@@ -1,0 +1,54 @@
+.top-frame {
+    text-align: center;
+    padding: 15px;
+    background-color: #ecefc1;
+    color: #ad994e;
+    letter-spacing: 4px;
+    font-weight: bold;
+}
+
+.home {
+    .menu-button {
+        height: calc((100vh - 50px) / 4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
+        color: #f4fcca;
+        box-shadow: 0 3px 15px 0 rgba(0,0,0,0.65);
+    }
+
+    .menu-button.create-game {
+        background-color: #f3d467;
+    }
+
+    .menu-button.present-game {
+        background-color: #db7151;
+    }
+
+    .menu-button.join-game {
+        background-color: #97374e;
+    }
+
+    .menu-button.how-to-play {
+        background-color: #533159;
+    }
+
+    .menu-button-icon i {
+        font-size: 30px;
+        margin-right: 20px;
+    }
+
+    .menu-button-text {
+        flex: 1;
+    }
+
+    .menu-button-text-main {
+        margin-bottom: 0;
+        font-size: 1.3em;
+    }
+
+    .menu-button-text-second {
+        margin-bottom: 0;
+    }
+}

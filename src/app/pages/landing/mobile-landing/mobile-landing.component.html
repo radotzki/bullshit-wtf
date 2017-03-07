@@ -1,0 +1,44 @@
+<div class="top-frame">
+    BULLSHIT
+</div>
+<section class="home">
+    <div class="menu-button create-game" (click)="goto('create-game')">
+        <div class="menu-button-icon">
+            <i class="fa fa-plus-square"></i>
+        </div>
+        <div class="menu-button-text">
+            <p class="menu-button-text-main"> Create Game </p>
+            <p class="menu-button-text-second"> Set up a new game for you and your friends </p>
+        </div>
+    </div>
+
+    <div class="menu-button present-game" (click)="goto('/Game/PresentGame')">
+        <div class="menu-button-icon">
+            <i class="fa fa-share-square-o"></i>
+        </div>
+        <div class="menu-button-text">
+            <p class="menu-button-text-main"> Present Game </p>
+            <p class="menu-button-text-second"> Click here from the device you wish to use as a presenter </p>
+        </div>
+    </div>
+
+    <div class="menu-button join-game" (click)="goto('join-game')">
+        <div class="menu-button-icon">
+            <i class="fa fa-gamepad"></i>
+        </div>
+        <div class="menu-button-text">
+            <p class="menu-button-text-main"> Join Game </p>
+            <p class="menu-button-text-second"> Join a game by entering its PIN </p>
+        </div>
+    </div>
+
+    <div class="menu-button how-to-play" (click)="playVideo()">
+        <div class="menu-button-icon">
+            <i class="fa fa-youtube-play"></i>
+        </div>
+        <div class="menu-button-text">
+            <p class="menu-button-text-main"> How Do I Play? </p>
+            <p class="menu-button-text-second"> Click here to see a video </p>
+        </div>
+    </div>
+</section>

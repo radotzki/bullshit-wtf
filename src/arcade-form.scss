@@ -1,0 +1,57 @@
+.arcade-form {
+    height: 100vh;
+    width: 100vw;
+    background-image: url(assets/arcade.jpg);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+
+    .title-area {
+        padding: 0 15px;
+        color: white;
+        text-align: center;
+        text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .title {
+        margin-bottom: 10px;
+        font-size: 4.5em;
+        letter-spacing: 0.07em;
+        line-height: 1.7;
+        text-shadow: -2px 2px 0px rgba(0, 0, 0, 0.3), -2px 4px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .sub-title {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.375em;
+    }
+
+    .separator:before, .separator:after {
+        display: block;
+        width: 40%;
+        content: " ";
+        margin-top: 10px;
+        border: 1px solid #fff;
+    }
+
+    .separator:before {
+        float: left;
+    }
+
+    .separator:after {
+        float: right;
+    }
+
+    .separator {
+        width: 80%;
+        margin: 0 auto;
+    }
+
+    .controls {
+        margin-top: 20px;
+        padding: 0 40px;
+    }
+}
+

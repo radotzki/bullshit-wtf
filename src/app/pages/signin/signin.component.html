@@ -1,0 +1,35 @@
+<div class="arcade-form">
+    <form class="signin-form" (submit)="submit()" novalidate *ngIf="!waitForMail">
+
+        <div class="title-area">
+            <h1 class="title">Bullshit</h1>
+            <h3 class="sub-title">Enter your email to sign in</h3>
+            <div class="separator">♦</div>
+        </div>
+
+        <div class="controls">
+            <p class="control">
+                <input class="input" type="email" placeholder="Email" [(ngModel)]="email" name="email" [autofocus]="!registerMode">
+            </p>
+
+            <p class="control" *ngIf="registerMode">
+                <input class="input" type="text" placeholder="Name" [(ngModel)]="name" name="name" [autofocus]="registerMode">
+            </p>
+
+            <p *ngIf="errorMsg"> {{errorMsg}} </p>
+
+            <button class="button is-primary is-medium is-fullwidth" *ngIf="!registerMode" type="submit" [disabled]="!email" [class.is-loading]="loading">SIGNIN</button>
+            <button class="button is-primary is-medium is-fullwidth" *ngIf="registerMode" type="submit" [disabled]="!email || !name"
+                [class.is-loading]="loading">REGISTER</button>
+        </div>
+    </form>
+
+    <section class="wait-for-mail" *ngIf="waitForMail">
+        <h3>Almost there...</h3>
+        <i class="fa fa-envelope email-icon"></i>
+        <p>Please verify your email address. We’ve sent a confirmation email to:</p>
+        <p><strong>{{email}}</strong></p>
+        <p>Click the confirmation link in that email to begin playing Bullshit.</p>
+        <p>Didn’t receive the email? Check your Spam folder, it may have been caught by a filter.</p>
+    </section>
+</div>
