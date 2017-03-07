@@ -1,3 +1,4 @@
+import { AuthHttpModule } from './auth-http/auth-http.module';
 import { ApiService } from './services/api.service';
 import { StorageService } from './services/storage.service';
 import { SessionService } from './services/session.service';
@@ -32,6 +33,7 @@ import { JoinGameComponent } from './pages/join-game/join-game.component';
         FormsModule,
         HttpModule,
         AppRoutingModule,
+        AuthHttpModule,
     ],
     providers: [
         SessionService,

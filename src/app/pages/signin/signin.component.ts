@@ -47,7 +47,7 @@ export class SigninComponent implements OnInit {
                     this.registerMode = true;
                 } else {
                     // TODO: SENTRY
-                    this.errorMsg = 'oops, something wrong happend. Please try again';
+                    this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });
     }

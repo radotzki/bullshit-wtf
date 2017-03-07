@@ -1,3 +1,23 @@
-<p>
-  join-game works!
-</p>
+<div class="arcade-form">
+    <form (submit)="submit()" novalidate>
+
+        <div class="title-area">
+            <h1 class="title">Bullshit</h1>
+            <h3 class="sub-title">Enter a game PIN</h3>
+            <div class="separator">♦</div>
+        </div>
+
+        <div class="controls">
+            <p class="control">
+                <input class="input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin">
+            </p>
+
+            <div class="notification is-danger" *ngIf="errorMsg">
+                {{errorMsg}}
+            </div>
+
+            <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">JOIN</button>
+
+        </div>
+    </form>
+</div>

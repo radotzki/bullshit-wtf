@@ -1,5 +1,5 @@
 <div class="arcade-form">
-    <form class="signin-form" (submit)="submit()" novalidate *ngIf="!waitForMail">
+    <form (submit)="submit()" novalidate *ngIf="!waitForMail">
 
         <div class="title-area">
             <h1 class="title">Bullshit</h1>
@@ -9,14 +9,16 @@
 
         <div class="controls">
             <p class="control">
-                <input class="input" type="email" placeholder="Email" [(ngModel)]="email" name="email" [autofocus]="!registerMode">
+                <input class="input" type="email" placeholder="Email" [(ngModel)]="email" name="email">
             </p>
 
             <p class="control" *ngIf="registerMode">
-                <input class="input" type="text" placeholder="Name" [(ngModel)]="name" name="name" [autofocus]="registerMode">
+                <input class="input" type="text" placeholder="Your Name" [(ngModel)]="name" name="name" autofocus>
             </p>
 
-            <p *ngIf="errorMsg"> {{errorMsg}} </p>
+            <div class="notification is-danger" *ngIf="errorMsg">
+                {{errorMsg}}
+            </div>
 
             <button class="button is-primary is-medium is-fullwidth" *ngIf="!registerMode" type="submit" [disabled]="!email" [class.is-loading]="loading">SIGNIN</button>
             <button class="button is-primary is-medium is-fullwidth" *ngIf="registerMode" type="submit" [disabled]="!email || !name"
