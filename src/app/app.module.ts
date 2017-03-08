@@ -1,3 +1,4 @@
+import { SentryModule } from './sentry/sentry.module';
 import { AuthHttpModule } from './auth-http/auth-http.module';
 import { ApiService } from './services/api.service';
 import { StorageService } from './services/storage.service';
@@ -7,7 +8,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 
-import { AppRoutingModule } from './app-routing.module';
+import { AppRoutingModule } from './app-routing/app-routing.module';
 import { AppComponent } from './app.component';
 import { SigninComponent } from './pages/signin/signin.component';
 import { ValidateTokenComponent } from './pages/validate-token/validate-token.component';
@@ -16,6 +17,7 @@ import { MobileLandingComponent } from './pages/landing/mobile-landing/mobile-la
 import { DesktopLandingComponent } from './pages/landing/desktop-landing/desktop-landing.component';
 import { CreateGameComponent } from './pages/create-game/create-game.component';
 import { JoinGameComponent } from './pages/join-game/join-game.component';
+import { PresentGameComponent } from './pages/present-game/present-game.component';
 
 @NgModule({
     declarations: [
@@ -27,6 +29,7 @@ import { JoinGameComponent } from './pages/join-game/join-game.component';
         CreateGameComponent,
         JoinGameComponent,
         LandingComponent,
+        PresentGameComponent,
     ],
     imports: [
         BrowserModule,
@@ -34,6 +37,7 @@ import { JoinGameComponent } from './pages/join-game/join-game.component';
         HttpModule,
         AppRoutingModule,
         AuthHttpModule,
+        SentryModule,
     ],
     providers: [
         SessionService,

@@ -29,6 +29,14 @@ export class ApiService {
         return this.post(`api/games/${gamePin}/join`, {});
     }
 
+    presenterSignin(): Promise<{ token: string }> {
+        return this.unauthPost(`get-token`, { presenter: true });
+    }
+
+    createGame(categories: string[], numberOfQuestions: number, answerQuestionTime = 45, selectAnswerTime = 45): Promise<{ name: string }> {
+        return this.post(`api/games/`, { categories, numberOfQuestions, answerQuestionTime, selectAnswerTime });
+    }
+
     private post(url: string, body: Object) {
         return this.authHttp.post(environment.server + '/' + url, body)
             .toPromise()

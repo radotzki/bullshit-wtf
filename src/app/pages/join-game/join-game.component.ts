@@ -1,3 +1,4 @@
+import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { Component } from '@angular/core';
 
@@ -17,6 +18,7 @@ export class JoinGameComponent {
 
     submit() {
         this.loading = true;
+        this.errorMsg = '';
 
         this.apiService.join(this.pin)
             .then(game => {
@@ -30,7 +32,7 @@ export class JoinGameComponent {
                 if (err.code === 'GAME_NOT_FOUND') {
                     this.errorMsg = 'This game does not exist';
                 } else {
-                    // TODO SENTRY
+                    Raven.captureException(new Error(JSON.stringify(err)));
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });

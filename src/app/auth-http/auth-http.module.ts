@@ -7,8 +7,8 @@ import { AuthHttp, AuthConfig } from 'angular2-jwt';
 const storage = new StorageService();
 const session = new SessionService(null, storage);
 
-function authHttpServiceFactory(http: Http, options: RequestOptions) {
-    return new AuthHttp(new AuthConfig({ tokenGetter: (() => session.user.token) }), http, options);
+export function authHttpServiceFactory(http: Http, options: RequestOptions) {
+    return new AuthHttp(new AuthConfig({ tokenGetter: (() => session.token) }), http, options);
 }
 
 @NgModule({

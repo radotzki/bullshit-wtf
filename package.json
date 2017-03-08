@@ -5,10 +5,9 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0",
-    "build": "ng build",
-    "test": "ng test",
+    "build": "ng build -prod",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "deploy": "npm run lint && npm run build && firebase deploy"
   },
   "private": true,
   "dependencies": {
@@ -23,6 +22,7 @@
     "angular2-jwt": "^0.1.28",
     "bulma": "^0.3.2",
     "core-js": "^2.4.1",
+    "raven-js": "^3.12.1",
     "rxjs": "^5.1.0",
     "zone.js": "^0.7.6"
   },
@@ -32,6 +32,7 @@
     "@types/jasmine": "2.5.38",
     "@types/node": "~6.0.60",
     "codelyzer": "~2.0.0",
+    "firebase-tools": "^3.4.0",
     "jasmine-core": "~2.5.2",
     "jasmine-spec-reporter": "~3.2.0",
     "karma": "~1.4.1",

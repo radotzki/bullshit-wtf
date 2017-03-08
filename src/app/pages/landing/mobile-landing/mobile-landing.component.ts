@@ -1,4 +1,3 @@
-import { Router } from '@angular/router';
 import { Component } from '@angular/core';
 
 @Component({
@@ -8,16 +7,9 @@ import { Component } from '@angular/core';
 })
 export class MobileLandingComponent {
 
-    constructor(
-        private router: Router,
-    ) { }
+    constructor() { }
 
     playVideo() {
         window.open('https://youtu.be/6HGl9xoUcjw', '_blank');
     }
-
-    goto(state) {
-        this.router.navigate([state]);
-    }
-
 }

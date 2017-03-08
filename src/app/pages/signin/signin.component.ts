@@ -1,3 +1,4 @@
+import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
@@ -35,6 +36,7 @@ export class SigninComponent implements OnInit {
 
     signin() {
         this.loading = true;
+        this.errorMsg = '';
 
         this.apiService.signin(this.email, this.redirect)
             .then(() => {
@@ -46,7 +48,7 @@ export class SigninComponent implements OnInit {
                 if (err.code === 'NO_ACCOUNT') {
                     this.registerMode = true;
                 } else {
-                    // TODO: SENTRY
+                    Raven.captureException(new Error(JSON.stringify(err)));
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });
@@ -54,10 +56,14 @@ export class SigninComponent implements OnInit {
 
     register() {
         this.loading = true;
+        this.errorMsg = '';
 
         this.apiService.register(this.email, this.name)
             .then(() => this.signin())
-            .catch(err => this.errorMsg = err.message);
+            .catch(err => {
+                Raven.captureException(new Error(JSON.stringify(err)));
+                this.errorMsg = 'oops, something went wrong. Please try again';
+            });
     }
 
 }

@@ -1,0 +1,19 @@
+.create-game {
+    .radio.vertical {
+        display: block;
+        margin-left: 0;
+    }
+
+    .controls {
+        background: #fff;
+        padding: 10px 20px;
+        border-radius: 10px;
+        margin: 20px 40px;
+        opacity: 0.8;
+        font-size: 1.375em;
+    }
+
+    .action {
+        margin: 0 40px;
+    }
+}

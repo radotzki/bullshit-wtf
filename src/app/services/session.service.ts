@@ -1,3 +1,4 @@
+import * as Raven from 'raven-js';
 import { ValidateTokenComponent } from './../pages/validate-token/validate-token.component';
 import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
@@ -8,6 +9,7 @@ const storageKey = 'BS_SESSION';
 @Injectable()
 export class SessionService implements CanActivate {
     presenter: boolean;
+    presenterToken: string;
     private _user: User;
 
     constructor(
@@ -18,6 +20,7 @@ export class SessionService implements CanActivate {
     set user(user: User) {
         this._user = user;
         this.storageService.setItem(storageKey, JSON.stringify(user));
+        Raven.setUserContext({ email: user.email, id: user.id });
     }
 
     get user(): User {
@@ -30,6 +33,14 @@ export class SessionService implements CanActivate {
             return this._user;
         } catch (e) {
             return undefined;
+        }
+    }
+
+    get token() {
+        if (this.presenter) {
+            return this.presenterToken;
+        } else {
+            return this.user.token;
         }
     }
 
