@@ -9,11 +9,11 @@
 
         <div class="controls">
             <p class="control">
-                <input class="input" type="email" placeholder="Email" [(ngModel)]="email" name="email">
+                <input class="input is-medium" type="email" placeholder="Email" [(ngModel)]="email" name="email">
             </p>
 
             <p class="control" *ngIf="registerMode">
-                <input class="input" type="text" placeholder="Your Name" [(ngModel)]="name" name="name" autofocus>
+                <input class="input is-medium" type="text" placeholder="Your Name" [(ngModel)]="name" name="name" autofocus>
             </p>
 
             <div class="notification is-danger" *ngIf="errorMsg">
