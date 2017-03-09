@@ -1,3 +1,4 @@
+import { GameService } from './../../services/game.service';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { categories } from './categories';
@@ -16,6 +17,7 @@ export class CreateGameComponent {
 
     constructor(
         private apiService: ApiService,
+        private gameService: GameService,
     ) { }
 
     submit() {
@@ -28,8 +30,7 @@ export class CreateGameComponent {
 
         this.apiService.createGame(categoryNames, this.length)
             .then((resp) => {
-                // TODO: go to game resp.name
-                console.log('resp.name', resp.name);
+                this.gameService.register(resp.name);
                 this.loading = false;
             })
             .catch(err => {

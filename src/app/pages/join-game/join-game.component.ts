@@ -1,3 +1,4 @@
+import { GameService } from './../../services/game.service';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { Component } from '@angular/core';
@@ -14,6 +15,7 @@ export class JoinGameComponent {
 
     constructor(
         private apiService: ApiService,
+        private gameService: GameService,
     ) { }
 
     submit() {
@@ -21,9 +23,8 @@ export class JoinGameComponent {
         this.errorMsg = '';
 
         this.apiService.join(this.pin)
-            .then(game => {
-                // TODO: go to game
-                console.log('game', game);
+            .then(resp => {
+                this.gameService.register(resp.name);
                 this.loading = false;
             })
             .catch(err => {

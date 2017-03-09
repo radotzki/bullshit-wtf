@@ -1,3 +1,5 @@
+import { RoundIntroComponent } from './../pages/round-intro/round-intro.component';
+import { GameStagingComponent } from './../pages/game-staging/game-staging.component';
 import { PresentGameComponent } from './../pages/present-game/present-game.component';
 import { DesktopLandingComponent } from '../pages/landing/desktop-landing/desktop-landing.component';
 import { MobileLandingComponent } from '../pages/landing/mobile-landing/mobile-landing.component';
@@ -17,9 +19,11 @@ const routes: Routes = [
     { path: 'd', component: DesktopLandingComponent },
     { path: 'signin/:redirect', component: SigninComponent },
     { path: 'validate-token/:redirect/:email/:token', component: ValidateTokenComponent },
+    { path: 'present-game', component: PresentGameComponent },
     { path: 'create-game', component: CreateGameComponent, canActivate: [SessionService] },
     { path: 'join-game', component: JoinGameComponent, canActivate: [SessionService] },
-    { path: 'present-game', component: PresentGameComponent },
+    { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService] },
+    { path: 'round-intro/:pin/:number', component: RoundIntroComponent, canActivate: [SessionService] },
 ];
 
 @NgModule({

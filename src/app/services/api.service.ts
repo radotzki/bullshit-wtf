@@ -37,6 +37,18 @@ export class ApiService {
         return this.post(`api/games/`, { categories, numberOfQuestions, answerQuestionTime, selectAnswerTime });
     }
 
+    getGame(pin: string) {
+        return this.post(`api/games/${pin}`, {});
+    }
+
+    startGame(pin: string) {
+        return this.post(`api/games/${pin}/start`, {});
+    }
+
+    tickRoundIntro(pin: string) {
+        return this.post(`api/games/${pin}/tickRoundIntro`, {});
+    }
+
     private post(url: string, body: Object) {
         return this.authHttp.post(environment.server + '/' + url, body)
             .toPromise()

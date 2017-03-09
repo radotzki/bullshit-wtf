@@ -24,3 +24,9 @@ $family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxyge
 }
 
 @import "arcade-form";
+
+.game-main {
+    height: calc(100vh - 100px);
+    overflow: hidden;
+    padding: 20px;
+}

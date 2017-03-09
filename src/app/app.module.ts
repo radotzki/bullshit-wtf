@@ -1,3 +1,4 @@
+import { GameService } from './services/game.service';
 import { SentryModule } from './sentry/sentry.module';
 import { AuthHttpModule } from './auth-http/auth-http.module';
 import { ApiService } from './services/api.service';
@@ -18,6 +19,10 @@ import { DesktopLandingComponent } from './pages/landing/desktop-landing/desktop
 import { CreateGameComponent } from './pages/create-game/create-game.component';
 import { JoinGameComponent } from './pages/join-game/join-game.component';
 import { PresentGameComponent } from './pages/present-game/present-game.component';
+import { GameStagingComponent } from './pages/game-staging/game-staging.component';
+import { GameHeaderComponent } from './components/game-header/game-header.component';
+import { GameFooterComponent } from './components/game-footer/game-footer.component';
+import { RoundIntroComponent } from './pages/round-intro/round-intro.component';
 
 @NgModule({
     declarations: [
@@ -30,6 +35,10 @@ import { PresentGameComponent } from './pages/present-game/present-game.componen
         JoinGameComponent,
         LandingComponent,
         PresentGameComponent,
+        GameStagingComponent,
+        GameHeaderComponent,
+        GameFooterComponent,
+        RoundIntroComponent,
     ],
     imports: [
         BrowserModule,
@@ -43,6 +52,7 @@ import { PresentGameComponent } from './pages/present-game/present-game.componen
         SessionService,
         StorageService,
         ApiService,
+        GameService,
     ],
     bootstrap: [AppComponent]
 })

@@ -1,0 +1,14 @@
+.game-staging {
+    .player {
+        height: calc((100vh - 100px - 40px - 60px) / 4);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    .picture {
+        height: 100%;
+    }
+}
