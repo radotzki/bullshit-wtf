@@ -1,0 +1,34 @@
+<section class="show-question">
+    <app-game-header></app-game-header>
+    <progress *ngIf="game" class="progress is-primary" [value]="elapsedTime" [max]="game.answerQuestionTime"></progress>
+
+    <div class="game-main">
+        <div *ngIf="!game" class="screen-center">
+            <div class="loader"> </div>
+        </div>
+
+        <form *ngIf="game && !questionSubmitted" (submit)="submit()">
+            <!-- TODO: [style.direction]="game.currentQuestion.direction" -->
+            <p class="question"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+
+            <p class="control">
+                <input class="input" [class.is-danger]="enteredCorrectAnswer" type="text" placeholder="Answer" name="answer" [(ngModel)]="answer" max="40" autofocus>
+                <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try something else</span>
+            </p>
+
+            <p class="control">
+                <button type="submit" class="button is-primary is-fullwidth" [class.is-loading]="loading" [disabled]="!answer">SEND</button>
+            </p>
+        </form>
+
+        <div *ngIf="questionSubmitted" class="screen-center">
+            Your answer has been submitted
+        </div>
+
+        <div class="notification is-danger" *ngIf="errorMsg">
+            {{errorMsg}}
+        </div>
+    </div>
+
+    <app-game-footer></app-game-footer>
+</section>

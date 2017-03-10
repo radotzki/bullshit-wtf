@@ -1,3 +1,5 @@
+import { ShowAnswersComponent } from './../pages/show-answers/show-answers.component';
+import { ShowQuestionComponent } from './../pages/show-question/show-question.component';
 import { RoundIntroComponent } from './../pages/round-intro/round-intro.component';
 import { GameStagingComponent } from './../pages/game-staging/game-staging.component';
 import { PresentGameComponent } from './../pages/present-game/present-game.component';
@@ -24,6 +26,8 @@ const routes: Routes = [
     { path: 'join-game', component: JoinGameComponent, canActivate: [SessionService] },
     { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService] },
     { path: 'round-intro/:pin/:number', component: RoundIntroComponent, canActivate: [SessionService] },
+    { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService] },
+    { path: 'show-answers/:pin', component: ShowAnswersComponent, canActivate: [SessionService] },
 ];
 
 @NgModule({

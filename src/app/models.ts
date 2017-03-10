@@ -7,6 +7,7 @@ export interface Game {
     numberOfQuestions: number;
     players?: Player[];
     questions?: {[key: number]: Question};
+    currentQuestion?: Question;
     selectAnswerTime: number;
     state?: GameState;
 }
@@ -26,6 +27,7 @@ export interface Player {
     id: string;
     name: string;
     picture: string;
+    score: number;
 }
 
 export interface Question {
@@ -37,6 +39,7 @@ export interface Question {
     startedAt: number;
     state: QuestionState;
     lang: string;
+    questionNumber?: number;
 }
 
 export interface Answer {

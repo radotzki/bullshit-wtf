@@ -1,4 +1,5 @@
 <div class="game-header">
     <span> PIN: {{pin | uppercase}} </span>
     <button *ngIf="button" (click)="onClick.next()" class="button is-primary" [class.is-loading]="buttonLoading"> {{button}} </button>
+    <span *ngIf="text"> {{text | uppercase}} </span>
 </div>

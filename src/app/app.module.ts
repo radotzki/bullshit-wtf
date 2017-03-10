@@ -23,6 +23,9 @@ import { GameStagingComponent } from './pages/game-staging/game-staging.componen
 import { GameHeaderComponent } from './components/game-header/game-header.component';
 import { GameFooterComponent } from './components/game-footer/game-footer.component';
 import { RoundIntroComponent } from './pages/round-intro/round-intro.component';
+import { ShowQuestionComponent } from './pages/show-question/show-question.component';
+import { ShowAnswersComponent } from './pages/show-answers/show-answers.component';
+import { BsQuestionPipe } from './pipes/bs-question.pipe';
 
 @NgModule({
     declarations: [
@@ -39,6 +42,9 @@ import { RoundIntroComponent } from './pages/round-intro/round-intro.component';
         GameHeaderComponent,
         GameFooterComponent,
         RoundIntroComponent,
+        ShowQuestionComponent,
+        ShowAnswersComponent,
+        BsQuestionPipe,
     ],
     imports: [
         BrowserModule,

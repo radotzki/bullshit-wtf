@@ -31,7 +31,7 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         this.number = this.activatedRoute.snapshot.params['number'];
         this.points = roundPoints[this.number];
         this.gameService.register(this.pin);
-        // this.skipIntroTimout = setTimeout(() => this.apiService.tickRoundIntro(this.pin), 5000);
+        this.skipIntroTimout = setTimeout(() => this.apiService.tickRoundIntro(this.pin), 5000);
     }
 
     ngOnDestroy() {

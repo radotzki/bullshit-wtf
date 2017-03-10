@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
+import { QuestionState } from '../models';
 
 @Injectable()
 export class ApiService {
@@ -47,6 +48,18 @@ export class ApiService {
 
     tickRoundIntro(pin: string) {
         return this.post(`api/games/${pin}/tickRoundIntro`, {});
+    }
+
+    tick(pin: string, currentState: QuestionState) {
+        return this.post(`api/games/${pin}/tick/${currentState}`, { });
+    }
+
+    answer(pin: string, answer: string) {
+        return this.post(`api/games/${pin}/answer`, { answer });
+    }
+
+    chooseAnswer(pin: string, answer: string) {
+        return this.post(`api/games/${pin}/chooseAnswer`, { answer });
     }
 
     private post(url: string, body: Object) {

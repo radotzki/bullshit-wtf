@@ -33,7 +33,11 @@ export class GameService {
 
         const game = Observable.fromPromise(this.getGameFromCache(pin));
 
-        return Observable.merge(game, gameStrim);
+        return Observable.merge(game, gameStrim)
+            .map(resp => {
+                resp.currentQuestion = this.findCurrentQuestion(resp);
+                return resp;
+            });
     }
 
     register(pin: string) {
@@ -50,23 +54,23 @@ export class GameService {
     }
 
     private handleQuestionState(game: Game) {
-        const currentQuestion = this.findCurrentQuestion(game);
-
-        if (currentQuestion) {
-            if (currentQuestion.state === QuestionState.ShowQuestion) {
-                this.router.navigate(['ShowQuestion', game.name]);
-            } else if (currentQuestion.state === QuestionState.ShowAnswers) {
-                this.router.navigate(['ShowAnswers', game.name]);
-            } else if (currentQuestion.state === QuestionState.RevealTheTruth) {
+        if (game.currentQuestion) {
+            if (game.currentQuestion.state === QuestionState.ShowQuestion) {
+                this.router.navigate(['show-question', game.name]);
+            } else if (game.currentQuestion.state === QuestionState.ShowAnswers) {
+                this.router.navigate(['show-answers', game.name]);
+            } else if (game.currentQuestion.state === QuestionState.RevealTheTruth) {
                 this.router.navigate(['RevealTheTruth', game.name]);
-            } else if (currentQuestion.state === QuestionState.ScoreBoard) {
+            } else if (game.currentQuestion.state === QuestionState.ScoreBoard) {
                 this.router.navigate(['ScoreBoard', game.name]);
             }
         }
     }
 
     private findCurrentQuestion(game: Game): Question {
-        const questionsArray: Question[] = Object.keys(game.questions).map(key => game.questions[key]);
+        const questionsArray: Question[] = Object.keys(game.questions).map(key =>
+            Object.assign({}, game.questions[key], { questionNumber: Number(key) })
+        );
         return questionsArray.find(question => question.state !== QuestionState.Pending && question.state !== QuestionState.End);
     }
 
