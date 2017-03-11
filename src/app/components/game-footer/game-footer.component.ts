@@ -34,6 +34,6 @@ export class GameFooterComponent implements OnInit, OnDestroy {
     }
 
     onGameChange(game: Game) {
-        this.score = game.players.find(p => p.id === this.uid).score;
+        // this.score = game.players.find(p => p.id === this.uid).score;
     }
 }
