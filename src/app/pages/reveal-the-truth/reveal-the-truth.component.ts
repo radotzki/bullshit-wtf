@@ -67,7 +67,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     createDisplayArray(players: Player[], fakeAnswers: Answer[], realAnswer: Answer) {
         const relevantFakeAnswers = fakeAnswers.filter(fakeAnswer => fakeAnswer.selectedBy.length > 0);
-        const displayArray: Answer[] = relevantFakeAnswers.sort((a, b) => a.selectedBy.length < b.selectedBy.length ? -1 : 1);
+        const displayArray: Answer[] = [...relevantFakeAnswers].sort((a, b) => a.selectedBy.length < b.selectedBy.length ? -1 : 1);
 
         displayArray.map(answer => {
             answer.selectedByUser = answer.selectedBy.map(playerId => this.getPlayerData(players, playerId));

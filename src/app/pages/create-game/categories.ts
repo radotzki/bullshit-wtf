@@ -71,8 +71,8 @@ export const categories = [
         'lang': 'en',
         'name': 'world'
     },
-    // {
-    //     'lang': 'he',
-    //     'name': 'חוק וסדר'
-    // }
+    {
+        'lang': 'he',
+        'name': 'חוק וסדר'
+    }
 ];

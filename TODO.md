@@ -1,6 +1,6 @@
 1. presenter: font size, images size
+1. present-game
 1. server: sign in
-1. deploy
 1. sound
 1. speech
 1. stickers
@@ -9,3 +9,5 @@
 1. reveal-the-truth: animations
 1. game-footer: show score just after score-board
 1. citations
+1. game-staging - explanation for the "start" button
+1. points is too small

@@ -23,6 +23,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     elapsedTimeInterval;
     answerSelected: boolean;
     displayAnswers: Answer[];
+    showQuestion: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -123,7 +124,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         displayAnswers = [...displayAnswers, ...houseAnswersToAdd];
         displayAnswers.push(question.realAnswer);
 
-        displayAnswers = displayAnswers.sort((a, b) => a.text < b.text ? -1 : 1);
+        displayAnswers = [...displayAnswers].sort((a, b) => a.text < b.text ? -1 : 1);
         return displayAnswers;
     }
 

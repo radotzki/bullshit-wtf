@@ -39,7 +39,7 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
 
     onGameChanged(resp: Game) {
         this.game = resp;
-        this.displayPlayers = this.game.players.sort((a, b) => a.score < b.score ? 1 : -1);
+        this.displayPlayers = [...this.game.players].sort((a, b) => a.score < b.score ? 1 : -1);
 
         setTimeout(this.tick.bind(this), 5000);
     }

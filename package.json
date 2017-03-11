@@ -7,7 +7,7 @@
     "start": "ng serve --host 0.0.0.0",
     "build": "ng build -prod",
     "lint": "ng lint",
-    "deploy": "npm run lint && npm run build && firebase deploy"
+    "deploy": "npm run lint && npm run build && cp dist/index.html dist/200.html && surge dist bullshit.wtf"
   },
   "private": true,
   "dependencies": {
@@ -44,6 +44,7 @@
     "karma-jasmine": "~1.1.0",
     "karma-jasmine-html-reporter": "^0.2.2",
     "protractor": "~5.1.0",
+    "surge": "^0.18.0",
     "ts-node": "~2.0.0",
     "tslint": "~4.4.2",
     "typescript": "~2.0.0"
