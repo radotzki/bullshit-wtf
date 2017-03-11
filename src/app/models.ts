@@ -50,6 +50,7 @@ export interface Answer {
     selectedBy: string[];
     selectedByUser: Player[];
     createdByUser: Player[];
+    houseLie?: boolean;
 }
 
 export enum QuestionState {

@@ -29,6 +29,7 @@ import { BsQuestionPipe } from './pipes/bs-question.pipe';
 import { RevealTheTruthComponent } from './pages/reveal-the-truth/reveal-the-truth.component';
 import { ScoreBoardComponent } from './pages/score-board/score-board.component';
 import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-final.component';
+import { BsPointsPipe } from './pipes/bs-points.pipe';
 
 @NgModule({
     declarations: [
@@ -51,6 +52,7 @@ import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-
         RevealTheTruthComponent,
         ScoreBoardComponent,
         ScoreBoardFinalComponent,
+        BsPointsPipe,
     ],
     imports: [
         BrowserModule,

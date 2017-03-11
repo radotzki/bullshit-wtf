@@ -72,6 +72,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         displayArray.map(answer => {
             answer.selectedByUser = answer.selectedBy.map(playerId => this.getPlayerData(players, playerId));
             answer.createdByUser = answer.createdBy.map(playerId => this.getPlayerData(players, playerId));
+            answer.houseLie = answer.createdByUser[0].id === 'house';
             return answer;
         });
 
@@ -97,30 +98,31 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 //     "players": [
 //         {
 //             "id": "23123e3e-7c43-49bb-a870-b84773bb4c59",
-//             "name": "Inon",
+//             "name": "Inon Rotem",
 //             "picture": "avatar0.png",
 //             "score": 2700
 //         },
 //         {
 //             "id": "69ad630f-aece-4332-9eab-6ffd128db3cd",
-//             "name": "Yonatan",
+//             "name": "Yonatan Nis",
 //             "picture": "avatar1.png",
 //             "score": 400
 //         },
 //         {
 //             "id": "4ad45377-7688-4bc2-8ae4-7c5d48b33532",
-//             "name": "Sharon",
+//             "name": "Sharon Adler",
 //             "picture": "avatar2.png",
 //             "score": 800
 //         },
 //         {
 //             "id": "bbf69126-a235-46bd-85e3-dff03112aba4",
-//             "name": "Aanv",
+//             "name": "May Mazuz",
 //             "picture": "avatar3.png",
 //             "score": 3200
 //         }
 //     ],
 //     "currentQuestion": {
+//         "rtl": true,
 //         "citation": "https://en.wikipedia.org/wiki/Samburu_people",
 //         "fakeAnswers": [
 //             {
@@ -136,9 +138,9 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 //             },
 //             {
 //                 "createdBy": [
-//                     "house"
+//                     "69ad630f-aece-4332-9eab-6ffd128db3cd"
 //                 ],
-//                 "points": -800,
+//                 "points": 800,
 //                 "selectedBy": [
 //                     "23123e3e-7c43-49bb-a870-b84773bb4c59"
 //                 ],

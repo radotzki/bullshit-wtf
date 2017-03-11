@@ -12,8 +12,9 @@
             <div class="creators">
                 <div class="creator" [class.truth]="displayAnswers[displayIndex].truth" *ngFor="let creator of displayAnswers[displayIndex].createdByUser">
                     <img [src]="'/assets/' + creator.picture">
-                    <span *ngIf="presenter"> {{ creator.name }} </span>
+                    <span *ngIf="presenter || displayAnswers[displayIndex].createdByUser.length < 4"> {{ creator.name }} </span>
                 </div>
+                <p *ngIf="!displayAnswers[displayIndex].truth && !displayAnswers[displayIndex].houseLie" class="points-top"> {{ displayAnswers[displayIndex].points | bsPoints }} </p>
             </div>
 
             <p class="control answer">
@@ -25,8 +26,11 @@
             <div class="selectors">
                 <div class="selector" *ngFor="let selector of displayAnswers[displayIndex].selectedByUser">
                     <img [src]="'/assets/' + selector.picture">
-                    <span *ngIf="presenter"> {{ selector.name }} </span>
+                    <span *ngIf="presenter || displayAnswers[displayIndex].selectedByUser.length < 4"> {{ selector.name }} </span>
                 </div>
+                <p *ngIf="displayAnswers[displayIndex].truth || displayAnswers[displayIndex].houseLie" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
+                    {{ displayAnswers[displayIndex].points | bsPoints }}
+                </p>
             </div>
         </div>
     </div>
