@@ -12,7 +12,9 @@ import { Subscription } from 'rxjs/Subscription';
 export class GameHeaderComponent implements OnInit, OnDestroy {
     pin: string;
     text: string;
+    gameOver: boolean;
     gameSubscription: Subscription;
+    loading: boolean;
     @Input() button: string;
     @Input() buttonLoading: boolean;
     @Output() onClick: EventEmitter<any> = new EventEmitter();
@@ -23,6 +25,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     ) { }
 
     ngOnInit() {
+        this.loading = true;
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChange.bind(this));
     }
@@ -40,7 +43,11 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
             this.text = 'ROUND 3';
         } else if (this.roundInProgress(game.state)) {
             this.text = `${game.currentQuestion.questionNumber + 1} OF ${game.numberOfQuestions}`;
+        } else if (game.state === GameState.GameOver) {
+            this.gameOver = true;
         }
+
+        this.loading = false;
     }
 
     roundInProgress(state: GameState) {

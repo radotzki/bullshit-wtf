@@ -60,9 +60,9 @@ export class GameService {
             } else if (game.currentQuestion.state === QuestionState.ShowAnswers) {
                 this.router.navigate(['show-answers', game.name]);
             } else if (game.currentQuestion.state === QuestionState.RevealTheTruth) {
-                this.router.navigate(['RevealTheTruth', game.name]);
+                this.router.navigate(['reveal-the-truth', game.name]);
             } else if (game.currentQuestion.state === QuestionState.ScoreBoard) {
-                this.router.navigate(['ScoreBoard', game.name]);
+                this.router.navigate(['score-board', game.name]);
             }
         }
     }
@@ -90,7 +90,7 @@ export class GameService {
         } else if (game.state === GameState.RoundThreeIntro) {
             this.router.navigate(['round-intro', game.name, 'three']);
         } else if (game.state === GameState.GameOver) {
-            this.router.navigate(['ScoreBoardFinal', game.name]);
+            this.router.navigate(['score-board-final', game.name]);
         }
     }
 

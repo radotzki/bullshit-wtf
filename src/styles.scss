@@ -1,14 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
 
 $primary: #db7151;
-$info: hsl(217, 71%, 53%);
-$success: hsl(141, 71%, 48%);
+$info: #f3d467;
+$success: #97374e;
 $warning: hsl(48, 100%, 67%);
 $danger: hsl(348, 100%, 61%);
 $light: hsl(0, 0%, 96%);
 $dark: hsl(0, 0%, 21%);
 
-$family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+$family-primary: 'Luckiest Guy', 'Bangers', cursive;
 
 @import "~bulma/sass/utilities/_all";
 @import "~bulma/sass/base/_all";
@@ -18,10 +18,15 @@ $family-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxyge
 @import "~bulma/sass/elements/progress.sass";
 @import "~bulma/sass/elements/notification.sass";
 @import "~bulma/sass/elements/icon.sass";
+@import "~bulma/sass/elements/box.sass";
 @import "~bulma/sass/elements/other.sass";
 
 .button.is-fullwidth {
     display: block;
+}
+
+.button {
+    line-height: 2.285em;
 }
 
 .progress {

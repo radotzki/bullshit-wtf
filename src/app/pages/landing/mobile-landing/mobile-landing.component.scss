@@ -3,13 +3,14 @@
     padding: 15px;
     background-color: #ecefc1;
     color: #ad994e;
-    letter-spacing: 4px;
+    letter-spacing: 2px;
     font-weight: bold;
+    font-size: 1.5rem;
 }
 
 .home {
     .menu-button {
-        height: calc((100vh - 50px) / 4);
+        height: calc((100vh - 61px) / 4);
         display: flex;
         justify-content: space-between;
         align-items: center;

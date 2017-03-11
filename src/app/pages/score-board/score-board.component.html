@@ -1,0 +1,21 @@
+<section class="score-board">
+    <app-game-header></app-game-header>
+
+    <div class="game-main">
+        <div *ngIf="!game" class="screen-center">
+            <div class="loader"> </div>
+        </div>
+
+        <div *ngIf="game">
+            <div class="box player" *ngFor="let player of displayPlayers">
+                <span class="left">
+                    <img class="picture" [src]="'/assets/' + player.picture">
+                    <span class="name"> {{ player.name }} </span>
+                </span>
+                <span class="score"> {{ player.score }} </span>
+            </div>
+        </div>
+    </div>
+
+    <app-game-footer></app-game-footer>
+</section>

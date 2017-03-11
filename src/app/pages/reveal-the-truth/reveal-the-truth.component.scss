@@ -1,0 +1,45 @@
+.revael-the-truth {
+    .creators {
+        margin-top: 50px;
+    }
+
+    .answer {
+        margin: 30px 0;
+    }
+
+    .answer .button {
+        height: 100%;
+        white-space: normal;
+    }
+
+    .selectors,
+    .creators {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        height: 70px;
+    }
+
+    .selector,
+    .creator {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .selector img,
+    .creator img {
+        height: 40px;
+        width: 40px;
+    }
+
+    .creator.truth img {
+        width: 100%;
+    }
+
+    .selector:not(:last-child),
+    .creator:not(:last-child) {
+        margin-right: 15px;
+    }
+}

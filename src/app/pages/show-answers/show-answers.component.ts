@@ -123,17 +123,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         displayAnswers = [...displayAnswers, ...houseAnswersToAdd];
         displayAnswers.push(question.realAnswer);
 
-        console.log('displayAnswers', displayAnswers);
-        // TODO: check sort
-        displayAnswers = displayAnswers.sort((a, b) => {
-            if (a < b) {
-                return -1;
-            } else if (a > b) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
+        displayAnswers = displayAnswers.sort((a, b) => a.text < b.text ? -1 : 1);
         return displayAnswers;
     }
 

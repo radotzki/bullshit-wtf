@@ -1,3 +1,6 @@
+import { ScoreBoardFinalComponent } from './../pages/score-board-final/score-board-final.component';
+import { ScoreBoardComponent } from './../pages/score-board/score-board.component';
+import { RevealTheTruthComponent } from './../pages/reveal-the-truth/reveal-the-truth.component';
 import { ShowAnswersComponent } from './../pages/show-answers/show-answers.component';
 import { ShowQuestionComponent } from './../pages/show-question/show-question.component';
 import { RoundIntroComponent } from './../pages/round-intro/round-intro.component';
@@ -28,6 +31,9 @@ const routes: Routes = [
     { path: 'round-intro/:pin/:number', component: RoundIntroComponent, canActivate: [SessionService] },
     { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService] },
     { path: 'show-answers/:pin', component: ShowAnswersComponent, canActivate: [SessionService] },
+    { path: 'reveal-the-truth/:pin', component: RevealTheTruthComponent, canActivate: [SessionService] },
+    { path: 'score-board/:pin', component: ScoreBoardComponent, canActivate: [SessionService] },
+    { path: 'score-board-final/:pin', component: ScoreBoardFinalComponent, canActivate: [SessionService] },
 ];
 
 @NgModule({

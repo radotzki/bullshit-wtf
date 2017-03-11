@@ -1,0 +1,36 @@
+<section class="revael-the-truth">
+    <app-game-header></app-game-header>
+
+    <div class="game-main">
+        <div *ngIf="!game" class="screen-center">
+            <div class="loader"> </div>
+        </div>
+
+        <div *ngIf="game">
+            <!-- TODO: [style.direction]="game.currentQuestion.direction" -->
+            <p class="question"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+
+            <div class="creators">
+                <div class="creator" [class.truth]="displayAnswers[displayIndex].truth" *ngFor="let creator of displayAnswers[displayIndex].createdByUser">
+                    <img [src]="'/assets/' + creator.picture">
+                    <span *ngIf="presenter"> {{ creator.name }} </span>
+                </div>
+            </div>
+
+            <p class="control answer">
+                <button type="submit" class="button is-info is-fullwidth">
+                    {{displayAnswers[displayIndex].text | uppercase}}
+                </button>
+            </p>
+
+            <div class="selectors">
+                <div class="selector" *ngFor="let selector of displayAnswers[displayIndex].selectedByUser">
+                    <img [src]="'/assets/' + selector.picture">
+                    <span *ngIf="presenter"> {{ selector.name }} </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <app-game-footer></app-game-footer>
+</section>

@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs/Subscription';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -13,11 +14,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
     styleUrls: ['./game-staging.component.scss']
 })
 export class GameStagingComponent implements OnInit, OnDestroy {
-    game: Observable<Game>;
+    gameSubscription: Subscription;
+    game: Game;
     pin: string;
     presenter: boolean;
     loading: boolean;
     errorMsg: string;
+    leader: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -29,12 +32,18 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = this.sessionService.presenter;
-        this.game = this.gameService.feed(this.pin);
+        this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
     }
 
     ngOnDestroy() {
         this.gameService.unregister(this.pin);
+        this.gameSubscription.unsubscribe();
+    }
+
+    onGameChanged(resp: Game) {
+        this.game = resp;
+        this.leader = !this.sessionService.presenter && this.game.players[0].id === this.sessionService.user.id;
     }
 
     startGame() {

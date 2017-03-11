@@ -1,15 +1,20 @@
 <section class="game-staging">
-    <app-game-header [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()" ></app-game-header>
+    <app-game-header *ngIf="leader" [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
+    <app-game-header *ngIf="!leader"></app-game-header>
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
     <div class="game-main">
-        <section class="columns is-mobile is-multiline">
-            <div *ngFor="let player of (game | async)?.players" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
-                <img [src]="player.picture" class="picture">
+         <div *ngIf="!game" class="screen-center">
+            <div class="loader"> </div>
+        </div>
+
+        <div *ngIf="game" class="columns is-mobile is-multiline">
+            <div *ngFor="let player of game.players" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
+                <img [src]="'/assets/' + player.picture" class="picture">
                 <span> {{player.name}} </span>
             </div>
-        </section>
+        </div>
     </div>
 
     <app-game-footer></app-game-footer>

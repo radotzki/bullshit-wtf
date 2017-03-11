@@ -12,7 +12,7 @@
             <p class="question"> {{game.currentQuestion.questionText | bsQuestion}} </p>
 
             <p class="control">
-                <input class="input" [class.is-danger]="enteredCorrectAnswer" type="text" placeholder="Answer" name="answer" [(ngModel)]="answer" max="40" autofocus>
+                <input class="input" [class.is-danger]="enteredCorrectAnswer" type="text" placeholder="Answer" name="answer" [(ngModel)]="answer" maxlength="40" autofocus>
                 <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try something else</span>
             </p>
 
@@ -25,9 +25,7 @@
             Your answer has been submitted
         </div>
 
-        <div class="notification is-danger" *ngIf="errorMsg">
-            {{errorMsg}}
-        </div>
+        <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
     </div>
 
     <app-game-footer></app-game-footer>

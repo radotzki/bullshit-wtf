@@ -26,6 +26,9 @@ import { RoundIntroComponent } from './pages/round-intro/round-intro.component';
 import { ShowQuestionComponent } from './pages/show-question/show-question.component';
 import { ShowAnswersComponent } from './pages/show-answers/show-answers.component';
 import { BsQuestionPipe } from './pipes/bs-question.pipe';
+import { RevealTheTruthComponent } from './pages/reveal-the-truth/reveal-the-truth.component';
+import { ScoreBoardComponent } from './pages/score-board/score-board.component';
+import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-final.component';
 
 @NgModule({
     declarations: [
@@ -45,6 +48,9 @@ import { BsQuestionPipe } from './pipes/bs-question.pipe';
         ShowQuestionComponent,
         ShowAnswersComponent,
         BsQuestionPipe,
+        RevealTheTruthComponent,
+        ScoreBoardComponent,
+        ScoreBoardFinalComponent,
     ],
     imports: [
         BrowserModule,

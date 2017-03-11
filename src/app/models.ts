@@ -27,7 +27,7 @@ export interface Player {
     id: string;
     name: string;
     picture: string;
-    score: number;
+    score?: number;
 }
 
 export interface Question {
@@ -47,6 +47,8 @@ export interface Answer {
     points: number;
     text: string;
     selectedBy: string[];
+    selectedByUser: Player[];
+    createdByUser: Player[];
 }
 
 export enum QuestionState {

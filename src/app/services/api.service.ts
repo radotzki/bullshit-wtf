@@ -62,6 +62,10 @@ export class ApiService {
         return this.post(`api/games/${pin}/chooseAnswer`, { answer });
     }
 
+    replay(pin: string) {
+        return this.post(`api/games/${pin}/createChild`, {});
+    }
+
     private post(url: string, body: Object) {
         return this.authHttp.post(environment.server + '/' + url, body)
             .toPromise()

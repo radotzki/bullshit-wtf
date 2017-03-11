@@ -13,12 +13,10 @@
             </p>
 
             <p class="control" *ngIf="registerMode">
-                <input class="input is-medium" type="text" placeholder="Your Name" [(ngModel)]="name" name="name" autofocus>
+                <input class="input is-medium" type="text" placeholder="Your Name" [(ngModel)]="name" name="name" maxlength="10" autofocus>
             </p>
 
-            <div class="notification is-danger" *ngIf="errorMsg">
-                {{errorMsg}}
-            </div>
+            <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
             <button class="button is-primary is-medium is-fullwidth" *ngIf="!registerMode" type="submit" [disabled]="!email" [class.is-loading]="loading">SIGNIN</button>
             <button class="button is-primary is-medium is-fullwidth" *ngIf="registerMode" type="submit" [disabled]="!email || !name"
