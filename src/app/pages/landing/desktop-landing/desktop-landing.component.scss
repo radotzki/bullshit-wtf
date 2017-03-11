@@ -1,11 +1,22 @@
 .top-frame {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 15px;
     background-color: #ecefc1;
     color: #ad994e;
-    letter-spacing: 4px;
-    font-weight: bold;
-    font-size: 1.5rem;
+
+    .title {
+        letter-spacing: 2px;
+        font-weight: bold;
+        font-size: 1.5rem;
+        flex: 1;
+    }
+
+    .logo {
+        height: 32px;
+        margin-right: 10px;
+    }
 }
 
 .home {
