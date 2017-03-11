@@ -1,4 +1,3 @@
-1. hebrew
 1. normalize avatars
 1. reveal-the-truth: points, animations
 1. colors
