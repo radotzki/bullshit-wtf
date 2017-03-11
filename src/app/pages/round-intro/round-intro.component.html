@@ -2,8 +2,18 @@
     <app-game-header></app-game-header>
 
     <div class="game-main">
-        <h2><b>{{points.bullshit}}</b> points for everyone you bullshit</h2>
-		<h2><b>{{points.truth}}</b> points for finding the truth</h2>
+        <div class="screen-center">
+            <p class="bullshit">
+                {{points.bullshit}} points
+                <br>
+                for everyone you bullshit
+            </p>
+            <p class="truth">
+                {{points.truth}} points
+                <br>
+                for finding the truth
+            </p>
+        </div>
     </div>
 
     <app-game-footer></app-game-footer>

@@ -36,6 +36,11 @@ export class GameService {
         return Observable.merge(game, gameStrim)
             .map(resp => {
                 resp.currentQuestion = this.findCurrentQuestion(resp);
+
+                if (resp.currentQuestion) {
+                    resp.currentQuestion.rtl = resp.currentQuestion.lang === 'he-IL';
+                }
+
                 return resp;
             });
     }

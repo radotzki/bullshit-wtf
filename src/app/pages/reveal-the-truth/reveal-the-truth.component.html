@@ -7,8 +7,7 @@
         </div>
 
         <div *ngIf="game">
-            <!-- TODO: [style.direction]="game.currentQuestion.direction" -->
-            <p class="question"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+            <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
 
             <div class="creators">
                 <div class="creator" [class.truth]="displayAnswers[displayIndex].truth" *ngFor="let creator of displayAnswers[displayIndex].createdByUser">
@@ -18,7 +17,7 @@
             </div>
 
             <p class="control answer">
-                <button type="submit" class="button is-info is-fullwidth">
+                <button type="submit" class="button is-info is-fullwidth" [class.rtl]="game.currentQuestion.rtl">
                     {{displayAnswers[displayIndex].text | uppercase}}
                 </button>
             </p>

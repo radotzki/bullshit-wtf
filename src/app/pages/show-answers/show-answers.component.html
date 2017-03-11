@@ -10,7 +10,7 @@
         <div *ngIf="game && !answerSelected">
             <div *ngFor="let answer of displayAnswers">
                 <p class="control">
-                    <button class="button is-primary is-fullwidth answer" (click)="submit(answer.text)" [disabled]="loading">
+                    <button class="button is-primary is-fullwidth answer" (click)="submit(answer.text)" [disabled]="loading" [class.rtl]="game.currentQuestion.rtl">
                         {{ answer.text | uppercase }}
                     </button>
                 </p>
@@ -20,8 +20,7 @@
                 <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">WHAT WAS THE QUESTION AGAIN?</button>
             </p>
 
-            <!-- TODO: [style.direction]="game.currentQuestion.direction" -->
-            <p *ngIf="showQuestion" class="question"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+            <p *ngIf="showQuestion" class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
         </div>
 
         <div *ngIf="answerSelected" class="screen-center">

@@ -62,7 +62,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     }
 
     tick() {
-        // this.apiService.tick(this.pin, QuestionState.RevealTheTruth);
+        this.apiService.tick(this.pin, QuestionState.RevealTheTruth);
     }
 
     createDisplayArray(players: Player[], fakeAnswers: Answer[], realAnswer: Answer) {

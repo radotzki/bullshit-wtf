@@ -40,6 +40,7 @@ export interface Question {
     state: QuestionState;
     lang: string;
     questionNumber?: number;
+    rtl?: boolean;
 }
 
 export interface Answer {

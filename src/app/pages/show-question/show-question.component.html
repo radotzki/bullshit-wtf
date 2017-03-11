@@ -8,11 +8,11 @@
         </div>
 
         <form *ngIf="game && !questionSubmitted" (submit)="submit()">
-            <!-- TODO: [style.direction]="game.currentQuestion.direction" -->
-            <p class="question"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+            <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
 
             <p class="control">
-                <input class="input" [class.is-danger]="enteredCorrectAnswer" type="text" placeholder="Answer" name="answer" [(ngModel)]="answer" maxlength="40" autofocus>
+                <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="game.currentQuestion.rtl" type="text" name="answer"
+                    [(ngModel)]="answer" maxlength="40" autofocus>
                 <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try something else</span>
             </p>
 

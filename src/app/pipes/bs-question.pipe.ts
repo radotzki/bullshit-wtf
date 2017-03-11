@@ -6,7 +6,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 export class BsQuestionPipe implements PipeTransform {
 
     transform(value: string, args?: any): any {
-        return value.replace(/\$blank\$/gi, '________');
+        return value.replace(/\$\s?blank\s?\$/gi, '________');
     }
 
 }
