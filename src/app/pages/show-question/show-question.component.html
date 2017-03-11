@@ -7,7 +7,11 @@
             <div class="loader"> </div>
         </div>
 
-        <form *ngIf="game && !questionSubmitted" (submit)="submit()">
+        <div *ngIf="game && presenter" class="screen-center">
+            <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+        </div>
+
+        <form *ngIf="game && !questionSubmitted && !presenter" (submit)="submit()">
             <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
 
             <p class="control">
@@ -28,5 +32,5 @@
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
     </div>
 
-    <app-game-footer></app-game-footer>
+    <app-game-footer *ngIf="!presenter"></app-game-footer>
 </section>

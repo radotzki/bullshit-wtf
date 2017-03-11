@@ -8,7 +8,7 @@ $danger: hsl(348, 100%, 61%);
 $light: hsl(0, 0%, 96%);
 $dark: hsl(0, 0%, 21%);
 
-$family-primary: "Luckiest Guy", "Cousine", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+$family-primary: "Luckiest Guy", "Suez One", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 
 @import "~bulma/sass/utilities/_all";
 @import "~bulma/sass/base/_all";
@@ -55,5 +55,5 @@ $family-primary: "Luckiest Guy", "Cousine", -apple-system, BlinkMacSystemFont, "
 
 .rtl {
     direction: rtl;
-    font-family: 'Cousine';
+    font-family: 'Suez One';
 }

@@ -14,7 +14,7 @@ export class LandingComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.sessionService.presenter = false;
+        this.sessionService.presenter = undefined;
 
         if (isMobile()) {
             this.router.navigate(['m']);

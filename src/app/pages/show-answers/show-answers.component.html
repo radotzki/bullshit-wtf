@@ -7,14 +7,24 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="game && !answerSelected">
-            <div *ngFor="let answer of displayAnswers">
-                <p class="control">
-                    <button class="button is-primary is-fullwidth answer" (click)="submit(answer.text)" [disabled]="loading" [class.rtl]="game.currentQuestion.rtl">
+        <div *ngIf="game && presenter">
+            <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+
+            <div class="columns is-multiline">
+                <p *ngFor="let answer of displayAnswers" class="column is-one-third-tablet is-one-third-desktop">
+                    <button class="button is-primary is-fullwidth answer" [class.rtl]="game.currentQuestion.rtl">
                         {{ answer.text | uppercase }}
                     </button>
                 </p>
             </div>
+        </div>
+
+        <div *ngIf="game && !answerSelected && !presenter">
+            <p *ngFor="let answer of displayAnswers" class="control">
+                <button class="button is-primary is-fullwidth answer" (click)="submit(answer.text)" [disabled]="loading" [class.rtl]="game.currentQuestion.rtl">
+                    {{ answer.text | uppercase }}
+                </button>
+            </p>
 
             <p class="control">
                 <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">WHAT WAS THE QUESTION AGAIN?</button>
@@ -30,5 +40,5 @@
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
     </div>
 
-    <app-game-footer></app-game-footer>
+    <app-game-footer *ngIf="!presenter"></app-game-footer>
 </section>

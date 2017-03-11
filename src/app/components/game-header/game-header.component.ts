@@ -1,3 +1,4 @@
+import { SessionService } from './../../services/session.service';
 import { Game, GameState } from './../../models';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
@@ -15,6 +16,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     gameOver: boolean;
     gameSubscription: Subscription;
     loading: boolean;
+    presenter: boolean;
     @Input() button: string;
     @Input() buttonLoading: boolean;
     @Output() onClick: EventEmitter<any> = new EventEmitter();
@@ -22,11 +24,13 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     constructor(
         private activatedRoute: ActivatedRoute,
         private gameService: GameService,
+        private sessionService: SessionService,
     ) { }
 
     ngOnInit() {
         this.loading = true;
         this.pin = this.activatedRoute.snapshot.params['pin'];
+        this.presenter = !!this.sessionService.presenter;
         this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChange.bind(this));
     }
 

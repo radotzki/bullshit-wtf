@@ -6,15 +6,13 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="game">
-            <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
-
+        <div *ngIf="game" class="scene">
             <div class="creators">
                 <div class="creator" [class.truth]="displayAnswers[displayIndex].truth" *ngFor="let creator of displayAnswers[displayIndex].createdByUser">
                     <img [src]="'/assets/' + creator.picture">
                     <span *ngIf="presenter || displayAnswers[displayIndex].createdByUser.length < 4"> {{ creator.name }} </span>
                 </div>
-                <p *ngIf="!displayAnswers[displayIndex].truth && !displayAnswers[displayIndex].houseLie" class="points-top"> {{ displayAnswers[displayIndex].points | bsPoints }} </p>
+                <p *ngIf="!displayAnswers[displayIndex].truth && !displayAnswers[displayIndex].houseLie && displayAnswers[displayIndex].points" class="points-top"> {{ displayAnswers[displayIndex].points | bsPoints }} </p>
             </div>
 
             <p class="control answer">
@@ -28,12 +26,12 @@
                     <img [src]="'/assets/' + selector.picture">
                     <span *ngIf="presenter || displayAnswers[displayIndex].selectedByUser.length < 4"> {{ selector.name }} </span>
                 </div>
-                <p *ngIf="displayAnswers[displayIndex].truth || displayAnswers[displayIndex].houseLie" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
+                <p *ngIf="(displayAnswers[displayIndex].truth || displayAnswers[displayIndex].houseLie) && displayAnswers[displayIndex].points" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
                     {{ displayAnswers[displayIndex].points | bsPoints }}
                 </p>
             </div>
         </div>
     </div>
 
-    <app-game-footer></app-game-footer>
+    <app-game-footer *ngIf="!presenter"></app-game-footer>
 </section>

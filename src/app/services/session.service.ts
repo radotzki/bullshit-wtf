@@ -5,11 +5,11 @@ import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
 const storageKey = 'BS_SESSION';
+const presenterKey = 'BS_P';
 
 @Injectable()
 export class SessionService implements CanActivate {
-    presenter: boolean;
-    presenterToken: string;
+    private _presenter: string;
     private _user: User;
 
     constructor(
@@ -36,16 +36,33 @@ export class SessionService implements CanActivate {
         }
     }
 
+    get presenter() {
+        return this._presenter ? this._presenter : sessionStorage.getItem(presenterKey);
+    }
+
+    set presenter(token: string) {
+        this._presenter = token;
+
+        if (token) {
+            sessionStorage.setItem(presenterKey, token);
+            Raven.setUserContext({ username: 'presenter' });
+        } else {
+            sessionStorage.removeItem(presenterKey);
+        }
+    }
+
     get token() {
         if (this.presenter) {
-            return this.presenterToken;
-        } else {
+            return this.presenter;
+        } else if (this.user) {
             return this.user.token;
+        } else {
+            return undefined;
         }
     }
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-        if (this.user) {
+        if (this.user || this.presenter) {
             return true;
         } else {
             this.router.navigate(['signin', state.url]);

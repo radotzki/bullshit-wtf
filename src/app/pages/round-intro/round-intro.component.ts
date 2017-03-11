@@ -1,3 +1,4 @@
+import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
@@ -17,6 +18,7 @@ const roundPoints = {
 export class RoundIntroComponent implements OnInit, OnDestroy {
     pin: string;
     number: string;
+    presenter: boolean;
     points;
     skipIntroTimout;
 
@@ -24,11 +26,13 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private gameService: GameService,
         private apiService: ApiService,
+        private sessionService: SessionService,
     ) { }
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.number = this.activatedRoute.snapshot.params['number'];
+        this.presenter = !!this.sessionService.presenter;
         this.points = roundPoints[this.number];
         this.gameService.register(this.pin);
         this.skipIntroTimout = setTimeout(() => this.apiService.tickRoundIntro(this.pin), 5000);

@@ -1,3 +1,4 @@
+import { SessionService } from './../../services/session.service';
 import { Game, QuestionState, Player } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
@@ -15,15 +16,18 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
     pin: string;
     game: Game;
     displayPlayers: Player[];
+    presenter: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private gameService: GameService,
         private apiService: ApiService,
+        private sessionService: SessionService,
     ) { }
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
+        this.presenter = !!this.sessionService.presenter;
         this.gameSubscription = this.gameService.feed(this.pin).first().subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
     }

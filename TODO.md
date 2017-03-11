@@ -1,4 +1,6 @@
-1. presenter
+1. presenter: font size, images size
+1. server: sign in
+1. deploy
 1. sound
 1. speech
 1. stickers

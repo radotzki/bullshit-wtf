@@ -30,7 +30,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.presenter = this.sessionService.presenter;
+        this.presenter = !!this.sessionService.presenter;
         this.gameSubscription = this.gameService.feed(this.pin).first().subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
     }

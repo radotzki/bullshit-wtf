@@ -26,10 +26,7 @@ export class PresentGameComponent {
 
         this.apiService.presenterSignin()
             .then((resp) => {
-                this.sessionService.presenterToken = resp.token;
-                this.sessionService.presenter = true;
-            })
-            .then(() => {
+                this.sessionService.presenter = resp.token;
                 this.gameService.register(this.pin);
                 this.loading = false;
             })

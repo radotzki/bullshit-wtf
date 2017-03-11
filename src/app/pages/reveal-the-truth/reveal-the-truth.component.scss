@@ -1,10 +1,16 @@
 .revael-the-truth {
-    .creators {
-        margin-top: 30px;
+    .scene {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-top: -10%;
     }
 
     .answer {
-        margin: 20px 0;
+        margin: 20px auto;
+        max-width: 650px;
+        width: 100%;
     }
 
     .answer .button {
@@ -37,6 +43,7 @@
 
     .creator.truth img {
         width: 100%;
+        max-width: 350px;
     }
 
     .selector:not(:last-child),

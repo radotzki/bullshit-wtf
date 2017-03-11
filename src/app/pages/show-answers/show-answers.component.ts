@@ -35,7 +35,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
-        this.presenter = this.sessionService.presenter;
+        this.presenter = !!this.sessionService.presenter;
     }
 
     ngOnDestroy() {
@@ -113,7 +113,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         const answersCount = this.presenter ? numOfPlayers + 1 : numOfPlayers;
         const houseAnswers = question.fakeAnswers.filter(this.isHouseAnswer.bind(this));
         let displayAnswers = question.fakeAnswers.filter(answer => {
-            const myAnswer = answer.createdBy.indexOf(this.sessionService.user.id) > -1;
+            const myAnswer = !this.sessionService.presenter && answer.createdBy.indexOf(this.sessionService.user.id) > -1;
             const houseAnswer = this.isHouseAnswer(answer);
             return !myAnswer && !houseAnswer;
         });

@@ -36,7 +36,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
-        this.presenter = this.sessionService.presenter;
+        this.presenter = !!this.sessionService.presenter;
     }
 
     ngOnDestroy() {
