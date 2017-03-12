@@ -15,6 +15,10 @@
                 <span> {{player.name}} </span>
             </div>
         </div>
+
+         <div *ngIf="game && !game.players.length" class="screen-center">
+            Waiting for players..
+        </div>
     </div>
 
     <app-game-footer *ngIf="!presenter"></app-game-footer>

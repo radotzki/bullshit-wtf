@@ -11,8 +11,6 @@ import { MobileLandingComponent } from '../pages/landing/mobile-landing/mobile-l
 import { LandingComponent } from '../pages/landing/landing.component';
 import { JoinGameComponent } from '../pages/join-game/join-game.component';
 import { CreateGameComponent } from '../pages/create-game/create-game.component';
-import { ValidateTokenComponent } from '../pages/validate-token/validate-token.component';
-import { SigninComponent } from '../pages/signin/signin.component';
 import { SessionService } from '../services/session.service';
 
 import { NgModule } from '@angular/core';
@@ -22,11 +20,9 @@ const routes: Routes = [
     { path: '', component: LandingComponent },
     { path: 'm', component: MobileLandingComponent },
     { path: 'd', component: DesktopLandingComponent },
-    { path: 'signin/:redirect', component: SigninComponent },
-    { path: 'validate-token/:redirect/:email/:token', component: ValidateTokenComponent },
     { path: 'present-game', component: PresentGameComponent },
-    { path: 'create-game', component: CreateGameComponent, canActivate: [SessionService] },
-    { path: 'join-game', component: JoinGameComponent, canActivate: [SessionService] },
+    { path: 'create-game', component: CreateGameComponent },
+    { path: 'join-game', component: JoinGameComponent },
     { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService] },
     { path: 'round-intro/:pin/:number', component: RoundIntroComponent, canActivate: [SessionService] },
     { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService] },

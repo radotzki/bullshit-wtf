@@ -14,10 +14,11 @@ export class CreateGameComponent {
     length = 7;
     loading: boolean;
     errorMsg: string;
+    chooseMode: boolean;
+    pin: string;
 
     constructor(
-        private apiService: ApiService,
-        private gameService: GameService,
+        private apiService: ApiService
     ) { }
 
     submit() {
@@ -30,8 +31,9 @@ export class CreateGameComponent {
 
         this.apiService.createGame(categoryNames, this.length)
             .then((resp) => {
-                this.gameService.register(resp.name);
                 this.loading = false;
+                this.chooseMode = true;
+                this.pin = resp.name;
             })
             .catch(err => {
                 this.loading = false;

@@ -11,8 +11,6 @@ import { HttpModule } from '@angular/http';
 
 import { AppRoutingModule } from './app-routing/app-routing.module';
 import { AppComponent } from './app.component';
-import { SigninComponent } from './pages/signin/signin.component';
-import { ValidateTokenComponent } from './pages/validate-token/validate-token.component';
 import { LandingComponent } from './pages/landing/landing.component';
 import { MobileLandingComponent } from './pages/landing/mobile-landing/mobile-landing.component';
 import { DesktopLandingComponent } from './pages/landing/desktop-landing/desktop-landing.component';
@@ -34,8 +32,6 @@ import { BsPointsPipe } from './pipes/bs-points.pipe';
 @NgModule({
     declarations: [
         AppComponent,
-        SigninComponent,
-        ValidateTokenComponent,
         MobileLandingComponent,
         DesktopLandingComponent,
         CreateGameComponent,

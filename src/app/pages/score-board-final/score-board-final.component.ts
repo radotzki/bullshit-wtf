@@ -42,7 +42,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     onGameChanged(resp: Game) {
         this.game = resp;
         this.displayPlayers = [...this.game.players].sort((a, b) => a.score < b.score ? 1 : -1);
-        this.leader = !this.sessionService.presenter && this.game.players[0].id === this.sessionService.user.id;
+        this.leader = !this.sessionService.presenter && this.game.players[0].name === this.sessionService.user.name;
     }
 
     replay() {

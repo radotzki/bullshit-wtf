@@ -1,15 +1,15 @@
 import * as Raven from 'raven-js';
-import { ValidateTokenComponent } from './../pages/validate-token/validate-token.component';
 import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
-const storageKey = 'BS_SESSION';
-const presenterKey = 'BS_P';
+const tokenKey = 'BS_TOKEN';
+const playerKey = 'BS_PLAYER';
+const presenterKey = 'BS_PRESENTER';
 
 @Injectable()
 export class SessionService implements CanActivate {
-    private _presenter: string;
+    private _presenter: boolean;
     private _user: User;
 
     constructor(
@@ -19,8 +19,8 @@ export class SessionService implements CanActivate {
 
     set user(user: User) {
         this._user = user;
-        this.storageService.setItem(storageKey, JSON.stringify(user));
-        Raven.setUserContext({ email: user.email, id: user.id });
+        this.storageService.setItem(playerKey, JSON.stringify(user));
+        Raven.setUserContext({ email: user.name });
     }
 
     get user(): User {
@@ -29,7 +29,7 @@ export class SessionService implements CanActivate {
         }
 
         try {
-            this._user = JSON.parse(this.storageService.getItem(storageKey));
+            this._user = JSON.parse(this.storageService.getItem(playerKey));
             return this._user;
         } catch (e) {
             return undefined;
@@ -37,14 +37,14 @@ export class SessionService implements CanActivate {
     }
 
     get presenter() {
-        return this._presenter ? this._presenter : sessionStorage.getItem(presenterKey);
+        return this._presenter ? this._presenter : JSON.parse(sessionStorage.getItem(presenterKey));
     }
 
-    set presenter(token: string) {
-        this._presenter = token;
+    set presenter(isPresenter: boolean) {
+        this._presenter = isPresenter;
 
-        if (token) {
-            sessionStorage.setItem(presenterKey, token);
+        if (isPresenter) {
+            sessionStorage.setItem(presenterKey, JSON.stringify(isPresenter));
             Raven.setUserContext({ username: 'presenter' });
         } else {
             sessionStorage.removeItem(presenterKey);
@@ -52,28 +52,23 @@ export class SessionService implements CanActivate {
     }
 
     get token() {
-        if (this.presenter) {
-            return this.presenter;
-        } else if (this.user) {
-            return this.user.token;
-        } else {
-            return undefined;
-        }
+        return this.storageService.getItem(tokenKey);
     }
 
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    set token(token: string) {
+        this.storageService.setItem(tokenKey, token);
+    }
+
+    canActivate() {
         if (this.user || this.presenter) {
             return true;
         } else {
-            this.router.navigate(['signin', state.url]);
+            this.router.navigate(['/']);
             return false;
         }
     }
 }
 
 interface User {
-    token: string;
-    id: string;
     name: string;
-    email: string;
 }

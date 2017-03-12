@@ -52,7 +52,7 @@ export class GameService {
     }
 
     unregister(pin: string) {
-        if (pin) {
+        if (pin && this.registeredGames[pin]) {
             this.registeredGames[pin].unsubscribe();
             this.registeredGames[pin] = undefined;
         }

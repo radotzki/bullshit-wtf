@@ -14,20 +14,8 @@ export class ApiService {
         private authHttp: AuthHttp,
     ) { }
 
-    signin(email: string, redirect: string) {
-        return this.unauthPost(`get-token`, { email, redirect });
-    }
-
-    register(email: string, name: string) {
-        return this.unauthPost(`register`, { email, name });
-    }
-
-    validateToken(email: string, token: string): Promise<{ token: string, id: string, name: string }> {
-        return this.unauthPost(`validate-token`, { email, token });
-    }
-
-    join(gamePin: string) {
-        return this.post(`api/games/${gamePin}/join`, {});
+    join(pin: string, nickname: string): Promise<{ pin: string, token: string }> {
+        return this.unauthPost(`api/games-join`, { nickname, pin });
     }
 
     presenterSignin(): Promise<{ token: string }> {
@@ -35,7 +23,7 @@ export class ApiService {
     }
 
     createGame(categories: string[], numberOfQuestions: number, answerQuestionTime = 45, selectAnswerTime = 45): Promise<{ name: string }> {
-        return this.post(`api/games/`, { categories, numberOfQuestions, answerQuestionTime, selectAnswerTime });
+        return this.unauthPost(`api/games-create`, { categories, numberOfQuestions, answerQuestionTime, selectAnswerTime });
     }
 
     getGame(pin: string) {
@@ -51,7 +39,7 @@ export class ApiService {
     }
 
     tick(pin: string, currentState: QuestionState) {
-        return this.post(`api/games/${pin}/tick/${currentState}`, { });
+        return this.post(`api/games/${pin}/tick/${currentState}`, {});
     }
 
     answer(pin: string, answer: string) {

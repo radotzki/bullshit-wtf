@@ -7,6 +7,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import 'rxjs/add/operator/first';
 
+const housePicture = 'homegrown-bullshit.png';
+
 @Component({
     selector: 'app-reveal-the-truth',
     templateUrl: './reveal-the-truth.component.html',
@@ -70,24 +72,24 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         const displayArray: Answer[] = [...relevantFakeAnswers].sort((a, b) => a.selectedBy.length < b.selectedBy.length ? -1 : 1);
 
         displayArray.map(answer => {
-            answer.selectedByUser = answer.selectedBy.map(playerId => this.getPlayerData(players, playerId));
-            answer.createdByUser = answer.createdBy.map(playerId => this.getPlayerData(players, playerId));
-            answer.houseLie = answer.createdByUser[0].id === 'house';
+            answer.selectedByUser = answer.selectedBy.map(playerName => this.getPlayerData(players, playerName));
+            answer.createdByUser = answer.createdBy.map(playerName => this.getPlayerData(players, playerName));
+            answer.houseLie = answer.createdByUser[0].picture === housePicture;
             return answer;
         });
 
         displayArray.push(Object.assign({}, realAnswer, {
             truth: true,
-            selectedByUser: realAnswer.selectedBy.map(playerId => this.getPlayerData(players, playerId)),
+            selectedByUser: realAnswer.selectedBy.map(playerName => this.getPlayerData(players, playerName)),
             createdByUser: [{ name: '', picture: 'the-truth.png' }],
         }));
 
         return displayArray;
     }
 
-    getPlayerData(players: Player[], playerId: string) {
-        const houseObj = { id: 'house', name: 'Homegrown Bullshit', picture: 'homegrown-bullshit.png' };
-        return players.find(player => player.id === playerId) || houseObj;
+    getPlayerData(players: Player[], playerName: string) {
+        const houseObj = { name: 'Homegrown Bullshit', picture: housePicture };
+        return players.find(player => player.name === playerName) || houseObj;
     }
 
 }
@@ -97,25 +99,21 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 //     "name": "aanv",
 //     "players": [
 //         {
-//             "id": "23123e3e-7c43-49bb-a870-b84773bb4c59",
 //             "name": "Inon Rotem",
 //             "picture": "avatar0.png",
 //             "score": 2700
 //         },
 //         {
-//             "id": "69ad630f-aece-4332-9eab-6ffd128db3cd",
 //             "name": "Yonatan Nis",
 //             "picture": "avatar1.png",
 //             "score": 400
 //         },
 //         {
-//             "id": "4ad45377-7688-4bc2-8ae4-7c5d48b33532",
 //             "name": "Sharon Adler",
 //             "picture": "avatar2.png",
 //             "score": 800
 //         },
 //         {
-//             "id": "bbf69126-a235-46bd-85e3-dff03112aba4",
 //             "name": "May Mazuz",
 //             "picture": "avatar3.png",
 //             "score": 3200
@@ -131,18 +129,18 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 //                 ],
 //                 "points": -800,
 //                 "selectedBy": [
-//                     "4ad45377-7688-4bc2-8ae4-7c5d48b33532",
-//                     "69ad630f-aece-4332-9eab-6ffd128db3cd"
+//                     "Sharon Adler",
+//                     "Yonatan Nis"
 //                 ],
 //                 "text": "אני רעב"
 //             },
 //             {
 //                 "createdBy": [
-//                     "69ad630f-aece-4332-9eab-6ffd128db3cd"
+//                     "Yonatan Nis"
 //                 ],
 //                 "points": 800,
 //                 "selectedBy": [
-//                     "23123e3e-7c43-49bb-a870-b84773bb4c59"
+//                     "Inon Rotem"
 //                 ],
 //                 "text": "מי צריך נעליים?"
 //             },
@@ -172,7 +170,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 //             ],
 //             "points": 1000,
 //             "selectedBy": [
-//                 "bbf69126-a235-46bd-85e3-dff03112aba4"
+//                 "May Mazuz"
 //             ],
 //             "text": "לא רוצה את אלה. תביאו לי נעליים גדולות."
 //         },

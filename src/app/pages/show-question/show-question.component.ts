@@ -55,7 +55,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
             this.initElapsedTime();
         }
 
-        this.questionSubmitted = !this.presenter && this.checkQuestionSubmitted(this.game, this.sessionService.user.id);
+        this.questionSubmitted = !this.presenter && this.checkQuestionSubmitted(this.game, this.sessionService.user.name);
     }
 
     submit() {
@@ -79,8 +79,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
             });
     }
 
-    checkQuestionSubmitted(game: Game, uid: string) {
-        return game.currentQuestion.fakeAnswers.some(fakeAnswer => fakeAnswer.createdBy.indexOf(uid) > -1);
+    checkQuestionSubmitted(game: Game, username: string) {
+        return game.currentQuestion.fakeAnswers.some(fakeAnswer => fakeAnswer.createdBy.indexOf(username) > -1);
     }
 
     tick() {

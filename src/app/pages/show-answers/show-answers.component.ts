@@ -59,7 +59,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             this.displayAnswers = this.getDisplayAnswers(this.game.currentQuestion, this.game.players.length);
         }
 
-        this.answerSelected = !this.presenter && this.checkAnswerSelected(this.game, this.sessionService.user.id);
+        this.answerSelected = !this.presenter && this.checkAnswerSelected(this.game, this.sessionService.user.name);
     }
 
     submit(answer: string) {
@@ -78,9 +78,9 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             });
     }
 
-    checkAnswerSelected(game: Game, uid: string) {
+    checkAnswerSelected(game: Game, nickname: string) {
         const allAnswers = [...game.currentQuestion.fakeAnswers, game.currentQuestion.realAnswer];
-        return !!allAnswers.find(answer => answer.selectedBy.indexOf(uid) > -1);
+        return !!allAnswers.find(answer => answer.selectedBy.indexOf(nickname) > -1);
     }
 
     tick() {
@@ -114,7 +114,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         const answersCount = this.presenter ? numOfPlayers + 1 : numOfPlayers;
         const houseAnswers = question.fakeAnswers.filter(this.isHouseAnswer.bind(this));
         let displayAnswers = question.fakeAnswers.filter(answer => {
-            const myAnswer = !this.sessionService.presenter && answer.createdBy.indexOf(this.sessionService.user.id) > -1;
+            const myAnswer = !this.sessionService.presenter && answer.createdBy.indexOf(this.sessionService.user.name) > -1;
             const houseAnswer = this.isHouseAnswer(answer);
             return !myAnswer && !houseAnswer;
         });

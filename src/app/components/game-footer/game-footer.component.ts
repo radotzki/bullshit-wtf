@@ -12,7 +12,6 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class GameFooterComponent implements OnInit, OnDestroy {
     name: string;
-    uid: string;
     score: number;
     gameSubscription: Subscription;
 
@@ -25,7 +24,6 @@ export class GameFooterComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const pin = this.activatedRoute.snapshot.params['pin'];
         this.name = this.sessionService.user.name;
-        this.uid = this.sessionService.user.id;
         this.gameSubscription = this.gameService.feed(pin).subscribe(this.onGameChange.bind(this));
     }
 
@@ -34,6 +32,6 @@ export class GameFooterComponent implements OnInit, OnDestroy {
     }
 
     onGameChange(game: Game) {
-        // this.score = game.players.find(p => p.id === this.uid).score;
+        // this.score = game.players.find(p => p.name === this.name).score;
     }
 }
