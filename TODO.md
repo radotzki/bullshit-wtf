@@ -1,5 +1,4 @@
 1. input size (text cut off - android)
-1. presenter: font size, images size, game-staging text
 1. points is too small
 1. present-game
 1. sound

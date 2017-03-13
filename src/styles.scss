@@ -21,39 +21,8 @@ $family-primary: "Luckiest Guy", "Suez One", -apple-system, BlinkMacSystemFont, 
 @import "~bulma/sass/elements/box.sass";
 @import "~bulma/sass/elements/other.sass";
 
-.button.is-fullwidth {
-    display: block;
-}
-
-.button {
-    line-height: 2.285em;
-}
-
-.progress {
-    border-radius: 0;
-    position: absolute;
-}
-
-.notification.is-danger {
-    margin: 10px 0;
-}
-
-@import "arcade-form";
-
-.game-main {
-    height: calc(100vh - 100px);
-    overflow: hidden;
-    padding: 20px;
-}
-
-.screen-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.rtl {
-    direction: rtl;
-    font-family: 'Suez One';
-}
+@import "styles/bulma-override";
+@import "styles/rtl";
+@import "styles/font-size";
+@import "styles/arcade-form";
+@import "styles/game";

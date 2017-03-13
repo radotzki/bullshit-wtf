@@ -1,11 +1,13 @@
 .arcade-form {
-    height: 100vh;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
     width: 100vw;
     background-image: url(http://res.cloudinary.com/bullshit-wtf/image/upload/v1489348425/arcade_aaz9gs.jpg);
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
-    overflow: hidden;
 
     .title-area {
         padding: 0 15px;

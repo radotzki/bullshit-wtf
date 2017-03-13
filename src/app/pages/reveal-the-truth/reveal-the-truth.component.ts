@@ -81,7 +81,6 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         displayArray.push(Object.assign({}, realAnswer, {
             truth: true,
             selectedByUser: realAnswer.selectedBy.map(playerName => this.getPlayerData(players, playerName)),
-            createdByUser: [{ name: '', picture: 'the-truth.png' }],
         }));
 
         return displayArray;

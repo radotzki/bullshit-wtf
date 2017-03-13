@@ -8,9 +8,12 @@
 
         <div *ngIf="game" class="scene">
             <div class="creators">
-                <div class="creator" [class.truth]="displayAnswers[displayIndex].truth" *ngFor="let creator of displayAnswers[displayIndex].createdByUser">
+                <div class="creator" *ngFor="let creator of displayAnswers[displayIndex].createdByUser">
                     <img [src]="'/assets/' + creator.picture">
                     <span *ngIf="presenter || displayAnswers[displayIndex].createdByUser.length < 4"> {{ creator.name }} </span>
+                </div>
+                <div class="the-truth" *ngIf="displayAnswers[displayIndex].truth">
+                    <span> THE TRUTH </span>
                 </div>
                 <p *ngIf="!displayAnswers[displayIndex].truth && !displayAnswers[displayIndex].houseLie && displayAnswers[displayIndex].points" class="points-top"> {{ displayAnswers[displayIndex].points | bsPoints }} </p>
             </div>

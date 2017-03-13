@@ -9,6 +9,8 @@
             <div class="loader"> </div>
         </div>
 
+        <div class="spacer is-hidden-mobile"> </div>
+
         <div *ngIf="game" class="columns is-mobile is-multiline">
             <div *ngFor="let player of game.players" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
                 <img [src]="'/assets/' + player.picture" class="picture">
@@ -16,7 +18,7 @@
             </div>
         </div>
 
-         <div *ngIf="game && !game.players.length" class="screen-center">
+         <div *ngIf="game && !game.players.length" class="screen-center waiting-for-players">
             Waiting for players..
         </div>
     </div>

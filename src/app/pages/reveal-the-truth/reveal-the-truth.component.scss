@@ -4,7 +4,6 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        margin-top: -10%;
     }
 
     .answer {
@@ -24,7 +23,7 @@
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        height: 70px;
+        height: calc(3rem + 1rem + 1rem);
     }
 
     .selector,
@@ -37,13 +36,8 @@
 
     .selector img,
     .creator img {
-        height: 40px;
-        width: 40px;
-    }
-
-    .creator.truth img {
-        width: 100%;
-        max-width: 350px;
+        height: 3rem;
+        width: 3rem;
     }
 
     .selector:not(:last-child),
@@ -51,19 +45,30 @@
         margin-right: 15px;
     }
 
+    .points-bottom,
     .points-top {
         position: absolute;
-        top: -20px;
         color: hsl(141, 71%, 48%);
+        font-size: 1.5rem;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: 4rem;
+    }
+
+    .points-top {
+        top: -2.5rem;
     }
 
     .points-bottom {
-        position: absolute;
-        bottom: -35px;
-        color: hsl(141, 71%, 48%);
+        bottom: -2.5rem;
     }
 
     .points-bottom.negative {
         color: hsl(348, 100%, 61%);
+    }
+
+    .the-truth {
+        font-size: 2rem;
     }
 }

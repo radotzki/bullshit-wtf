@@ -7,7 +7,7 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="game && presenter">
+        <div *ngIf="game && presenter" class="presenter">
             <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
 
             <div class="columns is-multiline">
@@ -30,7 +30,7 @@
                 <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">WHAT WAS THE QUESTION AGAIN?</button>
             </p>
 
-            <p *ngIf="showQuestion" class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+            <p *ngIf="showQuestion" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
         </div>
 
         <div *ngIf="answerSelected" class="screen-center">

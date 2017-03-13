@@ -1,0 +1,12 @@
+.game-main {
+    height: calc(100vh - 100px);
+    overflow: hidden;
+    padding: 20px;
+}
+
+.screen-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}

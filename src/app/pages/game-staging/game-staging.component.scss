@@ -1,4 +1,8 @@
 .game-staging {
+    .spacer {
+        margin-top: 50px;
+    }
+
     .player {
         height: calc((100vh - 100px - 40px - 60px) / 4);
         display: flex;
@@ -10,5 +14,9 @@
 
     .picture {
         height: 100%;
+    }
+
+    .waiting-for-players {
+        font-size: 2rem;
     }
 }

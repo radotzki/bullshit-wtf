@@ -14,6 +14,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     pin: string;
     text: string;
     gameOver: boolean;
+    registration: boolean;
     gameSubscription: Subscription;
     loading: boolean;
     presenter: boolean;
@@ -49,6 +50,8 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
             this.text = `${game.currentQuestion.questionNumber + 1} OF ${game.numberOfQuestions}`;
         } else if (game.state === GameState.GameOver) {
             this.gameOver = true;
+        } else if (game.state === GameState.Registration && this.presenter) {
+            this.registration = true;
         }
 
         this.loading = false;
