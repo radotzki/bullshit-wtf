@@ -37,7 +37,7 @@ export class JoinGameComponent implements OnDestroy, OnInit {
 
         this.apiService.join(this.pin, this.nickname)
             .then(resp => {
-                this.sessionService.user = { name: this.nickname };
+                this.sessionService.user = { name: this.nickname.toLowerCase() };
                 this.sessionService.token = resp.token;
                 this.gameService.register(resp.pin);
                 this.loading = false;
