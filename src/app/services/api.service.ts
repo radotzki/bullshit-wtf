@@ -17,8 +17,8 @@ export class ApiService {
         private sessionService: SessionService,
     ) { }
 
-    createGame(categories: string[], numberOfQuestions: number): Promise<{ pin: string }> {
-        return this.unauthPost(`api/games-create`, { categories, numberOfQuestions });
+    createGame(lang: string, count: number): Promise<{ pin: string }> {
+        return this.cloudPost(`newGame`, { lang, count });
     }
 
     join(pin: string, nickname: string) {

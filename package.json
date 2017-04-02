@@ -7,7 +7,8 @@
     "start": "ng serve --host 0.0.0.0",
     "build": "ng build -prod",
     "lint": "ng lint",
-    "deploy": "npm run lint && npm run build && cp dist/index.html dist/200.html && surge dist bullshit.wtf"
+    "deploy": "npm run lint && npm run build && cp dist/index.html dist/200.html && surge dist bullshit.wtf",
+    "deploy:functions": "cd functions && npm run compile && cd .. && firebase deploy --only functions"
   },
   "private": true,
   "dependencies": {

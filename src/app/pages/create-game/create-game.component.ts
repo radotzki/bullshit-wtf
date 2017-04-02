@@ -1,7 +1,6 @@
 import { GameService } from './../../services/game.service';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
-import { categories } from './categories';
 import { Component } from '@angular/core';
 
 @Component({
@@ -25,11 +24,7 @@ export class CreateGameComponent {
         this.loading = true;
         this.errorMsg = '';
 
-        const categoryNames = categories
-            .filter(category => category.lang === this.language)
-            .map(category => category.name);
-
-        this.apiService.createGame(categoryNames, this.length)
+        this.apiService.createGame(this.language, this.length)
             .then((resp) => {
                 this.loading = false;
                 this.chooseMode = true;

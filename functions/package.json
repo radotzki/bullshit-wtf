@@ -1,10 +1,17 @@
 {
   "name": "functions",
   "description": "Cloud Functions for Firebase",
+  "main": "dist/index.js",
+  "scripts": {
+      "compile": "tsc"
+  },
   "dependencies": {
     "cors": "^2.8.1",
     "firebase-admin": "^4.1.2",
     "firebase-functions": "^0.5"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "typescript": "^2.2.2"
+  }
 }
