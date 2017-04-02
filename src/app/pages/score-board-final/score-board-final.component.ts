@@ -1,6 +1,6 @@
 import { SessionService } from './../../services/session.service';
 import * as Raven from 'raven-js';
-import { Game, QuestionState, Player } from './../../models';
+import { Game, Player } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
@@ -30,7 +30,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.gameSubscription = this.gameService.feed(this.pin).first().subscribe(this.onGameChanged.bind(this));
+        this.gameSubscription = this.apiService.game(this.pin).first().subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
     }
 

@@ -20,7 +20,6 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
     number: string;
     presenter: boolean;
     points;
-    skipIntroTimout;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -35,14 +34,10 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.points = roundPoints[this.number];
         this.gameService.register(this.pin);
-        this.skipIntroTimout = setTimeout(() => this.apiService.tickRoundIntro(this.pin), 5000);
     }
 
     ngOnDestroy() {
         this.gameService.unregister(this.pin);
-        if (this.skipIntroTimout) {
-            clearTimeout(this.skipIntroTimout);
-        }
     }
 
 }

@@ -12,9 +12,7 @@
                 <input class="input is-medium pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin">
             </p>
 
-            <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
-
-            <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">PRESENT</button>
+            <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin">PRESENT</button>
         </div>
     </form>
 </div>

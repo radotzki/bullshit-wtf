@@ -1,5 +1,5 @@
 import { SessionService } from './../../services/session.service';
-import { Game, QuestionState, Player } from './../../models';
+import { Game, Player } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
@@ -28,7 +28,7 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.gameSubscription = this.gameService.feed(this.pin).first().subscribe(this.onGameChanged.bind(this));
+        this.gameSubscription = this.apiService.game(this.pin).first().subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
     }
 
@@ -45,7 +45,7 @@ export class ScoreBoardComponent implements OnInit, OnDestroy {
     }
 
     tick() {
-        this.apiService.tick(this.pin, QuestionState.ScoreBoard);
+        // this.apiService.tick(this.pin, QuestionState.ScoreBoard);
     }
 
 }

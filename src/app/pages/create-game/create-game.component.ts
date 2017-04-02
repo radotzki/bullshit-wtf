@@ -33,7 +33,7 @@ export class CreateGameComponent {
             .then((resp) => {
                 this.loading = false;
                 this.chooseMode = true;
-                this.pin = resp.name;
+                this.pin = resp.pin;
             })
             .catch(err => {
                 this.loading = false;

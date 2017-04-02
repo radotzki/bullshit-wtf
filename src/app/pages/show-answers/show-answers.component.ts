@@ -4,7 +4,7 @@ import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Game, QuestionState, Question, Answer } from './../../models';
+import { Game, Question, Answer } from './../../models';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
 @Component({
@@ -34,7 +34,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChanged.bind(this));
+        this.gameSubscription = this.apiService.game(this.pin).subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
     }
@@ -56,7 +56,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         }
 
         if (!this.displayAnswers) {
-            this.displayAnswers = this.getDisplayAnswers(this.game.currentQuestion, this.game.players.length);
+            // this.displayAnswers = this.getDisplayAnswers(this.game.currentQuestion, this.game.players.length);
         }
 
         this.answerSelected = !this.presenter && this.checkAnswerSelected(this.game, this.sessionService.user.name);
@@ -84,25 +84,25 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     }
 
     tick() {
-        this.apiService.tick(this.pin, QuestionState.ShowAnswers);
+        // this.apiService.tick(this.pin, QuestionState.ShowAnswers);
     }
 
     initElapsedTime() {
-        this.elapsedTime = this.calcElapsedTime(this.game);
-        this.elapsedTimeInterval = setInterval(() => {
-            if (this.elapsedTime >= this.game.selectAnswerTime) {
-                this.tick();
-            } else {
-                this.elapsedTime += 1;
-            }
-        }, 1000);
+        // this.elapsedTime = this.calcElapsedTime(this.game);
+        // this.elapsedTimeInterval = setInterval(() => {
+        //     if (this.elapsedTime >= this.game.selectAnswerTime) {
+        //         this.tick();
+        //     } else {
+        //         this.elapsedTime += 1;
+        //     }
+        // }, 1000);
     }
 
-    calcElapsedTime(game: Game) {
-        const currentTime = game.currentTime;
-        const startedAt = game.currentQuestion.startedAt;
-        return Math.round(this.timeDiff(currentTime, startedAt) / 1000);
-    }
+    // calcElapsedTime(game: Game) {
+    //     const currentTime = game.currentTime;
+    //     const startedAt = game.currentQuestion.startedAt;
+    //     return Math.round(this.timeDiff(currentTime, startedAt) / 1000);
+    // }
 
     timeDiff(from, to): number {
         const toTime = new Date(to);
@@ -111,25 +111,26 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     }
 
     getDisplayAnswers(question: Question, numOfPlayers: number) {
-        const answersCount = this.presenter ? numOfPlayers + 1 : numOfPlayers;
-        const houseAnswers = question.fakeAnswers.filter(this.isHouseAnswer.bind(this));
-        let displayAnswers = question.fakeAnswers.filter(answer => {
-            const myAnswer = !this.sessionService.presenter && answer.createdBy.indexOf(this.sessionService.user.name) > -1;
-            const houseAnswer = this.isHouseAnswer(answer);
-            return !myAnswer && !houseAnswer;
-        });
-        const missingAnswersCount = answersCount - 1 - displayAnswers.length;
-        const houseAnswersToAdd = houseAnswers.splice(0, missingAnswersCount);
+        // const answersCount = this.presenter ? numOfPlayers + 1 : numOfPlayers;
+        // const houseAnswers = question.fakeAnswers.filter(this.isHouseAnswer.bind(this));
+        // let displayAnswers = question.fakeAnswers.filter(answer => {
+        //     const myAnswer = !this.sessionService.presenter && answer.createdBy.indexOf(this.sessionService.user.name) > -1;
+        //     const houseAnswer = this.isHouseAnswer(answer);
+        //     return !myAnswer && !houseAnswer;
+        // });
+        // const missingAnswersCount = answersCount - 1 - displayAnswers.length;
+        // const houseAnswersToAdd = houseAnswers.splice(0, missingAnswersCount);
 
-        displayAnswers = [...displayAnswers, ...houseAnswersToAdd];
-        displayAnswers.push(question.realAnswer);
+        // displayAnswers = [...displayAnswers, ...houseAnswersToAdd];
+        // displayAnswers.push(question.realAnswer);
 
-        displayAnswers = [...displayAnswers].sort((a, b) => a.text < b.text ? -1 : 1);
-        return displayAnswers;
+        // displayAnswers = [...displayAnswers].sort((a, b) => a.text < b.text ? -1 : 1);
+        // return displayAnswers;
     }
 
     isHouseAnswer(answer: Answer) {
-        return answer.createdBy.length === 1 && answer.createdBy[0] === 'house';
+        return false;
+        // return answer.createdBy.length === 1 && answer.createdBy[0] === 'house';
     }
 
 }

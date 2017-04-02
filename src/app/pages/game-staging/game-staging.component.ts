@@ -14,8 +14,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
     styleUrls: ['./game-staging.component.scss']
 })
 export class GameStagingComponent implements OnInit, OnDestroy {
-    gameSubscription: Subscription;
-    game: Game;
+    playersSubscription: Subscription;
+    players: { name: string }[];
     pin: string;
     presenter: boolean;
     loading: boolean;
@@ -32,18 +32,18 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChanged.bind(this));
+        this.playersSubscription = this.apiService.getPlayers(this.pin).subscribe(this.onPlayersChanged.bind(this));
         this.gameService.register(this.pin);
     }
 
     ngOnDestroy() {
         this.gameService.unregister(this.pin);
-        this.gameSubscription.unsubscribe();
+        this.playersSubscription.unsubscribe();
     }
 
-    onGameChanged(resp: Game) {
-        this.game = resp;
-        this.leader = !this.sessionService.presenter && this.game.players[0].name === this.sessionService.user.name;
+    onPlayersChanged(resp) {
+        this.players = resp;
+        this.leader = !this.sessionService.presenter && this.players[0].name === this.sessionService.user.name;
     }
 
     startGame() {
@@ -58,14 +58,3 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             });
     }
 }
-
-// const playersForTest = [
-//         { "name": "John Doh1", "picture": "http://localhost:3333/images/avatar0.png" },
-//         { "name": "John Doh2", "picture": "http://localhost:3333/images/avatar1.png" },
-//         { "name": "John Doh3", "picture": "http://localhost:3333/images/avatar2.png" },
-//         { "name": "John Doh4", "picture": "http://localhost:3333/images/avatar3.png" },
-//         { "name": "John Doh5", "picture": "http://localhost:3333/images/avatar4.png" },
-//         { "name": "John Doh6", "picture": "http://localhost:3333/images/avatar5.png" },
-//         { "name": "John Doh7", "picture": "http://localhost:3333/images/avatar6.png" },
-//         { "name": "John Doh8", "picture": "http://localhost:3333/images/avatar7.png" },
-//     ];

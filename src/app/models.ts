@@ -1,26 +1,22 @@
 export interface Game {
-    answerQuestionTime: number;
-    categories: string[];
-    createdAt?: Date;
-    currentTime?: Date;
-    name?: string;
-    numberOfQuestions: number;
-    players?: Player[];
-    questions?: {[key: number]: Question};
-    currentQuestion?: Question;
-    selectAnswerTime: number;
-    state?: GameState;
+    // players: number;
+    players: any;
+    currentQ: number;
+    totalQ: number;
+    pin: string;
+    state: GameState;
+
+    currentQuestion: any;
 }
 
 export enum GameState {
-    Registration,
-    RoundOneIntro,
-    RoundOneProgress,
-    RoundTwoIntro,
-    RoundTwoProgress,
-    RoundThreeIntro,
-    RoundThreeProgress,
-    GameOver,
+    GameStaging = 0,
+    RoundIntro = 1,
+    ShowQuestion = 2,
+    ShowAnswers = 3,
+    RevealTheTruth = 4,
+    ScoreBoard = 5,
+    ScoreBoardFinal = 6,
 }
 
 export interface Player {
@@ -29,34 +25,34 @@ export interface Player {
     score?: number;
 }
 
-export interface Question {
-    citation: string;
-    fakeAnswers: Answer[];
+export class Question {
+    rtl: boolean;
+
+    constructor(
+        public citation: string,
+        public text: string,
+        public locale: string,
+    ) {
+        this.rtl = locale === 'he-IL';
+    }
+
+}
+
+export class Answer {
     id: string;
-    questionText: string;
-    realAnswer: Answer;
-    startedAt: number;
-    state: QuestionState;
-    lang: string;
-    questionNumber?: number;
-    rtl?: boolean;
-}
-
-export interface Answer {
-    createdBy: string[];
-    points: number;
     text: string;
-    selectedBy: string[];
-    selectedByUser: Player[];
-    createdByUser: Player[];
-    houseLie?: boolean;
+    creators: string[];
+    selectors: string[];
+    houseLie: boolean;
+    realAnswer: boolean;
+
+    constructor(id, answer) {
+        this.id = id;
+        this.text = answer.text;
+        this.creators = Object.keys(answer.creators || {});
+        this.selectors = Object.keys(answer.selectors || {});
+        this.houseLie = !!answer.houseLie;
+        this.realAnswer = !!answer.realAnswer;
+    }
 }
 
-export enum QuestionState {
-    Pending,
-    ShowQuestion,
-    ShowAnswers,
-    RevealTheTruth,
-    ScoreBoard,
-    End,
-}

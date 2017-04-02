@@ -1,6 +1,6 @@
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
-import { Game, QuestionState, Answer, Player } from './../../models';
+import { Game, Answer, Player } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
@@ -33,7 +33,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.gameSubscription = this.gameService.feed(this.pin).first().subscribe(this.onGameChanged.bind(this));
+        this.gameSubscription = this.apiService.game(this.pin).first().subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
     }
 
@@ -64,26 +64,27 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     }
 
     tick() {
-        this.apiService.tick(this.pin, QuestionState.RevealTheTruth);
+        // this.apiService.tick(this.pin, QuestionState.RevealTheTruth);
     }
 
     createDisplayArray(players: Player[], fakeAnswers: Answer[], realAnswer: Answer) {
-        const relevantFakeAnswers = fakeAnswers.filter(fakeAnswer => fakeAnswer.selectedBy.length > 0);
-        const displayArray: Answer[] = [...relevantFakeAnswers].sort((a, b) => a.selectedBy.length < b.selectedBy.length ? -1 : 1);
+        // const relevantFakeAnswers = fakeAnswers.filter(fakeAnswer => fakeAnswer.selectedBy.length > 0);
+        // const displayArray: Answer[] = [...relevantFakeAnswers].sort((a, b) => a.selectedBy.length < b.selectedBy.length ? -1 : 1);
 
-        displayArray.map(answer => {
-            answer.selectedByUser = answer.selectedBy.map(playerName => this.getPlayerData(players, playerName));
-            answer.createdByUser = answer.createdBy.map(playerName => this.getPlayerData(players, playerName));
-            answer.houseLie = answer.createdByUser[0].picture === housePicture;
-            return answer;
-        });
+        // displayArray.map(answer => {
+        //     answer.selectedByUser = answer.selectedBy.map(playerName => this.getPlayerData(players, playerName));
+        //     answer.createdByUser = answer.createdBy.map(playerName => this.getPlayerData(players, playerName));
+        //     answer.houseLie = answer.createdByUser[0].picture === housePicture;
+        //     return answer;
+        // });
 
-        displayArray.push(Object.assign({}, realAnswer, {
-            truth: true,
-            selectedByUser: realAnswer.selectedBy.map(playerName => this.getPlayerData(players, playerName)),
-        }));
+        // displayArray.push(Object.assign({}, realAnswer, {
+        //     truth: true,
+        //     selectedByUser: realAnswer.selectedBy.map(playerName => this.getPlayerData(players, playerName)),
+        // }));
 
-        return displayArray;
+        // return displayArray;
+        return [];
     }
 
     getPlayerData(players: Player[], playerName: string) {

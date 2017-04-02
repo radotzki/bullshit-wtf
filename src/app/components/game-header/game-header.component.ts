@@ -1,6 +1,6 @@
+import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { Game, GameState } from './../../models';
-import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
@@ -24,15 +24,15 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private gameService: GameService,
         private sessionService: SessionService,
+        private apiService: ApiService,
     ) { }
 
     ngOnInit() {
         this.loading = true;
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.gameSubscription = this.gameService.feed(this.pin).subscribe(this.onGameChange.bind(this));
+        this.gameSubscription = this.apiService.game(this.pin).subscribe(this.onGameChange.bind(this));
     }
 
     ngOnDestroy() {
@@ -40,27 +40,22 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     }
 
     onGameChange(game: Game) {
-        if (game.state === GameState.RoundOneIntro) {
-            this.text = 'ROUND 1';
-        } else if (game.state === GameState.RoundTwoIntro) {
-            this.text = 'ROUND 2';
-        } else if (game.state === GameState.RoundThreeIntro) {
-            this.text = 'ROUND 3';
-        } else if (this.roundInProgress(game.state)) {
-            this.text = `${game.currentQuestion.questionNumber + 1} OF ${game.numberOfQuestions}`;
-        } else if (game.state === GameState.GameOver) {
-            this.gameOver = true;
-        } else if (game.state === GameState.Registration && this.presenter) {
+        if (game.state === GameState.RoundIntro) {
+            if (game.currentQ === 0) {
+                this.text = 'ROUND 1';
+            } else if (game.currentQ !== game.totalQ) {
+                this.text = 'ROUND 2';
+            } else {
+                this.text = 'ROUND 3';
+            }
+        } else if (game.state === GameState.GameStaging && this.presenter) {
             this.registration = true;
+        } else if (game.state === GameState.ScoreBoardFinal) {
+            this.gameOver = true;
+        } else if ([GameState.ShowQuestion, GameState.ShowAnswers, GameState.RevealTheTruth].includes(game.state)) {
+            this.text = `${game.currentQ + 1} OF ${game.totalQ}`;
         }
 
         this.loading = false;
     }
-
-    roundInProgress(state: GameState) {
-        return state === GameState.RoundOneProgress ||
-            state === GameState.RoundTwoProgress ||
-            state === GameState.RoundThreeProgress;
-    }
-
 }

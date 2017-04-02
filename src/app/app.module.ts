@@ -1,6 +1,6 @@
+import { FirebaseModule } from './firebase/firebase.module';
 import { GameService } from './services/game.service';
 import { SentryModule } from './sentry/sentry.module';
-import { AuthHttpModule } from './auth-http/auth-http.module';
 import { ApiService } from './services/api.service';
 import { StorageService } from './services/storage.service';
 import { SessionService } from './services/session.service';
@@ -55,8 +55,8 @@ import { BsPointsPipe } from './pipes/bs-points.pipe';
         FormsModule,
         HttpModule,
         AppRoutingModule,
-        AuthHttpModule,
         SentryModule,
+        FirebaseModule,
     ],
     providers: [
         SessionService,

@@ -12,8 +12,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 })
 export class PresentGameComponent implements OnDestroy, OnInit {
     pin: string;
-    loading: boolean;
-    errorMsg: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -35,21 +33,8 @@ export class PresentGameComponent implements OnDestroy, OnInit {
     }
 
     submit() {
-        this.loading = true;
-        this.errorMsg = '';
-
-        this.apiService.presenterSignin()
-            .then((resp) => {
-                this.sessionService.presenter = true;
-                this.sessionService.token = resp.token;
-                this.gameService.register(this.pin);
-                this.loading = false;
-            })
-            .catch((err) => {
-                this.loading = false;
-                Raven.captureException(new Error(JSON.stringify(err)));
-                this.errorMsg = 'oops, something went wrong. Please try again';
-            });
+        this.sessionService.presenter = true;
+        this.gameService.register(this.pin);
     }
 
 }
