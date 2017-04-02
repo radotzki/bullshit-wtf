@@ -1,3 +1,4 @@
+import { GameScheme } from './../../../game-model';
 import { environment } from './../../environments/environment';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
@@ -21,7 +22,7 @@ export class GameService {
 
     register(pin: string) {
         if (!this.registeredGames[pin]) {
-            this.registeredGames[pin] = this.apiService.game(pin).subscribe(this.handleGameState.bind(this));
+            this.registeredGames[pin] = this.apiService.game(pin).subscribe((game) => this.handleGameState(pin, game));
         }
     }
 
@@ -32,31 +33,31 @@ export class GameService {
         }
     }
 
-    private handleGameState(game: Game) {
-        if (game.state === GameState.GameStaging) {
-            this.router.navigate(['game-staging', game.pin]);
-        } else if (game.state === GameState.RoundIntro) {
+    private handleGameState(pin: string, game: GameScheme) {
+        if (game.state.id === GameState.GameStaging) {
+            this.router.navigate(['game-staging', pin]);
+        } else if (game.state.id === GameState.RoundIntro) {
             let round;
 
-            if (game.currentQ === 0) {
+            if (game.roundIndex === 0) {
                 round = 'one';
-            } else if (game.currentQ !== game.totalQ) {
+            } else if (game.roundIndex === 1) {
                 round = 'two';
             } else {
                 round = 'three';
             }
 
-            this.router.navigate(['round-intro', game.pin, round]);
-        } else if (game.state === GameState.ShowQuestion) {
-            this.router.navigate(['show-question', game.pin]);
-        } else if (game.state === GameState.ShowAnswers) {
-            this.router.navigate(['show-answers', game.pin]);
-        } else if (game.state === GameState.RevealTheTruth) {
-            this.router.navigate(['reveal-the-truth', game.pin]);
-        } else if (game.state === GameState.ScoreBoard) {
-            this.router.navigate(['score-board', game.pin]);
-        } else if (game.state === GameState.ScoreBoardFinal) {
-            this.router.navigate(['score-board-final', game.pin]);
+            this.router.navigate(['round-intro', pin, round]);
+        } else if (game.state.id === GameState.ShowQuestion) {
+            this.router.navigate(['show-question', pin]);
+        } else if (game.state.id === GameState.ShowAnswers) {
+            this.router.navigate(['show-answers', pin]);
+        } else if (game.state.id === GameState.RevealTheTruth) {
+            this.router.navigate(['reveal-the-truth', pin]);
+        } else if (game.state.id === GameState.ScoreBoard) {
+            this.router.navigate(['score-board', pin]);
+        } else if (game.state.id === GameState.ScoreBoardFinal) {
+            this.router.navigate(['score-board-final', pin]);
         }
     }
 }

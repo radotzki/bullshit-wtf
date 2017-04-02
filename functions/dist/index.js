@@ -84,9 +84,12 @@ exports.newGame = functions.https.onRequest(function (req, res) {
                             id: gameState.GameStaging,
                             timestamp: Date.now(),
                         },
+                        locale: lang,
                         timestamp: Date.now(),
+                        roundIndex: 0,
+                        questionIndex: 0,
                         totalQ: count,
-                        qIds: questions,
+                        qids: questions,
                         gameTick: 0,
                         presenter: false,
                     };
@@ -99,6 +102,84 @@ exports.newGame = functions.https.onRequest(function (req, res) {
         });
     }); });
 });
+exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(function (event) { return __awaiter(_this, void 0, void 0, function () {
+    var pin, game, _a;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                pin = event.params.pin;
+                return [4 /*yield*/, getOnce(gamesRef.child(pin))];
+            case 1:
+                game = _b.sent();
+                console.log('pin', pin);
+                console.log('game', game);
+                if (game.gameTick === game.state.id) {
+                    console.log('Game tick = game state');
+                    return [2 /*return*/];
+                }
+                _a = game.state.id;
+                switch (_a) {
+                    case gameState.GameStaging: return [3 /*break*/, 2];
+                    case gameState.RoundIntro: return [3 /*break*/, 4];
+                    case gameState.ShowQuestion: return [3 /*break*/, 6];
+                    case gameState.ShowAnswers: return [3 /*break*/, 8];
+                    case gameState.RevealTheTruth: return [3 /*break*/, 10];
+                    case gameState.ScoreBoard: return [3 /*break*/, 12];
+                }
+                return [3 /*break*/, 14];
+            case 2: return [4 /*yield*/, updateGame(pin, { state: updateState(gameState.RoundIntro) })];
+            case 3:
+                _b.sent();
+                return [3 /*break*/, 14];
+            case 4: return [4 /*yield*/, updateGame(pin, {
+                    state: updateState(gameState.ShowQuestion),
+                    currentQ: populateQuestion(game),
+                })];
+            case 5:
+                _b.sent();
+                return [3 /*break*/, 14];
+            case 6: return [4 /*yield*/, updateGame(pin, { state: updateState(gameState.ShowAnswers) })];
+            case 7:
+                _b.sent();
+                return [3 /*break*/, 14];
+            case 8: return [4 /*yield*/, updateGame(pin, { state: updateState(gameState.RevealTheTruth) })];
+            case 9:
+                _b.sent();
+                return [3 /*break*/, 14];
+            case 10: return [4 /*yield*/, updateGame(pin, { state: updateState(gameState.ScoreBoard) })];
+            case 11:
+                _b.sent();
+                return [3 /*break*/, 14];
+            case 12: return [4 /*yield*/, updateGame(pin, { state: updateState(gameState.ScoreBoard) })];
+            case 13:
+                _b.sent();
+                return [3 /*break*/, 14];
+            case 14: return [2 /*return*/];
+        }
+    });
+}); });
+// TODO: entered the truth
+// TOOD: decoys
+function updateState(stateId) {
+    return { id: stateId, timestamp: Date.now() };
+}
+function populateQuestion(game) {
+    return questions_1.getQuestion(game.qids[game.questionIndex]).questionText;
+}
+function nextQuestion(pin, game) {
+    if (game.questionIndex === game.totalQ) {
+        return updateGame(pin, { state: updateState(gameState.ScoreBoardFinal) });
+    }
+    else {
+        updateGame(pin, {
+            state: updateState(gameState.ShowQuestion),
+            questionIndex: game.questionIndex + 1,
+        });
+    }
+}
+function updateGame(pin, update) {
+    gamesRef.child(pin).update(update);
+}
 function leftPad(gameCounter) {
     while (gameCounter.length < 4) {
         gameCounter = "0" + gameCounter;

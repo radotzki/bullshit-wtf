@@ -1,3 +1,4 @@
+import { GamePlayers, GamePlayer } from './../../../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
@@ -8,19 +9,23 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
+function toArray<T>(obj: { [k: string]: T }): T[] {
+    return Object.keys(obj).map(k => obj[k]);
+}
+
 @Component({
     selector: 'app-game-staging',
     templateUrl: './game-staging.component.html',
     styleUrls: ['./game-staging.component.scss']
 })
 export class GameStagingComponent implements OnInit, OnDestroy {
-    playersSubscription: Subscription;
-    players: { name: string }[];
+    players: GamePlayer[];
+    playersSubscriber: Subscription;
     pin: string;
     presenter: boolean;
     loading: boolean;
     errorMsg: string;
-    leader: boolean;
+    leader: Observable<boolean>;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -32,18 +37,16 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.playersSubscription = this.apiService.getPlayers(this.pin).subscribe(this.onPlayersChanged.bind(this));
+        this.playersSubscriber = this.apiService.getPlayers(this.pin)
+            .map(toArray)
+            .subscribe(players => this.players = players);
+        // this.leader = this.players.map(players => toArray(players)[0].nickname === this.sessionService.user.name);
         this.gameService.register(this.pin);
     }
 
     ngOnDestroy() {
         this.gameService.unregister(this.pin);
-        this.playersSubscription.unsubscribe();
-    }
-
-    onPlayersChanged(resp) {
-        this.players = resp;
-        this.leader = !this.sessionService.presenter && this.players[0].name === this.sessionService.user.name;
+        this.playersSubscriber.unsubscribe();
     }
 
     startGame() {

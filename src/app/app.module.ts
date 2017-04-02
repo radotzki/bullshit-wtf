@@ -1,4 +1,3 @@
-import { FirebaseModule } from './firebase/firebase.module';
 import { GameService } from './services/game.service';
 import { SentryModule } from './sentry/sentry.module';
 import { ApiService } from './services/api.service';
@@ -56,7 +55,6 @@ import { BsPointsPipe } from './pipes/bs-points.pipe';
         HttpModule,
         AppRoutingModule,
         SentryModule,
-        FirebaseModule,
     ],
     providers: [
         SessionService,

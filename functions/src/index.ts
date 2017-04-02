@@ -1,9 +1,9 @@
+import { GameScheme } from './game-model';
 const functions = require('firebase-functions');
 const cors = require('cors')({ origin: true });
 const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 import { getQuestion, randomQuestions } from './questions';
-import { GameScheme } from '../../game-model';
 
 const gameState = {
     GameStaging: 0,
@@ -47,7 +47,10 @@ exports.newGame = functions.https.onRequest((req, res) => {
                 id: gameState.GameStaging,
                 timestamp: Date.now(),
             },
+            locale: lang,
             timestamp: Date.now(),
+            roundIndex: 0,
+            questionIndex: 0,
             totalQ: count,
             qids: questions,
             gameTick: 0,
@@ -59,6 +62,74 @@ exports.newGame = functions.https.onRequest((req, res) => {
         res.send({ pin: gamePin });
     });
 });
+
+exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(async event => {
+    const pin = event.params.pin;
+    const game = await getOnce<GameScheme>(gamesRef.child(pin));
+
+    console.log('pin', pin);
+    console.log('game', game);
+
+    if (game.gameTick === game.state.id) {
+        console.log('Game tick = game state');
+        return;
+    }
+
+    switch (game.state.id) {
+        case gameState.GameStaging:
+            await updateGame(pin, { state: updateState(gameState.RoundIntro) });
+            break;
+
+        case gameState.RoundIntro:
+            await updateGame(pin, {
+                state: updateState(gameState.ShowQuestion),
+                currentQ: populateQuestion(game),
+            });
+            break;
+
+        case gameState.ShowQuestion:
+            await updateGame(pin, { state: updateState(gameState.ShowAnswers) });
+            break;
+
+        case gameState.ShowAnswers:
+            await updateGame(pin, { state: updateState(gameState.RevealTheTruth) });
+            break;
+
+        case gameState.RevealTheTruth:
+            await updateGame(pin, { state: updateState(gameState.ScoreBoard) });
+            break;
+
+        case gameState.ScoreBoard:
+            await updateGame(pin, { state: updateState(gameState.ScoreBoard) });
+            break;
+    }
+});
+
+// TODO: entered the truth
+// TOOD: decoys
+
+function updateState(stateId: number) {
+    return { id: stateId, timestamp: Date.now() };
+}
+
+function populateQuestion(game: GameScheme) {
+    return getQuestion(game.qids[game.questionIndex]).questionText;
+}
+
+function nextQuestion(pin: string, game: GameScheme) {
+    if (game.questionIndex === game.totalQ) {
+        return updateGame(pin, { state: updateState(gameState.ScoreBoardFinal) });
+    } else {
+        updateGame(pin, {
+            state: updateState(gameState.ShowQuestion),
+            questionIndex: game.questionIndex + 1,
+        });
+    }
+}
+
+function updateGame(pin: string, update: Partial<GameScheme>) {
+    gamesRef.child(pin).update(update);
+}
 
 function leftPad(gameCounter: string) {
     while (gameCounter.length < 4) {
