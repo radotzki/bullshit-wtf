@@ -35,9 +35,6 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
-        this.apiService.getTimestamp(this.pin).then(timestamp => {
-            console.log('timestamp', timestamp);
-        });
 
         if (!this.presenter) {
             this.checkQuestionSubmitted(this.pin, this.sessionService.user.name);

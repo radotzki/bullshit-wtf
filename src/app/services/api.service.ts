@@ -59,6 +59,16 @@ export class ApiService {
     }
 
     game(pin: string): Observable<Game> {
+        // TODO: online users, choose leader by nickname, only the leader will tick states
+        // const userRef = this.af.database.object(`game-online-players/${pin}/${this.sessionService.user.name}`).$ref;
+        // const amOnline = this.af.database.object('/.info/connected').$ref;
+        // amOnline.on('value', function (snapshot) {
+        //     if (snapshot.val()) {
+        //         userRef.onDisconnect().remove();
+        //         userRef.set(true);
+        //     }
+        // });
+
         return this.af.database.object(`games/${pin}`)
             .map(resp => Object.assign({}, { pin: resp.$key }, resp));
     }
@@ -86,16 +96,14 @@ export class ApiService {
             .then(resp => Object.keys(resp || {}).map(id => new Answer(id, resp[id])));
     }
 
-    getTimestamp(pin: string): firebase.Promise<{ start: number, end: number }> {
-        return this.getObjectOnce(`game-timestamp/${pin}`).then(resp => resp.val());
-    }
-
     chooseAnswer(pin: string, answer: string) {
-        return this.post(`api/games/${pin}/chooseAnswer`, { answer });
+        return Promise.resolve();
+        // return this.unauthPost(`api/games/${pin}/chooseAnswer`, { answer });
     }
 
     replay(pin: string) {
-        return this.post(`api/games/${pin}/createChild`, {});
+        return Promise.resolve();
+        // return this.unauthPost(`api/games/${pin}/createChild`, {});
     }
 
     private getCurrentQ(pin: string) {
@@ -104,12 +112,6 @@ export class ApiService {
 
     private cloudPost(url: string, body: Object) {
         return this.http.post('https://us-central1-bullshit-fae48.cloudfunctions.net/' + url, body)
-            .toPromise()
-            .then(resp => resp.json(), resp => Promise.reject(resp.json()));
-    }
-
-    private post(url: string, body: Object) {
-        return this.http.post(environment.server + '/' + url, body)
             .toPromise()
             .then(resp => resp.json(), resp => Promise.reject(resp.json()));
     }

@@ -12,10 +12,14 @@ const json = {
     'games': {
         'ABCD': {
             state: 0,
+            timestamp: Date.now(),
             currentQ: 0,
             totalQ: 5,
             players: 7,
         }
+    },
+    'game-tick': {
+        'ABCD': 1,
     },
     'game-questions': {
         'ABCD': {
@@ -55,11 +59,11 @@ const json = {
             pname3: 800,
         }
     },
-    'game-timestamp': {
+    'game-online-players': {
         'ABCD': {
-            start: Date.now(),
-            end: Date.now() + 30000,
+            pname1: true,
+            pname2: true,
         }
-    }
+    },
 };
 
