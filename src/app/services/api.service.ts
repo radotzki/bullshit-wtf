@@ -7,49 +7,45 @@ import { environment } from '../../environments/environment';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
 import { AngularFire } from 'angularfire2';
+import { initializeApp } from 'firebase';
+
+const app = initializeApp({
+    apiKey: 'AIzaSyB9DBGta81H3qp3BMukjNF-pHKbh2RPcvA',
+    authDomain: 'bullshit-fae48.firebaseapp.com',
+    databaseURL: 'https://bullshit-fae48.firebaseio.com',
+    storageBucket: 'bullshit-fae48.appspot.com',
+    messagingSenderId: '328908700392',
+});
+
+// this.gamesRef = app.database().ref('games');
 
 @Injectable()
 export class ApiService {
+    gamesRef: firebase.database.Reference;
 
     constructor(
         private http: Http,
         private af: AngularFire,
         private sessionService: SessionService,
-    ) { }
+    ) {
+        // const app = initializeApp({
+        //     apiKey: 'AIzaSyB9DBGta81H3qp3BMukjNF-pHKbh2RPcvA',
+        //     authDomain: 'bullshit-fae48.firebaseapp.com',
+        //     databaseURL: 'https://bullshit-fae48.firebaseio.com',
+        //     storageBucket: 'bullshit-fae48.appspot.com',
+        //     messagingSenderId: '328908700392',
+        // });
+
+        this.gamesRef = app.database().ref('games');
+    }
 
     createGame(lang: string, count: number): Promise<{ pin: string }> {
         return this.cloudPost(`newGame`, { lang, count });
     }
 
     join(pin: string, nickname: string) {
-        return this.getListOnce(`game-players/${pin}`)
-            .then(snapshot => snapshot.val() || {})
-            .then(players => {
-                if (Object.keys(players).includes(nickname)) {
-                    return Promise.reject({ message: 'Sorry, that nickname is taken.' });
-                } else if (Object.keys(players).length === 8) {
-                    return Promise.reject({ message: 'This game is full.' });
-                }
-
-                let playersCount;
-                return this.af.database.object(`games/${pin}`).$ref.transaction(
-                    (game) => {
-                        if (game) {
-                            playersCount = game.players + 1;
-                            game.players = playersCount;
-                        }
-
-                        return game;
-                    },
-                    (error, committed, snapshot) => {
-                        if (error) {
-                            return Promise.reject(error);
-                        }
-
-                        return this.af.database.object(`game-players/${pin}/${nickname}`).set({ score: 0, order: playersCount - 1 });
-                    }
-                );
-            });
+        // TODO: 8 players max
+        return this.gamesRef.child(pin).child('players').push({ nickname, score: 0 });
     }
 
     getPlayers(pin: string) {
