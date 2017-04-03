@@ -32,8 +32,9 @@ export class JoinGameComponent implements OnInit {
         this.errorMsg = '';
 
         this.apiService.join(this.pin, this.nickname)
-            .then(() => {
-                this.sessionService.user = { name: this.nickname.toLowerCase() };
+            .then((pid) => {
+                console.log('pid', pid);
+                this.sessionService.user = { name: this.nickname.toLowerCase(), pid };
                 this.router.navigate(['game-staging', this.pin]);
                 this.loading = false;
             })

@@ -1,9 +1,9 @@
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Game, GameState } from './../../models';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
+import { GameState } from './../../game-model';
 
 @Component({
     selector: 'app-game-header',
@@ -39,7 +39,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         this.gameSubscription.unsubscribe();
     }
 
-    onGameChange(game: Game) {
+    onGameChange(game) {
         if (game.state === GameState.RoundIntro) {
             if (game.currentQ === 0) {
                 this.text = 'ROUND 1';

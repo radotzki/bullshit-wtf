@@ -1,6 +1,6 @@
 <section class="show-question">
     <app-game-header></app-game-header>
-    <!--<progress *ngIf="question" class="progress is-primary" [value]="(gameTimer | async)?.elapsed" [max]="(gameTimer | async)?.total"></progress>-->
+    <progress *ngIf="question" class="progress is-primary" [value]="10" [max]="100"></progress>
 
     <div class="game-main">
         <div *ngIf="!question" class="screen-center">
@@ -8,14 +8,14 @@
         </div>
 
         <div *ngIf="question && presenter" class="screen-center">
-            <p class="question" [class.rtl]="question.rtl"> {{question.text | bsQuestion}} </p>
+            <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
         </div>
 
         <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()">
-            <p class="question" [class.rtl]="question.rtl"> {{question.text | bsQuestion}} </p>
+            <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <p class="control">
-                <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="question.rtl" type="text" name="answer"
+                <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text" name="answer"
                     [(ngModel)]="answer" maxlength="40" autofocus>
                 <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try something else</span>
             </p>

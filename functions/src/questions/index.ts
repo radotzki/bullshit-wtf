@@ -1,5 +1,3 @@
-// import * as fs from 'fs';
-// const raw = JSON.parse(fs.readFileSync('../../raw-data.json', 'utf-8'));
 const raw = require('../../raw-data.json');
 
 const en = [].concat(...raw.filter(i => i.lang === 'en-US').map(i => i.questions)).filter(i => i.approved);
@@ -20,6 +18,6 @@ export function randomQuestions(lang: string, count: number): string[] {
         .map(q => q.id);
 }
 
-export function getQuestion(id: string) {
+export function getQuestion(id: string): { realAnswer: string, fakeAnswers: string[], questionText: string } {
     return questionsMap[id];
 }

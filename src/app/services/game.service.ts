@@ -1,4 +1,4 @@
-import { GameScheme } from './../../../game-model';
+import { GameScheme, GameState } from './../game-model';
 import { environment } from './../../environments/environment';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
@@ -9,7 +9,6 @@ import 'rxjs/add/observable/fromEvent';
 import 'rxjs/add/observable/merge';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/fromPromise';
-import { GameState, Game } from '../models';
 
 @Injectable()
 export class GameService {

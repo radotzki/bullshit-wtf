@@ -1,6 +1,5 @@
 import { SessionService } from './../../services/session.service';
 import * as Raven from 'raven-js';
-import { Game, Player } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
@@ -15,8 +14,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     gameSubscription: Subscription;
     pin: string;
-    game: Game;
-    displayPlayers: Player[];
+    game;
+    displayPlayers;
     loading: boolean;
     errorMsg: string;
     leader: boolean;
@@ -39,7 +38,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.gameSubscription.unsubscribe();
     }
 
-    onGameChanged(resp: Game) {
+    onGameChanged(resp) {
         this.game = resp;
         this.displayPlayers = [...this.game.players].sort((a, b) => a.score < b.score ? 1 : -1);
         this.leader = !this.sessionService.presenter && this.game.players[0].name === this.sessionService.user.name;

@@ -71,4 +71,5 @@ export class SessionService implements CanActivate {
 
 interface User {
     name: string;
+    pid: string;
 }

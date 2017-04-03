@@ -34,6 +34,10 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.points = roundPoints[this.number];
         this.gameService.register(this.pin);
+        this.apiService.getGameTimestamp(this.pin).then(({ timestamp, now }) => {
+            const timeRemain = 5000 - (now - timestamp);
+            setTimeout(() => this.apiService.tickRoundIntro(this.pin), timeRemain);
+        });
     }
 
     ngOnDestroy() {

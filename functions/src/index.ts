@@ -1,4 +1,4 @@
-import { GameScheme } from './game-model';
+import { GameScheme, Answer, Answers } from './game-model';
 const functions = require('firebase-functions');
 const cors = require('cors')({ origin: true });
 const admin = require('firebase-admin');
@@ -29,6 +29,12 @@ exports.alive = functions.https.onRequest((req, res) => {
     });
 });
 
+exports.time = functions.https.onRequest((req, res) => {
+    cors(req, res, () => {
+        res.send({ now: Date.now() });
+    });
+});
+
 exports.newGame = functions.https.onRequest((req, res) => {
     // TODO: handle errors in promise
     cors(req, res, async () => {
@@ -37,7 +43,7 @@ exports.newGame = functions.https.onRequest((req, res) => {
         const count = req.body.count;
         const gameCounterRef = admin.database().ref('gameCounter');
         const gameCounter = await getOnce<number>(gameCounterRef) + 1;
-        const gamePin = leftPad(gameCounter.toString(36).toUpperCase());
+        const gamePin = leftPad((gameCounter).toString(26).replace(/\d/g, d => 'qrstuvwxyz'[d]).toUpperCase());
 
         await gameCounterRef.set(gameCounter);
 
@@ -67,9 +73,6 @@ exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(async even
     const pin = event.params.pin;
     const game = await getOnce<GameScheme>(gamesRef.child(pin));
 
-    console.log('pin', pin);
-    console.log('game', game);
-
     if (game.gameTick === game.state.id) {
         console.log('Game tick = game state');
         return;
@@ -88,7 +91,18 @@ exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(async even
             break;
 
         case gameState.ShowQuestion:
-            await updateGame(pin, { state: updateState(gameState.ShowAnswers) });
+            const playerAnswers = game.answers;
+            console.log('playerAnswers', playerAnswers);
+            const fakeAnswers = populateFakeAnswers(pin, game);
+            console.log('fakeAnswers', fakeAnswers);
+            const realAnswer = getRealAnswer(game);
+            console.log('realAnswer', realAnswer);
+            const answers = Object.assign({}, playerAnswers, fakeAnswers, realAnswer);
+            console.log('answers', answers);
+            await updateGame(pin, {
+                state: updateState(gameState.ShowAnswers),
+                answers: answers,
+            });
             break;
 
         case gameState.ShowAnswers:
@@ -133,67 +147,59 @@ function updateGame(pin: string, update: Partial<GameScheme>) {
 
 function leftPad(gameCounter: string) {
     while (gameCounter.length < 4) {
-        gameCounter = `0${gameCounter}`;
+        gameCounter = `Q${gameCounter}`;
     }
 
     return gameCounter;
 }
 
-// exports.answer = functions.https.onRequest((req, res) => {
-//     cors(req, res, () => {
-//         const pin = req.body.pin;
-//         const answer = req.body.answer.toLowerCase();
-//         const nickname = req.body.nickname.toLowerCase();
-//         let currentQ;
-//         let players;
+function populateFakeAnswers(pin: string, game: GameScheme) {
+    const allFakeAnswers = getQuestion(game.qids[game.questionIndex]).fakeAnswers;
+    const playerAnswers = Object.keys(game.answers).map(k => game.answers[k].text);
+    const uniqueAnswersCount = Array.from(new Set(playerAnswers)).length;
+    const playersCount = Object.keys(game.players).length;
+    const fakeAnswers = allFakeAnswers.slice(0, playersCount - uniqueAnswersCount);
+    const res: Answers = {};
 
-//         return getOnce(`games/${pin}`)
-//             .then(resp => {
-//                 currentQ = resp.currentQ;
-//                 players = resp.players;
-//                 return getOnce(`game-question-answers/${pin}/${currentQ}`);
-//             })
-//             .then(answers => {
-//                 const answersArr = Object.keys(answers).map(id => Object.assign({}, { id }, answers[id]));
-//                 const realAnswer = answersArr.find(a => a.realAnswer).text.toLowerCase();
-//                 const fakeAnswer = answersArr.find(a => a.text === answer);
-//                 const playerAnswersCount = answersArr.reduce((sum, a) => sum + Object.keys(a.creators || {}).length, 0);
-//                 const promises = [] as any;
+    fakeAnswers.forEach(text => {
+        const key = gamesRef.child(pin).child('answers').push().key;
+        res[key] = { text, houseLie: true, realAnswer: false };
+    });
 
-//                 if (answer === realAnswer) {
-//                     return res.status(400).send({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
-//                 } else if (fakeAnswer) {
-//                     if (fakeAnswer.houseLie) {
-//                         promises
-//                             .push(admin.database()
-//                                 .ref(`game-question-answers/${pin}/${currentQ}/${fakeAnswer.id}/houseLie`)
-//                                 .set(false));
-//                     }
+    return res;
+}
 
-//                     promises
-//                         .push(admin.database()
-//                             .ref(`game-question-answers/${pin}/${currentQ}/${fakeAnswer.id}/creators/${nickname}`)
-//                             .set(true));
-//                 } else {
-//                     promises
-//                         .push(admin.database()
-//                             .ref(`game-question-answers/${pin}/${currentQ}`)
-//                             .push({ text: answer, creators: { [nickname]: true } }));
-//                 }
+function getRealAnswer(game: GameScheme) {
+    const text = getQuestion(game.qids[game.questionIndex]).realAnswer;
+    const realAnswer: Answers = {
+        truth: { text, houseLie: false, realAnswer: true }
+    };
+    return realAnswer;
+}
 
-//                 if (playerAnswersCount + 1 === players) {
-//                     promises.push(admin.database().ref(`games/${pin}/state`).set(gameState.ShowAnswers));
-//                 }
+exports.answer = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        const pin = req.body.pin;
+        const pid = req.body.pid;
+        const answer = req.body.answer.toLowerCase();
 
-//                 return Promise.all(promises);
-//             })
-//             .then(() => res.status(200).send({}))
-//             .catch(err => {
-//                 console.error(err);
-//                 res.status(500).send({});
-//             });
-//     });
-// });
+        const game = await getOnce<GameScheme>(gamesRef.child(pin));
+        const qid = game.qids[game.questionIndex];
+        const question = getQuestion(qid);
+
+        if (question.realAnswer.toLowerCase() === answer) {
+            return res.status(400).send({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
+        } else {
+            const playerAnswer = {
+                text: answer,
+                houseLie: false,
+                realAnswer: false,
+            };
+            await gamesRef.child(pin).child('answers').child(pid).set(playerAnswer);
+            res.status(200).send({});
+        }
+    });
+});
 
 
 function getOnce<T>(ref): Promise<T> {

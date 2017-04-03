@@ -1,4 +1,3 @@
-import { Game } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { SessionService } from './../../services/session.service';
 import { Component, OnInit } from '@angular/core';

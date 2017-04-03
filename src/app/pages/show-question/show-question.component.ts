@@ -1,5 +1,4 @@
 import * as Raven from 'raven-js';
-import { Game, Question } from './../../models';
 import { Subscription } from 'rxjs/Subscription';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -15,13 +14,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 export class ShowQuestionComponent implements OnInit, OnDestroy {
     pin: string;
     gameTimer;
-    question: Question;
+    question: string;
     presenter: boolean;
     loading: boolean;
     errorMsg: string;
     answer: string;
     questionSubmitted: boolean;
     enteredCorrectAnswer: boolean;
+    rtl: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -33,11 +33,12 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
+        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
 
         if (!this.presenter) {
-            this.checkQuestionSubmitted(this.pin, this.sessionService.user.name);
+            this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
         }
     }
 
@@ -64,12 +65,6 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });
-    }
-
-    checkQuestionSubmitted(pin: string, nickname: string) {
-        this.apiService.getAnswers(pin)
-            .then(answers => answers.find(answer => answer.creators.includes(nickname)))
-            .then(questionSubmitted => this.questionSubmitted = questionSubmitted);
     }
 
 }

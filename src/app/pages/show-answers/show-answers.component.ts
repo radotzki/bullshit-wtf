@@ -4,7 +4,6 @@ import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { Game, Question, Answer } from './../../models';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
 @Component({
@@ -13,16 +12,14 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
     styleUrls: ['./show-answers.component.scss']
 })
 export class ShowAnswersComponent implements OnInit, OnDestroy {
-    gameSubscription: Subscription;
     pin: string;
     presenter: boolean;
     loading: boolean;
     errorMsg: string;
-    game: Game;
-    elapsedTime: number;
-    elapsedTimeInterval;
+    question: string;
+    rtl: boolean;
     answerSelected: boolean;
-    displayAnswers: Answer[];
+    answers: string[];
     showQuestion: boolean;
 
     constructor(
@@ -34,32 +31,16 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.gameSubscription = this.apiService.game(this.pin).subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
+        this.apiService.getQuestion(this.pin).then(q => this.question = q);
+        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
+        this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
+        this.apiService.getAnswers(this.pin).then(a => this.answers = a);
     }
 
     ngOnDestroy() {
         this.gameService.unregister(this.pin);
-        this.gameSubscription.unsubscribe();
-
-        if (this.elapsedTimeInterval) {
-            clearInterval(this.elapsedTimeInterval);
-        }
-    }
-
-    onGameChanged(resp: Game) {
-        this.game = resp;
-
-        if (!this.elapsedTime) {
-            this.initElapsedTime();
-        }
-
-        if (!this.displayAnswers) {
-            // this.displayAnswers = this.getDisplayAnswers(this.game.currentQuestion, this.game.players.length);
-        }
-
-        this.answerSelected = !this.presenter && this.checkAnswerSelected(this.game, this.sessionService.user.name);
     }
 
     submit(answer: string) {
@@ -78,39 +59,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             });
     }
 
-    checkAnswerSelected(game: Game, nickname: string) {
-        const allAnswers = [...game.currentQuestion.fakeAnswers, game.currentQuestion.realAnswer];
-        return !!allAnswers.find(answer => answer.selectedBy.indexOf(nickname) > -1);
-    }
-
-    tick() {
-        // this.apiService.tick(this.pin, QuestionState.ShowAnswers);
-    }
-
-    initElapsedTime() {
-        // this.elapsedTime = this.calcElapsedTime(this.game);
-        // this.elapsedTimeInterval = setInterval(() => {
-        //     if (this.elapsedTime >= this.game.selectAnswerTime) {
-        //         this.tick();
-        //     } else {
-        //         this.elapsedTime += 1;
-        //     }
-        // }, 1000);
-    }
-
-    // calcElapsedTime(game: Game) {
-    //     const currentTime = game.currentTime;
-    //     const startedAt = game.currentQuestion.startedAt;
-    //     return Math.round(this.timeDiff(currentTime, startedAt) / 1000);
-    // }
-
-    timeDiff(from, to): number {
-        const toTime = new Date(to);
-        const fromTime = new Date(from);
-        return Math.abs(fromTime.getTime() - toTime.getTime());
-    }
-
-    getDisplayAnswers(question: Question, numOfPlayers: number) {
+    // getDisplayAnswers(question: Question, numOfPlayers: number) {
         // const answersCount = this.presenter ? numOfPlayers + 1 : numOfPlayers;
         // const houseAnswers = question.fakeAnswers.filter(this.isHouseAnswer.bind(this));
         // let displayAnswers = question.fakeAnswers.filter(answer => {
@@ -126,11 +75,6 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
         // displayAnswers = [...displayAnswers].sort((a, b) => a.text < b.text ? -1 : 1);
         // return displayAnswers;
-    }
-
-    isHouseAnswer(answer: Answer) {
-        return false;
-        // return answer.createdBy.length === 1 && answer.createdBy[0] === 'house';
-    }
+    // }
 
 }

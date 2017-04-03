@@ -1,27 +1,27 @@
 <section class="show-answers">
     <app-game-header></app-game-header>
-    <progress *ngIf="game" class="progress is-primary" [value]="elapsedTime" [max]="game.selectAnswerTime"></progress>
+    <progress *ngIf="answers" class="progress is-primary" [value]="10" [max]="100"></progress>
 
     <div class="game-main">
-        <div *ngIf="!game" class="screen-center">
+        <div *ngIf="!answers" class="screen-center">
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="game && presenter" class="presenter">
-            <p class="question" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+        <div *ngIf="answers && presenter" class="presenter">
+            <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <div class="columns is-multiline">
-                <p *ngFor="let answer of displayAnswers" class="column is-one-third-tablet is-one-third-desktop">
-                    <button class="button is-primary is-fullwidth answer" [class.rtl]="game.currentQuestion.rtl">
+                <p *ngFor="let answer of answers" class="column is-one-third-tablet is-one-third-desktop">
+                    <button class="button is-primary is-fullwidth answer" [class.rtl]="rtl">
                         {{ answer.text | uppercase }}
                     </button>
                 </p>
             </div>
         </div>
 
-        <div *ngIf="game && !answerSelected && !presenter">
-            <p *ngFor="let answer of displayAnswers" class="control">
-                <button class="button is-primary is-fullwidth answer" (click)="submit(answer.text)" [disabled]="loading" [class.rtl]="game.currentQuestion.rtl">
+        <div *ngIf="answers && !answerSelected && !presenter">
+            <p *ngFor="let answer of answers" class="control">
+                <button class="button is-primary is-fullwidth answer" (click)="submit(answer.text)" [disabled]="loading" [class.rtl]="rtl">
                     {{ answer.text | uppercase }}
                 </button>
             </p>
@@ -30,7 +30,7 @@
                 <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">WHAT WAS THE QUESTION AGAIN?</button>
             </p>
 
-            <p *ngIf="showQuestion" [class.rtl]="game.currentQuestion.rtl"> {{game.currentQuestion.questionText | bsQuestion}} </p>
+            <p *ngIf="showQuestion" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
         </div>
 
         <div *ngIf="answerSelected" class="screen-center">

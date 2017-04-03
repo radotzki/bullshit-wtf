@@ -1,7 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// import * as fs from 'fs';
-// const raw = JSON.parse(fs.readFileSync('../../raw-data.json', 'utf-8'));
 var raw = require('../../raw-data.json');
 var en = [].concat.apply([], raw.filter(function (i) { return i.lang === 'en-US'; }).map(function (i) { return i.questions; })).filter(function (i) { return i.approved; });
 var he = [].concat.apply([], raw.filter(function (i) { return i.lang === 'he-IL'; }).map(function (i) { return i.questions; })).filter(function (i) { return i.approved; });

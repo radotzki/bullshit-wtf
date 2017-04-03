@@ -1,9 +1,8 @@
-import { GamePlayers, GamePlayer } from './../../../../game-model';
+import { GamePlayers, GamePlayer } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Game } from './../../models';
 import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';

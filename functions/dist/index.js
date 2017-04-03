@@ -61,6 +61,11 @@ exports.alive = functions.https.onRequest(function (req, res) {
         res.send('alive');
     });
 });
+exports.time = functions.https.onRequest(function (req, res) {
+    cors(req, res, function () {
+        res.send({ now: Date.now() });
+    });
+});
 exports.newGame = functions.https.onRequest(function (req, res) {
     // TODO: handle errors in promise
     cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
@@ -74,7 +79,7 @@ exports.newGame = functions.https.onRequest(function (req, res) {
                     return [4 /*yield*/, getOnce(gameCounterRef)];
                 case 1:
                     gameCounter = (_a.sent()) + 1;
-                    gamePin = leftPad(gameCounter.toString(36).toUpperCase());
+                    gamePin = leftPad((gameCounter).toString(26).replace(/\d/g, function (d) { return 'qrstuvwxyz'[d]; }).toUpperCase());
                     return [4 /*yield*/, gameCounterRef.set(gameCounter)];
                 case 2:
                     _a.sent();
@@ -103,7 +108,7 @@ exports.newGame = functions.https.onRequest(function (req, res) {
     }); });
 });
 exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(function (event) { return __awaiter(_this, void 0, void 0, function () {
-    var pin, game, _a;
+    var pin, game, _a, playerAnswers, fakeAnswers, realAnswer, answers;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
@@ -111,8 +116,6 @@ exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(function (
                 return [4 /*yield*/, getOnce(gamesRef.child(pin))];
             case 1:
                 game = _b.sent();
-                console.log('pin', pin);
-                console.log('game', game);
                 if (game.gameTick === game.state.id) {
                     console.log('Game tick = game state');
                     return [2 /*return*/];
@@ -138,7 +141,19 @@ exports.tick = functions.database.ref('games/{pin}/gameTick').onWrite(function (
             case 5:
                 _b.sent();
                 return [3 /*break*/, 14];
-            case 6: return [4 /*yield*/, updateGame(pin, { state: updateState(gameState.ShowAnswers) })];
+            case 6:
+                playerAnswers = game.answers;
+                console.log('playerAnswers', playerAnswers);
+                fakeAnswers = populateFakeAnswers(pin, game);
+                console.log('fakeAnswers', fakeAnswers);
+                realAnswer = getRealAnswer(game);
+                console.log('realAnswer', realAnswer);
+                answers = Object.assign({}, playerAnswers, fakeAnswers, realAnswer);
+                console.log('answers', answers);
+                return [4 /*yield*/, updateGame(pin, {
+                        state: updateState(gameState.ShowAnswers),
+                        answers: answers,
+                    })];
             case 7:
                 _b.sent();
                 return [3 /*break*/, 14];
@@ -182,60 +197,62 @@ function updateGame(pin, update) {
 }
 function leftPad(gameCounter) {
     while (gameCounter.length < 4) {
-        gameCounter = "0" + gameCounter;
+        gameCounter = "Q" + gameCounter;
     }
     return gameCounter;
 }
-// exports.answer = functions.https.onRequest((req, res) => {
-//     cors(req, res, () => {
-//         const pin = req.body.pin;
-//         const answer = req.body.answer.toLowerCase();
-//         const nickname = req.body.nickname.toLowerCase();
-//         let currentQ;
-//         let players;
-//         return getOnce(`games/${pin}`)
-//             .then(resp => {
-//                 currentQ = resp.currentQ;
-//                 players = resp.players;
-//                 return getOnce(`game-question-answers/${pin}/${currentQ}`);
-//             })
-//             .then(answers => {
-//                 const answersArr = Object.keys(answers).map(id => Object.assign({}, { id }, answers[id]));
-//                 const realAnswer = answersArr.find(a => a.realAnswer).text.toLowerCase();
-//                 const fakeAnswer = answersArr.find(a => a.text === answer);
-//                 const playerAnswersCount = answersArr.reduce((sum, a) => sum + Object.keys(a.creators || {}).length, 0);
-//                 const promises = [] as any;
-//                 if (answer === realAnswer) {
-//                     return res.status(400).send({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
-//                 } else if (fakeAnswer) {
-//                     if (fakeAnswer.houseLie) {
-//                         promises
-//                             .push(admin.database()
-//                                 .ref(`game-question-answers/${pin}/${currentQ}/${fakeAnswer.id}/houseLie`)
-//                                 .set(false));
-//                     }
-//                     promises
-//                         .push(admin.database()
-//                             .ref(`game-question-answers/${pin}/${currentQ}/${fakeAnswer.id}/creators/${nickname}`)
-//                             .set(true));
-//                 } else {
-//                     promises
-//                         .push(admin.database()
-//                             .ref(`game-question-answers/${pin}/${currentQ}`)
-//                             .push({ text: answer, creators: { [nickname]: true } }));
-//                 }
-//                 if (playerAnswersCount + 1 === players) {
-//                     promises.push(admin.database().ref(`games/${pin}/state`).set(gameState.ShowAnswers));
-//                 }
-//                 return Promise.all(promises);
-//             })
-//             .then(() => res.status(200).send({}))
-//             .catch(err => {
-//                 console.error(err);
-//                 res.status(500).send({});
-//             });
-//     });
-// });
+function populateFakeAnswers(pin, game) {
+    var allFakeAnswers = questions_1.getQuestion(game.qids[game.questionIndex]).fakeAnswers;
+    var playerAnswers = Object.keys(game.answers).map(function (k) { return game.answers[k].text; });
+    var uniqueAnswersCount = Array.from(new Set(playerAnswers)).length;
+    var playersCount = Object.keys(game.players).length;
+    var fakeAnswers = allFakeAnswers.slice(0, playersCount - uniqueAnswersCount);
+    var res = {};
+    fakeAnswers.forEach(function (text) {
+        var key = gamesRef.child(pin).child('answers').push().key;
+        res[key] = { text: text, houseLie: true, realAnswer: false };
+    });
+    return res;
+}
+function getRealAnswer(game) {
+    var text = questions_1.getQuestion(game.qids[game.questionIndex]).realAnswer;
+    var realAnswer = {
+        truth: { text: text, houseLie: false, realAnswer: true }
+    };
+    return realAnswer;
+}
+exports.answer = functions.https.onRequest(function (req, res) {
+    cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
+        var pin, pid, answer, game, qid, question, playerAnswer;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    pin = req.body.pin;
+                    pid = req.body.pid;
+                    answer = req.body.answer.toLowerCase();
+                    return [4 /*yield*/, getOnce(gamesRef.child(pin))];
+                case 1:
+                    game = _a.sent();
+                    qid = game.qids[game.questionIndex];
+                    question = questions_1.getQuestion(qid);
+                    if (!(question.realAnswer.toLowerCase() === answer)) return [3 /*break*/, 2];
+                    return [2 /*return*/, res.status(400).send({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' })];
+                case 2:
+                    playerAnswer = {
+                        text: answer,
+                        houseLie: false,
+                        realAnswer: false,
+                    };
+                    return [4 /*yield*/, gamesRef.child(pin).child('answers').child(pid).set(playerAnswer)];
+                case 3:
+                    _a.sent();
+                    res.status(200).send({});
+                    _a.label = 4;
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); });
+});
 function getOnce(ref) {
     return ref.once('value').then(function (s) { return s.val(); });
 }
