@@ -12,7 +12,7 @@ export async function tick(pin) {
 
     if (game.tick === game.state.id) {
         console.error('Game tick = game state');
-        return;
+        return Promise.resolve();
     }
 
     switch (game.state.id) {
@@ -49,7 +49,7 @@ export async function tick(pin) {
             });
 
         case GameState.ScoreBoard:
-            return updateGame(pin, handleScoreBoardState(game));
+            return updateGame(pin, await handleScoreBoardState(game));
     }
 }
 

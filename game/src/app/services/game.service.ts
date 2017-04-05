@@ -44,31 +44,44 @@ export class GameService {
     }
 
     private handleGameState(pin: string, state: GameState) {
-        if (state === GameState.GameStaging) {
-            this.router.navigate(['game-staging', pin]);
-        } else if (state === GameState.RoundIntro) {
-            this.router.navigate(['round-intro', pin]);
-            this.tick(pin, GameState.ShowQuestion, durations[GameState.RoundIntro]);
-        } else if (state === GameState.ShowQuestion) {
-            this.router.navigate(['show-question', pin]);
-            this.tick(pin, GameState.ShowAnswers, durations[GameState.ShowQuestion]);
-        } else if (state === GameState.ShowAnswers) {
-            this.router.navigate(['show-answers', pin]);
-            this.tick(pin, GameState.RevealTheTruth, durations[GameState.ShowAnswers]);
-        } else if (state === GameState.RevealTheTruth) {
-            this.router.navigate(['reveal-the-truth', pin]);
-        } else if (state === GameState.ScoreBoard) {
-            this.router.navigate(['score-board', pin]);
-            this.tick(pin, GameState.ShowQuestion, durations[GameState.ScoreBoard]);
-        } else if (state === GameState.ScoreBoardFinal) {
-            this.router.navigate(['score-board-final', pin]);
+        switch (state) {
+            case GameState.GameStaging:
+                this.router.navigate(['game-staging', pin]);
+                break;
+
+            case GameState.RoundIntro:
+                this.router.navigate(['round-intro', pin]);
+                this.tick(pin, GameState.ShowQuestion, durations[GameState.RoundIntro]);
+                break;
+
+            case GameState.ShowQuestion:
+                this.router.navigate(['show-question', pin]);
+                this.tick(pin, GameState.ShowAnswers, durations[GameState.ShowQuestion]);
+                break;
+
+            case GameState.ShowAnswers:
+                this.router.navigate(['show-answers', pin]);
+                this.tick(pin, GameState.RevealTheTruth, durations[GameState.ShowAnswers]);
+                break;
+
+            case GameState.RevealTheTruth:
+                this.router.navigate(['reveal-the-truth', pin]);
+                break;
+
+            case GameState.ScoreBoard:
+                this.router.navigate(['score-board', pin]);
+                this.tick(pin, GameState.ShowQuestion, durations[GameState.ScoreBoard]);
+                break;
+
+            case GameState.ScoreBoardFinal:
+                this.router.navigate(['score-board-final', pin]);
+                break;
         }
     }
 
     private tick(pin: string, nextState: GameState, duration: number) {
         this.apiService.getGameTimestamp(pin).then(({ timestamp, now }) => {
             const timeRemain = duration - (now - timestamp);
-            console.log('timeRemain', timeRemain);
             this.registeredTimeout[pin] = setTimeout(() => this.apiService.tick(pin, nextState), timeRemain);
         });
     }

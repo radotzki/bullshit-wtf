@@ -1,4 +1,4 @@
-import { GamePlayers, GamePlayer } from './../../game-model';
+import { GamePlayers, GamePlayer, GameState } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
@@ -22,9 +22,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     playersSubscriber: Subscription;
     pin: string;
     presenter: boolean;
-    loading: boolean;
     errorMsg: string;
-    leader: Observable<boolean>;
+    loading: boolean;
+    showStartButton: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -40,8 +40,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             .map(players => players || {})
             .map(toArray)
             .subscribe(players => this.players = players);
-        // this.leader = this.players.map(players => toArray(players)[0].nickname === this.sessionService.user.nickname);
         this.gameService.register(this.pin);
+        this.apiService.gameHasPresenter(this.pin).then(hasPresenter =>
+            this.showStartButton = !hasPresenter || (hasPresenter && this.presenter)
+        );
     }
 
     ngOnDestroy() {
@@ -53,7 +55,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.startGame(this.pin)
+        this.apiService.tick(this.pin, GameState.RoundIntro)
             .catch(err => {
                 this.loading = false;
                 Raven.captureException(new Error(JSON.stringify(err)));

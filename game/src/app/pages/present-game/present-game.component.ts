@@ -33,8 +33,10 @@ export class PresentGameComponent implements OnDestroy, OnInit {
     }
 
     submit() {
-        this.sessionService.presenter = true;
-        this.gameService.register(this.pin);
+        this.apiService.joinAsPresenter(this.pin).then(() => {
+            this.sessionService.presenter = true;
+            this.gameService.register(this.pin);
+        });
     }
 
 }

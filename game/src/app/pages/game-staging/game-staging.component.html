@@ -1,13 +1,13 @@
 <section class="game-staging">
-    <app-game-header [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
-    <!--<app-game-header *ngIf="!leader"></app-game-header>-->
+    <app-game-header *ngIf="showStartButton" [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
+    <app-game-header *ngIf="!showStartButton"></app-game-header>
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
     <div class="game-main">
-         <!--<div *ngIf="!players" class="screen-center">
+         <div *ngIf="!players" class="screen-center">
             <div class="loader"> </div>
-        </div>-->
+        </div>
 
         <div class="spacer is-hidden-mobile"> </div>
 
@@ -18,9 +18,9 @@
             </div>
         </div>
 
-         <!--<div *ngIf="!(players | async).length" class="screen-center waiting-for-players">
+         <div *ngIf="players && !players.length" class="screen-center waiting-for-players">
             Waiting for players..
-        </div>-->
+        </div>
     </div>
 
     <app-game-footer *ngIf="!presenter"></app-game-footer>

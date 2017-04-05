@@ -2,6 +2,7 @@
   "name": "bullshit",
   "description": "",
   "scripts": {
+      "start": "cd game && npm start",
       "deploy:game": "cd game && npm run build && cd .. && firebase deploy --only hosting",
       "deploy:functions": "cd functions && npm run build && cd .. && firebase deploy --only functions"
   },

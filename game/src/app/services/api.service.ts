@@ -15,6 +15,7 @@ const firebase = initializeApp(environment.firebaseConfig);
 @Injectable()
 export class ApiService {
     gamesRef: firebase.database.Reference;
+    timeDiff: Promise<number>;
 
     constructor(
         private http: Http,
@@ -22,6 +23,11 @@ export class ApiService {
         private zone: NgZone,
     ) {
         this.gamesRef = firebase.database().ref('games');
+    }
+
+    gameHasPresenter(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<boolean>(this.gamesRef.child(pin).child('presenter'));
     }
 
     createGame(locale: string, count: number): Promise<{ pin: string }> {
@@ -36,6 +42,11 @@ export class ApiService {
         return pid;
     }
 
+    joinAsPresenter(pin: string) {
+        pin = pin.toUpperCase();
+        return this.gamesRef.child(pin).child('presenter').set(true);
+    }
+
     getPlayers(pin: string) {
         pin = pin.toUpperCase();
         return this.get<GamePlayers>(this.gamesRef.child(pin).child('players'));
@@ -44,11 +55,6 @@ export class ApiService {
     getPlayersObservable(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<GamePlayers>(this.gamesRef.child(pin).child('players'));
-    }
-
-    startGame(pin: string) {
-        pin = pin.toUpperCase();
-        return this.tick(pin, GameState.RoundIntro);
     }
 
     game(pin: string) {
@@ -68,10 +74,15 @@ export class ApiService {
 
     getGameTimestamp(pin: string) {
         pin = pin.toUpperCase();
+
+        if (!this.timeDiff) {
+            this.timeDiff = this.post<{ now: number }>('time').then(({ now }) => Date.now() - now);
+        }
+
         return Promise.all([
             this.get<number>(this.gamesRef.child(pin).child('state').child('timestamp')),
-            this.post<{ now: number }>('time')
-        ]).then(resp => ({ timestamp: resp[0], now: resp[1].now }));
+            this.timeDiff.then(diff => Date.now() - diff)
+        ]).then(resp => ({ timestamp: resp[0], now: resp[1] }));
     }
 
     getQuestion(pin: string) {
@@ -100,16 +111,18 @@ export class ApiService {
     async getAnswers(pin: string) {
         pin = pin.toUpperCase();
         const allAnswers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
-        const answersArray = Object.keys(allAnswers).map(k => allAnswers[k]);
+        let answersArray = Object.keys(allAnswers).map(k => allAnswers[k]);
 
-        if (this.sessionService.presenter) {
-            return answersArray.map(a => a.text);
-        } else {
+        if (!this.sessionService.presenter) {
             const pid = this.sessionService.user.pid;
-            const playerAnswer = allAnswers[pid].text;
-            const otherAnswers = answersArray.filter(a => a.text !== playerAnswer);
-            return otherAnswers.map(a => a.text);
+            const playerAnswer = allAnswers[pid];
+
+            if (playerAnswer) {
+                answersArray = answersArray.filter(a => a.text !== playerAnswer.text);
+            }
         }
+
+        return answersArray.map(a => a.text);
     }
 
     async didAnswerSelected(pin: string) {
@@ -127,7 +140,12 @@ export class ApiService {
 
     tick(pin: string, gameState: GameState) {
         pin = pin.toUpperCase();
-        return this.gamesRef.child(pin).child('tick').set(gameState);
+
+        return this.gameHasPresenter(pin).then(hasPresenter => {
+            if (!hasPresenter || (hasPresenter && this.sessionService.presenter)) {
+                return this.gamesRef.child(pin).child('tick').set(gameState);
+            }
+        });
     }
 
     async getAggregatedAnswers(pin: string) {
