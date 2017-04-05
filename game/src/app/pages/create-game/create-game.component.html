@@ -1,0 +1,58 @@
+<div class="arcade-form create-game">
+    <form (submit)="submit()" novalidate>
+
+        <div class="title-area">
+            <h1 class="title" routerLink="/">Bullshit</h1>
+            <h3 class="sub-title" *ngIf="!chooseMode">Create new game</h3>
+            <h3 class="sub-title" *ngIf="chooseMode">What is this device?</h3>
+            <div class="separator">♦</div>
+        </div>
+
+        <div class="controls" *ngIf="!chooseMode">
+            <label>Language:</label>
+            <p class="control">
+                <label class="radio vertical">
+                <input type="radio" name="locale" [value]="'en'" [(ngModel)]="locale">
+                English
+            </label>
+                <label class="radio vertical">
+                <input type="radio" name="locale" [value]="'he'" [(ngModel)]="locale">
+                Hebrew
+            </label>
+            </p>
+
+            <label>Length:</label>
+            <p class="control">
+                <label class="radio vertical">
+                <input type="radio" name="length" [value]="5" [(ngModel)]="length">
+                5 questions
+            </label>
+                <label class="radio vertical">
+                <input type="radio" name="length" [value]="7" [(ngModel)]="length">
+                7 questions
+            </label>
+                <label class="radio vertical">
+                <input type="radio" name="length" [value]="9" [(ngModel)]="length">
+                9 questions
+            </label>
+            </p>
+
+            <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
+        </div>
+
+        <p class="control action" *ngIf="!chooseMode">
+            <button class="button is-primary is-medium is-fullwidth" type="submit" [class.is-loading]="loading">CREATE</button>
+        </p>
+
+
+        <div class="choose-mode" *ngIf="chooseMode">
+            <p class="control presenter-mode">
+                <button class="button is-primary is-medium is-fullwidth" routerLink="/present-game" [queryParams]="{ pin: pin }">PRESENTER</button>
+            </p>
+
+            <p class="control">
+                <button class="button is-primary is-medium is-fullwidth" routerLink="/join-game" [queryParams]="{ pin: pin }">PLAYER</button>
+            </p>
+        </div>
+    </form>
+</div>

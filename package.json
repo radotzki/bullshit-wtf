@@ -1,52 +1,12 @@
 {
-  "name": "client",
-  "version": "0.0.0",
-  "license": "MIT",
+  "name": "bullshit",
+  "description": "",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve --host 0.0.0.0",
-    "build": "ng build -prod",
-    "lint": "ng lint",
-    "deploy": "npm run lint && npm run build && cp dist/index.html dist/200.html && surge dist bullshit.wtf",
-    "deploy:functions": "cd functions && npm run compile && cd .. && firebase deploy --only functions"
+      "deploy:game": "cd game && npm run build && cd .. && firebase deploy --only hosting",
+      "deploy:functions": "cd functions && npm run build && cd .. && firebase deploy --only functions"
   },
   "private": true,
-  "dependencies": {
-    "@angular/common": "^4.0.0",
-    "@angular/compiler": "^4.0.0",
-    "@angular/core": "^4.0.0",
-    "@angular/forms": "^4.0.0",
-    "@angular/http": "^4.0.0",
-    "@angular/platform-browser": "^4.0.0",
-    "@angular/platform-browser-dynamic": "^4.0.0",
-    "@angular/router": "^4.0.0",
-    "bulma": "^0.3.2",
-    "core-js": "^2.4.1",
-    "firebase": "^3.7.2",
-    "raven-js": "^3.12.1",
-    "rxjs": "^5.1.0",
-    "zone.js": "^0.8.4"
-  },
   "devDependencies": {
-    "@angular/cli": "1.0.0",
-    "@angular/compiler-cli": "^4.0.0",
-    "@types/jasmine": "2.5.38",
-    "@types/node": "~6.0.60",
-    "codelyzer": "~2.0.0",
-    "firebase-server": "^0.9.1",
-    "firebase-tools": "^3.5.0",
-    "jasmine-core": "~2.5.2",
-    "jasmine-spec-reporter": "~3.2.0",
-    "karma": "~1.4.1",
-    "karma-chrome-launcher": "~2.0.0",
-    "karma-cli": "~1.0.1",
-    "karma-coverage-istanbul-reporter": "^0.2.0",
-    "karma-jasmine": "~1.1.0",
-    "karma-jasmine-html-reporter": "^0.2.2",
-    "protractor": "~5.1.0",
-    "surge": "^0.18.0",
-    "ts-node": "~2.0.0",
-    "tslint": "~4.4.2",
-    "typescript": "^2.1.0"
+    "firebase-tools": "^3.5.0"
   }
 }

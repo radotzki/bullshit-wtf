@@ -1,0 +1,44 @@
+<section class="show-answers">
+    <app-game-header></app-game-header>
+    <progress *ngIf="answers" class="progress is-primary" [value]="10" [max]="100"></progress>
+
+    <div class="game-main">
+        <div *ngIf="!answers" class="screen-center">
+            <div class="loader"> </div>
+        </div>
+
+        <div *ngIf="answers && presenter" class="presenter">
+            <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+
+            <div class="columns is-multiline">
+                <p *ngFor="let answer of answers" class="column is-one-third-tablet is-one-third-desktop">
+                    <button class="button is-primary is-fullwidth answer" [class.rtl]="rtl">
+                        {{ answer | uppercase }}
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <div *ngIf="answers && !answerSelected && !presenter">
+            <p *ngFor="let answer of answers" class="control">
+                <button class="button is-primary is-fullwidth answer" (click)="submit(answer)" [disabled]="loading" [class.rtl]="rtl">
+                    {{ answer | uppercase }}
+                </button>
+            </p>
+
+            <p class="control">
+                <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">WHAT WAS THE QUESTION AGAIN?</button>
+            </p>
+
+            <p *ngIf="showQuestion" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+        </div>
+
+        <div *ngIf="answerSelected" class="screen-center">
+            Let's wait for your friends
+        </div>
+
+        <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
+    </div>
+
+    <app-game-footer *ngIf="!presenter"></app-game-footer>
+</section>

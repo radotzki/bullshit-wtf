@@ -1,1 +1,1 @@
-/Users/iradotzki/Workspaces/bullshit2/client/src/app/game-model.ts
+/Users/iradotzki/Workspaces/bullshit-wtf/game/src/app/game-model.ts

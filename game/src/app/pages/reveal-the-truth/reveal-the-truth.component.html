@@ -1,0 +1,45 @@
+<section class="revael-the-truth">
+    <app-game-header></app-game-header>
+
+    <div class="game-main">
+        <div *ngIf="!displayAnswers" class="screen-center">
+            <div class="loader"> </div>
+        </div>
+
+        <div *ngIf="displayAnswers" class="scene">
+            <div class="creators">
+                <span *ngIf="!displayAnswers[displayIndex].realAnswer && !displayAnswers[displayIndex].houseLie">
+                    <div class="creator" *ngFor="let creator of displayAnswers[displayIndex].creators">
+                        <img [src]="'/assets/' + creator">
+                        <span *ngIf="presenter || displayAnswers[displayIndex].creators.length < 4"> {{ creator }} </span>
+                    </div>
+                </span>
+                <div class="the-truth" *ngIf="displayAnswers[displayIndex].realAnswer">
+                    <span> THE TRUTH </span>
+                </div>
+                <div class="decoy" *ngIf="displayAnswers[displayIndex].houseLie">
+                    <span> Home Grown Bullshit </span>
+                </div>
+                <p *ngIf="!displayAnswers[displayIndex].realAnswer && !displayAnswers[displayIndex].houseLie && displayAnswers[displayIndex].points" class="points-top"> {{ displayAnswers[displayIndex].points | bsPoints }} </p>
+            </div>
+
+            <p class="control answer">
+                <button type="submit" class="button is-info is-fullwidth" [class.rtl]="rtl">
+                    {{displayAnswers[displayIndex].text | uppercase}}
+                </button>
+            </p>
+
+            <div class="selectors">
+                <div class="selector" *ngFor="let selector of displayAnswers[displayIndex].selectors">
+                    <img [src]="'/assets/' + selector">
+                    <span *ngIf="presenter || displayAnswers[displayIndex].selectors.length < 4"> {{ selector }} </span>
+                </div>
+                <p *ngIf="(displayAnswers[displayIndex].realAnswer || displayAnswers[displayIndex].houseLie) && displayAnswers[displayIndex].points" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
+                    {{ displayAnswers[displayIndex].points | bsPoints }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <app-game-footer *ngIf="!presenter"></app-game-footer>
+</section>
