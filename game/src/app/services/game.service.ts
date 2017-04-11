@@ -69,6 +69,7 @@ export class GameService {
 
             case GameState.ScoreBoard:
                 this.router.navigate(['score-board', pin]);
+                // The next state can be either ShowQuestion or ScoreBoardFinal
                 this.tick(pin, 999, durations[GameState.ScoreBoard]);
                 break;
 

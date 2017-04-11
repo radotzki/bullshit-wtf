@@ -1,7 +1,7 @@
 <div class="game-header" [style.visibility]="loading ? 'hidden' : 'visible'" [class.presenter]="presenter">
     <span *ngIf="!gameOver && !registration" class="pin"> PIN: {{pin | uppercase}} </span>
 
-    <a *ngIf="gameOver" class="button is-primary is-outlined" routerLink="/">
+    <a *ngIf="gameOver" class="button is-primary is-outlined" (click)="home()">
         <span class="icon" [class.is-medium]="presenter"> <i class="fa fa-home"></i> </span>
     </a>
 

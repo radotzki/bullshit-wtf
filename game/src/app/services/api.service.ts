@@ -162,6 +162,11 @@ export class ApiService {
         return { players, answers, answerSelections };
     }
 
+    playerScore(pin: string, pid: string) {
+        pin = pin.toUpperCase();
+        return this.observe<number>(this.gamesRef.child(pin).child('players').child(pid).child('score'));
+    }
+
     private post<T>(url: string, body: Object = {}): Promise<T> {
         return this.http.post(environment.cloudfunctions + url, body)
             .toPromise()

@@ -1,6 +1,7 @@
+import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { GameState } from './../../game-model';
@@ -26,6 +27,8 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private sessionService: SessionService,
         private apiService: ApiService,
+        private router: Router,
+        private gameService: GameService,
     ) { }
 
     ngOnInit() {
@@ -80,5 +83,10 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
 
     getCurrentRoundIndex() {
         this.apiService.getRoundIndex(this.pin).then(ridx => this.text = `ROUND ${ridx + 1}`);
+    }
+
+    home() {
+        this.gameService.unregister();
+        this.router.navigate(['/']);
     }
 }
