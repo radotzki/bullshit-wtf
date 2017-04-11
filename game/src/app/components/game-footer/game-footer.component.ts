@@ -22,9 +22,9 @@ export class GameFooterComponent implements OnInit {
 
     ngOnInit() {
         const pin = this.activatedRoute.snapshot.params['pin'];
-        this.name = this.sessionService.user.nickname;
 
         if (!this.sessionService.presenter) {
+            this.name = this.sessionService.user.nickname;
             this.score = this.apiService.playerScore(pin, this.sessionService.user.pid);
         }
     }

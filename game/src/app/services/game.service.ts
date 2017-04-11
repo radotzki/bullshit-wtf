@@ -43,6 +43,8 @@ export class GameService {
     }
 
     private handleGameState(pin: string, state: GameState) {
+        this.clearTimer();
+
         switch (state) {
             case GameState.GameStaging:
                 this.router.navigate(['game-staging', pin]);
@@ -81,8 +83,6 @@ export class GameService {
 
     private tick(pin: string, nextState: GameState, duration: number) {
         this.apiService.getGameTimestamp(pin).then(({ timestamp, now }) => {
-            this.clearTimer();
-            // TODO: clear timer after side effect tick
             const timeRemain = duration - (now - timestamp);
             this.timeout = setTimeout(() => this.apiService.tick(pin, nextState), timeRemain);
         });
