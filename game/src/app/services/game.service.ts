@@ -1,15 +1,8 @@
 import { Subscription } from 'rxjs/Subscription';
 import { GameScheme, GameState } from './../game-model';
-import { environment } from './../../environments/environment';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/do';
-import 'rxjs/add/observable/fromEvent';
-import 'rxjs/add/observable/merge';
-import 'rxjs/add/observable/of';
-import 'rxjs/add/observable/fromPromise';
 
 export const durations = {
     [GameState.RoundIntro]: 5000,

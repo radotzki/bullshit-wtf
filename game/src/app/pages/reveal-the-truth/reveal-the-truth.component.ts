@@ -79,7 +79,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             if ((answer.realAnswer || answer.houseLie) && answerSelection[0]) {
                 points = answerSelection[0].score;
             } else {
-                points = answer.score
+                points = answer.score;
             }
 
             const creators = answersArray
@@ -102,7 +102,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         return {
             nickname: playersArray.find(p => p.pid === pid).nickname,
             picture: `avatar${playersArray.findIndex(p => p.pid === pid)}.png`,
-        }
+        };
     }
 
 }
