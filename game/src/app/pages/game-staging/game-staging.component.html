@@ -1,11 +1,11 @@
-<section class="game-staging">
+<section class="game-container game-staging">
     <app-game-header *ngIf="showStartButton" [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
     <app-game-header *ngIf="!showStartButton"></app-game-header>
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
     <div class="game-main">
-         <div *ngIf="!players" class="screen-center">
+        <div *ngIf="!players" class="screen-center">
             <div class="loader"> </div>
         </div>
 
@@ -18,7 +18,7 @@
             </div>
         </div>
 
-         <div *ngIf="players && !players.length" class="screen-center waiting-for-players">
+        <div *ngIf="players && !players.length" class="screen-center waiting-for-players">
             Waiting for players..
         </div>
     </div>
