@@ -3,30 +3,23 @@ import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export async function newGame(locale, count) {
-    // TODO: transaction
-    const gameCounter = await get<number>(gameCounterRef) + 1;
-    const gamePin = generateGameName(gameCounter);
-    const questions = randomQuestions(locale, count);
-    const game: GameScheme = {
-        state: {
-            id: GameState.GameStaging,
-            timestamp: Date.now(),
-        },
-        locale,
-        timestamp: Date.now(),
-        roundIndex: 0,
-        questionIndex: 0,
-        players: {},
-        totalQ: count,
-        qids: questions,
-        tick: 0,
-        presenter: false,
-    };
+    return new Promise((resolve, reject) => {
+        gameCounterRef.transaction(
+            (current) => current + 1,
+            (error, committed, snapshot) => {
+                if (error) {
+                    return reject(error);
+                }
 
-    await gameCounterRef.set(gameCounter);
-    await gamesRef.child(gamePin).set(game);
+                const gameCounter = snapshot.val();
+                const gamePin = generateGameName(gameCounter);
+                const questions = randomQuestions(locale, count);
+                const game = emptyGame(locale, count, questions);
 
-    return gamePin;
+                gamesRef.child(gamePin).set(game).then(() => resolve(gamePin));
+            },
+        )
+    });
 }
 
 function generateGameName(gameCounter) {
@@ -39,4 +32,21 @@ function leftPad(gameCounter: string) {
     }
 
     return gameCounter;
+}
+
+function emptyGame(locale: string, count: number, questions: string[]): GameScheme {
+    return {
+        state: {
+            id: GameState.GameStaging,
+            timestamp: Date.now(),
+        },
+        locale,
+        timestamp: Date.now(),
+        roundIndex: 0,
+        questionIndex: 0,
+        totalQ: count,
+        qids: questions,
+        tick: 0,
+        presenter: false,
+    }
 }
