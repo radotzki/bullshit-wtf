@@ -35,11 +35,8 @@ export class ApiService {
     }
 
     async join(pin: string, nickname: string) {
-        // TODO: 8 players max
         pin = pin.toUpperCase();
-        const pid = this.gamesRef.child(pin).child('players').push().key;
-        await this.gamesRef.child(pin).child('players').child(pid).set({ nickname, score: 0 });
-        return pid;
+        return this.post<{pid: string}>(`join`, { pin, nickname }).then(resp => resp.pid);
     }
 
     joinAsPresenter(pin: string) {

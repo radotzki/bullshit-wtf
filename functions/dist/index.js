@@ -42,6 +42,7 @@ var tick_1 = require("./controllers/tick");
 var answer_1 = require("./controllers/answer");
 var new_game_1 = require("./controllers/new-game");
 var on_answer_selection_1 = require("./controllers/on-answer-selection");
+var join_1 = require("./controllers/join");
 exports.time = functions.https.onRequest(function (req, res) {
     cors(req, res, function () {
         res.send({ now: Date.now() });
@@ -83,6 +84,29 @@ exports.answer = functions.https.onRequest(function (req, res) {
                 case 3:
                     e_1 = _a.sent();
                     return [2 /*return*/, res.status(400).send(e_1)];
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); });
+});
+exports.join = functions.https.onRequest(function (req, res) {
+    cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
+        var pin, nickname, pid, e_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    pin = req.body.pin;
+                    nickname = req.body.nickname;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, join_1.join(pin, nickname)];
+                case 2:
+                    pid = _a.sent();
+                    return [2 /*return*/, res.status(200).send({ pid: pid })];
+                case 3:
+                    e_2 = _a.sent();
+                    return [2 /*return*/, res.status(400).send(e_2)];
                 case 4: return [2 /*return*/];
             }
         });

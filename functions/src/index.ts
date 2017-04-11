@@ -5,6 +5,7 @@ import { tick } from './controllers/tick';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
 import { onAnswerSelection } from './controllers/on-answer-selection';
+import { join } from './controllers/join';
 
 exports.time = functions.https.onRequest((req, res) => {
     cors(req, res, () => {
@@ -30,6 +31,20 @@ exports.answer = functions.https.onRequest((req, res) => {
         try {
             await answer(pin, pid, playerAnswer);
             return res.status(200).send({});
+        } catch (e) {
+            return res.status(400).send(e);
+        }
+    });
+});
+
+exports.join = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        const pin = req.body.pin;
+        const nickname = req.body.nickname;
+
+        try {
+            const pid = await join(pin, nickname);
+            return res.status(200).send({ pid });
         } catch (e) {
             return res.status(400).send(e);
         }
