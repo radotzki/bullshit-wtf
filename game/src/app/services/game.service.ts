@@ -13,7 +13,7 @@ import 'rxjs/add/observable/fromPromise';
 
 export const durations = {
     [GameState.RoundIntro]: 5000,
-    [GameState.ShowQuestion]: 20000,
+    [GameState.ShowQuestion]: 25000,
     [GameState.ShowAnswers]: 20000,
     [GameState.ScoreBoard]: 5000,
 };
