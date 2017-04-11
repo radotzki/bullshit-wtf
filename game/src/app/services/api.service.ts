@@ -36,7 +36,7 @@ export class ApiService {
 
     async join(pin: string, nickname: string) {
         pin = pin.toUpperCase();
-        return this.post<{pid: string}>(`join`, { pin, nickname }).then(resp => resp.pid);
+        return this.post<{ pid: string }>(`join`, { pin, nickname }).then(resp => resp.pid);
     }
 
     joinAsPresenter(pin: string) {
@@ -113,18 +113,20 @@ export class ApiService {
     async getAnswers(pin: string) {
         pin = pin.toUpperCase();
         const allAnswers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
-        let answersArray = Object.keys(allAnswers || {}).map(k => allAnswers[k]);
+        let answersArray = Object.keys(allAnswers || {})
+            .map(k => allAnswers[k].text)
+            .filter((v, i, a) => a.indexOf(v) === i);
 
         if (!this.sessionService.presenter) {
             const pid = this.sessionService.user.pid;
             const playerAnswer = allAnswers[pid];
 
             if (playerAnswer) {
-                answersArray = answersArray.filter(a => a.text !== playerAnswer.text);
+                answersArray = answersArray.filter(a => a !== playerAnswer.text);
             }
         }
 
-        return answersArray.map(a => a.text);
+        return answersArray;
     }
 
     async didAnswerSelected(pin: string) {
