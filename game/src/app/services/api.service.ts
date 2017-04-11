@@ -115,7 +115,8 @@ export class ApiService {
         const allAnswers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
         let answersArray = Object.keys(allAnswers || {})
             .map(k => allAnswers[k].text)
-            .filter((v, i, a) => a.indexOf(v) === i);
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .sort((a, b) => a > b ? 1 : -1);
 
         if (!this.sessionService.presenter) {
             const pid = this.sessionService.user.pid;
@@ -147,7 +148,6 @@ export class ApiService {
 
         return this.gameHasPresenter(pin).then(hasPresenter => {
             if (!hasPresenter || (hasPresenter && this.sessionService.presenter)) {
-                console.log('tick', gameState);
                 return this.gamesRef.child(pin).child('tick').set(gameState);
             }
         });
@@ -164,6 +164,16 @@ export class ApiService {
     playerScore(pin: string, pid: string) {
         pin = pin.toUpperCase();
         return this.observe<number>(this.gamesRef.child(pin).child('players').child(pid).child('score'));
+    }
+
+    fork(pin: string) {
+        pin = pin.toUpperCase();
+        return this.post<{ pid: string }>(`fork`, { pin });
+    }
+
+    getForkGame(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<string>(this.gamesRef.child(pin).child('fork'));
     }
 
     private post<T>(url: string, body: Object = {}): Promise<T> {

@@ -25,6 +25,7 @@ export interface GameScheme {
     qids: { [id: number]: string };
     tick: number;
     presenter: boolean;
+    fork?: string;
 }
 
 export interface GamePlayers {

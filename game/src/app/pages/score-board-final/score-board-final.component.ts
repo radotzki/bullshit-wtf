@@ -1,17 +1,20 @@
+import { Subscription } from 'rxjs/Subscription';
 import { SessionService } from './../../services/session.service';
 import * as Raven from 'raven-js';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 
 @Component({
     selector: 'app-score-board-final',
     templateUrl: './score-board-final.component.html',
     styleUrls: ['./score-board-final.component.scss']
 })
-export class ScoreBoardFinalComponent implements OnInit {
+export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     pin: string;
+    loading: boolean;
+    forkGameSubscription: Subscription;
     displayPlayers;
 
     constructor(
@@ -30,6 +33,22 @@ export class ScoreBoardFinalComponent implements OnInit {
                 .map((p, i) => Object.assign(p, { picture: `avatar${i}.png` }))
                 .sort((a, b) => a.score < b.score ? 1 : -1);
         });
+
+        this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(fork => {
+            if (fork) {
+                this.gameService.unregister();
+                this.gameService.register(fork);
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.forkGameSubscription.unsubscribe();
+    }
+
+    replay() {
+        this.loading = true;
+        this.apiService.fork(this.pin);
     }
 
 }

@@ -3,26 +3,25 @@ import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export async function newGame(locale, count) {
+    return incGameCounter().then(gameCounter => {
+        const gamePin = generateGameName(gameCounter);
+        const questions = randomQuestions(locale, count);
+        const game = emptyGame(locale, count, questions);
+
+        return gamesRef.child(gamePin).set(game).then(() => gamePin);
+    });
+}
+
+export function incGameCounter() {
     return new Promise((resolve, reject) => {
         gameCounterRef.transaction(
             (current) => current + 1,
-            (error, committed, snapshot) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                const gameCounter = snapshot.val();
-                const gamePin = generateGameName(gameCounter);
-                const questions = randomQuestions(locale, count);
-                const game = emptyGame(locale, count, questions);
-
-                gamesRef.child(gamePin).set(game).then(() => resolve(gamePin));
-            },
+            (error, committed, snapshot) => error ? reject(error) : resolve(snapshot.val()),
         )
     });
 }
 
-function generateGameName(gameCounter) {
+export function generateGameName(gameCounter) {
     return leftPad((gameCounter).toString(26).replace(/\d/g, d => 'qrstuvwxyz'[d]).toUpperCase());
 }
 

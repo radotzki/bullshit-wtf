@@ -6,6 +6,7 @@ import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
 import { onAnswerSelection } from './controllers/on-answer-selection';
 import { join } from './controllers/join';
+import { fork } from "./controllers/fork";
 
 exports.time = functions.https.onRequest((req, res) => {
     cors(req, res, () => {
@@ -19,6 +20,19 @@ exports.newGame = functions.https.onRequest((req, res) => {
         const count = req.body.count;
         const pin = await newGame(locale, count);
         res.send({ pin });
+    });
+});
+
+exports.fork = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        const pin = req.body.pin;
+
+        try {
+            await fork(pin);
+            return res.status(200).send({});
+        } catch (e) {
+            return res.status(400).send(e);
+        }
     });
 });
 

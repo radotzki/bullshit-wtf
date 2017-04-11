@@ -1,5 +1,5 @@
 <section class="game-container score-board-final">
-    <app-game-header></app-game-header>
+    <app-game-header [button]="'REPLAY'" [buttonLoading]="loading" (onClick)="replay()"></app-game-header>
 
     <div class="game-main">
         <div *ngIf="!displayPlayers" class="screen-center">

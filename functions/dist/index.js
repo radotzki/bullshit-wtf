@@ -43,6 +43,7 @@ var answer_1 = require("./controllers/answer");
 var new_game_1 = require("./controllers/new-game");
 var on_answer_selection_1 = require("./controllers/on-answer-selection");
 var join_1 = require("./controllers/join");
+var fork_1 = require("./controllers/fork");
 exports.time = functions.https.onRequest(function (req, res) {
     cors(req, res, function () {
         res.send({ now: Date.now() });
@@ -65,9 +66,31 @@ exports.newGame = functions.https.onRequest(function (req, res) {
         });
     }); });
 });
+exports.fork = functions.https.onRequest(function (req, res) {
+    cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
+        var pin, e_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    pin = req.body.pin;
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, fork_1.fork(pin)];
+                case 2:
+                    _a.sent();
+                    return [2 /*return*/, res.status(200).send({})];
+                case 3:
+                    e_1 = _a.sent();
+                    return [2 /*return*/, res.status(400).send(e_1)];
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); });
+});
 exports.answer = functions.https.onRequest(function (req, res) {
     cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
-        var pin, pid, playerAnswer, e_1;
+        var pin, pid, playerAnswer, e_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -82,8 +105,8 @@ exports.answer = functions.https.onRequest(function (req, res) {
                     _a.sent();
                     return [2 /*return*/, res.status(200).send({})];
                 case 3:
-                    e_1 = _a.sent();
-                    return [2 /*return*/, res.status(400).send(e_1)];
+                    e_2 = _a.sent();
+                    return [2 /*return*/, res.status(400).send(e_2)];
                 case 4: return [2 /*return*/];
             }
         });
@@ -91,7 +114,7 @@ exports.answer = functions.https.onRequest(function (req, res) {
 });
 exports.join = functions.https.onRequest(function (req, res) {
     cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
-        var pin, nickname, pid, e_2;
+        var pin, nickname, pid, e_3;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -105,8 +128,8 @@ exports.join = functions.https.onRequest(function (req, res) {
                     pid = _a.sent();
                     return [2 /*return*/, res.status(200).send({ pid: pid })];
                 case 3:
-                    e_2 = _a.sent();
-                    return [2 /*return*/, res.status(400).send(e_2)];
+                    e_3 = _a.sent();
+                    return [2 /*return*/, res.status(400).send(e_3)];
                 case 4: return [2 /*return*/];
             }
         });
