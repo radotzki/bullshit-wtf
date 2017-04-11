@@ -35,14 +35,14 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.gameSubscription = this.apiService.gameState(this.pin).subscribe(this.onGameChange.bind(this));
+        this.gameSubscription = this.apiService.gameState(this.pin).subscribe(this.onStateChange.bind(this));
     }
 
     ngOnDestroy() {
         this.gameSubscription.unsubscribe();
     }
 
-    onGameChange(state: GameState) {
+    onStateChange(state: GameState) {
         switch (state) {
             case GameState.GameStaging:
                 this.registration = true;
