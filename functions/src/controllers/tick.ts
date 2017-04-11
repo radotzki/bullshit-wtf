@@ -3,8 +3,8 @@ import { GameScheme, Answer, Answers, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
-const pointsForBullshitting = [800, 1200, 2500];
-const pointsForHouseLie = [-800, -1200, -2500];
+const pointsForBullshitting = [500, 750, 1000];
+const pointsForHouseLie = [-500, -750, -1000];
 
 export async function tick(pin) {
     pin = pin.toUpperCase();

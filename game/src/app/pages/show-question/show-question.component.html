@@ -1,6 +1,7 @@
 <section class="game-container show-question">
     <app-game-header></app-game-header>
-    <progress *ngIf="question && past && duration" class="progress is-primary" [value]="past" [max]="duration"></progress>
+    <progress *ngIf="question && past && duration" class="progress" [class.is-primary]="duration - past >= 5000" [class.is-danger]="duration - past < 5000"
+        [value]="past" [max]="duration"></progress>
 
     <div class="game-main">
         <div *ngIf="!question" class="screen-center">
@@ -15,8 +16,8 @@
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <p class="control">
-                <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text" name="answer"
-                    [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off">
+                <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text" name="answer" [(ngModel)]="answer"
+                    maxlength="40" autofocus autocomplete="off">
                 <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try something else</span>
             </p>
 
