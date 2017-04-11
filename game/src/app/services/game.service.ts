@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs/Subscription';
 import { GameScheme, GameState } from './../game-model';
 import { environment } from './../../environments/environment';
 import { ApiService } from './api.service';
@@ -10,17 +11,17 @@ import 'rxjs/add/observable/merge';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/observable/fromPromise';
 
-const durations = {
+export const durations = {
     [GameState.RoundIntro]: 5000,
-    [GameState.ShowQuestion]: 30000,
-    [GameState.ShowAnswers]: 30000,
+    [GameState.ShowQuestion]: 20000,
+    [GameState.ShowAnswers]: 20000,
     [GameState.ScoreBoard]: 5000,
 };
 
 @Injectable()
 export class GameService {
-    private registeredGames = {};
-    private registeredTimeout = {};
+    private game: Subscription;
+    private timeout;
 
     constructor(
         private router: Router,
@@ -28,18 +29,16 @@ export class GameService {
     ) { }
 
     register(pin: string) {
-        if (!this.registeredGames[pin]) {
-            this.registeredGames[pin] =
-                this.apiService.gameState(pin).subscribe(state => this.handleGameState(pin, state));
+        if (!this.game) {
+            this.game = this.apiService.gameState(pin).subscribe(state => this.handleGameState(pin, state));
         }
     }
 
-    unregister(pin: string) {
-        if (pin && this.registeredGames[pin]) {
-            this.registeredGames[pin].unsubscribe();
-            this.registeredGames[pin] = undefined;
-            clearTimeout(this.registeredTimeout[pin]);
-            this.registeredTimeout[pin] = undefined;
+    unregister() {
+        if (this.game) {
+            this.game.unsubscribe();
+            this.game = undefined;
+            this.clearTimer();
         }
     }
 
@@ -70,7 +69,7 @@ export class GameService {
 
             case GameState.ScoreBoard:
                 this.router.navigate(['score-board', pin]);
-                this.tick(pin, GameState.ShowQuestion, durations[GameState.ScoreBoard]);
+                this.tick(pin, 999, durations[GameState.ScoreBoard]);
                 break;
 
             case GameState.ScoreBoardFinal:
@@ -81,8 +80,17 @@ export class GameService {
 
     private tick(pin: string, nextState: GameState, duration: number) {
         this.apiService.getGameTimestamp(pin).then(({ timestamp, now }) => {
+            this.clearTimer();
+            // TODO: clear timer after side effect tick
             const timeRemain = duration - (now - timestamp);
-            this.registeredTimeout[pin] = setTimeout(() => this.apiService.tick(pin, nextState), timeRemain);
+            this.timeout = setTimeout(() => this.apiService.tick(pin, nextState), timeRemain);
         });
+    }
+
+    private clearTimer() {
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+            this.timeout = undefined;
+        }
     }
 }

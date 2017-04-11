@@ -32,30 +32,53 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
-        this.gameSubscription = this.apiService.game(this.pin).subscribe(this.onGameChange.bind(this));
+        this.gameSubscription = this.apiService.gameState(this.pin).subscribe(this.onGameChange.bind(this));
     }
 
     ngOnDestroy() {
         this.gameSubscription.unsubscribe();
     }
 
-    onGameChange(game) {
-        if (game.state === GameState.RoundIntro) {
-            if (game.currentQ === 0) {
-                this.text = 'ROUND 1';
-            } else if (game.currentQ !== game.totalQ) {
-                this.text = 'ROUND 2';
-            } else {
-                this.text = 'ROUND 3';
-            }
-        } else if (game.state === GameState.GameStaging && this.presenter) {
-            this.registration = true;
-        } else if (game.state === GameState.ScoreBoardFinal) {
-            this.gameOver = true;
-        } else if ([GameState.ShowQuestion, GameState.ShowAnswers, GameState.RevealTheTruth].includes(game.state)) {
-            this.text = `${game.currentQ + 1} OF ${game.totalQ}`;
+    onGameChange(state: GameState) {
+        switch (state) {
+            case GameState.GameStaging:
+                this.registration = true;
+                break;
+
+            case GameState.RoundIntro:
+                this.getCurrentRoundIndex();
+                break;
+
+            case GameState.ShowQuestion:
+                this.getCurrentQuestionIndex();
+                break;
+
+            case GameState.ShowAnswers:
+                this.getCurrentQuestionIndex();
+                break;
+
+            case GameState.RevealTheTruth:
+                this.getCurrentQuestionIndex();
+                break;
+
+            case GameState.ScoreBoardFinal:
+                this.gameOver = true;
+                break;
         }
 
         this.loading = false;
+    }
+
+    getCurrentQuestionIndex() {
+        const qidxPromise = this.apiService.getQuestionIndex(this.pin);
+        const totalQPromise = this.apiService.getTotalQuestions(this.pin);
+
+        Promise
+            .all([qidxPromise, totalQPromise])
+            .then(([qidx, totalQ]) => this.text = `${qidx + 1} OF ${totalQ}`);
+    }
+
+    getCurrentRoundIndex() {
+        this.apiService.getRoundIndex(this.pin).then(ridx => this.text = `ROUND ${ridx + 1}`);
     }
 }

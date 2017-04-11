@@ -2,7 +2,7 @@ import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 const roundPoints = [
     { truth: 1000, bullshit: 800 },
@@ -15,10 +15,10 @@ const roundPoints = [
     templateUrl: './round-intro.component.html',
     styleUrls: ['./round-intro.component.scss']
 })
-export class RoundIntroComponent implements OnInit, OnDestroy {
+export class RoundIntroComponent implements OnInit {
     pin: string;
     presenter: boolean;
-    points = {};
+    points: { truth?: number, bullshit?: number } = {};
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -34,10 +34,6 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         this.apiService.getRoundIndex(this.pin).then(roundIndex => {
             this.points = roundPoints[roundIndex];
         });
-    }
-
-    ngOnDestroy() {
-        this.gameService.unregister(this.pin);
     }
 
 }

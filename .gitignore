@@ -1,5 +1,9 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# symlinked Files
+game/src/app/game-model.ts
+functions/src/game-model.ts
+
 # compiled output
 game/dist
 functions/dist

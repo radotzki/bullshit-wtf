@@ -1,14 +1,14 @@
 <section class="score-board-final">
-    <app-game-header *ngIf="!leader"></app-game-header>
+    <app-game-header></app-game-header>
 
     <div class="game-main">
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
-        <div *ngIf="!game" class="screen-center">
+        <div *ngIf="!displayPlayers" class="screen-center">
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="game">
+        <div *ngIf="displayPlayers">
             <div class="box player" *ngFor="let player of displayPlayers">
                 <span class="left">
                     <img class="picture" [src]="'/assets/' + player.picture">

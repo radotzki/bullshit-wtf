@@ -5,7 +5,7 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import 'rxjs/add/operator/first';
-import { GameState } from "../../game-model";
+import { GameState } from '../../game-model';
 
 const housePicture = 'homegrown-bullshit.png';
 
@@ -35,15 +35,12 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
         this.createDisplayAnswers().then(displayArray => {
-            console.log('displayArray', displayArray);
             this.displayAnswers = displayArray;
             this.show();
         });
     }
 
     ngOnDestroy() {
-        this.gameService.unregister(this.pin);
-
         if (this.displayInterval) {
             clearInterval(this.displayInterval);
         }
@@ -62,8 +59,8 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     async createDisplayAnswers() {
         const { players, answers, answerSelections } = await this.apiService.getAggregatedAnswers(this.pin);
-        const answersArray = Object.keys(answers).map(k => Object.assign({}, { pid: k }, answers[k]));
-        const answerSelectionsArray = Object.keys(answerSelections).map(k => Object.assign({}, { pid: k }, answerSelections[k]));
+        const answersArray = Object.keys(answers || {}).map(k => Object.assign({}, { pid: k }, answers[k]));
+        const answerSelectionsArray = Object.keys(answerSelections || {}).map(k => Object.assign({}, { pid: k }, answerSelections[k]));
         const res: DisplayItem[] = [];
 
         answersArray.forEach(answer => {
@@ -74,14 +71,21 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
             const selectors = answerSelection.map(a => players[a.pid].nickname);
 
-            if (!selectors.length) {
+            if (!selectors.length && !answer.realAnswer) {
                 return;
+            }
+
+            let points = 0;
+
+            if ((answer.realAnswer || answer.houseLie) && answerSelection[0]) {
+                points = answerSelection[0].score;
+            } else {
+                points = answer.score
             }
 
             const creators = answersArray
                 .filter(a => a.text === answer.text)
                 .map(a => a.houseLie || a.realAnswer ? '' : players[a.pid].nickname);
-            const points = (answer.realAnswer || answer.houseLie) ? answerSelection[0].score : answer.score;
             const text = answer.text;
             const realAnswer = answer.realAnswer;
             const houseLie = answer.houseLie;

@@ -9,5 +9,5 @@
 
     <span *ngIf="text" class="text"> {{text | uppercase}} </span>
 
-    <span *ngIf="registration" class="registration"> Join at bullshit.wtf with Game PIN: {{pin | uppercase}} </span>
+    <span *ngIf="registration && presenter" class="registration"> Join at bullshit.wtf with Game PIN: {{pin | uppercase}} </span>
 </div>

@@ -8,10 +8,6 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
-function toArray<T>(obj: { [k: string]: T }): T[] {
-    return Object.keys(obj).map(k => obj[k]);
-}
-
 @Component({
     selector: 'app-game-staging',
     templateUrl: './game-staging.component.html',
@@ -37,8 +33,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
         this.playersSubscriber = this.apiService.getPlayersObservable(this.pin)
-            .map(players => players || {})
-            .map(toArray)
+            .map(players => Object.keys(players || {}).map(k => players[k]))
             .subscribe(players => this.players = players);
         this.gameService.register(this.pin);
         this.apiService.gameHasPresenter(this.pin).then(hasPresenter =>
@@ -47,7 +42,6 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.gameService.unregister(this.pin);
         this.playersSubscriber.unsubscribe();
     }
 

@@ -1,11 +1,11 @@
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { GameService } from './../../services/game.service';
+import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { GameState } from "../../game-model";
+import { GameState } from '../../game-model';
 
 @Component({
     selector: 'app-show-answers',
@@ -22,6 +22,9 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     answerSelected: boolean;
     answers: string[];
     showQuestion: boolean;
+    duration: number;
+    past: number;
+    timer;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -38,10 +41,13 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         this.apiService.getAnswers(this.pin).then(a => this.answers = a);
+        this.startTimer();
     }
 
     ngOnDestroy() {
-        this.gameService.unregister(this.pin);
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
     }
 
     submit(answer: string) {
@@ -58,6 +64,14 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
                 Raven.captureException(new Error(JSON.stringify(err)));
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
+    }
+
+    startTimer() {
+        this.apiService.getGameTimestamp(this.pin).then(({ timestamp, now }) => {
+            this.duration = durations[GameState.ShowAnswers];
+            this.past = now - timestamp;
+            this.timer = setInterval(() => this.past += 1000, 1000);
+        });
     }
 
 }

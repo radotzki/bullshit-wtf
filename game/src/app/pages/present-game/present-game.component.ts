@@ -1,23 +1,22 @@
-import { ActivatedRoute } from '@angular/router';
-import { GameService } from './../../services/game.service';
-import * as Raven from 'raven-js';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-present-game',
     templateUrl: './present-game.component.html',
     styleUrls: ['./present-game.component.scss']
 })
-export class PresentGameComponent implements OnDestroy, OnInit {
+export class PresentGameComponent implements OnInit {
     pin: string;
+    loading: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private sessionService: SessionService,
         private apiService: ApiService,
-        private gameService: GameService,
+        private router: Router,
     ) { }
 
     ngOnInit() {
@@ -27,15 +26,13 @@ export class PresentGameComponent implements OnDestroy, OnInit {
             this.submit();
         }
     }
-
-    ngOnDestroy() {
-        this.gameService.unregister(this.pin);
-    }
-
     submit() {
+        this.loading = true;
+
         this.apiService.joinAsPresenter(this.pin).then(() => {
             this.sessionService.presenter = true;
-            this.gameService.register(this.pin);
+            this.router.navigate(['game-staging', this.pin]);
+            this.loading = false;
         });
     }
 

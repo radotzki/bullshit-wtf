@@ -1,24 +1,18 @@
 import { SessionService } from './../../services/session.service';
 import * as Raven from 'raven-js';
-import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-score-board-final',
     templateUrl: './score-board-final.component.html',
     styleUrls: ['./score-board-final.component.scss']
 })
-export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
-    gameSubscription: Subscription;
+export class ScoreBoardFinalComponent implements OnInit {
     pin: string;
-    game;
     displayPlayers;
-    loading: boolean;
-    errorMsg: string;
-    leader: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -29,19 +23,11 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.gameSubscription = this.apiService.game(this.pin).first().subscribe(this.onGameChanged.bind(this));
         this.gameService.register(this.pin);
-    }
-
-    ngOnDestroy() {
-        this.gameService.unregister(this.pin);
-        this.gameSubscription.unsubscribe();
-    }
-
-    onGameChanged(resp) {
-        this.game = resp;
-        this.displayPlayers = [...this.game.players].sort((a, b) => a.score < b.score ? 1 : -1);
-        this.leader = !this.sessionService.presenter && this.game.players[0].name === this.sessionService.user.nickname;
+        this.apiService.getPlayers(this.pin).then(resp => {
+            const players = Object.keys(resp).map(k => resp[k]);
+            this.displayPlayers = players.sort((a, b) => a.score < b.score ? 1 : -1);
+        });
     }
 
 }

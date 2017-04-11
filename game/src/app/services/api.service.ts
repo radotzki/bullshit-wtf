@@ -57,11 +57,6 @@ export class ApiService {
         return this.observe<GamePlayers>(this.gamesRef.child(pin).child('players'));
     }
 
-    game(pin: string) {
-        pin = pin.toUpperCase();
-        return this.observe<GameScheme>(this.gamesRef.child(pin));
-    }
-
     gameState(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<number>(this.gamesRef.child(pin).child('state').child('id'));
@@ -70,6 +65,16 @@ export class ApiService {
     getRoundIndex(pin: string) {
         pin = pin.toUpperCase();
         return this.get<number>(this.gamesRef.child(pin).child('roundIndex'));
+    }
+
+    getQuestionIndex(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<number>(this.gamesRef.child(pin).child('questionIndex'));
+    }
+
+    getTotalQuestions(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<number>(this.gamesRef.child(pin).child('totalQ'));
     }
 
     getGameTimestamp(pin: string) {
@@ -111,7 +116,7 @@ export class ApiService {
     async getAnswers(pin: string) {
         pin = pin.toUpperCase();
         const allAnswers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
-        let answersArray = Object.keys(allAnswers).map(k => allAnswers[k]);
+        let answersArray = Object.keys(allAnswers || {}).map(k => allAnswers[k]);
 
         if (!this.sessionService.presenter) {
             const pid = this.sessionService.user.pid;
@@ -143,6 +148,7 @@ export class ApiService {
 
         return this.gameHasPresenter(pin).then(hasPresenter => {
             if (!hasPresenter || (hasPresenter && this.sessionService.presenter)) {
+                console.log('tick', gameState);
                 return this.gamesRef.child(pin).child('tick').set(gameState);
             }
         });

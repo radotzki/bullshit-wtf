@@ -1,13 +1,18 @@
 {
-  "name": "bullshit",
-  "description": "",
-  "scripts": {
-      "start": "cd game && npm start",
-      "deploy:game": "cd game && npm run build && cd .. && firebase deploy --only hosting",
-      "deploy:functions": "cd functions && npm run build && cd .. && firebase deploy --only functions"
-  },
-  "private": true,
-  "devDependencies": {
-    "firebase-tools": "^3.5.0"
-  }
+    "name": "bullshit",
+    "description": "",
+    "scripts": {
+        "postinstall": "sh ./symlink.sh",
+        "start": "cd game && npm start",
+        "deploy-game": "cd game && npm run build && cd .. && firebase deploy --only hosting",
+        "deploy-functions": "cd functions && npm run build && cd .. && firebase deploy --only functions",
+        "deploy": "npm run deploy-functions && npm run deploy-game",
+        "prod:deploy-game": "npm run deploy-game -- -P bullshit-wtf-prod",
+        "prod:deploy-functions": "npm run deploy-functions -- -P bullshit-wtf-prod",
+        "prod:deploy": "npm run prod:deploy-functions && npm run prod:deploy-game"
+    },
+    "private": true,
+    "devDependencies": {
+        "firebase-tools": "^3.5.0"
+    }
 }

@@ -5,12 +5,13 @@
 
 export const environment = {
     production: false,
-    cloudfunctions: 'https://us-central1-bullshit-fae48.cloudfunctions.net/',
+    cloudfunctions: 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/',
     firebaseConfig: {
-        apiKey: 'AIzaSyB9DBGta81H3qp3BMukjNF-pHKbh2RPcvA',
-        authDomain: 'bullshit-fae48.firebaseapp.com',
-        databaseURL: 'https://bullshit-fae48.firebaseio.com',
-        storageBucket: 'bullshit-fae48.appspot.com',
-        messagingSenderId: '328908700392',
+        apiKey: 'AIzaSyDgUaXkz8z2mUXIeb-XDy97ko1P9zUq6Us',
+        authDomain: 'bullshit-wtf-dev.firebaseapp.com',
+        databaseURL: 'https://bullshit-wtf-dev.firebaseio.com',
+        projectId: 'bullshit-wtf-dev',
+        storageBucket: 'bullshit-wtf-dev.appspot.com',
+        messagingSenderId: '351075272123'
     }
 };

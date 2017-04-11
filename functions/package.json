@@ -3,7 +3,6 @@
   "description": "Cloud Functions for Firebase",
   "main": "dist/index.js",
   "scripts": {
-    "local": "tsc && node dist/express.js",
     "build": "rimraf dist && tsc"
   },
   "dependencies": {
@@ -14,8 +13,7 @@
   },
   "private": true,
   "devDependencies": {
-    "body-parser": "^1.13.3",
-    "express": "^4.13.3",
+    "@google-cloud/functions-emulator": "^1.0.0-alpha.15",
     "firebase-tools": "^3.5.0",
     "rimraf": "^2.6.1",
     "typescript": "^2.2.2"

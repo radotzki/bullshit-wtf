@@ -2,10 +2,10 @@ import * as Raven from 'raven-js';
 import { Subscription } from 'rxjs/Subscription';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { GameService } from './../../services/game.service';
+import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { GameState } from "../../game-model";
+import { GameState } from '../../game-model';
 
 @Component({
     selector: 'app-show-question',
@@ -14,7 +14,6 @@ import { GameState } from "../../game-model";
 })
 export class ShowQuestionComponent implements OnInit, OnDestroy {
     pin: string;
-    gameTimer;
     question: string;
     presenter: boolean;
     loading: boolean;
@@ -23,6 +22,9 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     questionSubmitted: boolean;
     enteredCorrectAnswer: boolean;
     rtl: boolean;
+    duration: number;
+    past: number;
+    timer;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -37,6 +39,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
+        this.startTimer();
 
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
@@ -44,7 +47,9 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.gameService.unregister(this.pin);
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
     }
 
     submit() {
@@ -66,6 +71,14 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });
+    }
+
+    startTimer() {
+        this.apiService.getGameTimestamp(this.pin).then(({ timestamp, now }) => {
+            this.duration = durations[GameState.ShowQuestion];
+            this.past = now - timestamp;
+            this.timer = setInterval(() => this.past += 1000, 1000);
+        });
     }
 
 }

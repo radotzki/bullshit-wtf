@@ -11,9 +11,11 @@ export async function tick(pin) {
     const game = await get<GameScheme>(gamesRef.child(pin));
 
     if (game.tick === game.state.id) {
-        console.error('Game tick = game state');
+        console.log(`[PIN: ${pin}] Game state equal to tick`);
         return Promise.resolve();
     }
+
+    console.log(`[PIN: ${pin}] Current game state: ${game.state.id}`);
 
     switch (game.state.id) {
         case GameState.GameStaging:
@@ -75,7 +77,7 @@ function populateQuestionAnswers(pin: string, game: GameScheme) {
 
 function populateFakeAnswers(pin: string, game: GameScheme) {
     const allFakeAnswers = getQuestion(game.qids[game.questionIndex]).fakeAnswers;
-    const playerAnswers = Object.keys(game.answers).map(k => game.answers[k].text);
+    const playerAnswers = Object.keys(game.answers || {}).map(k => game.answers[k].text);
     const uniqueAnswersCount = Array.from(new Set(playerAnswers)).length;
     const playersCount = Object.keys(game.players).length;
     const fakeAnswers = allFakeAnswers.slice(0, playersCount - uniqueAnswersCount);
@@ -98,8 +100,8 @@ function getRealAnswer(game: GameScheme) {
 }
 
 function calcAnswersScore(game: GameScheme) {
-    const answers = Object.keys(game.answers).map(k => Object.assign({}, { pid: k }, game.answers[k]));
-    const answerSelections = Object.keys(game.answerSelections).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
+    const answers = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
+    const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
 
     answerSelections.forEach(answerSelection => {
         const relatedAnswers = answers.filter(answer => answer.text === answerSelection.text);
@@ -120,7 +122,7 @@ function calcAnswersScore(game: GameScheme) {
         }
     });
 
-    return { answers: game.answers, answerSelections: game.answerSelections };
+    return { answers: game.answers || {}, answerSelections: game.answerSelections || {} };
 }
 
 function calcPlayersScore(game: GameScheme) {
@@ -142,11 +144,8 @@ function calcPlayersScore(game: GameScheme) {
 
 async function handleScoreBoardState(game: GameScheme) {
     const gameOver = game.questionIndex === game.totalQ - 1;
-    console.log('gameOver', gameOver);
     const lastRound = game.questionIndex === game.totalQ - 2;
-    console.log('lastRound', lastRound);
-    const secondRound = game.questionIndex === Math.floor(game.totalQ / 2);
-    console.log('secondRound', secondRound);
+    const secondRound = game.questionIndex === Math.floor(game.totalQ / 2) - 1;
     let res;
 
     if (secondRound || lastRound) {
@@ -158,6 +157,9 @@ async function handleScoreBoardState(game: GameScheme) {
     } else if (gameOver) {
         res = {
             state: updateState(GameState.ScoreBoardFinal),
+            currentQ: {},
+            answers: {},
+            answerSelections: {},
         };
     } else {
         res = {
@@ -168,8 +170,6 @@ async function handleScoreBoardState(game: GameScheme) {
             answerSelections: {},
         };
     }
-
-    console.log('res', res);
 
     return res;
 }

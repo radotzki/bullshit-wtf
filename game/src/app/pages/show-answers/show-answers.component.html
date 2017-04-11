@@ -1,6 +1,6 @@
 <section class="show-answers">
     <app-game-header></app-game-header>
-    <progress *ngIf="answers" class="progress is-primary" [value]="10" [max]="100"></progress>
+    <progress *ngIf="answers" class="progress is-primary" [value]="past" [max]="duration"></progress>
 
     <div class="game-main">
         <div *ngIf="!answers" class="screen-center">
