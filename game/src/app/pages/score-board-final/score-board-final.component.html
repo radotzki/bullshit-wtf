@@ -12,7 +12,7 @@
             <div class="box player" *ngFor="let player of displayPlayers">
                 <span class="left">
                     <img class="picture" [src]="'/assets/' + player.picture">
-                    <span class="name"> {{ player.name }} </span>
+                    <span class="name"> {{ player.nickname }} </span>
                 </span>
                 <span class="score"> {{ player.score }} </span>
             </div>

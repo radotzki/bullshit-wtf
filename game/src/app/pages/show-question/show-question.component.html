@@ -16,7 +16,7 @@
 
             <p class="control">
                 <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text" name="answer"
-                    [(ngModel)]="answer" maxlength="40" autofocus>
+                    [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off">
                 <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try something else</span>
             </p>
 

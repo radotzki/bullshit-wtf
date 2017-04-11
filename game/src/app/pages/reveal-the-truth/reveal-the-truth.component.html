@@ -10,8 +10,8 @@
             <div class="creators">
                 <span *ngIf="!displayAnswers[displayIndex].realAnswer && !displayAnswers[displayIndex].houseLie">
                     <div class="creator" *ngFor="let creator of displayAnswers[displayIndex].creators">
-                        <img [src]="'/assets/' + creator">
-                        <span *ngIf="presenter || displayAnswers[displayIndex].creators.length < 4"> {{ creator }} </span>
+                        <img [src]="'/assets/' + creator.picture">
+                        <span *ngIf="presenter || displayAnswers[displayIndex].creators.length < 4"> {{ creator.nickname }} </span>
                     </div>
                 </span>
                 <div class="the-truth" *ngIf="displayAnswers[displayIndex].realAnswer">
@@ -31,8 +31,8 @@
 
             <div class="selectors">
                 <div class="selector" *ngFor="let selector of displayAnswers[displayIndex].selectors">
-                    <img [src]="'/assets/' + selector">
-                    <span *ngIf="presenter || displayAnswers[displayIndex].selectors.length < 4"> {{ selector }} </span>
+                    <img [src]="'/assets/' + selector.picture">
+                    <span *ngIf="presenter || displayAnswers[displayIndex].selectors.length < 4"> {{ selector.nickname }} </span>
                 </div>
                 <p *ngIf="(displayAnswers[displayIndex].realAnswer || displayAnswers[displayIndex].houseLie) && displayAnswers[displayIndex].points" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
                     {{ displayAnswers[displayIndex].points | bsPoints }}

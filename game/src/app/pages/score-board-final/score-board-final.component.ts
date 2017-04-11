@@ -26,7 +26,9 @@ export class ScoreBoardFinalComponent implements OnInit {
         this.gameService.register(this.pin);
         this.apiService.getPlayers(this.pin).then(resp => {
             const players = Object.keys(resp).map(k => resp[k]);
-            this.displayPlayers = players.sort((a, b) => a.score < b.score ? 1 : -1);
+            this.displayPlayers = players
+                .map((p, i) => Object.assign(p, { picture: `avatar${i}.png` }))
+                .sort((a, b) => a.score < b.score ? 1 : -1);
         });
     }
 

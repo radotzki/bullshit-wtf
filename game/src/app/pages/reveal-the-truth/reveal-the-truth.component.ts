@@ -5,9 +5,7 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import 'rxjs/add/operator/first';
-import { GameState } from '../../game-model';
-
-const housePicture = 'homegrown-bullshit.png';
+import { GameState, GamePlayer } from '../../game-model';
 
 @Component({
     selector: 'app-reveal-the-truth',
@@ -59,6 +57,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     async createDisplayAnswers() {
         const { players, answers, answerSelections } = await this.apiService.getAggregatedAnswers(this.pin);
+        const playersArray = Object.keys(players || {}).map(k => Object.assign({}, { pid: k }, players[k]));
         const answersArray = Object.keys(answers || {}).map(k => Object.assign({}, { pid: k }, answers[k]));
         const answerSelectionsArray = Object.keys(answerSelections || {}).map(k => Object.assign({}, { pid: k }, answerSelections[k]));
         const res: DisplayItem[] = [];
@@ -69,7 +68,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             }
 
             const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
-            const selectors = answerSelection.map(a => players[a.pid].nickname);
+            const selectors = answerSelection.map(a => this.playerObject(playersArray, a.pid));
 
             if (!selectors.length && !answer.realAnswer) {
                 return;
@@ -85,7 +84,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
             const creators = answersArray
                 .filter(a => a.text === answer.text)
-                .map(a => a.houseLie || a.realAnswer ? '' : players[a.pid].nickname);
+                .map(a => a.houseLie || a.realAnswer ? {} : this.playerObject(playersArray, a.pid));
             const text = answer.text;
             const realAnswer = answer.realAnswer;
             const houseLie = answer.houseLie;
@@ -98,12 +97,21 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
         return [...fakeAnswers, realAnswer];
     }
+
+    private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string) {
+        return {
+            nickname: playersArray.find(p => p.pid === pid).nickname,
+            picture: `avatar${playersArray.findIndex(p => p.pid === pid)}.png`,
+        }
+    }
+
 }
+
 
 interface DisplayItem {
     text: string;
-    selectors: string[];
-    creators: string[];
+    selectors: { nickname: string, picture: string }[];
+    creators: { nickname?: string, picture?: string }[];
     realAnswer: boolean;
     houseLie: boolean;
     points: number;
