@@ -18,5 +18,11 @@
     .registration {
         width: 100%;
         text-align: center;
+        font-size: 1.5rem;
+    }
+
+    .registration .url,
+    .registration .game-pin {
+        font-size: 2rem;
     }
 }
