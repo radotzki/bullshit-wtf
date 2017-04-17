@@ -1,4 +1,5 @@
 import * as Raven from 'raven-js';
+import { Howl } from 'howler';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
@@ -25,6 +26,8 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     duration: number;
     past: number;
     timer;
+    sound: Howl;
+    panic: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -42,9 +45,11 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         this.apiService.getAnswers(this.pin).then(a => this.answers = a);
         this.startTimer();
+        this.playBackground();
     }
 
     ngOnDestroy() {
+        this.stopMusic();
         if (this.timer) {
             clearInterval(this.timer);
         }
@@ -70,8 +75,37 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.getGameTimestamp(this.pin).then(({ timestamp, now }) => {
             this.duration = durations[GameState.ShowAnswers];
             this.past = now - timestamp;
-            this.timer = setInterval(() => this.past += 1000, 1000);
+            this.timer = setInterval(() => {
+                this.past += 1000;
+
+                if (!this.panic && this.duration - this.past < 5000) {
+                    this.playTimeWarning();
+                    this.panic = true;
+                }
+            }, 1000);
         });
+    }
+
+    playBackground() {
+        this.playMusic(['/assets/sounds/show-answers.mp3']);
+    }
+
+    playTimeWarning() {
+        this.playMusic(['/assets/sounds/time-warning.mp3']);
+    }
+
+    playMusic(src: string[]) {
+        if (this.presenter) {
+            this.stopMusic();
+            this.sound = new Howl({ src, autoplay: true });
+        }
+    }
+
+    stopMusic() {
+        if (this.sound) {
+            this.sound.fade(1, 0, 1000);
+            setTimeout(this.sound.stop, 1000);
+        }
     }
 
 }

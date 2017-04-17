@@ -1,6 +1,6 @@
 <section class="game-container show-question">
     <app-game-header></app-game-header>
-    <progress *ngIf="question && past && duration" class="progress" [class.is-primary]="duration - past >= 5000" [class.is-danger]="duration - past < 5000"
+    <progress *ngIf="question && past && duration" class="progress" [class.is-primary]="!panic" [class.is-danger]="panic"
         [value]="past" [max]="duration"></progress>
 
     <div class="game-main">

@@ -125,6 +125,10 @@
     magic-string "^0.19.0"
     source-map "^0.5.6"
 
+"@types/howler@^2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@types/howler/-/howler-2.0.2.tgz#3cf145a14eee379cd11264e7a5623b51f9dfb659"
+
 "@types/jasmine@2.5.38":
   version "2.5.38"
   resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-2.5.38.tgz#a4379124c4921d4e21de54ec74669c9e9b356717"
@@ -2551,6 +2555,10 @@ home-dir@^1.0.0:
 hosted-git-info@^2.1.4:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.4.1.tgz#4b0445e41c004a8bd1337773a4ff790ca40318c8"
+
+howler@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/howler/-/howler-2.0.3.tgz#a76ab5a37ae5cc1e4a5a0f3ce279ca2c72b5efc7"
 
 hpack.js@^2.1.6:
   version "2.1.6"

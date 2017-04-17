@@ -1,6 +1,7 @@
 import { GamePlayers, GamePlayer, GameState } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import * as Raven from 'raven-js';
+import { Howl } from 'howler';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { Observable } from 'rxjs/Observable';
@@ -21,6 +22,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     errorMsg: string;
     loading: boolean;
     showStartButton: boolean;
+    sound: Howl;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -32,10 +34,11 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
+        this.gameService.register(this.pin);
+        this.playMusic();
         this.playersSubscriber = this.apiService.getPlayersObservable(this.pin)
             .map(players => Object.keys(players || {}).map(k => players[k]))
             .subscribe(players => this.players = players);
-        this.gameService.register(this.pin);
         this.apiService.gameHasPresenter(this.pin).then(hasPresenter =>
             this.showStartButton = !hasPresenter || (hasPresenter && this.presenter)
         );
@@ -43,6 +46,11 @@ export class GameStagingComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.playersSubscriber.unsubscribe();
+
+        if (this.sound) {
+            this.sound.fade(1, 0, 1000);
+            setTimeout(this.sound.stop, 1000);
+        }
     }
 
     startGame() {
@@ -55,5 +63,15 @@ export class GameStagingComponent implements OnInit, OnDestroy {
                 Raven.captureException(new Error(JSON.stringify(err)));
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
+    }
+
+    playMusic() {
+        if (this.presenter) {
+            this.sound = new Howl({
+                src: ['/assets/sounds/staging.mp3'],
+                autoplay: true,
+                loop: true,
+            });
+        }
     }
 }

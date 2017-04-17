@@ -1,4 +1,5 @@
 import * as Raven from 'raven-js';
+import { Howl } from 'howler';
 import { Subscription } from 'rxjs/Subscription';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -25,6 +26,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     duration: number;
     past: number;
     timer;
+    sound: Howl;
+    panic: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -40,6 +43,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
         this.startTimer();
+        this.playBackground();
 
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
@@ -47,6 +51,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.stopMusic();
         if (this.timer) {
             clearInterval(this.timer);
         }
@@ -77,8 +82,37 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.apiService.getGameTimestamp(this.pin).then(({ timestamp, now }) => {
             this.duration = durations[GameState.ShowQuestion];
             this.past = now - timestamp;
-            this.timer = setInterval(() => this.past += 1000, 1000);
+            this.timer = setInterval(() => {
+                this.past += 1000;
+
+                if (!this.panic && this.duration - this.past < 5000) {
+                    this.playTimeWarning();
+                    this.panic = true;
+                }
+            }, 1000);
         });
+    }
+
+    playBackground() {
+        this.playMusic(['/assets/sounds/show-question.mp3']);
+    }
+
+    playTimeWarning() {
+        this.playMusic(['/assets/sounds/time-warning.mp3']);
+    }
+
+    playMusic(src: string[]) {
+        if (this.presenter) {
+            this.stopMusic();
+            this.sound = new Howl({ src, autoplay: true });
+        }
+    }
+
+    stopMusic() {
+        if (this.sound) {
+            this.sound.fade(1, 0, 1000);
+            setTimeout(this.sound.stop, 1000);
+        }
     }
 
 }

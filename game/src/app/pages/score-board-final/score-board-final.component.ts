@@ -1,6 +1,7 @@
 import { Subscription } from 'rxjs/Subscription';
 import { SessionService } from './../../services/session.service';
 import * as Raven from 'raven-js';
+import { Howl } from 'howler';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute } from '@angular/router';
@@ -16,6 +17,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     loading: boolean;
     forkGameSubscription: Subscription;
     displayPlayers;
+    sound: Howl;
+    presenter: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -26,7 +29,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
+        this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
+        this.playMusic();
         this.apiService.getPlayers(this.pin).then(resp => {
             const players = Object.keys(resp).map(k => resp[k]);
             this.displayPlayers = players
@@ -44,6 +49,11 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.forkGameSubscription.unsubscribe();
+
+        if (this.sound) {
+            this.sound.fade(1, 0, 1000);
+            setTimeout(this.sound.stop, 1000);
+        }
     }
 
     replay() {
@@ -51,4 +61,13 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.apiService.fork(this.pin);
     }
 
+    playMusic() {
+        if (this.presenter) {
+            this.sound = new Howl({
+                src: ['/assets/sounds/final.mp3'],
+                autoplay: true,
+                loop: true,
+            });
+        }
+    }
 }
