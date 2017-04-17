@@ -7,7 +7,7 @@
         </div>
 
         <div *ngIf="displayAnswers" class="scene">
-            <div class="creators">
+            <div class="creators" [class.hidden]="!showCreators">
                 <span *ngIf="!displayAnswers[displayIndex].realAnswer && !displayAnswers[displayIndex].houseLie">
                     <div class="creator" *ngFor="let creator of displayAnswers[displayIndex].creators">
                         <img [src]="'/assets/' + creator.picture">
@@ -34,7 +34,7 @@
                     <img [src]="'/assets/' + selector.picture">
                     <span *ngIf="presenter || displayAnswers[displayIndex].selectors.length < 4"> {{ selector.nickname }} </span>
                 </div>
-                <p *ngIf="(displayAnswers[displayIndex].realAnswer || displayAnswers[displayIndex].houseLie) && displayAnswers[displayIndex].points" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
+                <p *ngIf="showCreators && (displayAnswers[displayIndex].realAnswer || displayAnswers[displayIndex].houseLie) && displayAnswers[displayIndex].points" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
                     {{ displayAnswers[displayIndex].points | bsPoints }}
                 </p>
             </div>

@@ -1,10 +1,10 @@
+import { Howl } from 'howler';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import 'rxjs/add/operator/first';
 import { GameState, GamePlayer } from '../../game-model';
 
 @Component({
@@ -19,6 +19,8 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     displayIndex: number;
     displayInterval;
     rtl: boolean;
+    showCreators: boolean;
+    sound: Howl;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -39,6 +41,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.stopMusic();
         if (this.displayInterval) {
             clearInterval(this.displayInterval);
         }
@@ -46,8 +49,13 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     show() {
         this.displayIndex = 0;
+        this.showCreators = false;
+        setTimeout(this.revealCreators.bind(this), 3000);
+
         this.displayInterval = setInterval(() => {
             if (this.displayIndex < this.displayAnswers.length - 1) {
+                this.showCreators = false;
+                setTimeout(this.revealCreators.bind(this), 3000);
                 this.displayIndex += 1;
             } else {
                 this.apiService.tick(this.pin, GameState.ScoreBoard);
@@ -95,6 +103,35 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             nickname: playersArray.find(p => p.pid === pid).nickname,
             picture: `avatar${playersArray.findIndex(p => p.pid === pid)}.png`,
         };
+    }
+
+    private revealCreators() {
+        const sound = this.getSound(this.displayAnswers[this.displayIndex]);
+        this.showCreators = true;
+        this.playMusic([`/assets/sounds/${sound}.mp3`]);
+    }
+
+    private getSound(item: DisplayItem) {
+        if (item.realAnswer) {
+            return 'the-truth';
+        } else if (item.houseLie) {
+            return `house-lie-${Math.round(Math.random())}`;
+        } else {
+            return `player-lie-${Math.round(Math.random())}`;
+        }
+    }
+
+    private playMusic(src: string[]) {
+        if (this.presenter) {
+            this.stopMusic();
+            this.sound = new Howl({ src, autoplay: true });
+        }
+    }
+
+    private stopMusic() {
+        if (this.sound) {
+            this.sound.stop();
+        }
     }
 
 }
