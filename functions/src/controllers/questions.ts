@@ -1,4 +1,4 @@
-const raw = require('../../raw-data.json');
+const raw = require('../../raw-data.json').filter(i => i.name !== 'web development');
 
 const en = [].concat(...raw.filter(i => i.lang === 'en-US').map(i => i.questions)).filter(i => i.approved);
 const he = [].concat(...raw.filter(i => i.lang === 'he-IL').map(i => i.questions)).filter(i => i.approved);
