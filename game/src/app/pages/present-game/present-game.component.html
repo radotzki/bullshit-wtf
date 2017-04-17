@@ -1,4 +1,4 @@
-<div class="arcade-form">
+<div class="arcade-form" *ngIf="!hide">
     <form (submit)="submit()" novalidate>
 
         <div class="title-area">
@@ -9,10 +9,14 @@
 
         <div class="controls">
             <p class="control">
-                <input class="input is-medium pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin">
+                <input class="input is-medium pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin" autofocus>
             </p>
 
             <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">PRESENT</button>
         </div>
     </form>
+</div>
+
+<div *ngIf="hide" class="screen-center">
+    <div class="loader"> </div>
 </div>

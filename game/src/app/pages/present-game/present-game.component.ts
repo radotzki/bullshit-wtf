@@ -11,6 +11,7 @@ import { Component, OnInit } from '@angular/core';
 export class PresentGameComponent implements OnInit {
     pin: string;
     loading: boolean;
+    hide: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -23,6 +24,7 @@ export class PresentGameComponent implements OnInit {
         this.pin = this.activatedRoute.snapshot.queryParams['pin'];
 
         if (this.pin) {
+            this.hide = true;
             this.submit();
         }
     }
