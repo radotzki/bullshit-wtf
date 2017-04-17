@@ -39,6 +39,11 @@ export class ApiService {
         return this.post<{ pid: string }>(`join`, { pin, nickname }).then(resp => resp.pid);
     }
 
+    validateGameName(pin: string) {
+        pin = pin.toUpperCase();
+        return this.post(`validateGameName`, { pin });
+    }
+
     joinAsPresenter(pin: string) {
         pin = pin.toUpperCase();
         return this.gamesRef.child(pin).child('presenter').set(true);

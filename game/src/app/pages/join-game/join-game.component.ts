@@ -15,6 +15,7 @@ export class JoinGameComponent implements OnInit {
     nickname: string;
     loading: boolean;
     errorMsg: string;
+    nicknameState: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -28,6 +29,29 @@ export class JoinGameComponent implements OnInit {
     }
 
     submit() {
+        if (!this.nicknameState) {
+            this.validateGameName();
+        } else {
+            this.join();
+        }
+    }
+
+    validateGameName() {
+        this.loading = true;
+        this.errorMsg = '';
+
+        this.apiService.validateGameName(this.pin)
+            .then(() => {
+                this.nicknameState = true;
+                this.loading = false;
+            })
+            .catch(err => {
+                this.loading = false;
+                this.errorMsg = err.message;
+            });
+    }
+
+    join() {
         this.loading = true;
         this.errorMsg = '';
 

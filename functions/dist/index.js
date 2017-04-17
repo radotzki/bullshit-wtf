@@ -44,6 +44,7 @@ var new_game_1 = require("./controllers/new-game");
 var on_answer_selection_1 = require("./controllers/on-answer-selection");
 var join_1 = require("./controllers/join");
 var fork_1 = require("./controllers/fork");
+var validate_game_name_1 = require("./controllers/validate-game-name");
 exports.time = functions.https.onRequest(function (req, res) {
     cors(req, res, function () {
         res.send({ now: Date.now() });
@@ -130,6 +131,27 @@ exports.join = functions.https.onRequest(function (req, res) {
                 case 3:
                     e_3 = _a.sent();
                     return [2 /*return*/, res.status(400).send(e_3)];
+                case 4: return [2 /*return*/];
+            }
+        });
+    }); });
+});
+exports.validateGameName = functions.https.onRequest(function (req, res) {
+    cors(req, res, function () { return __awaiter(_this, void 0, void 0, function () {
+        var pin, _a, _b, _c, e_4;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    pin = req.body.pin;
+                    _d.label = 1;
+                case 1:
+                    _d.trys.push([1, 3, , 4]);
+                    _b = (_a = res.status(200)).send;
+                    return [4 /*yield*/, validate_game_name_1.validateGameName(pin)];
+                case 2: return [2 /*return*/, _b.apply(_a, [_d.sent()])];
+                case 3:
+                    e_4 = _d.sent();
+                    return [2 /*return*/, res.status(400).send(e_4)];
                 case 4: return [2 /*return*/];
             }
         });

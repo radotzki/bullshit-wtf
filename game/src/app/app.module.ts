@@ -27,6 +27,7 @@ import { RevealTheTruthComponent } from './pages/reveal-the-truth/reveal-the-tru
 import { ScoreBoardComponent } from './pages/score-board/score-board.component';
 import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-final.component';
 import { BsPointsPipe } from './pipes/bs-points.pipe';
+import { NgxAutofocusDirective } from './directives/ngx-autofocus.directive';
 
 @NgModule({
     declarations: [
@@ -48,6 +49,7 @@ import { BsPointsPipe } from './pipes/bs-points.pipe';
         ScoreBoardComponent,
         ScoreBoardFinalComponent,
         BsPointsPipe,
+        NgxAutofocusDirective,
     ],
     imports: [
         BrowserModule,
