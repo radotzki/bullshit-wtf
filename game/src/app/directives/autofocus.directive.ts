@@ -1,9 +1,9 @@
 import { Directive, ElementRef } from '@angular/core';
 
 @Directive({
-    selector: '[ngxAutofocus]'
+    selector: '[appAutofocus]'
 })
-export class NgxAutofocusDirective {
+export class AutofocusDirective {
 
     constructor(el: ElementRef) {
         setTimeout(() => el.nativeElement.focus(), 100);
