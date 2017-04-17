@@ -60,21 +60,23 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         const playersArray = Object.keys(players || {}).map(k => Object.assign({}, { pid: k }, players[k]));
         const answersArray = Object.keys(answers || {}).map(k => Object.assign({}, { pid: k }, answers[k]));
         const answerSelectionsArray = Object.keys(answerSelections || {}).map(k => Object.assign({}, { pid: k }, answerSelections[k]));
-        const res: DisplayItem[] = [];
+        const displayItems: DisplayItem[] = [];
 
         answersArray.forEach(answer => {
-            if (res.find(w => w.text === answer.text)) {
-                return;
-            }
-
             const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
             const selectors = answerSelection.map(a => this.playerObject(playersArray, a.pid));
+            const text = answer.text;
+            const realAnswer = answer.realAnswer;
+            const houseLie = answer.houseLie;
+            const creators = answersArray
+                .filter(a => a.text === answer.text)
+                .map(a => a.houseLie || a.realAnswer ? {} : this.playerObject(playersArray, a.pid));
+            let points = 0;
 
-            if (!selectors.length && !answer.realAnswer) {
+            if (displayItems.find(w => w.text === answer.text) ||
+                (!selectors.length && !answer.realAnswer)) {
                 return;
             }
-
-            let points = 0;
 
             if ((answer.realAnswer || answer.houseLie) && answerSelection[0]) {
                 points = answerSelection[0].score;
@@ -82,20 +84,10 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
                 points = answer.score;
             }
 
-            const creators = answersArray
-                .filter(a => a.text === answer.text)
-                .map(a => a.houseLie || a.realAnswer ? {} : this.playerObject(playersArray, a.pid));
-            const text = answer.text;
-            const realAnswer = answer.realAnswer;
-            const houseLie = answer.houseLie;
-
-            res.push({ creators, selectors, points, text, realAnswer, houseLie });
+            displayItems.push({ creators, selectors, points, text, realAnswer, houseLie });
         });
 
-        const realAnswer = res.find(i => i.realAnswer);
-        const fakeAnswers = res.filter(i => !i.realAnswer);
-
-        return [...fakeAnswers, realAnswer];
+        return displayItems.sort((a, b) => a.text > b.text ? 1 : -1).sort(a => a.realAnswer ? 1 : -1);
     }
 
     private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string) {
