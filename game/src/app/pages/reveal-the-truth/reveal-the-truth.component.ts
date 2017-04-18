@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { GameState, GamePlayer } from '../../game-model';
+import { GameState, GamePlayer, RevealAnswer } from '../../game-model';
 
 @Component({
     selector: 'app-reveal-the-truth',
@@ -64,38 +64,20 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     }
 
     async createDisplayAnswers() {
-        const { players, answers, answerSelections } = await this.apiService.getAggregatedAnswers(this.pin);
-        const playersArray = Object.keys(players || {}).map(k => Object.assign({}, { pid: k }, players[k]));
-        const answersArray = Object.keys(answers || {}).map(k => Object.assign({}, { pid: k }, answers[k]));
-        const answerSelectionsArray = Object.keys(answerSelections || {}).map(k => Object.assign({}, { pid: k }, answerSelections[k]));
+        const revealAnswers = await this.apiService.getRevealAnswers(this.pin);
+        const players = await this.apiService.getPlayers(this.pin);
+        const playersArray = Object.keys(players || {}).map(k => Object.assign({ pid: k }, players[k]));
         const displayItems: DisplayItem[] = [];
 
-        answersArray.forEach(answer => {
-            const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
-            const selectors = answerSelection.map(a => this.playerObject(playersArray, a.pid));
-            const text = answer.text;
-            const realAnswer = answer.realAnswer;
-            const houseLie = answer.houseLie;
-            const creators = answersArray
-                .filter(a => a.text === answer.text)
-                .map(a => a.houseLie || a.realAnswer ? {} : this.playerObject(playersArray, a.pid));
-            let points = 0;
+        revealAnswers
+            .filter(a => a.selectors)
+            .forEach(answer => {
+                const displaySelectors = answer.selectors.map(s => this.playerObject(playersArray, s));
+                const displayCreators = answer.creators.filter(c => c).map(c => this.playerObject(playersArray, c));
+                displayItems.push(Object.assign(answer, { displaySelectors, displayCreators }));
+            });
 
-            if (displayItems.find(w => w.text === answer.text) ||
-                (!selectors.length && !answer.realAnswer)) {
-                return;
-            }
-
-            if ((answer.realAnswer || answer.houseLie) && answerSelection[0]) {
-                points = answerSelection[0].score;
-            } else {
-                points = answer.score;
-            }
-
-            displayItems.push({ creators, selectors, points, text, realAnswer, houseLie });
-        });
-
-        return displayItems.sort((a, b) => a.text > b.text ? 1 : -1).sort(a => a.realAnswer ? 1 : -1);
+        return displayItems;
     }
 
     private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string) {
@@ -136,12 +118,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
 }
 
-
-interface DisplayItem {
-    text: string;
-    selectors: { nickname: string, picture: string }[];
-    creators: { nickname?: string, picture?: string }[];
-    realAnswer: boolean;
-    houseLie: boolean;
-    points: number;
+interface DisplayItem extends RevealAnswer {
+    displaySelectors: { nickname: string, picture: string }[];
+    displayCreators: { nickname?: string, picture?: string }[];
 }

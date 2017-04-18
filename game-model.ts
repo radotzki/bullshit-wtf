@@ -20,6 +20,7 @@ export interface GameScheme {
     currentQ?: string;
     answers?: Answers;
     answerSelections?: AnswerSelections;
+    revealAnswers?: RevealAnswer[];
     totalQ: number;
     players?: GamePlayers;
     qids: { [id: number]: string };
@@ -55,4 +56,13 @@ export interface AnswerSelections {
 export interface AnswerSelection {
     text: string;
     score?: number;
+}
+
+export interface RevealAnswer {
+    text: string;
+    selectors: string[];
+    creators: string[];
+    realAnswer: boolean;
+    houseLie: boolean;
+    points: number;
 }

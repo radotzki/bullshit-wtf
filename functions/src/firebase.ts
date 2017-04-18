@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 export const gamesRef = admin.database().ref('games');
+export const qHistoryRef = admin.database().ref('qHistory');
 export const gameCounterRef = admin.database().ref('gameCounter');
 
 export function get<T>(ref): Promise<T> {

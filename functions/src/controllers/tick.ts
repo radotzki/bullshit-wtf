@@ -1,6 +1,6 @@
 import { getQuestion } from './questions';
-import { GameScheme, Answer, Answers, GameState } from '../game-model';
-import { get, gamesRef } from '../firebase';
+import { GameScheme, Answer, Answers, GameState, RevealAnswer, GamePlayer } from '../game-model';
+import { get, gamesRef, qHistoryRef } from '../firebase';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
@@ -27,6 +27,7 @@ export async function tick(pin) {
                 currentQ: populateQuestion(game, game.questionIndex),
                 answers: {},
                 answerSelections: {},
+                revealAnswers: null,
             });
 
         case GameState.ShowQuestion:
@@ -37,11 +38,13 @@ export async function tick(pin) {
 
         case GameState.ShowAnswers:
             const { answers, answerSelections } = calcAnswersScore(game);
+            const revealAnswers = generateRevealAnswers(game);
 
             return updateGame(pin, {
                 state: updateState(GameState.RevealTheTruth),
                 answers,
                 answerSelections,
+                revealAnswers,
             });
 
         case GameState.RevealTheTruth:
@@ -51,7 +54,7 @@ export async function tick(pin) {
             });
 
         case GameState.ScoreBoard:
-            return updateGame(pin, await handleScoreBoardState(game));
+            return updateGame(pin, await handleScoreBoardState(game, pin));
     }
 }
 
@@ -125,6 +128,39 @@ function calcAnswersScore(game: GameScheme) {
     return { answers: game.answers || {}, answerSelections: game.answerSelections || {} };
 }
 
+function generateRevealAnswers(game: GameScheme) {
+    const playersArray = Object.keys(game.players || {}).map(k => Object.assign({}, { pid: k }, game.players[k]));
+    const answersArray = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
+    const answerSelectionsArray = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
+    const revealAnswers: RevealAnswer[] = [];
+
+    answersArray.forEach(answer => {
+        const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
+        const selectors = answerSelection.map(a => a.pid);
+        const text = answer.text;
+        const realAnswer = answer.realAnswer;
+        const houseLie = answer.houseLie;
+        const creators = answersArray
+            .filter(a => a.text === answer.text)
+            .map(a => a.houseLie || a.realAnswer ? '' : a.pid);
+        let points = 0;
+
+        if (revealAnswers.find(w => w.text === answer.text)) {
+            return;
+        }
+
+        if ((answer.realAnswer || answer.houseLie) && answerSelection[0]) {
+            points = answerSelection[0].score;
+        } else {
+            points = answer.score || 0;
+        }
+
+        revealAnswers.push({ creators, selectors, points, text, realAnswer, houseLie });
+    });
+
+    return revealAnswers.sort((a, b) => a.text > b.text ? 1 : -1).sort(a => a.realAnswer ? 1 : -1);
+}
+
 function calcPlayersScore(game: GameScheme) {
     const answers = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
     const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
@@ -142,11 +178,13 @@ function calcPlayersScore(game: GameScheme) {
     return game.players;
 }
 
-async function handleScoreBoardState(game: GameScheme) {
+async function handleScoreBoardState(game: GameScheme, pin: string) {
     const gameOver = game.questionIndex === game.totalQ - 1;
     const lastRound = game.questionIndex === game.totalQ - 2;
     const secondRound = game.questionIndex === Math.floor(game.totalQ / 2) - 1;
     let res;
+
+    await saveQuestionHistory(game, pin);
 
     if (secondRound || lastRound) {
         res = {
@@ -160,6 +198,7 @@ async function handleScoreBoardState(game: GameScheme) {
             currentQ: {},
             answers: {},
             answerSelections: {},
+            revealAnswers: null,
         };
     } else {
         res = {
@@ -168,8 +207,18 @@ async function handleScoreBoardState(game: GameScheme) {
             currentQ: populateQuestion(game, game.questionIndex + 1),
             answers: {},
             answerSelections: {},
+            revealAnswers: null,
         };
     }
 
     return res;
+}
+
+function saveQuestionHistory(game: GameScheme, pin: string) {
+    return qHistoryRef.push({
+        pin,
+        q: game.currentQ,
+        a: game.revealAnswers,
+        timestamp: Date.now(),
+    });
 }

@@ -1,4 +1,4 @@
-import { GameScheme, GamePlayers, Answers, GameState, AnswerSelections } from './../game-model';
+import { GameScheme, GamePlayers, Answers, GameState, AnswerSelections, RevealAnswer } from './../game-model';
 import { SessionService } from './session.service';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
@@ -158,12 +158,9 @@ export class ApiService {
         });
     }
 
-    async getAggregatedAnswers(pin: string) {
+    getRevealAnswers(pin: string) {
         pin = pin.toUpperCase();
-        const players = await this.get<GamePlayers>(this.gamesRef.child(pin).child('players'));
-        const answers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
-        const answerSelections = await this.get<AnswerSelections>(this.gamesRef.child(pin).child('answerSelections'));
-        return { players, answers, answerSelections };
+        return this.get<RevealAnswer[]>(this.gamesRef.child(pin).child('revealAnswers'));
     }
 
     playerScore(pin: string, pid: string) {
