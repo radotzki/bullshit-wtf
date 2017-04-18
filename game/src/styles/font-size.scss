@@ -1,6 +1,7 @@
 $tablet: 769px;
 $desktop: 1000px;
 $widescreen: 1192px;
+$tv: 1919px;
 
 // mobile
 @media screen and (max-width: $tablet - 1px) {
@@ -24,9 +25,20 @@ $widescreen: 1192px;
 }
 
 // widescreen
-@media screen and (min-width: $widescreen) {
+@media screen and (min-width: $widescreen) and (max-width: $tv - 1px) {
     html {
         font-size: 32px;
+    }
+
+    .arcade-form {
+        font-size: 22px;
+    }
+}
+
+// tv
+@media screen and (min-width: $tv) {
+    html {
+        font-size: 38px;
     }
 
     .arcade-form {
