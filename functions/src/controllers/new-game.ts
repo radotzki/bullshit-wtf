@@ -1,12 +1,15 @@
 import { randomQuestions } from './questions';
 import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
+import { mixpanel } from '../mixpanel';
 
 export async function newGame(locale, count) {
     return incGameCounter().then(gameCounter => {
         const gamePin = generateGameName(gameCounter);
         const questions = randomQuestions(locale, count);
         const game = emptyGame(locale, count, questions);
+
+        mixpanel.track('Game Created');
 
         return gamesRef.child(gamePin).set(game).then(() => gamePin);
     });

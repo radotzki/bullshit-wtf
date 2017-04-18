@@ -9,11 +9,13 @@
     "@google-cloud/debug-agent": "^1.0.0",
     "cors": "^2.8.1",
     "firebase-admin": "^4.1.2",
-    "firebase-functions": "^0.5"
+    "firebase-functions": "^0.5",
+    "mixpanel": "^0.7.0"
   },
   "private": true,
   "devDependencies": {
     "@google-cloud/functions-emulator": "^1.0.0-alpha.15",
+    "@types/mixpanel": "0.0.28",
     "firebase-tools": "^3.5.0",
     "rimraf": "^2.6.1",
     "typescript": "^2.2.2"
