@@ -3,7 +3,6 @@ import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
-const tokenKey = 'BS_TOKEN';
 const playerKey = 'BS_PLAYER';
 const presenterKey = 'BS_PRESENTER';
 
@@ -49,14 +48,6 @@ export class SessionService implements CanActivate {
         } else {
             sessionStorage.removeItem(presenterKey);
         }
-    }
-
-    get token() {
-        return this.storageService.getItem(tokenKey);
-    }
-
-    set token(token: string) {
-        this.storageService.setItem(tokenKey, token);
     }
 
     canActivate() {
