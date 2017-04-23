@@ -14,7 +14,7 @@
             </p>
 
             <p class="control" *ngIf="nicknameState">
-                <input class="input is-large pin-input" type="text" placeholder="Nickname" [(ngModel)]="nickname" name="nickname" appAutofocus>
+                <input class="input is-large pin-input" type="text" placeholder="Nickname" [(ngModel)]="nickname" name="nickname" appAutofocus maxlength="9">
             </p>
 
             <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
