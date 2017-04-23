@@ -5,9 +5,9 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 
 const roundPoints = [
-    { truth: 1000, bullshit: 800 },
-    { truth: 1500, bullshit: 1200 },
-    { truth: 2000, bullshit: 2500 },
+    { truth: 1000, bullshit: 500 },
+    { truth: 1500, bullshit: 750 },
+    { truth: 2000, bullshit: 1000 },
 ];
 
 @Component({
