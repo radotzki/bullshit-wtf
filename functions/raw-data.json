@@ -4772,21 +4772,6 @@
                 "realAnswer": "קוקאין"
             },
             {
-                "approved": true,
-                "citation": "http://www.hollywoodreporter.com/live-feed/mr-t-lands-home-improvement-782994",
-                "createdAt": "2015-12-05T21:34:45.234Z",
-                "creatorId": "10206397926522997",
-                "fakeAnswers": [
-                    "זמן פטיש",
-                    "תואר ראשון בשיפוץ",
-                    "עשה זאת בעצמך",
-                    "תשאיר את זה למיסטר טי"
-                ],
-                "id": "5fcff879-4cfe-4937-a24c-901c9b7fbd97",
-                "questionText": "במרץ 2015 נודע שמיסטר טי, השחקן מהסדרה \"צוות לעניין\", יארח ברשת DIY תוכנית לשיפוץ בתים שנקראת $BLANK$",
-                "realAnswer": "אני מרחם על הכלים"
-            },
-            {
                 "approved": false,
                 "citation": "http://www.thewire.com/entertainment/2013/03/lil-poopy-disowned/62681/",
                 "createdAt": {
@@ -7881,7 +7866,7 @@
                     "אוזניים"
                 ],
                 "id": "aaa9573b-efbe-4c70-9e76-5cc1b433f219",
-                "questionText": "בשנת 2015 במהלך חגיגת סינקו דה מאיו במדינת מרילנד, השוטר Michael Flaig הואשם בנשיחת ה$BLANK$ של אדם איתו התקוטט",
+                "questionText": "בשנת 2015 במהלך חגיגת סינקו דה מאיו במדינת מרילנד, השוטר Michael Flaig הואשם בנשיכת ה$BLANK$ של אדם איתו התקוטט",
                 "realAnswer": "אשכים"
             },
             {
