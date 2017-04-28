@@ -94,7 +94,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     }
 
     playBackground() {
-        this.playMusic(['/assets/sounds/show-question.mp3']);
+        this.playMusic(['/assets/sounds/during-game.mp3']);
     }
 
     playTimeWarning() {
