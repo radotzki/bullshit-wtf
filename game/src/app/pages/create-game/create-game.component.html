@@ -47,11 +47,11 @@
 
         <div class="choose-mode" *ngIf="chooseMode">
             <p class="control presenter-mode">
-                <button class="button is-primary is-medium is-fullwidth" routerLink="/present-game" [queryParams]="{ pin: pin }">PRESENTER</button>
+                <button class="button is-primary is-medium is-fullwidth" [routerLink]="['/present-game', pin]">PRESENTER</button>
             </p>
 
             <p class="control">
-                <button class="button is-primary is-medium is-fullwidth" routerLink="/join-game" [queryParams]="{ pin: pin }">PLAYER</button>
+                <button class="button is-primary is-medium is-fullwidth" [routerLink]="['/join-game', pin]">PLAYER</button>
             </p>
         </div>
     </form>

@@ -21,7 +21,7 @@ export class PresentGameComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.pin = this.activatedRoute.snapshot.queryParams['pin'];
+        this.pin = this.activatedRoute.snapshot.params['pin'];
 
         if (this.pin) {
             this.hide = true;

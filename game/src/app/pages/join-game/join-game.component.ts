@@ -25,7 +25,7 @@ export class JoinGameComponent implements OnInit {
     ) { }
 
     ngOnInit() {
-        this.pin = this.activatedRoute.snapshot.queryParams['pin'];
+        this.pin = this.activatedRoute.snapshot.params['pin'];
 
         if (this.pin) {
             this.nicknameState = true;
