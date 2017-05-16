@@ -72,8 +72,8 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         revealAnswers
             .filter(a => a.selectors || a.realAnswer)
             .forEach(answer => {
-                const displaySelectors = answer.selectors.map(s => this.playerObject(playersArray, s));
-                const displayCreators = answer.creators.filter(c => c).map(c => this.playerObject(playersArray, c));
+                const displaySelectors = answer.selectors ? answer.selectors.map(s => this.playerObject(playersArray, s)) : [];
+                const displayCreators = answer.creators ? answer.creators.filter(c => c).map(c => this.playerObject(playersArray, c)) : [];
                 displayItems.push(Object.assign(answer, { displaySelectors, displayCreators }));
             });
 
