@@ -4,9 +4,9 @@ import { get, gamesRef, gameCounterRef } from '../firebase';
 import { mixpanel } from '../mixpanel';
 
 export async function newGame(locale, count) {
-    return incGameCounter().then(gameCounter => {
+    return incGameCounter().then(async gameCounter => {
         const gamePin = generateGameName(gameCounter);
-        const questions = randomQuestions(locale, count);
+        const questions = await randomQuestions(locale, count);
         const game = emptyGame(locale, count, questions);
 
         mixpanel.track('Game Created');

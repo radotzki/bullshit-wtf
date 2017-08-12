@@ -8,9 +8,9 @@ export async function fork(pin: string) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
-    return incGameCounter().then(gameCounter => {
+    return incGameCounter().then(async gameCounter => {
         const forkedGamePin = generateGameName(gameCounter);
-        const questions = randomQuestions(game.locale, game.totalQ);
+        const questions = await randomQuestions(game.locale, game.totalQ);
         const forkedGame = createFork(game, questions);
 
         mixpanel.track('Game Forked');

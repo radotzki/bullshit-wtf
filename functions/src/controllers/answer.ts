@@ -6,7 +6,7 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
     const qid = game.qids[game.questionIndex];
-    const question = getQuestion(qid);
+    const question = await getQuestion(qid);
 
     if (question.realAnswer.toLowerCase() === playerAnswer.toLowerCase()) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });

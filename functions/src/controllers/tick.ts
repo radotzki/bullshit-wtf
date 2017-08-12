@@ -25,7 +25,7 @@ export async function tick(pin) {
         case GameState.RoundIntro:
             return updateGame(pin, {
                 state: updateState(GameState.ShowQuestion),
-                currentQ: populateQuestion(game, game.questionIndex),
+                currentQ: await populateQuestion(game, game.questionIndex),
                 answers: {},
                 answerSelections: {},
                 revealAnswers: null,
@@ -34,7 +34,7 @@ export async function tick(pin) {
         case GameState.ShowQuestion:
             return updateGame(pin, {
                 state: updateState(GameState.ShowAnswers),
-                answers: populateQuestionAnswers(pin, game),
+                answers: await populateQuestionAnswers(pin, game),
             });
 
         case GameState.ShowAnswers:
@@ -68,19 +68,20 @@ function updateGame(pin: string, update: Partial<GameScheme>) {
 }
 
 function populateQuestion(game: GameScheme, qidx: number) {
-    return getQuestion(game.qids[qidx]).questionText;
+    return getQuestion(game.qids[qidx]).then(q => q.questionText);
 }
 
-function populateQuestionAnswers(pin: string, game: GameScheme) {
+async function populateQuestionAnswers(pin: string, game: GameScheme) {
     const playerAnswers = game.answers;
-    const fakeAnswers = populateFakeAnswers(pin, game);
-    const realAnswer = getRealAnswer(game);
+    const fakeAnswers = await populateFakeAnswers(pin, game);
+    const realAnswer = await getRealAnswer(game);
     const answers = Object.assign({}, playerAnswers, fakeAnswers, realAnswer);
     return answers;
 }
 
-function populateFakeAnswers(pin: string, game: GameScheme) {
-    const allFakeAnswers = getQuestion(game.qids[game.questionIndex]).fakeAnswers;
+async function populateFakeAnswers(pin: string, game: GameScheme) {
+    const question = await getQuestion(game.qids[game.questionIndex]);
+    const allFakeAnswers = question.fakeAnswers;
     const playerAnswers = Object.keys(game.answers || {}).map(k => game.answers[k].text);
     const uniqueAnswersCount = Array.from(new Set(playerAnswers)).length;
     const playersCount = Object.keys(game.players).length;
@@ -95,8 +96,9 @@ function populateFakeAnswers(pin: string, game: GameScheme) {
     return res;
 }
 
-function getRealAnswer(game: GameScheme) {
-    const text = getQuestion(game.qids[game.questionIndex]).realAnswer;
+async function getRealAnswer(game: GameScheme) {
+    const question = await getQuestion(game.qids[game.questionIndex]);
+    const text = question.realAnswer;
     const realAnswer: Answers = {
         truth: { text, houseLie: false, realAnswer: true }
     };
@@ -206,7 +208,7 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
         res = {
             state: updateState(GameState.ShowQuestion),
             questionIndex: game.questionIndex + 1,
-            currentQ: populateQuestion(game, game.questionIndex + 1),
+            currentQ: await populateQuestion(game, game.questionIndex + 1),
             answers: {},
             answerSelections: {},
             revealAnswers: null,

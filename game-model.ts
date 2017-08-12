@@ -66,3 +66,11 @@ export interface RevealAnswer {
     houseLie: boolean;
     points: number;
 }
+
+export interface Question {
+    id: string;
+    realAnswer: string;
+    fakeAnswers: string[];
+    questionText: string;
+    citation: string;
+}
