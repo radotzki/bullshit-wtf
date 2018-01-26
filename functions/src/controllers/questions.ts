@@ -11,7 +11,7 @@ export async function randomQuestions(lang: string, count: number) {
 
 export function getQuestion(id: string): Promise<Question> {
     return get(questionsRef.child(id))
-        .then(resp => Object.assign(resp, { id }));
+        .then(resp => Object.assign(resp, { id } as Question));
 }
 
 function getQuestionsByLang(lang: string): Promise<Question[]> {

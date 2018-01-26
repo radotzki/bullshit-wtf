@@ -1,4 +1,3 @@
-import { mixpanel } from './../mixpanel';
 import { GameScheme, GameState, GamePlayers } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
@@ -12,8 +11,6 @@ export async function fork(pin: string) {
         const forkedGamePin = generateGameName(gameCounter);
         const questions = await randomQuestions(game.locale, game.totalQ);
         const forkedGame = createFork(game, questions);
-
-        mixpanel.track('Game Forked');
 
         return gamesRef.child(forkedGamePin).set(forkedGame)
             .then(() => gamesRef.child(pin).child('fork').set(forkedGamePin));

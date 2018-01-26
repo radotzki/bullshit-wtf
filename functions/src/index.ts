@@ -8,6 +8,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
 import { validateGameName } from './controllers/validate-game-name';
+import * as analytics from './controllers/analytics';
 
 exports.time = functions.https.onRequest((req, res) => {
     cors(req, res, () => {
@@ -86,4 +87,14 @@ exports.tick = functions.database.ref('games/{pin}/tick').onWrite(event => {
 exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite(event => {
     const pin = event.params.pin;
     return onAnswerSelection(pin);
+});
+
+exports.gameState = functions.database.ref('games/{pin}/state').onWrite(event => {
+    const pin = event.params.pin;
+    return analytics.onStateChange(pin);
+});
+
+exports.onFork = functions.database.ref('games/{pin}/fork').onWrite(event => {
+    const pin = event.params.pin;
+    return analytics.onFork(pin);
 });

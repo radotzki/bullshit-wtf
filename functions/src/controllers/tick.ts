@@ -1,4 +1,3 @@
-import { mixpanel } from './../mixpanel';
 import { getQuestion } from './questions';
 import { GameScheme, Answer, Answers, GameState, RevealAnswer, GamePlayer } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
@@ -196,7 +195,6 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             questionIndex: game.questionIndex + 1,
         };
     } else if (gameOver) {
-        mixpanel.track('Game Ended');
         res = {
             state: updateState(GameState.ScoreBoardFinal),
             currentQ: {},
