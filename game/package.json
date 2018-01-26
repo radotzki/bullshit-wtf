@@ -20,6 +20,7 @@
     "@types/howler": "^2.0.2",
     "bulma": "^0.3.2",
     "core-js": "^2.4.1",
+    "enhanced-resolve": "^3.3.0",
     "firebase": "^3.7.2",
     "howler": "^2.0.3",
     "raven-js": "^3.12.1",
@@ -46,6 +47,6 @@
     "surge": "^0.18.0",
     "ts-node": "~2.0.0",
     "tslint": "~4.4.2",
-    "typescript": "^2.1.0"
+    "typescript": "^2.3.4"
   }
 }
