@@ -1,7 +1,7 @@
 import { GameScheme } from '../game-model';
 import { get, gamesRef } from '../firebase';
 
-export async function join(pin: string, nickname: string) {
+export async function join(pin: string, nickname: string, uid: string) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
@@ -10,6 +10,6 @@ export async function join(pin: string, nickname: string) {
     }
 
     const pid = gamesRef.child(pin).child('players').push().key;
-    await gamesRef.child(pin).child('players').child(pid).set({ nickname, score: 0 });
+    await gamesRef.child(pin).child('players').child(pid).set({ nickname, uid, score: 0 });
     return pid;
 }

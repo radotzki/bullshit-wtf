@@ -34,9 +34,9 @@ export class ApiService {
         return this.post(`newGame`, { locale, count });
     }
 
-    async join(pin: string, nickname: string) {
+    async join(pin: string, nickname: string, uid: string) {
         pin = pin.toUpperCase();
-        return this.post<{ pid: string }>(`join`, { pin, nickname }).then(resp => resp.pid);
+        return this.post<{ pid: string }>(`join`, { pin, nickname, uid }).then(resp => resp.pid);
     }
 
     validateGameName(pin: string) {
@@ -176,6 +176,16 @@ export class ApiService {
     getForkGame(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<string>(this.gamesRef.child(pin).child('fork'));
+    }
+
+    async signInAnonymously(pin: string, nickname: string) {
+        try {
+            const user = await firebase.auth().signInAnonymously();
+            this.post('onJoinGame', { user, pin, nickname });
+            return user;
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     private post<T>(url: string, body: Object = {}): Promise<T> {

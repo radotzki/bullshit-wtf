@@ -36,6 +36,7 @@ export interface GamePlayers {
 export interface GamePlayer {
     nickname: string;
     score: number;
+    uid: string;
 }
 
 export interface Answers {

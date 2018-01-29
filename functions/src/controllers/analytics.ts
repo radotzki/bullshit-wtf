@@ -22,6 +22,17 @@ export async function onStateChange(pin: string) {
     }
 }
 
+export async function onJoinGame(uid: string, ip: string, useragent: string, pin: string, nickname: string) {
+    return insert('users', {
+        uid,
+        ip,
+        useragent,
+        pin,
+        nickname,
+        time: new Date(),
+    });
+}
+
 async function openGame(pin: string, game: GameScheme) {
     return insert('opened_games', {
         id: pin,
@@ -53,6 +64,7 @@ async function forks(pin: string, game: GameScheme) {
 }
 
 async function insert(table, obj) {
+    console.log(`Insert to BigQuery, table: '${table}', data: ${JSON.stringify(obj)}`);
     const dataset = bigquery.dataset('analytics');
     try {
         await dataset.table(table).insert(obj);

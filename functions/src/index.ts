@@ -57,9 +57,10 @@ exports.join = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         const pin = req.body.pin;
         const nickname = req.body.nickname;
+        const uid = req.body.uid;
 
         try {
-            const pid = await join(pin, nickname);
+            const pid = await join(pin, nickname, uid);
             return res.status(200).send({ pid });
         } catch (e) {
             return res.status(400).send(e);
@@ -76,6 +77,19 @@ exports.validateGameName = functions.https.onRequest((req, res) => {
         } catch (e) {
             return res.status(400).send(e);
         }
+    });
+});
+
+exports.onJoinGame = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        const uid = req.body.uid;
+        const pin = req.body.pin;
+        const nickname = req.body.nickname;
+        const ip = req.headers['x-forwarded-for'];
+        const useragent = req.headers['user-agent'];
+
+        await analytics.onJoinGame(uid, ip, useragent, pin, nickname);
+        return res.status(200).send({});
     });
 });
 

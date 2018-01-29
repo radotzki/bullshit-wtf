@@ -55,11 +55,12 @@ export class JoinGameComponent implements OnInit {
             });
     }
 
-    join() {
+    async join() {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.join(this.pin, this.nickname)
+        const user = await this.apiService.signInAnonymously(this.pin, this.nickname);
+        this.apiService.join(this.pin, this.nickname, user.uid)
             .then((pid) => {
                 this.sessionService.user = { nickname: this.nickname.toLowerCase(), pid };
                 this.router.navigate(['game-staging', this.pin]);

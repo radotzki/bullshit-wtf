@@ -39,8 +39,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
                 .sort((a, b) => a.score < b.score ? 1 : -1);
         });
 
-        this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(fork => {
+        this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(async fork => {
             if (fork) {
+                if (!this.presenter) {
+                    await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname);
+                }
+
                 this.gameService.unregister();
                 this.gameService.register(fork);
             }
