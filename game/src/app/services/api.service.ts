@@ -181,7 +181,7 @@ export class ApiService {
     async signInAnonymously(pin: string, nickname: string) {
         try {
             const user = await firebase.auth().signInAnonymously();
-            this.post('onJoinGame', { user, pin, nickname });
+            this.post('onJoinGame', { uid: user.uid, pin, nickname });
             return user;
         } catch (error) {
             console.log(error);
