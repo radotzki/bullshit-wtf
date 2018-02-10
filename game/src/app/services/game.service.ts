@@ -1,7 +1,7 @@
 import { Subscription } from 'rxjs/Subscription';
 import { GameScheme, GameState } from './../game-model';
 import { ApiService } from './api.service';
-import { Router } from '@angular/router';
+import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 
 export const durations = {
@@ -12,7 +12,7 @@ export const durations = {
 };
 
 @Injectable()
-export class GameService {
+export class GameService implements CanActivate {
     private game: Subscription;
     private timeout;
 
@@ -85,6 +85,17 @@ export class GameService {
         if (this.timeout) {
             clearTimeout(this.timeout);
             this.timeout = undefined;
+        }
+    }
+
+    canActivate(route: ActivatedRouteSnapshot) {
+        const pin = route.params.pin;
+
+        if (!pin || pin.length !== 4) {
+            this.router.navigate(['/']);
+            return false;
+        } else {
+            return true;
         }
     }
 }

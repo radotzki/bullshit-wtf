@@ -15,6 +15,7 @@ import { SessionService } from '../services/session.service';
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { GameService } from '../services/game.service';
 
 const routes: Routes = [
     { path: '', component: LandingComponent },
@@ -25,13 +26,13 @@ const routes: Routes = [
     { path: 'present-game/:pin', component: PresentGameComponent },
     { path: 'join-game', component: JoinGameComponent },
     { path: 'join-game/:pin', component: JoinGameComponent },
-    { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService] },
-    { path: 'round-intro/:pin', component: RoundIntroComponent, canActivate: [SessionService] },
-    { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService] },
-    { path: 'show-answers/:pin', component: ShowAnswersComponent, canActivate: [SessionService] },
-    { path: 'reveal-the-truth/:pin', component: RevealTheTruthComponent, canActivate: [SessionService] },
-    { path: 'score-board/:pin', component: ScoreBoardComponent, canActivate: [SessionService] },
-    { path: 'score-board-final/:pin', component: ScoreBoardFinalComponent, canActivate: [SessionService] },
+    { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService, GameService] },
+    { path: 'round-intro/:pin', component: RoundIntroComponent, canActivate: [SessionService, GameService] },
+    { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService, GameService] },
+    { path: 'show-answers/:pin', component: ShowAnswersComponent, canActivate: [SessionService, GameService] },
+    { path: 'reveal-the-truth/:pin', component: RevealTheTruthComponent, canActivate: [SessionService, GameService] },
+    { path: 'score-board/:pin', component: ScoreBoardComponent, canActivate: [SessionService, GameService] },
+    { path: 'score-board-final/:pin', component: ScoreBoardFinalComponent, canActivate: [SessionService, GameService] },
 ];
 
 @NgModule({
