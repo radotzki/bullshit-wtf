@@ -33,6 +33,7 @@ const routes: Routes = [
     { path: 'reveal-the-truth/:pin', component: RevealTheTruthComponent, canActivate: [SessionService, GameService] },
     { path: 'score-board/:pin', component: ScoreBoardComponent, canActivate: [SessionService, GameService] },
     { path: 'score-board-final/:pin', component: ScoreBoardFinalComponent, canActivate: [SessionService, GameService] },
+    { path: '**', component: LandingComponent},
 ];
 
 @NgModule({
