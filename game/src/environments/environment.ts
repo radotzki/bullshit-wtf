@@ -13,5 +13,6 @@ export const environment = {
         projectId: 'bullshit-wtf-dev',
         storageBucket: 'bullshit-wtf-dev.appspot.com',
         messagingSenderId: '351075272123'
-    }
+    },
+    sentry: 'https://9fd70ebdc2c744569ccb0000896cb0ca@sentry.io/285990'
 };

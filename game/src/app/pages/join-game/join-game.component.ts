@@ -58,17 +58,25 @@ export class JoinGameComponent implements OnInit {
     async join() {
         this.loading = true;
         this.errorMsg = '';
+        let uid;
 
-        const user = await this.apiService.signInAnonymously(this.pin, this.nickname);
-        this.apiService.join(this.pin, this.nickname, user.uid)
+        try {
+            uid = (await this.apiService.signInAnonymously(this.pin, this.nickname)).uid;
+        } catch (e) {
+            uid = 0;
+            Raven.captureException(new Error('Error: can not sign-in with anonymous method. ' + JSON.stringify(e)));
+        }
+
+        this.apiService.join(this.pin, this.nickname, uid)
             .then((pid) => {
-                this.sessionService.user = { nickname: this.nickname.toLowerCase(), pid };
+                this.sessionService.user = { nickname: this.nickname.toLowerCase(), pid, uid };
                 this.router.navigate(['game-staging', this.pin]);
                 this.loading = false;
             })
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = err.message;
+                Raven.captureException(new Error(JSON.stringify(err)));
             });
     }
 

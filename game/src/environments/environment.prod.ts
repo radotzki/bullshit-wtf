@@ -8,5 +8,6 @@ export const environment = {
         projectId: 'bullshit-wtf-prod',
         storageBucket: 'bullshit-wtf-prod.appspot.com',
         messagingSenderId: '1054623883511'
-    }
+    },
+    sentry: 'https://cbf5aaf3b4694fc2993289b77d2c7db6@sentry.io/144992'
 };

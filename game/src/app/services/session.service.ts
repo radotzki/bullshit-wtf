@@ -19,7 +19,7 @@ export class SessionService implements CanActivate {
     set user(user: User) {
         this._user = user;
         this.storageService.setItem(playerKey, JSON.stringify(user));
-        Raven.setUserContext({ email: user.nickname });
+        Raven.setUserContext({ id: user.uid });
     }
 
     get user(): User {
@@ -63,4 +63,5 @@ export class SessionService implements CanActivate {
 interface User {
     nickname: string;
     pid: string;
+    uid?: string;
 }
