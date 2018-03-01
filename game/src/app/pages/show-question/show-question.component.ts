@@ -72,7 +72,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;
                 } else {
-                    Raven.captureException(new Error(JSON.stringify(err)));
+                    Raven.captureException(err);
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });

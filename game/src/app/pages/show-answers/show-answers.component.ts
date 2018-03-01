@@ -66,7 +66,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             })
             .catch(err => {
                 this.loading = false;
-                Raven.captureException(new Error(JSON.stringify(err)));
+                Raven.captureException(err);
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }

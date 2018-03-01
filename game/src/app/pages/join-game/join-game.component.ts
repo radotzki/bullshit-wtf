@@ -64,7 +64,7 @@ export class JoinGameComponent implements OnInit {
             uid = (await this.apiService.signInAnonymously(this.pin, this.nickname)).uid;
         } catch (e) {
             uid = 0;
-            Raven.captureException(new Error('Error: can not sign-in with anonymous method. ' + JSON.stringify(e)));
+            Raven.captureException(e);
         }
 
         this.apiService.join(this.pin, this.nickname, uid)
@@ -76,7 +76,7 @@ export class JoinGameComponent implements OnInit {
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = err.message;
-                Raven.captureException(new Error(JSON.stringify(err)));
+                Raven.captureException(err);
             });
     }
 

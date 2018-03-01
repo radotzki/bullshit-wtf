@@ -60,7 +60,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.apiService.tick(this.pin, GameState.RoundIntro)
             .catch(err => {
                 this.loading = false;
-                Raven.captureException(new Error(JSON.stringify(err)));
+                Raven.captureException(err);
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }

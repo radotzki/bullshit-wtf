@@ -33,7 +33,7 @@ export class CreateGameComponent {
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = 'oops, something went wrong. Please try again';
-                Raven.captureException(new Error(JSON.stringify(err)));
+                Raven.captureException(err);
             });
     }
 
