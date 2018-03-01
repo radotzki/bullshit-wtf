@@ -56,6 +56,12 @@
         padding: 0 40px;
     }
 
+    .controls-wrapper {
+        display: flex;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
     .pin-input {
         text-transform: uppercase;
     }

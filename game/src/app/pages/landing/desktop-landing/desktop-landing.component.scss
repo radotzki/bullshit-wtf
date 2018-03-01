@@ -1,66 +1,25 @@
-.top-frame {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px;
-    background-color: #ecefc1;
-    color: #ad994e;
-
-    .title {
-        letter-spacing: 2px;
-        font-weight: bold;
-        font-size: 1.5rem;
-        flex: 1;
-    }
-
-    .logo {
-        height: 32px;
-        margin-right: 10px;
-    }
+.main-columns {
+    justify-content: center;
+    margin-top: 60px;
 }
 
-.home {
-    .menu-button {
-        height: calc((100vh - 61px) / 4);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 15px;
-        color: #f4fcca;
-        box-shadow: 0 3px 15px 0 rgba(0,0,0,0.65);
+.menu-button {
+    transition: .5s;
+    border: 1px solid #f1f2f3;
+    border-radius: 5px;
+    padding: 0.5rem;
+    text-align: center;
+    color: #fff;
+    background-color: #db7151;
+    opacity: 0.9;
+
+    &:hover {
+        box-shadow: 0 0 36px rgba(0,0,0,0.3);
+        cursor: pointer;
     }
 
-    .menu-button.join-game {
-        background-color: #533159;
-    }
-
-    .menu-button.create-game {
-        background-color: #97374e;
-    }
-
-    .menu-button.present-game {
-        background-color: #db7151;
-    }
-
-    .menu-button.how-to-play {
-        background-color: #f3d467;
-    }
-
-    .menu-button-icon i {
-        font-size: 30px;
-        margin-right: 20px;
-    }
-
-    .menu-button-text {
-        flex: 1;
-    }
-
-    .menu-button-text-main {
-        margin-bottom: 0;
-        font-size: 1.3em;
-    }
-
-    .menu-button-text-second {
-        margin-bottom: 0;
+    i {
+        font-size: 2rem;
+        margin-bottom: 10px;
     }
 }

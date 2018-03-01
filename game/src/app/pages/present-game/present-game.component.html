@@ -7,12 +7,14 @@
             <div class="separator">♦</div>
         </div>
 
-        <div class="controls">
-            <p class="control">
-                <input class="input is-medium pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin" autofocus>
-            </p>
+        <div class="controls-wrapper">
+            <div class="controls">
+                <p class="control">
+                    <input class="input is-medium pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin" appAutofocus>
+                </p>
 
-            <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">PRESENT</button>
+                <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">PRESENT</button>
+            </div>
         </div>
     </form>
 </div>
