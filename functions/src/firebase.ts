@@ -1,6 +1,10 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-admin.initializeApp(functions.config().firebase);
+admin.initializeApp(Object.assign(
+    {},
+    functions.config().firebase,
+    { databaseAuthVariableOverride: { uid: 'bl-service-worker' } }
+));
 
 export const gamesRef = admin.database().ref('games');
 export const qHistoryRef = admin.database().ref('qHistory');

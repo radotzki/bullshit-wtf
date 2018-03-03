@@ -1,0 +1,85 @@
+{
+    "rules": {
+        "qHistory": {
+            ".read": "auth.uid == 'bl-service-worker'",
+            ".write": "auth.uid == 'bl-service-worker'"
+        },
+        "gameCounter": {
+            ".read": "auth.uid == 'bl-service-worker'",
+            ".write": "auth.uid == 'bl-service-worker'"
+        },
+        "questions": {
+            ".read": "auth.uid == 'bl-service-worker'",
+            ".write": "auth.uid == 'bl-service-worker'",
+            ".indexOn": [
+                "lang"
+            ]
+        },
+        "games": {
+            "$pin": {
+                ".write": "auth.uid == 'bl-service-worker'",
+                ".read": "auth.uid == 'bl-service-worker'",
+                "state": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "timestamp": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "roundIndex": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "questionIndex": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "locale": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "currentQ": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "answers": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "answerSelections": {
+                    ".read": "true",
+                    ".write": "true"
+                },
+                "revealAnswers": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "totalQ": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "players": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "qids": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "tick": {
+                    ".read": "true",
+                    ".write": "true"
+                },
+                "presenter": {
+                    ".read": "true",
+                    ".write": "true"
+                },
+                "fork": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                }
+            }
+        }
+    }
+}

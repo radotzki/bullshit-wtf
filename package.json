@@ -5,10 +5,12 @@
         "start": "cd game && npm start",
         "deploy-game": "cd game && npm run build && cd .. && firebase deploy --only hosting",
         "deploy-functions": "cd functions && npm run build && cd .. && firebase deploy --only functions",
-        "deploy": "npm run deploy-functions && npm run deploy-game",
+        "deploy-rules": "firebase deploy --only database",
+        "deploy": "npm run deploy-functions && npm run deploy-game && npm run deploy-rules",
         "prod:deploy-game": "npm run deploy-game -- -P bullshit-wtf-prod",
         "prod:deploy-functions": "npm run deploy-functions -- -P bullshit-wtf-prod",
-        "prod:deploy": "npm run prod:deploy-functions && npm run prod:deploy-game"
+        "prod:deploy-rules": "npm run deploy-rules -- -P bullshit-wtf-prod",
+        "prod:deploy": "npm run prod:deploy-functions && npm run prod:deploy-game && npm run prod:deploy-rules"
     },
     "private": true,
     "devDependencies": {
