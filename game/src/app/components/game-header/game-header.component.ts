@@ -19,6 +19,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     gameSubscription: Subscription;
     loading: boolean;
     presenter: boolean;
+    showGoHomeModal: boolean;
     @Input() button: string;
     @Input() buttonLoading: boolean;
     @Output() onClick: EventEmitter<any> = new EventEmitter();
@@ -85,7 +86,15 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         this.apiService.getRoundIndex(this.pin).then(ridx => this.text = `ROUND ${ridx + 1}`);
     }
 
-    home() {
+    homeModal() {
+        if (this.gameOver) {
+            this.navigateHome();
+        } else {
+            this.showGoHomeModal = true;
+        }
+    }
+
+    navigateHome() {
         this.gameService.unregister();
         this.router.navigate(['/']);
     }

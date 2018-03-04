@@ -1,9 +1,13 @@
 <div class="game-header" [style.visibility]="loading ? 'hidden' : 'visible'" [class.presenter]="presenter">
-    <span *ngIf="!gameOver && !(registration && presenter)" class="pin"> PIN: {{pin | uppercase}} </span>
+    <div class="game-header-left">
+        <a class="button is-primary is-outlined" (click)="homeModal()">
+            <span class="icon" [class.is-medium]="presenter">
+                <i class="fa fa-home"></i>
+            </span>
+        </a>
 
-    <a *ngIf="gameOver" class="button is-primary is-outlined" (click)="home()">
-        <span class="icon" [class.is-medium]="presenter"> <i class="fa fa-home"></i> </span>
-    </a>
+        <span *ngIf="!gameOver && !(registration && presenter)" class="pin"> PIN: {{pin | uppercase}} </span>
+    </div>
 
     <button *ngIf="button" (click)="onClick.next()" class="button is-primary" [class.is-loading]="buttonLoading"> {{button}} </button>
 
@@ -15,4 +19,20 @@
         with Game PIN:
         <span class="game-pin"> {{pin | uppercase}} </span>
     </span>
+</div>
+
+<div class="modal" [class.is-active]="showGoHomeModal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <section class="modal-card-body">
+            <h3 class="title">Don't leave us :(</h3>
+            <p>Do you want to leave this awesome game?</p>
+        </section>
+
+        <footer class="modal-card-foot">
+            <button class="button is-primary" (click)="showGoHomeModal=false">KEEP PLAYING</button>
+            <button class="button" (click)="navigateHome()">BACK HOME</button>
+        </footer>
+
+    </div>
 </div>
