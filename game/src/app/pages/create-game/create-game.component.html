@@ -3,13 +3,12 @@
 
         <div class="title-area">
             <h1 class="title" routerLink="/">Bullshit</h1>
-            <h3 class="sub-title" *ngIf="!chooseMode">Create new game</h3>
-            <h3 class="sub-title" *ngIf="chooseMode">What is this device?</h3>
+            <h3 class="sub-title">Create new game</h3>
             <div class="separator">♦</div>
         </div>
 
         <div class="create-game-controls-wrapper">
-            <div class="controls" *ngIf="!chooseMode">
+            <div class="controls">
                 <label>Language:</label>
                 <p class="control">
                     <label class="radio vertical">
@@ -36,20 +35,9 @@
                 <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
             </div>
 
-            <p class="control action" *ngIf="!chooseMode">
+            <p class="control action">
                 <button class="button is-primary is-medium is-fullwidth" type="submit" [class.is-loading]="loading">CREATE</button>
             </p>
-
-
-            <div class="choose-mode" *ngIf="chooseMode">
-                <p class="control presenter-mode">
-                    <button class="button is-primary is-medium is-fullwidth" [routerLink]="['/present-game', pin]">PRESENTER</button>
-                </p>
-
-                <p class="control">
-                    <button class="button is-primary is-medium is-fullwidth" [routerLink]="['/join-game', pin]">PLAYER</button>
-                </p>
-            </div>
         </div>
     </form>
 </div>

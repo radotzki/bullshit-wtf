@@ -2,6 +2,7 @@ import { GameService } from './../../services/game.service';
 import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-create-game',
@@ -13,11 +14,10 @@ export class CreateGameComponent {
     length = 7;
     loading: boolean;
     errorMsg: string;
-    chooseMode: boolean;
-    pin: string;
 
     constructor(
-        private apiService: ApiService
+        private apiService: ApiService,
+        private router: Router,
     ) { }
 
     submit() {
@@ -27,8 +27,7 @@ export class CreateGameComponent {
         this.apiService.createGame(this.locale, this.length)
             .then((resp) => {
                 this.loading = false;
-                this.chooseMode = true;
-                this.pin = resp.pin;
+                this.router.navigate(['/join-game', resp.pin]);
             })
             .catch(err => {
                 this.loading = false;
