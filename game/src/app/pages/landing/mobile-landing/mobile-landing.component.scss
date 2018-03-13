@@ -1,21 +1,13 @@
 .top-frame {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    text-align: center;
     padding: 15px;
-    background-color: #ecefc1;
-    color: #ad994e;
+    background-color: #502440;
+    color: #fff;
 
     .title {
         letter-spacing: 2px;
         font-weight: bold;
         font-size: 1.5rem;
-        flex: 1;
-    }
-
-    .logo {
-        height: 32px;
-        margin-right: 10px;
     }
 }
 
