@@ -6,10 +6,5 @@ import { Component } from '@angular/core';
     styleUrls: ['./desktop-landing.component.scss']
 })
 export class DesktopLandingComponent {
-
     constructor() { }
-
-    playVideo() {
-        window.open('https://youtu.be/6HGl9xoUcjw', '_blank');
-    }
 }

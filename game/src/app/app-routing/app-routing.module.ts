@@ -11,6 +11,7 @@ import { MobileLandingComponent } from '../pages/landing/mobile-landing/mobile-l
 import { LandingComponent } from '../pages/landing/landing.component';
 import { JoinGameComponent } from '../pages/join-game/join-game.component';
 import { CreateGameComponent } from '../pages/create-game/create-game.component';
+import { LearnComponent } from '../pages/learn/learn.component';
 import { SessionService } from '../services/session.service';
 
 import { NgModule } from '@angular/core';
@@ -26,6 +27,7 @@ const routes: Routes = [
     { path: 'present-game/:pin', component: PresentGameComponent },
     { path: 'join-game', component: JoinGameComponent },
     { path: 'join-game/:pin', component: JoinGameComponent },
+    { path: 'learn', component: LearnComponent },
     { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService, GameService] },
     { path: 'round-intro/:pin', component: RoundIntroComponent, canActivate: [SessionService, GameService] },
     { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService, GameService] },

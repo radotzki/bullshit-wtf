@@ -28,6 +28,7 @@ import { ScoreBoardComponent } from './pages/score-board/score-board.component';
 import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-final.component';
 import { BsPointsPipe } from './pipes/bs-points.pipe';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { LearnComponent } from './pages/learn/learn.component';
 
 @NgModule({
     declarations: [
@@ -50,6 +51,7 @@ import { AutofocusDirective } from './directives/autofocus.directive';
         ScoreBoardFinalComponent,
         BsPointsPipe,
         AutofocusDirective,
+        LearnComponent,
     ],
     imports: [
         BrowserModule,
