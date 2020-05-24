@@ -93,22 +93,22 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
     });
 });
 
-exports.tick = functions.database.ref('games/{pin}/tick').onWrite(event => {
+exports.tick = functions.database.ref('games/{pin}/tick').onWrite((change, event) => {
     const pin = event.params.pin;
     return tick(pin);
 });
 
-exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite(event => {
+exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite((change, event) => {
     const pin = event.params.pin;
     return onAnswerSelection(pin);
 });
 
-exports.gameState = functions.database.ref('games/{pin}/state').onWrite(event => {
+exports.gameState = functions.database.ref('games/{pin}/state').onWrite((change, event) => {
     const pin = event.params.pin;
     return analytics.onStateChange(pin);
 });
 
-exports.onFork = functions.database.ref('games/{pin}/fork').onWrite(event => {
+exports.onFork = functions.database.ref('games/{pin}/fork').onWrite((change, event) => {
     const pin = event.params.pin;
     return analytics.onFork(pin);
 });

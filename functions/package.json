@@ -9,14 +9,17 @@
     "@google-cloud/bigquery": "^1.0.0",
     "@google-cloud/debug-agent": "^1.0.0",
     "cors": "^2.8.1",
-    "firebase-admin": "^4.1.2",
-    "firebase-functions": "0.8.1"
+    "firebase-admin": "^8.12.1",
+    "firebase-functions": "^3.6.1"
   },
   "private": true,
   "devDependencies": {
     "@google-cloud/functions-emulator": "^1.0.0-alpha.15",
-    "firebase-tools": "^3.5.0",
+    "firebase-tools": "^8.4.0",
     "rimraf": "^2.6.1",
     "typescript": "^2.2.2"
+  },
+  "engines": {
+    "node": "10"
   }
 }

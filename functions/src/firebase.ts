@@ -2,7 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp(Object.assign(
     {},
-    functions.config().firebase,
+    functions.firebaseConfig(),
     { databaseAuthVariableOverride: { uid: 'bl-service-worker' } }
 ));
 
