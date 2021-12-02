@@ -1,7 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
-import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit } from '@angular/core';
 
@@ -64,7 +63,6 @@ export class JoinGameComponent implements OnInit {
             uid = (await this.apiService.signInAnonymously(this.pin, this.nickname)).uid;
         } catch (e) {
             uid = 0;
-            Raven.captureException(e);
         }
 
         this.apiService.join(this.pin, this.nickname, uid)
@@ -76,7 +74,6 @@ export class JoinGameComponent implements OnInit {
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = err.message;
-                Raven.captureException(err);
             });
     }
 

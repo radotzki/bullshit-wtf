@@ -12,8 +12,7 @@
         "prod:deploy-rules": "npm run deploy-rules -- -P bullshit-wtf-prod",
         "prod:deploy": "npm run prod:deploy-functions && npm run prod:deploy-game && npm run prod:deploy-rules"
     },
-    "private": true,
     "devDependencies": {
-        "firebase-tools": "^8.4.0"
+        "firebase-tools": "^9.23.0"
     }
 }

@@ -1,4 +1,3 @@
-import * as Raven from 'raven-js';
 import { Howl } from 'howler';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -66,7 +65,6 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             })
             .catch(err => {
                 this.loading = false;
-                Raven.captureException(err);
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }

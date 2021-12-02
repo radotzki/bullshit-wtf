@@ -1,6 +1,5 @@
 import { GamePlayers, GamePlayer, GameState } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
-import * as Raven from 'raven-js';
 import { Howl } from 'howler';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -60,7 +59,6 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.apiService.tick(this.pin, GameState.RoundIntro)
             .catch(err => {
                 this.loading = false;
-                Raven.captureException(err);
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }

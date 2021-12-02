@@ -1,5 +1,4 @@
 import { GameService } from './../../services/game.service';
-import * as Raven from 'raven-js';
 import { ApiService } from './../../services/api.service';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
@@ -32,7 +31,6 @@ export class CreateGameComponent {
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = 'oops, something went wrong. Please try again';
-                Raven.captureException(err);
             });
     }
 

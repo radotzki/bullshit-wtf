@@ -1,4 +1,3 @@
-import * as Raven from 'raven-js';
 import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
@@ -21,7 +20,6 @@ export class SessionService implements CanActivate {
     set user(user: User) {
         this._user = user;
         this.storageService.setItem(playerKey, JSON.stringify(user));
-        Raven.setUserContext({ id: user.uid });
         gtag('set', { 'user_id': user.uid });
     }
 
@@ -47,7 +45,6 @@ export class SessionService implements CanActivate {
 
         if (isPresenter) {
             sessionStorage.setItem(presenterKey, JSON.stringify(isPresenter));
-            Raven.setUserContext({ username: 'presenter' });
         } else {
             sessionStorage.removeItem(presenterKey);
         }

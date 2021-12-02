@@ -1,6 +1,5 @@
 import { Subscription } from 'rxjs/Subscription';
 import { SessionService } from './../../services/session.service';
-import * as Raven from 'raven-js';
 import { Howl } from 'howler';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';

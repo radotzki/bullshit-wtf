@@ -1,4 +1,3 @@
-import * as Raven from 'raven-js';
 import { Howl } from 'howler';
 import { Subscription } from 'rxjs/Subscription';
 import { ApiService } from './../../services/api.service';
@@ -72,7 +71,6 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;
                 } else {
-                    Raven.captureException(err);
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });
