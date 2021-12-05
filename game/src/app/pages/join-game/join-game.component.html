@@ -10,19 +10,30 @@
 
         <div class="controls-wrapper">
             <div class="controls">
-                <p class="control" *ngIf="!nicknameState">
-                    <input class="input is-large pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin" appAutofocus>
-                </p>
+                <div class="field" *ngIf="!nicknameState">
+                    <p class="control">
+                        <input class="input is-large pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin"
+                            name="pin" appAutofocus>
+                    </p>
+                </div>
 
-                <p class="control" *ngIf="nicknameState">
-                    <input class="input is-large pin-input" type="text" placeholder="Nickname" [(ngModel)]="nickname" name="nickname" appAutofocus
-                        maxlength="9">
-                </p>
+                <div class="field" *ngIf="nicknameState">
+                    <p class="control">
+                        <input class="input is-large pin-input" type="text" placeholder="Nickname"
+                            [(ngModel)]="nickname" name="nickname" appAutofocus maxlength="9">
+                    </p>
+                </div>
 
                 <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
-                <button *ngIf="!nicknameState" class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">NEXT</button>
-                <button *ngIf="nicknameState" class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname" [class.is-loading]="loading">JOIN</button>
+                <div class="field" *ngIf="!nicknameState">
+                    <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin"
+                        [class.is-loading]="loading">NEXT</button>
+                </div>
+                <div class="field" *ngIf="nicknameState">
+                    <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname"
+                        [class.is-loading]="loading">JOIN</button>
+                </div>
             </div>
         </div>
     </form>
