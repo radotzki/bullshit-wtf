@@ -3,10 +3,10 @@ import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, Ga
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline } from './phase';
 import { pickHouseLies } from './answer-options';
+import { houseLiePoints } from './house-lie';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
-const pointsForHouseLie = [-500, -750, -1000];
 
 /** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
 export async function tick(pin) {
@@ -193,7 +193,8 @@ function calcAnswersScore(game: GameScheme) {
         if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
             game.answerSelections[answerSelection.pid].score = pointsForCorrectAnswer[game.roundIndex];
         } else if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
-            game.answerSelections[answerSelection.pid].score = pointsForHouseLie[game.roundIndex];
+            // Set below, once every player's points for their own lie are known.
+            game.answerSelections[answerSelection.pid].score = 0;
         } else {
             game.answerSelections[answerSelection.pid].score = 0;
             relatedAnswers.forEach(answer => {
@@ -203,6 +204,21 @@ function calcAnswersScore(game: GameScheme) {
 
                 game.answers[answer.pid].score += pointsForBullshitting[game.roundIndex]
             });
+        }
+    });
+
+    // A house lie only takes back points the player has: it never pushes a score below zero.
+    answerSelections.forEach(answerSelection => {
+        const relatedAnswers = answers.filter(answer => answer.text === answerSelection.text);
+
+        if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
+            const player = (game.players || {})[answerSelection.pid];
+            const ownLie = (game.answers || {})[answerSelection.pid];
+            game.answerSelections[answerSelection.pid].score = houseLiePoints(
+                game.roundIndex,
+                player ? player.score : 0,
+                ownLie && !ownLie.realAnswer && !ownLie.houseLie ? ownLie.score || 0 : 0,
+            );
         }
     });
 
@@ -230,13 +246,23 @@ function generateRevealAnswers(game: GameScheme) {
             return;
         }
 
-        if ((answer.realAnswer || answer.houseLie) && answerSelection[0]) {
+        let pointsBy: { [pid: string]: number };
+
+        if (houseLie && answerSelection[0]) {
+            // The row shows the most any picker lost; a picker with no points to lose lost nothing.
+            pointsBy = {};
+            answerSelection.forEach(a => pointsBy[a.pid] = a.score || 0);
+            points = Math.min(0, ...answerSelection.map(a => a.score || 0));
+        } else if (realAnswer && answerSelection[0]) {
             points = answerSelection[0].score;
         } else {
             points = answer.score || 0;
         }
 
-        revealAnswers.push({ creators, selectors, points, text, realAnswer, houseLie });
+        revealAnswers.push(Object.assign(
+            { creators, selectors, points, text, realAnswer, houseLie },
+            pointsBy ? { pointsBy } : {},
+        ));
     });
 
     return revealAnswers.sort((a, b) => a.text > b.text ? 1 : -1).sort(a => a.realAnswer ? 1 : -1);
