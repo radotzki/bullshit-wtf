@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS `bullshit-wtf-prod.analytics.shares` (
 PARTITION BY DATE(time)
 OPTIONS (description = 'Counted shares, one row per send (see functions/src/controllers/analytics.ts SHARE_METHODS)');
 
+-- Since the lonely-lobby change, content_type 'invite' also lands here: lobby invite sends
+-- (method whatsapp, native, copy) and lone hosts' "Start alone anyway" taps (method solo-start).
+-- Same columns; crew_id is null for these. No schema change.
+
 -- ---------------------------------------------------------------------------
 -- Read-only queries.
 
@@ -30,3 +34,10 @@ OPTIONS (description = 'Counted shares, one row per send (see functions/src/cont
 -- FROM `bullshit-wtf-prod.analytics.shares`
 -- WHERE content_type = 'crew-night' AND time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 28 DAY)
 -- GROUP BY method ORDER BY sends DESC;
+
+-- Lobby invites per method per day, and "Start alone anyway" taps (method solo-start).
+-- SELECT DATE(time) AS day, method, COUNT(*) AS sends, COUNT(DISTINCT uid) AS senders
+-- FROM `bullshit-wtf-prod.analytics.shares`
+-- WHERE content_type = 'invite'
+-- GROUP BY day, method
+-- ORDER BY day DESC, sends DESC;

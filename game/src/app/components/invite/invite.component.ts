@@ -6,6 +6,8 @@ import { Component, Input, OnInit } from '@angular/core';
  * Lobby invite: a QR code and a shareable join link for the game PIN.
  * On a presenter screen it is always shown, big, so people in the room can scan it.
  * On a phone it is a button that opens a sheet with the QR, share, WhatsApp and copy.
+ * With `inline` (the host is alone in the lobby) the sheet's content is shown on the page instead.
+ * Each send is counted in BigQuery's shares table as content_type "invite".
  */
 @Component({
     selector: 'app-invite',
@@ -15,6 +17,7 @@ import { Component, Input, OnInit } from '@angular/core';
 export class InviteComponent implements OnInit {
     @Input() pin: string;
     @Input() presenter: boolean;
+    @Input() inline: boolean;
     locale = 'en';
     open: boolean;
     copied: boolean;
@@ -72,16 +75,27 @@ export class InviteComponent implements OnInit {
             url: this.linkUrl,
         }, 'invite');
         this.copied = result === 'copied';
+        if (result === 'shared') {
+            this.count('native');
+        } else if (result === 'copied') {
+            this.count('copy');
+        }
     }
 
     async copy() {
         this.copied = await this.shareService.copy(this.linkUrl);
         if (this.copied) {
             this.shareService.track('copy', 'invite');
+            this.count('copy');
         }
     }
 
     whatsapp() {
         this.shareService.track('whatsapp', 'invite');
+        this.count('whatsapp');
+    }
+
+    private count(method: 'whatsapp' | 'native' | 'copy') {
+        this.apiService.logShare('invite', method, { locale: this.locale });
     }
 }

@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { lobbyHost, lobbyText, LobbyText, HOST_GRACE_MS, packBanner } from './lobby-host';
+import { lobbyHost, lobbyText, LobbyText, HOST_GRACE_MS, packBanner, firstFriend } from './lobby-host';
 
 @Component({
     selector: 'app-game-staging',
@@ -34,6 +34,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private arrivedAt = Date.now();
     private hostLoaded = false;
     private graceTimer: any;
+    /** The host has been alone in this lobby, so the first friend in is greeted by name. */
+    private wasAlone = false;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -99,8 +101,12 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             waitedMs: Date.now() - this.arrivedAt,
         });
 
+        if (view.alone) {
+            this.wasAlone = true;
+        }
+        const friend = firstFriend(view, this.players || [], this.myUid, this.wasAlone);
         this.showStartButton = view.canStart;
-        this.lobby = lobbyText(view, (this.players || []).length, this.locale);
+        this.lobby = lobbyText(view, (this.players || []).length, this.locale, friend);
     }
 
     ngOnDestroy() {
@@ -111,6 +117,15 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.sound.fade(1, 0, 1000);
             setTimeout(this.sound.stop, 1000);
         }
+    }
+
+    /** "Start alone anyway": counted, so we can see how many lone hosts insist, then a normal start. */
+    startAlone() {
+        if (this.loading) {
+            return;
+        }
+        this.apiService.logShare('invite', 'solo-start', { locale: this.locale });
+        this.startGame();
     }
 
     startGame() {

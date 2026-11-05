@@ -35,6 +35,27 @@
         height: 100%;
     }
 
+    // Host alone: the invite takes the screen, the host's own owl stays small.
+    .lobby.alone .player {
+        height: 90px;
+    }
+
+    .start-alone {
+        text-align: center;
+        margin: 4px 0 8px;
+
+        .start-alone-link {
+            color: #9a9a9a;
+            font-size: 0.9rem;
+            text-decoration: underline;
+
+            &.is-disabled {
+                pointer-events: none;
+                opacity: 0.5;
+            }
+        }
+    }
+
     .lobby-status {
         display: flex;
         flex-direction: column;
@@ -45,6 +66,11 @@
         .lobby-message {
             font-size: 1.25rem;
             font-weight: 600;
+        }
+
+        .lobby-sub {
+            font-size: 1rem;
+            margin-top: 2px;
         }
 
         .lobby-count {

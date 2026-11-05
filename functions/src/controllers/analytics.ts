@@ -66,8 +66,14 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     calendar-share     CALENDAR INVITE, sent through the phone's share sheet
 //     calendar-download  CALENDAR INVITE, downloaded as a .ics file
 //     google-calendar    tapped "or add it to Google Calendar"
+//   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
+//     whatsapp           tapped WHATSAPP
+//     native             sent through the phone's share sheet (SHARE LINK)
+//     copy               copied the link (COPY LINK, or SHARE LINK on a phone with no share sheet)
+//     solo-start         a lone host tapped "Start alone anyway" (not a send: counts who insists)
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar'],
+    'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
 };
 
 export interface ShareRow {

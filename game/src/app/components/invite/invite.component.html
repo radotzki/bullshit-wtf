@@ -5,8 +5,28 @@
     <p class="url"> {{displayUrl}} </p>
 </div>
 
+<!-- Phone, host alone in the lobby: the invite is the screen. WhatsApp first, then share or copy, then the QR. -->
+<div *ngIf="!presenter && inline" class="invite-inline">
+    <a class="button is-success is-fullwidth is-medium whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
+        <span class="icon"><i class="fa fa-whatsapp"></i></span>
+        <span> WHATSAPP </span>
+    </a>
+    <button *ngIf="canShare" class="button is-primary is-fullwidth" (click)="share()">
+        <span class="icon"><i class="fa fa-share-alt"></i></span>
+        <span> SHARE LINK </span>
+    </button>
+    <button *ngIf="!canShare" class="button is-fullwidth" (click)="copy()">
+        <span class="icon"><i class="fa" [class.fa-link]="!copied" [class.fa-check]="copied"></i></span>
+        <span> {{copied ? 'LINK COPIED' : 'COPY LINK'}} </span>
+    </button>
+
+    <p class="scan-hint" [attr.dir]="locale === 'he' ? 'rtl' : null"> {{t?.scanHint}} </p>
+    <app-qr-code class="qr" [data]="qrUrl" [label]="'Scan to join game ' + pinUpper"></app-qr-code>
+    <p class="pin"> PIN: {{pinUpper}} </p>
+</div>
+
 <!-- Phone: invite button + sheet -->
-<div *ngIf="!presenter" class="invite-phone">
+<div *ngIf="!presenter && !inline" class="invite-phone">
     <button class="button is-primary is-outlined is-fullwidth invite-button" (click)="toggle()">
         <span class="icon"><i class="fa fa-user-plus"></i></span>
         <span> INVITE FRIENDS </span>
