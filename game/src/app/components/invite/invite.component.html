@@ -1,0 +1,43 @@
+<!-- Presenter (TV / laptop): always-visible scan-to-join card -->
+<div *ngIf="presenter" class="invite-presenter box">
+    <app-qr-code class="qr" [data]="qrUrl" [label]="'Scan to join game ' + pinUpper"></app-qr-code>
+    <p class="scan"> SCAN TO JOIN </p>
+    <p class="url"> {{displayUrl}} </p>
+</div>
+
+<!-- Phone: invite button + sheet -->
+<div *ngIf="!presenter" class="invite-phone">
+    <button class="button is-primary is-outlined is-fullwidth invite-button" (click)="toggle()">
+        <span class="icon"><i class="fa fa-user-plus"></i></span>
+        <span> INVITE FRIENDS </span>
+    </button>
+
+    <div class="modal" [class.is-active]="open">
+        <div class="modal-background" (click)="toggle()"></div>
+        <div class="modal-content">
+            <section class="modal-card-body invite-sheet">
+                <h3 class="title"> INVITE FRIENDS </h3>
+                <p class="hint"> Let them scan this, or send them the link </p>
+
+                <app-qr-code class="qr" [data]="qrUrl" [label]="'Scan to join game ' + pinUpper"></app-qr-code>
+                <p class="pin"> PIN: {{pinUpper}} </p>
+
+                <button *ngIf="canShare" class="button is-primary is-fullwidth" (click)="share()">
+                    <span class="icon"><i class="fa fa-share-alt"></i></span>
+                    <span> SHARE LINK </span>
+                </button>
+                <a class="button is-success is-fullwidth whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
+                    <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                    <span> WHATSAPP </span>
+                </a>
+                <button class="button is-fullwidth" (click)="copy()">
+                    <span class="icon"><i class="fa" [class.fa-link]="!copied" [class.fa-check]="copied"></i></span>
+                    <span> {{copied ? 'LINK COPIED' : 'COPY LINK'}} </span>
+                </button>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-primary" (click)="toggle()"> DONE </button>
+            </footer>
+        </div>
+    </div>
+</div>

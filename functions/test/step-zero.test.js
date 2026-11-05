@@ -41,6 +41,7 @@ const fakeFirebase = {
     qHistoryRef: ref(['qHistory']),
     gameCounterRef: ref(['gameCounter']),
     questionsRef: ref(['questions']),
+    seenQuestionsRef: ref(['seenQuestions']),
     get: (r) => r.once('value').then(s => s.val()),
 };
 

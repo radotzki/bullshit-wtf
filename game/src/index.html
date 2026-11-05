@@ -1,31 +1,44 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Bullshit: a free party game for phones. Lie, bluff, find the truth</title>
 
-  <!-- Search Engine -->
+  <!--
+    Link previews (WhatsApp, Facebook, X, Telegram, Slack) and search.
+    scripts/build-he.js copies this file to he.html with the Hebrew versions of
+    every tag between the BS:META markers; /he/** is served from that file.
+  -->
+  <!-- BS:META:START -->
   <meta name="description" content="A free party game everyone plays on their own phone, in the browser. Write a lie that fools your friends, then find the truth. Up to 8 players, no download. In English and Hebrew.">
   <link rel="canonical" href="https://bullshit.wtf/">
-  <meta name="image" content="https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/logo_y0uyd5.png">
-  <!-- Schema.org for Google -->
-  <meta itemprop="name" content="Bullshit">
-  <meta itemprop="description" content="A free party game for phones. Lie, bluff, find the truth.">
-  <meta itemprop="image" content="https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/logo_y0uyd5.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Bullshit","alternateName":"בולשיט","url":"https://bullshit.wtf/","description":"A free party game for phones. Everyone writes a lie to fill in a strange true fact, then tries to find the truth among all the answers.","genre":["Party game","Trivia","Bluffing"],"gamePlatform":"Web browser","playMode":"MultiPlayer","numberOfPlayers":{"@type":"QuantitativeValue","minValue":2,"maxValue":8},"inLanguage":["en","he"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Bullshit: a free party game for phones">
-  <meta name="twitter:description" content="Lie, bluff, find the truth. Everyone plays on their own phone, no download.">
-  <!-- Open Graph (Facebook, WhatsApp, Telegram). Open Graph tags use property, not name. -->
-  <meta property="og:title" content="Bullshit: a free party game for phones">
-  <meta property="og:description" content="Lie, bluff, find the truth. Everyone plays on their own phone, no download.">
-  <meta property="og:image" content="https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/logo_y0uyd5.png">
-  <meta property="og:url" content="https://bullshit.wtf">
+  <link rel="alternate" hreflang="en" href="https://bullshit.wtf/">
+  <link rel="alternate" hreflang="he" href="https://bullshit.wtf/he">
+  <link rel="alternate" hreflang="x-default" href="https://bullshit.wtf/">
+  <!-- Open Graph (Facebook, WhatsApp, Telegram, LinkedIn, Slack) -->
+  <meta property="og:type" content="website">
   <meta property="og:site_name" content="Bullshit">
+  <meta property="og:title" content="Bullshit - the party game of lies">
+  <meta property="og:description" content="Fool your friends with fake answers to strange true facts. Free, up to 8 players, everyone plays on their phone.">
+  <meta property="og:url" content="https://bullshit.wtf/">
+  <meta property="og:image" content="https://bullshit.wtf/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Bullshit: fool your friends with fake answers to strange true facts">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="he_IL">
-  <meta property="og:type" content="website">
+  <!-- X / Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bullshit - the party game of lies">
+  <meta name="twitter:description" content="Fool your friends with fake answers to strange true facts. Free, up to 8 players, everyone plays on their phone.">
+  <meta name="twitter:image" content="https://bullshit.wtf/assets/og-image.png">
+  <!-- Schema.org for Google -->
+  <meta itemprop="name" content="Bullshit">
+  <meta itemprop="description" content="Fool your friends with fake answers to strange true facts. Free, up to 8 players, everyone plays on their phone.">
+  <meta itemprop="image" content="https://bullshit.wtf/assets/og-image.png">
+  <!-- BS:META:END -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Bullshit","alternateName":"בולשיט","url":"https://bullshit.wtf/","description":"A free party game for phones. Everyone writes a lie to fill in a strange true fact, then tries to find the truth among all the answers.","genre":["Party game","Trivia","Bluffing"],"gamePlatform":"Web browser","playMode":"MultiPlayer","numberOfPlayers":{"@type":"QuantitativeValue","minValue":2,"maxValue":8},"inLanguage":["en","he"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+  <meta name="theme-color" content="#db7151">
 
   <base href="/">
 

@@ -4,6 +4,10 @@
             ".read": "auth.uid == 'bl-service-worker'",
             ".write": "auth.uid == 'bl-service-worker'"
         },
+        "seenQuestions": {
+            ".read": "auth.uid == 'bl-service-worker'",
+            ".write": "auth.uid == 'bl-service-worker'"
+        },
         "gameCounter": {
             ".read": "auth.uid == 'bl-service-worker'",
             ".write": "auth.uid == 'bl-service-worker'"

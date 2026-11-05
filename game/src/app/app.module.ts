@@ -29,6 +29,11 @@ import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-
 import { BsPointsPipe } from './pipes/bs-points.pipe';
 import { AutofocusDirective } from './directives/autofocus.directive';
 import { LearnComponent } from './pages/learn/learn.component';
+import { QrCodeComponent } from './components/qr-code/qr-code.component';
+import { InviteComponent } from './components/invite/invite.component';
+import { ShareResultsComponent } from './components/share-results/share-results.component';
+import { ShareService } from './services/share.service';
+import { ResultsCardService } from './services/results-card.service';
 
 @NgModule({
     declarations: [
@@ -52,6 +57,9 @@ import { LearnComponent } from './pages/learn/learn.component';
         BsPointsPipe,
         AutofocusDirective,
         LearnComponent,
+        QrCodeComponent,
+        InviteComponent,
+        ShareResultsComponent,
     ],
     imports: [
         BrowserModule,
@@ -65,6 +73,8 @@ import { LearnComponent } from './pages/learn/learn.component';
         StorageService,
         ApiService,
         GameService,
+        ShareService,
+        ResultsCardService,
     ],
     bootstrap: [AppComponent]
 })

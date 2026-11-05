@@ -120,7 +120,13 @@ ${p.body.trim().split('\n').map(l => '    ' + l).join('\n')}
 
 function sitemap() {
     const today = new Date().toISOString().slice(0, 10);
-    const home = `  <url>\n    <loc>${SITE}/</loc>\n    <lastmod>${today}</lastmod>\n  </url>`;
+    // The two home pages: / and /he (dist/he.html, written by scripts/build-he.js).
+    const homes = ['/', '/he'].map(loc => `  <url>
+    <loc>${SITE}${loc}</loc>
+    <lastmod>${today}</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="${SITE}/"/>
+    <xhtml:link rel="alternate" hreflang="he" href="${SITE}/he"/>
+  </url>`);
     const urls = pages.map(p => {
         const en = p.site.lang === 'en' ? p : byPath[p.twin];
         const he = p.site.lang === 'he' ? p : byPath[p.twin];
@@ -133,7 +139,7 @@ function sitemap() {
     });
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${[home].concat(urls).join('\n')}
+${homes.concat(urls).join('\n')}
 </urlset>
 `;
 }

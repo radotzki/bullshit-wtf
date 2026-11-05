@@ -9,13 +9,19 @@
             <div class="loader"> </div>
         </div>
 
+        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false"></app-invite>
+
         <div class="spacer is-hidden-mobile"> </div>
 
-        <div class="columns is-mobile is-multiline">
-            <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
-                <img [src]="'/assets/avatar' + i + '.png'" class="picture">
-                <span> {{player.nickname}} </span>
+        <div class="lobby" [class.with-invite]="presenter">
+            <div class="columns is-mobile is-multiline">
+                <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
+                    <img [src]="'/assets/avatar' + i + '.png'" class="picture">
+                    <span> {{player.nickname}} </span>
+                </div>
             </div>
+
+            <app-invite *ngIf="presenter" class="lobby-invite" [pin]="pin" [presenter]="true"></app-invite>
         </div>
 
         <div *ngIf="players && !players.length" class="screen-center waiting-for-players">

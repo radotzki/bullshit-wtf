@@ -11,5 +11,6 @@
         "types": ["node"],
         "skipLibCheck": true,
         "rootDir": "src"
-    }
+    },
+    "include": ["src"]
 }
