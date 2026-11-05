@@ -4,6 +4,11 @@
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
+    <div *ngIf="lobby && players?.length" class="lobby-status" [class.presenter]="presenter" [attr.dir]="lobby.rtl ? 'rtl' : null">
+        <span class="lobby-message"> {{lobby.message}} </span>
+        <span class="lobby-count"> {{lobby.count}} </span>
+    </div>
+
     <div class="game-main">
         <div *ngIf="!players" class="screen-center">
             <div class="loader"> </div>

@@ -54,6 +54,12 @@ export class ApiService {
         return this.get<boolean>(this.gamesRef.child(pin).child('presenter'));
     }
 
+    /** Anonymous uid of the browser that created (or replayed) this game, if known. */
+    getGameCreator(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<string>(this.gamesRef.child(pin).child('creator'));
+    }
+
     async createGame(locale: string, count: number): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating still works if sign-in fails.

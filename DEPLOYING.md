@@ -23,7 +23,7 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ```sh
 npm run prod:deploy-functions   # 12 functions (11 + phaseTimer), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
-npm run prod:deploy-rules       # unchanged rules, can be skipped
+npm run prod:deploy-rules       # needed: makes games/$pin/creator readable (host-only START)
 ```
 
 Deploy functions first, then the game: the new client reads the error `message` and
@@ -94,9 +94,18 @@ not be checked without Firebase access.
     go first. New spend: `phaseTimer` runs for the length of each timed phase, roughly
     7 minutes of 128MB function time per 7-question game.
 
+### Lobby: only the host can start
+
+Only the browser that created (or replayed) the game sees START; other phones see
+"Waiting for <host> to start the game" and the player count. With a big screen, only the
+big screen starts. This reads `games/$pin/creator`, which the new database rules make
+readable. Until the rules are deployed the read is refused and every phone shows START,
+as before, so the order of deploys does not matter, but deploy the rules for the change
+to take effect. If the host has not joined the lobby after 90 seconds, anyone may start.
+
 ### Unchanged
 
-Database rules, question data, game rules, phase lengths, scoring, Google Analytics tag
+Question data, game rules, phase lengths, scoring, Google Analytics tag
 (Universal Analytics, which records nothing since 2023), hosting config apart from the
 build output.
 
