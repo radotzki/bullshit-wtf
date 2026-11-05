@@ -86,6 +86,8 @@ export class ApiService {
         const hostKey = newHostKey();
         const resp = await this.post<{ pin: string }>(`newGame`, {
             locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
+            // This client starts through startGame, so the server may refuse START ticks for this game.
+            serverStart: true,
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -310,6 +312,21 @@ export class ApiService {
     }
 
     /**
+     * START in the lobby. The server checks that this phone may start the game: in a game with a
+     * host key, only the phone that brings that key (or the big screen) may.
+     */
+    startGame(pin: string) {
+        pin = pin.toUpperCase();
+
+        return this.gameHasPresenter(pin).then(hasPresenter => {
+            if (!hasPresenter || this.sessionService.presenter) {
+                const hostKey = hostKeyFor(pin) || null;
+                return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
+            }
+        });
+    }
+
+    /**
      * Ask the server to end the phase `state`. Any player may do this: the server only accepts it
      * once that phase's deadline has passed, and only once.
      */
@@ -348,7 +365,13 @@ export class ApiService {
         // The player who pressed Replay hosts the new game; the server marks them by their player id.
         const user = this.sessionService.user;
         const pid = user && user.pid ? user.pid : null;
-        return this.post<{ pid: string }>(`fork`, { pin, uid, pid });
+        // A new host key for the new game: with it, only this phone may start it.
+        const hostKey = pid ? newHostKey() : null;
+        const resp = await this.post<{ pin?: string }>(`fork`, { pin, uid, pid, hostKey });
+        if (hostKey && resp && resp.pin) {
+            rememberHostKey(resp.pin, hostKey);
+        }
+        return resp;
     }
 
     getForkGame(pin: string) {
@@ -384,7 +407,7 @@ export class ApiService {
     async crewRematch(crew: string) {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
-        const resp = await this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid, hostKey });
+        const resp = await this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid, hostKey, serverStart: true });
         if (resp && resp.created) {
             rememberHostKey(resp.pin, hostKey);
         }

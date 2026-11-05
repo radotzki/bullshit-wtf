@@ -10,6 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
+import { startGame } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
@@ -57,7 +58,8 @@ exports.newGame = functions.https.onRequest((req, res) => {
         const clientWaitMs = isFinite(wait) && wait >= 0 ? Math.round(wait) : null;
         const hostKey = cleanHostKey(req.body.hostKey);
         try {
-            const pin = await newGame(locale, count, uid, { pack: req.body.pack, campaign: req.body.campaign, hostKey });
+            const serverStart = req.body.serverStart === true;
+            const pin = await newGame(locale, count, uid, { pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart });
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {
@@ -73,8 +75,8 @@ exports.fork = functions.https.onRequest((req, res) => {
         const uid = cleanUid(req.body.uid);
 
         try {
-            await fork(pin, uid, cleanPid(req.body.pid));
-            return res.status(200).send({});
+            const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey));
+            return res.status(200).send({ pin: forked });
         } catch (e) {
             return res.status(400).send(errorBody(e));
         }
@@ -97,10 +99,23 @@ exports.createCrew = functions.https.onRequest((req, res) => {
 exports.crewRematch = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         try {
-            const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey));
+            const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
+                req.body.serverStart === true);
             return res.status(200).send(result);
         } catch (e) {
             return res.status(400).send(errorBody(e));
+        }
+    });
+});
+
+// START in the lobby. In a game with a host key only the host's phone (or the big screen) may start it:
+// see startVerdict in controllers/start.ts.
+exports.startGame = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey)));
+        } catch (e) {
+            return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
         }
     });
 });

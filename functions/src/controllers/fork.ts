@@ -6,23 +6,27 @@ import { pickCoach } from './lie-helper';
 
 /**
  * Replay: a new game with the same players. `creator` is the uid of the phone that pressed Replay,
- * `hostPid` its player id in the finished game; that player hosts the new game.
+ * `hostPid` its player id in the finished game; that player hosts the new game. `hostKey` is that
+ * phone's new one-game secret for the new game (see hostKey in game-model): with it, only that phone
+ * may start the new game. Resolves to the new game's pin.
  */
-export async function fork(pin: string, creator?: string, hostPid?: string) {
+export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<string> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
     return incGameCounter().then(async gameCounter => {
         const forkedGamePin = generateGameName(gameCounter);
         const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-        const forkedGame = createFork(pin, game, questions, creator, hostPid);
+        const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey);
 
         return gamesRef.child(forkedGamePin).set(forkedGame)
-            .then(() => gamesRef.child(pin).child('fork').set(forkedGamePin));
+            .then(() => gamesRef.child(pin).child('fork').set(forkedGamePin))
+            .then(() => forkedGamePin);
     });
 }
 
-function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string): GameScheme {
+function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
+    hostKey?: string): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -53,6 +57,12 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
     if (hostPid && players[hostPid]) {
         Object.keys(players).forEach(k => delete players[k].host);
         players[hostPid].host = true;
+        // Only a phone that is a player of this game can hold its host key.
+        if (hostKey) {
+            forked.hostKey = hostKey;
+            // Only clients that start through startGame send a key with Replay.
+            forked.serverStart = true;
+        }
     }
     if (Object.keys(players).some(k => players[k] && players[k].host)) {
         forked.hasHost = true;

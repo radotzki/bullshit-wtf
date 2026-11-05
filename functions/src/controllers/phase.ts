@@ -64,6 +64,12 @@ export function tickAllowed(game: GameScheme, tick: number | string, now: number
         return false;
     }
 
+    // A game made by a current client starts only through startGame, which checks for the host.
+    // Any phone can write a tick, so a tick never starts such a game.
+    if (game.state.id === GameState.GameStaging && game.serverStart) {
+        return false;
+    }
+
     if (game.state.deadline) {
         return now >= game.state.deadline - clockSkewTolerance;
     }

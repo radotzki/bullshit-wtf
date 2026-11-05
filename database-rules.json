@@ -89,7 +89,7 @@
                 },
                 "tick": {
                     ".read": "true",
-                    ".write": "true"
+                    ".write": "!(root.child('games').child($pin).child('state').child('id').val() === 0 && root.child('games').child($pin).child('serverStart').val() === true)"
                 },
                 "presenter": {
                     ".read": "true",

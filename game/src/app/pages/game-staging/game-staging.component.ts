@@ -1,5 +1,5 @@
 import { reportError } from './../../sentry/sentry.module';
-import { GamePlayers, GameState } from './../../game-model';
+import { GamePlayers } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import { Howl } from 'howler';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
@@ -140,9 +140,14 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.tick(this.pin, GameState.RoundIntro)
+        this.apiService.startGame(this.pin)
             .catch(err => {
                 this.loading = false;
+                if (err && err.code === 'NOT_HOST') {
+                    // Only the host's phone may start this game; the server said this is not it.
+                    this.errorMsg = this.locale === 'he' ? 'רק המארח יכול להתחיל את המשחק' : 'Only the host can start this game';
+                    return;
+                }
                 reportError(err, 'startGame', { pin: this.pin });
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
