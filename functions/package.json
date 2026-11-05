@@ -6,7 +6,7 @@
     "copy-model": "node -e \"require('fs').copyFileSync('../game-model.ts', 'src/game-model.ts')\"",
     "build": "npm run copy-model && rimraf dist && tsc",
     "test": "npm run build && node --test test/*.test.js && npm run test:questions",
-    "test:questions": "npm run copy-model && rimraf dist-test && tsc -p tsconfig.test.json && node dist-test/test/question-picker.test.js && node dist-test/test/answer-options.test.js && node dist-test/test/house-lie.test.js",
+    "test:questions": "npm run copy-model && rimraf dist-test && tsc -p tsconfig.test.json && node dist-test/test/question-picker.test.js && node dist-test/test/answer-options.test.js && node dist-test/test/house-lie.test.js && node dist-test/test/house-lie-cleanup.test.js",
     "test:sleeping-phones": "npm run build && node test/sleeping-phones.js"
   },
   "dependencies": {

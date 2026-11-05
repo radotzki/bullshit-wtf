@@ -4,6 +4,7 @@ import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline } from './phase';
 import { pickHouseLies } from './answer-options';
 import { houseLiePoints } from './house-lie';
+import { cleanHouseLies } from './house-lie-cleanup';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
@@ -163,7 +164,7 @@ async function populateFakeAnswers(pin: string, game: GameScheme) {
     const question = await getQuestion(game.qids[game.questionIndex]);
     const playerAnswers = Object.keys(game.answers || {}).map(k => game.answers[k].text);
     const playersCount = Object.keys(game.players || {}).length;
-    const fakeAnswers = pickHouseLies(question.fakeAnswers, playerAnswers, question.realAnswer, playersCount);
+    const fakeAnswers = pickHouseLies(cleanHouseLies(question.id, question.fakeAnswers), playerAnswers, question.realAnswer, playersCount);
     const res: Answers = {};
 
     fakeAnswers.forEach(text => {
