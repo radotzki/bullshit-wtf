@@ -95,4 +95,66 @@
         text-align: center;
         color: #7a7a7a;
     }
+
+    .next-night {
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+
+        .button + .button {
+            margin-top: 8px;
+        }
+    }
+
+    .night-title {
+        font-family: "Luckiest Guy", "Suez One", sans-serif;
+        font-size: 1.2em;
+        text-align: center;
+        color: #db7151;
+    }
+
+    .night-hint {
+        margin-top: 2px;
+    }
+
+    .night-inputs {
+        display: flex;
+        margin-bottom: 8px;
+
+        .input {
+            min-width: 0;
+        }
+
+        .input + .input {
+            margin-inline-start: 8px;
+            flex: 0 0 38%;
+        }
+    }
+
+    .night-when {
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 10px;
+
+        &.is-error {
+            color: #cc0f35;
+            font-weight: 400;
+        }
+    }
+
+    .whatsapp.is-disabled {
+        opacity: .5;
+        pointer-events: none;
+    }
+
+    .night-google {
+        margin-top: 8px;
+        text-align: center;
+        font-size: .9em;
+
+        a {
+            color: #7a7a7a;
+            text-decoration: underline;
+        }
+    }
 }

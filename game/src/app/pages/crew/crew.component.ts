@@ -5,6 +5,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiService } from './../../services/api.service';
 import { CrewService } from './../../services/crew.service';
 import { ShareService } from './../../services/share.service';
+import { StorageService } from './../../services/storage.service';
+import {
+    NightInfo, buildIcs, dateValue, defaultNight, googleCalendarUrl, icsFileName, nightLabel, nightText,
+    nightTitle, parseNight, timeValue,
+} from './next-night';
 import { markHosted } from '../../services/join-source';
 import { Crew, CrewMember, GameState, crewStandings, crewLeaderLine } from './../../game-model';
 
@@ -28,6 +33,9 @@ export class CrewComponent implements OnInit, OnDestroy {
     copied: boolean;
     lobbyPin: string;
     lobbyCount = 0;
+    nightDate: string;
+    nightTime: string;
+    nightSent: boolean;
     private crewSub: Subscription;
     private lobbySub: Subscription;
     private lobbyPlayersSub: Subscription;
@@ -38,6 +46,7 @@ export class CrewComponent implements OnInit, OnDestroy {
         private apiService: ApiService,
         private crewService: CrewService,
         private shareService: ShareService,
+        private storageService: StorageService,
     ) { }
 
     ngOnInit() {
@@ -46,6 +55,7 @@ export class CrewComponent implements OnInit, OnDestroy {
             crew => this.onCrew(crew),
             err => { this.notFound = true; reportError(err, 'crew', { crew: this.id }); },
         );
+        this.loadNight();
     }
 
     ngOnDestroy() {
@@ -152,5 +162,117 @@ export class CrewComponent implements OnInit, OnDestroy {
 
     whatsapp() {
         this.shareService.track('whatsapp', 'crew');
+    }
+
+    // Next game night: a date the group agrees on, sent as a calendar file and a WhatsApp text.
+    // This browser remembers the last date it picked for the crew; nothing goes to the server.
+
+    private get nightKey() {
+        return `BS_NIGHT_${this.id}`;
+    }
+
+    private loadNight() {
+        let saved: Date;
+        try {
+            const t = +this.storageService.getItem(this.nightKey);
+            saved = t > Date.now() ? new Date(t) : undefined;
+        } catch (e) { }
+        const d = saved || defaultNight(new Date());
+        this.nightDate = dateValue(d);
+        this.nightTime = timeValue(d);
+    }
+
+    get night(): Date {
+        return parseNight(this.nightDate, this.nightTime);
+    }
+
+    get nightInPast() {
+        const d = this.night;
+        return !!d && d.getTime() < Date.now();
+    }
+
+    get nightReady() {
+        return !!this.night && !this.nightInPast && !!this.crew;
+    }
+
+    get nightWhen() {
+        const d = this.night;
+        return d ? nightLabel(d, this.locale) : '';
+    }
+
+    private get nightInfo(): NightInfo {
+        return {
+            crewName: this.crew ? this.crew.name : '',
+            leader: this.leader || '',
+            url: this.crewUrl,
+            locale: this.locale,
+        };
+    }
+
+    private nightPicked(how: string) {
+        try {
+            this.storageService.setItem(this.nightKey, String(this.night.getTime()));
+        } catch (e) { }
+        this.nightSent = true;
+        this.shareService.track(how, 'crew-night');
+    }
+
+    get nightWhatsappUrl() {
+        return this.nightReady ? this.shareService.whatsappUrl(nightText(this.night, this.nightInfo), this.crewUrl) : '';
+    }
+
+    get nightGoogleUrl() {
+        return this.nightReady ? googleCalendarUrl(this.night, this.nightInfo) : '';
+    }
+
+    nightWhatsapp() {
+        this.nightPicked('whatsapp');
+    }
+
+    nightGoogle() {
+        this.nightPicked('google-calendar');
+    }
+
+    /** Phones with a share sheet send the .ics into the group chat; elsewhere it downloads. */
+    async nightCalendar() {
+        if (!this.nightReady) {
+            return;
+        }
+        const info = this.nightInfo;
+        const ics = buildIcs(this.night, info, this.id, new Date());
+        const name = icsFileName(info.crewName);
+        let file: File;
+        try {
+            file = new File([ics], name, { type: 'text/calendar' });
+        } catch (e) { }
+
+        if (file && this.shareService.canShareFiles([file])) {
+            const result = await this.shareService.share({
+                title: nightTitle(info),
+                text: `${nightText(this.night, info)}\n${this.crewUrl}`,
+                files: [file],
+            }, 'crew-night');
+            if (result === 'shared') {
+                this.nightPicked('calendar-share');
+                return;
+            }
+            if (result === 'cancelled') {
+                return;
+            }
+        }
+
+        this.downloadIcs(ics, name);
+        this.nightPicked('calendar-download');
+    }
+
+    private downloadIcs(ics: string, name: string) {
+        const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 }

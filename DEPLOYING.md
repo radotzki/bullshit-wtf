@@ -146,6 +146,11 @@ games (wins, then points) and a REMATCH button that opens one shared lobby for t
 - Deploy order: functions (all 15), then rules (the crew page reads `crews/<id>`), then hosting.
 - BigQuery: run `functions/bigquery/2026-11-crews.sql` once (adds NULLABLE `crew_id`). New values:
   `origin = 'crew'` and `users.via = 'crew'`.
+- Next game night (client only, hosting deploy is enough): the crew page has a day and time picker,
+  next Friday 21:00 by default. It sends the date with the crew link as a WhatsApp text, a calendar
+  file (shared into the chat on phones that can share files, downloaded elsewhere) and a Google
+  Calendar link. Nothing is stored on the server; the browser remembers its own last pick.
+  Analytics: gtag `share` events with `content_type: crew-night`.
 
 ## Hanukkah pack and campaign tags
 
