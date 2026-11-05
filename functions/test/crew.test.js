@@ -199,13 +199,16 @@ test('Rematch makes one crew game with fresh questions, and later taps join the 
     assert.ok(!qids.includes('q0') && !qids.includes('q1') && !qids.includes('q2'), 'no question a member has seen');
     assert.strictEqual(db.crews[body.id].rematch.pin, r.body.pin);
 
-    const again = await call('crewRematch', { crew: body.id, uid: 'u2' });
+    const again = await call('crewRematch', { crew: body.id, uid: 'u2', hostKey: 'B'.repeat(24) });
     assert.deepStrictEqual(again.body, { pin: r.body.pin, created: false });
+    assert.strictEqual('hostKey' in g, false, 'a later tap does not take over the waiting lobby');
 
     // once that game starts, the next tap makes a new game
     db.games[r.body.pin].state = { id: RoundIntro, timestamp: Date.now() };
-    const third = await call('crewRematch', { crew: body.id, uid: 'u2' });
+    const third = await call('crewRematch', { crew: body.id, hostKey: 'C'.repeat(24) });
     assert.strictEqual(third.body.created, true);
+    assert.strictEqual(db.games[third.body.pin].hostKey, 'C'.repeat(24), 'a rematch without a uid still marks its host');
+    assert.strictEqual(db.games[third.body.pin].hasHost, true);
     assert.notStrictEqual(third.body.pin, r.body.pin);
 
     assert.strictEqual((await call('crewRematch', { crew: 'nope99' })).body.code, 'CREW_NOT_EXIST');

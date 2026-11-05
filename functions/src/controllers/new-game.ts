@@ -11,6 +11,8 @@ export interface NewGameOptions {
     pack?: string;
     // The campaign tag the host arrived with.
     campaign?: string;
+    // The creating phone's one-game secret (see hostKey in game-model), already cleaned.
+    hostKey?: string;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
@@ -32,6 +34,11 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         // The round-1 lie helper, on for half of all games (crew rematches included).
         if (pickCoach()) {
             game.coach = true;
+        }
+
+        if (options.hostKey) {
+            game.hostKey = options.hostKey;
+            game.hasHost = true;
         }
 
         if (options.crew) {

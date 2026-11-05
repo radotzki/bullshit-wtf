@@ -35,6 +35,11 @@ export interface GameScheme {
     fork?: string;
     // Who started this game and how (for measuring hosts and groups that return).
     creator?: string;        // anonymous uid of the browser that created or replayed it
+    // A one-game secret from the phone that created it, so the lobby knows the host even when that
+    // phone's sign-in failed (no uid). Never readable by clients; the matching join gets `host: true`.
+    hostKey?: string;
+    // This game has a host marked by hostKey (readable): other phones wait for that host to join.
+    hasHost?: boolean;
     origin?: GameOrigin;
     parent?: string;         // PIN of the finished game this one was replayed from
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.
@@ -86,6 +91,8 @@ export interface GamePlayer {
     nickname: string;
     score: number;
     uid: string;
+    // The game's host (the phone that created it, or pressed Replay), marked by the server.
+    host?: boolean;
 }
 
 export interface Answers {

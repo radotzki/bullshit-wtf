@@ -1,6 +1,7 @@
 import { reportError } from './../sentry/sentry.module';
 import { GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew } from './../game-model';
 import { SessionService } from './session.service';
+import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
 import { Injectable, NgZone } from '@angular/core';
@@ -70,14 +71,24 @@ export class ApiService {
         return this.get<string>(this.gamesRef.child(pin).child('creator'));
     }
 
+    /** Whether the server marks this game's host by the creating phone's host key (see host-key.ts). */
+    getGameHasHost(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<boolean>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
     async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating never waits long for sign-in:
         // without a uid the game is made all the same, and anyone may start it.
+        // The host key marks the host either way, so the lobby knows it even without a uid.
         const { uid, waitedMs } = await this.uidWithin(SIGN_IN_WAIT_MS);
-        return this.post<{ pin: string }>(`newGame`, {
-            locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs,
+        const hostKey = newHostKey();
+        const resp = await this.post<{ pin: string }>(`newGame`, {
+            locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
         });
+        rememberHostKey(resp && resp.pin, hostKey);
+        return resp;
     }
 
     /**
@@ -132,7 +143,8 @@ export class ApiService {
 
     async join(pin: string, nickname: string, uid: string) {
         pin = pin.toUpperCase();
-        return this.post<{ pid: string }>(`join`, { pin, nickname, uid }).then(resp => resp.pid);
+        const hostKey = hostKeyFor(pin) || null;
+        return this.post<{ pid: string }>(`join`, { pin, nickname, uid, hostKey }).then(resp => resp.pid);
     }
 
     validateGameName(pin: string) {
@@ -333,7 +345,10 @@ export class ApiService {
     async fork(pin: string) {
         pin = pin.toUpperCase();
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
-        return this.post<{ pid: string }>(`fork`, { pin, uid });
+        // The player who pressed Replay hosts the new game; the server marks them by their player id.
+        const user = this.sessionService.user;
+        const pid = user && user.pid ? user.pid : null;
+        return this.post<{ pid: string }>(`fork`, { pin, uid, pid });
     }
 
     getForkGame(pin: string) {
@@ -368,7 +383,12 @@ export class ApiService {
 
     async crewRematch(crew: string) {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
-        return this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid });
+        const hostKey = newHostKey();
+        const resp = await this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid, hostKey });
+        if (resp && resp.created) {
+            rememberHostKey(resp.pin, hostKey);
+        }
+        return resp;
     }
 
     /**

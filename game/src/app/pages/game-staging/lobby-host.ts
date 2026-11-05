@@ -9,19 +9,32 @@ import { GamePlayer } from '../../game-model';
  * - Otherwise the browser that created (or replayed) the game starts it. The
  *   server stores that browser's anonymous uid as `creator`; each player row
  *   carries its uid, so everyone can see who the host is.
- * - If the host is unknown (an old game, sign-in failed, or the database rules
- *   that make `creator` readable are not deployed yet), everyone may start, as before.
+ * - The phone that created the game also sends a one-game host key, and the server
+ *   marks the join with that key `host: true` (and the game `hasHost`). Replay marks
+ *   the player who pressed it. That row wins over `creator`, so a host whose sign-in
+ *   failed (no uid) is still the host. The host knows itself by its player id.
+ * - If the host is unknown (an old game, or the database rules that make `creator`
+ *   and `hasHost` readable are not deployed yet), everyone may start, as before.
  * - If the host has not joined the lobby after HOST_GRACE_MS, everyone may start,
  *   so a host who closed the tab cannot leave the group stuck.
  */
 export const HOST_GRACE_MS = 90 * 1000;
 
+/** A lobby player, with its player id when known. */
+export interface LobbyPlayer extends GamePlayer {
+    pid?: string;
+}
+
 export interface LobbyHostInput {
     hasPresenter: boolean;
     isPresenter: boolean;
     creator: string | null;
+    /** The server marks this game's host by host key (a player row with `host: true`, once it joins). */
+    hasHost?: boolean;
     myUid: string | null;
-    players: GamePlayer[];
+    /** This phone's player id in this game. */
+    myPid?: string | null;
+    players: LobbyPlayer[];
     waitedMs: number;
 }
 
@@ -46,16 +59,22 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
             : { canStart: false, wait: 'big-screen', hostName: null, alone: false };
     }
 
-    if (!input.creator) {
+    const players = (input.players || []).filter(p => !!p);
+    const marked = players.filter(p => p.host)[0];
+
+    if (!input.creator && !input.hasHost && !marked) {
         return { canStart: true, wait: 'none', hostName: null, alone: false };
     }
 
-    if (input.myUid && input.myUid === input.creator) {
-        const players = (input.players || []).filter(p => !!p);
+    // A marked host row wins; the creator's uid is for games made before host keys.
+    const isMe = marked
+        ? !!input.myPid && marked.pid === input.myPid
+        : !!input.creator && !!input.myUid && input.myUid === input.creator;
+    if (isMe) {
         return { canStart: true, wait: 'none', hostName: null, alone: players.length === 1 };
     }
 
-    const host = (input.players || []).filter(p => p && p.uid === input.creator)[0];
+    const host = marked || (input.creator ? players.filter(p => p.uid === input.creator)[0] : null);
     if (host) {
         return { canStart: false, wait: 'host', hostName: host.nickname, alone: false };
     }
@@ -72,12 +91,15 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
  * Only for a host who was alone in the lobby, and only while that first friend is the only other
  * player: once a third player joins, the lobby goes back to the usual line.
  */
-export function firstFriend(view: LobbyHostView, players: GamePlayer[], myUid: string | null, wasAlone: boolean): string | null {
+export function firstFriend(view: LobbyHostView, players: LobbyPlayer[], myUid: string | null, wasAlone: boolean,
+    myPid: string | null = null): string | null {
     const list = (players || []).filter(p => !!p);
     if (!wasAlone || view.alone || !view.canStart || list.length !== 2) {
         return null;
     }
-    const friend = list.filter(p => p.uid !== myUid)[0];
+    // Without a uid (sign-in failed), this phone knows its own row by player id.
+    const mine = (p: LobbyPlayer) => (!!myPid && p.pid === myPid) || (!!myUid && p.uid === myUid);
+    const friend = list.filter(p => !mine(p))[0];
     return friend && friend.nickname ? friend.nickname : null;
 }
 
