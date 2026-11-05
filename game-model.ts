@@ -8,11 +8,15 @@ export enum GameState {
     ScoreBoardFinal = 6,
 }
 
+export interface GameStateInfo {
+    id: number;
+    timestamp: number;
+    // Server time at which this phase ends. Set by the server for every timed phase.
+    deadline?: number;
+}
+
 export interface GameScheme {
-    state: {
-        id: number,
-        timestamp: number,
-    };
+    state: GameStateInfo;
     timestamp: number;
     roundIndex: number;
     questionIndex: number;
@@ -24,7 +28,9 @@ export interface GameScheme {
     totalQ: number;
     players?: GamePlayers;
     qids: { [id: number]: string };
-    tick: number;
+    // Legacy clients write the state they want to move to (a GameState, or 999).
+    // Current clients write "<state id>:<state timestamp>" of the state they want to leave.
+    tick: number | string;
     presenter: boolean;
     fork?: string;
 }

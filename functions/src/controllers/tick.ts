@@ -1,67 +1,114 @@
 import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
-import { GameScheme, Answer, Answers, GameState, RevealAnswer, GamePlayer } from '../game-model';
+import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
+import { tickAllowed, stateKey, withDeadline } from './phase';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
 const pointsForHouseLie = [-500, -750, -1000];
 
+/** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
 export async function tick(pin) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
-    if (game.tick === game.state.id) {
-        console.log(`[PIN: ${pin}] Game state equal to tick`);
-        return Promise.resolve();
+    if (!tickAllowed(game, game && game.tick, Date.now())) {
+        console.log(`[PIN: ${pin}] Ignoring tick ${game && game.tick} in state ${game && game.state && game.state.id}`);
+        return;
     }
 
-    console.log(`[PIN: ${pin}] Current game state: ${game.state.id}`);
+    return advance(pin, game.state);
+}
 
+/**
+ * Move the game on from the phase `from`, exactly once.
+ * Safe to call from the server timer, a client tick and the "everyone answered" checks at the same time:
+ * whoever claims the lock for this phase first does the work, everyone else is a no-op.
+ */
+export async function advance(pin: string, from: GameStateInfo) {
+    pin = pin.toUpperCase();
+    const game = await get<GameScheme>(gamesRef.child(pin));
+
+    if (!game || !game.state || stateKey(game.state) !== stateKey(from)) {
+        console.log(`[PIN: ${pin}] State already moved on from ${stateKey(from)}`);
+        return;
+    }
+
+    if (!(await claim(pin, stateKey(from)))) {
+        console.log(`[PIN: ${pin}] Another caller is advancing from ${stateKey(from)}`);
+        return;
+    }
+
+    console.log(`[PIN: ${pin}] Advancing from state ${game.state.id}`);
+    const update = await nextUpdate(pin, game);
+
+    if (!update) {
+        return;
+    }
+
+    if (update.state) {
+        update.state = withDeadline(update.state, Object.assign({}, game, update));
+    }
+
+    return updateGame(pin, update);
+}
+
+function claim(pin: string, key: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('advanceLock').transaction(
+            current => current === key ? undefined : key,
+            (error, committed) => error ? reject(error) : resolve(committed),
+            false,
+        );
+    });
+}
+
+async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameScheme> | undefined> {
     switch (game.state.id) {
         case GameState.GameStaging:
-            return updateGame(pin, {
+            return {
                 state: updateState(GameState.RoundIntro),
                 qids: await pickQuestionsForRoom(game),
-            });
+            };
 
         case GameState.RoundIntro:
-            return updateGame(pin, {
+            return {
                 state: updateState(GameState.ShowQuestion),
                 currentQ: await populateQuestion(game, game.questionIndex),
                 answers: {},
                 answerSelections: {},
                 revealAnswers: null,
-            });
+            };
 
         case GameState.ShowQuestion:
-            return updateGame(pin, {
+            return {
                 state: updateState(GameState.ShowAnswers),
                 answers: await populateQuestionAnswers(pin, game),
-            });
+            };
 
         case GameState.ShowAnswers:
             const { answers, answerSelections } = calcAnswersScore(game);
             const revealAnswers = generateRevealAnswers(game);
 
-            return updateGame(pin, {
+            return {
                 state: updateState(GameState.RevealTheTruth),
                 answers,
                 answerSelections,
                 revealAnswers,
-            });
+            };
 
         case GameState.RevealTheTruth:
-            return updateGame(pin, {
+            return {
                 state: updateState(GameState.ScoreBoard),
                 players: calcPlayersScore(game),
-            });
+            };
 
         case GameState.ScoreBoard:
-            return updateGame(pin, await handleScoreBoardState(game, pin));
+            return handleScoreBoardState(game, pin);
     }
 }
 
-function updateState(stateId: number) {
+function updateState(stateId: number): GameStateInfo {
     return { id: stateId, timestamp: Date.now() };
 }
 
