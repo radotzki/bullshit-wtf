@@ -1,6 +1,7 @@
 import { GameScheme, GameState } from "../game-model";
 import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
+import { QuestionResultRow } from './lie-helper';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
@@ -107,7 +108,13 @@ function origin(game: GameScheme) {
         crew_id: game.crew || null,
         pack: game.pack || null,
         campaign: game.campaign || null,
+        coach: !!game.coach,
     };
+}
+
+/** One row per question played (see lie-helper.ts questionResult). */
+export async function onQuestionResult(row: QuestionResultRow) {
+    return insert('question_results', { ...row, time: new Date() });
 }
 
 async function openGame(pin: string, game: GameScheme) {

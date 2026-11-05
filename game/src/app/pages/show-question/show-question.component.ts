@@ -7,6 +7,7 @@ import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameState } from '../../game-model';
+import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 
 @Component({
     selector: 'app-show-question',
@@ -28,6 +29,11 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     timer;
     sound: Howl;
     panic: boolean;
+    // The round-1 lie helper (games with coach: true only).
+    helper: LieHelperView = { hint: null, placeholder: null, button: null };
+    private ideas: string[] = [];
+    private ideasUsed = 0;
+    private helperInfo: { coach: boolean; roundIndex: number; questionIndex: number; locale: string };
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -47,6 +53,40 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
+            this.loadHelper();
+        }
+    }
+
+    /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */
+    private async loadHelper() {
+        try {
+            const info = await this.apiService.getLieHelperInfo(this.pin);
+            this.helperInfo = info;
+            this.updateHelper();
+
+            if (info.coach && info.roundIndex === 0) {
+                this.ideas = await this.apiService.getMyIdeas(this.pin);
+                this.updateHelper();
+            }
+        } catch (e) {
+            // The screen works without the helper.
+        }
+    }
+
+    private updateHelper() {
+        const i = this.helperInfo;
+        if (i) {
+            this.helper = lieHelperView(i.coach, i.roundIndex, i.questionIndex, i.locale, this.ideas, this.ideasUsed);
+        }
+    }
+
+    giveMeALie() {
+        const idea = nextIdea(this.ideas, this.ideasUsed);
+        if (idea) {
+            this.answer = idea;
+            this.enteredCorrectAnswer = false;
+            this.ideasUsed++;
+            this.updateHelper();
         }
     }
 
