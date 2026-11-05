@@ -82,6 +82,10 @@
                 "fork": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "creator": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
                 }
             }
         }

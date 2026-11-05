@@ -6,7 +6,8 @@
     "ng": "ng",
     "copy-model": "node -e \"require('fs').copyFileSync('../game-model.ts', 'src/app/game-model.ts')\"",
     "start": "npm run copy-model && node --openssl-legacy-provider node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 -o",
-    "build": "npm run copy-model && ng lint && node --openssl-legacy-provider node_modules/@angular/cli/bin/ng build -prod && node scripts/build-he.js && node seo/build-pages.js"
+    "build": "npm run copy-model && ng lint && node --openssl-legacy-provider node_modules/@angular/cli/bin/ng build -prod && node scripts/build-he.js && node seo/build-pages.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@angular/common": "^4.0.0",
