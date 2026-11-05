@@ -28,6 +28,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     savingCrew: boolean;
     crewError: string;
     crewSubscription: Subscription;
+    myNickname: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -43,6 +44,13 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.playMusic();
         this.apiService.getPlayers(this.pin).then(resp => {
+            const user = !this.presenter && this.sessionService.user;
+            const mine = user && resp && resp[user.pid];
+            // The nickname as typed (the session keeps it lower-cased), for the crew's "this is me".
+            this.myNickname = mine ? mine.nickname : (user ? user.nickname : undefined);
+            if (this.crewId) {
+                this.crewService.remember(this.crewId, this.crewName, this.myNickname);
+            }
             const players = Object.keys(resp).map(k => resp[k]);
             this.displayPlayers = players
                 .map((p, i) => Object.assign(p, { picture: `avatar${i}.png` }))
@@ -86,8 +94,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.naming = false;
         const crew = await this.apiService.getCrew(id);
         this.crewName = crew ? crew.name : '';
-        const user = !this.presenter && this.sessionService.user;
-        this.crewService.remember(id, this.crewName, user ? user.nickname : undefined);
+        this.crewService.remember(id, this.crewName, this.myNickname);
     }
 
     startNaming() {
