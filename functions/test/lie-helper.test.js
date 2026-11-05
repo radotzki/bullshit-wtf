@@ -64,6 +64,14 @@ test('who gets the second lie is not always the first to join', () => {
     assert.ok(firsts.size > 1);
 });
 
+test('one usable fake answer is shared by everyone; no usable fake answers gives no ideas at all', () => {
+    assert.deepStrictEqual(pickIdeas(['only one', 'ONLY ONE ', 'truth'], 'Truth', ['a', 'b']), { a: ['only one'], b: ['only one'] });
+    assert.deepStrictEqual(pickIdeas([], 'truth', ['a']), {});
+    assert.deepStrictEqual(pickIdeas(undefined, 'truth', ['a']), {});
+    assert.deepStrictEqual(pickIdeas(['truth', ' '], 'truth', ['a']), {});
+    assert.deepStrictEqual(pickIdeas(['a lie'], 'truth', []), {});
+});
+
 test('a sent lie counts as an idea whatever its case and spacing', () => {
     assert.strictEqual(isIdea(['Reverse Paradise', 'Gloom Atoll'], '  reverse PARADISE '), true);
     assert.strictEqual(isIdea(['Reverse Paradise'], 'reverse paradise island'), false);
