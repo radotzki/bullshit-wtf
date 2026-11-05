@@ -19,9 +19,13 @@ export function pickCoach(random: Random = Math.random): boolean {
 }
 
 /**
- * Two of the question's fake answers per player, never the real answer.
- * Different for each player while the question has enough; after that they repeat across players.
- * A player never gets the same lie twice. A question with no usable fake answers gives nobody ideas.
+ * Up to two of the question's fake answers per player, never the real answer.
+ * A player knows every lie they were offered is fake, so a lie offered to two players could never fool
+ * one of them when the other sends it. So no lie goes to two players while the pool lasts: every player
+ * gets one lie before anyone gets a second, and the second lies go to as many players as the pool allows
+ * (4 fake answers: 2 players get 2 each; 3 players get 2/1/1; 4 players 1 each). Only when there are more
+ * players than lies do players share one: each of those gets a single lie, the one handed out least.
+ * Who gets a second lie is random. A question with no usable fake answers gives nobody ideas.
  */
 export function pickIdeas(
     fakeAnswers: string[],
@@ -39,22 +43,21 @@ export function pickIdeas(
     });
 
     const res: { [pid: string]: string[] } = {};
-    if (!candidates.length) {
+    if (!candidates.length || !(pids || []).length) {
         return res;
     }
 
     const pool = shuffle(candidates, random);
-    const perPlayer = Math.min(IDEAS_PER_PLAYER, pool.length);
-    let next = 0;
+    const players = shuffle(pids, random);
 
-    (pids || []).forEach(pid => {
-        const ideas: string[] = [];
-        for (let i = 0; i < perPlayer; i++) {
-            ideas.push(pool[next % pool.length]);
-            next++;
-        }
-        res[pid] = ideas;
-    });
+    // First lies: one per player, distinct while the pool lasts, then the least handed out.
+    players.forEach((pid, i) => res[pid] = [pool[i % pool.length]]);
+
+    // Second lies: only lies nobody holds yet.
+    let next = players.length;
+    for (let i = 0; i < players.length && IDEAS_PER_PLAYER > 1 && next < pool.length; i++) {
+        res[players[i]].push(pool[next++]);
+    }
 
     return res;
 }

@@ -22,21 +22,46 @@ test('players get different lies while the question has enough', () => {
     const ideas = pickIdeas(fakes, 'x', ['a', 'b', 'c']);
     const all = [].concat(ideas.a, ideas.b, ideas.c);
     assert.strictEqual(new Set(all).size, 6);
+    assert.strictEqual(all.length, 6);
 });
 
-test('with few fake answers the lies repeat across players, but never twice for one player', () => {
-    const ideas = pickIdeas(['one', 'two', 'three'], 'x', ['a', 'b', 'c', 'd'], seq(0.3, 0.7));
-    Object.keys(ideas).forEach(pid => {
-        assert.strictEqual(ideas[pid].length, 2);
-        assert.notStrictEqual(ideas[pid][0], ideas[pid][1]);
+function holders(ideas) {
+    const count = {};
+    Object.keys(ideas).forEach(pid => ideas[pid].forEach(l => count[l] = (count[l] || 0) + 1));
+    return count;
+}
+
+test('4 fake answers: no lie goes to two players while the pool lasts (2/2, 2/1/1, 1/1/1/1)', () => {
+    const four = ['f0', 'f1', 'f2', 'f3'];
+    [[['a', 'b'], [2, 2]], [['a', 'b', 'c'], [1, 1, 2]], [['a', 'b', 'c', 'd'], [1, 1, 1, 1]]].forEach(([pids, sizes]) => {
+        for (let run = 0; run < 50; run++) {
+            const ideas = pickIdeas(four, 'truth', pids);
+            assert.deepStrictEqual(Object.keys(ideas).map(p => ideas[p].length).sort(), sizes, JSON.stringify(ideas));
+            Object.values(holders(ideas)).forEach(n => assert.strictEqual(n, 1, JSON.stringify(ideas)));
+        }
     });
 });
 
-test('one usable fake answer gives one lie each; none gives no ideas at all', () => {
-    assert.deepStrictEqual(pickIdeas(['only one', 'ONLY ONE ', 'truth'], 'Truth', ['a', 'b']), { a: ['only one'], b: ['only one'] });
-    assert.deepStrictEqual(pickIdeas([], 'truth', ['a']), {});
-    assert.deepStrictEqual(pickIdeas(undefined, 'truth', ['a']), {});
-    assert.deepStrictEqual(pickIdeas(['truth', ' '], 'truth', ['a']), {});
+test('3 fake answers, 2 players: 2 and 1, nothing shared', () => {
+    const ideas = pickIdeas(['f0', 'f1', 'f2'], 'truth', ['a', 'b']);
+    assert.deepStrictEqual(Object.keys(ideas).map(p => ideas[p].length).sort(), [1, 2]);
+    Object.values(holders(ideas)).forEach(n => assert.strictEqual(n, 1));
+});
+
+test('more players than lies: everyone gets one, spread as evenly as it can be', () => {
+    const ideas = pickIdeas(['f0', 'f1', 'f2', 'f3'], 'truth', ['a', 'b', 'c', 'd', 'e', 'f']);
+    Object.keys(ideas).forEach(pid => assert.strictEqual(ideas[pid].length, 1));
+    const counts = Object.values(holders(ideas)).sort();
+    assert.deepStrictEqual(counts, [1, 1, 2, 2]);
+});
+
+test('who gets the second lie is not always the first to join', () => {
+    const firsts = new Set();
+    for (let run = 0; run < 50; run++) {
+        const ideas = pickIdeas(['f0', 'f1', 'f2', 'f3'], 'truth', ['a', 'b', 'c']);
+        firsts.add(Object.keys(ideas).find(p => ideas[p].length === 2));
+    }
+    assert.ok(firsts.size > 1);
 });
 
 test('a sent lie counts as an idea whatever its case and spacing', () => {
