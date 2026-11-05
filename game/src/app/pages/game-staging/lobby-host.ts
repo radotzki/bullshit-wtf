@@ -21,8 +21,15 @@ import { GamePlayer } from '../../game-model';
  *   so it starts the game like the host's phone would.
  * - If the host has not joined the lobby after HOST_GRACE_MS, everyone may start,
  *   so a host who closed the tab cannot leave the group stuck.
+ * - The host's lobby page reports in every HOST_PING_MS; the server keeps the time (`hostSeen`).
+ *   If a joined host has not reported in for HOST_GONE_MS (a dead phone, a closed browser), everyone
+ *   may start, and the lobby says the host seems to be gone. The server checks the same.
  */
 export const HOST_GRACE_MS = 90 * 1000;
+/** Must match HOST_GONE_MS in functions/src/controllers/start.ts. */
+export const HOST_GONE_MS = 90 * 1000;
+/** How often the host's lobby page reports in. */
+export const HOST_PING_MS = 20 * 1000;
 
 /** A lobby player, with its player id when known. */
 export interface LobbyPlayer extends GamePlayer {
@@ -42,6 +49,8 @@ export interface LobbyHostInput {
     myPid?: string | null;
     players: LobbyPlayer[];
     waitedMs: number;
+    /** How long ago (server time) the host's lobby page last reported in, or null if unknown. */
+    hostAwayMs?: number | null;
 }
 
 export type LobbyWait = 'none' | 'host' | 'host-to-join' | 'big-screen';
@@ -56,6 +65,8 @@ export interface LobbyHostView {
      * a solo game has nobody to fool, and lone hosts who start alone rarely come back.
      */
     alone: boolean;
+    /** The host joined but has not been seen for HOST_GONE_MS, so anyone may start: their name. */
+    hostGone?: string | null;
 }
 
 export function lobbyHost(input: LobbyHostInput): LobbyHostView {
@@ -85,6 +96,10 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
     }
 
     const host = marked || (input.creator ? players.filter(p => p.uid === input.creator)[0] : null);
+    // Only a marked host reports in, so only a marked host can be gone.
+    if (marked && typeof input.hostAwayMs === 'number' && input.hostAwayMs >= HOST_GONE_MS) {
+        return { canStart: true, wait: 'none', hostName: null, alone: false, hostGone: marked.nickname };
+    }
     if (host) {
         return { canStart: false, wait: 'host', hostName: host.nickname, alone: false };
     }
@@ -119,6 +134,7 @@ const strings = {
         hostToJoin: () => 'Waiting for the host to join',
         bigScreen: () => 'The game starts from the big screen',
         startHint: () => 'Press START when everyone is in',
+        hostGone: (name: string) => `${name} seems to be gone. Anyone can press START`,
         friendIn: (name: string) => `${name} is in! Press START when everyone is in`,
         alone: () => 'Bullshit needs friends: you score by fooling them',
         aloneSub: () => 'Send them the link. It takes them 10 seconds to join.',
@@ -130,6 +146,7 @@ const strings = {
         hostToJoin: () => 'מחכים שמי שפתח את המשחק יצטרף',
         bigScreen: () => 'המשחק מתחיל מהמסך הגדול',
         startHint: () => 'לחצו START כשכולם בפנים',
+        hostGone: (name: string) => `נראה ש־${name} יצא. כל אחד יכול ללחוץ START`,
         friendIn: (name: string) => `${name} בפנים! לחצו START כשכולם בפנים`,
         alone: () => 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו',
         aloneSub: () => 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.',
@@ -159,6 +176,8 @@ export function lobbyText(view: LobbyHostView, playerCount: number, locale: stri
     if (view.alone) {
         message = t.alone();
         sub = t.aloneSub();
+    } else if (view.canStart && view.hostGone) {
+        message = t.hostGone(view.hostGone);
     } else if (view.canStart && friendName) {
         message = t.friendIn(friendName);
     } else if (view.canStart) {

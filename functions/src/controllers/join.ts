@@ -31,5 +31,9 @@ export async function join(pin: string, nickname: string, uid: string, hostKey?:
         }
     });
     await playersRef.update(update);
+    if (game.serverStart) {
+        // The host is in the lobby now; their lobby page keeps reporting in (see hostHere).
+        await gamesRef.child(pin).child('hostSeen').set(Date.now());
+    }
     return pid;
 }

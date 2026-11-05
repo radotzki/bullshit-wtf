@@ -321,6 +321,30 @@ export class ApiService {
         return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
     }
 
+    /**
+     * The host's lobby page reports that it is still there, so the group can start without a host
+     * whose phone died (see hostSeen in game-model). Only the browser with the host key reports.
+     */
+    hostHere(pin: string) {
+        pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin);
+        if (!hostKey) {
+            return Promise.resolve({ seen: false });
+        }
+        return this.post<{ seen: boolean }>(`hostHere`, { pin, hostKey });
+    }
+
+    /** Server time the host last reported in, live. Errors until the rules that expose it are deployed. */
+    getHostSeenObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<number>(this.gamesRef.child(pin).child('hostSeen'));
+    }
+
+    /** How far this phone's clock is ahead of the server's, in ms. */
+    clockAhead(): Promise<number> {
+        return this.serverNow().then(now => Date.now() - now);
+    }
+
     /** This browser holds the host key for this game (it created or replayed it). */
     holdsHostKey(pin: string): boolean {
         return !!hostKeyFor(pin.toUpperCase());

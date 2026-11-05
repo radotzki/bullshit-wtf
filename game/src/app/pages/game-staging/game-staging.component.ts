@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, packBanner, firstFriend } from './lobby-host';
+import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend } from './lobby-host';
 
 @Component({
     selector: 'app-game-staging',
@@ -36,8 +36,19 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private arrivedAt = Date.now();
     private hostLoaded = false;
     private graceTimer: any;
+    /** Server time the host's lobby page last reported in, and how far this clock is ahead of the server's. */
+    private hostSeen: number = null;
+    private clockAhead: number = null;
+    private hostSeenSubscriber: Subscription;
+    private pingTimer: any;
+    private lobbyTimer: any;
     /** The host has been alone in this lobby, so the first friend in is greeted by name. */
     private wasAlone = false;
+    private onVisible = () => {
+        if (!document.hidden) {
+            this.reportIn();
+        }
+    }
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -58,6 +69,35 @@ export class GameStagingComponent implements OnInit, OnDestroy {
                 this.updateLobby();
             });
         this.loadHost();
+        this.watchHost();
+    }
+
+    /**
+     * A joined host whose phone dies must not leave the group stuck. The host's page reports in
+     * every HOST_PING_MS (and as soon as it is back on screen); other phones watch that time and
+     * get START once the host has been gone HOST_GONE_MS. The server checks the same.
+     */
+    private watchHost() {
+        if (this.apiService.holdsHostKey(this.pin)) {
+            this.reportIn();
+            this.pingTimer = setInterval(() => this.reportIn(), HOST_PING_MS);
+            document.addEventListener('visibilitychange', this.onVisible);
+            return;
+        }
+        this.apiService.clockAhead().then(ahead => {
+            this.clockAhead = ahead;
+            this.updateLobby();
+        }).catch(() => null);
+        // Unreadable until the database rules that expose `hostSeen` are deployed: then nobody is gone.
+        this.hostSeenSubscriber = this.apiService.getHostSeenObservable(this.pin).subscribe(seen => {
+            this.hostSeen = typeof seen === 'number' ? seen : null;
+            this.updateLobby();
+        }, () => null);
+        this.lobbyTimer = setInterval(() => this.updateLobby(), 5000);
+    }
+
+    private reportIn() {
+        this.apiService.hostHere(this.pin).catch(() => null);
     }
 
     /** Find out who may start: the game's host, or (if unknown) the big screen or anyone. */
@@ -108,6 +148,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             myPid: this.myPid,
             players: this.players || [],
             waitedMs: Date.now() - this.arrivedAt,
+            hostAwayMs: this.hostSeen !== null && this.clockAhead !== null
+                ? Date.now() - this.clockAhead - this.hostSeen : null,
         });
 
         if (view.alone) {
@@ -121,6 +163,12 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.playersSubscriber.unsubscribe();
         clearTimeout(this.graceTimer);
+        clearInterval(this.pingTimer);
+        clearInterval(this.lobbyTimer);
+        document.removeEventListener('visibilitychange', this.onVisible);
+        if (this.hostSeenSubscriber) {
+            this.hostSeenSubscriber.unsubscribe();
+        }
 
         if (this.sound) {
             this.sound.fade(1, 0, 1000);

@@ -107,6 +107,10 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "hostSeen": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
                 "crew": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
