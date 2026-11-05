@@ -52,6 +52,17 @@ test('WhatsApp text names the crew, the night and the leader', () => {
     assert.ok(t.includes('21:00') && t.includes('נובמבר') && t.includes('שישי'), t);
 });
 
+test('no full stop is added after a leader line that ends in a question mark', () => {
+    const d = n.parseNight('2026-11-13', '21:00');
+    const t = n.nightText(d, Object.assign({}, info, { leader: 'No winner yet. Who takes the first one?' }));
+    assert.strictEqual(t, 'Bullshit game night for Office Friday: Friday 13 November, 21:00. No winner yet. Who takes the first one? Scores and rematch here:');
+    const h = n.nightText(d, Object.assign({}, he, { leader: 'עוד אין מנצחים. מי לוקח את הראשון?' }));
+    assert.ok(h.includes('מי לוקח את הראשון? הטבלה'), h);
+    assert.ok(!h.includes('?.'), h);
+    assert.strictEqual(n.nightText(d, Object.assign({}, info, { leader: '' })),
+        'Bullshit game night for Office Friday: Friday 13 November, 21:00. Scores and rematch here:');
+});
+
 test('calendar file is a valid one-event VCALENDAR in UTC with the crew link', () => {
     const d = n.parseNight('2026-11-13', '21:00'); // 19:00 UTC in Israel winter time
     const ics = n.buildIcs(d, info, 'g4d48z', new Date(Date.UTC(2026, 10, 5, 17, 0, 0)));

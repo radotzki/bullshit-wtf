@@ -129,6 +129,32 @@
             margin-inline-start: 8px;
             flex: 0 0 38%;
         }
+
+        // Narrow phones (iPhone SE, 320 px): the time field's clock icon was clipped, so stack them.
+        @media (max-width: 359px) {
+            flex-direction: column;
+
+            .input + .input {
+                margin-inline-start: 0;
+                margin-top: 8px;
+                flex: 0 0 auto;
+            }
+        }
+    }
+
+    // Long labels wrap inside the button instead of running into its edge on narrow phones.
+    .night-whatsapp,
+    .night-calendar {
+        white-space: normal;
+        height: auto;
+        min-height: 2.25em;
+        text-align: center;
+
+        @media (max-width: 359px) {
+            font-size: .9em;
+            padding-left: .5em;
+            padding-right: .5em;
+        }
     }
 
     .night-when {
