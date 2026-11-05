@@ -26,6 +26,8 @@ export class CreateGameComponent implements OnInit {
     ) { }
 
     ngOnInit() {
+        // Sign in now, so a tap on Create does not wait for it.
+        this.apiService.warmUpSignIn();
         const params = this.route.snapshot.queryParams || {};
         this.locale = params.lang === 'he' || params.lang === 'en' ? params.lang : preferredLocale();
 

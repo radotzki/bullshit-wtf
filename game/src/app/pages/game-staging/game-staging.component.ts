@@ -2,7 +2,7 @@ import { reportError } from './../../sentry/sentry.module';
 import { GamePlayers, GamePlayer, GameState } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import { Howl } from 'howler';
-import { ApiService } from './../../services/api.service';
+import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
@@ -69,7 +69,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             optional(this.apiService.getGameCreator(this.pin), null),
             optional(this.apiService.getGameLocale(this.pin), 'en'),
             this.apiService.getGamePack(this.pin),
-            this.presenter ? Promise.resolve(null) : (user && user.uid) ? Promise.resolve(user.uid) : this.apiService.currentUid(),
+            this.presenter ? Promise.resolve(null) : (user && user.uid) ? Promise.resolve(user.uid)
+                : this.apiService.uidWithin(SIGN_IN_WAIT_MS).then(r => r.uid),
         ]).then((found: any[]) => {
             const [hasPresenter, creator, locale, pack, myUid] = found;
             this.hasPresenter = !!hasPresenter;

@@ -42,8 +42,12 @@ exports.newGame = functions.https.onRequest((req, res) => {
         const locale = req.body.locale;
         const count = req.body.count;
         const uid = cleanUid(req.body.uid);
+        // How long the phone waited for sign-in before calling us (capped at about 1.5 s).
+        const wait = Number(req.body.clientWaitMs);
+        const clientWaitMs = isFinite(wait) && wait >= 0 ? Math.round(wait) : null;
         try {
             const pin = await newGame(locale, count, uid, { pack: req.body.pack, campaign: req.body.campaign });
+            console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid }));
             return res.send({ pin });
         } catch (e) {
             console.error('newGame failed', e);
