@@ -15,6 +15,32 @@
                 <span class="score"> {{ player.score }} </span>
             </div>
 
+            <div class="crew-panel">
+                <a *ngIf="crewId" class="button is-info is-fullwidth crew-link" [routerLink]="['/c', crewId]">
+                    <span class="icon"><i class="fa fa-trophy"></i></span>
+                    <span dir="auto"> {{ crewName || 'CREW' }}: SCOREBOARD &amp; REMATCH </span>
+                </a>
+
+                <button *ngIf="!crewId && !naming && displayPlayers.length > 1" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
+                    <span class="icon"><i class="fa fa-users"></i></span>
+                    <span> SAVE THIS CREW </span>
+                </button>
+
+                <form *ngIf="!crewId && naming" class="crew-form" (submit)="saveCrew()" novalidate>
+                    <p class="crew-form-hint">Name your crew to keep score across games and rematch in one tap.</p>
+                    <div class="field has-addons">
+                        <p class="control is-expanded">
+                            <input class="input" type="text" name="crewName" placeholder="The Office Liars" maxlength="24"
+                                [(ngModel)]="newCrewName" appAutofocus dir="auto">
+                        </p>
+                        <p class="control">
+                            <button class="button is-primary" type="submit" [disabled]="!newCrewName.trim()" [class.is-loading]="savingCrew">SAVE</button>
+                        </p>
+                    </div>
+                    <div class="notification is-danger" *ngIf="crewError">{{ crewError }}</div>
+                </form>
+            </div>
+
             <app-share-results [pin]="pin" [players]="displayPlayers"></app-share-results>
         </div>
     </div>

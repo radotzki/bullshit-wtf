@@ -1,0 +1,98 @@
+.crew-page {
+    overflow-y: auto;
+
+    .title {
+        cursor: pointer;
+    }
+
+    .controls {
+        width: 100%;
+        max-width: 460px;
+        padding: 0 16px 24px;
+    }
+
+    .crew-loader {
+        margin: 40px auto;
+    }
+
+    .crew-box {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .leader {
+        font-family: "Luckiest Guy", "Suez One", sans-serif;
+        font-size: 1.4em;
+        text-align: center;
+        color: #db7151;
+        line-height: 1.3;
+    }
+
+    .meta {
+        text-align: center;
+        color: #7a7a7a;
+        margin-bottom: 12px;
+    }
+
+    .standings {
+        width: 100%;
+        margin-bottom: 16px;
+        border-collapse: collapse;
+
+        th {
+            font-size: .75em;
+            color: #7a7a7a;
+            text-transform: uppercase;
+            text-align: right;
+            padding: 2px 6px;
+        }
+
+        td {
+            padding: 8px 6px;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+
+        .rank {
+            width: 2em;
+            text-align: left;
+            color: #7a7a7a;
+        }
+
+        .name {
+            text-align: left;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .wins {
+            font-weight: 700;
+        }
+
+        tr.me td {
+            background: #fdf1ec;
+        }
+    }
+
+    .hint {
+        text-align: center;
+        color: #7a7a7a;
+        font-size: .9em;
+        margin: 6px 0 14px;
+    }
+
+    .send .button + .button {
+        margin-top: 8px;
+    }
+
+    .whatsapp {
+        background-color: #25d366;
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .copied {
+        margin-top: 8px;
+        text-align: center;
+        color: #7a7a7a;
+    }
+}

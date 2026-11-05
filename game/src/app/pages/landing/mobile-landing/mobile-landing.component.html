@@ -3,6 +3,14 @@
 </div>
 <section class="home">
 
+    <div class="crews" *ngIf="crews.length">
+        <a class="crew" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
+            <i class="fa fa-trophy"></i>
+            <span class="crew-name" dir="auto">{{ crew.name }}</span>
+            <span class="crew-action">SCORES &amp; REMATCH</span>
+        </a>
+    </div>
+
     <div class="menu-button join-game" routerLink="/join-game">
         <div class="menu-button-icon">
             <i class="fa fa-gamepad"></i>

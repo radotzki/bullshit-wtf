@@ -8,7 +8,7 @@
  */
 const arrivalKey = 'BS_VIA';
 const hostedKey = 'BS_HOSTED_PIN';
-const known = ['pin', 'link', 'qr', 'results', 'host', 'replay'];
+const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
 
 function storage(): Storage | null {
     try {

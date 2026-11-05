@@ -19,6 +19,12 @@
                 "lang"
             ]
         },
+        "crews": {
+            "$id": {
+                ".read": "true",
+                ".write": "auth.uid == 'bl-service-worker'"
+            }
+        },
         "games": {
             "$pin": {
                 ".write": "auth.uid == 'bl-service-worker'",
@@ -90,6 +96,10 @@
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
                 "creator": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "crew": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 }

@@ -34,6 +34,8 @@ import { InviteComponent } from './components/invite/invite.component';
 import { ShareResultsComponent } from './components/share-results/share-results.component';
 import { ShareService } from './services/share.service';
 import { ResultsCardService } from './services/results-card.service';
+import { CrewService } from './services/crew.service';
+import { CrewComponent } from './pages/crew/crew.component';
 
 @NgModule({
     declarations: [
@@ -60,6 +62,7 @@ import { ResultsCardService } from './services/results-card.service';
         QrCodeComponent,
         InviteComponent,
         ShareResultsComponent,
+        CrewComponent,
     ],
     imports: [
         BrowserModule,
@@ -75,6 +78,7 @@ import { ResultsCardService } from './services/results-card.service';
         GameService,
         ShareService,
         ResultsCardService,
+        CrewService,
     ],
     bootstrap: [AppComponent]
 })

@@ -1,0 +1,66 @@
+<div class="arcade-form crew-page">
+    <div class="title-area">
+        <h1 class="title" routerLink="/">Bullshit</h1>
+        <h3 class="sub-title" dir="auto">{{ crew ? crew.name : (notFound ? 'Crew not found' : '') }}</h3>
+        <div class="separator">♦</div>
+    </div>
+
+    <div class="controls-wrapper">
+        <div class="controls">
+            <div *ngIf="!crew && !notFound" class="loader crew-loader"></div>
+
+            <div *ngIf="notFound" class="box crew-box">
+                <p>This crew link does not work. Check it, or start a new game and save your crew at the end.</p>
+                <a class="button is-primary is-fullwidth" routerLink="/create-game">CREATE GAME</a>
+            </div>
+
+            <div *ngIf="crew" class="box crew-box">
+                <p class="leader" dir="auto">{{ leader }}</p>
+                <p class="meta">{{ crew.gameCount === 1 ? '1 game' : crew.gameCount + ' games' }} played</p>
+
+                <table class="standings">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="name"></th>
+                            <th title="Wins">Wins</th>
+                            <th title="Total points">Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let m of standings; let i = index" [class.me]="isMe(m)">
+                            <td class="rank">{{ i + 1 }}</td>
+                            <td class="name" dir="auto">{{ m.nickname }}</td>
+                            <td class="wins">{{ m.wins }}</td>
+                            <td class="points">{{ m.points }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <button class="button is-primary is-medium is-fullwidth rematch" (click)="rematch()" [class.is-loading]="loading">
+                    {{ lobbyPin ? 'JOIN THE REMATCH' : 'REMATCH' }}
+                </button>
+                <p class="hint" *ngIf="lobbyPin">{{ lobbyCount === 1 ? '1 player' : lobbyCount + ' players' }} in the lobby, PIN {{ lobbyPin }}</p>
+                <p class="hint" *ngIf="!lobbyPin">Starts a new game for the crew. Send the link so everyone joins.</p>
+
+                <div class="notification is-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+                <div class="send">
+                    <button *ngIf="canShare" class="button is-fullwidth" (click)="share()">
+                        <span class="icon"><i class="fa fa-share-alt"></i></span>
+                        <span> SEND TO THE CREW </span>
+                    </button>
+                    <a class="button is-fullwidth whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
+                        <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                        <span> WHATSAPP </span>
+                    </a>
+                    <button *ngIf="!canShare" class="button is-fullwidth" (click)="share()">
+                        <span class="icon"><i class="fa fa-link"></i></span>
+                        <span> COPY CREW LINK </span>
+                    </button>
+                    <p *ngIf="copied" class="copied"> Copied! Paste it in your group chat. </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -21,9 +21,9 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ## Deploy (production)
 
 ```sh
-npm run prod:deploy-functions   # 13 functions (11 + phaseTimer + onRevealDone), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 15 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
-npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT)
+npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews)
 ```
 
 Always deploy all functions after a change to game logic (`--only functions`, not one function by name).
@@ -132,6 +132,20 @@ build output.
 - Client: clean install, lint and production build on Node 22; pages opened in a
   browser and compared with live; Sentry payloads captured in the browser show
   "Calling newGame failed with status 500", tag `where: createGame`, code and status.
+
+## Saved crews
+
+After a game, a group can save itself as a crew: bullshit.wtf/c/<id> shows its standings across
+games (wins, then points) and a REMATCH button that opens one shared lobby for the crew.
+
+- Data: `crews/<id>` in the Realtime Database (name, locale, members keyed by lowercase nickname,
+  a log of games, the latest rematch lobby). World-readable by id, written only by functions.
+  Games get a `crew` field; Replay carries it, so replays count for the crew.
+- Functions: `createCrew` and `crewRematch` (HTTP, new), and `gameState` adds each finished crew game
+  to the standings (a game counts when at least two played and at least half the crew was in it).
+- Deploy order: functions (all 15), then rules (the crew page reads `crews/<id>`), then hosting.
+- BigQuery: run `functions/bigquery/2026-11-crews.sql` once (adds NULLABLE `crew_id`). New values:
+  `origin = 'crew'` and `users.via = 'crew'`.
 
 ## Step zero analytics and search basics (second change)
 
