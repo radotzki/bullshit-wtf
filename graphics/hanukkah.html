@@ -1,0 +1,100 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Hanukkah 2026 images: link previews (og-hanukkah-*) and post images. Render: node graphics/render-hanukkah.js -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{position:relative;overflow:hidden;background:#13284f;color:#fff;font-family:"Luckiest Guy","Suez One",sans-serif;margin-bottom:20px}
+.card .stars{position:absolute;inset:0;background:
+ radial-gradient(circle at 12% 18%,rgba(243,212,103,.35) 0 3px,transparent 4px),
+ radial-gradient(circle at 82% 12%,rgba(243,212,103,.3) 0 2px,transparent 3px),
+ radial-gradient(circle at 68% 30%,rgba(255,255,255,.25) 0 2px,transparent 3px),
+ radial-gradient(circle at 25% 60%,rgba(255,255,255,.2) 0 2px,transparent 3px),
+ radial-gradient(circle at 92% 70%,rgba(243,212,103,.3) 0 3px,transparent 4px)}
+.logo-word{color:#fff;-webkit-text-stroke:4px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.35);line-height:1;font-weight:normal;margin:0}
+.gold{color:#f3d467}
+.band{position:absolute;left:0;right:0;bottom:0;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;letter-spacing:1px;text-align:center}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .logo-word{font-family:"Suez One",sans-serif}
+.menorah{display:block}
+/* OG 1200x630 */
+.og{width:1200px;height:630px;display:flex;align-items:center}
+.og .menorah{width:390px;margin:0 20px 90px 60px}
+.og .text{flex:1;padding-right:56px;margin-bottom:90px}
+.og.he .menorah{margin:0 60px 90px 20px}
+.og.he .text{padding-right:0;padding-left:56px}
+.og .logo-word{font-size:132px}
+.og p{margin:14px 0 0;font-size:48px;line-height:1.15}
+.og .band{height:96px;font-size:40px}
+/* Square 1080x1080 */
+.sq{width:1080px;height:1080px;text-align:center}
+.sq .menorah{width:520px;margin:70px auto 10px}
+.sq .logo-word{font-size:150px}
+.sq .q{font-size:56px;line-height:1.2;margin:24px 70px 0}
+.sq .sub{font-size:40px;margin:22px 70px 0;color:#d8e0f0;line-height:1.25}
+.sq .band{height:120px;font-size:44px}
+/* Story 1080x1920 */
+.st{width:1080px;height:1920px;text-align:center}
+.st .menorah{width:700px;margin:220px auto 30px}
+.st .logo-word{font-size:180px}
+.st .q{font-size:72px;line-height:1.2;margin:50px 80px 0}
+.st .sub{font-size:50px;margin:40px 80px 0;color:#d8e0f0;line-height:1.3}
+.st .band{height:180px;font-size:56px}
+</style></head><body>
+<template id="menorah">
+<svg class="menorah" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#f3d467">
+    <rect x="190" y="200" width="20" height="40"/><rect x="130" y="236" width="140" height="16" rx="6"/>
+    <path d="M30 120 Q30 200 200 200 Q370 200 370 120 L356 120 Q356 186 200 186 Q44 186 44 120Z"/>
+    <path d="M75 120 Q75 172 200 172 Q325 172 325 120 L311 120 Q311 158 200 158 Q89 158 89 120Z"/>
+    <path d="M120 120 Q120 146 200 146 Q280 146 280 120 L266 120 Q266 134 200 134 Q134 134 134 120Z"/>
+    <path d="M160 120 Q160 124 200 124 Q240 124 240 120Z"/><rect x="193" y="96" width="14" height="110"/>
+  </g>
+  <g fill="#ffffff">
+    <rect x="28" y="72" width="18" height="48" rx="3"/><rect x="73" y="72" width="18" height="48" rx="3"/>
+    <rect x="118" y="72" width="18" height="48" rx="3"/><rect x="158" y="72" width="18" height="48" rx="3"/>
+    <rect x="191" y="40" width="18" height="56" rx="3"/>
+    <rect x="224" y="72" width="18" height="48" rx="3"/><rect x="264" y="72" width="18" height="48" rx="3"/>
+    <rect x="309" y="72" width="18" height="48" rx="3"/><rect x="354" y="72" width="18" height="48" rx="3"/>
+  </g>
+  <g fill="#ffb347">
+    <path d="M37 40 Q48 58 37 70 Q26 58 37 40Z"/><path d="M82 40 Q93 58 82 70 Q71 58 82 40Z"/>
+    <path d="M127 40 Q138 58 127 70 Q116 58 127 40Z"/><path d="M167 40 Q178 58 167 70 Q156 58 167 40Z"/>
+    <path d="M200 6 Q213 26 200 38 Q187 26 200 6Z"/>
+    <path d="M233 40 Q244 58 233 70 Q222 58 233 40Z"/><path d="M273 40 Q284 58 273 70 Q262 58 273 40Z"/>
+    <path d="M318 40 Q329 58 318 70 Q307 58 318 40Z"/><path d="M363 40 Q374 58 363 70 Q352 58 363 40Z"/>
+  </g>
+</svg>
+</template>
+
+<div class="card og" id="og-en"><div class="stars"></div><span data-m></span>
+  <div class="text"><h1 class="logo-word">BULLSHIT</h1><p class="gold">The Hanukkah edition</p><p>Fool your family with fake answers to strange true facts</p></div>
+  <div class="band">FREE PARTY GAME · PLAY ON YOUR PHONES · BULLSHIT.WTF</div></div>
+
+<div class="card og he" id="og-he"><div class="stars"></div><span data-m></span>
+  <div class="text"><h1 class="logo-word">בולשיט</h1><p class="gold">מהדורת חנוכה</p><p>עבדו על כל המשפחה עם תשובות מזויפות לעובדות מוזרות ואמיתיות</p></div>
+  <div class="band">משחק חברה חינמי · משחקים בטלפון · BULLSHIT.WTF</div></div>
+
+<div class="card sq he" id="post-he"><div class="stars"></div><span data-m></span>
+  <h1 class="logo-word">בולשיט</h1>
+  <div class="q gold">מה עושים אחרי הלביבות?<br>עובדים על כל המשפחה</div>
+  <div class="sub">משחק חברה בטלפון, בחינם ובלי אפליקציה.<br>שאלות חנוכה חדשות. עד 8 שחקנים.</div>
+  <div class="band">BULLSHIT.WTF/HE/HANUKKAH</div></div>
+
+<div class="card sq" id="post-en"><div class="stars"></div><span data-m></span>
+  <h1 class="logo-word">BULLSHIT</h1>
+  <div class="q gold">After the candles:<br>who's the best liar in the family?</div>
+  <div class="sub">A free party game on your phones. No app.<br>New Hanukkah questions. Up to 8 players.</div>
+  <div class="band">BULLSHIT.WTF/HANUKKAH-PARTY-GAME</div></div>
+
+<div class="card st he" id="story-he"><div class="stars"></div><span data-m></span>
+  <h1 class="logo-word">בולשיט</h1>
+  <div class="q gold">ערב שישי, נר ראשון.<br>מי השקרן הכי טוב בחבורה?</div>
+  <div class="sub">משחק חברה בטלפון, בחינם.<br>סורקים את הקוד בטלוויזיה ומשחקים.</div>
+  <div class="band">BULLSHIT.WTF/HE/HANUKKAH</div></div>
+
+<script>
+document.querySelectorAll('[data-m]').forEach(function (el) {
+  el.replaceWith(document.getElementById('menorah').content.cloneNode(true));
+});
+</script>
+</body></html>

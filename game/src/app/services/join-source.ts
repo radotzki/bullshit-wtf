@@ -8,6 +8,8 @@
  */
 const arrivalKey = 'BS_VIA';
 const hostedKey = 'BS_HOSTED_PIN';
+const campaignKey = 'BS_CAMPAIGN';
+const localeKey = 'BS_SITE_LOCALE';
 const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
 
 function storage(): Storage | null {
@@ -39,6 +41,56 @@ export function rememberArrivalSource() {
         try {
             s.setItem(arrivalKey, via);
         } catch (e) { }
+    }
+
+    // The raw tag of a post link (?via=fb-he-hanukkah), sent with a game this tab creates.
+    const tag = readCampaign(window.location.search);
+    if (tag && s) {
+        try {
+            s.setItem(campaignKey, tag);
+        } catch (e) { }
+    }
+
+    // Arriving on a Hebrew address (/he, /he/...) or with ?lang=he makes Hebrew the default for new games.
+    const lang = /[?&]lang=(he|en)\b/.exec(window.location.search || '');
+    const locale = lang ? lang[1] : (/^\/he(\/|$)/.test(window.location.pathname || '') ? 'he' : null);
+    if (locale) {
+        try {
+            window.localStorage.setItem(localeKey, locale);
+        } catch (e) { }
+    }
+}
+
+/** A post's campaign tag, as cleanCampaign in game-model allows; known join sources are not campaigns. */
+export function readCampaign(search: string): string | null {
+    const match = /[?&]via=([^&#]*)/.exec(search || '');
+    const tag = match ? decodeURIComponent(match[1]).toLowerCase().trim() : '';
+    return /^[a-z0-9][a-z0-9-]{0,39}$/.test(tag) && known.indexOf(tag) < 0 ? tag : null;
+}
+
+/** The campaign tag this tab arrived with, if any. */
+export function arrivalCampaign(): string | null {
+    const s = storage();
+    try {
+        return s ? s.getItem(campaignKey) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/** The language this browser last arrived in ('he' from a Hebrew address), else from the browser. */
+export function preferredLocale(): string {
+    try {
+        const saved = window.localStorage.getItem(localeKey);
+        if (saved === 'he' || saved === 'en') {
+            return saved;
+        }
+    } catch (e) { }
+    try {
+        const nav = (navigator.language || '').toLowerCase();
+        return nav.indexOf('he') === 0 || nav.indexOf('iw') === 0 ? 'he' : 'en';
+    } catch (e) {
+        return 'en';
     }
 }
 

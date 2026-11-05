@@ -9,6 +9,10 @@
         <span class="lobby-count"> {{lobby.count}} </span>
     </div>
 
+    <div *ngIf="packBanner" class="pack-banner" [class.presenter]="presenter" [attr.dir]="locale === 'he' ? 'rtl' : null">
+        🕎 {{ packBanner }}
+    </div>
+
     <div class="game-main">
         <div *ngIf="!players" class="screen-center">
             <div class="loader"> </div>

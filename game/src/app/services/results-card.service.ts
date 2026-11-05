@@ -14,8 +14,8 @@ const LIGHT = '#f5f5f5';
 const FONT = '"Luckiest Guy", "Suez One", "Arial Black", sans-serif';
 
 const labels = {
-    en: { heading: 'FINAL SCORES', you: 'YOU', footer: 'PLAY FREE AT BULLSHIT.WTF' },
-    he: { heading: 'תוצאות סופיות', you: 'אני', footer: 'שחקו בחינם ב-BULLSHIT.WTF' },
+    en: { heading: 'FINAL SCORES', hanukkah: 'HANUKKAH FINAL SCORES', you: 'YOU', footer: 'PLAY FREE AT BULLSHIT.WTF' },
+    he: { heading: 'תוצאות סופיות', hanukkah: 'תוצאות סופיות · חנוכה', you: 'אני', footer: 'שחקו בחינם ב-BULLSHIT.WTF' },
 };
 
 /**
@@ -25,7 +25,7 @@ const labels = {
 @Injectable()
 export class ResultsCardService {
 
-    async render(players: CardPlayer[], me: string, locale: string): Promise<Blob> {
+    async render(players: CardPlayer[], me: string, locale: string, pack?: string): Promise<Blob> {
         const t = labels[locale === 'he' ? 'he' : 'en'];
         await this.loadFonts();
         const avatars = await Promise.all(players.map(p => this.loadImage(`/assets/${p.picture}`)));
@@ -54,7 +54,7 @@ export class ResultsCardService {
         ctx.font = `54px ${FONT}`;
         ctx.fillStyle = GREY;
         (ctx as any).direction = locale === 'he' ? 'rtl' : 'ltr';
-        ctx.fillText(t.heading, SIZE / 2, 270);
+        ctx.fillText(pack === 'hanukkah' ? t.hanukkah : t.heading, SIZE / 2, 270);
         (ctx as any).direction = 'ltr';
 
         // Rows

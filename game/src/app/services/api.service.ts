@@ -62,11 +62,11 @@ export class ApiService {
         return this.get<string>(this.gamesRef.child(pin).child('creator'));
     }
 
-    async createGame(locale: string, count: number): Promise<{ pin: string }> {
+    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating still works if sign-in fails.
         const uid = await this.currentUid();
-        return this.post<{ pin: string }>(`newGame`, { locale, count, uid });
+        return this.post<{ pin: string }>(`newGame`, { locale, count, uid, pack: pack || null, campaign: campaign || null });
     }
 
     /** This browser's anonymous uid, signing in if needed; undefined if that fails. */
@@ -155,6 +155,12 @@ export class ApiService {
     getQuestion(pin: string) {
         pin = pin.toUpperCase();
         return this.get<string>(this.gamesRef.child(pin).child('currentQ'));
+    }
+
+    /** The game's seasonal question pack, or null. */
+    getGamePack(pin: string): Promise<string> {
+        pin = pin.toUpperCase();
+        return this.get<string>(this.gamesRef.child(pin).child('pack')).catch(() => null);
     }
 
     getGameLocale(pin: string) {

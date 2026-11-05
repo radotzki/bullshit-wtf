@@ -147,6 +147,23 @@ games (wins, then points) and a REMATCH button that opens one shared lobby for t
 - BigQuery: run `functions/bigquery/2026-11-crews.sql` once (adds NULLABLE `crew_id`). New values:
   `origin = 'crew'` and `users.via = 'crew'`.
 
+## Hanukkah pack and campaign tags
+
+- Questions can carry `pack: "hanukkah"`. Pack questions never appear in normal games. A pack game
+  (`newGame` with `pack`, Replay of a pack game, or a crew rematch in the pack's season) mixes up to 3
+  pack questions nobody in the room has seen, the first one opening the game. The room re-pick at START
+  (`tick`) keeps the pack, so deploy all functions.
+- The pack's questions live in `questions/hanukkah-*` in the database. Load them only **after** the
+  new functions are live: old functions would mix them into every game.
+- The create page offers the pack from `?pack=hanukkah`, and switched on by default during the season
+  in `questionPacks` (game-model.ts). The lobby shows a Hanukkah line and the results card says so.
+- `?lang=he` or arriving on a `/he` address makes Hebrew the default on the create page.
+- A post's `?via=<tag>` (not one of the join sources) is sent with the game the tab creates and kept as
+  `campaign`. The SEO pages pass it on to their Start button.
+- Database rules: `games/$pin/pack` is readable. BigQuery: run `functions/bigquery/2026-11-hanukkah.sql`
+  once (NULLABLE `pack` and `campaign` on opened_games and closed_games).
+- Images: `graphics/hanukkah.html`, rendered with `node graphics/render-hanukkah.js <assets> <posts>`.
+
 ## Step zero analytics and search basics (second change)
 
 **Before deploying the functions**, add the new BigQuery columns once:

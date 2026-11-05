@@ -1,18 +1,32 @@
 import { randomQuestions } from './questions';
-import { GameScheme, GameState } from '../game-model';
+import { GameScheme, GameState, isPack, cleanCampaign } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export interface NewGameOptions {
     // A crew rematch: the crew this game counts for, and its members' browsers (no repeat questions).
     crew?: string;
     uids?: string[];
+    // A seasonal question pack (see questionPacks in game-model).
+    pack?: string;
+    // The campaign tag the host arrived with.
+    campaign?: string;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
     return incGameCounter().then(async gameCounter => {
         const gamePin = generateGameName(gameCounter);
-        const questions = await randomQuestions(locale, count, options.uids || []);
+        const pack = isPack(options.pack) ? options.pack : undefined;
+        const questions = await randomQuestions(locale, count, options.uids || [], pack);
         const game = emptyGame(locale, count, questions, creator);
+
+        if (pack) {
+            game.pack = pack;
+        }
+
+        const campaign = cleanCampaign(options.campaign);
+        if (campaign) {
+            game.campaign = campaign;
+        }
 
         if (options.crew) {
             game.crew = options.crew;

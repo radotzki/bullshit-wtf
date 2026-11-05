@@ -67,3 +67,40 @@ export function shuffle<T>(items: T[], random: Random = Math.random): T[] {
 
     return arr;
 }
+
+/**
+ * Picks a game's questions with a seasonal pack mixed in: up to `perGame` pack questions nobody
+ * in the room has seen (a pack question is never repeated), the rest from the normal bank as
+ * pickQuestions does. The pack questions are spread out, the first one opening the game.
+ */
+export function pickWithPack(
+    regularIds: string[],
+    packIds: string[],
+    seenRecords: SeenRecord[],
+    count: number,
+    perGame: number,
+    random: Random = Math.random,
+): string[] {
+    const lastSeen = mergeSeen(seenRecords);
+    const freshPack = packIds.filter(id => !(id in lastSeen));
+    const pack = shuffle(freshPack, random).slice(0, Math.max(0, Math.min(perGame, count)));
+    const regular = pickQuestions(regularIds, seenRecords, count - pack.length, random);
+
+    // Short of normal questions (tiny bank): top up with more fresh pack questions.
+    const extra = shuffle(freshPack.filter(id => pack.indexOf(id) < 0), random)
+        .slice(0, Math.max(0, count - pack.length - regular.length));
+    const packAll = pack.concat(extra);
+
+    const result: string[] = [];
+    const slots = new Set(packAll.map((_, i) => Math.round(i * count / packAll.length)));
+    let p = 0;
+    let r = 0;
+    for (let i = 0; i < count && (p < packAll.length || r < regular.length); i++) {
+        if ((slots.has(i) && p < packAll.length) || r >= regular.length) {
+            result.push(packAll[p++]);
+        } else {
+            result.push(regular[r++]);
+        }
+    }
+    return result;
+}

@@ -1,17 +1,26 @@
 import { questionsRef, seenQuestionsRef, get } from './../firebase';
-import { Question } from '../game-model';
-import { pickQuestions, SeenRecord } from './question-picker';
+import { Question, questionPacks, isPack } from '../game-model';
+import { pickQuestions, pickWithPack, SeenRecord } from './question-picker';
 import { isRetired } from './retired-questions';
 
 /**
  * Picks `count` questions for `lang`, avoiding questions any of the given
  * devices (uids) have already seen. With no uids it is a plain random pick.
  */
-export async function randomQuestions(lang: string, count: number, uids: string[] = []) {
-    const questions = await getQuestionsByLang(lang);
+export async function randomQuestions(lang: string, count: number, uids: string[] = [], pack?: string) {
+    const all = await getQuestionsByLang(lang);
+    // Pack questions only appear in games of their pack.
+    const questions = all.filter(q => !q.pack);
     const seen = await getSeenRecords(uids);
     const playable = questions.map(q => q.id).filter(id => !isRetired(id));
-    return pickQuestions(playable.length >= count ? playable : questions.map(q => q.id), seen, count);
+    const regular = playable.length >= count ? playable : questions.map(q => q.id);
+
+    if (pack && isPack(pack)) {
+        const packIds = all.filter(q => q.pack === pack && !isRetired(q.id)).map(q => q.id);
+        return pickWithPack(regular, packIds, seen, count, questionPacks[pack].perGame);
+    }
+
+    return pickQuestions(regular, seen, count);
 }
 
 export function getQuestion(id: string): Promise<Question> {

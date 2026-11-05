@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { pickQuestions, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
+import { pickQuestions, pickWithPack, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
 
 // Seeded random so failures are reproducible.
 function seeded(seed: number) {
@@ -86,6 +86,39 @@ const tests: { [name: string]: () => void } = {
         const out = shuffle(input, seeded(1));
         assert.deepStrictEqual(input, bank(20));
         assert.deepStrictEqual(out.slice().sort(), input.slice().sort());
+    },
+
+    'pack game: up to perGame pack questions, first one opens the game, rest normal'() {
+        const regular = bank(40);
+        const pack = Array.from({ length: 12 }, (_, i) => `h${i}`);
+        for (const count of [5, 7, 9]) {
+            const qids = pickWithPack(regular, pack, [], count, 3, seeded(count));
+            assert.strictEqual(qids.length, count);
+            assert.strictEqual(new Set(qids).size, count);
+            assert.strictEqual(qids.filter(q => q[0] === 'h').length, 3);
+            assert.ok(qids[0][0] === 'h', 'first question is from the pack');
+            assert.ok(qids[1][0] === 'q', 'pack questions are spread out');
+        }
+    },
+
+    'pack questions are never repeated; once used up, games are normal'() {
+        const regular = bank(60);
+        const pack = Array.from({ length: 7 }, (_, i) => `h${i}`);
+        const store: SeenRecord = {};
+        const counts: number[] = [];
+        for (let g = 0; g < 4; g++) {
+            const qids = pickWithPack(regular, pack, [store], 7, 3, seeded(g + 1));
+            counts.push(qids.filter(q => q[0] === 'h').length);
+            qids.forEach((q, i) => store[q] = g * 10 + i + 1);
+        }
+        assert.deepStrictEqual(counts, [3, 3, 1, 0]);
+        assert.strictEqual(Object.keys(store).filter(q => q[0] === 'h').length, 7);
+    },
+
+    'pack game with a tiny normal bank tops up from the pack'() {
+        const qids = pickWithPack(bank(2), ['h0', 'h1', 'h2', 'h3', 'h4'], [], 5, 2, seeded(3));
+        assert.strictEqual(qids.length, 5);
+        assert.strictEqual(new Set(qids).size, 5);
     },
 };
 

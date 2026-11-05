@@ -140,7 +140,7 @@ async function populateQuestion(game: GameScheme, qidx: number) {
  */
 async function pickQuestionsForRoom(game: GameScheme) {
     try {
-        const qids = await randomQuestions(game.locale, game.totalQ, playerUids(game));
+        const qids = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
         return qids.length ? qids : game.qids;
     } catch (e) {
         console.error('Failed to pick questions for room, keeping original ones', e);

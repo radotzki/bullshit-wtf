@@ -41,6 +41,10 @@ export interface GameScheme {
     revealDone?: { [pid: string]: boolean };
     // The saved crew this game counts for (set by a crew rematch, carried by Replay).
     crew?: string;
+    // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
+    pack?: string;
+    // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay.
+    campaign?: string;
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';
@@ -112,6 +116,8 @@ export interface RevealAnswer {
 
 export interface Question {
     id: string;
+    // Seasonal pack this question belongs to; such questions only appear in games of that pack.
+    pack?: string;
     realAnswer: string;
     fakeAnswers: string[];
     questionText: string;
@@ -249,4 +255,47 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
     return he
         ? `${first.nickname} מוביל/ה ${first.wins}–${second.wins}`
         : `${first.nickname} leads ${first.wins} to ${second.wins}`;
+}
+
+/**
+ * Seasonal question packs. A pack game mixes up to `perGame` of the pack's questions (ones nobody in
+ * the room has seen) into the normal questions. Pack questions never appear in other games.
+ * `season` (dates in Israel, inclusive) is when the create page offers the pack switched on by
+ * default and crew rematches use it; outside it the pack is still playable by link (?pack=<id>).
+ */
+export interface QuestionPack {
+    perGame: number;
+    season: { from: string; to: string };
+    label: { en: string; he: string };
+}
+
+export const questionPacks: { [id: string]: QuestionPack } = {
+    hanukkah: {
+        perGame: 3,
+        season: { from: '2026-11-26', to: '2026-12-13' },
+        label: { en: 'Hanukkah questions', he: 'שאלות חנוכה' },
+    },
+};
+
+export function isPack(id: any): boolean {
+    return typeof id === 'string' && Object.prototype.hasOwnProperty.call(questionPacks, id);
+}
+
+/** The pack whose season includes `now` (by the date in Israel), if any. */
+export function seasonalPack(now: number = Date.now()): string | undefined {
+    // Israel is UTC+2 in winter; close enough for a day-level season.
+    const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
+    return Object.keys(questionPacks).find(id => {
+        const s = questionPacks[id].season;
+        return day >= s.from && day <= s.to;
+    });
+}
+
+/** A campaign tag as typed in a post link: lowercase letters, digits and dashes, or nothing. */
+export function cleanCampaign(tag: any): string | undefined {
+    if (typeof tag !== 'string') {
+        return undefined;
+    }
+    const t = tag.toLowerCase().trim();
+    return /^[a-z0-9][a-z0-9-]{0,39}$/.test(t) ? t : undefined;
 }
