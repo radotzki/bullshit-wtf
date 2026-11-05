@@ -1,4 +1,5 @@
-const functions = require('firebase-functions');
+// 1st-gen API: keeps the existing function names, URLs and triggers unchanged.
+const functions = require('firebase-functions/v1');
 const cors = require('cors')({ origin: true });
 
 import { tick } from './controllers/tick';
@@ -10,6 +11,18 @@ import { fork } from './controllers/fork';
 import { validateGameName } from './controllers/validate-game-name';
 import * as analytics from './controllers/analytics';
 
+// Error bodies always carry a readable message and a code, so the client
+// (and Sentry) never sees an empty object.
+function errorBody(e: any) {
+    if (e && typeof e === 'object') {
+        return {
+            message: e.message || String(e),
+            code: e.code || 'INTERNAL',
+        };
+    }
+    return { message: String(e), code: 'INTERNAL' };
+}
+
 exports.time = functions.https.onRequest((req, res) => {
     cors(req, res, () => {
         res.send({ now: Date.now() });
@@ -20,8 +33,13 @@ exports.newGame = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         const locale = req.body.locale;
         const count = req.body.count;
-        const pin = await newGame(locale, count);
-        res.send({ pin });
+        try {
+            const pin = await newGame(locale, count);
+            return res.send({ pin });
+        } catch (e) {
+            console.error('newGame failed', e);
+            return res.status(500).send(errorBody(e));
+        }
     });
 });
 
@@ -33,7 +51,7 @@ exports.fork = functions.https.onRequest((req, res) => {
             await fork(pin);
             return res.status(200).send({});
         } catch (e) {
-            return res.status(400).send(e);
+            return res.status(400).send(errorBody(e));
         }
     });
 });
@@ -48,7 +66,7 @@ exports.answer = functions.https.onRequest((req, res) => {
             await answer(pin, pid, playerAnswer);
             return res.status(200).send({});
         } catch (e) {
-            return res.status(400).send(e);
+            return res.status(400).send(errorBody(e));
         }
     });
 });
@@ -63,7 +81,7 @@ exports.join = functions.https.onRequest((req, res) => {
             const pid = await join(pin, nickname, uid);
             return res.status(200).send({ pid });
         } catch (e) {
-            return res.status(400).send(e);
+            return res.status(400).send(errorBody(e));
         }
     });
 });
@@ -75,7 +93,7 @@ exports.validateGameName = functions.https.onRequest((req, res) => {
         try {
             return res.status(200).send(await validateGameName(pin));
         } catch (e) {
-            return res.status(400).send(e);
+            return res.status(400).send(errorBody(e));
         }
     });
 });
@@ -88,7 +106,11 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
         const ip = req.headers['x-forwarded-for'];
         const useragent = req.headers['user-agent'];
 
-        await analytics.onJoinGame(uid, ip, useragent, pin, nickname);
+        try {
+            await analytics.onJoinGame(uid, ip, useragent, pin, nickname);
+        } catch (e) {
+            console.error('onJoinGame analytics failed', e);
+        }
         return res.status(200).send({});
     });
 });

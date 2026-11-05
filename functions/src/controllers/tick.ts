@@ -63,7 +63,8 @@ function updateState(stateId: number) {
 }
 
 function updateGame(pin: string, update: Partial<GameScheme>) {
-    gamesRef.child(pin).update(update);
+    // Return the write so the function waits for it before finishing.
+    return gamesRef.child(pin).update(update);
 }
 
 function populateQuestion(game: GameScheme, qidx: number) {

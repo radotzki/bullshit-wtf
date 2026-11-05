@@ -7,6 +7,8 @@ $warning: hsl(48, 100%, 67%);
 $danger: hsl(348, 100%, 61%);
 $light: hsl(0, 0%, 96%);
 $dark: hsl(0, 0%, 21%);
+// Bulma 0.9 defaults links and input focus to blue; keep the brand colour as in Bulma 0.3.
+$link: $primary;
 
 $family-primary: "Luckiest Guy", "Suez One", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 

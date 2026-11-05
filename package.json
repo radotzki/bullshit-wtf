@@ -4,7 +4,7 @@
     "scripts": {
         "start": "cd game && npm start",
         "deploy-game": "cd game && npm run build && cd .. && firebase deploy --only hosting",
-        "deploy-functions": "cd functions && npm run build && cd .. && firebase deploy --only functions",
+        "deploy-functions": "firebase deploy --only functions",
         "deploy-rules": "firebase deploy --only database",
         "deploy": "npm run deploy-functions && npm run deploy-game && npm run deploy-rules",
         "prod:deploy-game": "npm run deploy-game -- -P bullshit-wtf-prod",
@@ -13,6 +13,9 @@
         "prod:deploy": "npm run prod:deploy-functions && npm run prod:deploy-game && npm run prod:deploy-rules"
     },
     "devDependencies": {
-        "firebase-tools": "^9.23.0"
+        "firebase-tools": "^15.35.0"
+    },
+    "engines": {
+        "node": ">=20"
     }
 }

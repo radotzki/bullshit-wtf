@@ -1,3 +1,4 @@
+import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
 import { Subscription } from 'rxjs/Subscription';
 import { ApiService } from './../../services/api.service';
@@ -71,6 +72,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;
                 } else {
+                    reportError(err, 'answer', { pin: this.pin });
                     this.errorMsg = 'oops, something went wrong. Please try again';
                 }
             });

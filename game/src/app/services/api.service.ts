@@ -1,3 +1,4 @@
+import { reportError } from './../sentry/sentry.module';
 import { GameScheme, GamePlayers, Answers, GameState, AnswerSelections, RevealAnswer } from './../game-model';
 import { SessionService } from './session.service';
 import { Observable } from 'rxjs/Observable';
@@ -11,6 +12,29 @@ import 'rxjs/add/operator/toPromise';
 import 'rxjs/add/operator/publish';
 
 const firebase = initializeApp(environment.firebaseConfig);
+
+/**
+ * Build a real Error from a failed call to a cloud function, keeping the
+ * server's message and code when it sent JSON, and the HTTP status always.
+ */
+function apiError(url: string, resp: any) {
+    let body: any = null;
+
+    try {
+        body = resp.json();
+    } catch (e) {
+        body = null;
+    }
+
+    const status = resp && resp.status;
+    const message = (body && body.message) ||
+        (status === 0 ? `Network error calling ${url}` : `Calling ${url} failed with status ${status}`);
+    const error: any = new Error(message);
+    error.code = (body && body.code) || (status === 0 ? 'NETWORK_ERROR' : 'HTTP_' + status);
+    error.status = status;
+    error.endpoint = url;
+    return error;
+}
 
 @Injectable()
 export class ApiService {
@@ -185,13 +209,14 @@ export class ApiService {
             return user;
         } catch (error) {
             console.log(error);
+            reportError(error, 'signInAnonymously', { pin });
         }
     }
 
     private post<T>(url: string, body: Object = {}): Promise<T> {
         return this.http.post(environment.cloudfunctions + url, body)
             .toPromise()
-            .then(resp => resp.json(), resp => Promise.reject(resp.json()));
+            .then(resp => resp.json(), resp => Promise.reject(apiError(url, resp)));
     }
 
     private observe<T>(query: firebase.database.Query, eventType = 'value') {

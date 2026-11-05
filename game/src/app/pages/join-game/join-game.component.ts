@@ -1,3 +1,4 @@
+import { reportError } from './../../sentry/sentry.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
@@ -51,6 +52,9 @@ export class JoinGameComponent implements OnInit {
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = err.message;
+                if (!err || (err.code !== 'GAME_NOT_EXIST' && err.code !== 'GAME_IS_FULL')) {
+                    reportError(err, 'validateGameName', { pin: this.pin });
+                }
             });
     }
 
@@ -59,11 +63,9 @@ export class JoinGameComponent implements OnInit {
         this.errorMsg = '';
         let uid;
 
-        try {
-            uid = (await this.apiService.signInAnonymously(this.pin, this.nickname)).uid;
-        } catch (e) {
-            uid = 0;
-        }
+        // signInAnonymously reports its own failure and resolves to undefined.
+        const user = await this.apiService.signInAnonymously(this.pin, this.nickname);
+        uid = user ? user.uid : 0;
 
         this.apiService.join(this.pin, this.nickname, uid)
             .then((pid) => {
@@ -74,6 +76,10 @@ export class JoinGameComponent implements OnInit {
             .catch(err => {
                 this.loading = false;
                 this.errorMsg = err.message;
+                // Wrong PIN and full game are expected; report anything else.
+                if (!err || (err.code !== 'GAME_NOT_EXIST' && err.code !== 'GAME_IS_FULL')) {
+                    reportError(err, 'join', { pin: this.pin });
+                }
             });
     }
 

@@ -1,3 +1,4 @@
+import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -65,6 +66,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             })
             .catch(err => {
                 this.loading = false;
+                reportError(err, 'chooseAnswer', { pin: this.pin });
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }

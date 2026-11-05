@@ -1,7 +1,8 @@
 import { GameScheme, GameState } from "../game-model";
 import { get, gamesRef } from '../firebase';
 
-const bigquery = require('@google-cloud/bigquery')();
+const { BigQuery } = require('@google-cloud/bigquery');
+const bigquery = new BigQuery();
 
 export async function onFork(pin: string) {
     pin = pin.toUpperCase();
@@ -69,7 +70,8 @@ async function insert(table, obj) {
     try {
         await dataset.table(table).insert(obj);
     } catch (e) {
-        console.error('Bigquery Insert failed', e);
+        // PartialFailureError carries per-row reasons in e.errors.
+        console.error('Bigquery Insert failed', e && e.message, JSON.stringify(e && e.errors));
     }
 
     return;

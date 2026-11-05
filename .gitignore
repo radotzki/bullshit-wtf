@@ -47,3 +47,7 @@ testem.log
 #System Files
 .DS_Store
 Thumbs.db
+
+# emulators
+database-debug.log
+ui-debug.log

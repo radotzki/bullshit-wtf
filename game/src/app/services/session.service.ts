@@ -1,3 +1,4 @@
+import { setSentryUser } from './../sentry/sentry.module';
 import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
@@ -20,6 +21,7 @@ export class SessionService implements CanActivate {
     set user(user: User) {
         this._user = user;
         this.storageService.setItem(playerKey, JSON.stringify(user));
+        setSentryUser({ id: user.uid });
         gtag('set', { 'user_id': user.uid });
     }
 
@@ -45,6 +47,7 @@ export class SessionService implements CanActivate {
 
         if (isPresenter) {
             sessionStorage.setItem(presenterKey, JSON.stringify(isPresenter));
+            setSentryUser({ username: 'presenter' });
         } else {
             sessionStorage.removeItem(presenterKey);
         }
