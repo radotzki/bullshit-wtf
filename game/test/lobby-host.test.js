@@ -253,7 +253,7 @@ test('a guest waits for a joined host who reported in recently', () => {
     assert.strictEqual(v.hostGone, undefined);
 });
 
-test('once the joined host has been gone 90 s, anyone may start, and the lobby says why', () => {
+test('once the joined host has been gone HOST_GONE_MS (5 minutes), anyone may start, and the lobby says why', () => {
     const v = view({ creator: null, hasHost: true, players: marked, myPid: 'pb', hostAwayMs: HOST_GONE_MS });
     assert.strictEqual(v.canStart, true);
     assert.strictEqual(v.hostGone, 'Alice');
@@ -282,4 +282,8 @@ test('the host itself is never told it is gone', () => {
 
 test('the host reports in several times within the gone time', () => {
     assert.ok(HOST_GONE_MS / HOST_PING_MS >= 4);
+});
+
+test('the host-gone wait is 5 minutes, so a host inviting friends in WhatsApp keeps their game', () => {
+    assert.strictEqual(HOST_GONE_MS, 5 * 60 * 1000);
 });

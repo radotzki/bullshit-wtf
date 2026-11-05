@@ -109,7 +109,7 @@ exports.crewRematch = functions.https.onRequest((req, res) => {
 });
 
 // START in the lobby. In a game with a host key only the host's phone may start it, unless the host
-// never joined or has been gone 90 s: see startVerdict in controllers/start.ts.
+// never joined within 90 s or has been gone 5 minutes: see startVerdict in controllers/start.ts.
 exports.startGame = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         try {

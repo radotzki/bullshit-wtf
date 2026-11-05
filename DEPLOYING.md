@@ -42,7 +42,7 @@ client carry `serverStart`, and for them the server ignores START ticks and the 
 
 Host gone: in a `serverStart` game the host's lobby page calls `hostHere` every 20 s with its key, and
 the server stores its own time in `games/$pin/hostSeen` (the host's join and Replay set it too). Once a
-joined host has not reported in for 90 s, startGame lets anyone start, and the other phones show START
+joined host has not reported in for 5 minutes, startGame lets anyone start, and the other phones show START
 with "<host> seems to be gone". Without the rules deploy nobody sees START early, but the server still
 allows it. Release order: functions
 (startGame must exist before the site calls it), then rules, then the site.

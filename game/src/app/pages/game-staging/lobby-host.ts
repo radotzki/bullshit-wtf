@@ -27,7 +27,7 @@ import { GamePlayer } from '../../game-model';
  */
 export const HOST_GRACE_MS = 90 * 1000;
 /** Must match HOST_GONE_MS in functions/src/controllers/start.ts. */
-export const HOST_GONE_MS = 90 * 1000;
+export const HOST_GONE_MS = 5 * 60 * 1000;
 /** How often the host's lobby page reports in. */
 export const HOST_PING_MS = 20 * 1000;
 

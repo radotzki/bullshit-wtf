@@ -13,7 +13,7 @@ export const HOST_GRACE_MS = 90 * 1000;
  * reports every HOST_PING_MS (hostHere), so this is several missed reports in a row.
  * Must match HOST_GONE_MS in game/src/app/pages/game-staging/lobby-host.ts.
  */
-export const HOST_GONE_MS = 90 * 1000;
+export const HOST_GONE_MS = 5 * 60 * 1000;
 
 export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'not-host';
 
@@ -24,7 +24,7 @@ export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'not
  *   shows the lobby: any phone can open the present page or write `presenter`, so it proves nothing;
  * - if no player row is marked as the host 90 s after the lobby opened, anyone may start it,
  *   so a host who closed the tab cannot leave the group stuck;
- * - if the host joined but their lobby page has not reported in (hostSeen) for 90 s, anyone may
+ * - if the host joined but their lobby page has not reported in (hostSeen) for 5 minutes, anyone may
  *   start it, so a host whose phone died cannot leave the group stuck either. Only the server writes
  *   hostSeen, and only for the phone that brings the host key: a guest cannot make the host look gone.
  *   Only games from clients that report (serverStart) have it; without it the host must start;

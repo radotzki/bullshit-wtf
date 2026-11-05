@@ -244,7 +244,7 @@ test('Replay with a key but no player id stores no key, so the new game keeps th
     assert.strictEqual('hostKey' in db.games[forked.body.pin], false);
 });
 
-// ---- A joined host whose phone died: the group may start once the host has been gone 90 s ----
+// ---- A joined host whose phone died: the group may start once the host has been gone HOST_GONE_MS (5 minutes) ----
 
 test('the host joining marks them seen', async () => {
     const before = Date.now();
@@ -252,7 +252,7 @@ test('the host joining marks them seen', async () => {
     assert.ok(db.games[pin].hostSeen >= before, 'join by the host sets hostSeen');
 });
 
-test('a guest may start once the joined host has been gone 90 s, not before', async () => {
+test('a guest may start once the joined host has been gone HOST_GONE_MS (5 minutes), not before', async () => {
     const { pin } = await hostedLobby();
     db.games[pin].hostSeen = Date.now() - (HOST_GONE_MS - 5000);
     assert.strictEqual((await call('startGame', { pin })).code, 403, 'the host was here 85 s ago');
@@ -327,4 +327,8 @@ test('Replay with a host key marks the new host seen', async () => {
     const before = Date.now();
     const next = (await call('fork', { pin, pid: friend, hostKey: 'N'.repeat(24) })).body.pin;
     assert.ok(db.games[next].hostSeen >= before);
+});
+
+test('the host-gone wait is 5 minutes, the same as the lobby', () => {
+    assert.strictEqual(HOST_GONE_MS, 5 * 60 * 1000);
 });
