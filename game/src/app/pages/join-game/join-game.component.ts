@@ -34,6 +34,8 @@ export class JoinGameComponent implements OnInit {
     ) { }
 
     ngOnInit() {
+        // Sign in now, so a tap on Join does not wait for it.
+        this.apiService.warmUpSignIn();
         this.pin = this.activatedRoute.snapshot.params['pin'];
 
         if (this.pin) {
@@ -105,7 +107,7 @@ export class JoinGameComponent implements OnInit {
         this.errorMsg = '';
         let uid;
 
-        // signInAnonymously reports its own failure and resolves to undefined.
+        // signInAnonymously waits at most about 1.5 s and resolves to undefined if sign-in is slower or fails.
         const via = takeJoinSource(this.pin, this.activatedRoute.snapshot.queryParams['via'], this.pinInUrl);
         const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
         uid = user ? user.uid : 0;

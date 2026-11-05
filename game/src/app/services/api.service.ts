@@ -13,6 +13,12 @@ import 'rxjs/add/operator/publish';
 
 const firebase = initializeApp(environment.firebaseConfig);
 
+/** The longest a tap on Create, Join, Replay or Rematch waits for sign-in. */
+export const SIGN_IN_WAIT_MS = 1500;
+
+/** The one anonymous sign-in of this page load, shared by every caller. */
+let signingIn: Promise<firebase.User> = null;
+
 /**
  * Build a real Error from a failed call to a cloud function, keeping the
  * server's message and code when it sent JSON, and the HTTP status always.
@@ -64,21 +70,54 @@ export class ApiService {
 
     async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
-        // tell whether hosts come back. Creating still works if sign-in fails.
-        const uid = await this.currentUid();
-        return this.post<{ pin: string }>(`newGame`, { locale, count, uid, pack: pack || null, campaign: campaign || null });
+        // tell whether hosts come back. Creating never waits long for sign-in:
+        // without a uid the game is made all the same, and anyone may start it.
+        const { uid, waitedMs } = await this.uidWithin(SIGN_IN_WAIT_MS);
+        return this.post<{ pin: string }>(`newGame`, {
+            locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs,
+        });
+    }
+
+    /**
+     * Start signing this browser in anonymously, once. Pages call this when they open,
+     * so sign-in is usually done by the time a player taps. Where Google's sign-in
+     * script fails to load, this takes 20 to 30 seconds and resolves to undefined.
+     */
+    warmUpSignIn(): Promise<firebase.User> {
+        if (!signingIn) {
+            signingIn = (async () => {
+                try {
+                    const auth = firebase.auth();
+                    return auth.currentUser || await auth.signInAnonymously();
+                } catch (error) {
+                    signingIn = null; // let a later page try again
+                    reportError(error, 'signIn');
+                    return undefined;
+                }
+            })();
+        }
+        return signingIn;
+    }
+
+    /** The signed-in user if sign-in finishes within maxWaitMs, and how long we waited. */
+    async userWithin(maxWaitMs: number): Promise<{ user: firebase.User; waitedMs: number }> {
+        const started = Date.now();
+        const user = await Promise.race([
+            this.warmUpSignIn(),
+            new Promise<firebase.User>(resolve => setTimeout(() => resolve(undefined), maxWaitMs)),
+        ]);
+        return { user: user || undefined, waitedMs: Date.now() - started };
+    }
+
+    async uidWithin(maxWaitMs: number): Promise<{ uid: string; waitedMs: number }> {
+        const { user, waitedMs } = await this.userWithin(maxWaitMs);
+        return { uid: user ? user.uid : undefined, waitedMs };
     }
 
     /** This browser's anonymous uid, signing in if needed; undefined if that fails. */
     async currentUid(): Promise<string> {
-        try {
-            const auth = firebase.auth();
-            const user = auth.currentUser || await auth.signInAnonymously();
-            return user ? user.uid : undefined;
-        } catch (error) {
-            reportError(error, 'currentUid');
-            return undefined;
-        }
+        const user = await this.warmUpSignIn();
+        return user ? user.uid : undefined;
     }
 
     async join(pin: string, nickname: string, uid: string) {
@@ -283,7 +322,7 @@ export class ApiService {
 
     async fork(pin: string) {
         pin = pin.toUpperCase();
-        const uid = await this.currentUid();
+        const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         return this.post<{ pid: string }>(`fork`, { pin, uid });
     }
 
@@ -318,7 +357,7 @@ export class ApiService {
     }
 
     async crewRematch(crew: string) {
-        const uid = await this.currentUid();
+        const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         return this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid });
     }
 
@@ -333,15 +372,20 @@ export class ApiService {
         } catch (e) { }
     }
 
+    /**
+     * Sign in for joining, waiting at most SIGN_IN_WAIT_MS; resolves to undefined
+     * if sign-in is slower or fails. The join is still counted when sign-in
+     * finishes later.
+     */
     async signInAnonymously(pin: string, nickname: string, via?: string) {
-        try {
-            const user = await firebase.auth().signInAnonymously();
-            this.post('onJoinGame', { uid: user.uid, pin, nickname, via });
-            return user;
-        } catch (error) {
-            console.log(error);
-            reportError(error, 'signInAnonymously', { pin });
-        }
+        const signIn = this.warmUpSignIn();
+        signIn.then(user => {
+            if (user) {
+                this.post('onJoinGame', { uid: user.uid, pin, nickname, via }).catch(() => { });
+            }
+        });
+        const { user } = await this.userWithin(SIGN_IN_WAIT_MS);
+        return user;
     }
 
     private post<T>(url: string, body: Object = {}): Promise<T> {
