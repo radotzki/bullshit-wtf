@@ -150,7 +150,21 @@ games (wins, then points) and a REMATCH button that opens one shared lobby for t
   next Friday 21:00 by default. It sends the date with the crew link as a WhatsApp text, a calendar
   file (shared into the chat on phones that can share files, downloaded elsewhere) and a Google
   Calendar link. Nothing is stored on the server; the browser remembers its own last pick.
-  Analytics: gtag `share` events with `content_type: crew-night`.
+  Analytics: gtag `share` events with `content_type: crew-night` (Universal Analytics records nothing,
+  so the count that matters is in BigQuery, below).
+
+### Game night sends in BigQuery
+
+Each game night send on a crew page calls the new `onShare` function, which adds a row to BigQuery
+`analytics.shares` with its method: `whatsapp`, `calendar-share` (CALENDAR INVITE through the phone's
+share sheet), `calendar-download` (the .ics downloaded) or `google-calendar`, plus the crew, its
+language and the browser's anonymous uid. A calendar share now counts once (it used to log a second
+`native` share event).
+
+- Deploy order: run `functions/bigquery/2026-11-shares.sql` once (creates the table; until then the
+  function logs an insert failure and nothing is counted), then functions (all 16), then hosting.
+  Rules are unchanged.
+- The same file holds the query for sends per method per day.
 
 ## Hanukkah pack and campaign tags
 

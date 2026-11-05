@@ -221,6 +221,7 @@ export class CrewComponent implements OnInit, OnDestroy {
         } catch (e) { }
         this.nightSent = true;
         this.shareService.track(how, 'crew-night');
+        this.apiService.logShare('crew-night', how, { crew: this.id, locale: this.locale });
     }
 
     get nightWhatsappUrl() {
@@ -257,7 +258,7 @@ export class CrewComponent implements OnInit, OnDestroy {
                 title: nightTitle(info),
                 text: `${nightText(this.night, info)}\n${this.crewUrl}`,
                 files: [file],
-            }, 'crew-night');
+            }, null);
             if (result === 'shared') {
                 this.nightPicked('calendar-share');
                 return;

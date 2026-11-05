@@ -59,6 +59,45 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
     });
 }
 
+// What a share was and how it went out. Only these land in BigQuery; anything else is dropped.
+//   crew-night  the crew page's NEXT GAME NIGHT section:
+//     whatsapp           tapped SEND THE DATE ON WHATSAPP
+//     calendar-share     CALENDAR INVITE, sent through the phone's share sheet
+//     calendar-download  CALENDAR INVITE, downloaded as a .ics file
+//     google-calendar    tapped "or add it to Google Calendar"
+export const SHARE_METHODS: { [contentType: string]: string[] } = {
+    'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar'],
+};
+
+export interface ShareRow {
+    content_type: string;
+    method: string;
+    crew_id: string | null;
+    locale: string | null;
+    uid: string | null;
+}
+
+/** A share row from a client's request body, or null when it is not one we count. */
+export function cleanShare(body: any): ShareRow | null {
+    if (!body || typeof body !== 'object') {
+        return null;
+    }
+    const contentType = String(body.content_type || '').toLowerCase();
+    const method = String(body.method || '').toLowerCase();
+    const methods = SHARE_METHODS[contentType];
+    if (!methods || methods.indexOf(method) < 0) {
+        return null;
+    }
+    const crew = typeof body.crew === 'string' && /^[a-z0-9]{1,32}$/i.test(body.crew) ? body.crew.toLowerCase() : null;
+    const locale = body.locale === 'he' || body.locale === 'en' ? body.locale : null;
+    const uid = typeof body.uid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(body.uid) ? body.uid : null;
+    return { content_type: contentType, method, crew_id: crew, locale, uid };
+}
+
+export async function onShare(row: ShareRow) {
+    return insert('shares', { ...row, time: new Date() });
+}
+
 // Host and start kind, the same on opened_games and closed_games.
 function origin(game: GameScheme) {
     return {

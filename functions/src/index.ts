@@ -150,6 +150,22 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
     });
 });
 
+// One game night send from a crew page (or another counted share): a row in BigQuery `shares`.
+// Always answers 200, so the page never waits on or fails with analytics.
+exports.onShare = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        const row = analytics.cleanShare(req.body);
+        if (row) {
+            try {
+                await analytics.onShare(row);
+            } catch (e) {
+                console.error('onShare analytics failed', e);
+            }
+        }
+        return res.status(200).send({ counted: !!row });
+    });
+});
+
 exports.tick = functions.database.ref('games/{pin}/tick').onWrite((change, event) => {
     const pin = event.params.pin;
     return tick(pin);

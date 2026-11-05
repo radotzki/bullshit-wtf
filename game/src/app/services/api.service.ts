@@ -298,6 +298,17 @@ export class ApiService {
         return this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid });
     }
 
+    /**
+     * Counts one share in BigQuery (game night sends from a crew page). Fire and forget:
+     * never throws, and the page does not wait on it.
+     */
+    async logShare(contentType: string, method: string, extra: { crew?: string; locale?: string } = {}) {
+        try {
+            const uid = await this.currentUid();
+            await this.post('onShare', { content_type: contentType, method, uid, ...extra });
+        } catch (e) { }
+    }
+
     async signInAnonymously(pin: string, nickname: string, via?: string) {
         try {
             const user = await firebase.auth().signInAnonymously();
