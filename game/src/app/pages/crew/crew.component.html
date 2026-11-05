@@ -1,7 +1,7 @@
 <div class="arcade-form crew-page">
     <div class="title-area">
         <h1 class="title" routerLink="/">Bullshit</h1>
-        <h3 class="sub-title" dir="auto">{{ crew ? crew.name : (notFound ? 'Crew not found' : '') }}</h3>
+        <h3 class="sub-title" dir="auto">{{ crew ? crew.name : (notFound ? t.notFoundTitle : '') }}</h3>
         <div class="separator">♦</div>
     </div>
 
@@ -9,22 +9,22 @@
         <div class="controls">
             <div *ngIf="!crew && !notFound" class="loader crew-loader"></div>
 
-            <div *ngIf="notFound" class="box crew-box">
-                <p>This crew link does not work. Check it, or start a new game and save your crew at the end.</p>
-                <a class="button is-primary is-fullwidth" routerLink="/create-game">CREATE GAME</a>
+            <div *ngIf="notFound" class="box crew-box" [attr.dir]="t.dir" [class.is-rtl]="t.dir === 'rtl'">
+                <p>{{ t.notFound }}</p>
+                <a class="button is-primary is-fullwidth" routerLink="/create-game">{{ t.createGame }}</a>
             </div>
 
-            <div *ngIf="crew" class="box crew-box">
+            <div *ngIf="crew" class="box crew-box" [attr.dir]="t.dir" [class.is-rtl]="t.dir === 'rtl'">
                 <p class="leader" dir="auto">{{ leader }}</p>
-                <p class="meta">{{ crew.gameCount === 1 ? '1 game' : crew.gameCount + ' games' }} played</p>
+                <p class="meta">{{ t.played(crew.gameCount) }}</p>
 
                 <table class="standings">
                     <thead>
                         <tr>
                             <th></th>
                             <th class="name"></th>
-                            <th title="Wins">Wins</th>
-                            <th title="Total points">Points</th>
+                            <th [title]="t.wins">{{ t.wins }}</th>
+                            <th [title]="t.points">{{ t.points }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,52 +38,52 @@
                 </table>
 
                 <button class="button is-primary is-medium is-fullwidth rematch" (click)="rematch()" [class.is-loading]="loading">
-                    {{ lobbyPin ? 'JOIN THE REMATCH' : 'REMATCH' }}
+                    {{ lobbyPin ? t.joinRematch : t.rematch }}
                 </button>
-                <p class="hint" *ngIf="lobbyPin">{{ lobbyCount === 1 ? '1 player' : lobbyCount + ' players' }} in the lobby, PIN {{ lobbyPin }}</p>
-                <p class="hint" *ngIf="!lobbyPin">Starts a new game for the crew. Send the link so everyone joins.</p>
+                <p class="hint" *ngIf="lobbyPin">{{ t.lobby(lobbyCount, lobbyPin) }}</p>
+                <p class="hint" *ngIf="!lobbyPin">{{ t.rematchHint }}</p>
 
                 <div class="notification is-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
 
                 <div class="send">
                     <button *ngIf="canShare" class="button is-fullwidth" (click)="share()">
                         <span class="icon"><i class="fa fa-share-alt"></i></span>
-                        <span> SEND TO THE CREW </span>
+                        <span> {{ t.sendToCrew }} </span>
                     </button>
                     <a class="button is-fullwidth whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
                         <span class="icon"><i class="fa fa-whatsapp"></i></span>
-                        <span> WHATSAPP </span>
+                        <span> {{ t.whatsapp }} </span>
                     </a>
                     <button *ngIf="!canShare" class="button is-fullwidth" (click)="share()">
                         <span class="icon"><i class="fa fa-link"></i></span>
-                        <span> COPY CREW LINK </span>
+                        <span> {{ t.copyLink }} </span>
                     </button>
-                    <p *ngIf="copied" class="copied"> Copied! Paste it in your group chat. </p>
+                    <p *ngIf="copied" class="copied"> {{ t.copied }} </p>
                 </div>
 
                 <div class="next-night">
-                    <h4 class="night-title">NEXT GAME NIGHT</h4>
-                    <p class="hint night-hint">Pick a day and time, then send it to the group with a calendar invite.</p>
+                    <h4 class="night-title">{{ t.nightTitle }}</h4>
+                    <p class="hint night-hint">{{ t.nightHint }}</p>
                     <div class="night-inputs">
-                        <input class="input" type="date" name="nightDate" [(ngModel)]="nightDate" (ngModelChange)="nightSent = false" aria-label="Day">
-                        <input class="input" type="time" name="nightTime" [(ngModel)]="nightTime" (ngModelChange)="nightSent = false" aria-label="Time" step="900">
+                        <input class="input" type="date" name="nightDate" [(ngModel)]="nightDate" (ngModelChange)="nightSent = false" [attr.aria-label]="t.day">
+                        <input class="input" type="time" name="nightTime" [(ngModel)]="nightTime" (ngModelChange)="nightSent = false" [attr.aria-label]="t.time" step="900">
                     </div>
                     <p class="night-when" dir="auto" *ngIf="nightReady">{{ nightWhen }}</p>
-                    <p class="night-when is-error" *ngIf="nightInPast">That time has passed. Pick a later one.</p>
+                    <p class="night-when is-error" *ngIf="nightInPast">{{ t.nightPast }}</p>
 
                     <a class="button is-fullwidth whatsapp night-whatsapp" [class.is-disabled]="!nightReady" [attr.href]="nightWhatsappUrl || null"
                         target="_blank" rel="noopener" (click)="nightWhatsapp()">
                         <span class="icon"><i class="fa fa-whatsapp"></i></span>
-                        <span> SEND THE DATE ON WHATSAPP </span>
+                        <span> {{ t.nightWhatsapp }} </span>
                     </a>
                     <button class="button is-fullwidth night-calendar" [disabled]="!nightReady" (click)="nightCalendar()">
                         <span class="icon"><i class="fa fa-calendar"></i></span>
-                        <span> CALENDAR INVITE </span>
+                        <span> {{ t.calendar }} </span>
                     </button>
                     <p class="night-google" *ngIf="nightReady">
-                        <a [href]="nightGoogleUrl" target="_blank" rel="noopener" (click)="nightGoogle()">or add it to Google Calendar</a>
+                        <a [href]="nightGoogleUrl" target="_blank" rel="noopener" (click)="nightGoogle()">{{ t.google }}</a>
                     </p>
-                    <p class="copied" *ngIf="nightSent"><i class="fa fa-check"></i> Game night: <span dir="auto">{{ nightWhen }}</span></p>
+                    <p class="copied" *ngIf="nightSent"><i class="fa fa-check"></i> {{ t.nightSent }} <span dir="auto">{{ nightWhen }}</span></p>
                 </div>
             </div>
         </div>

@@ -10,6 +10,7 @@ import {
     NightInfo, buildIcs, dateValue, defaultNight, googleCalendarUrl, icsFileName, nightLabel, nightText,
     nightTitle, parseNight, timeValue,
 } from './next-night';
+import { CrewStrings, crewStrings, localeFromPath } from './crew-strings';
 import { markHosted } from '../../services/join-source';
 import { Crew, CrewMember, GameState, crewStandings, crewLeaderLine } from './../../game-model';
 
@@ -37,6 +38,7 @@ export class CrewComponent implements OnInit, OnDestroy {
     nightTime: string;
     nightSent: boolean;
     private nightLocale: string;
+    private pathLocale = 'en';
     private crewSub: Subscription;
     private lobbySub: Subscription;
     private lobbyPlayersSub: Subscription;
@@ -52,6 +54,7 @@ export class CrewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.id = (this.activatedRoute.snapshot.params['id'] || '').toLowerCase();
+        this.pathLocale = localeFromPath(typeof window !== 'undefined' ? window.location.pathname : '');
         this.crewSub = this.apiService.getCrewObservable(this.id).subscribe(
             crew => this.onCrew(crew),
             err => { this.notFound = true; reportError(err, 'crew', { crew: this.id }); },
@@ -63,8 +66,17 @@ export class CrewComponent implements OnInit, OnDestroy {
         this.watchLobby(null);
     }
 
+    /** The crew's language once it has loaded; until then (or if it is not found), the link's. */
     get locale() {
-        return this.crew && this.crew.locale === 'he' ? 'he' : 'en';
+        if (this.crew) {
+            return this.crew.locale === 'he' ? 'he' : 'en';
+        }
+        return this.pathLocale;
+    }
+
+    /** The page's words, in the crew's language. */
+    get t(): CrewStrings {
+        return crewStrings(this.locale);
     }
 
     get myNickname() {
@@ -132,7 +144,7 @@ export class CrewComponent implements OnInit, OnDestroy {
             const prefix = this.locale === 'he' ? ['he'] : [];
             this.router.navigate(prefix.concat(['join-game', pin]), { queryParams: { via: 'crew' } });
         } catch (err) {
-            this.errorMsg = err && err.message;
+            this.errorMsg = this.t.rematchFailed || (err && err.message);
             reportError(err, 'crewRematch', { crew: this.id });
         }
 

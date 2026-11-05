@@ -22,7 +22,7 @@ const strings = {
     he: {
         inviteTitle: (name: string) => `${name}: משחק חוזר בבולשיט`,
         inviteText: (name: string, leader: string) =>
-            `משחק חוזר בבולשיט ל${name}! ${leader}. לחצו כדי לראות את הטבלה ולהצטרף:`,
+            `משחק חוזר בבולשיט של ${name}! ${leader}. לחצו כדי לראות את הטבלה ולהצטרף:`,
     },
 };
 

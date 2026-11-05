@@ -42,22 +42,23 @@
             font-size: .75em;
             color: #7a7a7a;
             text-transform: uppercase;
-            text-align: right;
+            text-align: end;
             padding: 2px 6px;
         }
 
         td {
             padding: 8px 6px;
             border-top: 1px solid #eee;
-            text-align: right;
+            text-align: end;
         }
 
         .rank {
             width: 2em;
-            text-align: left;
+            text-align: start;
             color: #7a7a7a;
         }
 
+        // Names carry dir="auto", so "start" would follow each name; align them with the page instead.
         .name {
             text-align: left;
             font-weight: 600;
@@ -182,5 +183,15 @@
             color: #7a7a7a;
             text-decoration: underline;
         }
+    }
+
+    .crew-box.is-rtl .standings .name {
+        text-align: right;
+    }
+
+    // Hebrew crews: Bulma's icon spacing assumes left to right, so mirror it inside buttons.
+    .crew-box.is-rtl .button .icon:first-child:not(:last-child) {
+        margin-left: .25em;
+        margin-right: calc(-.5em - 1px);
     }
 }
