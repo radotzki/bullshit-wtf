@@ -34,6 +34,19 @@ test('late on Friday it moves to next week', () => {
     assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 7, 12, 0))), '2026-11-13');
 });
 
+test('Hebrew crews default to Thursday at 21:00, English crews keep Friday', () => {
+    const wed = new Date(2026, 10, 4, 12, 0); // Wednesday 4 Nov 2026
+    assert.strictEqual(n.dateValue(n.defaultNight(wed, 'he')), '2026-11-05');
+    assert.strictEqual(n.timeValue(n.defaultNight(wed, 'he')), '21:00');
+    assert.strictEqual(n.defaultNight(wed, 'he').getDay(), 4);
+    assert.strictEqual(n.dateValue(n.defaultNight(wed, 'en')), '2026-11-06');
+    assert.strictEqual(n.dateValue(n.defaultNight(wed)), '2026-11-06');
+    // Late on Thursday it moves to next Thursday; on Friday it is six days away.
+    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 5, 20, 0), 'he')), '2026-11-12');
+    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 5, 18, 0), 'he')), '2026-11-05');
+    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 6, 12, 0), 'he')), '2026-11-12');
+});
+
 test('inputs round-trip and bad input is refused', () => {
     const d = n.parseNight('2026-11-13', '20:30');
     assert.strictEqual(d.getHours(), 20);
