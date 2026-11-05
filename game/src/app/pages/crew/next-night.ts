@@ -6,6 +6,7 @@
 
 export const NIGHT_MINUTES = 90;
 const DEFAULT_HOUR = 21;
+const THURSDAY = 4;
 const FRIDAY = 5;
 
 export interface NightInfo {
@@ -17,10 +18,16 @@ export interface NightInfo {
 
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 
-/** The next Friday at 21:00 local time that is at least two hours away. */
-export function defaultNight(now: Date): Date {
+/** The night a crew's week points to: in Israel the weekend starts Thursday night (Friday evening is family dinner). */
+export function defaultNightDay(locale: string) {
+    return locale === 'he' ? THURSDAY : FRIDAY;
+}
+
+/** The next Friday (Thursday for Hebrew crews) at 21:00 local time that is at least two hours away. */
+export function defaultNight(now: Date, locale?: string): Date {
+    const day = defaultNightDay(locale);
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), DEFAULT_HOUR, 0, 0, 0);
-    d.setDate(d.getDate() + ((FRIDAY - d.getDay() + 7) % 7));
+    d.setDate(d.getDate() + ((day - d.getDay() + 7) % 7));
     if (d.getTime() - now.getTime() < 2 * 3600 * 1000) {
         d.setDate(d.getDate() + 7);
     }

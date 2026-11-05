@@ -36,6 +36,7 @@ export class CrewComponent implements OnInit, OnDestroy {
     nightDate: string;
     nightTime: string;
     nightSent: boolean;
+    private nightLocale: string;
     private crewSub: Subscription;
     private lobbySub: Subscription;
     private lobbyPlayersSub: Subscription;
@@ -55,7 +56,6 @@ export class CrewComponent implements OnInit, OnDestroy {
             crew => this.onCrew(crew),
             err => { this.notFound = true; reportError(err, 'crew', { crew: this.id }); },
         );
-        this.loadNight();
     }
 
     ngOnDestroy() {
@@ -90,6 +90,12 @@ export class CrewComponent implements OnInit, OnDestroy {
         this.leader = crewLeaderLine(crew, crew.locale);
         this.crewService.remember(crew.id, crew.name);
         this.watchLobby(crew.rematch && crew.rematch.pin);
+        // The default night depends on the crew's language, so it is set once the crew is known,
+        // and not again on later updates, which would overwrite what the player picked.
+        if (this.nightLocale !== this.locale) {
+            this.nightLocale = this.locale;
+            this.loadNight();
+        }
     }
 
     /** Is a rematch lobby waiting? Then the button says so, and how many are in. */
@@ -177,7 +183,7 @@ export class CrewComponent implements OnInit, OnDestroy {
             const t = +this.storageService.getItem(this.nightKey);
             saved = t > Date.now() ? new Date(t) : undefined;
         } catch (e) { }
-        const d = saved || defaultNight(new Date());
+        const d = saved || defaultNight(new Date(), this.locale);
         this.nightDate = dateValue(d);
         this.nightTime = timeValue(d);
     }
