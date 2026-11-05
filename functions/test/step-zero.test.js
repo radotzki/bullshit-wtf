@@ -204,3 +204,38 @@ test('HTTP endpoints pass the uid and join source through, and drop bad uids', a
     await call('onJoinGame', { uid: 'u8', pin: created.body.pin, nickname: 'noa' }, {});
     assert.deepStrictEqual(take('users').map(r => [r.uid, r.via]), [['u7', 'qr'], ['u8', null]]);
 });
+
+test('a game night send lands in shares with its method, crew and language', async () => {
+    rows.length = 0;
+    for (const method of ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar']) {
+        const r = await call('onShare', { content_type: 'crew-night', method, crew: 'KvRue3', locale: 'he', uid: 'u1' });
+        assert.deepStrictEqual(r, { code: 200, body: { counted: true } });
+    }
+    const shares = take('shares');
+    assert.deepStrictEqual(shares.map(s => s.method), ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar']);
+    for (const s of shares) {
+        assert.strictEqual(s.content_type, 'crew-night');
+        assert.strictEqual(s.crew_id, 'kvrue3');
+        assert.strictEqual(s.locale, 'he');
+        assert.strictEqual(s.uid, 'u1');
+        assert.ok(s.time instanceof Date);
+    }
+});
+
+test('shares we do not count are dropped, and bad fields are cleared, without an error', async () => {
+    rows.length = 0;
+    for (const body of [
+        { content_type: 'crew-night', method: 'native' },
+        { content_type: 'crew-night', method: 'clipboard' },
+        { content_type: 'results', method: 'whatsapp' },
+        {},
+        null,
+    ]) {
+        const r = await call('onShare', body);
+        assert.deepStrictEqual(r, { code: 200, body: { counted: false } });
+    }
+    assert.strictEqual(take('shares').length, 0);
+    await call('onShare', { content_type: 'CREW-NIGHT', method: 'WhatsApp', crew: '<x>', locale: 'fr', uid: 'a b' });
+    assert.deepStrictEqual(Object.assign({}, take('shares')[0], { time: 0 }),
+        { content_type: 'crew-night', method: 'whatsapp', crew_id: null, locale: null, uid: null, time: 0 });
+});

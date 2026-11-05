@@ -90,8 +90,11 @@ export class ShareService {
         return !!(navigator as any).share;
     }
 
-    /** Opens the native share sheet when there is one, otherwise copies the text and link. */
-    async share(payload: SharePayload, contentType: string): Promise<ShareResult> {
+    /**
+     * Opens the native share sheet when there is one, otherwise copies the text and link.
+     * Pass a null contentType when the caller logs the share itself, so it is not counted twice.
+     */
+    async share(payload: SharePayload, contentType: string | null): Promise<ShareResult> {
         const nav = navigator as any;
         const data: any = { title: payload.title, text: payload.text };
 
@@ -160,7 +163,10 @@ export class ShareService {
         this.track('download', 'results');
     }
 
-    track(method: string, contentType: string) {
+    track(method: string, contentType: string | null) {
+        if (!contentType) {
+            return;
+        }
         try {
             gtag('event', 'share', { method, content_type: contentType });
         } catch (e) { }
