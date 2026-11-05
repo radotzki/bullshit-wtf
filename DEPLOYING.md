@@ -35,7 +35,8 @@ Every function carries its own copy of the shared code, and `phaseTimer`, `answe
 `onAnswerSelection` move the game on as well as `tick`. Deploying `tick` alone left the old house lies live.
 
 Host-only START on the server: the lobby's START calls the `startGame` function, which starts a game
-made with a host key only for the phone that brings that key (or the big screen). Games made by this
+made with a host key only for the phone that brings that key, big screen or not (the big screen only
+shows the lobby; it starts only games with no host key). Games made by this
 client carry `serverStart`, and for them the server ignores START ticks and the rules refuse writing
 `tick` in the lobby. Games made by an older client keep starting by tick. Release order: functions
 (startGame must exist before the site calls it), then rules, then the site.

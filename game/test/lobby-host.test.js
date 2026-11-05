@@ -54,9 +54,42 @@ test('Hebrew games get Hebrew text, right to left', () => {
     assert.strictEqual(t.rtl, true);
 });
 
-test('with a big screen, only the big screen starts', () => {
-    assert.strictEqual(view({ hasPresenter: true, isPresenter: true }).canStart, true);
-    const phone = view({ hasPresenter: true, myUid: 'uid-alice' });
+test('with a big screen, the host still starts a hosted game; the big screen waits for them', () => {
+    const big = view({ hasPresenter: true, isPresenter: true });
+    assert.strictEqual(big.canStart, false);
+    assert.strictEqual(big.wait, 'host');
+    assert.strictEqual(big.hostName, 'Alice');
+    assert.strictEqual(lobbyText(big, 3, 'en').message, 'Waiting for Alice to start the game');
+    const host = view({ hasPresenter: true, myUid: 'uid-alice' });
+    assert.strictEqual(host.canStart, true);
+    const guest = view({ hasPresenter: true, myUid: 'uid-ben' });
+    assert.strictEqual(guest.canStart, false);
+    assert.strictEqual(guest.wait, 'host');
+});
+
+test('a guest who opens the present page does not get START in a hosted game', () => {
+    const marked = [Object.assign({ pid: 'p1', host: true }, alice), Object.assign({ pid: 'p2' }, ben)];
+    // The guest's browser on the present page: no host key, not the host.
+    const fake = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, players: marked });
+    assert.strictEqual(fake.canStart, false);
+    assert.strictEqual(fake.wait, 'host');
+    // Before the host joins: wait for them, then the 90 s rule, as on phones.
+    const early = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, players: [ben], waitedMs: 1000 });
+    assert.strictEqual(early.canStart, false);
+    assert.strictEqual(early.wait, 'host-to-join');
+    const late = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, players: [ben], waitedMs: HOST_GRACE_MS });
+    assert.strictEqual(late.canStart, true);
+});
+
+test('a big screen opened in the browser that made the game holds its key and starts it', () => {
+    const big = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, holdsHostKey: true, players: [ben] });
+    assert.strictEqual(big.canStart, true);
+    assert.strictEqual(big.alone, false);
+});
+
+test('with a big screen and no known host, the big screen starts, as before', () => {
+    assert.strictEqual(view({ creator: null, hasPresenter: true, isPresenter: true }).canStart, true);
+    const phone = view({ creator: null, hasPresenter: true, myUid: 'uid-alice' });
     assert.strictEqual(phone.canStart, false);
     assert.strictEqual(phone.wait, 'big-screen');
 });

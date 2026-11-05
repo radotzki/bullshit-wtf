@@ -5,8 +5,9 @@ import { GamePlayer } from '../../game-model';
  *
  * Only one browser should start the game, so friends who are still joining
  * are not locked out by one impatient tap:
- * - With a big screen (presenter), only the big screen starts the game.
- * - Otherwise the browser that created (or replayed) the game starts it. The
+ * - The browser that created (or replayed) the game starts it, big screen or not:
+ *   the big screen only shows the lobby (the server refuses it too, see startVerdict
+ *   in functions/src/controllers/start.ts). The
  *   server stores that browser's anonymous uid as `creator`; each player row
  *   carries its uid, so everyone can see who the host is.
  * - The phone that created the game also sends a one-game host key, and the server
@@ -14,7 +15,10 @@ import { GamePlayer } from '../../game-model';
  *   the player who pressed it. That row wins over `creator`, so a host whose sign-in
  *   failed (no uid) is still the host. The host knows itself by its player id.
  * - If the host is unknown (an old game, or the database rules that make `creator`
- *   and `hasHost` readable are not deployed yet), everyone may start, as before.
+ *   and `hasHost` readable are not deployed yet), everyone may start, as before;
+ *   with a big screen, the big screen starts such a game.
+ * - A big screen opened in the browser that created the game holds its host key,
+ *   so it starts the game like the host's phone would.
  * - If the host has not joined the lobby after HOST_GRACE_MS, everyone may start,
  *   so a host who closed the tab cannot leave the group stuck.
  */
@@ -28,6 +32,8 @@ export interface LobbyPlayer extends GamePlayer {
 export interface LobbyHostInput {
     hasPresenter: boolean;
     isPresenter: boolean;
+    /** This browser holds the game's host key (it created or replayed the game). */
+    holdsHostKey?: boolean;
     creator: string | null;
     /** The server marks this game's host by host key (a player row with `host: true`, once it joins). */
     hasHost?: boolean;
@@ -53,25 +59,29 @@ export interface LobbyHostView {
 }
 
 export function lobbyHost(input: LobbyHostInput): LobbyHostView {
-    if (input.hasPresenter) {
-        return input.isPresenter
-            ? { canStart: true, wait: 'none', hostName: null, alone: false }
-            : { canStart: false, wait: 'big-screen', hostName: null, alone: false };
-    }
-
     const players = (input.players || []).filter(p => !!p);
     const marked = players.filter(p => p.host)[0];
+    const none: LobbyHostView = { canStart: true, wait: 'none', hostName: null, alone: false };
 
     if (!input.creator && !input.hasHost && !marked) {
-        return { canStart: true, wait: 'none', hostName: null, alone: false };
+        // No known host: the big screen starts, or anyone without one.
+        if (input.hasPresenter && !input.isPresenter) {
+            return { canStart: false, wait: 'big-screen', hostName: null, alone: false };
+        }
+        return none;
+    }
+
+    // A game with a host: only the host starts it, big screen or not.
+    if (input.isPresenter && input.holdsHostKey) {
+        return none;
     }
 
     // A marked host row wins; the creator's uid is for games made before host keys.
-    const isMe = marked
+    const isMe = !input.isPresenter && (marked
         ? !!input.myPid && marked.pid === input.myPid
-        : !!input.creator && !!input.myUid && input.myUid === input.creator;
+        : !!input.creator && !!input.myUid && input.myUid === input.creator);
     if (isMe) {
-        return { canStart: true, wait: 'none', hostName: null, alone: players.length === 1 };
+        return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1 };
     }
 
     const host = marked || (input.creator ? players.filter(p => p.uid === input.creator)[0] : null);
@@ -80,7 +90,7 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
     }
 
     if (input.waitedMs >= HOST_GRACE_MS) {
-        return { canStart: true, wait: 'none', hostName: null, alone: false };
+        return none;
     }
 
     return { canStart: false, wait: 'host-to-join', hostName: null, alone: false };

@@ -313,17 +313,17 @@ export class ApiService {
 
     /**
      * START in the lobby. The server checks that this phone may start the game: in a game with a
-     * host key, only the phone that brings that key (or the big screen) may.
+     * host key, only the phone that brings that key may, big screen or not.
      */
     startGame(pin: string) {
         pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin) || null;
+        return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
+    }
 
-        return this.gameHasPresenter(pin).then(hasPresenter => {
-            if (!hasPresenter || this.sessionService.presenter) {
-                const hostKey = hostKeyFor(pin) || null;
-                return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
-            }
-        });
+    /** This browser holds the host key for this game (it created or replayed it). */
+    holdsHostKey(pin: string): boolean {
+        return !!hostKeyFor(pin.toUpperCase());
     }
 
     /**

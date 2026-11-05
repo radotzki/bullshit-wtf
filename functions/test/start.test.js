@@ -1,4 +1,4 @@
-// Host-only START: only the phone with the game's host key (or the big screen) starts a hosted game.
+// Host-only START: only the phone with the game's host key starts a hosted game, big screen or not.
 // Runs the compiled functions (dist/) against an in-memory database and a fake
 // BigQuery, so it needs no Firebase project or credentials:
 //   npm run build && npm test
@@ -186,9 +186,38 @@ test('if the host never joins, anyone may start after the grace time, as the lob
     assert.strictEqual(startVerdict(lobby(now - HOST_GRACE_MS * 10, withHost), KEY, now), 'host');
 });
 
-test('with a big screen, the big screen starts (it holds no key)', () => {
-    const g = { hostKey: KEY, presenter: true, state: { id: GameStaging, timestamp: Date.now() }, players: {} };
-    assert.strictEqual(startVerdict(g, undefined, Date.now()), 'big-screen');
+test('a big screen does not start a hosted game: the presenter flag proves nothing', () => {
+    const now = Date.now();
+    const g = { hostKey: KEY, hasHost: true, presenter: true, state: { id: GameStaging, timestamp: now }, players: {} };
+    assert.strictEqual(startVerdict(g, undefined, now), 'not-host');
+    assert.strictEqual(startVerdict(g, OTHER, now), 'not-host');
+    assert.strictEqual(startVerdict(g, KEY, now), 'host', 'the host starts it, big screen or not');
+    // The 90 s rule still frees a group whose host never came, big screen or not.
+    assert.strictEqual(startVerdict(g, undefined, now + HOST_GRACE_MS), 'host-missing');
+});
+
+test('a guest who claims to be the big screen still cannot start a hosted game', async () => {
+    const { pin } = await hostedLobby();
+    db.games[pin].presenter = true;                      // anyone can write this, as the present page does
+    const none = await call('startGame', { pin });
+    assert.strictEqual(none.code, 403);
+    assert.strictEqual(none.body.code, 'NOT_HOST');
+    const wrong = await call('startGame', { pin, hostKey: OTHER });
+    assert.strictEqual(wrong.code, 403);
+    assert.strictEqual(db.games[pin].state.id, GameStaging);
+    // The host's phone starts it with the big screen in the room.
+    const host = await call('startGame', { pin, hostKey: KEY });
+    assert.strictEqual(host.code, 200);
+    assert.strictEqual(db.games[pin].state.id, RoundIntro);
+});
+
+test('a big screen still starts a game with no host key', async () => {
+    seedQuestions();
+    const pin = (await call('newGame', { locale: 'en', count: 5 })).body.pin;
+    await call('join', { pin, nickname: 'dana', uid: 'u1' });
+    db.games[pin].presenter = true;
+    assert.strictEqual((await call('startGame', { pin })).code, 200);
+    assert.strictEqual(db.games[pin].state.id, RoundIntro);
 });
 
 test('Replay with a host key: only the phone that pressed Replay starts the new game', async () => {

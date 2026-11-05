@@ -8,16 +8,17 @@ import { advance } from './tick';
  */
 export const HOST_GRACE_MS = 90 * 1000;
 
-export type StartVerdict = 'host' | 'open' | 'big-screen' | 'host-missing' | 'not-host';
+export type StartVerdict = 'host' | 'open' | 'host-missing' | 'not-host';
 
 /**
  * Who may start a game from the lobby. Only a game made with a host key (see hostKey in game-model)
  * is held to its host:
- * - the phone that brings the game's host key starts it;
- * - with a big screen, the big screen starts it, as the lobby shows (it holds no key);
+ * - the phone that brings the game's host key starts it, big screen or not. The big screen only
+ *   shows the lobby: any phone can open the present page or write `presenter`, so it proves nothing;
  * - if no player row is marked as the host 90 s after the lobby opened, anyone may start it,
  *   so a host who closed the tab cannot leave the group stuck;
- * - games made before host keys (or by an old client) keep the old rule: anyone may start them.
+ * - games with no host key (made before host keys, or by an old client) keep the old rule: anyone
+ *   may start them, and the lobby leaves that to the big screen if there is one.
  */
 export function startVerdict(game: GameScheme, hostKey: string | undefined, now: number): StartVerdict {
     if (!game.hostKey) {
@@ -25,9 +26,6 @@ export function startVerdict(game: GameScheme, hostKey: string | undefined, now:
     }
     if (hostKey && hostKey === game.hostKey) {
         return 'host';
-    }
-    if (game.presenter) {
-        return 'big-screen';
     }
     const players = game.players || {};
     const hostIn = Object.keys(players).some(k => players[k] && players[k].host);
