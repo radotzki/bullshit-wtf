@@ -21,9 +21,9 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ## Deploy (production)
 
 ```sh
-npm run prod:deploy-functions   # 12 functions (11 + phaseTimer), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 13 functions (11 + phaseTimer + onRevealDone), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
-npm run prod:deploy-rules       # needed: makes games/$pin/creator readable (host-only START)
+npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT)
 ```
 
 Deploy functions first, then the game: the new client reads the error `message` and
@@ -103,9 +103,18 @@ readable. Until the rules are deployed the read is refused and every phone shows
 as before, so the order of deploys does not matter, but deploy the rules for the change
 to take effect. If the host has not joined the lobby after 90 seconds, anyone may start.
 
+### Faster reveal
+
+The reveal keeps the question on screen and builds up one row per picked answer
+(1.6 s each on phones, 4.5 s with a big screen), then shows each player their result and
+a NEXT button. When every player has tapped NEXT, the new `onRevealDone` function ends the
+reveal early; it needs the new `revealDone` database rule. Without the rule the tap is
+refused and the reveal ends at its deadline, so the order of deploys does not matter.
+Round intro and score board now last 3 s instead of 5 s.
+
 ### Unchanged
 
-Question data, game rules, phase lengths, scoring, Google Analytics tag
+Question data, game rules, scoring, Google Analytics tag
 (Universal Analytics, which records nothing since 2023), hosting config apart from the
 build output.
 

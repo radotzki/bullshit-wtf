@@ -96,6 +96,7 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
                 answers,
                 answerSelections,
                 revealAnswers,
+                revealDone: null,
             };
 
         case GameState.RevealTheTruth:

@@ -230,6 +230,20 @@ export class ApiService {
         return this.get<RevealAnswer[]>(this.gamesRef.child(pin).child('revealAnswers'));
     }
 
+    /** This player has seen the reveal and wants to move on. When every player has, the server ends the reveal. */
+    revealDone(pin: string) {
+        pin = pin.toUpperCase();
+        const pid = this.sessionService.user.pid;
+        return this.gamesRef.child(pin).child('revealDone').child(pid).set(true);
+    }
+
+    /** How many players have tapped NEXT on the reveal so far. */
+    revealDoneCount(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<{ [pid: string]: boolean }>(this.gamesRef.child(pin).child('revealDone'))
+            .map(done => Object.keys(done || {}).length);
+    }
+
     playerScore(pin: string, pid: string) {
         pin = pin.toUpperCase();
         return this.observe<number>(this.gamesRef.child(pin).child('players').child(pid).child('score'));
