@@ -26,6 +26,10 @@ npm run prod:deploy-game        # hosting
 npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT)
 ```
 
+Always deploy all functions after a change to game logic (`--only functions`, not one function by name).
+Every function carries its own copy of the shared code, and `phaseTimer`, `answer`, `onRevealDone` and
+`onAnswerSelection` move the game on as well as `tick`. Deploying `tick` alone left the old house lies live.
+
 Deploy functions first, then the game: the new client reads the error `message` and
 `code` that the new functions send.
 
