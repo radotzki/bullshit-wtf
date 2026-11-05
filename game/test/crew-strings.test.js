@@ -48,7 +48,8 @@ test('Hebrew crews get every string in Hebrew, right to left', () => {
         assert.ok(!/[A-Za-z]{2,}/.test(s.replace('Google', '')), `${key} has no English: ${s}`);
     }
     assert.strictEqual(he.played(1), 'משחק אחד עד עכשיו');
-    assert.strictEqual(he.lobby(1, '4321'), 'שחקן אחד מחכה במשחק, קוד 4321');
+    assert.strictEqual(he.lobby(1, '4321'), 'שחקן אחד כבר בפנים, קוד 4321');
+    assert.strictEqual(he.lobby(3, '4321'), '3 שחקנים כבר בפנים, קוד 4321');
 });
 
 test('the template uses only strings, no English left in it', () => {
