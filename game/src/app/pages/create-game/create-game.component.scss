@@ -1,4 +1,9 @@
 .create-game {
+    // Bulma 0.9 gives .control a fixed 1rem font size; keep the larger form text.
+    .control {
+        font-size: inherit;
+    }
+
     .radio.vertical {
         display: block;
         margin-left: 0;

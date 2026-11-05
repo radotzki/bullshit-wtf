@@ -1,3 +1,4 @@
+import { reportError } from './../../sentry/sentry.module';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { Component } from '@angular/core';
@@ -30,6 +31,7 @@ export class CreateGameComponent {
             })
             .catch(err => {
                 this.loading = false;
+                reportError(err, 'createGame', { locale: this.locale, count: this.length });
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }

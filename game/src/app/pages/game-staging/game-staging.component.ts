@@ -1,3 +1,4 @@
+import { reportError } from './../../sentry/sentry.module';
 import { GamePlayers, GamePlayer, GameState } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import { Howl } from 'howler';
@@ -59,6 +60,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.apiService.tick(this.pin, GameState.RoundIntro)
             .catch(err => {
                 this.loading = false;
+                reportError(err, 'startGame', { pin: this.pin });
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });
     }
