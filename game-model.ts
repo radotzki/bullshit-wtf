@@ -272,7 +272,7 @@ export interface QuestionPack {
 export const questionPacks: { [id: string]: QuestionPack } = {
     hanukkah: {
         perGame: 3,
-        season: { from: '2026-11-26', to: '2026-12-13' },
+        season: { from: '2026-12-01', to: '2026-12-13' },
         label: { en: 'Hanukkah questions', he: 'שאלות חנוכה' },
     },
 };
