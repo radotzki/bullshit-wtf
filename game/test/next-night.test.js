@@ -61,7 +61,7 @@ test('WhatsApp text names the crew, the night and the leader', () => {
     assert.strictEqual(n.nightText(d, info),
         'Bullshit game night for Office Friday: Friday 13 November, 21:00. Alice leads 4 to 3. Scores and rematch here:');
     const t = n.nightText(d, he);
-    assert.ok(t.startsWith('ערב בולשיט להמשפחה: '), t);
+    assert.ok(t.startsWith('ערב בולשיט של המשפחה: '), t);
     assert.ok(t.includes('21:00') && t.includes('נובמבר') && t.includes('שישי'), t);
 });
 
