@@ -1,21 +1,19 @@
-import { GameScheme, GameState, GameStateInfo } from '../game-model';
+import { GameScheme, GameState, GameStateInfo, revealSchedule, revealTiming } from '../game-model';
 
 // How long each timed phase lasts. Must match game/src/app/services/game.service.ts.
 export const durations = {
-    [GameState.RoundIntro]: 5000,
+    [GameState.RoundIntro]: 4000,
     [GameState.ShowQuestion]: 25000,
     [GameState.ShowAnswers]: 20000,
-    [GameState.ScoreBoard]: 5000,
+    [GameState.ScoreBoard]: 4000,
 };
-
-// The reveal screen shows each picked answer (and the truth) for 7 seconds.
-export const revealStepDuration = 7000;
 
 // A client tick may arrive a little before the server's deadline because of clock skew.
 export const clockSkewTolerance = 1500;
 
-// The longest a single phase can last (9 reveal steps * 7s); used to guard the server timer.
-export const maxPhaseDuration = 9 * revealStepDuration + 5000;
+// The longest a single phase can last (a big-screen reveal of 9 rows: 8 players' lies and the truth),
+// plus a margin; used to guard the server timer.
+export const maxPhaseDuration = 9 * revealTiming.presenter.step + revealTiming.presenter.hold + 5000;
 
 /**
  * How long the phase `stateId` lasts, given the game as it will be in that phase.
@@ -23,8 +21,7 @@ export const maxPhaseDuration = 9 * revealStepDuration + 5000;
  */
 export function phaseDuration(stateId: number, game: Partial<GameScheme>): number | undefined {
     if (stateId === GameState.RevealTheTruth) {
-        const shown = (game.revealAnswers || []).filter(a => (a.selectors && a.selectors.length) || a.realAnswer).length;
-        return Math.max(shown, 1) * revealStepDuration;
+        return revealSchedule(game.revealAnswers, !!game.presenter).duration;
     }
 
     return durations[stateId];
@@ -73,4 +70,24 @@ export function tickAllowed(game: GameScheme, tick: number | string, now: number
 
     // Games started before deadlines existed: fall back to the old behaviour.
     return true;
+}
+
+/**
+ * Whether the players' NEXT taps end the reveal now: every player has tapped, and the last row has been shown
+ * (give or take clock skew). Returns how long to wait first (0 = now), or undefined if not.
+ */
+export function revealDoneWait(game: GameScheme, now: number): number | undefined {
+    if (!game || !game.state || game.state.id !== GameState.RevealTheTruth) {
+        return undefined;
+    }
+
+    const players = Object.keys(game.players || {});
+    const done = game.revealDone || {};
+
+    if (!players.length || !players.every(pid => done[pid] === true)) {
+        return undefined;
+    }
+
+    const allShownAt = game.state.timestamp + revealSchedule(game.revealAnswers, !!game.presenter).allShown;
+    return Math.max(0, allShownAt - clockSkewTolerance - now);
 }

@@ -7,6 +7,7 @@ import { onPhaseStart } from './controllers/phase-timer';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
 import { onAnswerSelection } from './controllers/on-answer-selection';
+import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
 import { validateGameName } from './controllers/validate-game-name';
@@ -130,7 +131,7 @@ exports.tick = functions.database.ref('games/{pin}/tick').onWrite((change, event
 });
 
 // Ends each timed phase on the server at its deadline, so a game keeps going when every phone sleeps.
-// The longest phase (the reveal) is about 63 seconds, hence the longer timeout.
+// The longest phase (a big-screen reveal with 8 players) is under 50 seconds, hence the longer timeout.
 exports.phaseTimer = functions
     .runWith({ timeoutSeconds: 120, memory: '128MB' })
     .database.ref('games/{pin}/state').onWrite((change, context) => {
@@ -141,6 +142,12 @@ exports.phaseTimer = functions
 exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite((change, event) => {
     const pin = event.params.pin;
     return onAnswerSelection(pin);
+});
+
+// Every player tapped NEXT on the reveal: move on without waiting for its deadline.
+exports.onRevealDone = functions.database.ref('games/{pin}/revealDone').onWrite((change, event) => {
+    const pin = event.params.pin;
+    return onRevealDone(pin);
 });
 
 exports.gameState = functions.database.ref('games/{pin}/state').onWrite((change, event) => {

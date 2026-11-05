@@ -5,10 +5,10 @@ import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 
 export const durations = {
-    [GameState.RoundIntro]: 5000,
+    [GameState.RoundIntro]: 4000,
     [GameState.ShowQuestion]: 25000,
     [GameState.ShowAnswers]: 20000,
-    [GameState.ScoreBoard]: 5000,
+    [GameState.ScoreBoard]: 4000,
 };
 
 // The server ends each phase at its deadline. Phones only step in if the server is late,

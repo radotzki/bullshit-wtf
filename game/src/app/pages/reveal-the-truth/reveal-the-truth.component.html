@@ -1,41 +1,67 @@
-<section class="game-container revael-the-truth">
+<section class="game-container revael-the-truth" [class.is-presenter]="presenter">
     <app-game-header></app-game-header>
 
     <div class="game-main">
-        <div *ngIf="!displayAnswers" class="screen-center">
+        <div *ngIf="!rows" class="screen-center">
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="displayAnswers" class="scene">
-            <div class="creators" [class.hidden]="!showCreators">
-                <span *ngIf="!displayAnswers[displayIndex].realAnswer && !displayAnswers[displayIndex].houseLie">
-                    <div class="creator" *ngFor="let creator of displayAnswers[displayIndex].displayCreators">
-                        <img [src]="'/assets/' + creator.picture">
-                        <span *ngIf="presenter || displayAnswers[displayIndex].displayCreators.length < 4"> {{ creator.nickname }} </span>
+        <div *ngIf="rows" class="reveal">
+            <p class="question" [class.rtl]="rtl" *ngIf="question"> {{question | bsQuestion}} </p>
+
+            <div class="rows">
+                <ng-container *ngFor="let row of rows; let i = index">
+                    <div *ngIf="i < visibleRows" class="row box" [class.truth]="row.realAnswer && i < writersShown"
+                        [class.house]="row.houseLie && i < writersShown">
+                        <p class="text" [class.rtl]="rtl"> {{ row.text | uppercase }} </p>
+
+                        <div class="who">
+                            <div class="pickers">
+                                <span class="label" *ngIf="row.pickers.length">picked by</span>
+                                <span class="label" *ngIf="!row.pickers.length">nobody found it</span>
+                                <span class="player" *ngFor="let p of row.pickers">
+                                    <img [src]="'/assets/' + p.picture"> {{ p.nickname }}
+                                </span>
+                            </div>
+
+                            <div class="writer" [class.shown]="i < writersShown">
+                                <ng-container *ngIf="row.realAnswer">
+                                    <span class="tag-truth">THE TRUTH</span>
+                                    <span class="points" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                </ng-container>
+                                <ng-container *ngIf="row.houseLie">
+                                    <span class="tag-house">Home Grown Bullshit</span>
+                                    <span class="points negative" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                </ng-container>
+                                <ng-container *ngIf="!row.realAnswer && !row.houseLie">
+                                    <span class="label">bullshit by</span>
+                                    <span class="player" *ngFor="let c of row.creators">
+                                        <img [src]="'/assets/' + c.picture"> {{ c.nickname }}
+                                    </span>
+                                    <span class="points" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                </ng-container>
+                            </div>
+                        </div>
                     </div>
-                </span>
-                <div class="the-truth" *ngIf="displayAnswers[displayIndex].realAnswer">
-                    <span> THE TRUTH </span>
-                </div>
-                <div class="decoy" *ngIf="displayAnswers[displayIndex].houseLie">
-                    <span> Home Grown Bullshit </span>
-                </div>
-                <p *ngIf="!displayAnswers[displayIndex].realAnswer && !displayAnswers[displayIndex].houseLie && displayAnswers[displayIndex].points" class="points-top"> {{ displayAnswers[displayIndex].points | bsPoints }} </p>
+                </ng-container>
             </div>
 
-            <p class="control answer">
-                <button type="submit" class="button is-success is-fullwidth" [class.rtl]="rtl">
-                    {{displayAnswers[displayIndex].text | uppercase}}
-                </button>
-            </p>
+            <div *ngIf="allShown" class="after">
+                <p class="unpicked" *ngIf="unpicked.length">
+                    Nobody fell for:
+                    <span *ngFor="let u of unpicked; let last = last">
+                        <span [class.rtl]="rtl">{{ u.text | uppercase }}</span>
+                        <span *ngIf="u.creators.length">({{ u.creators[0].nickname }})</span><span *ngIf="!last">, </span>
+                    </span>
+                </p>
 
-            <div class="selectors">
-                <div class="selector" *ngFor="let selector of displayAnswers[displayIndex].displaySelectors">
-                    <img [src]="'/assets/' + selector.picture">
-                    <span *ngIf="presenter || displayAnswers[displayIndex].displaySelectors.length < 4"> {{ selector.nickname }} </span>
+                <div class="my-result" *ngIf="myResult.length">
+                    <p *ngFor="let line of myResult"> {{ line }} </p>
                 </div>
-                <p *ngIf="showCreators && (displayAnswers[displayIndex].realAnswer || displayAnswers[displayIndex].houseLie) && displayAnswers[displayIndex].points" class="points-bottom" [class.negative]="displayAnswers[displayIndex].houseLie">
-                    {{ displayAnswers[displayIndex].points | bsPoints }}
+
+                <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">NEXT</button>
+                <p *ngIf="!presenter && tapped && waitingFor" class="waiting">
+                    Waiting for {{ waitingFor }} {{ waitingFor === 1 ? 'friend' : 'friends' }}
                 </p>
             </div>
         </div>

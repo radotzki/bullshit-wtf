@@ -5,8 +5,17 @@ import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { GameState, GamePlayer, RevealAnswer } from '../../game-model';
+import { GamePlayer, RevealAnswer, revealSchedule } from '../../game-model';
 
+/**
+ * The reveal: the question stays on top, and the answers somebody picked appear one row at a time,
+ * the truth last. Each row shows who picked it, then who wrote it. Answers nobody picked get no row of
+ * their own; they are listed together at the end. Then each player sees their own result and can tap NEXT;
+ * once everyone has, the server moves on without waiting for the deadline.
+ *
+ * Every phone works out what to show from the server's phase start time, so all screens stay in step
+ * even if one loads late.
+ */
 @Component({
     selector: 'app-reveal-the-truth',
     templateUrl: './reveal-the-truth.component.html',
@@ -15,12 +24,29 @@ import { GameState, GamePlayer, RevealAnswer } from '../../game-model';
 export class RevealTheTruthComponent implements OnInit, OnDestroy {
     pin: string;
     presenter: boolean;
-    displayAnswers: DisplayItem[];
-    displayIndex: number;
-    displayInterval;
     rtl: boolean;
-    showCreators: boolean;
-    sound: Howl;
+    question: string;
+
+    rows: Row[];
+    unpicked: Row[] = [];
+    myResult: string[] = [];
+
+    visibleRows = 0;
+    writersShown = 0;
+    allShown = false;
+
+    playersCount = 0;
+    doneCount = 0;
+    tapped = false;
+
+    private step: number;
+    private allShownAt: number;
+    private startedAt: number;       // server time the reveal began
+    private clockOffset = 0;         // server time minus this phone's time
+    private ticker;
+    private soundsPlayed = 0;
+    private doneSub: Subscription;
+    private sound: Howl;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -34,68 +60,141 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
         this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
-        this.createDisplayAnswers().then(displayArray => {
-            this.displayAnswers = displayArray;
-            this.show();
-        });
+        this.apiService.getQuestion(this.pin).then(q => this.question = q);
+        this.load();
     }
 
     ngOnDestroy() {
         this.stopMusic();
-        if (this.displayInterval) {
-            clearInterval(this.displayInterval);
+        clearInterval(this.ticker);
+
+        if (this.doneSub) {
+            this.doneSub.unsubscribe();
         }
     }
 
-    show() {
-        this.displayIndex = 0;
-        this.showCreators = false;
-        setTimeout(this.revealCreators.bind(this), 3000);
-
-        this.displayInterval = setInterval(() => {
-            if (this.displayIndex < this.displayAnswers.length - 1) {
-                this.showCreators = false;
-                setTimeout(this.revealCreators.bind(this), 3000);
-                this.displayIndex += 1;
-            }
-            // After the last answer the server moves everyone to the score board.
-        }, 7000);
+    next() {
+        this.tapped = true;
+        // If this fails (old database rules, network), the reveal still ends at its deadline.
+        this.apiService.revealDone(this.pin).catch(() => undefined);
     }
 
-    async createDisplayAnswers() {
-        const revealAnswers = await this.apiService.getRevealAnswers(this.pin);
-        const players = await this.apiService.getPlayers(this.pin);
+    get waitingFor() {
+        return Math.max(this.playersCount - this.doneCount, 0);
+    }
+
+    private async load() {
+        const [revealAnswers, players, info, hasPresenter] = await Promise.all([
+            this.apiService.getRevealAnswers(this.pin),
+            this.apiService.getPlayers(this.pin),
+            this.apiService.getGameStateInfo(this.pin),
+            this.apiService.gameHasPresenter(this.pin),
+        ]);
+
         const playersArray = Object.keys(players || {}).map(k => Object.assign({ pid: k }, players[k]));
-        const displayItems: DisplayItem[] = [];
+        const all = (revealAnswers || []).map(a => this.toRow(a, playersArray));
 
-        revealAnswers
-            .filter(a => a.selectors || a.realAnswer)
-            .forEach(answer => {
-                const displaySelectors = answer.selectors ? answer.selectors.map(s => this.playerObject(playersArray, s)) : [];
-                const displayCreators = answer.creators ? answer.creators.filter(c => c).map(c => this.playerObject(playersArray, c)) : [];
-                displayItems.push(Object.assign(answer, { displaySelectors, displayCreators }));
-            });
+        // Picked lies first, the ones that fooled fewest people first, so the big ones come last; the truth always last.
+        const picked = all.filter(r => r.pickers.length && !r.realAnswer)
+            .sort((a, b) => a.pickers.length - b.pickers.length || (a.text > b.text ? 1 : -1));
+        const truth = all.filter(r => r.realAnswer);
+        this.rows = picked.concat(truth);
+        this.unpicked = all.filter(r => !r.pickers.length && !r.realAnswer && !r.houseLie);
+        this.playersCount = playersArray.length;
 
-        return displayItems;
+        if (!this.presenter && this.sessionService.user) {
+            this.myResult = this.resultFor(this.sessionService.user.pid, all);
+        }
+
+        const schedule = revealSchedule(revealAnswers, !!hasPresenter);
+        this.step = schedule.step;
+        this.allShownAt = schedule.allShown;
+        this.clockOffset = info.now - Date.now();
+        this.startedAt = info.state && info.state.timestamp || info.now;
+
+        this.doneSub = this.apiService.revealDoneCount(this.pin).subscribe(count => this.doneCount = count);
+        this.update();
+        this.ticker = setInterval(() => this.update(), 100);
     }
 
-    private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string) {
+    private update() {
+        const elapsed = Date.now() + this.clockOffset - this.startedAt;
+        const half = this.step / 2;
+
+        this.visibleRows = Math.min(this.rows.length, Math.floor(elapsed / this.step) + 1);
+        this.writersShown = Math.min(this.rows.length, Math.floor((elapsed + half) / this.step));
+        this.allShown = elapsed >= this.allShownAt;
+
+        // On the big screen, a sound for each writer as it is revealed.
+        if (this.writersShown > this.soundsPlayed) {
+            this.soundsPlayed = this.writersShown;
+            this.playMusic([`/assets/sounds/${this.getSound(this.rows[this.writersShown - 1])}.mp3`]);
+        }
+
+        if (this.allShown) {
+            clearInterval(this.ticker);
+        }
+    }
+
+    private toRow(answer: RevealAnswer, playersArray: (GamePlayer & { pid: string })[]): Row {
         return {
-            nickname: playersArray.find(p => p.pid === pid).nickname,
-            picture: `avatar${playersArray.findIndex(p => p.pid === pid)}.png`,
+            text: answer.text,
+            realAnswer: !!answer.realAnswer,
+            houseLie: !!answer.houseLie,
+            points: answer.points || 0,
+            pickerIds: answer.selectors || [],
+            creatorIds: (answer.creators || []).filter(c => c),
+            pickers: (answer.selectors || []).map(pid => this.playerObject(playersArray, pid)).filter(p => p),
+            creators: (answer.creators || []).filter(c => c).map(pid => this.playerObject(playersArray, pid)).filter(p => p),
         };
     }
 
-    private revealCreators() {
-        const sound = this.getSound(this.displayAnswers[this.displayIndex]);
-        this.showCreators = true;
-        this.playMusic([`/assets/sounds/${sound}.mp3`]);
+    /** One or two short lines on how this player did this question. */
+    private resultFor(pid: string, rows: Row[]): string[] {
+        const lines: string[] = [];
+        const pickedRow = rows.find(r => r.pickerIds.indexOf(pid) !== -1);
+        const myLie = rows.find(r => r.creatorIds.indexOf(pid) !== -1);
+
+        if (pickedRow && pickedRow.realAnswer) {
+            lines.push(`You found the truth! ${this.signed(pickedRow.points)}`);
+        } else if (pickedRow && pickedRow.houseLie) {
+            lines.push(`You fell for our bullshit. ${this.signed(pickedRow.points)}`);
+        } else if (pickedRow) {
+            lines.push(`You fell for ${this.names(pickedRow.creators)}'s bullshit.`);
+        } else {
+            lines.push(`You didn't pick an answer.`);
+        }
+
+        if (myLie && myLie.pickers.length) {
+            lines.push(`You fooled ${this.names(myLie.pickers)}! ${this.signed(myLie.points)}`);
+        } else if (myLie) {
+            lines.push(`Nobody fell for your answer.`);
+        }
+
+        return lines;
     }
 
-    private getSound(item: DisplayItem) {
-        if (item.realAnswer) {
+    private names(players: Player[]) {
+        const n = players.map(p => p.nickname);
+        return n.length <= 1 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;
+    }
+
+    private signed(points: number) {
+        return points > 0 ? `+${points}` : `${points}`;
+    }
+
+    private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string): Player {
+        const index = playersArray.findIndex(p => p.pid === pid);
+        return index === -1 ? undefined : {
+            nickname: playersArray[index].nickname,
+            picture: `avatar${index}.png`,
+        };
+    }
+
+    private getSound(row: Row) {
+        if (row.realAnswer) {
             return 'the-truth';
-        } else if (item.houseLie) {
+        } else if (row.houseLie) {
             return `house-lie-${Math.round(Math.random())}`;
         } else {
             return `player-lie-${Math.round(Math.random())}`;
@@ -114,10 +213,20 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             this.sound.stop();
         }
     }
-
 }
 
-interface DisplayItem extends RevealAnswer {
-    displaySelectors: { nickname: string, picture: string }[];
-    displayCreators: { nickname?: string, picture?: string }[];
+interface Player {
+    nickname: string;
+    picture: string;
+}
+
+interface Row {
+    text: string;
+    realAnswer: boolean;
+    houseLie: boolean;
+    points: number;
+    pickerIds: string[];
+    creatorIds: string[];
+    pickers: Player[];
+    creators: Player[];
 }

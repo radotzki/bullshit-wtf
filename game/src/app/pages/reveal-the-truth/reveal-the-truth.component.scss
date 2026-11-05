@@ -1,86 +1,162 @@
 .revael-the-truth {
-    .scene {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+    .game-main {
+        padding: 12px 16px;
+        overflow-y: auto;
     }
 
-    .answer {
-        margin: 20px auto;
+    .reveal {
         max-width: 650px;
-        width: 100%;
+        margin: 0 auto;
     }
 
-    .answer .button {
-        height: 100%;
-        white-space: normal;
+    .question {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        opacity: 0.9;
     }
 
-    .selectors,
-    .creators {
-        position: relative;
+    .row {
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        animation: row-in 0.25s ease-out;
+        border: 2px solid transparent;
+    }
+
+    .row.truth {
+        border-color: hsl(141, 71%, 48%);
+    }
+
+    .row.house {
+        border-color: hsl(348, 100%, 61%);
+    }
+
+    .text {
+        font-size: 1.25rem;
+        line-height: 1.2;
+        margin-bottom: 6px;
+    }
+
+    .who {
         display: flex;
-        justify-content: center;
         flex-wrap: wrap;
-        height: calc(3rem + 1rem + 1rem);
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
     }
 
-    .creators.hidden {
-        visibility: hidden;
-    }
-
-    .selector,
-    .creator {
+    .pickers,
+    .writer {
         display: flex;
-        flex-direction: column;
-        justify-content: center;
+        flex-wrap: wrap;
         align-items: center;
     }
 
-    .selector img,
-    .creator img {
-        height: 3rem;
-        width: 3rem;
+    .writer {
+        visibility: hidden;
     }
 
-    .selector:not(:last-child),
-    .creator:not(:last-child) {
-        margin-right: 15px;
+    .writer.shown {
+        visibility: visible;
+        animation: pop 0.3s ease-out;
     }
 
-    .points-bottom,
-    .points-top {
-        position: absolute;
+    .label {
+        opacity: 0.7;
+        margin-right: 6px;
+    }
+
+    .player {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 8px;
+    }
+
+    .player img {
+        height: 1.6rem;
+        width: 1.6rem;
+        margin-right: 3px;
+    }
+
+    .points {
         color: hsl(141, 71%, 48%);
-        font-size: 1.5rem;
-        left: 0;
-        right: 0;
-        margin: 0 auto;
-        width: 4rem;
+        font-size: 1.1rem;
+        margin-left: 4px;
     }
 
-    .points-top {
-        top: -2.5rem;
-    }
-
-    .points-bottom {
-        bottom: -2.5rem;
-    }
-
-    .points-bottom.negative {
+    .points.negative {
         color: hsl(348, 100%, 61%);
     }
 
-    .the-truth {
-        font-size: 2rem;
+    .tag-truth {
+        color: hsl(141, 71%, 48%);
+        font-size: 1.1rem;
     }
 
-    .decoy {
-        font-size: 2rem;
+    .tag-house {
+        color: hsl(348, 100%, 61%);
+        font-size: 1.1rem;
+    }
+
+    .after {
+        animation: row-in 0.25s ease-out;
+    }
+
+    .unpicked {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 10px;
+    }
+
+    .my-result {
+        font-size: 1.15rem;
+        margin-bottom: 10px;
+    }
+
+    .waiting {
+        text-align: center;
+    }
+
+    // Big screen: larger text, for a room to read together.
+    &.is-presenter {
+        .question {
+            font-size: 1.6rem;
+        }
+
+        .text {
+            font-size: 2rem;
+        }
+
+        .who {
+            font-size: 1.3rem;
+        }
+
+        .player img {
+            height: 2.5rem;
+            width: 2.5rem;
+        }
+    }
+}
+
+@keyframes row-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes pop {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
     }
 }
