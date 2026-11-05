@@ -11,6 +11,7 @@ import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
 import { validateGameName } from './controllers/validate-game-name';
+import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
 
 // Error bodies always carry a readable message and a code, so the client
@@ -59,6 +60,30 @@ exports.fork = functions.https.onRequest((req, res) => {
         try {
             await fork(pin, uid);
             return res.status(200).send({});
+        } catch (e) {
+            return res.status(400).send(errorBody(e));
+        }
+    });
+});
+
+// Save the players of a finished game as a crew.
+exports.createCrew = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid));
+            return res.status(200).send(crew);
+        } catch (e) {
+            return res.status(400).send(errorBody(e));
+        }
+    });
+});
+
+// One tap on a crew page: a new game for the crew (or the rematch lobby already waiting).
+exports.crewRematch = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            const result = await crewRematch(req.body.crew, cleanUid(req.body.uid));
+            return res.status(200).send(result);
         } catch (e) {
             return res.status(400).send(errorBody(e));
         }

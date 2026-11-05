@@ -4,7 +4,8 @@
         <div class="title-area">
             <h1 class="title" routerLink="/">Bullshit</h1>
             <h3 *ngIf="!nicknameState" class="sub-title">Enter a game PIN</h3>
-            <h3 *ngIf="nicknameState" class="sub-title">Enter a nickname</h3>
+            <h3 *ngIf="nicknameState && !crewName" class="sub-title">Enter a nickname</h3>
+            <h3 *ngIf="nicknameState && crewName" class="sub-title" dir="auto">{{ crewName }} rematch: who are you?</h3>
             <div class="separator">♦</div>
         </div>
 
@@ -22,6 +23,11 @@
                         <input class="input is-large pin-input" type="text" placeholder="Nickname"
                             [(ngModel)]="nickname" name="nickname" appAutofocus maxlength="9">
                     </p>
+                </div>
+
+                <div class="field crew-nicknames" *ngIf="nicknameState && crewNicknames.length">
+                    <button *ngFor="let n of crewNicknames" type="button" class="button is-small is-rounded"
+                        [class.is-primary]="nickname === n" (click)="pickNickname(n)" dir="auto">{{ n }}</button>
                 </div>
 
                 <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

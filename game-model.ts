@@ -39,9 +39,11 @@ export interface GameScheme {
     parent?: string;         // PIN of the finished game this one was replayed from
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.
     revealDone?: { [pid: string]: boolean };
+    // The saved crew this game counts for (set by a crew rematch, carried by Replay).
+    crew?: string;
 }
 
-export type GameOrigin = 'create' | 'replay';
+export type GameOrigin = 'create' | 'replay' | 'crew';
 
 /**
  * The reveal screen shows, one row at a time, each answer somebody picked, then the truth last.
@@ -114,4 +116,137 @@ export interface Question {
     fakeAnswers: string[];
     questionText: string;
     citation: string;
+}
+
+/**
+ * A crew: a group that saved itself after a game, with standings across games.
+ * Stored at crews/{id}, readable by anyone who has the id, written by functions only.
+ * Members are nickname slots, keyed by crewMemberKey(nickname): no accounts.
+ */
+export interface Crew {
+    id: string;
+    name: string;
+    locale: string;
+    totalQ: number;
+    createdAt: number;
+    creator?: string;
+    members: { [key: string]: CrewMember };
+    // Every finished game that was offered to the crew, counted or not (keeps updates idempotent).
+    games?: { [pin: string]: CrewGameRecord };
+    gameCount: number;
+    lastPlayed?: number;
+    // The latest crew rematch lobby, so everyone who taps Rematch lands in the same game.
+    rematch?: { pin: string; time: number };
+}
+
+export interface CrewMember {
+    nickname: string;
+    games: number;
+    wins: number;
+    points: number;
+    best: number;
+    // Browsers that played as this member: used to avoid repeat questions in a crew rematch.
+    uids?: { [uid: string]: boolean };
+}
+
+export interface CrewGameRecord {
+    time: number;
+    players: number;
+    counted: boolean;
+    winners?: string[];
+}
+
+export interface CrewGamePlayer {
+    nickname: string;
+    score: number;
+    uid?: string;
+}
+
+/** A Realtime Database key for a nickname: case and spacing do not matter. */
+export function crewMemberKey(nickname: string): string {
+    const key = String(nickname || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.#$\[\]\/]/g, '_');
+    return key || '_';
+}
+
+/**
+ * Adds a finished game to the crew's standings, and returns the crew.
+ * A game counts only when at least two played and at least half of the crew was in it,
+ * so a solo game cannot farm wins. Players of a counted game who are new to the crew join it.
+ * Adding the same game twice changes nothing.
+ */
+export function applyCrewGame(crew: Crew, pin: string, players: CrewGamePlayer[], time: number): Crew {
+    crew.games = crew.games || {};
+    crew.members = crew.members || {};
+    crew.gameCount = crew.gameCount || 0;
+
+    if (crew.games[pin]) {
+        return crew;
+    }
+
+    const memberCount = Object.keys(crew.members).length;
+    const matched = players.filter(p => !!crew.members[crewMemberKey(p.nickname)]).length;
+    const counted = players.length >= 2 && matched >= Math.ceil(memberCount / 2);
+    const record: CrewGameRecord = { time, players: players.length, counted };
+
+    if (counted) {
+        const top = Math.max.apply(null, players.map(p => p.score || 0));
+        const winners = top > 0 ? players.filter(p => (p.score || 0) === top).map(p => crewMemberKey(p.nickname)) : [];
+        record.winners = winners;
+
+        players.forEach(p => {
+            const key = crewMemberKey(p.nickname);
+            const m: CrewMember = crew.members[key] || { nickname: String(p.nickname || '').trim(), games: 0, wins: 0, points: 0, best: 0 };
+            m.nickname = String(p.nickname || '').trim() || m.nickname;
+            m.games = (m.games || 0) + 1;
+            m.points = (m.points || 0) + (p.score || 0);
+            m.best = Math.max(m.best || 0, p.score || 0);
+            m.wins = (m.wins || 0) + (winners.indexOf(key) >= 0 ? 1 : 0);
+            if (p.uid) {
+                m.uids = m.uids || {};
+                m.uids[p.uid] = true;
+            }
+            crew.members[key] = m;
+        });
+
+        crew.gameCount += 1;
+        crew.lastPlayed = time;
+    }
+
+    crew.games[pin] = record;
+    return crew;
+}
+
+/** Members in standings order: most wins, then most points, then fewest games. */
+export function crewStandings(crew: Crew): CrewMember[] {
+    const members = crew && crew.members ? Object.keys(crew.members).map(k => crew.members[k]) : [];
+    return members.sort((a, b) =>
+        (b.wins || 0) - (a.wins || 0) || (b.points || 0) - (a.points || 0) || (a.games || 0) - (b.games || 0));
+}
+
+/** One line for the top of the crew page, like "Dana leads 4 to 3". */
+export function crewLeaderLine(crew: Crew, locale: string): string {
+    const he = locale === 'he';
+    const s = crewStandings(crew);
+    const games = crew ? crew.gameCount || 0 : 0;
+
+    if (!games || !s.length || !(s[0].wins > 0)) {
+        return he ? 'עוד אין מנצחים. מי לוקח את הראשון?' : 'No winner yet. Who takes the first one?';
+    }
+
+    const first = s[0];
+    const second = s[1];
+
+    if (second && second.wins === first.wins) {
+        return he
+            ? `תיקו ${first.wins}–${second.wins} בין ${first.nickname} ל־${second.nickname}`
+            : `${first.nickname} and ${second.nickname} are tied ${first.wins} to ${second.wins}`;
+    }
+
+    if (!second) {
+        return he ? `${first.nickname} מוביל/ה עם ${first.wins}` : `${first.nickname} leads with ${first.wins}`;
+    }
+
+    return he
+        ? `${first.nickname} מוביל/ה ${first.wins}–${second.wins}`
+        : `${first.nickname} leads ${first.wins} to ${second.wins}`;
 }

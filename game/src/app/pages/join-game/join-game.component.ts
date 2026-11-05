@@ -5,6 +5,8 @@ import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit } from '@angular/core';
 import { takeJoinSource } from '../../services/join-source';
+import { CrewService } from '../../services/crew.service';
+import { crewStandings } from '../../game-model';
 
 @Component({
     selector: 'app-join-game',
@@ -18,12 +20,17 @@ export class JoinGameComponent implements OnInit {
     errorMsg: string;
     nicknameState: boolean;
     pinInUrl: boolean;
+    // A crew game: the crew's nicknames not yet taken in this game, one tap to pick yours.
+    crewId: string;
+    crewName: string;
+    crewNicknames: string[] = [];
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private apiService: ApiService,
         private sessionService: SessionService,
         private router: Router,
+        private crewService: CrewService,
     ) { }
 
     ngOnInit() {
@@ -32,7 +39,39 @@ export class JoinGameComponent implements OnInit {
         if (this.pin) {
             this.pinInUrl = true;
             this.nicknameState = true;
+            this.loadCrew();
         }
+    }
+
+    async loadCrew() {
+        try {
+            const crewId = await this.apiService.getGameCrew(this.pin);
+            if (!crewId) {
+                return;
+            }
+            const [crew, players] = await Promise.all([this.apiService.getCrew(crewId), this.apiService.getPlayers(this.pin)]);
+            if (!crew) {
+                return;
+            }
+            const taken = Object.keys(players || {}).map(k => (players[k].nickname || '').trim().toLowerCase());
+            this.crewId = crew.id;
+            this.crewName = crew.name;
+            this.crewNicknames = crewStandings(crew)
+                .map(m => m.nickname)
+                .filter(n => n && taken.indexOf(n.toLowerCase()) < 0)
+                .sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1);
+
+            const mine = this.crewService.get(crew.id);
+            if (!this.nickname && mine && mine.nickname && taken.indexOf(mine.nickname.toLowerCase()) < 0) {
+                this.nickname = mine.nickname;
+            }
+        } catch (e) {
+            // The chips are a shortcut; typing a nickname still works.
+        }
+    }
+
+    pickNickname(nickname: string) {
+        this.nickname = nickname;
     }
 
     submit() {
@@ -74,6 +113,9 @@ export class JoinGameComponent implements OnInit {
         this.apiService.join(this.pin, this.nickname, uid)
             .then((pid) => {
                 this.sessionService.user = { nickname: this.nickname.toLowerCase(), pid, uid };
+                if (this.crewId) {
+                    this.crewService.remember(this.crewId, this.crewName, this.nickname);
+                }
                 this.router.navigate(['game-staging', this.pin]);
                 this.loading = false;
             })

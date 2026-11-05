@@ -23,3 +23,18 @@
         margin-bottom: 10px;
     }
 }
+
+.your-crews {
+    margin-top: 10px;
+    padding: 0 .75rem;
+
+    .your-crews-title {
+        color: #fff;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .button + .button {
+        margin-top: 8px;
+    }
+}

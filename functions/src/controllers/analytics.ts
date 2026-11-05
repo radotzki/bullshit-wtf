@@ -1,5 +1,6 @@
 import { GameScheme, GameState } from "../game-model";
 import { get, gamesRef } from '../firebase';
+import { recordCrewGame } from './crew';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
@@ -17,7 +18,12 @@ export async function onStateChange(pin: string) {
     if (game.state.id === GameState.RoundIntro && game.questionIndex === 0) {
         return openGame(pin, game);
     } else if (game.state.id === GameState.ScoreBoardFinal) {
-        return closeGame(pin, game);
+        // The crew's standings must not wait on (or fail with) BigQuery.
+        await Promise.all([
+            closeGame(pin, game),
+            recordCrewGame(pin, game).catch(e => console.error('recordCrewGame failed', pin, e && e.message)),
+        ]);
+        return;
     } else {
         return;
     }
@@ -30,7 +36,8 @@ export async function onStateChange(pin: string) {
 //   results came from a shared results card
 //   host    the player who just created the game
 //   replay  carried into the next game by Replay
-export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay'];
+//   crew    tapped Rematch on a crew page, or opened a crew link
+export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
 
 export function cleanVia(via: any): string | null {
     if (via === undefined || via === null || via === '') {
@@ -58,6 +65,7 @@ function origin(game: GameScheme) {
         creator_uid: game.creator || null,
         origin: game.origin || null,
         parent_pin: game.parent || null,
+        crew_id: game.crew || null,
     };
 }
 

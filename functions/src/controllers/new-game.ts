@@ -2,11 +2,22 @@ import { randomQuestions } from './questions';
 import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
-export async function newGame(locale, count, creator?: string) {
+export interface NewGameOptions {
+    // A crew rematch: the crew this game counts for, and its members' browsers (no repeat questions).
+    crew?: string;
+    uids?: string[];
+}
+
+export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
     return incGameCounter().then(async gameCounter => {
         const gamePin = generateGameName(gameCounter);
-        const questions = await randomQuestions(locale, count);
+        const questions = await randomQuestions(locale, count, options.uids || []);
         const game = emptyGame(locale, count, questions, creator);
+
+        if (options.crew) {
+            game.crew = options.crew;
+            game.origin = 'crew';
+        }
 
         return gamesRef.child(gamePin).set(game).then(() => gamePin);
     });

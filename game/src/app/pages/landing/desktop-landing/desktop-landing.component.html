@@ -40,6 +40,14 @@
                 </div>
             </div>
 
+            <div class="your-crews" *ngIf="crews.length">
+                <p class="your-crews-title">Your crews</p>
+                <a class="button is-info is-fullwidth" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
+                    <span class="icon"><i class="fa fa-trophy"></i></span>
+                    <span dir="auto">{{ crew.name }}: scores &amp; rematch</span>
+                </a>
+            </div>
+
         </div>
     </div>
 

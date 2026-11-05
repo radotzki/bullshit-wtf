@@ -1,5 +1,5 @@
 import { reportError } from './../sentry/sentry.module';
-import { GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer } from './../game-model';
+import { GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew } from './../game-model';
 import { SessionService } from './session.service';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
@@ -39,6 +39,7 @@ function apiError(url: string, resp: any) {
 @Injectable()
 export class ApiService {
     gamesRef: firebase.database.Reference;
+    crewsRef: firebase.database.Reference;
     timeDiff: Promise<number>;
 
     constructor(
@@ -47,6 +48,7 @@ export class ApiService {
         private zone: NgZone,
     ) {
         this.gamesRef = firebase.database().ref('games');
+        this.crewsRef = firebase.database().ref('crews');
     }
 
     gameHasPresenter(pin: string) {
@@ -258,6 +260,36 @@ export class ApiService {
     getForkGame(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<string>(this.gamesRef.child(pin).child('fork'));
+    }
+
+    /** The crew a game counts for, as it changes (null when it has none). */
+    getGameCrewObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<string>(this.gamesRef.child(pin).child('crew'));
+    }
+
+    getGameCrew(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<string>(this.gamesRef.child(pin).child('crew'));
+    }
+
+    getCrew(id: string) {
+        return this.get<Crew>(this.crewsRef.child(id.toLowerCase()));
+    }
+
+    getCrewObservable(id: string) {
+        return this.observe<Crew>(this.crewsRef.child(id.toLowerCase()));
+    }
+
+    async createCrew(pin: string, name: string) {
+        pin = pin.toUpperCase();
+        const uid = await this.currentUid();
+        return this.post<{ id: string; name: string }>(`createCrew`, { pin, name, uid });
+    }
+
+    async crewRematch(crew: string) {
+        const uid = await this.currentUid();
+        return this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid });
     }
 
     async signInAnonymously(pin: string, nickname: string, via?: string) {

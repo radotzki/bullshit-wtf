@@ -42,6 +42,11 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
         forked.creator = host;
     }
 
+    // Replay keeps counting for the same crew.
+    if (game.crew) {
+        forked.crew = game.crew;
+    }
+
     return forked;
 }
 

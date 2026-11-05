@@ -1,0 +1,10 @@
+
+.crew-nicknames {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .button {
+        margin: 0 4px 6px;
+    }
+}
