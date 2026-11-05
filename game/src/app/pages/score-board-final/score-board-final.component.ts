@@ -41,7 +41,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(async fork => {
             if (fork) {
                 if (!this.presenter) {
-                    await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname);
+                    await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
                 }
 
                 this.gameService.unregister();

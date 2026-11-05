@@ -54,8 +54,23 @@ export class ApiService {
         return this.get<boolean>(this.gamesRef.child(pin).child('presenter'));
     }
 
-    createGame(locale: string, count: number): Promise<{ pin: string }> {
-        return this.post(`newGame`, { locale, count });
+    async createGame(locale: string, count: number): Promise<{ pin: string }> {
+        // The creating browser's anonymous uid marks the host, so BigQuery can
+        // tell whether hosts come back. Creating still works if sign-in fails.
+        const uid = await this.currentUid();
+        return this.post<{ pin: string }>(`newGame`, { locale, count, uid });
+    }
+
+    /** This browser's anonymous uid, signing in if needed; undefined if that fails. */
+    async currentUid(): Promise<string> {
+        try {
+            const auth = firebase.auth();
+            const user = auth.currentUser || await auth.signInAnonymously();
+            return user ? user.uid : undefined;
+        } catch (error) {
+            reportError(error, 'currentUid');
+            return undefined;
+        }
     }
 
     async join(pin: string, nickname: string, uid: string) {
@@ -214,9 +229,10 @@ export class ApiService {
         return this.observe<number>(this.gamesRef.child(pin).child('players').child(pid).child('score'));
     }
 
-    fork(pin: string) {
+    async fork(pin: string) {
         pin = pin.toUpperCase();
-        return this.post<{ pid: string }>(`fork`, { pin });
+        const uid = await this.currentUid();
+        return this.post<{ pid: string }>(`fork`, { pin, uid });
     }
 
     getForkGame(pin: string) {
@@ -224,10 +240,10 @@ export class ApiService {
         return this.observe<string>(this.gamesRef.child(pin).child('fork'));
     }
 
-    async signInAnonymously(pin: string, nickname: string) {
+    async signInAnonymously(pin: string, nickname: string, via?: string) {
         try {
             const user = await firebase.auth().signInAnonymously();
-            this.post('onJoinGame', { uid: user.uid, pin, nickname });
+            this.post('onJoinGame', { uid: user.uid, pin, nickname, via });
             return user;
         } catch (error) {
             console.log(error);

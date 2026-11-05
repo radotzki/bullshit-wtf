@@ -3,6 +3,7 @@ import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { markHosted } from '../../services/join-source';
 
 @Component({
     selector: 'app-create-game',
@@ -27,6 +28,7 @@ export class CreateGameComponent {
         this.apiService.createGame(this.locale, this.length)
             .then((resp) => {
                 this.loading = false;
+                markHosted(resp.pin);
                 this.router.navigate(['/join-game', resp.pin]);
             })
             .catch(err => {

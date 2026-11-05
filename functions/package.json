@@ -5,7 +5,7 @@
   "scripts": {
     "copy-model": "node -e \"require('fs').copyFileSync('../game-model.ts', 'src/game-model.ts')\"",
     "build": "npm run copy-model && rimraf dist && tsc",
-    "test": "npm run build && node --test test/phase.test.js",
+    "test": "npm run build && node --test test/*.test.js",
     "test:sleeping-phones": "npm run build && node test/sleeping-phones.js"
   },
   "dependencies": {

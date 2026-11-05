@@ -33,7 +33,13 @@ export interface GameScheme {
     tick: number | string;
     presenter: boolean;
     fork?: string;
+    // Who started this game and how (for measuring hosts and groups that return).
+    creator?: string;        // anonymous uid of the browser that created or replayed it
+    origin?: GameOrigin;
+    parent?: string;         // PIN of the finished game this one was replayed from
 }
+
+export type GameOrigin = 'create' | 'replay';
 
 export interface GamePlayers {
     [id: string]: GamePlayer;
