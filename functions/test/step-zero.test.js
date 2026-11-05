@@ -222,6 +222,28 @@ test('a game night send lands in shares with its method, crew and language', asy
     }
 });
 
+test('lobby invite sends and "start alone anyway" taps land in shares as invite', async () => {
+    rows.length = 0;
+    for (const method of ['whatsapp', 'native', 'copy', 'solo-start']) {
+        const r = await call('onShare', { content_type: 'invite', method, locale: 'he', uid: 'u2' });
+        assert.deepStrictEqual(r, { code: 200, body: { counted: true } });
+    }
+    const shares = take('shares');
+    assert.deepStrictEqual(shares.map(s => s.method), ['whatsapp', 'native', 'copy', 'solo-start']);
+    for (const s of shares) {
+        assert.strictEqual(s.content_type, 'invite');
+        assert.strictEqual(s.crew_id, null);
+        assert.strictEqual(s.locale, 'he');
+        assert.strictEqual(s.uid, 'u2');
+    }
+    rows.length = 0;
+    for (const method of ['clipboard', 'calendar-share', 'open']) {
+        const r = await call('onShare', { content_type: 'invite', method });
+        assert.deepStrictEqual(r, { code: 200, body: { counted: false } });
+    }
+    assert.strictEqual(take('shares').length, 0);
+});
+
 test('shares we do not count are dropped, and bad fields are cleared, without an error', async () => {
     rows.length = 0;
     for (const body of [

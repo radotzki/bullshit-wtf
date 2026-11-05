@@ -18,6 +18,7 @@ const SITE = 'https://bullshit.wtf';
 const strings = {
     en: {
         inviteTitle: 'Join my Bullshit game',
+        scanHint: 'or let them scan this',
         inviteText: (pin: string) => `Come play Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`,
         resultsTitle: 'Bullshit results',
         resultsText: (place: number, total: number, score: number) =>
@@ -29,6 +30,7 @@ const strings = {
     },
     he: {
         inviteTitle: 'בואו לשחק בולשיט',
+        scanHint: 'או שיסרקו את זה',
         inviteText: (pin: string) => `בואו לשחק איתי בולשיט! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`,
         resultsTitle: 'תוצאות בולשיט',
         resultsText: (place: number, total: number, score: number) =>

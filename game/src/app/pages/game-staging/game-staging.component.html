@@ -1,11 +1,12 @@
 <section class="game-container game-staging">
-    <app-game-header *ngIf="showStartButton" [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
-    <app-game-header *ngIf="!showStartButton"></app-game-header>
+    <app-game-header *ngIf="showStartButton && !lobby?.alone" [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
+    <app-game-header *ngIf="!showStartButton || lobby?.alone"></app-game-header>
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
     <div *ngIf="lobby && players?.length" class="lobby-status" [class.presenter]="presenter" [attr.dir]="lobby.rtl ? 'rtl' : null">
-        <span class="lobby-message"> {{lobby.message}} </span>
+        <span class="lobby-message" [class.alone]="lobby.alone"> {{lobby.message}} </span>
+        <span *ngIf="lobby.sub" class="lobby-sub"> {{lobby.sub}} </span>
         <span class="lobby-count"> {{lobby.count}} </span>
     </div>
 
@@ -18,11 +19,15 @@
             <div class="loader"> </div>
         </div>
 
-        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false"></app-invite>
+        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false" [inline]="!!lobby?.alone"></app-invite>
+
+        <div *ngIf="lobby?.alone" class="start-alone" [attr.dir]="lobby.rtl ? 'rtl' : null">
+            <a class="start-alone-link" [class.is-disabled]="loading" (click)="startAlone()"> {{lobby.startAlone}} </a>
+        </div>
 
         <div class="spacer is-hidden-mobile"> </div>
 
-        <div class="lobby" [class.with-invite]="presenter">
+        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone">
             <div class="columns is-mobile is-multiline">
                 <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
                     <img [src]="'/assets/avatar' + i + '.png'" class="picture">
