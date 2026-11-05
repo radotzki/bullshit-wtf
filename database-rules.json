@@ -103,6 +103,10 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "hasHost": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
                 "crew": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"

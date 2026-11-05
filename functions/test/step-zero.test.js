@@ -261,3 +261,62 @@ test('shares we do not count are dropped, and bad fields are cleared, without an
     assert.deepStrictEqual(Object.assign({}, take('shares')[0], { time: 0 }),
         { content_type: 'crew-night', method: 'whatsapp', crew_id: null, locale: null, uid: null, time: 0 });
 });
+
+// ---- Host key: the lobby knows the host even when the creating phone has no uid ----
+
+test('a host key marks the creating phone\'s join as host, with or without a uid', async () => {
+    seedQuestions();
+    const key = 'K'.repeat(24);
+    const created = await call('newGame', { locale: 'en', count: 5, hostKey: key });
+    const pin = created.body.pin;
+    assert.strictEqual(db.games[pin].hostKey, key);
+    assert.strictEqual(db.games[pin].hasHost, true);
+    assert.strictEqual('creator' in db.games[pin], false);
+
+    const host = await call('join', { pin, nickname: 'dana', uid: 0, hostKey: key });
+    const friend = await call('join', { pin, nickname: 'avi', uid: 'u2' });
+    const wrong = await call('join', { pin, nickname: 'eve', uid: 0, hostKey: 'X'.repeat(24) });
+    assert.strictEqual(db.games[pin].players[host.body.pid].host, true);
+    assert.ok(!db.games[pin].players[friend.body.pid].host);
+    assert.ok(!db.games[pin].players[wrong.body.pid].host);
+
+    // The host joins again (a refresh): only the newest row is the host.
+    const again = await call('join', { pin, nickname: 'dana', uid: 0, hostKey: key });
+    assert.strictEqual(db.games[pin].players[again.body.pid].host, true);
+    assert.ok(!db.games[pin].players[host.body.pid].host);
+});
+
+test('bad host keys are dropped, and games without one are as before', async () => {
+    seedQuestions();
+    for (const hostKey of ['short', { $gt: '' }, 'a b'.repeat(10), undefined]) {
+        const created = await call('newGame', { locale: 'en', count: 5, uid: 'u1', hostKey });
+        assert.strictEqual('hostKey' in db.games[created.body.pin], false);
+        assert.strictEqual('hasHost' in db.games[created.body.pin], false);
+        const joined = await call('join', { pin: created.body.pin, nickname: 'dana', uid: 'u1', hostKey });
+        assert.ok(!db.games[created.body.pin].players[joined.body.pid].host);
+    }
+});
+
+test('Replay marks the player who pressed it as host, even without a uid', async () => {
+    seedQuestions();
+    const key = 'Q'.repeat(24);
+    const first = (await call('newGame', { locale: 'en', count: 5, hostKey: key })).body.pin;
+    const dana = (await call('join', { pin: first, nickname: 'dana', uid: 0, hostKey: key })).body.pid;
+    const avi = (await call('join', { pin: first, nickname: 'avi', uid: 0 })).body.pid;
+    await call('fork', { pin: first, pid: avi });
+    const second = db.games[first].fork;
+    assert.strictEqual(db.games[second].players[avi].host, true);
+    assert.ok(!db.games[second].players[dana].host);
+    assert.strictEqual(db.games[second].hasHost, true);
+    assert.strictEqual('hostKey' in db.games[second], false);
+
+    // An old client sends no player id: the old host stays the host.
+    await call('fork', { pin: second });
+    const third = db.games[second].fork;
+    assert.strictEqual(db.games[third].players[avi].host, true);
+    assert.strictEqual(db.games[third].hasHost, true);
+
+    // A player id that is not in the game changes nothing.
+    await call('fork', { pin: third, pid: 'nobody' });
+    assert.strictEqual(db.games[db.games[third].fork].players[avi].host, true);
+});

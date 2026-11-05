@@ -136,3 +136,76 @@ test('if the friend leaves, the host is alone again and the invite comes back', 
     assert.strictEqual(firstFriend(again, [alice], 'uid-alice', true), null);
     assert.strictEqual(lobbyText(again, 1, 'en', null).message, 'Bullshit needs friends: you score by fooling them');
 });
+
+// ---- Host marked by host key: the creating phone's sign-in failed, so it has no uid ----
+
+const keyHost = { nickname: 'Alice', score: 0, uid: 0, host: true, pid: 'p-alice' };
+const benNoUid = { nickname: 'Ben', score: 0, uid: 0, pid: 'p-ben' };
+const chenRow = { nickname: 'Chen', score: 0, uid: 'uid-chen', pid: 'p-chen' };
+
+function keyView(over) {
+    return lobbyHost(Object.assign({
+        hasPresenter: false, isPresenter: false, creator: null, hasHost: true,
+        myUid: null, myPid: null, players: [keyHost], waitedMs: 0,
+    }, over));
+}
+
+test('sign-in failed: the host alone still gets the invite-first lobby', () => {
+    const v = keyView({ myPid: 'p-alice' });
+    assert.strictEqual(v.canStart, true);
+    assert.strictEqual(v.alone, true);
+    assert.strictEqual(lobbyText(v, 1, 'en').message, 'Bullshit needs friends: you score by fooling them');
+});
+
+test('sign-in failed: friends, with or without a uid, wait for the host by name', () => {
+    const players = [keyHost, benNoUid, chenRow];
+    const ben = keyView({ myPid: 'p-ben', players });
+    const chen = keyView({ myPid: 'p-chen', myUid: 'uid-chen', players });
+    const host = keyView({ myPid: 'p-alice', players });
+    assert.deepStrictEqual([host.canStart, ben.canStart, chen.canStart], [true, false, false]);
+    assert.strictEqual(ben.wait, 'host');
+    assert.strictEqual(ben.hostName, 'Alice');
+    assert.strictEqual(lobbyText(chen, 3, 'en').message, 'Waiting for Alice to start the game');
+});
+
+test('a host key game whose host has not joined yet: wait, then anyone after the grace period', () => {
+    const early = keyView({ myPid: 'p-ben', players: [benNoUid] });
+    assert.strictEqual(early.canStart, false);
+    assert.strictEqual(early.wait, 'host-to-join');
+    assert.strictEqual(keyView({ myPid: 'p-ben', players: [benNoUid], waitedMs: HOST_GRACE_MS }).canStart, true);
+});
+
+test('the marked host row wins over the creator uid (Replay pressed by a phone without a uid)', () => {
+    const replayer = { nickname: 'Ben', score: 0, uid: 0, host: true, pid: 'p-ben' };
+    const alice2 = { nickname: 'Alice', score: 0, uid: 'uid-alice', pid: 'p-alice' };
+    const players = [alice2, replayer];
+    const asAlice = keyView({ creator: 'uid-alice', myUid: 'uid-alice', myPid: 'p-alice', players });
+    const asBen = keyView({ creator: 'uid-alice', myPid: 'p-ben', players });
+    assert.strictEqual(asAlice.canStart, false);
+    assert.strictEqual(asAlice.hostName, 'Ben');
+    assert.strictEqual(asBen.canStart, true);
+});
+
+test('a host with a uid and a host key: the same answer as before', () => {
+    const hostRow = { nickname: 'Alice', score: 0, uid: 'uid-alice', host: true, pid: 'p-alice' };
+    const v = keyView({ creator: 'uid-alice', myUid: 'uid-alice', myPid: 'p-alice', players: [hostRow] });
+    assert.strictEqual(v.alone, true);
+    // An old phone that never learned its player id still finds itself by uid... only without a marked row.
+    const old = lobbyHost({ hasPresenter: false, isPresenter: false, creator: 'uid-alice', myUid: 'uid-alice',
+        players: [{ nickname: 'Alice', score: 0, uid: 'uid-alice' }], waitedMs: 0 });
+    assert.strictEqual(old.alone, true);
+});
+
+test('sign-in failed: the first friend is greeted by name, not the host itself', () => {
+    const players = [keyHost, benNoUid];
+    const v = keyView({ myPid: 'p-alice', players });
+    assert.strictEqual(v.alone, false);
+    assert.strictEqual(firstFriend(v, players, null, true, 'p-alice'), 'Ben');
+    assert.strictEqual(lobbyText(v, 2, 'en', 'Ben').message, 'Ben is in! Press START when everyone is in');
+});
+
+test('a game with neither creator nor host key is still open to all', () => {
+    const v = keyView({ hasHost: false, players: [benNoUid], myPid: 'p-ben' });
+    assert.strictEqual(v.canStart, true);
+    assert.strictEqual(v.alone, false);
+});

@@ -1,5 +1,5 @@
 import { reportError } from './../../sentry/sentry.module';
-import { GamePlayers, GamePlayer, GameState } from './../../game-model';
+import { GamePlayers, GameState } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import { Howl } from 'howler';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { lobbyHost, lobbyText, LobbyText, HOST_GRACE_MS, packBanner, firstFriend } from './lobby-host';
+import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, packBanner, firstFriend } from './lobby-host';
 
 @Component({
     selector: 'app-game-staging',
@@ -16,7 +16,7 @@ import { lobbyHost, lobbyText, LobbyText, HOST_GRACE_MS, packBanner, firstFriend
     styleUrls: ['./game-staging.component.scss']
 })
 export class GameStagingComponent implements OnInit, OnDestroy {
-    players: GamePlayer[];
+    players: LobbyPlayer[];
     playersSubscriber: Subscription;
     pin: string;
     presenter: boolean;
@@ -28,7 +28,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
 
     private hasPresenter: boolean;
     private creator: string = null;
+    private hasHost = false;
     private myUid: string = null;
+    private myPid: string = null;
     locale = 'en';
     packBanner: string = null;
     private arrivedAt = Date.now();
@@ -50,7 +52,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.playMusic();
         this.playersSubscriber = this.apiService.getPlayersObservable(this.pin)
-            .map(players => Object.keys(players || {}).map(k => players[k]))
+            .map(players => Object.keys(players || {}).map(k => Object.assign({}, players[k], { pid: k })))
             .subscribe(players => {
                 this.players = players;
                 this.updateLobby();
@@ -67,14 +69,17 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.apiService.gameHasPresenter(this.pin),
             // Unreadable until the database rules that expose `creator` are deployed.
             optional(this.apiService.getGameCreator(this.pin), null),
+            optional(this.apiService.getGameHasHost(this.pin), false),
             optional(this.apiService.getGameLocale(this.pin), 'en'),
             this.apiService.getGamePack(this.pin),
             this.presenter ? Promise.resolve(null) : (user && user.uid) ? Promise.resolve(user.uid)
                 : this.apiService.uidWithin(SIGN_IN_WAIT_MS).then(r => r.uid),
         ]).then((found: any[]) => {
-            const [hasPresenter, creator, locale, pack, myUid] = found;
+            const [hasPresenter, creator, hasHost, locale, pack, myUid] = found;
             this.hasPresenter = !!hasPresenter;
             this.creator = typeof creator === 'string' && creator ? creator : null;
+            this.hasHost = hasHost === true;
+            this.myPid = !this.presenter && user && user.pid ? user.pid : null;
             this.locale = locale === 'he' ? 'he' : 'en';
             this.packBanner = packBanner(pack, this.locale);
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
@@ -97,7 +102,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             hasPresenter: this.hasPresenter,
             isPresenter: this.presenter,
             creator: this.creator,
+            hasHost: this.hasHost,
             myUid: this.myUid,
+            myPid: this.myPid,
             players: this.players || [],
             waitedMs: Date.now() - this.arrivedAt,
         });
@@ -105,7 +112,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         if (view.alone) {
             this.wasAlone = true;
         }
-        const friend = firstFriend(view, this.players || [], this.myUid, this.wasAlone);
+        const friend = firstFriend(view, this.players || [], this.myUid, this.wasAlone, this.myPid);
         this.showStartButton = view.canStart;
         this.lobby = lobbyText(view, (this.players || []).length, this.locale, friend);
     }

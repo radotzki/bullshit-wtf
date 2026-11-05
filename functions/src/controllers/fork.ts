@@ -4,21 +4,25 @@ import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 
-export async function fork(pin: string, creator?: string) {
+/**
+ * Replay: a new game with the same players. `creator` is the uid of the phone that pressed Replay,
+ * `hostPid` its player id in the finished game; that player hosts the new game.
+ */
+export async function fork(pin: string, creator?: string, hostPid?: string) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
     return incGameCounter().then(async gameCounter => {
         const forkedGamePin = generateGameName(gameCounter);
         const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-        const forkedGame = createFork(pin, game, questions, creator);
+        const forkedGame = createFork(pin, game, questions, creator, hostPid);
 
         return gamesRef.child(forkedGamePin).set(forkedGame)
             .then(() => gamesRef.child(pin).child('fork').set(forkedGamePin));
     });
 }
 
-function createFork(parent: string, game: GameScheme, qids: string[], creator?: string): GameScheme {
+function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -43,6 +47,17 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
         forked.creator = host;
     }
 
+    // The player who pressed Replay is the host, even without a uid. An old client sends no player
+    // id: the old host stays marked, as the old creator stays.
+    const players = forked.players || {};
+    if (hostPid && players[hostPid]) {
+        Object.keys(players).forEach(k => delete players[k].host);
+        players[hostPid].host = true;
+    }
+    if (Object.keys(players).some(k => players[k] && players[k].host)) {
+        forked.hasHost = true;
+    }
+
     // Replay keeps counting for the same crew.
     if (game.crew) {
         forked.crew = game.crew;
@@ -62,7 +77,7 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
 }
 
 function resetPlayersScore(players: GamePlayers) {
-    Object.keys(players).forEach(k => players[k].score = 0);
+    Object.keys(players || {}).forEach(k => players[k].score = 0);
     return players;
 }
 
