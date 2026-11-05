@@ -21,7 +21,7 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ## Deploy (production)
 
 ```sh
-npm run prod:deploy-functions   # 11 functions, 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 12 functions (11 + phaseTimer), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
 npm run prod:deploy-rules       # unchanged rules, can be skipped
 ```
@@ -86,10 +86,17 @@ not be checked without Firebase access.
 11. Game state writes in `tick` are now awaited before the function ends. Before, the
     function could finish before the write, which can stall a game.
 12. BigQuery failures log the per-row reasons.
+13. Phases end on a server deadline. A new 12th function, `phaseTimer` (on
+    `games/{pin}/state`, 120s timeout, 128MB), waits for each timed phase's deadline and
+    moves the game on, so a game no longer stalls when every phone (or the presenter
+    screen) sleeps. Phones keep a backup timer: any awake phone ticks 2.5s after the
+    deadline. Ticks from phones on the old client are still understood, so functions can
+    go first. New spend: `phaseTimer` runs for the length of each timed phase, roughly
+    7 minutes of 128MB function time per 7-question game.
 
 ### Unchanged
 
-Database rules, question data, game rules and timers, scoring, Google Analytics tag
+Database rules, question data, game rules, phase lengths, scoring, Google Analytics tag
 (Universal Analytics, which records nothing since 2023), hosting config apart from the
 build output.
 

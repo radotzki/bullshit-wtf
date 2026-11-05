@@ -1,6 +1,7 @@
 import { getQuestion } from './questions';
 import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { advance } from './tick';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
@@ -20,8 +21,9 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
         const totalAnswers = Object.keys(game.answers || {}).length + 1;
         const totalPlayers = Object.keys(game.players).length;
 
-        return totalAnswers === totalPlayers ?
-            gamesRef.child(pin).child('tick').set(GameState.ShowAnswers) :
+        // Everyone has answered: end the question phase now instead of waiting for the deadline.
+        return totalAnswers === totalPlayers && game.state.id === GameState.ShowQuestion ?
+            advance(pin, game.state) :
             Promise.resolve();
     }
 }

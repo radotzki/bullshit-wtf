@@ -1,5 +1,5 @@
 import { Subscription } from 'rxjs/Subscription';
-import { GameScheme, GameState } from './../game-model';
+import { GameScheme, GameState, GameStateInfo } from './../game-model';
 import { ApiService } from './api.service';
 import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
@@ -10,6 +10,10 @@ export const durations = {
     [GameState.ShowAnswers]: 20000,
     [GameState.ScoreBoard]: 5000,
 };
+
+// The server ends each phase at its deadline. Phones only step in if the server is late,
+// so they wait this much longer before ticking themselves.
+const clientFallbackDelay = 2500;
 
 @Injectable()
 export class GameService implements CanActivate {
@@ -45,27 +49,27 @@ export class GameService implements CanActivate {
 
             case GameState.RoundIntro:
                 this.router.navigate(['round-intro', pin]);
-                this.tick(pin, GameState.ShowQuestion, durations[GameState.RoundIntro]);
+                this.fallbackTick(pin, state);
                 break;
 
             case GameState.ShowQuestion:
                 this.router.navigate(['show-question', pin]);
-                this.tick(pin, GameState.ShowAnswers, durations[GameState.ShowQuestion]);
+                this.fallbackTick(pin, state);
                 break;
 
             case GameState.ShowAnswers:
                 this.router.navigate(['show-answers', pin]);
-                this.tick(pin, GameState.RevealTheTruth, durations[GameState.ShowAnswers]);
+                this.fallbackTick(pin, state);
                 break;
 
             case GameState.RevealTheTruth:
                 this.router.navigate(['reveal-the-truth', pin]);
+                this.fallbackTick(pin, state);
                 break;
 
             case GameState.ScoreBoard:
                 this.router.navigate(['score-board', pin]);
-                // The next state can be either ShowQuestion or ScoreBoardFinal
-                this.tick(pin, 999, durations[GameState.ScoreBoard]);
+                this.fallbackTick(pin, state);
                 break;
 
             case GameState.ScoreBoardFinal:
@@ -74,10 +78,20 @@ export class GameService implements CanActivate {
         }
     }
 
-    private tick(pin: string, nextState: GameState, duration: number) {
-        this.apiService.getGameTimestamp(pin).then(({ timestamp, now }) => {
-            const timeRemain = duration - (now - timestamp);
-            this.timeout = setTimeout(() => this.apiService.tick(pin, nextState), timeRemain);
+    /**
+     * Every phone, presenter or not, keeps a backup timer on the shared deadline the server set.
+     * If the server has not moved the game on shortly after the deadline, the first awake phone does.
+     * A phone that was asleep ticks as soon as it wakes, since its overdue timer fires then.
+     */
+    private fallbackTick(pin: string, stateId: GameState) {
+        this.apiService.getGameStateInfo(pin).then(({ state, now }) => {
+            if (!state || state.id !== stateId) {
+                return;
+            }
+
+            const deadline = state.deadline || (state.timestamp + (durations[stateId] || 0));
+            const timeRemain = Math.max(0, deadline - now) + clientFallbackDelay;
+            this.timeout = setTimeout(() => this.apiService.tickFrom(pin, state), timeRemain);
         });
     }
 

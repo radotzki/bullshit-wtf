@@ -1,5 +1,6 @@
 import { get, gamesRef } from '../firebase';
 import { GameScheme, GameState } from '../game-model';
+import { advance } from './tick';
 
 export async function onAnswerSelection(pin: string) {
     pin = pin.toUpperCase();
@@ -7,7 +8,8 @@ export async function onAnswerSelection(pin: string) {
     const answerSelectionCount = Object.keys(game.answerSelections || {}).length;
     const playersCount = Object.keys(game.players).length;
 
-    return answerSelectionCount === playersCount ?
-        gamesRef.child(pin).child('tick').set(GameState.RevealTheTruth) :
+    // Everyone has picked: end the answers phase now instead of waiting for the deadline.
+    return answerSelectionCount === playersCount && game.state.id === GameState.ShowAnswers ?
+        advance(pin, game.state) :
         Promise.resolve();
 }

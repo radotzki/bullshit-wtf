@@ -3,6 +3,7 @@ const functions = require('firebase-functions/v1');
 const cors = require('cors')({ origin: true });
 
 import { tick } from './controllers/tick';
+import { onPhaseStart } from './controllers/phase-timer';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
 import { onAnswerSelection } from './controllers/on-answer-selection';
@@ -119,6 +120,15 @@ exports.tick = functions.database.ref('games/{pin}/tick').onWrite((change, event
     const pin = event.params.pin;
     return tick(pin);
 });
+
+// Ends each timed phase on the server at its deadline, so a game keeps going when every phone sleeps.
+// The longest phase (the reveal) is about 63 seconds, hence the longer timeout.
+exports.phaseTimer = functions
+    .runWith({ timeoutSeconds: 120, memory: '128MB' })
+    .database.ref('games/{pin}/state').onWrite((change, context) => {
+        const pin = context.params.pin;
+        return onPhaseStart(pin, change.after.val());
+    });
 
 exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite((change, event) => {
     const pin = event.params.pin;

@@ -1,5 +1,5 @@
 import { reportError } from './../sentry/sentry.module';
-import { GameScheme, GamePlayers, Answers, GameState, AnswerSelections, RevealAnswer } from './../game-model';
+import { GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer } from './../game-model';
 import { SessionService } from './session.service';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
@@ -106,14 +106,27 @@ export class ApiService {
     getGameTimestamp(pin: string) {
         pin = pin.toUpperCase();
 
+        return Promise.all([
+            this.get<number>(this.gamesRef.child(pin).child('state').child('timestamp')),
+            this.serverNow(),
+        ]).then(resp => ({ timestamp: resp[0], now: resp[1] }));
+    }
+
+    private serverNow() {
         if (!this.timeDiff) {
             this.timeDiff = this.post<{ now: number }>('time').then(({ now }) => Date.now() - now);
         }
 
+        return this.timeDiff.then(diff => Date.now() - diff);
+    }
+
+    getGameStateInfo(pin: string) {
+        pin = pin.toUpperCase();
+
         return Promise.all([
-            this.get<number>(this.gamesRef.child(pin).child('state').child('timestamp')),
-            this.timeDiff.then(diff => Date.now() - diff)
-        ]).then(resp => ({ timestamp: resp[0], now: resp[1] }));
+            this.get<GameStateInfo>(this.gamesRef.child(pin).child('state')),
+            this.serverNow(),
+        ]).then(resp => ({ state: resp[0], now: resp[1] }));
     }
 
     getQuestion(pin: string) {
@@ -180,6 +193,15 @@ export class ApiService {
                 return this.gamesRef.child(pin).child('tick').set(gameState);
             }
         });
+    }
+
+    /**
+     * Ask the server to end the phase `state`. Any player may do this: the server only accepts it
+     * once that phase's deadline has passed, and only once.
+     */
+    tickFrom(pin: string, state: GameStateInfo) {
+        pin = pin.toUpperCase();
+        return this.gamesRef.child(pin).child('tick').set(`${state.id}:${state.timestamp}`);
     }
 
     getRevealAnswers(pin: string) {
