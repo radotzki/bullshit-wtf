@@ -2,10 +2,10 @@ import { GameScheme, GameState, GameStateInfo, revealSchedule, revealTiming } fr
 
 // How long each timed phase lasts. Must match game/src/app/services/game.service.ts.
 export const durations = {
-    [GameState.RoundIntro]: 4000,
+    [GameState.RoundIntro]: 3000,
     [GameState.ShowQuestion]: 25000,
     [GameState.ShowAnswers]: 20000,
-    [GameState.ScoreBoard]: 4000,
+    [GameState.ScoreBoard]: 3000,
 };
 
 // A client tick may arrive a little before the server's deadline because of clock skew.

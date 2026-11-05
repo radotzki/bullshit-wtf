@@ -51,7 +51,7 @@ export type GameOrigin = 'create' | 'replay';
  * Used by both the server (phase deadline) and the client (what to show when).
  */
 export const revealTiming = {
-    phones: { step: 1800, hold: 3000 },
+    phones: { step: 1600, hold: 3000 },
     // A big screen plays a sound per row and the room reads it together: give each row more time.
     presenter: { step: 4500, hold: 3000 },
 };
@@ -60,10 +60,10 @@ export function revealRows(revealAnswers: RevealAnswer[] | undefined | null): nu
     return Math.max((revealAnswers || []).filter(a => (a.selectors && a.selectors.length) || a.realAnswer).length, 1);
 }
 
-/** How long the reveal lasts, and when its last row has been fully shown (ms after it starts). */
+/** How long the reveal lasts, and when the last row's writer has been shown (ms after it starts). */
 export function revealSchedule(revealAnswers: RevealAnswer[] | undefined | null, presenter: boolean) {
     const timing = presenter ? revealTiming.presenter : revealTiming.phones;
-    const allShown = revealRows(revealAnswers) * timing.step;
+    const allShown = revealRows(revealAnswers) * timing.step - timing.step / 2;
     return { step: timing.step, allShown, duration: allShown + timing.hold };
 }
 

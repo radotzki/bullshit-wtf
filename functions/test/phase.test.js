@@ -12,8 +12,8 @@ function game(id, timestamp, deadline, tick) {
 test('every timed phase gets a deadline', () => {
     assert.strictEqual(withDeadline({ id: S.ShowQuestion, timestamp: 1000 }, {}).deadline, 26000);
     assert.strictEqual(withDeadline({ id: S.ShowAnswers, timestamp: 1000 }, {}).deadline, 21000);
-    assert.strictEqual(withDeadline({ id: S.RoundIntro, timestamp: 1000 }, {}).deadline, 5000);
-    assert.strictEqual(withDeadline({ id: S.ScoreBoard, timestamp: 1000 }, {}).deadline, 5000);
+    assert.strictEqual(withDeadline({ id: S.RoundIntro, timestamp: 1000 }, {}).deadline, 4000);
+    assert.strictEqual(withDeadline({ id: S.ScoreBoard, timestamp: 1000 }, {}).deadline, 4000);
     assert.strictEqual(withDeadline({ id: S.GameStaging, timestamp: 1000 }, {}).deadline, undefined);
     assert.strictEqual(withDeadline({ id: S.ScoreBoardFinal, timestamp: 1000 }, {}).deadline, undefined);
 });
@@ -25,13 +25,13 @@ const revealAnswers = [
     { text: 'truth', selectors: ['p2'], realAnswer: true },
 ];
 
-test('on phones the reveal lasts 1.8 s per row shown, plus 3 s to see your result', () => {
-    assert.strictEqual(phaseDuration(S.RevealTheTruth, { revealAnswers }), 2 * 1800 + 3000);
-    assert.strictEqual(phaseDuration(S.RevealTheTruth, {}), 1800 + 3000);
+test('on phones the reveal lasts 1.6 s per row shown, plus 3 s to see your result after the last writer', () => {
+    assert.strictEqual(phaseDuration(S.RevealTheTruth, { revealAnswers }), 2 * 1600 - 800 + 3000);
+    assert.strictEqual(phaseDuration(S.RevealTheTruth, {}), 1600 - 800 + 3000);
 });
 
 test('with a big screen each row gets 4.5 s', () => {
-    assert.strictEqual(phaseDuration(S.RevealTheTruth, { revealAnswers, presenter: true }), 2 * 4500 + 3000);
+    assert.strictEqual(phaseDuration(S.RevealTheTruth, { revealAnswers, presenter: true }), 2 * 4500 - 2250 + 3000);
 });
 
 test('the longest reveal (8 players and the truth, on a big screen) fits the server timer', () => {
@@ -49,7 +49,7 @@ function revealGame(done, extra) {
 }
 
 test('NEXT ends the reveal only when every player tapped, after the last row', () => {
-    const allShownAt = 1000 + 2 * 1800;
+    const allShownAt = 1000 + 2 * 1600 - 800;
     assert.strictEqual(revealDoneWait(revealGame({ p1: true }), allShownAt), undefined, 'one player still watching');
     assert.strictEqual(revealDoneWait(revealGame(undefined), allShownAt), undefined, 'nobody tapped');
     assert.strictEqual(revealDoneWait(revealGame({ p1: true, p2: true }), allShownAt), 0, 'everyone tapped');
