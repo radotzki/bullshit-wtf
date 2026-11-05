@@ -28,6 +28,10 @@ const routes: Routes = [
     { path: 'join-game', component: JoinGameComponent },
     { path: 'join-game/:pin', component: JoinGameComponent },
     { path: 'learn', component: LearnComponent },
+    // Hebrew entry points: same pages, served from he.html so link previews are in Hebrew
+    { path: 'he', component: LandingComponent },
+    { path: 'he/join-game', component: JoinGameComponent },
+    { path: 'he/join-game/:pin', component: JoinGameComponent },
     { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService, GameService] },
     { path: 'round-intro/:pin', component: RoundIntroComponent, canActivate: [SessionService, GameService] },
     { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService, GameService] },

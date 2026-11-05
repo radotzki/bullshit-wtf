@@ -1,0 +1,33 @@
+<button class="button is-primary is-fullwidth share-results-button" (click)="openSheet()" [disabled]="!players">
+    <span class="icon"><i class="fa fa-share-alt"></i></span>
+    <span> SHARE RESULTS </span>
+</button>
+
+<div class="modal" [class.is-active]="open">
+    <div class="modal-background" (click)="close()"></div>
+    <div class="modal-content">
+        <section class="modal-card-body share-sheet">
+            <div class="preview">
+                <div *ngIf="loading" class="loader"></div>
+                <img *ngIf="previewUrl" [src]="previewUrl" alt="Final scores card">
+            </div>
+
+            <button *ngIf="canShare" class="button is-primary is-fullwidth" (click)="share()" [disabled]="loading">
+                <span class="icon"><i class="fa fa-share-alt"></i></span>
+                <span> SHARE </span>
+            </button>
+            <a class="button is-fullwidth whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
+                <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                <span> WHATSAPP </span>
+            </a>
+            <button class="button is-fullwidth" (click)="save()" [disabled]="loading || !blob">
+                <span class="icon"><i class="fa fa-download"></i></span>
+                <span> SAVE IMAGE </span>
+            </button>
+            <p *ngIf="copied" class="copied"> Copied! Paste it anywhere. </p>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" (click)="close()"> DONE </button>
+        </footer>
+    </div>
+</div>

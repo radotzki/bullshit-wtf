@@ -1,0 +1,71 @@
+.invite-presenter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem;
+    text-align: center;
+
+    .qr {
+        width: 9rem;
+        height: 9rem;
+    }
+
+    .scan {
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .url {
+        font-size: 0.45rem;
+        color: #7a7a7a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+}
+
+.invite-phone {
+    .invite-button {
+        margin-bottom: 10px;
+    }
+
+    .invite-sheet {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+
+        .title {
+            margin-bottom: 0.25rem;
+        }
+
+        .hint {
+            margin-bottom: 0.75rem;
+            color: #7a7a7a;
+        }
+
+        .qr {
+            width: 200px;
+            height: 200px;
+        }
+
+        .pin {
+            margin: 0.5rem 0 1rem;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        .button + .button {
+            margin-top: 8px;
+        }
+
+        .whatsapp {
+            background-color: #25d366;
+            border-color: transparent;
+            color: #fff;
+        }
+    }
+
+    .modal-card-foot {
+        justify-content: center;
+    }
+}
