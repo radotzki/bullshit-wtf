@@ -43,7 +43,7 @@ exports.newGame = functions.https.onRequest((req, res) => {
         const count = req.body.count;
         const uid = cleanUid(req.body.uid);
         try {
-            const pin = await newGame(locale, count, uid);
+            const pin = await newGame(locale, count, uid, { pack: req.body.pack, campaign: req.body.campaign });
             return res.send({ pin });
         } catch (e) {
             console.error('newGame failed', e);

@@ -9,7 +9,7 @@ export async function fork(pin: string, creator?: string) {
 
     return incGameCounter().then(async gameCounter => {
         const forkedGamePin = generateGameName(gameCounter);
-        const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game));
+        const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
         const forkedGame = createFork(pin, game, questions, creator);
 
         return gamesRef.child(forkedGamePin).set(forkedGame)
@@ -45,6 +45,11 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
     // Replay keeps counting for the same crew.
     if (game.crew) {
         forked.crew = game.crew;
+    }
+
+    // Replay keeps the seasonal pack (a group playing Hanukkah night after night).
+    if (game.pack) {
+        forked.pack = game.pack;
     }
 
     return forked;

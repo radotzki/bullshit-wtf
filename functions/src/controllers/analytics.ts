@@ -66,6 +66,8 @@ function origin(game: GameScheme) {
         origin: game.origin || null,
         parent_pin: game.parent || null,
         crew_id: game.crew || null,
+        pack: game.pack || null,
+        campaign: game.campaign || null,
     };
 }
 

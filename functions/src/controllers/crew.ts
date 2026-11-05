@@ -1,4 +1,4 @@
-import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame } from '../game-model';
+import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
 import { newGame } from './new-game';
 
@@ -145,7 +145,7 @@ export async function crewRematch(crewId: string, uid?: string): Promise<{ pin: 
     const uids: string[] = [];
     Object.keys(crew.members || {}).forEach(k => Object.keys(crew.members[k].uids || {}).forEach(u => uids.push(u)));
 
-    const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, { crew: id, uids });
+    const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, { crew: id, uids, pack: seasonalPack() });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });
     return { pin, created: true };
 }

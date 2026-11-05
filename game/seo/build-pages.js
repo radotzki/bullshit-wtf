@@ -62,9 +62,9 @@ function render(p) {
   <meta property="og:title" content="${esc(p.title)}">
   <meta property="og:description" content="${esc(p.description)}">
   <meta property="og:url" content="${SITE}${p.path}">
-  <meta property="og:image" content="${IMAGE}">
+  <meta property="og:image" content="${p.image ? SITE + p.image : IMAGE}">
   <meta property="og:locale" content="${s.lang === 'he' ? 'he_IL' : 'en_US'}">
-  <meta name="twitter:card" content="summary">
+  <meta name="twitter:card" content="${p.image ? 'summary_large_image' : 'summary'}">
   <link rel="icon" type="image/png" href="/assets/favicon-32x32.png" sizes="32x32">
   <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
   <script type="application/ld+json">${JSON.stringify(ld)}</script>
@@ -105,7 +105,7 @@ function render(p) {
     <h1>${esc(p.h1)}</h1>
 ${p.body.trim().split('\n').map(l => '    ' + l).join('\n')}
     <div class="cta">
-      <a class="btn primary" href="${s.start.href}">${esc(s.start.label)}</a>
+      <a class="btn primary" href="${esc((p.start || s.start).href)}">${esc((p.start || s.start).label)}</a>
       <a class="btn secondary" href="${s.join.href}">${esc(s.join.label)}</a>
     </div>
     <nav class="more">
@@ -113,6 +113,18 @@ ${p.body.trim().split('\n').map(l => '    ' + l).join('\n')}
     </nav>
   </main>
   <footer>${esc(s.footer)}</footer>
+  <script>
+    // Keep a post's ?via= tag on the way into the game, so the game records which post it came from.
+    (function () {
+      var m = /[?&]via=([a-z0-9-]{1,40})/i.exec(location.search);
+      if (!m) return;
+      var links = document.querySelectorAll('a.btn');
+      for (var i = 0; i < links.length; i++) {
+        var h = links[i].getAttribute('href');
+        links[i].setAttribute('href', h + (h.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1]);
+      }
+    })();
+  </script>
 </body>
 </html>
 `;

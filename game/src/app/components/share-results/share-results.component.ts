@@ -18,6 +18,7 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
     @Input() pin: string;
     @Input() players: CardPlayer[];
     locale = 'en';
+    pack: string = null;
     open: boolean;
     loading: boolean;
     copied: boolean;
@@ -36,6 +37,7 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.apiService.getGameLocale(this.pin).then(locale => this.locale = locale || 'en');
+        this.apiService.getGamePack(this.pin).then(pack => this.pack = pack || null);
     }
 
     ngOnDestroy() {
@@ -83,7 +85,7 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         if (!this.blob) {
             this.loading = true;
             try {
-                this.blob = await this.resultsCardService.render(this.players || [], this.me, this.locale);
+                this.blob = await this.resultsCardService.render(this.players || [], this.me, this.locale, this.pack);
                 this.file = new File([this.blob], 'bullshit-results.png', { type: 'image/png' });
                 this.objectUrl = URL.createObjectURL(this.blob);
                 this.previewUrl = this.sanitizer.bypassSecurityTrustUrl(this.objectUrl);

@@ -21,7 +21,7 @@ const en = {
 const he = {
     lang: 'he',
     dir: 'rtl',
-    start: { href: '/create-game', label: 'פותחים משחק' },
+    start: { href: '/create-game?lang=he', label: 'פותחים משחק' },
     join: { href: '/join-game', label: 'מצטרפים עם קוד' },
     nav: [
         { href: '/he/how-to-play', label: 'איך משחקים' },
@@ -152,6 +152,8 @@ module.exports = [
     },
     {
         path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en,
+        start: { href: '/create-game?lang=en&pack=hanukkah', label: 'Start a Hanukkah game' },
+        image: '/assets/og-hanukkah-en.png',
         title: 'A Hanukkah party game for the whole family, free on your phones',
         description: 'Eight nights, one family, a lot of latkes. Bullshit is a free bluffing trivia game everyone plays on their own phone after candle lighting. No download.',
         h1: 'A Hanukkah game for after the candles',
@@ -164,12 +166,15 @@ module.exports = [
   <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, not know facts.</li>
   <li><strong>Up to 8 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
   <li><strong>Free, no app.</strong> Cousins who arrive late join with the PIN in seconds.</li>
-  <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together.</li>
+  <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
+  <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together. Save your group as a crew and the scoreboard carries over from night to night.</li>
 </ul>
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {
         path: '/he/hanukkah', twin: '/hanukkah-party-game', site: he,
+        start: { href: '/create-game?lang=he&pack=hanukkah', label: 'פותחים משחק חנוכה' },
+        image: '/assets/og-hanukkah-he.png',
         title: 'משחק לחנוכה לכל המשפחה, חינם בטלפון',
         description: 'שמונה לילות, משפחה אחת והרבה סופגניות. בולשיט הוא משחק בלוף וטריוויה חינמי שכל אחד משחק מהטלפון שלו אחרי הדלקת הנרות. בלי הורדה.',
         h1: 'משחק לחנוכה, לאחרי הדלקת הנרות',
@@ -182,7 +187,8 @@ module.exports = [
   <li><strong>מגיל 10 בערך</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות.</li>
   <li><strong>עד 8 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
   <li><strong>חינם, בלי אפליקציה.</strong> בני דודים שמגיעים באיחור מצטרפים עם הקוד תוך שניות.</li>
-  <li><strong>שמונה לילות, שאלות חדשות.</strong> בסוף משחק לוחצים שוב, ואותה חבורה ממשיכה למשחק חדש.</li>
+  <li><strong>שאלות חנוכה.</strong> במשחק חנוכה יש שלוש שאלות חנוכה בכל משחק: האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג, ועוד.</li>
+  <li><strong>שמונה לילות, שאלות חדשות.</strong> בסוף משחק לוחצים שוב, ואותה חבורה ממשיכה למשחק חדש. שומרים את החבורה, וטבלת הניקוד ממשיכה מלילה ללילה.</li>
 </ul>
 <p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
     },

@@ -32,6 +32,15 @@
                     </label>
                 </p>
 
+                <ng-container *ngIf="pack">
+                    <label>Special:</label>
+                    <p class="control">
+                        <label class="checkbox vertical pack-option">
+                            <input type="checkbox" name="usePack" [(ngModel)]="usePack"> 🕎 {{ packLabel }}
+                        </label>
+                    </p>
+                </ng-container>
+
                 <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
             </div>
 

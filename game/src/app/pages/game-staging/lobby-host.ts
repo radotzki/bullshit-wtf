@@ -100,3 +100,13 @@ export function lobbyText(view: LobbyHostView, playerCount: number, locale: stri
 
     return { message, count: t.count(playerCount), rtl: he };
 }
+
+/** The lobby line for a seasonal pack game, or null. */
+export function packBanner(pack: string, locale: string): string {
+    if (pack !== 'hanukkah') {
+        return null;
+    }
+    return locale === 'he'
+        ? 'מהדורת חנוכה: יש במשחק הזה שאלות חנוכה חדשות'
+        : 'Hanukkah edition: new Hanukkah questions in this game';
+}

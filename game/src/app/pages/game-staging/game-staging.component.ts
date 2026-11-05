@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { lobbyHost, lobbyText, LobbyText, HOST_GRACE_MS } from './lobby-host';
+import { lobbyHost, lobbyText, LobbyText, HOST_GRACE_MS, packBanner } from './lobby-host';
 
 @Component({
     selector: 'app-game-staging',
@@ -29,7 +29,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private hasPresenter: boolean;
     private creator: string = null;
     private myUid: string = null;
-    private locale = 'en';
+    locale = 'en';
+    packBanner: string = null;
     private arrivedAt = Date.now();
     private hostLoaded = false;
     private graceTimer: any;
@@ -65,12 +66,14 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             // Unreadable until the database rules that expose `creator` are deployed.
             optional(this.apiService.getGameCreator(this.pin), null),
             optional(this.apiService.getGameLocale(this.pin), 'en'),
+            this.apiService.getGamePack(this.pin),
             this.presenter ? Promise.resolve(null) : (user && user.uid) ? Promise.resolve(user.uid) : this.apiService.currentUid(),
         ]).then((found: any[]) => {
-            const [hasPresenter, creator, locale, myUid] = found;
+            const [hasPresenter, creator, locale, pack, myUid] = found;
             this.hasPresenter = !!hasPresenter;
             this.creator = typeof creator === 'string' && creator ? creator : null;
             this.locale = locale === 'he' ? 'he' : 'en';
+            this.packBanner = packBanner(pack, this.locale);
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
             this.hostLoaded = true;
             this.updateLobby();
