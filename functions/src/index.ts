@@ -10,7 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
-import { startGame } from './controllers/start';
+import { startGame, hostHere } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
@@ -108,12 +108,23 @@ exports.crewRematch = functions.https.onRequest((req, res) => {
     });
 });
 
-// START in the lobby. In a game with a host key only the host's phone (or the big screen) may start it:
-// see startVerdict in controllers/start.ts.
+// START in the lobby. In a game with a host key only the host's phone may start it, unless the host
+// never joined within 90 s or has been gone 5 minutes: see startVerdict in controllers/start.ts.
 exports.startGame = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         try {
             return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey)));
+        } catch (e) {
+            return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
+        }
+    });
+});
+
+// The host's lobby page reports in, so the group can start without a host whose phone died.
+exports.hostHere = functions.https.onRequest((req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
         } catch (e) {
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
         }

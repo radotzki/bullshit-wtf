@@ -62,6 +62,8 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
             forked.hostKey = hostKey;
             // Only clients that start through startGame send a key with Replay.
             forked.serverStart = true;
+            // The player who pressed Replay is in the new lobby now (see hostHere).
+            forked.hostSeen = Date.now();
         }
     }
     if (Object.keys(players).some(k => players[k] && players[k].host)) {

@@ -16,7 +16,7 @@ function load() {
     return mod.exports;
 }
 
-const { lobbyHost, lobbyText, firstFriend, HOST_GRACE_MS } = load();
+const { lobbyHost, lobbyText, firstFriend, HOST_GRACE_MS, HOST_GONE_MS, HOST_PING_MS } = load();
 
 const alice = { nickname: 'Alice', score: 0, uid: 'uid-alice' };
 const ben = { nickname: 'Ben', score: 0, uid: 'uid-ben' };
@@ -241,4 +241,49 @@ test('a game with neither creator nor host key is still open to all', () => {
     const v = keyView({ hasHost: false, players: [benNoUid], myPid: 'p-ben' });
     assert.strictEqual(v.canStart, true);
     assert.strictEqual(v.alone, false);
+});
+
+// ---- A joined host whose phone died ----
+const marked = [Object.assign({ pid: 'pa', host: true }, alice), Object.assign({ pid: 'pb' }, ben), Object.assign({ pid: 'pc' }, chen)];
+
+test('a guest waits for a joined host who reported in recently', () => {
+    const v = view({ creator: null, hasHost: true, players: marked, myPid: 'pb', hostAwayMs: HOST_GONE_MS - 1 });
+    assert.strictEqual(v.canStart, false);
+    assert.strictEqual(v.wait, 'host');
+    assert.strictEqual(v.hostGone, undefined);
+});
+
+test('once the joined host has been gone HOST_GONE_MS (5 minutes), anyone may start, and the lobby says why', () => {
+    const v = view({ creator: null, hasHost: true, players: marked, myPid: 'pb', hostAwayMs: HOST_GONE_MS });
+    assert.strictEqual(v.canStart, true);
+    assert.strictEqual(v.hostGone, 'Alice');
+    assert.strictEqual(lobbyText(v, 3, 'en').message, 'Alice seems to be gone. Anyone can press START');
+    const he = lobbyText(v, 3, 'he');
+    assert.ok(he.message.indexOf('Alice') >= 0 && he.message.indexOf('START') >= 0);
+    assert.strictEqual(he.rtl, true);
+    // The big screen too.
+    const big = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, players: marked, hostAwayMs: HOST_GONE_MS * 3 });
+    assert.strictEqual(big.canStart, true);
+});
+
+test('no host clock (older games, or rules not deployed yet): guests keep waiting for the host', () => {
+    for (const hostAwayMs of [null, undefined]) {
+        const v = view({ creator: null, hasHost: true, players: marked, myPid: 'pb', hostAwayMs, waitedMs: HOST_GRACE_MS * 10 });
+        assert.strictEqual(v.canStart, false);
+        assert.strictEqual(v.wait, 'host');
+    }
+});
+
+test('the host itself is never told it is gone', () => {
+    const v = view({ creator: null, hasHost: true, players: marked, myPid: 'pa', hostAwayMs: HOST_GONE_MS * 3 });
+    assert.strictEqual(v.canStart, true);
+    assert.ok(!v.hostGone);
+});
+
+test('the host reports in several times within the gone time', () => {
+    assert.ok(HOST_GONE_MS / HOST_PING_MS >= 4);
+});
+
+test('the host-gone wait is 5 minutes, so a host inviting friends in WhatsApp keeps their game', () => {
+    assert.strictEqual(HOST_GONE_MS, 5 * 60 * 1000);
 });

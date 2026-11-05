@@ -21,9 +21,9 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ## Deploy (production)
 
 ```sh
-npm run prod:deploy-functions   # 17 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 18 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
-npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
+npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 ```
 
 Round-1 lie helper: run `functions/bigquery/2026-11-round1-coach.sql` in BigQuery before deploying
@@ -38,7 +38,13 @@ Host-only START on the server: the lobby's START calls the `startGame` function,
 made with a host key only for the phone that brings that key, big screen or not (the big screen only
 shows the lobby; it starts only games with no host key). Games made by this
 client carry `serverStart`, and for them the server ignores START ticks and the rules refuse writing
-`tick` in the lobby. Games made by an older client keep starting by tick. Release order: functions
+`tick` in the lobby. Games made by an older client keep starting by tick.
+
+Host gone: in a `serverStart` game the host's lobby page calls `hostHere` every 20 s with its key, and
+the server stores its own time in `games/$pin/hostSeen` (the host's join and Replay set it too). Once a
+joined host has not reported in for 5 minutes, startGame lets anyone start, and the other phones show START
+with "<host> seems to be gone". Without the rules deploy nobody sees START early, but the server still
+allows it. Release order: functions
 (startGame must exist before the site calls it), then rules, then the site.
 
 Deploy functions first, then the game: the new client reads the error `message` and

@@ -44,6 +44,9 @@ export interface GameScheme {
     serverStart?: boolean;
     // This game has a host marked by hostKey (readable): other phones wait for that host to join.
     hasHost?: boolean;
+    // Server time the host's lobby page last reported in (serverStart games only, written only by the
+    // server for the phone with the host key). Readable: when it is 90 s old, anyone may start.
+    hostSeen?: number;
     origin?: GameOrigin;
     parent?: string;         // PIN of the finished game this one was replayed from
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.

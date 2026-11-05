@@ -70,7 +70,7 @@ Module._load = function (request, parent, isMain) {
 
 const dist = path.join(__dirname, '..', 'dist', 'controllers');
 const { newGame } = require(path.join(dist, 'new-game'));
-const { startVerdict, HOST_GRACE_MS } = require(path.join(dist, 'start'));
+const { startVerdict, HOST_GRACE_MS, HOST_GONE_MS } = require(path.join(dist, 'start'));
 const { tick } = require(path.join(dist, 'tick'));
 const { fork } = require(path.join(dist, 'fork'));
 const { join } = require(path.join(dist, 'join'));
@@ -242,4 +242,93 @@ test('Replay with a key but no player id stores no key, so the new game keeps th
     const { pin } = await hostedLobby();
     const forked = await call('fork', { pin, hostKey: 'N'.repeat(24) });
     assert.strictEqual('hostKey' in db.games[forked.body.pin], false);
+});
+
+// ---- A joined host whose phone died: the group may start once the host has been gone HOST_GONE_MS (5 minutes) ----
+
+test('the host joining marks them seen', async () => {
+    const before = Date.now();
+    const { pin } = await hostedLobby();
+    assert.ok(db.games[pin].hostSeen >= before, 'join by the host sets hostSeen');
+});
+
+test('a guest may start once the joined host has been gone HOST_GONE_MS (5 minutes), not before', async () => {
+    const { pin } = await hostedLobby();
+    db.games[pin].hostSeen = Date.now() - (HOST_GONE_MS - 5000);
+    assert.strictEqual((await call('startGame', { pin })).code, 403, 'the host was here 85 s ago');
+    assert.strictEqual(db.games[pin].state.id, GameStaging);
+
+    db.games[pin].hostSeen = Date.now() - HOST_GONE_MS - 1000;
+    const r = await call('startGame', { pin });
+    assert.strictEqual(r.code, 200);
+    assert.strictEqual(db.games[pin].state.id, RoundIntro);
+});
+
+test('the host reporting in keeps guests waiting', async () => {
+    const { pin } = await hostedLobby();
+    db.games[pin].hostSeen = Date.now() - HOST_GONE_MS * 5;
+    const ping = await call('hostHere', { pin, hostKey: KEY });
+    assert.strictEqual(ping.code, 200);
+    assert.deepStrictEqual(ping.body, { seen: true });
+    assert.ok(Date.now() - db.games[pin].hostSeen < 1000);
+    assert.strictEqual((await call('startGame', { pin })).code, 403);
+});
+
+test('a guest cannot report in for the host, so cannot keep or move the host clock', async () => {
+    const { pin } = await hostedLobby();
+    const old = Date.now() - HOST_GONE_MS * 5;
+    db.games[pin].hostSeen = old;
+    for (const hostKey of [undefined, '', OTHER, KEY.toLowerCase()]) {
+        const r = await call('hostHere', { pin, hostKey });
+        assert.strictEqual(r.code, 403);
+        assert.strictEqual(r.body.code, 'NOT_HOST');
+    }
+    assert.strictEqual(db.games[pin].hostSeen, old);
+    assert.strictEqual((await call('hostHere', { pin: 'ZZZZ', hostKey: KEY })).code, 400);
+});
+
+test('reporting in after the start changes nothing', async () => {
+    const { pin } = await hostedLobby();
+    await call('startGame', { pin, hostKey: KEY });
+    const seen = db.games[pin].hostSeen;
+    const r = await call('hostHere', { pin, hostKey: KEY });
+    assert.deepStrictEqual(r.body, { seen: false });
+    assert.strictEqual(db.games[pin].hostSeen, seen);
+});
+
+test('games from the client before this change keep host-only START: no host clock', async () => {
+    seedQuestions();
+    const pin = (await call('newGame', { locale: 'en', count: 5, hostKey: KEY })).body.pin;
+    await call('join', { pin, nickname: 'alice', uid: 0, hostKey: KEY });
+    await call('join', { pin, nickname: 'ben', uid: 0 });
+    assert.strictEqual('hostSeen' in db.games[pin], false);
+    assert.deepStrictEqual((await call('hostHere', { pin, hostKey: KEY })).body, { seen: false });
+    assert.strictEqual('hostSeen' in db.games[pin], false);
+});
+
+test('startVerdict: host gone only with a joined host, serverStart and an old hostSeen', () => {
+    const now = 10000000;
+    const withHost = { p1: { nickname: 'ben', uid: 0, score: 0 }, p2: { nickname: 'alice', uid: 0, score: 0, host: true } };
+    const g = (extra) => Object.assign({ hostKey: KEY, hasHost: true, serverStart: true,
+        state: { id: GameStaging, timestamp: now - HOST_GONE_MS * 10 }, players: withHost }, extra);
+    assert.strictEqual(startVerdict(g({ hostSeen: now - HOST_GONE_MS }), undefined, now), 'host-gone');
+    assert.strictEqual(startVerdict(g({ hostSeen: now - HOST_GONE_MS + 1 }), undefined, now), 'not-host');
+    assert.strictEqual(startVerdict(g({}), undefined, now), 'not-host', 'no host clock: wait for the host');
+    assert.strictEqual(startVerdict(g({ hostSeen: String(now - HOST_GONE_MS * 5) }), undefined, now), 'not-host');
+    assert.strictEqual(startVerdict(g({ hostSeen: now - HOST_GONE_MS * 5, serverStart: undefined }), undefined, now), 'not-host');
+    assert.strictEqual(startVerdict(g({ hostSeen: now - HOST_GONE_MS * 5 }), KEY, now), 'host');
+    // A big screen gets the same answer as any phone.
+    assert.strictEqual(startVerdict(g({ hostSeen: now - HOST_GONE_MS * 5, presenter: true }), undefined, now), 'host-gone');
+});
+
+test('Replay with a host key marks the new host seen', async () => {
+    const { pin, friend } = await hostedLobby();
+    await call('startGame', { pin, hostKey: KEY });
+    const before = Date.now();
+    const next = (await call('fork', { pin, pid: friend, hostKey: 'N'.repeat(24) })).body.pin;
+    assert.ok(db.games[next].hostSeen >= before);
+});
+
+test('the host-gone wait is 5 minutes, the same as the lobby', () => {
+    assert.strictEqual(HOST_GONE_MS, 5 * 60 * 1000);
 });
