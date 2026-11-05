@@ -18,6 +18,8 @@ export const SIGN_IN_WAIT_MS = 1500;
 
 /** The one anonymous sign-in of this page load, shared by every caller. */
 let signingIn: Promise<firebase.User> = null;
+/** Sign-in took longer than a full wait on this page load. */
+let signInSlow = false;
 
 /**
  * Build a real Error from a failed call to a cloud function, keeping the
@@ -88,7 +90,9 @@ export class ApiService {
             signingIn = (async () => {
                 try {
                     const auth = firebase.auth();
-                    return auth.currentUser || await auth.signInAnonymously();
+                    const user = auth.currentUser || await auth.signInAnonymously();
+                    signInSlow = false;
+                    return user;
                 } catch (error) {
                     signingIn = null; // let a later page try again
                     reportError(error, 'signIn');
@@ -102,10 +106,16 @@ export class ApiService {
     /** The signed-in user if sign-in finishes within maxWaitMs, and how long we waited. */
     async userWithin(maxWaitMs: number): Promise<{ user: firebase.User; waitedMs: number }> {
         const started = Date.now();
+        // Once sign-in has outlasted one full wait, the host's next tap (Join after Create) does not wait again.
+        const wait = signInSlow ? 0 : maxWaitMs;
+        let timedOut = false;
         const user = await Promise.race([
             this.warmUpSignIn(),
-            new Promise<firebase.User>(resolve => setTimeout(() => resolve(undefined), maxWaitMs)),
+            new Promise<firebase.User>(resolve => setTimeout(() => { timedOut = true; resolve(undefined); }, wait)),
         ]);
+        if (timedOut) {
+            signInSlow = true;
+        }
         return { user: user || undefined, waitedMs: Date.now() - started };
     }
 
