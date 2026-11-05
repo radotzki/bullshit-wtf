@@ -1,4 +1,4 @@
-import { getQuestion } from './questions';
+import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
 import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline } from './phase';
@@ -66,7 +66,10 @@ function claim(pin: string, key: string): Promise<boolean> {
 async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameScheme> | undefined> {
     switch (game.state.id) {
         case GameState.GameStaging:
-            return { state: updateState(GameState.RoundIntro) };
+            return {
+                state: updateState(GameState.RoundIntro),
+                qids: await pickQuestionsForRoom(game),
+            };
 
         case GameState.RoundIntro:
             return {
@@ -114,8 +117,36 @@ function updateGame(pin: string, update: Partial<GameScheme>) {
     return gamesRef.child(pin).update(update);
 }
 
-function populateQuestion(game: GameScheme, qidx: number) {
-    return getQuestion(game.qids[qidx]).then(q => q.questionText);
+async function populateQuestion(game: GameScheme, qidx: number) {
+    const qid = game.qids[qidx];
+    const question = await getQuestion(qid);
+
+    try {
+        await markQuestionSeen(qid, playerUids(game));
+    } catch (e) {
+        console.error(`Failed to save seen question ${qid}`, e);
+    }
+
+    return question.questionText;
+}
+
+/**
+ * Questions are re-picked when the game starts, because only now do we know
+ * who is in the room. Questions anyone here has already seen are avoided.
+ * On any failure we keep the questions picked when the game was created.
+ */
+async function pickQuestionsForRoom(game: GameScheme) {
+    try {
+        const qids = await randomQuestions(game.locale, game.totalQ, playerUids(game));
+        return qids.length ? qids : game.qids;
+    } catch (e) {
+        console.error('Failed to pick questions for room, keeping original ones', e);
+        return game.qids;
+    }
+}
+
+function playerUids(game: GameScheme): string[] {
+    return Object.keys(game.players || {}).map(k => game.players[k].uid);
 }
 
 async function populateQuestionAnswers(pin: string, game: GameScheme) {
