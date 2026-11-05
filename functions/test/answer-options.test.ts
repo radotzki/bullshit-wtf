@@ -75,7 +75,13 @@ const tests: { [name: string]: () => void } = {
     'retired questions include the male cat riddle'() {
         assert.ok(isRetired('3be6f72c-bead-ebfc-bf09-1ea8e74d02d2'));
         assert.ok(!isRetired('toString'));
-        assert.strictEqual(Object.keys(RETIRED_QUESTIONS).length, 6);
+        assert.strictEqual(Object.keys(RETIRED_QUESTIONS).length, 11);
+    },
+
+    'grim questions are retired in both languages'() {
+        ['c6d5cccb-ec6b-4462-8499-27ca96099048', '8fc05c5b-410b-2951-c6a8-8c2df1c3c268',
+         '29b26a02-2fcd-bb90-dd72-53dd9a42f4c8', 'fc8b9867-7bd5-4db2-9d5d-a64eecb7c954',
+         'a461ea8a-7306-3387-0bfe-0cafba3a36a0'].forEach(id => assert.ok(isRetired(id), id));
     },
 };
 

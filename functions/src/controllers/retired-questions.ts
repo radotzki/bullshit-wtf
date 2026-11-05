@@ -7,6 +7,11 @@
  * the bank on 2026-11-05: 17 of 314 questions have no blank; these 6 are the
  * ones whose answer most people already know. The other 11 stay in play.
  *
+ * A second review (2026-11-05) retired questions whose true answer sours a
+ * party: suicide, domestic violence, and setups (9/11, the KKK) that pull
+ * players toward writing hate or terror jokes as their lies. Rude, gross and
+ * merely dark-but-silly questions stay: that is the game's tone.
+ *
  * To bring one back, delete its line.
  */
 export const RETIRED_QUESTIONS: { [qid: string]: string } = {
@@ -16,6 +21,12 @@ export const RETIRED_QUESTIONS: { [qid: string]: string } = {
     '9195e93c-3173-97b7-9b19-e6c2f805f7fd': 'largest organ in the human body (skin)',
     '43283937-46bd-64c8-9e79-342a9951d668': "the only food that doesn't spoil (honey)",
     '3cec54c0-d575-7b85-25d3-618c643c560b': 'vitamin C deficiency (scurvy)',
+    // Grim true answers.
+    'c6d5cccb-ec6b-4462-8499-27ca96099048': 'grim: Blue Whale game, to win you must (commit suicide)',
+    '8fc05c5b-410b-2951-c6a8-8c2df1c3c268': 'grim: man assaulted his wife and locked her in a shed over a song (ding dong, the witch is dead)',
+    '29b26a02-2fcd-bb90-dd72-53dd9a42f4c8': "grim: DJ Khaled's name before 9/11 (arab attack); invites terror jokes",
+    'fc8b9867-7bd5-4db2-9d5d-a64eecb7c954': "grim: DJ Khaled's name before 9/11, Hebrew (arab attack); invites terror jokes",
+    'a461ea8a-7306-3387-0bfe-0cafba3a36a0': "grim: Oklahoma mayor's husband dressed as (KKK members); invites hate jokes",
 };
 
 export function isRetired(qid: string): boolean {
