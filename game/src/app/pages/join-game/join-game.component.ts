@@ -4,6 +4,7 @@ import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit } from '@angular/core';
+import { takeJoinSource } from '../../services/join-source';
 
 @Component({
     selector: 'app-join-game',
@@ -16,6 +17,7 @@ export class JoinGameComponent implements OnInit {
     loading: boolean;
     errorMsg: string;
     nicknameState: boolean;
+    pinInUrl: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -28,6 +30,7 @@ export class JoinGameComponent implements OnInit {
         this.pin = this.activatedRoute.snapshot.params['pin'];
 
         if (this.pin) {
+            this.pinInUrl = true;
             this.nicknameState = true;
         }
     }
@@ -64,7 +67,8 @@ export class JoinGameComponent implements OnInit {
         let uid;
 
         // signInAnonymously reports its own failure and resolves to undefined.
-        const user = await this.apiService.signInAnonymously(this.pin, this.nickname);
+        const via = takeJoinSource(this.pin, this.activatedRoute.snapshot.queryParams['via'], this.pinInUrl);
+        const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
         uid = user ? user.uid : 0;
 
         this.apiService.join(this.pin, this.nickname, uid)

@@ -3,22 +3,22 @@ import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 
-export async function fork(pin: string) {
+export async function fork(pin: string, creator?: string) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
     return incGameCounter().then(async gameCounter => {
         const forkedGamePin = generateGameName(gameCounter);
         const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game));
-        const forkedGame = createFork(game, questions);
+        const forkedGame = createFork(pin, game, questions, creator);
 
         return gamesRef.child(forkedGamePin).set(forkedGame)
             .then(() => gamesRef.child(pin).child('fork').set(forkedGamePin));
     });
 }
 
-function createFork(game: GameScheme, qids: string[]): GameScheme {
-    return {
+function createFork(parent: string, game: GameScheme, qids: string[], creator?: string): GameScheme {
+    const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
             timestamp: Date.now(),
@@ -32,7 +32,17 @@ function createFork(game: GameScheme, qids: string[]): GameScheme {
         tick: 0,
         presenter: game.presenter,
         players: resetPlayersScore(game.players),
+        origin: 'replay',
+        parent,
+    };
+
+    // The browser that pressed Replay hosts the new game; fall back to the old host.
+    const host = creator || game.creator;
+    if (host) {
+        forked.creator = host;
     }
+
+    return forked;
 }
 
 function resetPlayersScore(players: GamePlayers) {

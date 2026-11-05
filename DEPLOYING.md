@@ -111,6 +111,40 @@ build output.
   browser and compared with live; Sentry payloads captured in the browser show
   "Calling newGame failed with status 500", tag `where: createGame`, code and status.
 
+## Step zero analytics and search basics (second change)
+
+**Before deploying the functions**, add the new BigQuery columns once:
+
+```sh
+bq query --use_legacy_sql=false --project_id=bullshit-wtf-prod < functions/bigquery/2026-11-step-zero.sql
+```
+
+It only adds NULLABLE columns: `creator_uid`, `origin`, `parent_pin` on `opened_games`
+and `closed_games`, and `via` on `users`. If it is skipped, inserts still succeed (the
+functions set `ignoreUnknownValues`) but the new fields are dropped, so nothing is measured.
+The same file holds the read-only queries for host return rate and joins by source.
+
+What it records:
+- `creator_uid`: the anonymous uid of the browser that created the game, or pressed
+  Replay. The client now signs in anonymously before creating, which reuses the uid
+  the browser already has.
+- `origin`: `create` or `replay`; `parent_pin`: the finished game a replay came from.
+- `users.via`: `pin` (typed), `link` (join link without a tag), `qr`, `results`, `host`
+  (the creator joining their own game), `replay`, `other`; NULL from old clients still
+  open in a tab.
+
+Search basics, written into `game/dist` by `game/seo/build-pages.js` after the Angular
+build: eight plain HTML pages (how to play, party games on your phone, Hanukkah, Purim;
+English at `/…`, Hebrew at `/he/…`, linked with hreflang), `sitemap.xml` and
+`robots.txt`. `firebase.json` turns on `cleanUrls`, so `/how-to-play` serves
+`how-to-play.html` (and `/how-to-play.html` redirects to it). The home page gets a real
+title and description, Open Graph tags as `property` (chat apps ignore `name`), and
+structured data. After deploying, submit `https://bullshit.wtf/sitemap.xml` in Google
+Search Console (needs the owner's Google sign-in).
+
+Checks: `cd functions && npm test` (all function tests, no Firebase project or
+credentials needed; `PRINT_ROWS=1` prints every row the run would send to BigQuery).
+
 ## Known leftovers
 
 - npm audit reports moderate issues in transitive Google libraries (functions) and many

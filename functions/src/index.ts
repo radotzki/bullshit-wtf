@@ -24,6 +24,11 @@ function errorBody(e: any) {
     return { message: String(e), code: 'INTERNAL' };
 }
 
+// Firebase anonymous uids are short alphanumeric strings; ignore anything else.
+function cleanUid(uid: any): string | undefined {
+    return typeof uid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(uid) ? uid : undefined;
+}
+
 exports.time = functions.https.onRequest((req, res) => {
     cors(req, res, () => {
         res.send({ now: Date.now() });
@@ -34,8 +39,9 @@ exports.newGame = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         const locale = req.body.locale;
         const count = req.body.count;
+        const uid = cleanUid(req.body.uid);
         try {
-            const pin = await newGame(locale, count);
+            const pin = await newGame(locale, count, uid);
             return res.send({ pin });
         } catch (e) {
             console.error('newGame failed', e);
@@ -47,9 +53,10 @@ exports.newGame = functions.https.onRequest((req, res) => {
 exports.fork = functions.https.onRequest((req, res) => {
     cors(req, res, async () => {
         const pin = req.body.pin;
+        const uid = cleanUid(req.body.uid);
 
         try {
-            await fork(pin);
+            await fork(pin, uid);
             return res.status(200).send({});
         } catch (e) {
             return res.status(400).send(errorBody(e));
@@ -104,11 +111,12 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
         const uid = req.body.uid;
         const pin = req.body.pin;
         const nickname = req.body.nickname;
+        const via = analytics.cleanVia(req.body.via);
         const ip = req.headers['x-forwarded-for'];
         const useragent = req.headers['user-agent'];
 
         try {
-            await analytics.onJoinGame(uid, ip, useragent, pin, nickname);
+            await analytics.onJoinGame(uid, ip, useragent, pin, nickname, via);
         } catch (e) {
             console.error('onJoinGame analytics failed', e);
         }

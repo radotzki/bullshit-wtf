@@ -2,11 +2,11 @@ import { randomQuestions } from './questions';
 import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
-export async function newGame(locale, count) {
+export async function newGame(locale, count, creator?: string) {
     return incGameCounter().then(async gameCounter => {
         const gamePin = generateGameName(gameCounter);
         const questions = await randomQuestions(locale, count);
-        const game = emptyGame(locale, count, questions);
+        const game = emptyGame(locale, count, questions, creator);
 
         return gamesRef.child(gamePin).set(game).then(() => gamePin);
     });
@@ -33,8 +33,8 @@ function leftPad(gameCounter: string) {
     return gameCounter;
 }
 
-function emptyGame(locale: string, count: number, questions: string[]): GameScheme {
-    return {
+function emptyGame(locale: string, count: number, questions: string[], creator?: string): GameScheme {
+    const game: GameScheme = {
         state: {
             id: GameState.GameStaging,
             timestamp: Date.now(),
@@ -47,5 +47,12 @@ function emptyGame(locale: string, count: number, questions: string[]): GameSche
         qids: questions,
         tick: 0,
         presenter: false,
+        origin: 'create',
+    };
+
+    if (creator) {
+        game.creator = creator;
     }
+
+    return game;
 }
