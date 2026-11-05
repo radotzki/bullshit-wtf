@@ -60,11 +60,18 @@ export function nightLabel(d: Date, locale: string) {
     return `${day}, ${timeValue(d)}`;
 }
 
+/** " Alice leads 4 to 3." / " Who takes the first one?" / "": a full stop only when the line has none. */
+function leaderSentence(leader: string) {
+    const l = (leader || '').trim();
+    return l ? ` ${/[.!?]$/.test(l) ? l : l + '.'}` : '';
+}
+
 export function nightText(d: Date, info: NightInfo) {
     const when = nightLabel(d, info.locale);
+    const leader = leaderSentence(info.leader);
     return info.locale === 'he'
-        ? `ערב בולשיט ל${info.crewName}: ${when}. ${info.leader}. הטבלה והמשחק החוזר כאן:`
-        : `Bullshit game night for ${info.crewName}: ${when}. ${info.leader}. Scores and rematch here:`;
+        ? `ערב בולשיט ל${info.crewName}: ${when}.${leader} הטבלה והמשחק החוזר כאן:`
+        : `Bullshit game night for ${info.crewName}: ${when}.${leader} Scores and rematch here:`;
 }
 
 export function nightTitle(info: NightInfo) {
