@@ -104,6 +104,8 @@ export interface RevealAnswer {
     realAnswer: boolean;
     houseLie: boolean;
     points: number;
+    // House lies only: what each picker actually lost (a house lie never takes a score below zero).
+    pointsBy?: { [pid: string]: number };
 }
 
 export interface Question {

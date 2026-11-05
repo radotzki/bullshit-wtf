@@ -142,6 +142,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             realAnswer: !!answer.realAnswer,
             houseLie: !!answer.houseLie,
             points: answer.points || 0,
+            pointsBy: answer.pointsBy,
             pickerIds: answer.selectors || [],
             creatorIds: (answer.creators || []).filter(c => c),
             pickers: (answer.selectors || []).map(pid => this.playerObject(playersArray, pid)).filter(p => p),
@@ -158,7 +159,10 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         if (pickedRow && pickedRow.realAnswer) {
             lines.push(`You found the truth! ${this.signed(pickedRow.points)}`);
         } else if (pickedRow && pickedRow.houseLie) {
-            lines.push(`You fell for our bullshit. ${this.signed(pickedRow.points)}`);
+            const lost = pickedRow.pointsBy && pid in pickedRow.pointsBy ? pickedRow.pointsBy[pid] : pickedRow.points;
+            lines.push(lost < 0
+                ? `You fell for our bullshit. ${this.signed(lost)}`
+                : `You fell for our bullshit. No points to lose yet!`);
         } else if (pickedRow) {
             lines.push(`You fell for ${this.names(pickedRow.creators)}'s bullshit.`);
         } else {
@@ -225,6 +229,7 @@ interface Row {
     realAnswer: boolean;
     houseLie: boolean;
     points: number;
+    pointsBy?: { [pid: string]: number };
     pickerIds: string[];
     creatorIds: string[];
     pickers: Player[];
