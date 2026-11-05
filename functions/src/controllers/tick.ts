@@ -2,6 +2,7 @@ import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
 import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline } from './phase';
+import { pickHouseLies } from './answer-options';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
@@ -159,11 +160,9 @@ async function populateQuestionAnswers(pin: string, game: GameScheme) {
 
 async function populateFakeAnswers(pin: string, game: GameScheme) {
     const question = await getQuestion(game.qids[game.questionIndex]);
-    const allFakeAnswers = question.fakeAnswers;
     const playerAnswers = Object.keys(game.answers || {}).map(k => game.answers[k].text);
-    const uniqueAnswersCount = Array.from(new Set(playerAnswers)).length;
-    const playersCount = Object.keys(game.players).length;
-    const fakeAnswers = allFakeAnswers.slice(0, playersCount - uniqueAnswersCount);
+    const playersCount = Object.keys(game.players || {}).length;
+    const fakeAnswers = pickHouseLies(question.fakeAnswers, playerAnswers, question.realAnswer, playersCount);
     const res: Answers = {};
 
     fakeAnswers.forEach(text => {
