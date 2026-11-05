@@ -57,9 +57,8 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
                 this.showCreators = false;
                 setTimeout(this.revealCreators.bind(this), 3000);
                 this.displayIndex += 1;
-            } else {
-                this.apiService.tick(this.pin, GameState.ScoreBoard);
             }
+            // After the last answer the server moves everyone to the score board.
         }, 7000);
     }
 
