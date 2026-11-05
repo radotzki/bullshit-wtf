@@ -3,6 +3,14 @@
     "public": "game/dist",
     "rewrites": [
       {
+        "source": "/he",
+        "destination": "/he.html"
+      },
+      {
+        "source": "/he/**",
+        "destination": "/he.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

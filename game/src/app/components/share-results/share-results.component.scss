@@ -1,0 +1,52 @@
+.share-results-button {
+    margin-top: 10px;
+}
+
+.share-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .preview {
+        position: relative;
+        width: 100%;
+        max-width: 320px;
+        min-height: 120px;
+        margin-bottom: 1rem;
+
+        img {
+            display: block;
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .15);
+        }
+
+        .loader {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+        }
+    }
+
+    .button + .button {
+        margin-top: 8px;
+    }
+
+    .whatsapp {
+        background-color: #25d366;
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .copied {
+        margin-top: 8px;
+        color: #7a7a7a;
+    }
+}
+
+.modal-card-foot {
+    justify-content: center;
+}
