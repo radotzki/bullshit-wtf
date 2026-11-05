@@ -37,7 +37,11 @@ export interface GameScheme {
     creator?: string;        // anonymous uid of the browser that created or replayed it
     // A one-game secret from the phone that created it, so the lobby knows the host even when that
     // phone's sign-in failed (no uid). Never readable by clients; the matching join gets `host: true`.
+    // The server starts such a game only for the phone that brings this key (or the big screen).
     hostKey?: string;
+    // Made by a client that starts games through the startGame function: a tick (which any phone
+    // can write) never starts it. Games from older clients lack it, so their START tick still works.
+    serverStart?: boolean;
     // This game has a host marked by hostKey (readable): other phones wait for that host to join.
     hasHost?: boolean;
     origin?: GameOrigin;

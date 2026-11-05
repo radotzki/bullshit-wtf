@@ -13,6 +13,8 @@ export interface NewGameOptions {
     campaign?: string;
     // The creating phone's one-game secret (see hostKey in game-model), already cleaned.
     hostKey?: string;
+    // The creating phone starts the game through startGame, so a tick may not start it.
+    serverStart?: boolean;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
@@ -39,6 +41,9 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         if (options.hostKey) {
             game.hostKey = options.hostKey;
             game.hasHost = true;
+            if (options.serverStart) {
+                game.serverStart = true;
+            }
         }
 
         if (options.crew) {

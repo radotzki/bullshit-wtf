@@ -95,3 +95,14 @@ test('nothing moves a finished game', () => {
     assert.strictEqual(tickAllowed(game(S.ScoreBoardFinal, 1000), '6:1000', 99999), false);
     assert.strictEqual(tickAllowed(game(S.ScoreBoardFinal, 1000), 7, 99999), false);
 });
+
+test('a START tick never starts a game that starts through startGame; it still starts older games', () => {
+    const hosted = Object.assign(game(S.GameStaging, 1000), { hostKey: 'K'.repeat(24), serverStart: true });
+    assert.strictEqual(tickAllowed(hosted, S.RoundIntro, 1000), false);
+    assert.strictEqual(tickAllowed(hosted, '0:1000', 1000), false);
+    const older = Object.assign(game(S.GameStaging, 1000), { hostKey: 'K'.repeat(24) });
+    assert.strictEqual(tickAllowed(older, S.RoundIntro, 1000), true);
+    // later phases of a hosted game still move on by tick
+    const playing = Object.assign(game(S.ShowQuestion, 1000, 26000), { serverStart: true });
+    assert.strictEqual(tickAllowed(playing, '2:1000', 26000), true);
+});

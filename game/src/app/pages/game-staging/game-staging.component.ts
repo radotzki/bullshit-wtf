@@ -1,5 +1,5 @@
 import { reportError } from './../../sentry/sentry.module';
-import { GamePlayers, GameState } from './../../game-model';
+import { GamePlayers } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import { Howl } from 'howler';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
@@ -60,7 +60,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.loadHost();
     }
 
-    /** Find out who may start: the big screen, the game's creator, or (if unknown) anyone. */
+    /** Find out who may start: the game's host, or (if unknown) the big screen or anyone. */
     private loadHost() {
         const user = this.sessionService.user;
         const optional = (p: Promise<any>, fallback: any) => p.catch(() => fallback);
@@ -101,6 +101,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         const view = lobbyHost({
             hasPresenter: this.hasPresenter,
             isPresenter: this.presenter,
+            holdsHostKey: this.apiService.holdsHostKey(this.pin),
             creator: this.creator,
             hasHost: this.hasHost,
             myUid: this.myUid,
@@ -140,9 +141,14 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.tick(this.pin, GameState.RoundIntro)
+        this.apiService.startGame(this.pin)
             .catch(err => {
                 this.loading = false;
+                if (err && err.code === 'NOT_HOST') {
+                    // Only the host's phone may start this game; the server said this is not it.
+                    this.errorMsg = this.locale === 'he' ? 'רק המארח יכול להתחיל את המשחק' : 'Only the host can start this game';
+                    return;
+                }
                 reportError(err, 'startGame', { pin: this.pin });
                 this.errorMsg = 'oops, something went wrong. Please try again';
             });

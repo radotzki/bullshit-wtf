@@ -21,7 +21,7 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ## Deploy (production)
 
 ```sh
-npm run prod:deploy-functions   # 15 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 17 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
 npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 ```
@@ -33,6 +33,13 @@ functions, rules, game. Without the new rules the game simply shows no helper.
 Always deploy all functions after a change to game logic (`--only functions`, not one function by name).
 Every function carries its own copy of the shared code, and `phaseTimer`, `answer`, `onRevealDone` and
 `onAnswerSelection` move the game on as well as `tick`. Deploying `tick` alone left the old house lies live.
+
+Host-only START on the server: the lobby's START calls the `startGame` function, which starts a game
+made with a host key only for the phone that brings that key, big screen or not (the big screen only
+shows the lobby; it starts only games with no host key). Games made by this
+client carry `serverStart`, and for them the server ignores START ticks and the rules refuse writing
+`tick` in the lobby. Games made by an older client keep starting by tick. Release order: functions
+(startGame must exist before the site calls it), then rules, then the site.
 
 Deploy functions first, then the game: the new client reads the error `message` and
 `code` that the new functions send.

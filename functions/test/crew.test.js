@@ -205,9 +205,10 @@ test('Rematch makes one crew game with fresh questions, and later taps join the 
 
     // once that game starts, the next tap makes a new game
     db.games[r.body.pin].state = { id: RoundIntro, timestamp: Date.now() };
-    const third = await call('crewRematch', { crew: body.id, hostKey: 'C'.repeat(24) });
+    const third = await call('crewRematch', { crew: body.id, hostKey: 'C'.repeat(24), serverStart: true });
     assert.strictEqual(third.body.created, true);
     assert.strictEqual(db.games[third.body.pin].hostKey, 'C'.repeat(24), 'a rematch without a uid still marks its host');
+    assert.strictEqual(db.games[third.body.pin].serverStart, true, 'a current client starts its rematch through startGame');
     assert.strictEqual(db.games[third.body.pin].hasHost, true);
     assert.notStrictEqual(third.body.pin, r.body.pin);
 
