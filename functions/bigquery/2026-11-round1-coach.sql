@@ -4,7 +4,7 @@
 -- old rows NULL); until they exist, inserts still succeed (ignoreUnknownValues) without them.
 
 CREATE TABLE IF NOT EXISTS `bullshit-wtf-prod.analytics.question_results` (
-  time TIMESTAMP NOT NULL OPTIONS (description = 'When the question''s scoreboard ended'),
+  time TIMESTAMP NOT NULL OPTIONS (description = "When the question's scoreboard ended"),
   id STRING NOT NULL OPTIONS (description = 'Game PIN'),
   q_index INT64 NOT NULL OPTIONS (description = 'Question number in the game, from 0'),
   round INT64 NOT NULL OPTIONS (description = 'Round, 1 to 3'),
