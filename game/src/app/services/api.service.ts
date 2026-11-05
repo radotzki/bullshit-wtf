@@ -168,6 +168,30 @@ export class ApiService {
         return this.get<string>(this.gamesRef.child(pin).child('locale'));
     }
 
+    /** What the writing screen needs to decide on the round-1 lie helper. */
+    async getLieHelperInfo(pin: string) {
+        pin = pin.toUpperCase();
+        const game = this.gamesRef.child(pin);
+        const [coach, roundIndex, questionIndex, locale] = await Promise.all([
+            this.get<boolean>(game.child('coach')).catch(() => false),
+            this.get<number>(game.child('roundIndex')),
+            this.get<number>(game.child('questionIndex')),
+            this.get<string>(game.child('locale')),
+        ]);
+        return { coach: !!coach, roundIndex: roundIndex || 0, questionIndex: questionIndex || 0, locale };
+    }
+
+    /** This player's ready-made lies for the current question (round 1 of a coach game), or []. */
+    async getMyIdeas(pin: string): Promise<string[]> {
+        pin = pin.toUpperCase();
+        const user = this.sessionService.user;
+        if (!user || !user.pid) {
+            return [];
+        }
+        const ideas = await this.get<string[]>(this.gamesRef.child(pin).child('ideas').child(user.pid)).catch(() => null);
+        return Array.isArray(ideas) ? ideas.filter(i => typeof i === 'string' && i) : [];
+    }
+
     async didAnswerSubmitted(pin: string) {
         pin = pin.toUpperCase();
         const pid = this.sessionService.user.pid;

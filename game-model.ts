@@ -45,6 +45,11 @@ export interface GameScheme {
     pack?: string;
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay.
     campaign?: string;
+    // The round-1 lie helper is on for this game (a 50/50 test, set when the game is made).
+    coach?: boolean;
+    // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
+    // Each player can read only their own (games/$pin/ideas/$pid).
+    ideas?: { [pid: string]: string[] };
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';
@@ -92,6 +97,8 @@ export interface Answer {
     houseLie: boolean;
     realAnswer: boolean;
     score?: number;
+    // The player sent one of the lies the round-1 helper offered them.
+    idea?: boolean;
 }
 
 export interface AnswerSelections {

@@ -5,6 +5,8 @@ import { tickAllowed, stateKey, withDeadline } from './phase';
 import { pickHouseLies } from './answer-options';
 import { houseLiePoints } from './house-lie';
 import { cleanHouseLies } from './house-lie-cleanup';
+import { pickIdeas, questionResult } from './lie-helper';
+import { onQuestionResult } from './analytics';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
@@ -77,6 +79,7 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
             return {
                 state: updateState(GameState.ShowQuestion),
                 currentQ: await populateQuestion(game, game.questionIndex),
+                ideas: await ideasFor(game, game.questionIndex),
                 answers: {},
                 answerSelections: {},
                 revealAnswers: null,
@@ -131,6 +134,26 @@ async function populateQuestion(game: GameScheme, qidx: number) {
     }
 
     return question.questionText;
+}
+
+/**
+ * The round-1 lie helper: ready-made lies for each player, for the question at `qidx`.
+ * Only in round 1 of a coach game; null everywhere else, which also clears the last question's.
+ */
+async function ideasFor(game: GameScheme, qidx: number) {
+    if (!game.coach || (game.roundIndex || 0) !== 0) {
+        return null;
+    }
+
+    try {
+        const question = await getQuestion(game.qids[qidx]);
+        const ideas = pickIdeas(cleanHouseLies(question.id, question.fakeAnswers), question.realAnswer, Object.keys(game.players || {}));
+        return Object.keys(ideas).length ? ideas : null;
+    } catch (e) {
+        // The game goes on without the helper.
+        console.error('Failed to pick lie ideas', e);
+        return null;
+    }
 }
 
 /**
@@ -292,13 +315,19 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
     const secondRound = game.questionIndex === Math.floor(game.totalQ / 2) - 1;
     let res;
 
-    await saveQuestionHistory(game, pin);
+    // question_results measures the round-1 helper. It is awaited (a function may stop once it returns),
+    // alongside the history write; a BigQuery failure is logged and never fails the game.
+    await Promise.all([
+        saveQuestionHistory(game, pin),
+        onQuestionResult(questionResult(pin, game)).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
+    ]);
 
     if (secondRound || lastRound) {
         res = {
             state: updateState(GameState.RoundIntro),
             roundIndex: game.roundIndex + 1,
             questionIndex: game.questionIndex + 1,
+            ideas: null,
         };
     } else if (gameOver) {
         res = {
@@ -307,12 +336,14 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             answers: {},
             answerSelections: {},
             revealAnswers: null,
+            ideas: null,
         };
     } else {
         res = {
             state: updateState(GameState.ShowQuestion),
             questionIndex: game.questionIndex + 1,
             currentQ: await populateQuestion(game, game.questionIndex + 1),
+            ideas: await ideasFor(game, game.questionIndex + 1),
             answers: {},
             answerSelections: {},
             revealAnswers: null,

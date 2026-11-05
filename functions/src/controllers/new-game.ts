@@ -1,4 +1,5 @@
 import { randomQuestions } from './questions';
+import { pickCoach } from './lie-helper';
 import { GameScheme, GameState, isPack, cleanCampaign } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
@@ -26,6 +27,11 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         const campaign = cleanCampaign(options.campaign);
         if (campaign) {
             game.campaign = campaign;
+        }
+
+        // The round-1 lie helper, on for half of all games (crew rematches included).
+        if (pickCoach()) {
+            game.coach = true;
         }
 
         if (options.crew) {

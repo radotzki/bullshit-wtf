@@ -1,7 +1,8 @@
 import { getQuestion } from './questions';
-import { GameScheme, GameState } from '../game-model';
+import { Answer, GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { advance } from './tick';
+import { isIdea } from './lie-helper';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
@@ -12,11 +13,18 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
     if (question.realAnswer.toLowerCase() === playerAnswer.toLowerCase()) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
     } else {
-        await gamesRef.child(pin).child('answers').child(pid).set({
+        const stored: Answer = {
             text: playerAnswer.toLowerCase(),
             houseLie: false,
             realAnswer: false,
-        });
+        };
+
+        // Sent one of the round-1 helper's lies: counted for measuring, scored like any other lie.
+        if (isIdea(game.ideas && game.ideas[pid], playerAnswer)) {
+            stored.idea = true;
+        }
+
+        await gamesRef.child(pin).child('answers').child(pid).set(stored);
 
         const totalAnswers = Object.keys(game.answers || {}).length + 1;
         const totalPlayers = Object.keys(game.players).length;

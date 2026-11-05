@@ -23,8 +23,12 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ```sh
 npm run prod:deploy-functions   # 15 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
-npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews)
+npm run prod:deploy-rules       # needed: games/$pin/creator readable (host-only START), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 ```
+
+Round-1 lie helper: run `functions/bigquery/2026-11-round1-coach.sql` in BigQuery before deploying
+the functions (it creates `analytics.question_results`, which every scoreboard writes to). Then
+functions, rules, game. Without the new rules the game simply shows no helper.
 
 Always deploy all functions after a change to game logic (`--only functions`, not one function by name).
 Every function carries its own copy of the shared code, and `phaseTimer`, `answer`, `onRevealDone` and

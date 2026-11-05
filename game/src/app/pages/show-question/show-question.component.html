@@ -15,10 +15,13 @@
         <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()">
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
+            <p *ngIf="helper.hint" class="lie-hint" [class.rtl]="rtl">{{ helper.hint }}</p>
+
             <div class="field">
                 <p class="control">
                     <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text"
-                        name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off">
+                        name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off"
+                        [attr.placeholder]="helper.placeholder">
                     <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try
                         something else</span>
                 </p>
@@ -28,6 +31,13 @@
                 <p class="control">
                     <button type="submit" class="button is-primary is-fullwidth" [class.is-loading]="loading"
                         [disabled]="!answer">SEND</button>
+                </p>
+            </div>
+
+            <div *ngIf="helper.button" class="field">
+                <p class="control">
+                    <button type="button" class="button is-text is-fullwidth give-me-a-lie" [class.rtl]="rtl"
+                        (click)="giveMeALie()">{{ helper.button }}</button>
                 </p>
             </div>
         </form>

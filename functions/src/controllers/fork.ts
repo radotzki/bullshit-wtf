@@ -2,6 +2,7 @@ import { GameScheme, GameState, GamePlayers } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
+import { pickCoach } from './lie-helper';
 
 export async function fork(pin: string, creator?: string) {
     pin = pin.toUpperCase();
@@ -45,6 +46,11 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
     // Replay keeps counting for the same crew.
     if (game.crew) {
         forked.crew = game.crew;
+    }
+
+    // The round-1 lie helper, on for half of all games: each Replay is a new draw.
+    if (pickCoach()) {
+        forked.coach = true;
     }
 
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).
