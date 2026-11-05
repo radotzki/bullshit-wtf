@@ -60,6 +60,31 @@
                     </button>
                     <p *ngIf="copied" class="copied"> Copied! Paste it in your group chat. </p>
                 </div>
+
+                <div class="next-night">
+                    <h4 class="night-title">NEXT GAME NIGHT</h4>
+                    <p class="hint night-hint">Pick a day and time, then send it to the group with a calendar invite.</p>
+                    <div class="night-inputs">
+                        <input class="input" type="date" name="nightDate" [(ngModel)]="nightDate" (ngModelChange)="nightSent = false" aria-label="Day">
+                        <input class="input" type="time" name="nightTime" [(ngModel)]="nightTime" (ngModelChange)="nightSent = false" aria-label="Time" step="900">
+                    </div>
+                    <p class="night-when" dir="auto" *ngIf="nightReady">{{ nightWhen }}</p>
+                    <p class="night-when is-error" *ngIf="nightInPast">That time has passed. Pick a later one.</p>
+
+                    <a class="button is-fullwidth whatsapp night-whatsapp" [class.is-disabled]="!nightReady" [attr.href]="nightWhatsappUrl || null"
+                        target="_blank" rel="noopener" (click)="nightWhatsapp()">
+                        <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                        <span> SEND THE DATE ON WHATSAPP </span>
+                    </a>
+                    <button class="button is-fullwidth night-calendar" [disabled]="!nightReady" (click)="nightCalendar()">
+                        <span class="icon"><i class="fa fa-calendar"></i></span>
+                        <span> CALENDAR INVITE </span>
+                    </button>
+                    <p class="night-google" *ngIf="nightReady">
+                        <a [href]="nightGoogleUrl" target="_blank" rel="noopener" (click)="nightGoogle()">or add it to Google Calendar</a>
+                    </p>
+                    <p class="copied" *ngIf="nightSent"><i class="fa fa-check"></i> Game night: <span dir="auto">{{ nightWhen }}</span></p>
+                </div>
             </div>
         </div>
     </div>
