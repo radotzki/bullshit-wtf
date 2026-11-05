@@ -4,7 +4,8 @@
   "main": "dist/index.js",
   "scripts": {
     "copy-model": "node -e \"require('fs').copyFileSync('../game-model.ts', 'src/game-model.ts')\"",
-    "build": "npm run copy-model && rimraf dist && tsc"
+    "build": "npm run copy-model && rimraf dist && tsc",
+    "test": "npm run copy-model && rimraf dist-test && tsc -p tsconfig.test.json && node dist-test/test/question-picker.test.js"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.6.0",

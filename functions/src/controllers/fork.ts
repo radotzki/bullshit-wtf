@@ -9,7 +9,7 @@ export async function fork(pin: string) {
 
     return incGameCounter().then(async gameCounter => {
         const forkedGamePin = generateGameName(gameCounter);
-        const questions = await randomQuestions(game.locale, game.totalQ);
+        const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game));
         const forkedGame = createFork(game, questions);
 
         return gamesRef.child(forkedGamePin).set(forkedGame)
@@ -38,4 +38,8 @@ function createFork(game: GameScheme, qids: string[]): GameScheme {
 function resetPlayersScore(players: GamePlayers) {
     Object.keys(players).forEach(k => players[k].score = 0);
     return players;
+}
+
+function playerUids(game: GameScheme): string[] {
+    return Object.keys(game.players || {}).map(k => game.players[k].uid);
 }
