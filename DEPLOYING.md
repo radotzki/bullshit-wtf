@@ -21,7 +21,7 @@ with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2
 ## Deploy (production)
 
 ```sh
-npm run prod:deploy-functions   # 18 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 19 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit), 1st gen, Node 22, us-central1
 npm run prod:deploy-game        # hosting
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 ```
@@ -49,6 +49,16 @@ allows it. Release order: functions
 
 Deploy functions first, then the game: the new client reads the error `message` and
 `code` that the new functions send.
+
+## Visit beacon
+
+`game/src/index.html` runs a tiny script before everything else. When a page is hidden or closed
+(up to 3 times), and once at 12 s if the app has still not drawn, it posts one line to the `visit`
+function: first and last path, whether the app started, the first script error, browser language,
+referrer host. The function logs it as `visit {...}` with device and browser from the user agent;
+no IP, no player data. Count visits, stuck loads and how far people got from the function log
+(filter `textPayload:"visit "`). Test phones say `HeadlessChrome` nowhere, so tell them apart by
+time or by the scripted paths.
 
 ## What a deploy changes compared with what is live (checked 2026-11-05)
 
