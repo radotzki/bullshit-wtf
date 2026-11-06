@@ -1,5 +1,7 @@
 import { reportError } from './../sentry/sentry.module';
-import { GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew } from './../game-model';
+import {
+    GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
+} from './../game-model';
 import { SessionService } from './session.service';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { Observable } from 'rxjs/Observable';
@@ -224,6 +226,18 @@ export class ApiService {
     getGamePack(pin: string): Promise<string> {
         pin = pin.toUpperCase();
         return this.get<string>(this.gamesRef.child(pin).child('pack')).catch(() => null);
+    }
+
+    /** Each player's best lie of the game (games/$pin/highlights), for the final screen. */
+    getHighlights(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<Highlights>(this.gamesRef.child(pin).child('highlights'));
+    }
+
+    /** The question highlights were first kept from (0: the whole game), or null for an older game. */
+    getHighlightsFrom(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<number>(this.gamesRef.child(pin).child('highlightsFrom'));
     }
 
     getGameLocale(pin: string) {

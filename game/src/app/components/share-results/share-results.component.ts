@@ -5,6 +5,13 @@ import { CardPlayer, ResultsCardService } from './../../services/results-card.se
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
+const sheetStrings = {
+    en: { shareResults: 'SHARE RESULTS', share: 'SHARE', whatsapp: 'WHATSAPP', saveImage: 'SAVE IMAGE', done: 'DONE',
+        copied: 'Copied! Paste it anywhere.', cardAlt: 'Final scores card' },
+    he: { shareResults: 'שיתוף התוצאות', share: 'שיתוף', whatsapp: 'וואטסאפ', saveImage: 'שמירת התמונה', done: 'סיום',
+        copied: 'הועתק! אפשר להדביק בכל מקום.', cardAlt: 'כרטיס התוצאות' },
+};
+
 /**
  * After the final scoreboard: turn the results into a picture people want to post,
  * with the site address on it, and share it.
@@ -17,6 +24,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 export class ShareResultsComponent implements OnInit, OnDestroy {
     @Input() pin: string;
     @Input() players: CardPlayer[];
+    @Input() label: string;
     locale = 'en';
     pack: string = null;
     open: boolean;
@@ -46,6 +54,19 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         }
     }
 
+    get ui() {
+        return sheetStrings[this.locale === 'he' ? 'he' : 'en'];
+    }
+
+    /** This phone's row: by player id when the final screen marked it, else by nickname. */
+    private myIndex(players: CardPlayer[], me: string) {
+        const marked = players.findIndex(p => !!p.me);
+        if (marked >= 0 || players.some(p => p.me === false)) {
+            return marked;
+        }
+        return me ? players.findIndex(p => (p.nickname || '').toLowerCase() === me.toLowerCase()) : -1;
+    }
+
     get me(): string {
         const user = !this.sessionService.presenter && this.sessionService.user;
         return user ? user.nickname : undefined;
@@ -55,10 +76,14 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         const t = this.shareService.strings(this.locale);
         const players = this.players || [];
         const me = this.me;
-        const idx = me ? players.findIndex(p => (p.nickname || '').toLowerCase() === me.toLowerCase()) : -1;
+        const idx = this.myIndex(players, me);
 
         if (idx >= 0) {
-            return t.resultsText(idx + 1, players.length, players[idx].score || 0);
+            const best = players[idx].best;
+            const lie = best && best.text && best.fooled ? t.bestLieText(best.text.toUpperCase(), best.fooled) + ' ' : '';
+            // Ties share a place: the final screen gives each player their place.
+            const place = players[idx].place || idx + 1;
+            return lie + t.resultsText(place, players.length, players[idx].score || 0);
         }
 
         const winner = players[0];
@@ -85,7 +110,8 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         if (!this.blob) {
             this.loading = true;
             try {
-                this.blob = await this.resultsCardService.render(this.players || [], this.me, this.locale, this.pack);
+                this.blob = await this.resultsCardService.render(this.players || [], this.me, this.locale, this.pack,
+                    this.myIndex(this.players || [], this.me));
                 this.file = new File([this.blob], 'bullshit-results.png', { type: 'image/png' });
                 this.objectUrl = URL.createObjectURL(this.blob);
                 this.previewUrl = this.sanitizer.bypassSecurityTrustUrl(this.objectUrl);

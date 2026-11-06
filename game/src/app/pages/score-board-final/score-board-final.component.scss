@@ -1,26 +1,248 @@
+$primary: #db7151;
+$gold: #f3d467;
+$dark: #363636;
+$body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
 .score-board-final {
-    .player {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        height: calc((100vh - 100px - 40px - 70px) / 8);
-        padding: 5px 10px;
-        margin-bottom: 10px;
+    .game-main {
+        padding: 12px 12px 24px;
+        overflow-x: hidden;
     }
 
-    .left {
+    .final {
+        position: relative;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+
+    // Confetti falls once, behind the winner, for about 4 seconds.
+    .confetti {
+        position: absolute;
+        top: -20px;
+        left: 0;
+        right: 0;
+        height: 340px;
+        z-index: 2;
+        overflow: hidden;
+        pointer-events: none;
+
+        i {
+            position: absolute;
+            top: -12px;
+            width: 8px;
+            height: 14px;
+            border-radius: 2px;
+            opacity: 0;
+            animation: fall 2.6s ease-in 1 forwards;
+        }
+
+        .c0 { background: $primary; }
+        .c1 { background: $gold; }
+        .c2 { background: #97374e; }
+        .c3 { background: #5bc0be; }
+        .c4 { background: #5bc0be; width: 6px; height: 6px; border-radius: 50%; }
+        .c5 { background: $gold; width: 6px; height: 6px; border-radius: 50%; }
+        .c6 { background: $primary; height: 8px; }
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(0) rotate(0); opacity: 1; }
+        85% { opacity: 1; }
+        100% { transform: translateY(340px) rotate(540deg); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .confetti { display: none; }
+        .trophy { animation: none; }
+    }
+
+    // The game pages are white: the winner gets a card of their own in the brand colour.
+    .hero {
+        position: relative;
+        text-align: center;
+        padding: 10px 12px 14px;
+        border-radius: 12px;
+        background: linear-gradient(160deg, #e5835f 0%, $primary 55%, #c45d40 100%);
+        box-shadow: 0 4px 0 rgba(0, 0, 0, .15);
+        color: #fff;
+        text-shadow: 0 2px 0 rgba(0, 0, 0, .25);
+    }
+
+    .trophy {
+        width: 64px;
+        height: 64px;
+        fill: $gold;
+        filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .25));
+        animation: pop .6s cubic-bezier(.2, 1.6, .4, 1) 1;
+    }
+
+    @keyframes pop {
+        0% { transform: scale(.2); }
+        100% { transform: scale(1); }
+    }
+
+    .headline {
+        font-size: 2.1rem;
+        line-height: 1.1;
+        margin: 4px 0 2px;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    .tied {
+        font-size: 1.3rem;
+        word-break: break-word;
+    }
+
+    .winner-score {
+        font-size: 1.2rem;
+        color: $gold;
+    }
+
+    .my-line {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 2px 12px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, .2);
+        font-size: 1rem;
+    }
+
+    .actions {
+        position: relative;
+        margin: 12px 0 14px;
+
+        .rematch {
+            height: 3.2rem;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, .25);
+        }
+
+        .hint {
+            text-align: center;
+            color: #7a7a7a;
+            font-family: $body-font;
+            font-size: .85rem;
+            margin: 6px 0 8px;
+        }
+    }
+
+    .players {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .player {
+        padding: 8px 10px;
+        margin-bottom: 8px;
+
+        &.winner {
+            box-shadow: 0 0 0 3px $gold, 0 2px 6px rgba(0, 0, 0, .2);
+        }
+
+        &.me .name {
+            color: $primary;
+        }
+    }
+
+    .row {
         display: flex;
         align-items: center;
-        height: 100%;
+        min-width: 0;
+    }
+
+    .place {
+        flex: 0 0 auto;
+        width: 1.6em;
+        font-size: 1.3rem;
+        color: #7a7a7a;
+        text-align: center;
+    }
+
+    .winner .place {
+        color: $primary;
     }
 
     .picture {
-        height: 100%;
-        margin-right: 10px;
+        flex: 0 0 auto;
+        height: 36px;
+        margin: 0 8px;
+    }
+
+    .name {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 1.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .you {
+        font-size: .7em;
+        color: $primary;
+    }
+
+    .score {
+        flex: 0 0 auto;
+        font-size: 1.25rem;
+        margin: 0 4px;
+        padding-inline-start: 10px;
+    }
+
+    .badge {
+        display: inline-block;
+        margin: 4px 0 0;
+        padding: 1px 8px;
+        border-radius: 4px;
+        background: $gold;
+        color: $dark;
+        font-size: .8rem;
+    }
+
+    .lie {
+        margin-top: 4px;
+        font-family: $body-font;
+        font-size: .9rem;
+        line-height: 1.3;
+        color: #4a4a4a;
+        overflow-wrap: anywhere;
+
+        &.none {
+            color: #9a9a9a;
+            font-style: italic;
+        }
+    }
+
+    .lie-label {
+        color: #7a7a7a;
+    }
+
+    .lie-text {
+        font-weight: 700;
+        color: $dark;
+        text-transform: uppercase;
+    }
+
+    .lie-fooled {
+        white-space: nowrap;
+        color: $primary;
+
+        &::before {
+            content: " · ";
+            color: #b5b5b5;
+        }
     }
 
     .crew-panel {
         margin-top: 10px;
+    }
+
+    .crew-link {
+        height: auto;
+        min-height: 2.5em;
+        white-space: normal;
     }
 
     .crew-form {
@@ -30,8 +252,46 @@
     }
 
     .crew-form-hint {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+        font-family: $body-font;
         font-size: .9em;
         margin-bottom: 8px;
+    }
+
+    .is-rtl {
+        font-family: 'Suez One', $body-font;
+
+        .lie, .hint, .crew-form-hint {
+            font-family: $body-font;
+        }
+    }
+
+    // A big screen in the room: nobody scrolls it, so the list goes in two columns when it is long.
+    // Phones rematch and share; the big screen only shows the result.
+    // Rows stay one line of name and one line of lie, so 8 players fit 1080 px.
+    &.presenter {
+        .final { max-width: 1200px; }
+        .hero { padding: 6px 12px 10px; margin-bottom: 14px; }
+        .headline { font-size: 2.2rem; }
+        .trophy { width: 56px; height: 56px; }
+        .tied, .winner-score { font-size: 1.1rem; }
+        .players.many {
+            display: grid;
+            // minmax(0, 1fr): a long one-line lie must not widen its column.
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-gap: 8px 12px;
+            .player { margin-bottom: 0; }
+        }
+        .player { padding: 4px 10px; min-width: 0; }
+        .name, .score { font-size: 1.2rem; }
+        .score { padding-inline-start: 16px; }
+        .picture { height: 32px; }
+        .badge { margin-top: 2px; font-size: .75rem; }
+        .lie {
+            font-size: .9rem;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 }

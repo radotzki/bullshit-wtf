@@ -4,6 +4,9 @@ export interface CardPlayer {
     nickname: string;
     score: number;
     picture: string; // file name under /assets
+    place?: number;  // ties share a place
+    me?: boolean;    // this phone's player, when known by player id
+    best?: { text: string; fooled: number }; // the player's best lie, when it fooled someone
 }
 
 const SIZE = 1080;
@@ -14,8 +17,10 @@ const LIGHT = '#f5f5f5';
 const FONT = '"Luckiest Guy", "Suez One", "Arial Black", sans-serif';
 
 const labels = {
-    en: { heading: 'FINAL SCORES', hanukkah: 'HANUKKAH FINAL SCORES', you: 'YOU', footer: 'PLAY FREE AT BULLSHIT.WTF' },
-    he: { heading: 'תוצאות סופיות', hanukkah: 'תוצאות סופיות · חנוכה', you: 'אני', footer: 'שחקו בחינם ב-BULLSHIT.WTF' },
+    en: { heading: 'FINAL SCORES', hanukkah: 'HANUKKAH FINAL SCORES', you: 'YOU', footer: 'PLAY FREE AT BULLSHIT.WTF',
+        fooled: (n: number) => `fooled ${n}` },
+    he: { heading: 'תוצאות סופיות', hanukkah: 'תוצאות סופיות · חנוכה', you: 'אני', footer: 'שחקו בחינם ב-BULLSHIT.WTF',
+        fooled: (n: number) => `נפלו בזה: ${n}` },
 };
 
 /**
@@ -25,7 +30,7 @@ const labels = {
 @Injectable()
 export class ResultsCardService {
 
-    async render(players: CardPlayer[], me: string, locale: string, pack?: string): Promise<Blob> {
+    async render(players: CardPlayer[], me: string, locale: string, pack?: string, myIndex?: number): Promise<Blob> {
         const t = labels[locale === 'he' ? 'he' : 'en'];
         await this.loadFonts();
         const avatars = await Promise.all(players.map(p => this.loadImage(`/assets/${p.picture}`)));
@@ -68,8 +73,11 @@ export class ResultsCardService {
 
         players.forEach((p, i) => {
             const y = top + i * (rowH + gap);
-            const isMe = !!me && (p.nickname || '').toLowerCase() === me.toLowerCase();
-            const isWinner = i === 0;
+            const isMe = typeof myIndex === 'number' ? i === myIndex : !!me && (p.nickname || '').toLowerCase() === me.toLowerCase();
+            const place = p.place || i + 1;
+            const isWinner = place === 1;
+            // The best lie goes under the name when the rows are tall enough to read it.
+            const lie = rowH >= 90 && p.best && p.best.text && p.best.fooled ? p.best : null;
 
             this.roundRect(ctx, left, y, width, rowH, 18);
             ctx.fillStyle = isWinner ? '#fdf1ec' : LIGHT;
@@ -87,7 +95,7 @@ export class ResultsCardService {
             ctx.textAlign = 'center';
             ctx.font = `${Math.round(rowH * 0.5)}px ${FONT}`;
             ctx.fillStyle = isWinner ? PRIMARY : GREY;
-            ctx.fillText(`${i + 1}`, left + 50, cy + 3);
+            ctx.fillText(`${place}`, left + 50, cy + 3);
 
             // Avatar
             const avatar = avatars[i];
@@ -102,13 +110,34 @@ export class ResultsCardService {
             ctx.font = `${Math.round(rowH * 0.42)}px ${FONT}`;
             ctx.fillStyle = DARK;
             const name = (p.nickname || '').toUpperCase();
-            ctx.fillText(name, left + 120 + ah, cy + 3);
+            const nameY = lie ? y + rowH * 0.36 : cy + 3;
+            ctx.fillText(name, left + 120 + ah, nameY);
 
             if (isMe) {
                 const nameW = ctx.measureText(name).width;
                 ctx.font = `${Math.round(rowH * 0.26)}px ${FONT}`;
                 ctx.fillStyle = PRIMARY;
-                ctx.fillText(`(${t.you})`, left + 135 + ah + nameW, cy + 3);
+                ctx.fillText(`(${t.you})`, left + 135 + ah + nameW, nameY);
+            }
+
+            if (lie) {
+                const maxW = width - 120 - ah - 200;
+                ctx.font = `${Math.round(rowH * 0.24)}px ${FONT}`;
+                ctx.fillStyle = GREY;
+                const fooled = t.fooled(lie.fooled);
+                let text = lie.text.toUpperCase();
+                let quote = `"${text}" · ${fooled}`;
+                while (text.length > 1 && ctx.measureText(quote).width > maxW) {
+                    text = text.slice(0, -1);
+                    quote = `"${text.trim()}…" · ${fooled}`;
+                }
+                // The row runs left to right in both languages, so the lie starts under the name;
+                // rtl keeps Hebrew words and numbers in order.
+                (ctx as any).direction = locale === 'he' ? 'rtl' : 'ltr';
+                ctx.textAlign = 'left';
+                ctx.fillText(quote, left + 120 + ah, y + rowH * 0.74);
+                (ctx as any).direction = 'ltr';
+                ctx.textAlign = 'left';
             }
 
             // Score
