@@ -14,11 +14,12 @@ export const FORK_WAIT_MS = 10 * 1000;
  * may start the new game. Resolves to the new game's pin, and whether this phone hosts it.
  *
  * One Replay per game: when two phones press Replay at once, the first claims the new game and the
- * second gets that same game back, as a guest (`host: false`, so it keeps no host key). Without this,
+ * second gets that same game back, with its host key, so both phones that pressed Replay may start it
+ * (the first stays the named host in the lobby). Without this,
  * each press made its own game, the phones followed whichever arrived first, and the phone that pressed
  * Replay could end up in the other phone's lobby without START (Friday 6 Nov: JVQP made JVRQ and JVRR).
  */
-export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<{ pin: string; host: boolean }> {
+export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
     const gameCounter = await incGameCounter();
@@ -28,7 +29,12 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     if (claimed && claimed !== forkedGamePin) {
         // Another phone pressed Replay first: everyone goes to its game.
         if (await forkReady(pin, claimed)) {
-            return { pin: claimed, host: false };
+            // Whoever pressed Replay may start the new game, so this player gets its host key too.
+            // Only a player of the finished game, from a client that sends a key (and so reads this one).
+            const players = game.players || {};
+            const theirs = hostPid && hostKey && players[hostPid]
+                ? await get<string>(gamesRef.child(claimed).child('hostKey')) : null;
+            return theirs ? { pin: claimed, host: true, hostKey: theirs } : { pin: claimed, host: false };
         }
         // That Replay never finished (its function failed): make the game here instead.
         console.log(`[PIN: ${pin}] Replay ${claimed} never finished; making ${forkedGamePin}`);

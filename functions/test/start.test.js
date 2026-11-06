@@ -238,7 +238,7 @@ test('Replay with a host key: only the phone that pressed Replay starts the new 
     assert.strictEqual(db.games[next].state.id, RoundIntro);
 });
 
-test('two phones pressing Replay at once get one new game; the first presser hosts it', async () => {
+test('two phones pressing Replay at once get one new game, and both may start it', async () => {
     const { pin, host, friend } = await hostedLobby();
     await call('startGame', { pin, hostKey: KEY });
     const K1 = 'A'.repeat(24), K2 = 'B'.repeat(24);
@@ -253,13 +253,26 @@ test('two phones pressing Replay at once get one new game; the first presser hos
     assert.strictEqual(a.body.pin, b.body.pin, 'both phones go to the same game');
     assert.strictEqual(Object.keys(db.games).length, before + 1, 'only one new game');
     assert.strictEqual(db.games[pin].fork, a.body.pin);
-    assert.deepStrictEqual([a.body.host, b.body.host], [true, false]);
+    assert.deepStrictEqual([a.body.host, b.body.host], [true, true]);
+    assert.strictEqual(a.body.hostKey, undefined, 'the first presser keeps its own key');
+    assert.strictEqual(b.body.hostKey, K1, 'the second presser gets the new game\'s key');
     const next = db.games[a.body.pin];
     assert.strictEqual(next.hostKey, K1);
-    assert.strictEqual(next.players[friend].host, true);
+    assert.strictEqual(next.players[friend].host, true, 'the first presser is the named host');
     assert.strictEqual(next.players[host].host, undefined);
-    assert.strictEqual((await call('startGame', { pin: a.body.pin, hostKey: K2 })).code, 403);
-    assert.strictEqual((await call('startGame', { pin: a.body.pin, hostKey: K1 })).code, 200);
+    assert.strictEqual((await call('startGame', { pin: a.body.pin, hostKey: K2 })).code, 403, 'its own key is for no game');
+    assert.strictEqual((await call('startGame', { pin: a.body.pin, hostKey: b.body.hostKey })).code, 200);
+});
+
+test('a second Replay from a non-player or an old client gets no key', async () => {
+    const { pin, friend } = await hostedLobby();
+    await call('startGame', { pin, hostKey: KEY });
+    const a = await call('fork', { pin, pid: friend, hostKey: 'A'.repeat(24) });
+    const stranger = await call('fork', { pin, pid: 'nobody', hostKey: 'B'.repeat(24) });
+    const old = await call('fork', { pin });
+    assert.strictEqual(stranger.body.pin, a.body.pin);
+    assert.deepStrictEqual([stranger.body.host, stranger.body.hostKey], [false, undefined]);
+    assert.deepStrictEqual([old.body.pin, old.body.host, old.body.hostKey], [a.body.pin, false, undefined]);
 });
 
 test('a second Replay makes its own game if the first one never finished', async () => {

@@ -19,6 +19,8 @@ import { GamePlayer } from '../../game-model';
  *   with a big screen, the big screen starts such a game.
  * - A big screen opened in the browser that created the game holds its host key,
  *   so it starts the game like the host's phone would.
+ * - A phone that holds the host key starts it too: when two phones press Replay at once, both get the
+ *   new game's key, so the one that pressed second is not left without START.
  * - If the host has not joined the lobby after HOST_GRACE_MS, everyone may start,
  *   so a host who closed the tab cannot leave the group stuck.
  * - The host's lobby page reports in every HOST_PING_MS; the server keeps the time (`hostSeen`).
@@ -85,6 +87,11 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
     // A game with a host: only the host starts it, big screen or not.
     if (input.isPresenter && input.holdsHostKey) {
         return none;
+    }
+    // A phone with the host key may start: it created the game, or pressed Replay (when two phones press
+    // Replay at once, both get the key, and the lobby names the first as the host).
+    if (!input.isPresenter && input.holdsHostKey) {
+        return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1 };
     }
 
     // A marked host row wins; the creator's uid is for games made before host keys.
