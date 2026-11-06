@@ -1,5 +1,5 @@
 import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
-import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer, addHighlights } from '../game-model';
+import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer, addHighlights, highlightsStart } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline } from './phase';
 import { pickHouseLies } from './answer-options';
@@ -103,7 +103,7 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
                 revealDone: null,
                 // Kept for the final screen: each player's lie that fooled the most players.
                 highlights: addHighlights(game.highlights, revealAnswers, typeof game.currentQ === 'string' ? game.currentQ : undefined),
-                highlightsFrom: typeof game.highlightsFrom === 'number' ? game.highlightsFrom : game.questionIndex || 0,
+                highlightsFrom: highlightsStart(game.highlightsFrom, game.questionIndex),
             };
 
         case GameState.RevealTheTruth:

@@ -373,6 +373,11 @@ export function addHighlights(previous: Highlights | null | undefined, revealAns
     return next;
 }
 
+/** Where a game's highlights count from: kept once set, else the question being revealed now. */
+export function highlightsStart(previous: number | null | undefined, questionIndex: number | null | undefined): number {
+    return typeof previous === 'number' ? previous : questionIndex || 0;
+}
+
 /** The players' rank order on the final screen: by score, ties share a place (1, 1, 3). */
 export function finalPlaces(scores: number[]): number[] {
     return scores.map(s => 1 + scores.filter(o => (o || 0) > (s || 0)).length);

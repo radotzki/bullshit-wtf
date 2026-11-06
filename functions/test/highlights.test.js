@@ -1,7 +1,7 @@
 // The final screen's highlights: each player's best lie. Run with: npm test
 const test = require('node:test');
 const assert = require('node:assert');
-const { addHighlights, finalPlaces } = require('../dist/game-model');
+const { addHighlights, finalPlaces, highlightsStart } = require('../dist/game-model');
 
 const q1 = [
     { text: 'nickelback', selectors: ['a', 'c'], creators: ['b'], realAnswer: false, houseLie: false, points: 1000 },
@@ -52,4 +52,13 @@ test('final places share a place on a tie', () => {
     assert.deepStrictEqual(finalPlaces([6250, 5750, 3500]), [1, 2, 3]);
     assert.deepStrictEqual(finalPlaces([5000, 5000, 3500]), [1, 1, 3]);
     assert.deepStrictEqual(finalPlaces([0, 0]), [1, 1]);
+});
+
+test('highlights count from the first reveal a new server handles, and that never moves', () => {
+    assert.strictEqual(highlightsStart(undefined, 0), 0);      // a whole game
+    assert.strictEqual(highlightsStart(undefined, undefined), 0);
+    assert.strictEqual(highlightsStart(undefined, 3), 3);      // a game that was running at the deploy
+    assert.strictEqual(highlightsStart(3, 4), 3);
+    assert.strictEqual(highlightsStart(0, 4), 0);
+    assert.strictEqual(highlightsStart(null, 2), 2);
 });
