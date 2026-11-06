@@ -2,6 +2,8 @@
 // data), so the function log can tell "nobody came" from "phones came and the app never started".
 export interface VisitRow {
     kind: 'stuck' | 'end';
+    // Random per page load, never stored on the phone: groups the rows of one page view.
+    view: string;
     first: string;
     last: string;
     booted: boolean;
@@ -67,12 +69,13 @@ export function cleanVisit(body: any, userAgent: any): VisitRow | null {
     const ms = Number(body.ms);
     return {
         kind: body.k,
+        view: /^[a-z0-9]{1,12}$/.test(text(body.v, 12)) ? text(body.v, 12) : '',
         first: path(body.first),
         last: path(body.last),
         booted: body.booted === true,
         ms: isFinite(ms) && ms >= 0 ? Math.min(Math.round(ms), 864e5) : -1,
         err: text(body.err, 200),
-        lang: /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(text(body.lang, 10)) ? text(body.lang, 10) : '',
+        lang: /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/.test(text(body.lang, 10)) ? text(body.lang, 10) : '',
         ref: /^[A-Za-z0-9.-]{1,60}$/.test(text(body.ref, 60)) ? text(body.ref, 60).toLowerCase() : '',
         device: deviceOf(ua),
         browser: browserOf(ua),

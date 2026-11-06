@@ -5,14 +5,14 @@
   <title>Bullshit: a free party game for phones. Lie, bluff, find the truth</title>
   <!--
     Visit beacon: one small row per page view in the `visit` function's log, sent when the
-    page is hidden or closed (up to 3 times), and once at 12 s if the app has still not drawn (stuck spinner).
+    page is hidden or closed (up to 3 times; v groups the rows of one page view), and once at 12 s if the app has still not drawn (stuck spinner).
     It runs before every other script, so it also sees a phone where the app never starts
     (a script that fails to load or parse, before Sentry is up). No IP, no player data.
   -->
   <script>
   (function () {
-    var w = window, sent = { stuck: 0, end: 0 }, t0 = new Date().getTime(), err = '', first = location.pathname;
-    var url = /(^|\.)bullshit\.wtf$/.test(location.hostname)
+    var w = window, sent = { stuck: 0, end: 0 }, v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
+    var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-prod(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/.test(location.hostname)
       ? 'https://us-central1-bullshit-wtf-prod.cloudfunctions.net/visit'
       : 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/visit';
     var res = '';
@@ -35,7 +35,7 @@
       if (sent[kind] >= (kind === 'end' ? 3 : 1)) { return; }
       sent[kind]++;
       var body = JSON.stringify({
-        k: kind, first: first.slice(0, 80), last: location.pathname.slice(0, 80), booted: booted(),
+        k: kind, v: v, first: first.slice(0, 80), last: location.pathname.slice(0, 80), booted: booted(),
         ms: new Date().getTime() - t0, err: err || res, lang: (navigator.language || '').slice(0, 10),
         ref: (document.referrer || '').replace(/^https?:\/\/([^\/?#]+).*$/, '$1').slice(0, 60)
       });

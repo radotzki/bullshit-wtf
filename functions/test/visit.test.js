@@ -7,8 +7,8 @@ const ANDROID = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KH
 const IG = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 350.0';
 
 test('a text/plain beacon body is parsed and cleaned', () => {
-    const row = cleanVisit(JSON.stringify({ k: 'end', first: '/join-game/ABCD', last: '/game-staging/ABCD', booted: true, ms: 15234.6, err: '', lang: 'he-IL', ref: 'l.instagram.com' }), IPHONE);
-    assert.deepStrictEqual(row, { kind: 'end', first: '/join-game/ABCD', last: '/game-staging/ABCD', booted: true, ms: 15235, err: '', lang: 'he-IL', ref: 'l.instagram.com', device: 'iphone', browser: 'safari 18.1' });
+    const row = cleanVisit(JSON.stringify({ k: 'end', v: 'k3j9x0ab', first: '/join-game/ABCD', last: '/game-staging/ABCD', booted: true, ms: 15234.6, err: '', lang: 'he-IL', ref: 'l.instagram.com' }), IPHONE);
+    assert.deepStrictEqual(row, { kind: 'end', view: 'k3j9x0ab', first: '/join-game/ABCD', last: '/game-staging/ABCD', booted: true, ms: 15235, err: '', lang: 'he-IL', ref: 'l.instagram.com', device: 'iphone', browser: 'safari 18.1' });
 });
 
 test('a stuck page keeps its first error', () => {
@@ -31,6 +31,9 @@ test('junk is refused, and paths with query strings are dropped', () => {
     assert.strictEqual(row.lang, '');
     assert.strictEqual(row.ref, '');
     assert.strictEqual(row.device, 'other');
+    assert.strictEqual(row.view, '');
+    assert.strictEqual(cleanVisit({ k: 'end', v: 'BAD-ID!' }, '').view, '');
+    assert.strictEqual(cleanVisit({ k: 'end', lang: 'zh-Hant-TW' }, '').lang, 'zh-Hant-TW');
 });
 
 test('devices and browsers, in-app ones included', () => {
