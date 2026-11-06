@@ -239,3 +239,20 @@ credentials needed; `PRINT_ROWS=1` prints every row the run would send to BigQue
 - npm audit reports moderate issues in transitive Google libraries (functions) and many
   in the 2017-era client toolchain (build-time only).
 - raven-js is retired; moving to the current Sentry SDK needs a newer Angular.
+
+## Final screen (winner, best lies, rematch, share)
+
+The final screen celebrates the winner (or the tie), shows each player's place and their best lie
+("NICKELBACK" · fooled 2 players), a BIGGEST BULLSHITTER badge for whoever fooled the most players,
+a big REMATCH button (the same Replay as before: same players, new questions, and a crew game stays
+a crew game) and SHARE RESULTS. Everything on it, the crew panel and the share sheet follow the
+game's language (English or Hebrew, right to left). The results card and the share text carry the
+best lie.
+
+- Data: `tick` adds to `games/$pin/highlights/$pid` (text, fooled, points, question, total fooled) as
+  each reveal starts. Only players' own lies that somebody picked count.
+- Deploy order: functions (all 18: `tick`, `phaseTimer`, `answer`, `onAnswerSelection` and
+  `onRevealDone` all move the game on), then rules (`games/$pin/highlights` readable), then hosting.
+  Without the new functions or rules the screen still works and shows "Nobody fell for their lies"
+  for everyone; games already running when the functions go live miss the lies of earlier rounds.
+- No BigQuery change.
