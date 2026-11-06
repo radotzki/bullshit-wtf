@@ -29,6 +29,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     pin: string;
     loading: boolean;
     forkGameSubscription: Subscription;
+    /** This phone's Replay call, while it runs. */
+    private forkCall: Promise<any> = null;
     displayPlayers: FinalPlayer[];
     winners: FinalPlayer[] = [];
     mine: FinalPlayer;
@@ -88,6 +90,11 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
         this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(async fork => {
             if (fork) {
+                // The phone that pressed Replay goes once its host key for the new game is saved, so its
+                // lobby knows it is the host from the start (START works at once, and it reports in).
+                if (this.forkCall) {
+                    await this.forkCall.catch(() => null);
+                }
                 if (!this.presenter) {
                     await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
                 }
@@ -169,8 +176,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     }
 
     replay() {
+        if (this.forkCall) {
+            return;
+        }
         this.loading = true;
-        this.apiService.fork(this.pin).catch(err => {
+        this.forkCall = this.apiService.fork(this.pin).catch(err => {
+            this.forkCall = null;
             this.loading = false;
             reportError(err, 'fork', { pin: this.pin });
         });
