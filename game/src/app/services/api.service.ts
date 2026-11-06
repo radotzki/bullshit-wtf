@@ -405,9 +405,11 @@ export class ApiService {
         const pid = user && user.pid ? user.pid : null;
         // A new host key for the new game: with it, only this phone may start it.
         const hostKey = pid ? newHostKey() : null;
-        const resp = await this.post<{ pin?: string }>(`fork`, { pin, uid, pid, hostKey });
-        if (hostKey && resp && resp.pin) {
-            rememberHostKey(resp.pin, hostKey);
+        const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(`fork`, { pin, uid, pid, hostKey });
+        // Another phone pressed Replay first: the server hands this phone that game's key (it may start it
+        // too), or says it is a guest there (host: false) and keeps no key.
+        if (hostKey && resp && resp.pin && resp.host !== false) {
+            rememberHostKey(resp.pin, resp.hostKey || hostKey);
         }
         return resp;
     }
