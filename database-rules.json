@@ -115,6 +115,10 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "highlights": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
                 "coach": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"

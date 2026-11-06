@@ -4,6 +4,8 @@ export interface CardPlayer {
     nickname: string;
     score: number;
     picture: string; // file name under /assets
+    place?: number;  // ties share a place
+    best?: { text: string; fooled: number }; // the player's best lie, when it fooled someone
 }
 
 const SIZE = 1080;
@@ -14,8 +16,10 @@ const LIGHT = '#f5f5f5';
 const FONT = '"Luckiest Guy", "Suez One", "Arial Black", sans-serif';
 
 const labels = {
-    en: { heading: 'FINAL SCORES', hanukkah: 'HANUKKAH FINAL SCORES', you: 'YOU', footer: 'PLAY FREE AT BULLSHIT.WTF' },
-    he: { heading: 'תוצאות סופיות', hanukkah: 'תוצאות סופיות · חנוכה', you: 'אני', footer: 'שחקו בחינם ב-BULLSHIT.WTF' },
+    en: { heading: 'FINAL SCORES', hanukkah: 'HANUKKAH FINAL SCORES', you: 'YOU', footer: 'PLAY FREE AT BULLSHIT.WTF',
+        fooled: (n: number) => `fooled ${n}` },
+    he: { heading: 'תוצאות סופיות', hanukkah: 'תוצאות סופיות · חנוכה', you: 'אני', footer: 'שחקו בחינם ב-BULLSHIT.WTF',
+        fooled: (n: number) => `נפלו בזה: ${n}` },
 };
 
 /**
@@ -69,7 +73,10 @@ export class ResultsCardService {
         players.forEach((p, i) => {
             const y = top + i * (rowH + gap);
             const isMe = !!me && (p.nickname || '').toLowerCase() === me.toLowerCase();
-            const isWinner = i === 0;
+            const place = p.place || i + 1;
+            const isWinner = place === 1;
+            // The best lie goes under the name when the rows are tall enough to read it.
+            const lie = rowH >= 90 && p.best && p.best.text && p.best.fooled ? p.best : null;
 
             this.roundRect(ctx, left, y, width, rowH, 18);
             ctx.fillStyle = isWinner ? '#fdf1ec' : LIGHT;
@@ -87,7 +94,7 @@ export class ResultsCardService {
             ctx.textAlign = 'center';
             ctx.font = `${Math.round(rowH * 0.5)}px ${FONT}`;
             ctx.fillStyle = isWinner ? PRIMARY : GREY;
-            ctx.fillText(`${i + 1}`, left + 50, cy + 3);
+            ctx.fillText(`${place}`, left + 50, cy + 3);
 
             // Avatar
             const avatar = avatars[i];
@@ -102,13 +109,33 @@ export class ResultsCardService {
             ctx.font = `${Math.round(rowH * 0.42)}px ${FONT}`;
             ctx.fillStyle = DARK;
             const name = (p.nickname || '').toUpperCase();
-            ctx.fillText(name, left + 120 + ah, cy + 3);
+            const nameY = lie ? y + rowH * 0.36 : cy + 3;
+            ctx.fillText(name, left + 120 + ah, nameY);
 
             if (isMe) {
                 const nameW = ctx.measureText(name).width;
                 ctx.font = `${Math.round(rowH * 0.26)}px ${FONT}`;
                 ctx.fillStyle = PRIMARY;
-                ctx.fillText(`(${t.you})`, left + 135 + ah + nameW, cy + 3);
+                ctx.fillText(`(${t.you})`, left + 135 + ah + nameW, nameY);
+            }
+
+            if (lie) {
+                const maxW = width - 120 - ah - 200;
+                ctx.font = `${Math.round(rowH * 0.24)}px ${FONT}`;
+                ctx.fillStyle = GREY;
+                const fooled = t.fooled(lie.fooled);
+                let text = lie.text.toUpperCase();
+                let quote = `"${text}" · ${fooled}`;
+                while (text.length > 1 && ctx.measureText(quote).width > maxW) {
+                    text = text.slice(0, -1);
+                    quote = `"${text.trim()}…" · ${fooled}`;
+                }
+                (ctx as any).direction = locale === 'he' ? 'rtl' : 'ltr';
+                ctx.textAlign = locale === 'he' ? 'right' : 'left';
+                const lx = locale === 'he' ? left + 120 + ah + maxW : left + 120 + ah;
+                ctx.fillText(quote, lx, y + rowH * 0.74);
+                (ctx as any).direction = 'ltr';
+                ctx.textAlign = 'left';
             }
 
             // Score

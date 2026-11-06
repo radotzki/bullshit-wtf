@@ -27,6 +27,8 @@ const strings = {
                 : `I came ${ordinal(place)} of ${total} at Bullshit with ${score} points. Can you beat that? Play free at bullshit.wtf`,
         groupResultsText: (winner: string, score: number) =>
             `${winner} won our game of Bullshit with ${score} points. Can you fool your friends? Play free at bullshit.wtf`,
+        bestLieText: (lie: string, fooled: number) =>
+            `My lie "${lie}" fooled ${fooled === 1 ? '1 friend' : `${fooled} friends`}.`,
     },
     he: {
         inviteTitle: 'בואו לשחק בולשיט',
@@ -39,6 +41,8 @@ const strings = {
                 : `הגעתי למקום ${place} מתוך ${total} בבולשיט עם ${score} נקודות. תצליחו יותר? שחקו בחינם ב-bullshit.wtf`,
         groupResultsText: (winner: string, score: number) =>
             `הניצחון במשחק הבולשיט שלנו הלך ל-${winner} עם ${score} נקודות. תצליחו לעבוד על החברים? שחקו בחינם ב-bullshit.wtf`,
+        bestLieText: (lie: string, fooled: number) =>
+            `השקר שלי "${lie}" עבד על ${fooled === 1 ? 'חבר אחד' : `${fooled} חברים`}.`,
     },
 };
 

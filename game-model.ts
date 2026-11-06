@@ -62,6 +62,8 @@ export interface GameScheme {
     // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
     // Each player can read only their own (games/$pin/ideas/$pid).
     ideas?: { [pid: string]: string[] };
+    // Each player's best lie so far (the one that fooled the most players), for the final screen.
+    highlights?: Highlights;
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';
@@ -319,4 +321,56 @@ export function cleanCampaign(tag: any): string | undefined {
     }
     const t = tag.toLowerCase().trim();
     return /^[a-z0-9][a-z0-9-]{0,39}$/.test(t) ? t : undefined;
+}
+
+/** A player's best lie of the game, and how many players their lies fooled in all. */
+export interface Highlight {
+    text: string;       // the lie that fooled the most players (ties: the one that scored more, then the earlier one)
+    fooled: number;     // players that lie fooled
+    points: number;     // points that lie scored
+    q?: string;         // the question it answered
+    total: number;      // players fooled by all of this player's lies, all game
+}
+
+export interface Highlights {
+    [pid: string]: Highlight;
+}
+
+/**
+ * Adds one question's reveal to the game's highlights. Only players' own lies count (not the truth,
+ * not house lies), and only once somebody picked them. Players who wrote the same lie share it.
+ * Returns a new object; `previous` is left as it was.
+ */
+export function addHighlights(previous: Highlights | null | undefined, revealAnswers: RevealAnswer[] | null | undefined,
+    question?: string): Highlights {
+    const next: Highlights = {};
+    Object.keys(previous || {}).forEach(pid => next[pid] = Object.assign({}, previous[pid]));
+
+    (revealAnswers || []).forEach(row => {
+        const fooled = row ? (row.selectors || []).length : 0;
+        if (!fooled || row.realAnswer || row.houseLie) {
+            return;
+        }
+        (row.creators || []).filter(pid => !!pid).forEach(pid => {
+            const had = next[pid];
+            const total = (had ? had.total || 0 : 0) + fooled;
+            const better = !had || !had.text || fooled > (had.fooled || 0) ||
+                (fooled === (had.fooled || 0) && (row.points || 0) > (had.points || 0));
+            const best: Highlight = better
+                ? { text: row.text, fooled, points: row.points || 0, total }
+                : { text: had.text, fooled: had.fooled, points: had.points, total };
+            const q = better ? question : had.q;
+            if (typeof q === 'string' && q) {
+                best.q = q;
+            }
+            next[pid] = best;
+        });
+    });
+
+    return next;
+}
+
+/** The players' rank order on the final screen: by score, ties share a place (1, 1, 3). */
+export function finalPlaces(scores: number[]): number[] {
+    return scores.map(s => 1 + scores.filter(o => (o || 0) > (s || 0)).length);
 }

@@ -7,6 +7,18 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
+import { Highlight, Highlights, finalPlaces } from './../../game-model';
+import { finalStrings, FinalStrings } from './final-strings';
+
+export interface FinalPlayer {
+    nickname: string;
+    score: number;
+    picture: string;
+    place: number;
+    me: boolean;
+    best?: Highlight;
+    biggest?: boolean;
+}
 
 @Component({
     selector: 'app-score-board-final',
@@ -17,7 +29,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     pin: string;
     loading: boolean;
     forkGameSubscription: Subscription;
-    displayPlayers;
+    displayPlayers: FinalPlayer[];
+    winners: FinalPlayer[] = [];
+    mine: FinalPlayer;
+    locale = 'en';
+    t: FinalStrings = finalStrings.en;
+    confetti = Array.from({ length: 28 }, (_, i) => i);
     sound: Howl;
     presenter: boolean;
     // Saved crews: this game's crew, or the form to save one.
@@ -43,18 +60,24 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
         this.playMusic();
-        this.apiService.getPlayers(this.pin).then(resp => {
+        this.apiService.getGameLocale(this.pin).then(locale => {
+            this.locale = locale === 'he' ? 'he' : 'en';
+            this.t = finalStrings[this.locale];
+        });
+        Promise.all([
+            this.apiService.getPlayers(this.pin),
+            // The final screen still works for games that ended before highlights were kept.
+            this.apiService.getHighlights(this.pin).catch(() => null),
+        ]).then(([resp, highlights]) => {
+            resp = resp || {};
             const user = !this.presenter && this.sessionService.user;
-            const mine = user && resp && resp[user.pid];
+            const mine = user && resp[user.pid];
             // The nickname as typed (the session keeps it lower-cased), for the crew's "this is me".
             this.myNickname = mine ? mine.nickname : (user ? user.nickname : undefined);
             if (this.crewId) {
                 this.crewService.remember(this.crewId, this.crewName, this.myNickname);
             }
-            const players = Object.keys(resp).map(k => resp[k]);
-            this.displayPlayers = players
-                .map((p, i) => Object.assign(p, { picture: `avatar${i}.png` }))
-                .sort((a, b) => a.score < b.score ? 1 : -1);
+            this.setPlayers(resp, highlights || {}, user ? user.pid : undefined);
         });
 
         this.crewSubscription = this.apiService.getGameCrewObservable(this.pin).subscribe(id => this.onCrew(id));
@@ -79,6 +102,60 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.sound.fade(1, 0, 1000);
             setTimeout(this.sound.stop, 1000);
         }
+    }
+
+    private setPlayers(resp, highlights: Highlights, myPid: string) {
+        const players = Object.keys(resp)
+            .map((pid, i) => ({
+                pid,
+                nickname: resp[pid].nickname,
+                score: resp[pid].score || 0,
+                picture: `avatar${i}.png`,
+                best: highlights[pid] && highlights[pid].text ? highlights[pid] : undefined,
+            }))
+            .sort((a, b) => b.score - a.score);
+        const places = finalPlaces(players.map(p => p.score));
+        const mostFooled = Math.max(0, ...players.map(p => p.best ? p.best.total || 0 : 0));
+        const biggest = players.filter(p => p.best && (p.best.total || 0) === mostFooled);
+
+        this.displayPlayers = players.map((p, i) => ({
+            nickname: p.nickname,
+            score: p.score,
+            picture: p.picture,
+            place: places[i],
+            me: !!myPid && p.pid === myPid,
+            best: p.best,
+            // One clear "biggest bullshitter": nobody gets it on a tie.
+            biggest: mostFooled > 0 && biggest.length === 1 && biggest[0].pid === p.pid,
+        }));
+        this.winners = this.displayPlayers.filter(p => p.place === 1);
+        this.mine = this.displayPlayers.find(p => p.me);
+    }
+
+    get rtl() {
+        return this.locale === 'he';
+    }
+
+    get headline() {
+        if (this.winners.length === 1) {
+            return this.t.wins(this.winners[0].nickname);
+        }
+        return this.t.tie;
+    }
+
+    get tiedNames() {
+        const names = this.winners.map(p => p.nickname);
+        return names.length > 1 ? names.slice(0, -1).join(', ') + ` ${this.t.and}${this.rtl ? '' : ' '}` + names[names.length - 1] : '';
+    }
+
+    get myLine() {
+        if (!this.mine || this.displayPlayers.length < 2) {
+            return '';
+        }
+        if (this.mine.place === 1) {
+            return this.winners.length > 1 ? this.t.youTied : this.t.youWon;
+        }
+        return this.t.yourPlace(this.mine.place, this.displayPlayers.length);
     }
 
     replay() {
@@ -114,7 +191,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             // The game's crew field updates too; this just makes it show at once.
             await this.onCrew(crew.id);
         } catch (err) {
-            this.crewError = (err && err.message) || 'Could not save the crew';
+            this.crewError = (err && err.message) || this.t.crewError;
             reportError(err, 'createCrew', { pin: this.pin });
         }
         this.savingCrew = false;
