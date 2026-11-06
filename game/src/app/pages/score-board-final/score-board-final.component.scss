@@ -276,17 +276,19 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         .tied, .winner-score { font-size: 1.1rem; }
         .players.many {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            // minmax(0, 1fr): a long one-line lie must not widen its column.
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             grid-gap: 8px 12px;
             .player { margin-bottom: 0; }
         }
-        .player { padding: 6px 10px; }
+        .player { padding: 4px 10px; min-width: 0; }
         .name, .score { font-size: 1.2rem; }
         .score { padding-inline-start: 16px; }
         .picture { height: 32px; }
         .badge { margin-top: 2px; font-size: .75rem; }
         .lie {
-            font-size: 1rem;
+            font-size: .9rem;
+            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
