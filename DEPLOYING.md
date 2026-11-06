@@ -250,9 +250,12 @@ game's language (English or Hebrew, right to left). The results card and the sha
 best lie.
 
 - Data: `tick` adds to `games/$pin/highlights/$pid` (text, fooled, points, question, total fooled) as
-  each reveal starts. Only players' own lies that somebody picked count.
+  each reveal starts. Only players' own lies that somebody picked count. `games/$pin/highlightsFrom`
+  is the question it started counting from: the screen says "Nobody fell for their lies" only when it
+  is 0, so games running across a deploy never claim that wrongly.
+- Big screen: the winner card and the list (two columns above 4 players); REMATCH and SHARE stay on
+  the phones.
 - Deploy order: functions (all 18: `tick`, `phaseTimer`, `answer`, `onAnswerSelection` and
-  `onRevealDone` all move the game on), then rules (`games/$pin/highlights` readable), then hosting.
-  Without the new functions or rules the screen still works and shows "Nobody fell for their lies"
-  for everyone; games already running when the functions go live miss the lies of earlier rounds.
+  `onRevealDone` all move the game on), then rules (`highlights` and `highlightsFrom` readable), then
+  hosting. Without the new functions or rules the screen still works, just without the lies.
 - No BigQuery change.

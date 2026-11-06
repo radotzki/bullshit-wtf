@@ -5,6 +5,7 @@ export interface CardPlayer {
     score: number;
     picture: string; // file name under /assets
     place?: number;  // ties share a place
+    me?: boolean;    // this phone's player, when known by player id
     best?: { text: string; fooled: number }; // the player's best lie, when it fooled someone
 }
 
@@ -29,7 +30,7 @@ const labels = {
 @Injectable()
 export class ResultsCardService {
 
-    async render(players: CardPlayer[], me: string, locale: string, pack?: string): Promise<Blob> {
+    async render(players: CardPlayer[], me: string, locale: string, pack?: string, myIndex?: number): Promise<Blob> {
         const t = labels[locale === 'he' ? 'he' : 'en'];
         await this.loadFonts();
         const avatars = await Promise.all(players.map(p => this.loadImage(`/assets/${p.picture}`)));
@@ -72,7 +73,7 @@ export class ResultsCardService {
 
         players.forEach((p, i) => {
             const y = top + i * (rowH + gap);
-            const isMe = !!me && (p.nickname || '').toLowerCase() === me.toLowerCase();
+            const isMe = typeof myIndex === 'number' ? i === myIndex : !!me && (p.nickname || '').toLowerCase() === me.toLowerCase();
             const place = p.place || i + 1;
             const isWinner = place === 1;
             // The best lie goes under the name when the rows are tall enough to read it.
@@ -130,10 +131,11 @@ export class ResultsCardService {
                     text = text.slice(0, -1);
                     quote = `"${text.trim()}…" · ${fooled}`;
                 }
+                // The row runs left to right in both languages, so the lie starts under the name;
+                // rtl keeps Hebrew words and numbers in order.
                 (ctx as any).direction = locale === 'he' ? 'rtl' : 'ltr';
-                ctx.textAlign = locale === 'he' ? 'right' : 'left';
-                const lx = locale === 'he' ? left + 120 + ah + maxW : left + 120 + ah;
-                ctx.fillText(quote, lx, y + rowH * 0.74);
+                ctx.textAlign = 'left';
+                ctx.fillText(quote, left + 120 + ah, y + rowH * 0.74);
                 (ctx as any).direction = 'ltr';
                 ctx.textAlign = 'left';
             }

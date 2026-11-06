@@ -3,6 +3,7 @@ export const finalStrings = {
     en: {
         wins: (name: string) => `${name} WINS!`,
         tie: 'IT\'S A TIE!',
+        gameOver: 'GAME OVER',
         and: '&',
         points: (n: number) => `${n} POINTS`,
         youWon: 'That\'s you. Champion!',
@@ -26,6 +27,7 @@ export const finalStrings = {
     he: {
         wins: (name: string) => `הניצחון של ${name}!`,
         tie: 'תיקו!',
+        gameOver: 'המשחק נגמר',
         and: 'ו',
         points: (n: number) => `${n} נקודות`,
         youWon: 'ניצחת! כל הכבוד',

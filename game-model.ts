@@ -64,6 +64,9 @@ export interface GameScheme {
     ideas?: { [pid: string]: string[] };
     // Each player's best lie so far (the one that fooled the most players), for the final screen.
     highlights?: Highlights;
+    // The question index highlights were first kept from. 0 means the whole game counts, so a player
+    // with no highlight really fooled nobody (games already running at a deploy start later).
+    highlightsFrom?: number;
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';

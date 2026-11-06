@@ -58,6 +58,15 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         return sheetStrings[this.locale === 'he' ? 'he' : 'en'];
     }
 
+    /** This phone's row: by player id when the final screen marked it, else by nickname. */
+    private myIndex(players: CardPlayer[], me: string) {
+        const marked = players.findIndex(p => !!p.me);
+        if (marked >= 0 || players.some(p => p.me === false)) {
+            return marked;
+        }
+        return me ? players.findIndex(p => (p.nickname || '').toLowerCase() === me.toLowerCase()) : -1;
+    }
+
     get me(): string {
         const user = !this.sessionService.presenter && this.sessionService.user;
         return user ? user.nickname : undefined;
@@ -67,7 +76,7 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         const t = this.shareService.strings(this.locale);
         const players = this.players || [];
         const me = this.me;
-        const idx = me ? players.findIndex(p => (p.nickname || '').toLowerCase() === me.toLowerCase()) : -1;
+        const idx = this.myIndex(players, me);
 
         if (idx >= 0) {
             const best = players[idx].best;
@@ -101,7 +110,8 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
         if (!this.blob) {
             this.loading = true;
             try {
-                this.blob = await this.resultsCardService.render(this.players || [], this.me, this.locale, this.pack);
+                this.blob = await this.resultsCardService.render(this.players || [], this.me, this.locale, this.pack,
+                    this.myIndex(this.players || [], this.me));
                 this.file = new File([this.blob], 'bullshit-results.png', { type: 'image/png' });
                 this.objectUrl = URL.createObjectURL(this.blob);
                 this.previewUrl = this.sanitizer.bypassSecurityTrustUrl(this.objectUrl);

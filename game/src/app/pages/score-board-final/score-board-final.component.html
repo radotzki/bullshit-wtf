@@ -1,7 +1,7 @@
 <section class="game-container score-board-final" [class.presenter]="presenter">
     <app-game-header></app-game-header>
 
-    <div class="game-main" [attr.dir]="rtl ? 'rtl' : 'ltr'" [class.is-rtl]="rtl">
+    <div class="game-main" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="locale" [class.is-rtl]="rtl">
         <div *ngIf="!displayPlayers" class="screen-center">
             <div class="loader"> </div>
         </div>
@@ -17,12 +17,12 @@
                     <path d="M18 6h28v6h10v6c0 8-6 14-13 15-2 5-5 8-9 9v8h8v8H22v-8h8v-8c-4-1-7-4-9-9C14 32 8 26 8 18v-6h10z M14 18c0 4 2 8 5 9-1-3-1-6-1-9z M46 18c0 3 0 6-1 9 3-1 5-5 5-9z"/>
                 </svg>
                 <h1 class="headline" dir="auto">{{ headline }}</h1>
-                <p *ngIf="winners.length > 1" class="tied" dir="auto">{{ tiedNames }}</p>
+                <p *ngIf="winners.length > 1" class="tied" [attr.dir]="rtl ? 'rtl' : 'auto'">{{ tiedNames }}</p>
                 <p class="winner-score" *ngIf="winners.length">{{ t.points(winners[0].score) }}</p>
                 <p *ngIf="myLine" class="my-line">{{ myLine }}</p>
             </div>
 
-            <div class="actions">
+            <div class="actions" *ngIf="!presenter">
                 <button class="button is-primary is-medium is-fullwidth rematch" (click)="replay()" [class.is-loading]="loading">
                     {{ t.rematch }}
                 </button>
@@ -30,7 +30,7 @@
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share"></app-share-results>
             </div>
 
-            <ol class="players">
+            <ol class="players" [class.many]="displayPlayers.length > 4">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
                     <div class="row">
                         <span class="place">{{ player.place }}</span>
@@ -41,10 +41,10 @@
                     <div *ngIf="player.biggest" class="badge">{{ t.biggest }}</div>
                     <div class="lie" *ngIf="player.best">
                         <span class="lie-label">{{ t.bestLie }}:</span>
-                        <q class="lie-text" dir="auto">{{ player.best.text }}</q>
+                        <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
                     </div>
-                    <div class="lie none" *ngIf="!player.best">{{ t.fooledNobody }}</div>
+                    <div class="lie none" *ngIf="!player.best && wholeGame">{{ t.fooledNobody }}</div>
                 </li>
             </ol>
 

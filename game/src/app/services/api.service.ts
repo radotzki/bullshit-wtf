@@ -234,6 +234,12 @@ export class ApiService {
         return this.get<Highlights>(this.gamesRef.child(pin).child('highlights'));
     }
 
+    /** The question highlights were first kept from (0: the whole game), or null for an older game. */
+    getHighlightsFrom(pin: string) {
+        pin = pin.toUpperCase();
+        return this.get<number>(this.gamesRef.child(pin).child('highlightsFrom'));
+    }
+
     getGameLocale(pin: string) {
         pin = pin.toUpperCase();
         return this.get<string>(this.gamesRef.child(pin).child('locale'));

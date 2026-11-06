@@ -22,6 +22,7 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         left: 0;
         right: 0;
         height: 340px;
+        z-index: 2;
         overflow: hidden;
         pointer-events: none;
 
@@ -38,7 +39,7 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         .c0 { background: $primary; }
         .c1 { background: $gold; }
         .c2 { background: #97374e; }
-        .c3 { background: #fff; }
+        .c3 { background: #5bc0be; }
         .c4 { background: #5bc0be; width: 6px; height: 6px; border-radius: 50%; }
         .c5 { background: $gold; width: 6px; height: 6px; border-radius: 50%; }
         .c6 { background: $primary; height: 8px; }
@@ -55,10 +56,14 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         .trophy { animation: none; }
     }
 
+    // The game pages are white: the winner gets a card of their own in the brand colour.
     .hero {
         position: relative;
         text-align: center;
-        padding: 6px 0 10px;
+        padding: 10px 12px 14px;
+        border-radius: 12px;
+        background: linear-gradient(160deg, #e5835f 0%, $primary 55%, #c45d40 100%);
+        box-shadow: 0 4px 0 rgba(0, 0, 0, .15);
         color: #fff;
         text-shadow: 0 2px 0 rgba(0, 0, 0, .25);
     }
@@ -105,7 +110,7 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
 
     .actions {
         position: relative;
-        margin: 6px 0 14px;
+        margin: 12px 0 14px;
 
         .rematch {
             height: 3.2rem;
@@ -115,11 +120,10 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
 
         .hint {
             text-align: center;
-            color: #fff;
+            color: #7a7a7a;
             font-family: $body-font;
             font-size: .85rem;
-            margin: 4px 0 6px;
-            text-shadow: 0 1px 0 rgba(0, 0, 0, .3);
+            margin: 6px 0 8px;
         }
     }
 
@@ -260,13 +264,21 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         }
     }
 
-    // A big screen in the room: larger type, the list in two columns when it is long.
+    // A big screen in the room: nobody scrolls it, so the list goes in two columns when it is long.
+    // Phones rematch and share; the big screen only shows the result.
     &.presenter {
-        .final { max-width: 900px; }
-        .headline { font-size: 3.5rem; }
-        .trophy { width: 110px; height: 110px; }
-        .name, .score { font-size: 1.8rem; }
-        .lie { font-size: 1.2rem; }
-        .picture { height: 52px; }
+        .final { max-width: 1200px; }
+        .hero { padding-bottom: 16px; }
+        .headline { font-size: 2.6rem; }
+        .trophy { width: 72px; height: 72px; }
+        .players.many {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 8px 12px;
+            .player { margin-bottom: 0; }
+        }
+        .name, .score { font-size: 1.5rem; }
+        .lie { font-size: 1.05rem; }
+        .picture { height: 44px; }
     }
 }

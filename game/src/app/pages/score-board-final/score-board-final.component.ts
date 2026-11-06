@@ -34,6 +34,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     mine: FinalPlayer;
     locale = 'en';
     t: FinalStrings = finalStrings.en;
+    wholeGame: boolean;
     confetti = Array.from({ length: 28 }, (_, i) => i);
     sound: Howl;
     presenter: boolean;
@@ -60,15 +61,18 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
         this.playMusic();
-        this.apiService.getGameLocale(this.pin).then(locale => {
-            this.locale = locale === 'he' ? 'he' : 'en';
-            this.t = finalStrings[this.locale];
-        });
         Promise.all([
             this.apiService.getPlayers(this.pin),
             // The final screen still works for games that ended before highlights were kept.
             this.apiService.getHighlights(this.pin).catch(() => null),
-        ]).then(([resp, highlights]) => {
+            this.apiService.getHighlightsFrom(this.pin).catch(() => null),
+            this.apiService.getGameLocale(this.pin).catch(() => 'en'),
+        ]).then(([resp, highlights, from, locale]) => {
+            // The words are in the game's language from the first paint.
+            this.locale = locale === 'he' ? 'he' : 'en';
+            this.t = finalStrings[this.locale];
+            // "Nobody fell for their lies" only when every round was counted.
+            this.wholeGame = from === 0;
             resp = resp || {};
             const user = !this.presenter && this.sessionService.user;
             const mine = user && resp[user.pid];
@@ -140,12 +144,18 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         if (this.winners.length === 1) {
             return this.t.wins(this.winners[0].nickname);
         }
-        return this.t.tie;
+        return this.winners.length ? this.t.tie : this.t.gameOver;
     }
 
     get tiedNames() {
         const names = this.winners.map(p => p.nickname);
-        return names.length > 1 ? names.slice(0, -1).join(', ') + ` ${this.t.and}${this.rtl ? '' : ' '}` + names[names.length - 1] : '';
+        if (names.length < 2) {
+            return '';
+        }
+        const last = names[names.length - 1];
+        // Hebrew joins "and" to the name: "דני ויוסי", but "דני ו-Joe" before a name in Latin letters.
+        const and = this.rtl ? (/^[\u0590-\u05FF]/.test(last) ? ' ו' : ' ו-') : ` ${this.t.and} `;
+        return names.slice(0, -1).join(', ') + and + last;
     }
 
     get myLine() {
@@ -160,7 +170,10 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     replay() {
         this.loading = true;
-        this.apiService.fork(this.pin);
+        this.apiService.fork(this.pin).catch(err => {
+            this.loading = false;
+            reportError(err, 'fork', { pin: this.pin });
+        });
     }
 
     private async onCrew(id: string) {

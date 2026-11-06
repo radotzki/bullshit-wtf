@@ -103,6 +103,7 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
                 revealDone: null,
                 // Kept for the final screen: each player's lie that fooled the most players.
                 highlights: addHighlights(game.highlights, revealAnswers, typeof game.currentQ === 'string' ? game.currentQ : undefined),
+                highlightsFrom: typeof game.highlightsFrom === 'number' ? game.highlightsFrom : game.questionIndex || 0,
             };
 
         case GameState.RevealTheTruth:
