@@ -3,6 +3,52 @@
 <head>
   <meta charset="utf-8">
   <title>Bullshit: a free party game for phones. Lie, bluff, find the truth</title>
+  <!--
+    Visit beacon: one small row per page view in the `visit` function's log, sent when the
+    page is hidden or closed (up to 3 times; v groups the rows of one page view), and once at 12 s if the app has still not drawn (stuck spinner).
+    It runs before every other script, so it also sees a phone where the app never starts
+    (a script that fails to load or parse, before Sentry is up). No IP, no player data.
+  -->
+  <script>
+  (function () {
+    var w = window, sent = { stuck: 0, end: 0 }, v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
+    var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-prod(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/.test(location.hostname)
+      ? 'https://us-central1-bullshit-wtf-prod.cloudfunctions.net/visit'
+      : 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/visit';
+    var res = '';
+    // The first script error wins; a failed load counts only for a file of our own site
+    // (an outside script, stylesheet or font that a network blocks does not stop the game).
+    w.addEventListener('error', function (e) {
+      var t = e && e.target;
+      if (t && t !== w && (t.src || t.href)) {
+        var u = String(t.src || t.href);
+        if (!res && u.indexOf(location.origin) === 0) { res = 'load failed: ' + u.slice(0, 160); }
+      } else if (!err) {
+        err = String((e && e.message) || 'error').slice(0, 200);
+      }
+    }, true);
+    function booted() {
+      var r = document.querySelector('app-root');
+      return !!(r && r.children.length && !(r.children.length === 1 && r.firstElementChild && r.firstElementChild.className === 'l'));
+    }
+    function send(kind) {
+      if (sent[kind] >= (kind === 'end' ? 3 : 1)) { return; }
+      sent[kind]++;
+      var body = JSON.stringify({
+        k: kind, v: v, first: first.slice(0, 80), last: location.pathname.slice(0, 80), booted: booted(),
+        ms: new Date().getTime() - t0, err: err || res, lang: (navigator.language || '').slice(0, 10),
+        ref: (document.referrer || '').replace(/^https?:\/\/([^\/?#]+).*$/, '$1').slice(0, 60)
+      });
+      try {
+        if (navigator.sendBeacon && navigator.sendBeacon(url, body)) { return; }
+      } catch (e) { }
+      try { var x = new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type', 'text/plain'); x.send(body); } catch (e) { }
+    }
+    setTimeout(function () { if (!booted()) { send('stuck'); } }, 12000);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') { send('end'); } });
+    w.addEventListener('pagehide', function () { send('end'); });
+  })();
+  </script>
 
   <!--
     Link previews (WhatsApp, Facebook, X, Telegram, Slack) and search.
