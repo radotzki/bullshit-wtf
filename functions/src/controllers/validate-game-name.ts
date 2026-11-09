@@ -1,5 +1,6 @@
 import { GameScheme } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { gameOverError } from './game-over';
 
 export async function validateGameName(pin: string) {
     pin = pin.toUpperCase();
@@ -7,6 +8,11 @@ export async function validateGameName(pin: string) {
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
+    }
+
+    const over = await gameOverError(game, Date.now());
+    if (over) {
+        return Promise.reject(over);
     }
 
     if (Object.keys(game.players || {}).length === 8) {

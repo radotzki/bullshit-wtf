@@ -3,13 +3,30 @@
 
         <div class="title-area">
             <h1 class="title" routerLink="/">Bullshit</h1>
-            <h3 *ngIf="!nicknameState" class="sub-title">Enter a game PIN</h3>
-            <h3 *ngIf="nicknameState && !crewName" class="sub-title">Enter a nickname</h3>
-            <h3 *ngIf="nicknameState && crewName" class="sub-title" dir="auto">{{ crewName }} rematch: who are you?</h3>
+            <h3 *ngIf="!nicknameState && !gameOver" class="sub-title">Enter a game PIN</h3>
+            <h3 *ngIf="nicknameState && !crewName && !gameOver" class="sub-title">Enter a nickname</h3>
+            <h3 *ngIf="nicknameState && crewName && !gameOver" class="sub-title" dir="auto">{{ crewName }} rematch: who are you?</h3>
             <div class="separator">♦</div>
         </div>
 
-        <div class="controls-wrapper">
+        <div class="controls-wrapper" *ngIf="gameOver">
+            <div class="controls game-over">
+                <p class="game-over-title">Game over</p>
+                <p class="game-over-text">Game {{ gameOver.pin }} has finished. Check the PIN and try again.</p>
+                <p class="game-over-text" *ngIf="gameOver.rematch">Its players started a new game: {{ gameOver.rematch }}.</p>
+                <p class="game-over-text" *ngIf="gameOver.justEnded">If they play again, ask for the new PIN.</p>
+                <div class="field" *ngIf="gameOver.rematch">
+                    <button class="button is-primary is-medium is-fullwidth join-rematch" type="button"
+                        (click)="joinRematch()">JOIN {{ gameOver.rematch }}</button>
+                </div>
+                <div class="field">
+                    <button class="button is-medium is-fullwidth try-again" type="button"
+                        [class.is-primary]="!gameOver.rematch" (click)="tryAnotherPin()">TRY ANOTHER PIN</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-wrapper" *ngIf="!gameOver">
             <div class="controls">
                 <div class="field" *ngIf="!nicknameState">
                     <p class="control">
