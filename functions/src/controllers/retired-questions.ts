@@ -27,6 +27,12 @@ export const RETIRED_QUESTIONS: { [qid: string]: string } = {
     '29b26a02-2fcd-bb90-dd72-53dd9a42f4c8': "grim: DJ Khaled's name before 9/11 (arab attack); invites terror jokes",
     'fc8b9867-7bd5-4db2-9d5d-a64eecb7c954': "grim: DJ Khaled's name before 9/11, Hebrew (arab attack); invites terror jokes",
     'a461ea8a-7306-3387-0bfe-0cafba3a36a0': "grim: Oklahoma mayor's husband dressed as (KKK members); invites hate jokes",
+    // Hebrew question review (2026-11-07): too easy, or a joke that only works in English.
+    '3ffff3b9-3d1c-46ff-b8fb-e1543528cdfa': "the only food that doesn't spoil, Hebrew (honey)",
+    'cadcd592-202a-49f1-a81b-c4c1373c1069': 'largest organ in the human body, Hebrew (skin)',
+    'cc7dbbb3-e7b4-4244-8d86-5149949f1dca': 'crows wait for a better treat; the test is called (marshmallow), Hebrew; too famous',
+    '908603d2-6492-441b-98a7-0de5c728c6fb': 'Wikipedia page edited 500+ times (pedant), Hebrew; English-only joke',
+    'a3a8fc0a-94f0-406a-8794-30cbd00e3677': "2013 YouTube hack of (Soulja Boy), Hebrew; few Israeli players know him",
 };
 
 export function isRetired(qid: string): boolean {
