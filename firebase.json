@@ -4,6 +4,10 @@
     "cleanUrls": true,
     "rewrites": [
       {
+        "source": "/_v",
+        "function": "visit"
+      },
+      {
         "source": "/he",
         "destination": "/he.html"
       },

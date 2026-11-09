@@ -192,7 +192,8 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
     });
 });
 
-// One page view from the visit beacon (game/src/index.html), sent with sendBeacon as text/plain,
+// One page view from the visit beacon (game/src/index.html), sent to /_v on the game's own site
+// (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,
 // so no CORS preflight. Logged as one line starting "visit "; always answers 204.
 exports.visit = functions.https.onRequest((req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
