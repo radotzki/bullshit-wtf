@@ -3,6 +3,7 @@ import { Answer, GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { advance } from './tick';
 import { isIdea } from './lie-helper';
+import { isSameAnswer } from './same-answer';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
@@ -10,7 +11,7 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
     const qid = game.qids[game.questionIndex];
     const question = await getQuestion(qid);
 
-    if (question.realAnswer.toLowerCase() === playerAnswer.toLowerCase()) {
+    if (isSameAnswer(playerAnswer, question.realAnswer)) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
     } else {
         const stored: Answer = {
