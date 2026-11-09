@@ -75,7 +75,7 @@ const tests: { [name: string]: () => void } = {
     'retired questions include the male cat riddle'() {
         assert.ok(isRetired('3be6f72c-bead-ebfc-bf09-1ea8e74d02d2'));
         assert.ok(!isRetired('toString'));
-        assert.strictEqual(Object.keys(RETIRED_QUESTIONS).length, 11);
+        assert.strictEqual(Object.keys(RETIRED_QUESTIONS).length, 16);
     },
 
     'grim questions are retired in both languages'() {
