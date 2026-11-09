@@ -65,8 +65,10 @@ Deploy functions first, then the game: the new client reads the error `message` 
 ## Visit beacon
 
 `game/src/index.html` runs a tiny script before everything else. When a page is hidden or closed
-(up to 3 times), and once at 12 s if the app has still not drawn, it posts one line to the `visit`
-function: first and last path, whether the app started, the first script error, browser language,
+(up to 3 times), and once at 12 s if the app has still not drawn, it posts one line to `/_v` on the
+game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to another site is
+dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon still reports success).
+Deploy hosting for the rewrite; the `visit` function itself is unchanged. It posts: first and last path, whether the app started, the first script error, browser language,
 referrer host, and a random id per page load (`view`, never stored on the phone) that groups the
 rows of one page view. The function logs it as `visit {...}` with device and browser from the user agent;
 no IP, no player data. Count visits (distinct `view`), stuck loads and how far people got (the last row of each view) from the function log
