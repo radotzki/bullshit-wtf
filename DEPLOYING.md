@@ -194,6 +194,19 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   Rules are unchanged.
 - The same file holds the query for sends per method per day.
 
+## Opening questions
+
+- Questions can carry `opener: true`. In a normal game, question 1 is an opener nobody in the room has
+  seen; the rest are picked as before. Openers are kept for question 1, so a room meets every opener
+  (30 per language) before any repeats; once a room has seen them all they join the normal bank.
+  A pack game (Hanukkah) still opens with a pack question. The re-pick at START (`tick`) and Replay
+  (`fork`) use the same picker, so deploy all functions.
+- The 60 questions (30 English, 30 Hebrew, ids `opener-en-01..30`, `opener-he-01..30`) are in
+  `functions/data/opening-questions.json`. Load them **after** the new functions are live (old functions
+  would mix them into any question slot and use them up):
+  `npx firebase database:update /questions functions/data/opening-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+- To retire one, add its id to `retired-questions.ts` as with any question.
+
 ## Hanukkah pack and campaign tags
 
 - Questions can carry `pack: "hanukkah"`. Pack questions never appear in normal games. A pack game
