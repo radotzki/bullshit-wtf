@@ -216,7 +216,10 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             await this.onCrew(crew.id);
         } catch (err) {
             this.crewError = (err && err.message) || this.t.crewError;
-            reportError(err, 'createCrew', { pin: this.pin });
+            // A refused name (empty, or a slur or sex word) is expected; report anything else.
+            if (!err || err.code !== 'BAD_NAME') {
+                reportError(err, 'createCrew', { pin: this.pin });
+            }
         }
         this.savingCrew = false;
     }

@@ -10,8 +10,20 @@ npm install                       # Firebase CLI 15
 (cd game && npm ci && npm run build)   # output in game/dist
 ```
 
-`game-model.ts` is shared by both apps. Each build copies it into place, so the old
-`symlink.sh` step is no longer needed.
+`game-model.ts`, `name-flag.ts` and `name-lists.json` are shared by both apps. Each build copies
+them into place with `copy-shared.js` (the JSON becomes `name-lists.ts`), so the old `symlink.sh`
+step is no longer needed.
+
+## Nickname filter
+
+The `join` function swaps a nickname that is a slur or a sex word for a sweet name ("Grandma",
+"סבתא") and tells only that phone, with a toast in the lobby. The word lists, the allow list and
+the swap names are in `name-lists.json`. To add a missed word, put it in the right list; to stop a
+false hit, add the whole squashed name to `allow`. Then run `functions/test/name-flag.test.js` and
+the BigQuery check in the growth notes before shipping. Crew names on the list are refused.
+
+Release: run `functions/bigquery/2026-11-name-flag.sql` (adds `users.name_flag`), then all
+functions, then the game. Until the SQL runs, joins still log, without `name_flag`.
 
 The client is still Angular 4 with Angular CLI 1.7. To build it on a current Node:
 `node-sass` is replaced by Dart Sass through an npm `overrides` entry, the build runs

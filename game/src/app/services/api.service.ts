@@ -148,7 +148,10 @@ export class ApiService {
     async join(pin: string, nickname: string, uid: string) {
         pin = pin.toUpperCase();
         const hostKey = hostKeyFor(pin) || null;
-        return this.post<{ pid: string }>(`join`, { pin, nickname, uid, hostKey }).then(resp => resp.pid);
+        // nickname: the name the server stored (cut to 9, or a sweet name if the typed one was a slur
+        // or a sex word, with swapped set). Older functions send only pid.
+        return this.post<{ pid: string; nickname?: string; swapped?: boolean }>(`join`, { pin, nickname, uid, hostKey })
+            .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
     }
 
     validateGameName(pin: string) {

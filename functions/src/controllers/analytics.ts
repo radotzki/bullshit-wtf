@@ -2,6 +2,7 @@ import { GameScheme, GameState } from "../game-model";
 import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
+import { nameFlag } from '../name-flag';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
@@ -56,6 +57,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
         pin,
         nickname,
         via,
+        // The raw typed name stays in nickname (to measure); name_flag is hate, sex or null.
+        name_flag: nameFlag(nickname),
         time: new Date(),
     });
 }

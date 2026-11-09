@@ -181,7 +181,7 @@ test('joins record their source; unknown tags become "other", missing ones null'
     }
     assert.deepStrictEqual(take('users').map(r => r.via), ['qr', 'link', 'results', 'pin', 'host', 'replay', 'other', null]);
     const row = take('users')[0];
-    assert.deepStrictEqual(Object.keys(row).sort(), ['ip', 'nickname', 'pin', 'time', 'uid', 'useragent', 'via']);
+    assert.deepStrictEqual(Object.keys(row).sort(), ['ip', 'name_flag', 'nickname', 'pin', 'time', 'uid', 'useragent', 'via']);
 });
 
 test('HTTP endpoints pass the uid and join source through, and drop bad uids', async () => {
