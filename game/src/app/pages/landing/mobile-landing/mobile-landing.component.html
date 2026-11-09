@@ -1,13 +1,14 @@
-<div class="top-frame">
-    <span class="title"> BULLSHIT </span>
+<div class="top-frame" [attr.dir]="t.dir" [attr.lang]="t.lang">
+    <span class="title"> {{ t.title }} </span>
+    <a class="lang-switch" *ngIf="t.lang === 'he'" [attr.lang]="t.switchTo" (click)="switchLanguage()">{{ t.switchLabel }}</a>
 </div>
-<section class="home">
+<section class="home" [attr.dir]="t.dir" [attr.lang]="t.lang" [class.is-rtl]="t.dir === 'rtl'">
 
     <div class="crews" *ngIf="crews.length">
         <a class="crew" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
             <i class="fa fa-trophy"></i>
             <span class="crew-name" dir="auto">{{ crew.name }}</span>
-            <span class="crew-action">SCORES &amp; REMATCH</span>
+            <span class="crew-action">{{ t.crewAction }}</span>
         </a>
     </div>
 
@@ -16,8 +17,8 @@
             <i class="fa fa-gamepad"></i>
         </div>
         <div class="menu-button-text">
-            <p class="menu-button-text-main"> Join Game </p>
-            <p class="menu-button-text-second"> Join a game by entering its PIN </p>
+            <p class="menu-button-text-main"> {{ t.join }} </p>
+            <p class="menu-button-text-second"> {{ t.joinHint }} </p>
         </div>
     </div>
 
@@ -26,8 +27,8 @@
             <i class="fa fa-plus-square"></i>
         </div>
         <div class="menu-button-text">
-            <p class="menu-button-text-main"> Create Game </p>
-            <p class="menu-button-text-second"> Set up a new game for you and your friends </p>
+            <p class="menu-button-text-main"> {{ t.create }} </p>
+            <p class="menu-button-text-second"> {{ t.createHint }} </p>
         </div>
     </div>
 
@@ -36,8 +37,8 @@
             <i class="fa fa-share-square-o"></i>
         </div>
         <div class="menu-button-text">
-            <p class="menu-button-text-main"> Present Game </p>
-            <p class="menu-button-text-second"> Click here from the device you wish to use as a presenter </p>
+            <p class="menu-button-text-main"> {{ t.present }} </p>
+            <p class="menu-button-text-second"> {{ t.presentHint }} </p>
         </div>
     </div>
 
@@ -46,8 +47,8 @@
             <i class="fa fa-graduation-cap"></i>
         </div>
         <div class="menu-button-text">
-            <p class="menu-button-text-main"> How Do I Play? </p>
-            <p class="menu-button-text-second"> Click here to learn the rules </p>
+            <p class="menu-button-text-main"> {{ t.learn }} </p>
+            <p class="menu-button-text-second"> {{ t.learnHint }} </p>
         </div>
     </div>
 </section>
