@@ -12,8 +12,11 @@
   <script>
   (function () {
     var w = window, sent = { stuck: 0, end: 0 }, v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
-    var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-prod(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/.test(location.hostname)
-      ? 'https://us-central1-bullshit-wtf-prod.cloudfunctions.net/visit'
+    // Same site on Firebase Hosting (firebase.json sends /_v to the visit function): blockers
+    // drop every beacon to another site (EasyPrivacy's "*$ping,third-party", used by Samsung
+    // Internet's ad-block add-ons, Brave and uBlock), and sendBeacon still says true then.
+    var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-(prod|dev)(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/.test(location.hostname)
+      ? '/_v'
       : 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/visit';
     var res = '';
     // The first script error wins; a failed load counts only for a file of our own site
