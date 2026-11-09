@@ -94,6 +94,16 @@ export function preferredLocale(): string {
     }
 }
 
+/** The visitor picked a language on the home menu: keep it for the menu and for new games. */
+export function setPreferredLocale(locale: string) {
+    if (locale !== 'he' && locale !== 'en') {
+        return;
+    }
+    try {
+        window.localStorage.setItem(localeKey, locale);
+    } catch (e) { }
+}
+
 /** The browser that created this game joins it as the host. */
 export function markHosted(pin: string) {
     const s = storage();
