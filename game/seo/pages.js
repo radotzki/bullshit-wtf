@@ -98,6 +98,7 @@ const howHe = `
 module.exports = [
     {
         path: '/how-to-play', twin: '/he/how-to-play', site: en,
+        image: '/assets/og-how-en.png',
         title: 'How to play Bullshit, the free bluffing trivia game for phones',
         description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 8 players.',
         h1: 'How to play Bullshit',
@@ -105,6 +106,7 @@ module.exports = [
     },
     {
         path: '/he/how-to-play', twin: '/how-to-play', site: he,
+        image: '/assets/og-how-he.png',
         title: 'איך משחקים בולשיט, משחק הבלוף והטריוויה החינמי בטלפון',
         description: 'החוקים של בולשיט: ממציאים תשובה שתעבוד על החברים, ואז מחפשים את האמת בין כל התשובות. חינם, בדפדפן, עד 8 שחקנים.',
         h1: 'איך משחקים בולשיט',
@@ -112,6 +114,7 @@ module.exports = [
     },
     {
         path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en,
+        image: '/assets/og-phone-en.png',
         title: 'A free party game on your phones: Bullshit, the bluffing trivia game',
         description: 'Looking for a party game everyone can play on their own phone, in the same room, with no download? Bullshit is free and starts in under a minute.',
         h1: 'A party game everyone plays on their own phone',
@@ -132,6 +135,7 @@ module.exports = [
     },
     {
         path: '/he/party-game-phone', twin: '/party-games-on-your-phone', site: he,
+        image: '/assets/og-phone-he.png',
         title: 'משחק חברה חינמי בטלפון: בולשיט, משחק הבלוף והטריוויה',
         description: 'מחפשים משחק חברה שכל אחד משחק מהטלפון שלו, באותו חדר, בלי להוריד כלום? בולשיט חינמי ומתחיל בפחות מדקה.',
         h1: 'משחק חברה שכל אחד משחק מהטלפון שלו',
@@ -194,6 +198,7 @@ module.exports = [
     },
     {
         path: '/purim-party-game', twin: '/he/purim', site: en,
+        image: '/assets/og-purim-en.png',
         title: 'A Purim party game: free bluffing trivia on your phones',
         description: 'On the holiday of masks, the best liar wins. Bullshit is a free party game for phones where you fool your friends with fake answers. No download.',
         h1: 'A Purim game where the best liar wins',
@@ -211,6 +216,7 @@ module.exports = [
     },
     {
         path: '/he/purim', twin: '/purim-party-game', site: he,
+        image: '/assets/og-purim-he.png',
         title: 'משחק לפורים: בלוף וטריוויה בטלפון, בחינם',
         description: 'בחג התחפושות, השקרן הכי טוב מנצח. בולשיט הוא משחק חברה חינמי בטלפון שבו עובדים על החברים עם תשובות מומצאות. בלי הורדה.',
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
