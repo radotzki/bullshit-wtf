@@ -43,5 +43,9 @@
         </div>
     </div>
 
+    <div *ngIf="nameToast" class="name-toast" role="status" (click)="hideNameToast()" [attr.dir]="locale === 'he' ? 'rtl' : null">
+        {{ nameToast }}
+    </div>
+
     <app-game-footer *ngIf="!presenter"></app-game-footer>
 </section>

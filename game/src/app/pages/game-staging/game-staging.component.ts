@@ -8,6 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { swapToast } from './../../name-flag';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend } from './lobby-host';
 
 @Component({
@@ -33,6 +34,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private myPid: string = null;
     locale = 'en';
     packBanner: string = null;
+    /** Only on the phone whose nickname the server swapped, once: why it has a sweet name now. */
+    nameToast: string = null;
+    private toastTimer: any;
     private arrivedAt = Date.now();
     private hostLoaded = false;
     private graceTimer: any;
@@ -122,6 +126,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.myPid = !this.presenter && user && user.pid ? user.pid : null;
             this.locale = locale === 'he' ? 'he' : 'en';
             this.packBanner = packBanner(pack, this.locale);
+            this.showNameToast();
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
             this.hostLoaded = true;
             this.updateLobby();
@@ -131,6 +136,21 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             reportError(err, 'lobbyHost', { pin: this.pin });
             this.showStartButton = true;
         });
+    }
+
+    private showNameToast() {
+        const swap = this.sessionService.nameSwap;
+        if (this.presenter || !swap || swap.pin !== String(this.pin || '').toUpperCase()) {
+            return;
+        }
+        this.sessionService.nameSwap = null;
+        this.nameToast = swapToast(swap.nickname, this.locale);
+        this.toastTimer = setTimeout(() => this.nameToast = null, 9000);
+    }
+
+    hideNameToast() {
+        this.nameToast = null;
+        clearTimeout(this.toastTimer);
     }
 
     private updateLobby() {
@@ -163,6 +183,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.playersSubscriber.unsubscribe();
         clearTimeout(this.graceTimer);
+        clearTimeout(this.toastTimer);
         clearInterval(this.pingTimer);
         clearInterval(this.lobbyTimer);
         document.removeEventListener('visibilitychange', this.onVisible);

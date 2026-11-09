@@ -154,8 +154,8 @@ exports.join = functions.https.onRequest((req, res) => {
         const uid = req.body.uid;
 
         try {
-            const pid = await join(pin, nickname, uid, cleanHostKey(req.body.hostKey));
-            return res.status(200).send({ pid });
+            // { pid, nickname, swapped? }: the phone keeps the nickname the server stored.
+            return res.status(200).send(await join(pin, nickname, uid, cleanHostKey(req.body.hostKey)));
         } catch (e) {
             return res.status(400).send(errorBody(e));
         }

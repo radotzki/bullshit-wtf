@@ -1,6 +1,7 @@
 import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
 import { newGame } from './new-game';
+import { nameFlag, crewNameRefused } from '../name-flag';
 
 // Ids look like "k7m2qx": no 0/o, 1/l/i, so they survive being read aloud or retyped.
 const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -66,6 +67,10 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
 
     if (!game) {
         return fail('Game does not exist', 'GAME_NOT_EXIST');
+    }
+    // A crew is named on purpose by one person, so a slur or sex word is refused, not swapped.
+    if (nameFlag(crewName) || nameFlag(name)) {
+        return fail(crewNameRefused(game.locale), 'BAD_NAME');
     }
     if (!game.state || game.state.id !== GameState.ScoreBoardFinal) {
         return fail('Finish the game first', 'GAME_NOT_FINISHED');

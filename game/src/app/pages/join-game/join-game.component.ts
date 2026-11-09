@@ -113,10 +113,12 @@ export class JoinGameComponent implements OnInit {
         uid = user ? user.uid : 0;
 
         this.apiService.join(this.pin, this.nickname, uid)
-            .then((pid) => {
-                this.sessionService.user = { nickname: this.nickname.toLowerCase(), pid, uid };
+            .then(({ pid, nickname, swapped }) => {
+                // Keep the name the server stored, so Replay and the crew never send the typed one back.
+                this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };
+                this.sessionService.nameSwap = swapped ? { pin: this.pin.toUpperCase(), nickname } : null;
                 if (this.crewId) {
-                    this.crewService.remember(this.crewId, this.crewName, this.nickname);
+                    this.crewService.remember(this.crewId, this.crewName, nickname);
                 }
                 this.router.navigate(['game-staging', this.pin]);
                 this.loading = false;

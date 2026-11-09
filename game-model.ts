@@ -1,3 +1,5 @@
+import { nameFlag } from './name-flag';
+
 export enum GameState {
     GameStaging = 0,
     RoundIntro = 1,
@@ -250,9 +252,14 @@ export function applyCrewGame(crew: Crew, pin: string, players: CrewGamePlayer[]
     return crew;
 }
 
-/** Members in standings order: most wins, then most points, then fewest games. */
+/**
+ * Members in standings order: most wins, then most points, then fewest games. Members whose name
+ * is a slur or a sex word (crews saved before the nickname filter) are left out, so the crew page
+ * and the rematch name chips never show them.
+ */
 export function crewStandings(crew: Crew): CrewMember[] {
-    const members = crew && crew.members ? Object.keys(crew.members).map(k => crew.members[k]) : [];
+    const members = crew && crew.members ? Object.keys(crew.members).map(k => crew.members[k])
+        .filter(m => m && !nameFlag(m.nickname)) : [];
     return members.sort((a, b) =>
         (b.wins || 0) - (a.wins || 0) || (b.points || 0) - (a.points || 0) || (a.games || 0) - (b.games || 0));
 }

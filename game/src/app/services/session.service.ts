@@ -12,6 +12,8 @@ const presenterKey = 'BS_PRESENTER';
 export class SessionService implements CanActivate {
     private _presenter: boolean;
     private _user: User;
+    /** Set when the server swapped this phone's nickname; the lobby shows the toast once and clears it. */
+    nameSwap: { pin: string; nickname: string } = null;
 
     constructor(
         private router: Router,
