@@ -148,6 +148,8 @@ export interface Question {
     id: string;
     // Seasonal pack this question belongs to; such questions only appear in games of that pack.
     pack?: string;
+    // An easy opening question: question 1 of a game is one of these that nobody in the room has seen.
+    opener?: boolean;
     realAnswer: string;
     fakeAnswers: string[];
     questionText: string;

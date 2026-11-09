@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { pickQuestions, pickWithPack, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
+import { pickQuestions, pickWithPack, pickWithOpener, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
 
 // Seeded random so failures are reproducible.
 function seeded(seed: number) {
@@ -119,6 +119,42 @@ const tests: { [name: string]: () => void } = {
         const qids = pickWithPack(bank(2), ['h0', 'h1', 'h2', 'h3', 'h4'], [], 5, 2, seeded(3));
         assert.strictEqual(qids.length, 5);
         assert.strictEqual(new Set(qids).size, 5);
+    },
+    'opener game: question 1 is an unseen opener, the rest come from the normal bank'() {
+        const regular = bank(40);
+        const openers = Array.from({ length: 30 }, (_, i) => `o${i}`);
+        const seen: SeenRecord = { o0: 1, o1: 2, o2: 3 };
+        for (const count of [1, 5, 7, 9]) {
+            const random = seeded(count);
+            const qids = pickWithOpener(regular, openers, [seen], count, (ids, n) => pickQuestions(ids, [seen], n, random), random);
+            assert.strictEqual(qids.length, count);
+            assert.strictEqual(new Set(qids).size, count);
+            assert.ok(qids[0][0] === 'o', 'first question is an opener');
+            assert.ok(!(qids[0] in seen), 'the opener is one the room has not seen');
+            assert.ok(qids.slice(1).every(q => q[0] === 'q'), 'only one opener per game');
+        }
+    },
+
+    'a room meets every opener once before they mix into the bank'() {
+        const regular = bank(200);
+        const openers = Array.from({ length: 6 }, (_, i) => `o${i}`);
+        const store: SeenRecord = {};
+        const firsts: string[] = [];
+        for (let g = 0; g < 8; g++) {
+            const random = seeded(g + 1);
+            const qids = pickWithOpener(regular, openers, [store], 7, (ids, n) => pickQuestions(ids, [store], n, random), random);
+            firsts.push(qids[0]);
+            qids.forEach((q, i) => store[q] = g * 10 + i + 1);
+        }
+        assert.deepStrictEqual(firsts.slice(0, 6).sort(), openers.slice().sort());
+        assert.ok(firsts.slice(6).every(q => q[0] === 'q'), 'after all openers are seen, the bank is unseen first');
+    },
+
+    'no openers in the bank: picks as before'() {
+        const random = seeded(5);
+        const qids = pickWithOpener(bank(20), [], [], 7, (ids, n) => pickQuestions(ids, [], n, random), random);
+        assert.strictEqual(qids.length, 7);
+        assert.strictEqual(new Set(qids).size, 7);
     },
 };
 

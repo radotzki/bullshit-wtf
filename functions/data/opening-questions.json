@@ -1,0 +1,722 @@
+{
+  "opener-en-01": {
+    "questionText": "Before rubber erasers, people rubbed out pencil marks with $blank$",
+    "realAnswer": "bread",
+    "fakeAnswers": [
+      "potato",
+      "cheese",
+      "wet sand"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eraser",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-02": {
+    "questionText": "Wombats are the only animals known to poop in the shape of $blank$",
+    "realAnswer": "cubes",
+    "fakeAnswers": [
+      "stars",
+      "hearts",
+      "little rings"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wombat",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-03": {
+    "questionText": "Under Swiss animal-welfare rules, a guinea pig must not be kept $blank$",
+    "realAnswer": "alone",
+    "fakeAnswers": [
+      "in an apartment",
+      "without a name",
+      "in a blue cage"
+    ],
+    "citation": "https://www.mentalfloss.com/animals/pets/its-illegal-own-single-guinea-pig-switzerland",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-04": {
+    "questionText": "In the 1830s, an Ohio doctor sold ketchup as $blank$",
+    "realAnswer": "pills",
+    "fakeAnswers": [
+      "hair gel",
+      "a love potion",
+      "wall paint"
+    ],
+    "citation": "https://tastingtable.com/1497845/ketchup-origin-medicine",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-05": {
+    "questionText": "Play-Doh was first sold as a putty for cleaning $blank$",
+    "realAnswer": "wallpaper",
+    "fakeAnswers": [
+      "car seats",
+      "chalkboards",
+      "windows"
+    ],
+    "citation": "https://huffingtonpost.co.uk/entry/play-doh-wallpaper-cleaner_n_3430042",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-06": {
+    "questionText": "Sea otters $blank$ while they sleep, so they don't drift apart",
+    "realAnswer": "hold hands",
+    "fakeAnswers": [
+      "sing",
+      "tie their tails together",
+      "take turns snoring"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sea_otter",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-07": {
+    "questionText": "A single day on Venus lasts longer than $blank$ there",
+    "realAnswer": "a whole year",
+    "fakeAnswers": [
+      "a dog's life",
+      "a century",
+      "a decade"
+    ],
+    "citation": "https://science.nasa.gov/venus/",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-08": {
+    "questionText": "The national animal of Scotland is the $blank$",
+    "realAnswer": "unicorn",
+    "fakeAnswers": [
+      "loch ness monster",
+      "highland cow",
+      "sheepdog"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Unicorn",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-09": {
+    "questionText": "The first thing ever sold on eBay was a broken $blank$",
+    "realAnswer": "laser pointer",
+    "fakeAnswers": [
+      "toaster",
+      "game boy",
+      "umbrella"
+    ],
+    "citation": "https://time.com/4018841/first-item-sold-listed-ebay/",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-10": {
+    "questionText": "The world's first webcam was set up to keep an eye on a $blank$",
+    "realAnswer": "coffee pot",
+    "fakeAnswers": [
+      "fish tank",
+      "parking spot",
+      "hamster"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Trojan_Room_coffee_pot",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-11": {
+    "questionText": "Botanically, strawberries are not berries, but $blank$ are",
+    "realAnswer": "bananas",
+    "fakeAnswers": [
+      "cherries",
+      "apples",
+      "pears"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Berry_(botany)",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-12": {
+    "questionText": "In 1807, a hunt ended with Napoleon retreating from hundreds of attacking $blank$",
+    "realAnswer": "rabbits",
+    "fakeAnswers": [
+      "geese",
+      "pigeons",
+      "bees"
+    ],
+    "citation": "https://www.mentalfloss.com/history/military/time-napoleon-was-attacked-rabbits",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-13": {
+    "questionText": "A shrimp's heart is in its $blank$",
+    "realAnswer": "head",
+    "fakeAnswers": [
+      "tail",
+      "legs",
+      "back"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Shrimp",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-14": {
+    "questionText": "Hawaiian pizza was invented in $blank$",
+    "realAnswer": "canada",
+    "fakeAnswers": [
+      "hawaii",
+      "australia",
+      "ohio"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hawaiian_pizza",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-15": {
+    "questionText": "In 1932, the Australian army went to war against $blank$, and lost",
+    "realAnswer": "emus",
+    "fakeAnswers": [
+      "kangaroos",
+      "rabbits",
+      "koalas"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emu_War",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-16": {
+    "questionText": "Finland hosts a world championship in carrying your $blank$",
+    "realAnswer": "wife",
+    "fakeAnswers": [
+      "sauna stones",
+      "mother-in-law",
+      "reindeer"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wife-carrying",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-17": {
+    "questionText": "Before it was called Google, the search engine was called $blank$",
+    "realAnswer": "backrub",
+    "fakeAnswers": [
+      "googolplex",
+      "searchy",
+      "pagerank"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/History_of_Google",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-18": {
+    "questionText": "Before it was called Pepsi, the drink was called $blank$",
+    "realAnswer": "brad's drink",
+    "fakeAnswers": [
+      "pep juice",
+      "cola king",
+      "fizzy pete"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pepsi",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-19": {
+    "questionText": "Counting by the number made, the world's biggest maker of tires is $blank$",
+    "realAnswer": "lego",
+    "fakeAnswers": [
+      "ikea",
+      "nasa",
+      "mcdonald's"
+    ],
+    "citation": "https://www.guinnessworldrecords.com/world-records/100909-largest-tyre-manufacture-per-annum",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-20": {
+    "questionText": "In Japan, millions of families eat $blank$ for Christmas dinner",
+    "realAnswer": "kfc",
+    "fakeAnswers": [
+      "sushi",
+      "pizza hut",
+      "mcdonald's"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Christmas_in_Japan",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-21": {
+    "questionText": "Nintendo was founded in 1889 to make $blank$",
+    "realAnswer": "playing cards",
+    "fakeAnswers": [
+      "umbrellas",
+      "kites",
+      "rice cookers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nintendo",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-22": {
+    "questionText": "Hippo sweat is $blank$",
+    "realAnswer": "red",
+    "fakeAnswers": [
+      "blue",
+      "green",
+      "glittery"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hippopotamus",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-23": {
+    "questionText": "The Eiffel Tower is a few centimetres taller every $blank$",
+    "realAnswer": "summer",
+    "fakeAnswers": [
+      "winter",
+      "morning",
+      "leap year"
+    ],
+    "citation": "https://factmyth.com/factoids/the-eiffel-tower-gets-taller-in-the-summertime",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-24": {
+    "questionText": "An ostrich's eye is bigger than its $blank$",
+    "realAnswer": "brain",
+    "fakeAnswers": [
+      "stomach",
+      "heart",
+      "beak"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Common_ostrich",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-25": {
+    "questionText": "During World War II, the future Queen Elizabeth II trained as a $blank$",
+    "realAnswer": "mechanic",
+    "fakeAnswers": [
+      "pilot",
+      "nurse",
+      "spy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Elizabeth_II",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-26": {
+    "questionText": "Kangaroos can't easily $blank$",
+    "realAnswer": "walk backwards",
+    "fakeAnswers": [
+      "swim",
+      "jump sideways",
+      "sleep lying down"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kangaroo",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-27": {
+    "questionText": "The Mona Lisa appears to have no $blank$",
+    "realAnswer": "eyebrows",
+    "fakeAnswers": [
+      "nose",
+      "hair",
+      "fingers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mona_Lisa",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-28": {
+    "questionText": "The man who designed the Pringles can asked to be buried in $blank$",
+    "realAnswer": "a pringles can",
+    "fakeAnswers": [
+      "a cereal box",
+      "a giant potato",
+      "a cookie tin"
+    ],
+    "citation": "https://www.snopes.com/fact-check/pringles-urn/",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-29": {
+    "questionText": "A group of flamingos is called a $blank$",
+    "realAnswer": "flamboyance",
+    "fakeAnswers": [
+      "parade",
+      "blush",
+      "pinkery"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Flamingo",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-en-30": {
+    "questionText": "The dot over a lowercase i is called a $blank$",
+    "realAnswer": "tittle",
+    "fakeAnswers": [
+      "speck",
+      "dottle",
+      "pip"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tittle",
+    "lang": "en",
+    "opener": true
+  },
+  "opener-he-01": {
+    "questionText": "לפני שהמציאו מחקים, מחקו סימני עיפרון עם $blank$",
+    "realAnswer": "לחם",
+    "fakeAnswers": [
+      "תפוח אדמה",
+      "גבינה",
+      "חול רטוב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eraser",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-02": {
+    "questionText": "וומבטים הם החיות היחידות שידוע שהקקי שלהן בצורת $blank$",
+    "realAnswer": "קוביות",
+    "fakeAnswers": [
+      "כוכבים",
+      "לבבות",
+      "טבעות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wombat",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-03": {
+    "questionText": "לפי חוקי צער בעלי חיים בשווייץ, אסור לגדל שרקן $blank$",
+    "realAnswer": "לבד",
+    "fakeAnswers": [
+      "בדירה",
+      "בלי שם",
+      "בכלוב כחול"
+    ],
+    "citation": "https://www.mentalfloss.com/animals/pets/its-illegal-own-single-guinea-pig-switzerland",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-04": {
+    "questionText": "בשנות ה-30 של המאה ה-19, רופא מאוהיו מכר קטשופ בתור $blank$",
+    "realAnswer": "גלולות",
+    "fakeAnswers": [
+      "ג'ל לשיער",
+      "שיקוי אהבה",
+      "צבע לקירות"
+    ],
+    "citation": "https://tastingtable.com/1497845/ketchup-origin-medicine",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-05": {
+    "questionText": "פליידו נמכר בהתחלה כחומר לניקוי $blank$",
+    "realAnswer": "טפטים",
+    "fakeAnswers": [
+      "מושבי מכונית",
+      "לוחות גיר",
+      "חלונות"
+    ],
+    "citation": "https://huffingtonpost.co.uk/entry/play-doh-wallpaper-cleaner_n_3430042",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-06": {
+    "questionText": "לוטרות ים $blank$ כשהן ישנות, כדי לא להיסחף אחת מהשנייה",
+    "realAnswer": "מחזיקות ידיים",
+    "fakeAnswers": [
+      "שרות",
+      "קושרות את הזנבות",
+      "נוחרות בתורות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sea_otter",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-07": {
+    "questionText": "על כוכב נוגה, יום אחד נמשך יותר מ $blank$",
+    "realAnswer": "שנה שלמה",
+    "fakeAnswers": [
+      "חיים של כלב",
+      "מאה שנה",
+      "עשור"
+    ],
+    "citation": "https://science.nasa.gov/venus/",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-08": {
+    "questionText": "החיה הלאומית של סקוטלנד היא $blank$",
+    "realAnswer": "חד קרן",
+    "fakeAnswers": [
+      "מפלצת לוך נס",
+      "פרה היילנדית",
+      "כבשה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Unicorn",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-09": {
+    "questionText": "הדבר הראשון שנמכר אי פעם באיביי היה $blank$ שבור",
+    "realAnswer": "סמן לייזר",
+    "fakeAnswers": [
+      "טוסטר",
+      "גיים בוי",
+      "מטריה"
+    ],
+    "citation": "https://time.com/4018841/first-item-sold-listed-ebay/",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-10": {
+    "questionText": "מצלמת הרשת הראשונה בעולם הוקמה כדי לצפות ב $blank$",
+    "realAnswer": "קנקן קפה",
+    "fakeAnswers": [
+      "אקווריום",
+      "מקום חניה",
+      "אוגר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Trojan_Room_coffee_pot",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-11": {
+    "questionText": "מבחינה בוטנית, תות הוא לא ענבה (berry), אבל $blank$ כן",
+    "realAnswer": "בננה",
+    "fakeAnswers": [
+      "דובדבן",
+      "תפוח",
+      "אגס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Berry_(botany)",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-12": {
+    "questionText": "ב-1807 ציד נגמר בכך שנפוליאון נסוג מפני מאות $blank$ שתקפו אותו",
+    "realAnswer": "ארנבים",
+    "fakeAnswers": [
+      "אווזים",
+      "יונים",
+      "דבורים"
+    ],
+    "citation": "https://www.mentalfloss.com/history/military/time-napoleon-was-attacked-rabbits",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-13": {
+    "questionText": "הלב של שרימפס נמצא ב $blank$ שלו",
+    "realAnswer": "ראש",
+    "fakeAnswers": [
+      "זנב",
+      "רגליים",
+      "גב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Shrimp",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-14": {
+    "questionText": "פיצה הוואית הומצאה ב $blank$",
+    "realAnswer": "קנדה",
+    "fakeAnswers": [
+      "הוואי",
+      "אוסטרליה",
+      "אוהיו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hawaiian_pizza",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-15": {
+    "questionText": "ב-1932 הצבא האוסטרלי יצא למלחמה נגד $blank$, והפסיד",
+    "realAnswer": "ציפורי אמו",
+    "fakeAnswers": [
+      "קנגורו",
+      "ארנבים",
+      "קואלות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emu_War",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-16": {
+    "questionText": "בפינלנד מתקיימת אליפות עולם בסחיבת $blank$",
+    "realAnswer": "נשים",
+    "fakeAnswers": [
+      "אבני סאונה",
+      "חמות",
+      "איילי צפון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wife-carrying",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-17": {
+    "questionText": "לפני שקראו לו גוגל, מנוע החיפוש נקרא $blank$",
+    "realAnswer": "באקראב",
+    "fakeAnswers": [
+      "גוגולפלקס",
+      "סרצ'י",
+      "פייג'ראנק"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/History_of_Google",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-18": {
+    "questionText": "לפני שקראו לו פפסי, המשקה נקרא $blank$",
+    "realAnswer": "המשקה של בראד",
+    "fakeAnswers": [
+      "מיץ פפ",
+      "מלך הקולה",
+      "הגזוז של פיט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pepsi",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-19": {
+    "questionText": "אם סופרים יחידות, יצרנית הצמיגים הגדולה בעולם היא $blank$",
+    "realAnswer": "לגו",
+    "fakeAnswers": [
+      "איקאה",
+      "נאס\"א",
+      "מקדונלד'ס"
+    ],
+    "citation": "https://www.guinnessworldrecords.com/world-records/100909-largest-tyre-manufacture-per-annum",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-20": {
+    "questionText": "ביפן, מיליוני משפחות אוכלות $blank$ בארוחת חג המולד",
+    "realAnswer": "KFC",
+    "fakeAnswers": [
+      "סושי",
+      "פיצה האט",
+      "מקדונלד'ס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Christmas_in_Japan",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-21": {
+    "questionText": "נינטנדו נוסדה ב-1889 כדי לייצר $blank$",
+    "realAnswer": "קלפי משחק",
+    "fakeAnswers": [
+      "מטריות",
+      "עפיפונים",
+      "סירי אורז"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nintendo",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-22": {
+    "questionText": "הזיעה של היפופוטמים בצבע $blank$",
+    "realAnswer": "אדום",
+    "fakeAnswers": [
+      "כחול",
+      "ירוק",
+      "נוצץ"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hippopotamus",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-23": {
+    "questionText": "מגדל אייפל גבוה בכמה סנטימטרים בכל $blank$",
+    "realAnswer": "קיץ",
+    "fakeAnswers": [
+      "חורף",
+      "בוקר",
+      "שנה מעוברת"
+    ],
+    "citation": "https://factmyth.com/factoids/the-eiffel-tower-gets-taller-in-the-summertime",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-24": {
+    "questionText": "העין של יען גדולה יותר מה $blank$ שלו",
+    "realAnswer": "מוח",
+    "fakeAnswers": [
+      "קיבה",
+      "לב",
+      "מקור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Common_ostrich",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-25": {
+    "questionText": "במלחמת העולם השנייה, המלכה אליזבת השנייה לעתיד הוכשרה בתור $blank$",
+    "realAnswer": "מכונאית",
+    "fakeAnswers": [
+      "טייסת",
+      "אחות",
+      "מרגלת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Elizabeth_II",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-26": {
+    "questionText": "קנגורו לא מסוגלים בקלות $blank$",
+    "realAnswer": "ללכת אחורה",
+    "fakeAnswers": [
+      "לשחות",
+      "לקפוץ הצידה",
+      "לישון בשכיבה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kangaroo",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-27": {
+    "questionText": "נראה שלמונה ליזה אין $blank$",
+    "realAnswer": "גבות",
+    "fakeAnswers": [
+      "אף",
+      "שיער",
+      "אצבעות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mona_Lisa",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-28": {
+    "questionText": "האיש שעיצב את קופסת הפרינגלס ביקש להיקבר ב $blank$",
+    "realAnswer": "קופסת פרינגלס",
+    "fakeAnswers": [
+      "קופסת דגני בוקר",
+      "תפוח אדמה ענק",
+      "קופסת עוגיות"
+    ],
+    "citation": "https://www.snopes.com/fact-check/pringles-urn/",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-29": {
+    "questionText": "קליאופטרה חיה קרוב יותר לנחיתה על הירח מאשר לבניית $blank$",
+    "realAnswer": "הפירמידה הגדולה",
+    "fakeAnswers": [
+      "הקולוסיאום",
+      "הפרתנון",
+      "חומת סין"
+    ],
+    "citation": "https://www.worldatlas.com/articles/so-cleopatra-lived-closer-in-time-to-the-first-lunar-landing-than-the-great-pyramids.html",
+    "lang": "he",
+    "opener": true
+  },
+  "opener-he-30": {
+    "questionText": "כשבמבה יצאה לשוק ב-1964, היא הייתה בטעם $blank$",
+    "realAnswer": "גבינה",
+    "fakeAnswers": [
+      "שוקולד",
+      "פיצה",
+      "קטשופ"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bamba_(snack)",
+    "lang": "he",
+    "opener": true
+  }
+}

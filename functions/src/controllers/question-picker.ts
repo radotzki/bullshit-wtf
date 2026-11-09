@@ -104,3 +104,28 @@ export function pickWithPack(
     }
     return result;
 }
+
+/**
+ * Picks a game's questions with an easy opener first: question 1 is an opener nobody in the room
+ * has seen, the rest are picked as before (with the pack, if any). Openers are kept for question 1,
+ * so a room meets every opener before any of them shows up again. Once a room has seen them all,
+ * they join the normal bank and question 1 is picked like the others.
+ */
+export function pickWithOpener(
+    regularIds: string[],
+    openerIds: string[],
+    seenRecords: SeenRecord[],
+    count: number,
+    pickRest: (regularIds: string[], count: number) => string[],
+    random: Random = Math.random,
+): string[] {
+    if (count <= 0) {
+        return [];
+    }
+    const lastSeen = mergeSeen(seenRecords);
+    const opener = shuffle(openerIds.filter(id => !(id in lastSeen)), random)[0];
+    if (!opener) {
+        return pickRest(regularIds.concat(openerIds), count);
+    }
+    return [opener].concat(pickRest(regularIds, count - 1));
+}

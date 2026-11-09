@@ -1,6 +1,6 @@
 import { questionsRef, seenQuestionsRef, get } from './../firebase';
 import { Question, questionPacks, isPack } from '../game-model';
-import { pickQuestions, pickWithPack, SeenRecord } from './question-picker';
+import { pickQuestions, pickWithPack, pickWithOpener, SeenRecord } from './question-picker';
 import { isRetired } from './retired-questions';
 
 /**
@@ -13,14 +13,19 @@ export async function randomQuestions(lang: string, count: number, uids: string[
     const questions = all.filter(q => !q.pack);
     const seen = await getSeenRecords(uids);
     const playable = questions.map(q => q.id).filter(id => !isRetired(id));
-    const regular = playable.length >= count ? playable : questions.map(q => q.id);
+    const pool = playable.length >= count ? playable : questions.map(q => q.id);
 
     if (pack && isPack(pack)) {
+        // A pack game opens with a pack question, as before.
         const packIds = all.filter(q => q.pack === pack && !isRetired(q.id)).map(q => q.id);
-        return pickWithPack(regular, packIds, seen, count, questionPacks[pack].perGame);
+        return pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame);
     }
 
-    return pickQuestions(regular, seen, count);
+    // Easy openers are kept for question 1 (see pickWithOpener).
+    const openers = new Set(questions.filter(q => q.opener === true).map(q => q.id));
+    const openerIds = pool.filter(id => openers.has(id));
+    const regular = pool.filter(id => !openers.has(id));
+    return pickWithOpener(regular, openerIds, seen, count, (ids, n) => pickQuestions(ids, seen, n));
 }
 
 export function getQuestion(id: string): Promise<Question> {
