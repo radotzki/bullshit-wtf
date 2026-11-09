@@ -33,6 +33,8 @@ export interface GameScheme {
     tick: number | string;
     presenter: boolean;
     fork?: string;
+    // The first Replay claims its new game's pin here, so a second Replay at the same moment joins it.
+    forking?: string;
     // Who started this game and how (for measuring hosts and groups that return).
     creator?: string;        // anonymous uid of the browser that created or replayed it
     // A one-game secret from the phone that created it, so the lobby knows the host even when that

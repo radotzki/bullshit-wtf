@@ -287,3 +287,13 @@ test('the host reports in several times within the gone time', () => {
 test('the host-gone wait is 5 minutes, so a host inviting friends in WhatsApp keeps their game', () => {
     assert.strictEqual(HOST_GONE_MS, 5 * 60 * 1000);
 });
+
+test('two phones pressed Replay at once: the second holds the key too and gets START; the lobby names the first', () => {
+    const marked = [Object.assign({ pid: 'p1', host: true }, alice), Object.assign({ pid: 'p2' }, ben), Object.assign({ pid: 'p3' }, chen)];
+    const first = view({ creator: 'uid-alice', hasHost: true, myPid: 'p1', players: marked, holdsHostKey: true });
+    const second = view({ creator: 'uid-alice', hasHost: true, myPid: 'p2', players: marked, holdsHostKey: true });
+    const third = view({ creator: 'uid-alice', hasHost: true, myPid: 'p3', players: marked });
+    assert.deepStrictEqual([first.canStart, second.canStart, third.canStart], [true, true, false]);
+    assert.strictEqual(third.hostName, 'Alice');
+    assert.strictEqual(second.alone, false);
+});

@@ -77,7 +77,7 @@ exports.fork = functions.https.onRequest((req, res) => {
 
         try {
             const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey));
-            return res.status(200).send({ pin: forked });
+            return res.status(200).send(forked);
         } catch (e) {
             return res.status(400).send(errorBody(e));
         }

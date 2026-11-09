@@ -4,25 +4,74 @@ import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 
+/** How long a second Replay waits for the first one's game to be ready before it makes its own. */
+export const FORK_WAIT_MS = 10 * 1000;
+
 /**
  * Replay: a new game with the same players. `creator` is the uid of the phone that pressed Replay,
  * `hostPid` its player id in the finished game; that player hosts the new game. `hostKey` is that
  * phone's new one-game secret for the new game (see hostKey in game-model): with it, only that phone
- * may start the new game. Resolves to the new game's pin.
+ * may start the new game. Resolves to the new game's pin, and whether this phone hosts it.
+ *
+ * One Replay per game: when two phones press Replay at once, the first claims the new game and the
+ * second gets that same game back, with its host key, so both phones that pressed Replay may start it
+ * (the first stays the named host in the lobby). Without this,
+ * each press made its own game, the phones followed whichever arrived first, and the phone that pressed
+ * Replay could end up in the other phone's lobby without START (Friday 6 Nov: JVQP made JVRQ and JVRR).
  */
-export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<string> {
+export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
+    const gameCounter = await incGameCounter();
+    const forkedGamePin = generateGameName(gameCounter);
 
-    return incGameCounter().then(async gameCounter => {
-        const forkedGamePin = generateGameName(gameCounter);
-        const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-        const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey);
+    const claimed = await claimFork(pin, forkedGamePin);
+    if (claimed && claimed !== forkedGamePin) {
+        // Another phone pressed Replay first: everyone goes to its game.
+        if (await forkReady(pin, claimed)) {
+            // Whoever pressed Replay may start the new game, so this player gets its host key too.
+            // Only a player of the finished game, from a client that sends a key (and so reads this one).
+            const players = game.players || {};
+            const theirs = hostPid && hostKey && players[hostPid]
+                ? await get<string>(gamesRef.child(claimed).child('hostKey')) : null;
+            return theirs ? { pin: claimed, host: true, hostKey: theirs } : { pin: claimed, host: false };
+        }
+        // That Replay never finished (its function failed): make the game here instead.
+        console.log(`[PIN: ${pin}] Replay ${claimed} never finished; making ${forkedGamePin}`);
+    }
 
-        return gamesRef.child(forkedGamePin).set(forkedGame)
-            .then(() => gamesRef.child(pin).child('fork').set(forkedGamePin))
-            .then(() => forkedGamePin);
+    const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
+    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey);
+
+    await gamesRef.child(forkedGamePin).set(forkedGame);
+    await gamesRef.child(pin).child('forking').set(forkedGamePin);
+    await gamesRef.child(pin).child('fork').set(forkedGamePin);
+    return { pin: forkedGamePin, host: true };
+}
+
+/** The first Replay of `pin` claims its new game's pin; resolves to the pin that holds the claim. */
+function claimFork(pin: string, forkedGamePin: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('forking').transaction(
+            (current) => current || forkedGamePin,
+            (error, committed, snapshot) => error ? reject(error) : resolve(snapshot.val()),
+        );
     });
+}
+
+/** Waits (up to FORK_WAIT_MS) until the claimed Replay game is written and the old game points to it. */
+async function forkReady(pin: string, claimed: string): Promise<boolean> {
+    const until = Date.now() + FORK_WAIT_MS;
+    while (true) {
+        const current = await get<string>(gamesRef.child(pin).child('fork'));
+        if (current === claimed) {
+            return true;
+        }
+        if (Date.now() >= until) {
+            return false;
+        }
+        await new Promise(r => setTimeout(r, 250));
+    }
 }
 
 function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
