@@ -1,0 +1,77 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link previews (1200x630) for the search pages: how to play, party games on your phone, Purim.
+     Render: node graphics/render-search-pages.js game/src/assets -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fff;margin-bottom:20px}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{width:360px;margin:0 30px 90px 70px;display:block}
+.text{flex:1;padding-right:60px;margin-bottom:90px}
+h1{margin:0;font-size:130px;line-height:1;color:#fff;-webkit-text-stroke:5px #9b9b9b;text-shadow:6px 8px 0 rgba(0,0,0,.18);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:56px;line-height:1.1;color:#97374e}
+p{margin:12px 0 0;font-size:40px;color:#4a4a4a;line-height:1.2}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 70px 90px 30px}
+.he .text{padding-right:0;padding-left:60px}
+.he .kicker{font-size:54px}
+.he p{font-size:40px}
+.he .band{font-size:40px}
+/* Purim: night-purple with confetti, a mask instead of the logo */
+.purim{background:#3b1f5c}
+.purim .confetti{position:absolute;inset:0;background:
+ radial-gradient(circle at 8% 14%,#f3d467 0 7px,transparent 8px),
+ radial-gradient(circle at 22% 82%,#db7151 0 6px,transparent 7px),
+ radial-gradient(circle at 41% 9%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 63% 18%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 88% 10%,#db7151 0 7px,transparent 8px),
+ radial-gradient(circle at 95% 55%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 55% 78%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 4% 52%,#7fd1c7 0 5px,transparent 6px),
+ radial-gradient(circle at 33% 45%,rgba(255,255,255,.5) 0 3px,transparent 4px),
+ radial-gradient(circle at 76% 70%,rgba(255,255,255,.5) 0 3px,transparent 4px)}
+.purim h1{-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.35)}
+.purim .kicker{color:#f3d467}
+.purim p{color:#fff}
+.purim .art{position:relative}
+</style></head><body>
+<template id="mask">
+<svg class="art" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <path d="M20 90 Q200 40 380 90 Q392 190 300 220 Q245 236 200 190 Q155 236 100 220 Q8 190 20 90Z" fill="#db7151" stroke="#f3d467" stroke-width="10" stroke-linejoin="round"/>
+  <ellipse cx="120" cy="140" rx="48" ry="30" fill="#3b1f5c"/><ellipse cx="280" cy="140" rx="48" ry="30" fill="#3b1f5c"/>
+  <circle cx="60" cy="110" r="9" fill="#f3d467"/><circle cx="340" cy="110" r="9" fill="#f3d467"/><circle cx="200" cy="96" r="11" fill="#7fd1c7"/>
+  <path d="M378 90 Q395 40 360 10" fill="none" stroke="#f3d467" stroke-width="8" stroke-linecap="round"/>
+  <path d="M30 230 Q20 270 50 292" fill="none" stroke="#7fd1c7" stroke-width="7" stroke-linecap="round"/>
+</svg>
+</template>
+
+<div class="card" id="how-en"><img class="art" src="../game/src/assets/logo.png">
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">How to play</div><p>Write a lie. Find the truth. Score for every friend you fool.</p></div>
+  <div class="band">FREE PARTY GAME · PLAY ON YOUR PHONES · BULLSHIT.WTF</div></div>
+
+<div class="card he" id="how-he"><img class="art" src="../game/src/assets/logo.png">
+  <div class="text"><h1>בולשיט</h1><div class="kicker">איך משחקים</div><p>ממציאים שקר, מחפשים את האמת, ומקבלים נקודות על כל מי שנפל בפח</p></div>
+  <div class="band">משחק חברה חינמי · משחקים בטלפון · BULLSHIT.WTF</div></div>
+
+<div class="card" id="phone-en"><img class="art" src="../game/src/assets/logo.png">
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The party game on your phones</div><p>No app, no sign-up. Up to 8 players in the same room.</p></div>
+  <div class="band">FREE · IN THE BROWSER · BULLSHIT.WTF</div></div>
+
+<div class="card he" id="phone-he"><img class="art" src="../game/src/assets/logo.png">
+  <div class="text"><h1>בולשיט</h1><div class="kicker">משחק חברה בטלפון</div><p>בלי אפליקציה ובלי הרשמה. עד 8 שחקנים באותו חדר.</p></div>
+  <div class="band">חינם · בדפדפן · BULLSHIT.WTF</div></div>
+
+<div class="card purim" id="purim-en"><div class="confetti"></div><span data-m></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The Purim party game</div><p>On the holiday of masks, the best liar wins</p></div>
+  <div class="band">FREE PARTY GAME · PLAY ON YOUR PHONES · BULLSHIT.WTF</div></div>
+
+<div class="card purim he" id="purim-he"><div class="confetti"></div><span data-m></span>
+  <div class="text"><h1>בולשיט</h1><div class="kicker">משחק לפורים</div><p>בחג התחפושות, השקרן הכי טוב מנצח</p></div>
+  <div class="band">משחק חברה חינמי · משחקים בטלפון · BULLSHIT.WTF</div></div>
+
+<script>
+document.querySelectorAll('[data-m]').forEach(function (el) {
+  el.replaceWith(document.getElementById('mask').content.cloneNode(true));
+});
+</script>
+</body></html>

@@ -63,6 +63,9 @@ function render(p) {
   <meta property="og:description" content="${esc(p.description)}">
   <meta property="og:url" content="${SITE}${p.path}">
   <meta property="og:image" content="${p.image ? SITE + p.image : IMAGE}">
+  ${p.image ? `<meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${esc(p.h1)}">` : ''}
   <meta property="og:locale" content="${s.lang === 'he' ? 'he_IL' : 'en_US'}">
   <meta name="twitter:card" content="${p.image ? 'summary_large_image' : 'summary'}">
   <link rel="icon" type="image/png" href="/assets/favicon-32x32.png" sizes="32x32">
