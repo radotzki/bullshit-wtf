@@ -1,6 +1,7 @@
 import { GameScheme, GamePlayer } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
+import { gameOverError } from './game-over';
 
 export interface JoinResult {
     pid: string;
@@ -35,6 +36,16 @@ export function cleanNickname(typed: any, uid: string, pid: string, locale: stri
 export async function join(pin: string, typed: string, uid: string, hostKey?: string): Promise<JoinResult> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
+
+    if (!game) {
+        return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
+    }
+
+    // A finished game takes no new players (a typed PIN, or an old invite link).
+    const over = await gameOverError(game, Date.now());
+    if (over) {
+        return Promise.reject(over);
+    }
 
     if (Object.keys(game.players || {}).length === 8) {
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });

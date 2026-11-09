@@ -20,10 +20,18 @@ import { cleanVisit } from './controllers/visit';
 // (and Sentry) never sees an empty object.
 function errorBody(e: any) {
     if (e && typeof e === 'object') {
-        return {
+        const body: { [key: string]: any } = {
             message: e.message || String(e),
             code: e.code || 'INTERNAL',
         };
+        // GAME_OVER: the rematch's PIN, or that the game just ended (see game-over.ts).
+        if (typeof e.rematch === 'string') {
+            body.rematch = e.rematch;
+        }
+        if (e.justEnded === true) {
+            body.justEnded = true;
+        }
+        return body;
     }
     return { message: String(e), code: 'INTERNAL' };
 }

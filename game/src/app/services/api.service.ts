@@ -44,6 +44,13 @@ function apiError(url: string, resp: any) {
     error.code = (body && body.code) || (status === 0 ? 'NETWORK_ERROR' : 'HTTP_' + status);
     error.status = status;
     error.endpoint = url;
+    // GAME_OVER: the rematch's PIN when its lobby is open, or that the game just ended.
+    if (body && typeof body.rematch === 'string') {
+        error.rematch = body.rematch;
+    }
+    if (body && body.justEnded === true) {
+        error.justEnded = true;
+    }
     return error;
 }
 

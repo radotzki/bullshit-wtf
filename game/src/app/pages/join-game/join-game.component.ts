@@ -24,6 +24,8 @@ export class JoinGameComponent implements OnInit {
     crewId: string;
     crewName: string;
     crewNicknames: string[] = [];
+    // The PIN belongs to a game that is over: say so, and offer another PIN (or its rematch).
+    gameOver: { pin: string; rematch?: string; justEnded?: boolean };
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -42,7 +44,61 @@ export class JoinGameComponent implements OnInit {
             this.pinInUrl = true;
             this.nicknameState = true;
             this.loadCrew();
+            this.checkLinkedGame();
         }
+    }
+
+    /** An old invite link: say the game is over before anyone types a nickname. */
+    private checkLinkedGame() {
+        const pin = this.pin;
+        this.apiService.validateGameName(pin).catch(err => {
+            if (this.pin === pin && err && err.code === 'GAME_OVER') {
+                this.showGameOver(err);
+            }
+        });
+    }
+
+    private isExpected(err) {
+        return err && (err.code === 'GAME_NOT_EXIST' || err.code === 'GAME_IS_FULL' || err.code === 'GAME_OVER');
+    }
+
+    private showGameOver(err) {
+        this.loading = false;
+        this.errorMsg = '';
+        this.gameOver = { pin: (this.pin || '').toUpperCase(), rematch: err.rematch, justEnded: !!err.justEnded };
+    }
+
+    /** The join page under the same entry point (the Hebrew one keeps its /he). */
+    private joinPath() {
+        return /^\/he\//.test(this.router.url) ? '/he/join-game' : '/join-game';
+    }
+
+    /** Back to an empty PIN box. */
+    tryAnotherPin() {
+        this.gameOver = null;
+        this.errorMsg = '';
+        this.pin = '';
+        this.pinInUrl = false;
+        this.nicknameState = false;
+        this.crewId = this.crewName = undefined;
+        this.crewNicknames = [];
+        this.router.navigate([this.joinPath()], { replaceUrl: true });
+    }
+
+    /** Join the rematch of the game that is over: its PIN, then a nickname. */
+    joinRematch() {
+        const rematch = this.gameOver && this.gameOver.rematch;
+        if (!rematch) {
+            return;
+        }
+        this.gameOver = null;
+        this.errorMsg = '';
+        this.pin = rematch;
+        this.nicknameState = true;
+        this.crewId = this.crewName = undefined;
+        this.crewNicknames = [];
+        this.router.navigate([this.joinPath(), rematch], { replaceUrl: true });
+        this.loadCrew();
     }
 
     async loadCrew() {
@@ -87,6 +143,7 @@ export class JoinGameComponent implements OnInit {
     validateGameName() {
         this.loading = true;
         this.errorMsg = '';
+        this.gameOver = null;
 
         this.apiService.validateGameName(this.pin)
             .then(() => {
@@ -94,9 +151,12 @@ export class JoinGameComponent implements OnInit {
                 this.loading = false;
             })
             .catch(err => {
+                if (err && err.code === 'GAME_OVER') {
+                    return this.showGameOver(err);
+                }
                 this.loading = false;
                 this.errorMsg = err.message;
-                if (!err || (err.code !== 'GAME_NOT_EXIST' && err.code !== 'GAME_IS_FULL')) {
+                if (!this.isExpected(err)) {
                     reportError(err, 'validateGameName', { pin: this.pin });
                 }
             });
@@ -124,10 +184,13 @@ export class JoinGameComponent implements OnInit {
                 this.loading = false;
             })
             .catch(err => {
+                if (err && err.code === 'GAME_OVER') {
+                    return this.showGameOver(err);
+                }
                 this.loading = false;
                 this.errorMsg = err.message;
-                // Wrong PIN and full game are expected; report anything else.
-                if (!err || (err.code !== 'GAME_NOT_EXIST' && err.code !== 'GAME_IS_FULL')) {
+                // Wrong PIN, full game and finished game are expected; report anything else.
+                if (!this.isExpected(err)) {
                     reportError(err, 'join', { pin: this.pin });
                 }
             });
