@@ -93,26 +93,45 @@ Things to know:
   a deploy for a reason that is not a permission.
 - **The access check.** Before the first deploy the run reads the database and the site, releases
   nothing, and switches nothing on in the Google project (`.github/scripts/check-access.js`):
-  - the database, with the Firebase tool: `firebase deploy --only database --dry-run` makes the
-    first calls of the rules deploy. It reads the database instance and sends the rules with
-    `dryRun=true` (checked, not stored). The tool's database path has no call that switches an
-    API on (read at version 15.35.0);
-  - the site, with one plain `GET` of the project's list of hosting sites
-    (`firebasehosting.googleapis.com/v1beta1/projects/<id>/sites`), sent through Google's
-    library like the permission check: redirects refused, the same time-outs, the same cleaning
-    of what is printed. It passes when Google lists one site or more.
+  - the database, with the three requests the Firebase tool's rules deploy starts with: a `GET`
+    of the Firebase project (`firebase.googleapis.com/v1beta1/projects/<id>`), which names the
+    default database instance; a `GET` of that instance
+    (`firebasedatabase.googleapis.com/v1beta/projects/<id>/locations/-/instances/<instance>`),
+    which holds the database's address; and a `PUT` of the rules file to that address with
+    `dryRun=true`, which the server checks and does not store. Each is sent only if the one
+    before it passed;
+  - the site, with one `GET` of the project's list of hosting sites
+    (`firebasehosting.googleapis.com/v1beta1/projects/<id>/sites`). It passes when Google lists
+    one site or more.
 
-  The site is not read with the Firebase tool. Each of its hosting commands, also the read-only
-  ones (`hosting:channel:list`, `hosting:sites:list`), first asks whether the Hosting API
-  (`firebasehosting.googleapis.com`) is on, and if it is off, tries to switch it on. Until
-  2026-11-11 this check ran `hosting:channel:list`, so it could have switched the API on if the
-  deploy account was allowed to. Switching an API on is the owner's step, never a side effect
-  of a check: with the API off, the `GET` is refused and the step names the API and fails. The
-  release step "3. Deploy the site" still uses the tool and would try the same, but it only runs
-  after this check has seen the API on.
+  All four are plain requests, sent through Google's library like the permission check:
+  redirects refused, the same time-outs, the same cleaning of what is printed. No command of the
+  Firebase tool runs in this check, because the tool can switch an API on while it only reads:
+  - its database dry run (`firebase deploy --only database --dry-run`, which this check ran
+    until November 2026) sends the same three requests, but when Google answers "not found" for
+    the Firebase project it turns to the Cloud Resource Manager API, and if that API is off,
+    tries to switch it on (read and tried at version 15.35.0). Runs could not get there, but
+    only because the permission check before it passes only while that API is on;
+  - each of its hosting commands, also the read-only ones (`hosting:channel:list`,
+    `hosting:sites:list`), first asks whether the Hosting API (`firebasehosting.googleapis.com`)
+    is on, and if it is off, tries to switch it on. Until 2026-11-11 this check ran
+    `hosting:channel:list`.
+
+  Switching an API on is the owner's step, never a side effect of a check. So the script holds
+  its own lock: it sends nothing but a `GET` to those three Google APIs and the one `PUT` of
+  the rules with `dryRun=true`, and refuses any other request before it is sent. An answer that
+  is not a clean yes ends the read; nothing is asked in its place. With an API off, Google
+  refuses the request and the step names the API and fails. A 403 that is not a disabled API
+  names the permission the account most likely lacks, and roles that hold it:
+  `firebase.projects.get`, `firebasedatabase.instances.get` or `firebasehosting.sites.list`.
+  The release steps "2. Deploy the database rules" and "3. Deploy the site" still use the tool
+  and could try to switch those APIs on, but they only run after this check has seen each
+  answer.
+  The check knows one form of `firebase.json`: one rules file for one database
+  (`"database": {"rules": "<file>.json"}`). With any other form it stops the run and says so.
   Both reads always run, also when the first fails, and the step fails afterwards if either
   did: on 2026-11-11 the database read failed first, the site read never ran, and the run could
-  not say whether the Hosting API was off too. The database read gets five minutes. This is there
+  not say whether the Hosting API was off too. Each request gets one minute. This is there
   because on 2026-11-11 a run released the functions, then failed at the rules ("Failed to get
   instance details"), and the site never went out. By itself it does not prove that the account
   may *write* to hosting: the tool's hosting dry run creates a new empty version on the live site,
@@ -180,11 +199,12 @@ or Google's answer when the question was refused. Nothing was released then. The
 The step "Check access to the database and the site" prints its own reasons too, in the log and
 on the summary page under "Access to the database and the site": one line for the database and
 one for the site, "reached" or "NOT reached", and under them the reason for each that was not
-reached: for the database the same filtered reading of the tool's debug file as described
-below, for the site the status and the error fields of Google's answer. When the Hosting API is
-off it says so by name; the owner switches it on in the Google Cloud console, the step never
-does. Fix everything it names before the next run. It then removes the debug file, so "Show why
-the step failed" has none to read here either.
+reached: the request that failed, with the status and the error fields of Google's answer. For
+the database the line also says which of its three requests it was: the Firebase project, the
+database instance or the rules. When an API is off it says so by name; the owner switches it on
+in the Google Cloud console, the step never does. When the rules file has a mistake, the
+database's own message is shown. Fix everything it names before the next run. This step makes no
+debug file, so "Show why the step failed" has none to read here either.
 
 For the other steps: the Firebase tool's own error is one general line, such as "Failed to get instance details", and
 it does not name a missing permission. Google's answer is in the tool's debug file, which the run

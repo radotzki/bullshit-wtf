@@ -109,24 +109,28 @@ jobs:
 
       # A release must not stop halfway: on 2026-11-11 the functions went out, then the rules step
       # could not read the database instance, and the site was never released. So before the
-      # first deploy, read both, release nothing, and switch nothing on in the Google project:
-      # - the database, with the tool: `deploy --only database --dry-run` reads the database
-      #   instance and sends the rules with dryRun=true (the server checks them and stores
-      #   nothing). The tool skips its deploy and release phases on a dry run, and its database
-      #   path has no call that switches an API on.
-      # - the site, with one plain GET of the project's list of hosting sites, through Google's
-      #   library like the permission check. Not with the tool: each of its hosting commands,
-      #   also the read-only ones, first tries to switch the Hosting API
-      #   (firebasehosting.googleapis.com) on when it is off. Switching an API on is the owner's
-      #   step, never a side effect of a check. With the API off the GET is refused, and the step
-      #   says so by name.
+      # first deploy, read both, release nothing, and switch nothing on in the Google project.
+      # No command of the Firebase tool runs here: every request is a plain one, sent through
+      # Google's library like the permission check.
+      # - the database, with the three requests the tool's rules deploy starts with: a GET of the
+      #   Firebase project, a GET of the database instance, and a PUT of the rules with
+      #   dryRun=true (the server checks them and stores nothing). Not with the tool's dry run:
+      #   when Google answers "not found" for the project, the tool turns to the Cloud Resource
+      #   Manager API and, if that API is off, tries to switch it on.
+      # - the site, with one GET of the project's list of hosting sites. Not with the tool: each
+      #   of its hosting commands, also the read-only ones, first tries to switch the Hosting API
+      #   (firebasehosting.googleapis.com) on when it is off.
+      # Switching an API on is the owner's step, never a side effect of a check. The script sends
+      # nothing but a GET to three Google APIs and that one PUT; any other request is refused in
+      # the script itself, before it is sent. With an API off the request is refused by Google,
+      # and the step says so by name.
       # Hosting gets a read and not a dry run on purpose: the tool's hosting dry run creates a
       # new, empty version on the live site. So this step proves the account can reach the site;
       # that it may write to it is what the step before this one asked.
       # Both reads always run, and the step fails afterwards if either failed: on 2026-11-11 the
       # database read failed first and the site read never ran, so one run could not name
-      # everything that was off. What the script prints is filtered and cleaned like the output
-      # of "Show why the step failed". See the script's header and DEPLOYING.md.
+      # everything that was off. What the script prints is cleaned like the output of "Show why
+      # the step failed". See the script's header and DEPLOYING.md.
       - name: Check access to the database and the site (releases nothing)
         run: node .github/scripts/check-access.js "$FIREBASE_PROJECT"
 

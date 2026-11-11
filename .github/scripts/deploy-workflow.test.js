@@ -5,7 +5,6 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { command } = require('./check-access.js');
 
 const yml = fs.readFileSync(path.join(__dirname, '..', 'workflows', 'deploy.yml'), 'utf8');
 const names = [...yml.matchAll(/^      - name: (.+)$/gm)].map(m => m[1]);
@@ -46,13 +45,57 @@ test('the only commands that change production are the three deploys, each for t
     ]);
     const code = yml.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
     assert.doesNotMatch(code, /--force/);
-    // The only other Firebase command of the run is the access check's database dry run. The site
-    // is read without the tool: each of its hosting commands can switch the Hosting API on.
-    assert.deepStrictEqual(command('made-up-project').join(' '),
-        'firebase deploy --only database --dry-run --project made-up-project --non-interactive');
-    // No workflow file runs the tool in any other way, and none runs a hosting command.
+    // No workflow file runs the tool in any other way, and none runs a hosting command or a dry run.
     assert.doesNotMatch(code.replace(/npx firebase /g, ''), /\bfirebase (deploy|hosting|functions|database)\b/);
-    assert.doesNotMatch(code, /hosting:/);
+    assert.doesNotMatch(code, /hosting:|--dry-run/);
+});
+
+// The Firebase tool can switch an API on while it only reads: its hosting commands do it for the
+// Hosting API, and its database dry run for the Cloud Resource Manager API when Google answers
+// "not found" for the project. So nothing before the first release may run the tool at all.
+test('no step before the first release runs the Firebase tool, and neither check script can', () => {
+    const job = yml.slice(yml.indexOf('\n  deploy:\n'));
+    const before = job.slice(job.indexOf('\n    steps:\n'), job.indexOf('      - name: 1. Deploy all functions'))
+        .split('\n').filter(l => !l.trim().startsWith('#'));
+    // Every command line of those steps: a one-line `run:`, or the lines of a `run: |` block.
+    const runs = [];
+    let block = -1;
+    for (const l of before) {
+        const indent = l.length - l.trimStart().length;
+        const one = l.match(/^\s+(?:- )?run: (.+)$/);
+        if (block >= 0 && l.trim() && indent > block) {
+            runs.push(l.trim());
+        } else if (one) {
+            block = one[1] === '|' ? indent : -1;
+            if (one[1] !== '|') {
+                runs.push(one[1]);
+            }
+        } else if (l.trim()) {
+            block = -1;
+        }
+    }
+    assert.deepStrictEqual(runs, [
+        'node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"',
+        'node .github/scripts/write-firebase-key.js --check-only "$FIREBASE_PROJECT"',
+        'npm ci',
+        'npm ci',
+        'npm run build',
+        'npm ci',
+        'npm run build',
+        'node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"',
+        'node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"',
+        'echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"',
+        'node .github/scripts/check-deploy-permissions.js "$FIREBASE_PROJECT"',
+        'node .github/scripts/check-access.js "$FIREBASE_PROJECT"',
+    ]);
+    assert.doesNotMatch(before.join('\n'), /firebase (deploy|hosting|functions|database)|npx|gcloud|curl/);
+    // The two scripts that hold the key's sign-in start no other program, and send no request
+    // that switches a service on.
+    for (const name of ['check-access.js', 'check-deploy-permissions.js']) {
+        const code = fs.readFileSync(path.join(__dirname, name), 'utf8').split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
+        assert.doesNotMatch(code, /child_process|spawn|exec\(|npx/, name);
+        assert.doesNotMatch(code, /:enable|serviceusage\.googleapis|services\/|'(PATCH|DELETE)'/, name);
+    }
 });
 
 test('both reads of the access check run in one step, for the run\'s project, before any release', () => {

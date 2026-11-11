@@ -285,6 +285,14 @@ test('without a sign-in the script itself stops the run, and prints no stack', (
     assert.match(out.stdout, /^::error title=Deploy stopped, nothing released/m);
     assert.doesNotMatch(out.stdout + out.stderr, /\n\s+at /);
     assert.doesNotMatch(out.stdout + out.stderr, /no-such-key/);
+    // The reason is said, not the bare name of an error.
+    assert.match(out.stdout, /it was not asked, because there is no key file to sign in with/);
+    assert.doesNotMatch(out.stdout, /: Error\b/);
+    // Nor is another sign-in looked for when the variable is not set at all.
+    delete env.GOOGLE_APPLICATION_CREDENTIALS;
+    const unset = spawnSync('node', [SCRIPT, PROJECT], { env, encoding: 'utf8', timeout: 20000 });
+    assert.strictEqual(unset.status, 1);
+    assert.match(unset.stdout, /there is no key file to sign in with/);
     const bad = spawnSync('node', [SCRIPT, 'Not A Project'], { env, encoding: 'utf8' });
     assert.strictEqual(bad.status, 1);
     assert.match(bad.stderr, /Usage/);

@@ -173,6 +173,10 @@ function noAnswer(place, e) {
         }
         return lines;
     }
+    if (e && e.code === 'NO_KEY_FILE') {
+        return [`No answer from ${scrub(place)}: it was not asked, because there is no key file to sign in with`,
+            '    (GOOGLE_APPLICATION_CREDENTIALS names no file that exists; the step "Write the Firebase key" writes it)'];
+    }
     if (timedOut(e)) {
         const seconds = Number.isFinite(e.seconds) ? ` after ${Number(e.seconds)} seconds` : '';
         const where = e.code === 'CHECK_TIMED_OUT' ? ' (the sign-in and the question together)' : '';
@@ -218,6 +222,13 @@ function googleRequest(auth, limits = {}) {
     const total = limits.total || TOTAL_TIMEOUT;
     const work = async options => {
         if (!auth) {
+            // Without a key file Google's library would look for another sign-in, also on the
+            // network, and fail with an error that says nothing. Only whether the file exists is
+            // looked at here: it is not opened.
+            const file = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+            if (!file || !fs.existsSync(file)) {
+                throw Object.assign(new Error('no key file'), { code: 'NO_KEY_FILE' });
+            }
             const { GoogleAuth } = require('google-auth-library');
             auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
         }
