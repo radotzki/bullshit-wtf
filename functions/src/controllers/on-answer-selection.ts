@@ -1,3 +1,4 @@
+import { playerPicks } from './scoring';
 import { get, gamesRef } from '../firebase';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { GameScheme, GameState } from '../game-model';
@@ -10,7 +11,8 @@ export async function onAnswerSelection(pin: string) {
     // Everyone has picked: end the answers phase now instead of waiting for the deadline.
     // A seat that has sent nothing in this game is not waited for (see seats.ts); while one is
     // left out the phase timer ends the phase, once its first seconds are over.
-    return everyoneSent(game, game.answerSelections) && game.state.id === GameState.ShowAnswers
+    // Only a player's pick counts (see scoring.ts).
+    return everyoneSent(game, playerPicks(game)) && game.state.id === GameState.ShowAnswers
         && leftOutGuardWait(game, Date.now()) === 0 ?
         advance(pin, game.state) :
         Promise.resolve();

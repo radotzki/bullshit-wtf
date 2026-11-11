@@ -4,6 +4,9 @@ import { advance } from './tick';
 import { maxPhaseDuration, stateKey } from './phase';
 import { LEFT_OUT_GUARD_MS, endsAfterGuard, guardedPhase } from './seats';
 
+// How long the timer waits before its second try when moving the game on failed.
+const retryDelay = 2000;
+
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // A timer can fire a moment early, and a lie sent just inside the guard must be stored before we look.
@@ -17,7 +20,7 @@ const guardMargin = 250;
  * On the way it looks once at the game, 10 seconds into the phase: if a seat nobody plays is left out
  * and everyone else has already answered or picked, the phase ends then (see seats.ts).
  */
-export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date.now()) {
+export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date.now(), retryAfter = retryDelay) {
     if (!state || !state.deadline) {
         return;
     }
@@ -45,7 +48,12 @@ export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date
 
         if (endsAfterGuard(game, Date.now())) {
             console.log(`[PIN: ${pin}] Everyone who plays is in; not waiting for a seat nobody plays`);
-            return advance(pin, state);
+            try {
+                return await advance(pin, state);
+            } catch (e) {
+                // advance() gave the phase back: go on to the deadline below, like any other phase.
+                console.error(`[PIN: ${pin}] Ending the phase after the guard failed`, e);
+            }
         }
     }
 
@@ -55,5 +63,12 @@ export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date
         await sleep(rest);
     }
 
-    return advance(pin, state);
+    try {
+        return await advance(pin, state);
+    } catch (e) {
+        // advance() gave the phase back. One more try, in case what failed was passing (a database read).
+        console.error(`[PIN: ${pin}] Phase timer failed, trying once more`, e);
+        await sleep(retryAfter);
+        return advance(pin, state);
+    }
 }

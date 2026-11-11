@@ -1,5 +1,6 @@
 import { GameScheme, GameState } from '../game-model';
 import { revealDoneWait } from './phase';
+import { playerPicks } from './scoring';
 
 /**
  * While a seat is left out, no phase ends early in its first 10 seconds: a player who missed all of
@@ -21,7 +22,7 @@ function canLeaveOut(game: GameScheme): boolean {
 /** Has this seat sent a lie or a pick in this game, the question being played included? */
 function hasPlayed(game: GameScheme, pid: string): boolean {
     return !!((game.played && game.played[pid]) || (game.answers && game.answers[pid]) ||
-        (game.answerSelections && game.answerSelections[pid]));
+        playerPicks(game)[pid]);
 }
 
 /**
@@ -86,7 +87,8 @@ export function endsAfterGuard(game: GameScheme, now: number): boolean {
         return false;
     }
     const leftOut = seatsToWaitFor(game).length < Object.keys(game.players || {}).length;
-    const sent = game.state.id === GameState.ShowQuestion ? game.answers : game.answerSelections;
+    // Only a player's pick counts (see scoring.ts).
+    const sent = game.state.id === GameState.ShowQuestion ? game.answers : playerPicks(game);
     return leftOut && everyoneSent(game, sent);
 }
 
