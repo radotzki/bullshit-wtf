@@ -38,8 +38,15 @@ jobs:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The key lives in the "production" environment, not in the repository's secrets. The
+    # environment's deployment branches are limited to master (a repository setting, see
+    # DEPLOYING.md), so GitHub itself refuses the key to a workflow run from any other branch,
+    # whatever that branch's copy of this file says. The `if` above is only the second lock.
+    environment: production
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -50,12 +57,12 @@ jobs:
             game/package-lock.json
 
       # First of all: no key, no release. This fails with a plain message before anything is built.
+      # It only checks: nothing is written to disk here, and the secret is in this step's
+      # environment alone, so the installs and builds below cannot read it.
       - name: Check the Firebase key
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
+        run: node .github/scripts/write-firebase-key.js --check-only "$FIREBASE_PROJECT"
 
       # Build everything before the first deploy step, so a broken build releases nothing.
       - name: Install the Firebase CLI
@@ -70,6 +77,14 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      # Only now, with every install and build done, does the key touch the disk.
+      - name: Write the Firebase key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
 
       # The order matters: new clients call functions that must already exist, and read paths the
       # new rules open. Each step runs only if the one before it succeeded.

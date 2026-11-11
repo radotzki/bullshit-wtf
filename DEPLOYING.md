@@ -17,8 +17,9 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
 
 1. Runs the same tests again, on the merged code. If they fail, nothing is deployed.
 2. Checks the Firebase key (below). No key, or a wrong one: the run fails with a plain message
-   before anything is built or deployed.
-3. Builds the functions and the site. A broken build deploys nothing.
+   before anything is built or deployed. The check writes nothing to disk.
+3. Builds the functions and the site. A broken build deploys nothing. Only after the last build
+   is the key written to a temporary file, so no package's install or build script can read it.
 4. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
@@ -42,14 +43,38 @@ Things to know:
 
 ### The Firebase key
 
-The deploy signs in as a Google service account. Its JSON key is the repository secret
-`FIREBASE_SERVICE_ACCOUNT` (GitHub: Settings, Secrets and variables, Actions). The key is written
-to a temporary file on the runner for the length of the job and removed at the end. It must never
+The deploy signs in as a Google service account. Its JSON key is the secret
+`FIREBASE_SERVICE_ACCOUNT` of the GitHub **environment `production`** (GitHub: Settings,
+Environments, production, Environment secrets). It is **not** a repository secret, and must not
+be one.
+
+Why an environment: a repository secret is handed to any workflow that runs from any branch of
+this repository. A branch could then add or edit a workflow file and use the key with no merge
+and no review; the `if: github.ref == 'refs/heads/master'` lines in `deploy.yml` do not stop
+that, because the branch runs its own copy of the file. An environment secret is given only to a
+job that names the environment, and GitHub refuses that job unless its branch is allowed by the
+environment's rule. So the rule "nothing ships unless it was merged" is held by GitHub itself.
+
+The environment's settings (owner, once, and before the secret is added):
+
+1. Settings, Environments, New environment, name `production`.
+2. Deployment branches and tags: "Selected branches and tags", then add the branch `master` and
+   nothing else.
+3. Environment secrets: add `FIREBASE_SERVICE_ACCOUNT`.
+4. If a repository secret of that name exists (Settings, Secrets and variables, Actions), delete
+   it: it would still be readable from any branch.
+
+Set the branch rule before the secret. GitHub creates a missing environment by itself, with no
+rule, the first time a job names it; an environment without the rule protects nothing. Do not
+loosen the rule or add other branches to it. Pull requests from forks never get secrets.
+
+In the job, the key is checked first, written to a temporary file on the runner only after all
+installs and builds, right before the first deploy step, and removed at the end. It must never
 be in the code, a workflow file, a log or a chat. The log prints only the account's email.
 
 To make one (owner, once): Google Cloud console, project `bullshit-wtf-prod`, IAM, Service
-accounts, create an account for deploys, add a JSON key, paste the whole file as the secret's
-value. The account needs to deploy 1st gen functions, database rules and hosting. These roles should
+accounts, create an account for deploys, add a JSON key, paste the whole file as the environment
+secret's value. The account needs to deploy 1st gen functions, database rules and hosting. These roles should
 cover it (not yet tried on this project): Cloud Functions Admin, Service Account User, Firebase Rules Admin, Firebase Realtime
 Database Admin, Firebase Hosting Admin, Artifact Registry Reader, Service Usage Consumer (or, more
 simply and more widely, Firebase Admin plus Service Account User). If a role is missing, the
