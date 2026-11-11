@@ -23,12 +23,21 @@
             </div>
 
             <div class="actions" *ngIf="!presenter">
-                <button class="button is-primary is-medium is-fullwidth rematch" (click)="replay()" [class.is-loading]="loading">
+                <button *ngIf="!rematchPin" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
+                    [class.is-loading]="loading">
                     {{ t.rematch }}
                 </button>
-                <p class="hint">{{ t.rematchHint }}</p>
-                <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share"></app-share-results>
+                <p *ngIf="!rematchPin" class="hint">{{ t.rematchHint }}</p>
+                <!-- Someone else pressed REMATCH: this player joins when ready, not when they pressed. -->
+                <button *ngIf="rematchPin" class="button is-primary is-medium is-fullwidth rematch join-rematch"
+                    (click)="joinRematch()" [class.is-loading]="loading">
+                    {{ rematchJoin }}
+                </button>
+                <p *ngIf="rematchPin" class="hint rematch-line" dir="auto">{{ rematchLine }}</p>
+                <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
             </div>
+
+            <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
 
             <ol class="players" [class.many]="displayPlayers.length > 4">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
