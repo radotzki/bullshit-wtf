@@ -7,6 +7,7 @@ import { houseLiePoints } from './house-lie';
 import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
+import { playedUpdate } from './seats';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
@@ -97,6 +98,8 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
 
             return {
                 state: updateState(GameState.RevealTheTruth),
+                // Which seats have sent a lie or a pick so far: the others are not waited for (seats.ts).
+                ...playedUpdate(game),
                 answers,
                 answerSelections,
                 revealAnswers,

@@ -55,6 +55,12 @@ export interface GameScheme {
     parent?: string;         // PIN of the finished game this one was replayed from
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.
     revealDone?: { [pid: string]: boolean };
+    // Seats that have sent a lie or a pick in this game, stored as each question's picks close.
+    // From question 2 on, the "everyone answered" checks do not wait for the other seats.
+    played?: { [pid: string]: boolean };
+    // The question index `played` was first kept from: only ever 0. A game without it (one that was
+    // already running when this was released) waits for every seat, as before.
+    playedFrom?: number;
     // The saved crew this game counts for (set by a crew rematch, carried by Replay).
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
