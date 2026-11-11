@@ -10,6 +10,7 @@
 import { shuffle, Random } from './question-picker';
 import { normalize } from './answer-options';
 import { GameScheme } from '../game-model';
+import { bigRevealArm } from './big-reveal';
 
 export const IDEAS_PER_PLAYER = 2;
 
@@ -79,6 +80,8 @@ export interface QuestionResultRow {
     picks: number;
     friend_fooled: number;
     coach: boolean;
+    // The staged reveal's arm: true, false, or null for a game outside that test (see big-reveal.ts).
+    big_reveal: boolean | null;
     locale: string | null;
 }
 
@@ -113,6 +116,7 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
         picks: Object.keys(selections).length,
         friend_fooled: friendFooled,
         coach: !!game.coach,
+        big_reveal: bigRevealArm(game),
         locale: game.locale || null,
     };
 }

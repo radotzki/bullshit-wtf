@@ -19,6 +19,7 @@ const clientFallbackDelay = 2500;
 export class GameService implements CanActivate {
     private game: Subscription;
     private timeout;
+    private current: GameState;
 
     constructor(
         private router: Router,
@@ -41,6 +42,7 @@ export class GameService implements CanActivate {
 
     private handleGameState(pin: string, state: GameState) {
         this.clearTimer();
+        this.current = state;
 
         switch (state) {
             case GameState.GameStaging:
@@ -68,7 +70,15 @@ export class GameService implements CanActivate {
                 break;
 
             case GameState.ScoreBoard:
-                this.router.navigate(['score-board', pin]);
+                // The staged reveal shows the scores itself, and the server gives this phase no time:
+                // the reveal page stays up until the next question. (A phone that opens the game right
+                // in this phase is not on the reveal page, and gets the scoreboard as before.)
+                this.apiService.isStagedReveal(pin).then(staged => {
+                    const onReveal = this.router.url.indexOf('/reveal-the-truth/') === 0;
+                    if (this.current === GameState.ScoreBoard && !(staged && onReveal)) {
+                        this.router.navigate(['score-board', pin]);
+                    }
+                });
                 this.fallbackTick(pin, state);
                 break;
 

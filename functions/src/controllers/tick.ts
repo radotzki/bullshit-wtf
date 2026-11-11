@@ -1,7 +1,7 @@
 import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
 import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer, addHighlights, highlightsStart } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
-import { tickAllowed, stateKey, withDeadline } from './phase';
+import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
 import { pickHouseLies } from './answer-options';
 import { houseLiePoints } from './house-lie';
 import { cleanHouseLies } from './house-lie-cleanup';
@@ -54,7 +54,14 @@ export async function advance(pin: string, from: GameStateInfo) {
         update.state = withDeadline(update.state, Object.assign({}, game, update));
     }
 
-    return updateGame(pin, update);
+    await updateGame(pin, update);
+
+    // A phase of no length (the scoreboard of a staged-reveal game) is left in this same run, so the
+    // next question does not wait for the phase timer's own function to start. That timer fires too,
+    // and finds the phase already claimed.
+    if (endsAtOnce(update.state)) {
+        return advance(pin, update.state);
+    }
 }
 
 function claim(pin: string, key: string): Promise<boolean> {
@@ -122,7 +129,7 @@ function updateState(stateId: number): GameStateInfo {
 }
 
 function updateGame(pin: string, update: Partial<GameScheme>) {
-    // Return the write so the function waits for it before finishing.
+    // Returned so the caller waits for the write before finishing.
     return gamesRef.child(pin).update(update);
 }
 
@@ -210,7 +217,7 @@ async function getRealAnswer(game: GameScheme) {
     return realAnswer;
 }
 
-function calcAnswersScore(game: GameScheme) {
+export function calcAnswersScore(game: GameScheme) {
     const answers = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
     const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
 
@@ -252,7 +259,7 @@ function calcAnswersScore(game: GameScheme) {
     return { answers: game.answers || {}, answerSelections: game.answerSelections || {} };
 }
 
-function generateRevealAnswers(game: GameScheme) {
+export function generateRevealAnswers(game: GameScheme) {
     const playersArray = Object.keys(game.players || {}).map(k => Object.assign({}, { pid: k }, game.players[k]));
     const answersArray = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
     const answerSelectionsArray = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
@@ -295,7 +302,7 @@ function generateRevealAnswers(game: GameScheme) {
     return revealAnswers.sort((a, b) => a.text > b.text ? 1 : -1).sort(a => a.realAnswer ? 1 : -1);
 }
 
-function calcPlayersScore(game: GameScheme) {
+export function calcPlayersScore(game: GameScheme) {
     const answers = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
     const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
 

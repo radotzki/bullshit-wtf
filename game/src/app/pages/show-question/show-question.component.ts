@@ -7,6 +7,7 @@ import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameState } from '../../game-model';
+import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 
 @Component({
@@ -28,6 +29,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     past: number;
     timer;
     sound: Howl;
+    private phoneTickStopped = false;
     panic: boolean;
     // The round-1 lie helper (games with coach: true only).
     helper: LieHelperView = { hint: null, placeholder: null, button: null };
@@ -40,6 +42,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         private gameService: GameService,
         private sessionService: SessionService,
         private apiService: ApiService,
+        private soundService: SoundService,
     ) { }
 
     ngOnInit() {
@@ -92,6 +95,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.stopMusic();
+        this.phoneTickStopped = true;
+        this.soundService.stop('time-warning');
         if (this.timer) {
             clearInterval(this.timer);
         }
@@ -139,6 +144,15 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     playTimeWarning() {
         this.playMusic(['/assets/sounds/time-warning.mp3']);
+
+        // Phones tick too in a staged-reveal game with no big screen (unless muted).
+        if (!this.presenter) {
+            this.apiService.phoneSound(this.pin).then(sound => {
+                if (sound && !this.phoneTickStopped) {
+                    this.soundService.play('time-warning');
+                }
+            });
+        }
     }
 
     playMusic(src: string[]) {

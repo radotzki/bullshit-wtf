@@ -471,3 +471,39 @@ best lie.
   `onRevealDone` all move the game on), then rules (`highlights` and `highlightsFrom` readable), then
   hosting. Without the new functions or rules the screen still works, just without the lies.
 - No BigQuery change.
+
+## Staged reveal (a 50/50 test)
+
+Half of new games get a staged reveal (`games/$pin/bigReveal: true`); the other half keep today's
+(`false`). The draw is made when a game is created, replayed or rematched, and it is independent of
+the round-1 lie helper's. Code: `functions/src/controllers/big-reveal.ts`, timing in `game-model.ts`
+(`revealSchedule`, `stagedRevealTiming`), the page in `game/src/app/pages/reveal-the-truth`.
+
+- What a staged game shows: each row in three beats (the answer, who picked it, who wrote it, 2.4 s a
+  row on phones), earlier rows folded to one line, "And the truth is…", a "You fooled …" flash on
+  the writer's phone, then each player's result and the scores with every player's change. Hebrew
+  and English. There is no separate scoreboard: its phase lasts 0 ms and the server leaves it in
+  the same run.
+- Sound on phones, staged games only, and only when the game has no big screen: the stings and
+  the clock tick that a big screen plays. A mute button in the header, remembered on the phone
+  (`BS_MUTED`). An iPhone in silent mode stays silent and iPhone browsers do not vibrate.
+- Only a game made by a client that asks for it (`stagedReveal: true` on `newGame`, `fork`,
+  `crewRematch`) is in the test. So the usual order, functions first and the site after, is safe: until
+  the site is live no phone asks, no game is flagged, and every game plays as before. A game already
+  in play at the release has no flag and keeps its timing. A phone still on the old site inside a
+  staged game shows today's faster rows, waits for the longer phase to end, and passes through the
+  scoreboard page in a blink; its game is never held up.
+- Deploy order: all functions, then rules (`games/$pin/bigReveal` readable), then hosting. Until
+  the rule is live a phone cannot read the flag and shows today's reveal inside the staged timing,
+  like a phone on the old site.
+- BigQuery: run the three `ALTER TABLE` statements in `functions/bigquery/2026-11-big-reveal.sql`
+  (column `big_reveal` on `opened_games`, `closed_games` and `question_results`: TRUE staged, FALSE
+  control, NULL not in the test). Until they are run nothing breaks, but the arm is dropped from the
+  rows and those games cannot be compared. The file holds the read queries: players still picking
+  on the last question, and rematches per game, by arm.
+- Mute taps are counted in the `shares` table as `content_type = 'sound'`, `method` `mute` or
+  `unmute`. They are not shares: leave them out of share counts.
+- Big screen, both arms: sizes on the reveal follow the screen's height, earlier rows fold to one
+  line and the page follows the newest row, so the truth is on screen at 1280x720 and 1920x1080.
+- To end the test: make `drawBigReveal` return `true` (everyone staged) or `undefined` (nobody), and
+  deploy the functions. No client change is needed either way.

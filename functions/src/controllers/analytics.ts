@@ -3,6 +3,7 @@ import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
 import { nameFlag } from '../name-flag';
+import { bigRevealArm } from './big-reveal';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
@@ -74,9 +75,13 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     native             sent through the phone's share sheet (SHARE LINK)
 //     copy               copied the link (COPY LINK, or SHARE LINK on a phone with no share sheet)
 //     solo-start         a lone host tapped "Start alone anyway" (not a send: counts who insists)
+//   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
+//     mute               tapped it to silence the game
+//     unmute             tapped it again
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
+    'sound': ['mute', 'unmute'],
 };
 
 export interface ShareRow {
@@ -118,6 +123,8 @@ function origin(game: GameScheme) {
         pack: game.pack || null,
         campaign: game.campaign || null,
         coach: !!game.coach,
+        // The staged reveal's arm: true, false, or null for a game outside that test.
+        big_reveal: bigRevealArm(game),
     };
 }
 

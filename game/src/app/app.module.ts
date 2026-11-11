@@ -35,6 +35,7 @@ import { ShareResultsComponent } from './components/share-results/share-results.
 import { ShareService } from './services/share.service';
 import { ResultsCardService } from './services/results-card.service';
 import { CrewService } from './services/crew.service';
+import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
 
 @NgModule({
@@ -79,6 +80,7 @@ import { CrewComponent } from './pages/crew/crew.component';
         ShareService,
         ResultsCardService,
         CrewService,
+        SoundService,
     ],
     bootstrap: [AppComponent]
 })

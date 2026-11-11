@@ -127,6 +127,10 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "bigReveal": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
                 "ideas": {
                     "$pid": {
                         ".read": "auth != null && root.child('games').child($pin).child('players').child($pid).child('uid').val() === auth.uid"

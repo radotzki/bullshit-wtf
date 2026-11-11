@@ -1,5 +1,6 @@
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
+import { drawBigReveal } from './big-reveal';
 import { GameScheme, GameState, isPack, cleanCampaign } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
@@ -15,6 +16,8 @@ export interface NewGameOptions {
     hostKey?: string;
     // The creating phone starts the game through startGame, so a tick may not start it.
     serverStart?: boolean;
+    // The creating phone can show the staged reveal, so this game is in its 50/50 test (see big-reveal.ts).
+    stagedReveal?: boolean;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
@@ -36,6 +39,12 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         // The round-1 lie helper, on for half of all games (crew rematches included).
         if (pickCoach()) {
             game.coach = true;
+        }
+
+        // The staged reveal, for half of the games made by a client that can show it. Its own draw.
+        const bigReveal = drawBigReveal(options.stagedReveal === true);
+        if (bigReveal !== undefined) {
+            game.bigReveal = bigReveal;
         }
 
         if (options.hostKey) {

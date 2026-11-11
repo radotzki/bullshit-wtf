@@ -3,6 +3,7 @@ import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
+import { drawBigReveal } from './big-reveal';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = 10 * 1000;
@@ -11,7 +12,7 @@ export const FORK_WAIT_MS = 10 * 1000;
  * Replay: a new game with the same players. `creator` is the uid of the phone that pressed Replay,
  * `hostPid` its player id in the finished game; that player hosts the new game. `hostKey` is that
  * phone's new one-game secret for the new game (see hostKey in game-model): with it, only that phone
- * may start the new game. Resolves to the new game's pin, and whether this phone hosts it.
+ * may start the new game. `stagedReveal`: that phone can show the staged reveal (see big-reveal.ts). Resolves to the new game's pin, and whether this phone hosts it.
  *
  * One Replay per game: when two phones press Replay at once, the first claims the new game and the
  * second gets that same game back, with its host key, so both phones that pressed Replay may start it
@@ -19,7 +20,8 @@ export const FORK_WAIT_MS = 10 * 1000;
  * each press made its own game, the phones followed whichever arrived first, and the phone that pressed
  * Replay could end up in the other phone's lobby without START (Friday 6 Nov: JVQP made JVRQ and JVRR).
  */
-export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<{ pin: string; host: boolean; hostKey?: string }> {
+export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string,
+    stagedReveal = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
     const gameCounter = await incGameCounter();
@@ -41,7 +43,7 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     }
 
     const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey);
+    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal);
 
     await gamesRef.child(forkedGamePin).set(forkedGame);
     await gamesRef.child(pin).child('forking').set(forkedGamePin);
@@ -74,8 +76,8 @@ async function forkReady(pin: string, claimed: string): Promise<boolean> {
     }
 }
 
-function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
-    hostKey?: string): GameScheme {
+export function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
+    hostKey?: string, stagedReveal = false): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -127,6 +129,12 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
     // The round-1 lie helper, on for half of all games: each Replay is a new draw.
     if (pickCoach()) {
         forked.coach = true;
+    }
+
+    // The staged reveal: each Replay is a new draw too, when the phone that pressed it can show it.
+    const bigReveal = drawBigReveal(stagedReveal === true);
+    if (bigReveal !== undefined) {
+        forked.bigReveal = bigReveal;
     }
 
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).

@@ -1,11 +1,21 @@
 import { Howl } from 'howler';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
+import { SoundService } from './../../services/sound.service';
 import { Subscription } from 'rxjs/Subscription';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { GamePlayer, RevealAnswer, revealSchedule } from '../../game-model';
+import { Component, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import {
+    GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing,
+    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings,
+} from '../../game-model';
+import { RevealStrings, revealStringsFor, resultLines, stingFor } from './reveal-strings';
+
+// How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
+// stand in their old order before they move to the new one (staged reveal only).
+const FLASH_MS = 1200;
+const SCORES_MOVE_AFTER_MS = 900;
 
 /**
  * The reveal: the question stays on top, and the answers somebody picked appear one row at a time,
@@ -15,6 +25,14 @@ import { GamePlayer, RevealAnswer, revealSchedule } from '../../game-model';
  *
  * Every phone works out what to show from the server's phase start time, so all screens stay in step
  * even if one loads late.
+ *
+ * Two versions, by the game's own flag (a 50/50 test, see bigReveal in game-model):
+ *   - today's reveal;
+ *   - the staged reveal: each row in three beats (the answer, who picked it, who wrote it), earlier rows
+ *     fold down to one line, "And the truth is…" before the truth, a "You fooled …" flash on the writer's
+ *     phone, sounds on phones, and at the end the scores with each player's change. Such a game has no
+ *     separate scoreboard: this page stays up until the next question.
+ * On a big screen both keep the newest row in view: earlier rows fold down, and the page follows it.
  */
 @Component({
     selector: 'app-reveal-the-truth',
@@ -26,25 +44,41 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     presenter: boolean;
     rtl: boolean;
     question: string;
+    staged = false;
+    me: string = null;
+    s: RevealStrings = revealStringsFor('en');
 
     rows: Row[];
     unpicked: Row[] = [];
     myResult: string[] = [];
 
     visibleRows = 0;
+    pickersShown = 0;
     writersShown = 0;
+    truthIntro = false;
     allShown = false;
+
+    // Staged reveal only.
+    standings: Standing[] = [];
+    scoresMoved = false;
+    flash: string = null;
+    flashOn = false;
+    flashPoints: number = null;
 
     playersCount = 0;
     doneCount = 0;
     tapped = false;
 
-    private step: number;
-    private allShownAt: number;
+    private schedule: RevealSchedule;
     private startedAt: number;       // server time the reveal began
     private clockOffset = 0;         // server time minus this phone's time
     private ticker;
     private soundsPlayed = 0;
+    private myRow = -1;
+    private buzzed = false;
+    private phoneSound = false;
+    private shownKey = '';
+    private destroyed = false;
     private doneSub: Subscription;
     private sound: Howl;
 
@@ -53,18 +87,20 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         private gameService: GameService,
         private apiService: ApiService,
         private sessionService: SessionService,
+        private soundService: SoundService,
+        private element: ElementRef,
     ) { }
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
-        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
         this.load();
     }
 
     ngOnDestroy() {
+        this.destroyed = true;
         this.stopMusic();
         clearInterval(this.ticker);
 
@@ -83,13 +119,33 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         return Math.max(this.playersCount - this.doneCount, 0);
     }
 
+    /** Many rows: the folded ones get smaller, so that nine still fit a big screen. */
+    get manyRows() {
+        return !!this.rows && this.rows.length > 5;
+    }
+
+    trackStanding(index: number, standing: Standing) {
+        return standing.pid;
+    }
+
     private async load() {
-        const [revealAnswers, players, info, hasPresenter] = await Promise.all([
+        const [revealAnswers, players, info, hasPresenter, staged, locale] = await Promise.all([
             this.apiService.getRevealAnswers(this.pin),
             this.apiService.getPlayers(this.pin),
             this.apiService.getGameStateInfo(this.pin),
             this.apiService.gameHasPresenter(this.pin),
+            this.apiService.isStagedReveal(this.pin),
+            this.apiService.getGameLocale(this.pin).catch(() => 'en'),
         ]);
+
+        if (this.destroyed) {
+            return;
+        }
+
+        this.staged = staged;
+        this.rtl = locale === 'he';
+        // Today's reveal keeps today's words (English); the staged one speaks the game's language.
+        this.s = revealStringsFor(staged ? locale : 'en');
 
         const playersArray = Object.keys(players || {}).map(k => Object.assign({ pid: k }, players[k]));
         const all = (revealAnswers || []).map(a => this.toRow(a, playersArray));
@@ -102,15 +158,39 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.unpicked = all.filter(r => !r.pickers.length && !r.realAnswer && !r.houseLie);
         this.playersCount = playersArray.length;
 
-        if (!this.presenter && this.sessionService.user) {
-            this.myResult = this.resultFor(this.sessionService.user.pid, all);
+        const me = !this.presenter && this.sessionService.user ? this.sessionService.user.pid : null;
+        this.me = me;
+
+        if (me) {
+            this.myResult = resultLines(me, all, this.s);
         }
 
-        const schedule = revealSchedule(revealAnswers, !!hasPresenter);
-        this.step = schedule.step;
-        this.allShownAt = schedule.allShown;
+        this.schedule = revealSchedule(revealAnswers, !!hasPresenter, staged);
         this.clockOffset = info.now - Date.now();
         this.startedAt = info.state && info.state.timestamp || info.now;
+
+        if (staged) {
+            // The players' scores do not hold this question yet while the reveal is on; a phone that
+            // loads this page a moment late may read them after the server has added it.
+            const added = !info.state || info.state.id !== GameState.RevealTheTruth;
+            this.standings = revealStandings(players, revealScoreChanges(revealAnswers), added);
+
+            // The player's own lie, if it fooled somebody: its writer gets the flash.
+            this.myRow = me ? this.rows.findIndex(r => !r.realAnswer && !r.houseLie && r.creatorIds.indexOf(me) !== -1) : -1;
+            if (this.myRow !== -1) {
+                this.flash = this.s.youFooled(this.rows[this.myRow].pickerNames);
+                this.flashPoints = this.rows[this.myRow].points;
+            }
+
+            // A row whose sound moment has passed before this page loaded stays silent.
+            const now = revealMoment(this.schedule, Date.now() + this.clockOffset - this.startedAt);
+            this.soundsPlayed = Math.max(0, Math.min(this.rows.length, now.writersShown) - 1);
+            // Phones play the stings and buzz only when no big screen does it for the room.
+            this.phoneSound = !this.presenter && !hasPresenter;
+            if (this.phoneSound) {
+                this.soundService.arm();
+            }
+        }
 
         this.doneSub = this.apiService.revealDoneCount(this.pin).subscribe(count => this.doneCount = count);
         this.update();
@@ -119,24 +199,80 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     private update() {
         const elapsed = Date.now() + this.clockOffset - this.startedAt;
-        const half = this.step / 2;
+        const moment = revealMoment(this.schedule, elapsed);
+        const count = this.rows.length;
 
-        this.visibleRows = Math.min(this.rows.length, Math.floor(elapsed / this.step) + 1);
-        this.writersShown = Math.min(this.rows.length, Math.floor((elapsed + half) / this.step));
-        this.allShown = elapsed >= this.allShownAt;
+        this.visibleRows = Math.min(count, moment.visibleRows);
+        this.pickersShown = Math.min(count, moment.pickersShown);
+        this.writersShown = Math.min(count, moment.writersShown);
+        this.truthIntro = this.staged && moment.truthIntro;
+        this.allShown = moment.allShown;
 
-        // On the big screen, a sound for each writer as it is revealed.
+        // A sound for each writer as it is revealed: on the big screen always, on phones in the staged reveal.
         if (this.writersShown > this.soundsPlayed) {
             this.soundsPlayed = this.writersShown;
-            this.playMusic([`/assets/sounds/${this.getSound(this.rows[this.writersShown - 1])}.mp3`]);
+            const index = this.writersShown - 1;
+            if (this.presenter) {
+                this.playMusic([`/assets/sounds/${this.staged ? stingFor(this.rows[index], index) : this.getSound(this.rows[index])}.mp3`]);
+            } else if (this.phoneSound) {
+                this.soundService.play(stingFor(this.rows[index], index));
+            }
         }
 
-        if (this.allShown) {
+        if (this.staged) {
+            this.scoresMoved = elapsed >= this.schedule.allShown + SCORES_MOVE_AFTER_MS;
+            this.updateFlash(elapsed);
+        }
+
+        this.follow();
+
+        // Today's reveal has nothing left to time once all is shown; the staged one still moves the scores.
+        if (this.allShown && (!this.staged || this.scoresMoved)) {
             clearInterval(this.ticker);
         }
     }
 
+    /** "You fooled Chen!" across the phone of the lie's writer, from the moment the room learns who wrote it. */
+    private updateFlash(elapsed: number) {
+        if (this.myRow === -1) {
+            return;
+        }
+        const from = revealRowStart(this.schedule, this.myRow) + this.schedule.writerAt;
+        const on = elapsed >= from && elapsed < from + FLASH_MS;
+        this.flashOn = on;
+
+        if (on && !this.buzzed && this.phoneSound) {
+            this.buzzed = true;
+            this.soundService.vibrate([60, 40, 120]);
+        }
+    }
+
+    /**
+     * Keep the newest thing in view: on a big screen (which nobody scrolls) whenever something appears,
+     * and on a phone in the staged reveal, where the scores and NEXT arrive below the rows.
+     */
+    private follow() {
+        const key = [this.visibleRows, this.pickersShown, this.writersShown, this.truthIntro, this.allShown].join();
+        if (key === this.shownKey) {
+            return;
+        }
+        this.shownKey = key;
+
+        if (!this.presenter && !this.staged) {
+            return;
+        }
+
+        setTimeout(() => {
+            const main: HTMLElement = this.element.nativeElement.querySelector('.game-main');
+            if (main) {
+                main.scrollTop = main.scrollHeight;
+            }
+        });
+    }
+
     private toRow(answer: RevealAnswer, playersArray: (GamePlayer & { pid: string })[]): Row {
+        const pickers = (answer.selectors || []).map(pid => this.playerObject(playersArray, pid)).filter(p => p);
+        const creators = (answer.creators || []).filter(c => c).map(pid => this.playerObject(playersArray, pid)).filter(p => p);
         return {
             text: answer.text,
             realAnswer: !!answer.realAnswer,
@@ -145,46 +281,11 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             pointsBy: answer.pointsBy,
             pickerIds: answer.selectors || [],
             creatorIds: (answer.creators || []).filter(c => c),
-            pickers: (answer.selectors || []).map(pid => this.playerObject(playersArray, pid)).filter(p => p),
-            creators: (answer.creators || []).filter(c => c).map(pid => this.playerObject(playersArray, pid)).filter(p => p),
+            pickers,
+            creators,
+            pickerNames: pickers.map(p => p.nickname),
+            creatorNames: creators.map(p => p.nickname),
         };
-    }
-
-    /** One or two short lines on how this player did this question. */
-    private resultFor(pid: string, rows: Row[]): string[] {
-        const lines: string[] = [];
-        const pickedRow = rows.find(r => r.pickerIds.indexOf(pid) !== -1);
-        const myLie = rows.find(r => r.creatorIds.indexOf(pid) !== -1);
-
-        if (pickedRow && pickedRow.realAnswer) {
-            lines.push(`You found the truth! ${this.signed(pickedRow.points)}`);
-        } else if (pickedRow && pickedRow.houseLie) {
-            const lost = pickedRow.pointsBy && pid in pickedRow.pointsBy ? pickedRow.pointsBy[pid] : pickedRow.points;
-            lines.push(lost < 0
-                ? `You fell for our bullshit. ${this.signed(lost)}`
-                : `You fell for our bullshit. No points to lose yet!`);
-        } else if (pickedRow) {
-            lines.push(`You fell for ${this.names(pickedRow.creators)}'s bullshit.`);
-        } else {
-            lines.push(`You didn't pick an answer.`);
-        }
-
-        if (myLie && myLie.pickers.length) {
-            lines.push(`You fooled ${this.names(myLie.pickers)}! ${this.signed(myLie.points)}`);
-        } else if (myLie) {
-            lines.push(`Nobody fell for your answer.`);
-        }
-
-        return lines;
-    }
-
-    private names(players: Player[]) {
-        const n = players.map(p => p.nickname);
-        return n.length <= 1 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;
-    }
-
-    private signed(points: number) {
-        return points > 0 ? `+${points}` : `${points}`;
     }
 
     private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string): Player {
@@ -234,4 +335,6 @@ interface Row {
     creatorIds: string[];
     pickers: Player[];
     creators: Player[];
+    pickerNames: string[];
+    creatorNames: string[];
 }
