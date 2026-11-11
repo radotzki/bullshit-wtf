@@ -1,4 +1,4 @@
-import { GameScheme, GameState } from "../game-model";
+import { GameScheme, GameState, isTestCampaign } from "../game-model";
 import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
@@ -39,6 +39,7 @@ export async function onStateChange(pin: string) {
 //   host    the player who just created the game
 //   replay  carried into the next game by Replay
 //   crew    tapped Rematch on a crew page, or opened a crew link
+// The server alone writes one more value, 'test', for every join of a test game (see onJoinGame).
 export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
 
 export function cleanVia(via: any): string | null {
@@ -49,7 +50,28 @@ export function cleanVia(via: any): string | null {
     return JOIN_SOURCES.indexOf(v) >= 0 ? v : 'other';
 }
 
+/** The value of users.via for every join of a test game, whatever the join's real source was. */
+export const TEST_VIA = 'test';
+
+/** Whether the game is a test game (its campaign is a test tag). A failed read counts as not. */
+async function isTestGame(pin: string): Promise<boolean> {
+    try {
+        if (typeof pin !== 'string' || !/^[A-Za-z]{1,12}$/.test(pin)) {
+            return false;
+        }
+        return isTestCampaign(await get<string>(gamesRef.child(pin.toUpperCase()).child('campaign')));
+    } catch (e) {
+        console.error('isTestGame failed', pin, e && e.message);
+        return false;
+    }
+}
+
 export async function onJoinGame(uid: string, ip: string, useragent: string, pin: string, nickname: string, via: string | null = null) {
+    // The users table has no campaign column, and a lobby that never starts has no other row:
+    // a join of a test game says so in via, so the lobby can be left out with nothing else to go by.
+    if (await isTestGame(pin)) {
+        via = TEST_VIA;
+    }
     return insert('users', {
         uid,
         ip,

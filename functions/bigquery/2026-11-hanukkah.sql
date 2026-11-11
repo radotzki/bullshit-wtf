@@ -19,9 +19,11 @@ ALTER TABLE `bullshit-wtf-prod.analytics.closed_games`
 -- through parent_pin: see the second query.
 -- SELECT DATE(time, 'Asia/Jerusalem') AS day, campaign, COUNT(*) AS games, SUM(players) AS players
 -- FROM `bullshit-wtf-prod.analytics.opened_games`
--- WHERE campaign IS NOT NULL GROUP BY day, campaign ORDER BY day, games DESC;
+--   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')   -- test games out (2026-11-test-mark.sql)
+-- GROUP BY day, campaign ORDER BY day, games DESC;
 
 -- Hanukkah pack games against all games, by day.
 -- SELECT DATE(time, 'Asia/Jerusalem') AS day, COUNTIF(pack = 'hanukkah') AS hanukkah_games, COUNT(*) AS games
 -- FROM `bullshit-wtf-prod.analytics.closed_games`
--- WHERE time >= '2026-11-26' GROUP BY day ORDER BY day;
+-- WHERE time >= '2026-11-26' AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- GROUP BY day ORDER BY day;

@@ -233,7 +233,8 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   in `questionPacks` (game-model.ts). The lobby shows a Hanukkah line and the results card says so.
 - `?lang=he` or arriving on a `/he` address makes Hebrew the default on the create page.
 - A post's `?via=<tag>` (not one of the join sources) is sent with the game the tab creates and kept as
-  `campaign`. The SEO pages pass it on to their Start button.
+  `campaign`. The SEO pages pass it on to their Start button. The tags `test` and `test-<anything>` are
+  reserved for play-tests (see "Test games" at the end): never put them on a real post.
 - Database rules: `games/$pin/pack` is readable. BigQuery: run `functions/bigquery/2026-11-hanukkah.sql`
   once (NULLABLE `pack` and `campaign` on opened_games and closed_games).
 - Images: `graphics/hanukkah.html`, rendered with `node graphics/render-hanukkah.js <assets> <posts>`.
@@ -297,3 +298,55 @@ best lie.
   `onRevealDone` all move the game on), then rules (`highlights` and `highlightsFrom` readable), then
   hosting. Without the new functions or rules the screen still works, just without the lies.
 - No BigQuery change.
+
+## Test games (play-tests that do not count as players)
+
+Every play-test on the live site must start from a test link, so that its rows mark themselves and
+stay out of the usage numbers. Nicknames no longer matter.
+
+**How to set the mark.** The tester who hosts opens the site with a test tag, then creates the game
+in that same tab:
+
+```
+https://bullshit.wtf/?via=test
+https://bullshit.wtf/?via=test-qa-lobby      (any name after "test-": lowercase letters, digits, dashes)
+https://bullshit.wtf/he?via=test             (Hebrew)
+```
+
+The tag stays with the tab until it is closed, so every game created in it is a test game. The other
+testers join as usual (invite link, QR code or typed PIN): the mark is on the game, not on them. To
+check before playing, the create request (`newGame`) in the browser's network panel carries
+`campaign: "test"`.
+
+**What carries the mark.** No new BigQuery column: it travels in columns that already exist.
+
+- `opened_games.campaign` and `closed_games.campaign` are `test` (or `test-...`).
+- Every `users` row of a test game has `via = 'test'` in place of the join's real source. The server
+  writes it from the game, so a lobby that never starts is marked too.
+- Replay keeps the mark (other campaign tags are still not carried by Replay). A crew saved from a
+  test game keeps it for its rematches.
+- `question_results` and `forks` have no column for it: leave them out by PIN. `shares` has no PIN:
+  leave them out by browser (any uid that joined a test game).
+
+**Reading the numbers.** `functions/bigquery/2026-11-test-mark.sql` holds the filters and the
+`test_pins` list to paste into a query, and the three daily numbers with tests out. The saved queries
+in the other files there leave marked games out. The tests of 5 to 11 November 2026 were played
+before the mark and carry none; that file keeps the old rule (nicknames, one campaign, two network
+addresses) for windows that include those days.
+
+**What the mark does not cover.**
+
+- A game created in a tab that arrived without the tag, even when testers play it. Start again from
+  a test link.
+- A tester who joins a real game: that game stays a real game.
+- A crew page opened on its own in a test tab: a rematch is marked only when the crew was saved from
+  a test game.
+- Page views in the visit beacon's log lines and errors in Sentry are not marked.
+
+**Deploy.** Functions only (`fork`, `onJoinGame`, `createCrew`, `crewRematch`; deploy all, as always).
+No BigQuery change, no rules change, no hosting change: the client already sends the tag. The lie
+helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed at the same time:
+"reached round 2" is 100% in both arms since the server moves games on, so it is now "half or more
+of the players picked an answer on a round-2 question".
+
+Checks: `functions/test/test-mark.test.js` (in `npm test`).
