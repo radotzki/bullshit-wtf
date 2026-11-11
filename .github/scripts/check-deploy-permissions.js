@@ -289,4 +289,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { NEEDS, TARGETS, ASK_TIMEOUT, TOTAL_TIMEOUT, wanted, check, report, googleRequest };
+module.exports = { NEEDS, TARGETS, ASK_TIMEOUT, TOTAL_TIMEOUT, wanted, check, report, googleRequest, noAnswer };

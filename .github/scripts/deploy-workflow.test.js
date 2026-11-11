@@ -5,7 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
-const { READS, command } = require('./check-access.js');
+const { command } = require('./check-access.js');
 
 const yml = fs.readFileSync(path.join(__dirname, '..', 'workflows', 'deploy.yml'), 'utf8');
 const names = [...yml.matchAll(/^      - name: (.+)$/gm)].map(m => m[1]);
@@ -46,13 +46,13 @@ test('the only commands that change production are the three deploys, each for t
     ]);
     const code = yml.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
     assert.doesNotMatch(code, /--force/);
-    // The only other Firebase commands of the run are the access check's two reads.
-    assert.deepStrictEqual(READS.map(r => command(r, 'made-up-project').join(' ')), [
-        'firebase deploy --only database --dry-run --project made-up-project --non-interactive',
-        'firebase hosting:channel:list --project made-up-project --non-interactive',
-    ]);
-    // No workflow file runs the tool in any other way.
+    // The only other Firebase command of the run is the access check's database dry run. The site
+    // is read without the tool: each of its hosting commands can switch the Hosting API on.
+    assert.deepStrictEqual(command('made-up-project').join(' '),
+        'firebase deploy --only database --dry-run --project made-up-project --non-interactive');
+    // No workflow file runs the tool in any other way, and none runs a hosting command.
     assert.doesNotMatch(code.replace(/npx firebase /g, ''), /\bfirebase (deploy|hosting|functions|database)\b/);
+    assert.doesNotMatch(code, /hosting:/);
 });
 
 test('both reads of the access check run in one step, for the run\'s project, before any release', () => {

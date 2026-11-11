@@ -109,25 +109,24 @@ jobs:
 
       # A release must not stop halfway: on 2026-11-11 the functions went out, then the rules step
       # could not read the database instance, and the site was never released. So before the
-      # first deploy, make the same first calls the rules and site deploys make, and release nothing:
-      # - `deploy --only database --dry-run` reads the database instance and sends the rules with
-      #   dryRun=true (the server checks them and stores nothing). The tool skips its deploy and
-      #   release phases on a dry run.
-      # - `hosting:channel:list` finds the project's hosting site, as the site deploy does, and
-      #   reads its channels.
+      # first deploy, read both, release nothing, and switch nothing on in the Google project:
+      # - the database, with the tool: `deploy --only database --dry-run` reads the database
+      #   instance and sends the rules with dryRun=true (the server checks them and stores
+      #   nothing). The tool skips its deploy and release phases on a dry run, and its database
+      #   path has no call that switches an API on.
+      # - the site, with one plain GET of the project's list of hosting sites, through Google's
+      #   library like the permission check. Not with the tool: each of its hosting commands,
+      #   also the read-only ones, first tries to switch the Hosting API
+      #   (firebasehosting.googleapis.com) on when it is off. Switching an API on is the owner's
+      #   step, never a side effect of a check. With the API off the GET is refused, and the step
+      #   says so by name.
       # Hosting gets a read and not a dry run on purpose: the tool's hosting dry run creates a
       # new, empty version on the live site. So this step proves the account can reach the site;
       # that it may write to it is what the step before this one asked.
-      # One call here is not a read. `hosting:channel:list` first asks whether the Hosting API
-      # (firebasehosting.googleapis.com) is on in the project, and if it is off, tries to switch
-      # it on. With the API on, as it is while the site is served, both commands only read. The
-      # tool's other read-only hosting command (`hosting:sites:list`) starts with the same step,
-      # and a plain request to Google would need new code that handles the key, so the step
-      # stays and its name says "releases nothing".
       # Both reads always run, and the step fails afterwards if either failed: on 2026-11-11 the
       # database read failed first and the site read never ran, so one run could not name
-      # everything that was off. The script empties the debug file before each read and prints,
-      # for a read that failed, the same filtered reading as "Show why the step failed".
+      # everything that was off. What the script prints is filtered and cleaned like the output
+      # of "Show why the step failed". See the script's header and DEPLOYING.md.
       - name: Check access to the database and the site (releases nothing)
         run: node .github/scripts/check-access.js "$FIREBASE_PROJECT"
 
