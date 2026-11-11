@@ -2,6 +2,7 @@ import { GameScheme, GamePlayer } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
+import { onRefusedJoin, refusedJoin } from './analytics';
 
 export interface JoinResult {
     pid: string;
@@ -48,6 +49,9 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     }
 
     if (Object.keys(game.players || {}).length === 8) {
+        // Counted, to size the audience for a ninth player. Awaited (a function may stop once it
+        // answers); a BigQuery failure is logged and never changes the answer.
+        await onRefusedJoin(refusedJoin(pin, game)).catch(e => console.error('onRefusedJoin failed', pin, e && e.message));
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });
     }
 

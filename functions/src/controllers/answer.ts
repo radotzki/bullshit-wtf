@@ -4,6 +4,7 @@ import { get, gamesRef } from '../firebase';
 import { advance } from './tick';
 import { isIdea } from './lie-helper';
 import { isSameAnswer } from './same-answer';
+import { stamp } from './answer-times';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
@@ -26,6 +27,9 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
         }
 
         await gamesRef.child(pin).child('answers').child(pid).set(stored);
+        // When the lie arrived, to measure the wait. Never fails the answer.
+        await gamesRef.child(pin).child('answerTimes').child('lies').child(pid).set(stamp(game.questionIndex, Date.now()))
+            .catch(e => console.error('lie time not saved', pin, e && e.message));
 
         const totalAnswers = Object.keys(game.answers || {}).length + 1;
         const totalPlayers = Object.keys(game.players).length;

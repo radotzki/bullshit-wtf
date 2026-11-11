@@ -121,6 +121,33 @@ function origin(game: GameScheme) {
     };
 }
 
+export interface RefusedJoinRow {
+    pin: string;
+    players: number;
+    started: boolean;
+    locale: string | null;
+    campaign: string | null;
+}
+
+/**
+ * One row of analytics.refused_joins: the server answered "game is full" to a join.
+ * Only the game is described (its PIN, size, language and campaign tag, and whether it had left
+ * the lobby). Nothing about the player who was turned away: no uid, no nickname, no address.
+ */
+export function refusedJoin(pin: string, game: GameScheme): RefusedJoinRow {
+    return {
+        pin,
+        players: Object.keys(game.players || {}).length,
+        started: !!game.state && game.state.id !== GameState.GameStaging,
+        locale: game.locale || null,
+        campaign: game.campaign || null,
+    };
+}
+
+export async function onRefusedJoin(row: RefusedJoinRow) {
+    return insert('refused_joins', { ...row, time: new Date() });
+}
+
 /** One row per question played (see lie-helper.ts questionResult). */
 export async function onQuestionResult(row: QuestionResultRow) {
     return insert('question_results', { ...row, time: new Date() });
