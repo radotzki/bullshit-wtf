@@ -7,6 +7,7 @@ import { houseLiePoints } from './house-lie';
 import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
+import { isSamePick } from './same-pick';
 
 const pointsForCorrectAnswer = [1000, 1500, 2000];
 const pointsForBullshitting = [500, 750, 1000];
@@ -215,7 +216,7 @@ function calcAnswersScore(game: GameScheme) {
     const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
 
     answerSelections.forEach(answerSelection => {
-        const relatedAnswers = answers.filter(answer => answer.text === answerSelection.text);
+        const relatedAnswers = answers.filter(answer => isSamePick(answer.text, answerSelection.text));
 
         if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
             game.answerSelections[answerSelection.pid].score = pointsForCorrectAnswer[game.roundIndex];
@@ -236,7 +237,7 @@ function calcAnswersScore(game: GameScheme) {
 
     // A house lie only takes back points the player has: it never pushes a score below zero.
     answerSelections.forEach(answerSelection => {
-        const relatedAnswers = answers.filter(answer => answer.text === answerSelection.text);
+        const relatedAnswers = answers.filter(answer => isSamePick(answer.text, answerSelection.text));
 
         if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
             const player = (game.players || {})[answerSelection.pid];
@@ -259,7 +260,7 @@ function generateRevealAnswers(game: GameScheme) {
     const revealAnswers: RevealAnswer[] = [];
 
     answersArray.forEach(answer => {
-        const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
+        const answerSelection = answerSelectionsArray.filter(a => isSamePick(answer.text, a.text));
         const selectors = answerSelection.map(a => a.pid);
         const text = answer.text;
         const realAnswer = answer.realAnswer;
