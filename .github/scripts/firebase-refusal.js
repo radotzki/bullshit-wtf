@@ -225,7 +225,8 @@ function read(dir) {
 function print(dir) {
     const text = read(dir);
     const out = text === null
-        ? 'No Firebase debug file with content: the step that failed ran no Firebase command, or the\ncommand stopped before it made a request.'
+        ? 'No Firebase debug file with content: the step that failed printed its own reason (the two\n' +
+            'checks before the release do), ran no Firebase command, or stopped before it made a request.'
         : report(text);
     console.log(out);
     if (process.env.GITHUB_STEP_SUMMARY) {

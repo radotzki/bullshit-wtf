@@ -124,12 +124,12 @@ jobs:
       # tool's other read-only hosting command (`hosting:sites:list`) starts with the same step,
       # and a plain request to Google would need new code that handles the key, so the step
       # stays and its name says "releases nothing".
+      # Both reads always run, and the step fails afterwards if either failed: on 2026-11-11 the
+      # database read failed first and the site read never ran, so one run could not name
+      # everything that was off. The script empties the debug file before each read and prints,
+      # for a read that failed, the same filtered reading as "Show why the step failed".
       - name: Check access to the database and the site (releases nothing)
-        run: |
-          node .github/scripts/firebase-refusal.js reset
-          npx firebase deploy --only database --dry-run --project "$FIREBASE_PROJECT" --non-interactive
-          node .github/scripts/firebase-refusal.js reset
-          npx firebase hosting:channel:list --project "$FIREBASE_PROJECT" --non-interactive
+        run: node .github/scripts/check-access.js "$FIREBASE_PROJECT"
 
       # The order matters: new clients call functions that must already exist, and read paths the
       # new rules open. Each step runs only if the one before it succeeded.
@@ -153,7 +153,8 @@ jobs:
       # functions step it holds config values and signed upload addresses. The script prints only
       # the refusals, field by field (see its header), and `reset` before each command above keeps
       # the file to that one command. The steps after a failed one are skipped, so the file still
-      # holds the command that failed.
+      # holds the command that failed. The two checks before the release print their own reasons
+      # and leave no file; this step then says so.
       - name: Show why the step failed
         if: failure()
         run: node .github/scripts/firebase-refusal.js print
