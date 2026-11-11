@@ -1,8 +1,100 @@
 # Deploying bullshit.wtf
 
+## Tests and deploys from GitHub (the normal way to release)
+
+Two workflows in `.github/workflows` do the work. A release is: open a pull request, wait for its
+tests, merge it to `master`.
+
+**Tests** (`ci.yml`) run on every pull request, with no secrets and no Firebase project:
+
+- Functions: `npm ci`, then `npm test` (builds, then runs every function test).
+- Game client: `npm ci`, `npm run build` (lint, production build, Hebrew shell, search pages), `npm test`,
+  and a check that the main files landed in `game/dist`.
+
+**Deploy to production** (`deploy.yml`) runs on every push to `master`, so on every merged pull
+request, and by hand (Actions tab, "Deploy to production", "Run workflow", branch `master`). A push
+that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to `bullshit-wtf-prod`:
+
+1. Runs the same tests again, on the merged code. If they fail, nothing is deployed.
+2. Checks the Firebase key (below). No key, or a wrong one: the run fails with a plain message
+   before anything is built or deployed. The check writes nothing to disk.
+3. Builds the functions and the site. A broken build deploys nothing. Only after the last build
+   is the key written to a temporary file, so no package's install or build script can read it.
+4. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
+   step runs only if the one before it succeeded, so a failure never leaves a new site calling old
+   functions. It can leave new functions with the old rules and site; functions are written to
+   keep old clients working, so that state is safe, and a re-run finishes the release.
+
+Things to know:
+
+- One release runs at a time and is never cancelled halfway. If several merges queue up behind a
+  running release, GitHub keeps only the newest waiting one, which holds all the others' code.
+- To retry, re-run the failed run or start a manual run. Every step is safe to repeat.
+- "Re-run" on an **old** run deploys that old commit again. That is the rollback; do not use it by
+  accident. A manual run always deploys the tip of `master`.
+- The workflow never passes `--force`. So if a change **removes or renames a function**, the
+  functions step stops and lists the functions that are live but gone from the code; nothing is
+  deleted by a machine. A person deletes them with the `firebase functions:delete` commands the log
+  prints, then re-runs. The same goes for a function that gains a retry policy or minimum instances.
+- If the functions step ends with "Functions successfully deployed but could not set up cleanup
+  policy", the functions are live but the rules and site were not deployed. Run
+  `npx firebase functions:artifacts:setpolicy -P bullshit-wtf-prod` once with the owner's sign-in,
+  then re-run the workflow.
+
+### The Firebase key
+
+The deploy signs in as a Google service account. Its JSON key is the secret
+`FIREBASE_SERVICE_ACCOUNT` of the GitHub **environment `production`** (GitHub: Settings,
+Environments, production, Environment secrets). It is **not** a repository secret, and must not
+be one.
+
+Why an environment: a repository secret is handed to any workflow that runs from any branch of
+this repository. A branch could then add or edit a workflow file and use the key with no merge
+and no review; the `if: github.ref == 'refs/heads/master'` lines in `deploy.yml` do not stop
+that, because the branch runs its own copy of the file. An environment secret is given only to a
+job that names the environment, and GitHub refuses that job unless its branch is allowed by the
+environment's rule. So the rule "nothing ships unless it was merged" is held by GitHub itself.
+
+The environment's settings (owner, once, and before the secret is added):
+
+1. Settings, Environments, New environment, name `production`.
+2. Deployment branches and tags: "Selected branches and tags", then add the branch `master` and
+   nothing else.
+3. Environment secrets: add `FIREBASE_SERVICE_ACCOUNT`.
+4. If a repository secret of that name exists (Settings, Secrets and variables, Actions), delete
+   it: it would still be readable from any branch.
+
+Set the branch rule before the secret. GitHub creates a missing environment by itself, with no
+rule, the first time a job names it; an environment without the rule protects nothing. Do not
+loosen the rule or add other branches to it. Pull requests from forks never get secrets.
+
+In the job, the key is checked first, written to a temporary file on the runner only after all
+installs and builds, right before the first deploy step, and removed at the end. It must never
+be in the code, a workflow file, a log or a chat. The log prints only the account's email.
+
+To make one (owner, once): Google Cloud console, project `bullshit-wtf-prod`, IAM, Service
+accounts, create an account for deploys, add a JSON key, paste the whole file as the environment
+secret's value. The account needs to deploy 1st gen functions, database rules and hosting. These roles should
+cover it (not yet tried on this project): Cloud Functions Admin, Service Account User, Firebase Rules Admin, Firebase Realtime
+Database Admin, Firebase Hosting Admin, Artifact Registry Reader, Service Usage Consumer (or, more
+simply and more widely, Firebase Admin plus Service Account User). If a role is missing, the
+failing step's log names the permission. To revoke access, delete the key in the console.
+
+### What the pipeline does not do (still a person's step)
+
+- **BigQuery schema SQL** (`functions/bigquery/*.sql`). Nothing runs it. A pull request that adds a
+  column or table must say so in its description, and the SQL must be run **before** the merge.
+  If it is skipped, rows still land, but the new fields are dropped silently.
+- **Loading questions** into the database (`firebase database:update /questions ...`), which goes
+  **after** the functions that understand them are live, so after the deploy run is green.
+- **Deleting a function**, as above.
+- **Google Search Console** (submitting the sitemap) and anything in the Firebase or Google Cloud
+  consoles.
+- The dev project (`bullshit-wtf-dev`) is not deployed by any workflow.
+
 ## Build
 
-Needs Node 20 or newer (tested on Node 22).
+Needs Node 20 or newer (tested on Node 22; the workflows use 22).
 
 ```sh
 npm install                       # Firebase CLI 15
@@ -30,12 +122,16 @@ The client is still Angular 4 with Angular CLI 1.7. To build it on a current Nod
 with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2.3
 (the newest Angular 4 accepts), and `game/.npmrc` sets `legacy-peer-deps`.
 
-## Deploy (production)
+## Deploy by hand (production)
+
+The workflow above runs these same three deploys, in the order functions, rules, site. By hand they
+need the owner's Firebase sign-in (`npx firebase login`); use them only when GitHub Actions is down.
+Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
 npm run prod:deploy-functions   # 19 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit), 1st gen, Node 22, us-central1
-npm run prod:deploy-game        # hosting
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
+npm run prod:deploy-game        # hosting
 ```
 
 Round-1 lie helper: run `functions/bigquery/2026-11-round1-coach.sql` in BigQuery before deploying
