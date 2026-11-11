@@ -116,7 +116,9 @@ jobs:
       # stays and its name says "releases nothing".
       - name: Check access to the database and the site (releases nothing)
         run: |
+          node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only database --dry-run --project "$FIREBASE_PROJECT" --non-interactive
+          node .github/scripts/firebase-refusal.js reset
           npx firebase hosting:channel:list --project "$FIREBASE_PROJECT" --non-interactive
 
       # The order matters: new clients call functions that must already exist, and read paths the
@@ -124,11 +126,27 @@ jobs:
       # Always all functions, never one by name: each carries its own copy of the shared code.
       # No --force: the CLI must never delete a function on its own.
       - name: 1. Deploy all functions
-        run: npx firebase deploy --only functions --project "$FIREBASE_PROJECT" --non-interactive
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          npx firebase deploy --only functions --project "$FIREBASE_PROJECT" --non-interactive
       - name: 2. Deploy the database rules
-        run: npx firebase deploy --only database --project "$FIREBASE_PROJECT" --non-interactive
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          npx firebase deploy --only database --project "$FIREBASE_PROJECT" --non-interactive
       - name: 3. Deploy the site
-        run: npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+
+      # A failed Firebase command prints one line; Google's answer (the status and the reason) is
+      # only in firebase-debug.log. That file is never printed or uploaded whole: after the
+      # functions step it holds config values and signed upload addresses. The script prints only
+      # the refusals, field by field (see its header), and `reset` before each command above keeps
+      # the file to that one command. The steps after a failed one are skipped, so the file still
+      # holds the command that failed.
+      - name: Show why the step failed
+        if: failure()
+        run: node .github/scripts/firebase-refusal.js print
 
       - name: Summary
         if: always()

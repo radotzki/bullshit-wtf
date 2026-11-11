@@ -27,6 +27,8 @@ test('the steps run in the intended order', () => {
         '1. Deploy all functions',
         '2. Deploy the database rules',
         '3. Deploy the site',
+        'Show why the step failed',
+        'Summary',
     ];
     const found = order.map(at);
     assert.deepStrictEqual(found, [...found].sort((a, b) => a - b));
@@ -52,4 +54,24 @@ test('both guard steps check master against this run\'s own commit', () => {
         assert.strictEqual(l.trim(),
             'run: node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"');
     }
+});
+
+test('every Firebase command starts from an empty debug file, and a failure prints only the filtered reason', () => {
+    const code = yml.split('\n').filter(l => !l.trim().startsWith('#'));
+    code.forEach((l, i) => {
+        if (/npx firebase /.test(l)) {
+            assert.strictEqual(code[i - 1].trim(), 'node .github/scripts/firebase-refusal.js reset', 'no reset before: ' + l.trim());
+        }
+    });
+    const step = yml.slice(yml.indexOf('      - name: Show why the step failed'), yml.indexOf('      - name: Summary'));
+    assert.strictEqual(step.trim(), [
+        '- name: Show why the step failed',
+        '        if: failure()',
+        '        run: node .github/scripts/firebase-refusal.js print',
+    ].join('\n'));
+    // The debug file itself is never printed, copied or uploaded.
+    const text = code.join('\n');
+    assert.doesNotMatch(text, /upload-artifact/);
+    assert.doesNotMatch(text, /firebase-debug/);
+    assert.doesNotMatch(text, /--debug|DEBUG/);
 });
