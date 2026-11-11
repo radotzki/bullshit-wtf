@@ -1,7 +1,7 @@
 // Unit tests for the seats nobody plays (controllers/seats.ts). Run with: npm test.
 const test = require('node:test');
 const assert = require('node:assert');
-const { seatsToWaitFor, everyoneSent, leftOutGuardWait, playedUpdate, endsAfterGuard, guardedPhase, revealEndWait, LEFT_OUT_GUARD_MS } =
+const { seatsToWaitFor, everyoneSent, leftOutGuardWait, playedUpdate, endsAfterGuard, guardedPhase, revealEndWait, LEFT_OUT_GUARD_MS, leftOutGuardMs } =
     require('../dist/controllers/seats');
 
 const S = { GameStaging: 0, RoundIntro: 1, ShowQuestion: 2, ShowAnswers: 3, RevealTheTruth: 4, ScoreBoard: 5, ScoreBoardFinal: 6 };
@@ -76,20 +76,30 @@ test('a seat that never plays: from question 2 the lies, the picks and NEXT stop
     assert.ok(picks.players.p3);
 });
 
-test('no phase ends early in its first 10 seconds while a seat is left out', () => {
+test('while a seat is left out, the lies do not end early in their first 20 seconds, the picks and the reveal in their first 10', () => {
     const flags = { played: { p1: true, p2: true }, playedFrom: 0 };
     const lies = game(3, 1, S.ShowQuestion, Object.assign({ answers: { p1: lie('a'), p2: lie('b') } }, flags));
-    assert.strictEqual(LEFT_OUT_GUARD_MS, 10000);
-    assert.strictEqual(leftOutGuardWait(lies, T + 4000), 6000);
-    assert.strictEqual(leftOutGuardWait(lies, T + 10000), 0);
-    assert.strictEqual(endsAfterGuard(lies, T + 9999), false, 'still inside the guard');
-    assert.strictEqual(endsAfterGuard(lies, T + 10000), true, 'the phase timer ends it when the guard is over');
+    // The two lengths, in the one place that sets them.
+    assert.deepStrictEqual(LEFT_OUT_GUARD_MS, { [S.ShowQuestion]: 20000, [S.ShowAnswers]: 10000, [S.RevealTheTruth]: 10000 });
+    assert.strictEqual(leftOutGuardMs(S.ShowQuestion), 20000, 'writing a lie takes longer than a tap');
+    assert.strictEqual(leftOutGuardMs(S.ShowAnswers), 10000);
+    assert.strictEqual(leftOutGuardMs(S.RevealTheTruth), 10000);
+    assert.strictEqual(leftOutGuardMs(S.ScoreBoard), 0, 'no other phase has a guard');
+
+    assert.strictEqual(leftOutGuardWait(lies, T + 4000), 16000);
+    assert.strictEqual(leftOutGuardWait(lies, T + 10000), 10000, 'ten seconds in, a late player still has ten to finish a lie');
+    assert.strictEqual(leftOutGuardWait(lies, T + 20000), 0);
+    assert.strictEqual(endsAfterGuard(lies, T + 10000), false, 'still inside the guard');
+    assert.strictEqual(endsAfterGuard(lies, T + 19999), false, 'still inside the guard');
+    assert.strictEqual(endsAfterGuard(lies, T + 20000), true, 'the phase timer ends it when the guard is over');
 
     const waiting = game(3, 1, S.ShowQuestion, Object.assign({ answers: { p1: lie('a') } }, flags));
-    assert.strictEqual(endsAfterGuard(waiting, T + 10000), false, 'p2 has not sent: the phase runs on');
+    assert.strictEqual(endsAfterGuard(waiting, T + 20000), false, 'p2 has not sent: the phase runs on');
 
     const picks = game(3, 1, S.ShowAnswers, Object.assign({ answerSelections: { p1: { text: 'x' }, p2: { text: 'x' } } }, flags));
-    assert.strictEqual(endsAfterGuard(picks, T + 10000), true);
+    assert.strictEqual(leftOutGuardWait(picks, T + 4000), 6000);
+    assert.strictEqual(endsAfterGuard(picks, T + 9999), false);
+    assert.strictEqual(endsAfterGuard(picks, T + 10000), true, 'a pick is one tap: 10 seconds');
     assert.strictEqual(guardedPhase(S.RevealTheTruth), false, 'the reveal has its own check');
 
     // The reveal: NEXT taps wait for the guard too (here the last row was shown long before).
@@ -100,7 +110,7 @@ test('no phase ends early in its first 10 seconds while a seat is left out', () 
     const full = game(2, 1, S.ShowQuestion, Object.assign({ answers: { p1: lie('a'), p2: lie('b') } }, flags));
     assert.strictEqual(leftOutGuardWait(full, T + 1), 0);
     assert.strictEqual(everyoneSent(full, full.answers), true);
-    assert.strictEqual(endsAfterGuard(full, T + 10000), false, 'nothing for the timer to do: the answer check ended it');
+    assert.strictEqual(endsAfterGuard(full, T + 20000), false, 'nothing for the timer to do: the answer check ended it');
 });
 
 test('a seat that joins in late counts again from the moment it sends', () => {
@@ -137,7 +147,7 @@ test('a table of two with one empty seat: the one player moves it on alone, afte
     const lies = game(2, 1, S.ShowQuestion, Object.assign({ answers: { p1: lie('a') } }, flags));
     assert.strictEqual(everyoneSent(lies, lies.answers), true);
     assert.strictEqual(endsAfterGuard(lies, T + 3000), false);
-    assert.strictEqual(endsAfterGuard(lies, T + 10000), true);
+    assert.strictEqual(endsAfterGuard(lies, T + 20000), true);
 });
 
 test('a game nobody plays runs on its clocks', () => {
@@ -145,7 +155,7 @@ test('a game nobody plays runs on its clocks', () => {
     const lies = game(3, 1, S.ShowQuestion, flags);
     assert.deepStrictEqual(seatsToWaitFor(lies), []);
     assert.strictEqual(everyoneSent(lies, lies.answers), false);
-    assert.strictEqual(endsAfterGuard(lies, T + 10000), false);
+    assert.strictEqual(endsAfterGuard(lies, T + 20000), false);
     const reveal = game(3, 1, S.RevealTheTruth, Object.assign({ revealDone: {} }, flags));
     assert.strictEqual(revealEndWait(reveal, T + 60000), undefined);
 });
@@ -159,7 +169,7 @@ test('a rematch that copied a dead seat starts with no flags, and drops the seat
     const flags = closeQuestion(rematch, ['p1', 'p2', 'p3'], ['p1', 'p2', 'p3']);
     const second = game(4, 1, S.ShowQuestion, Object.assign({ answers: { p1: lie('a'), p2: lie('b'), p3: lie('c') } }, flags));
     assert.deepStrictEqual(seatsToWaitFor(second), ['p1', 'p2', 'p3']);
-    assert.strictEqual(endsAfterGuard(second, T + 10000), true);
+    assert.strictEqual(endsAfterGuard(second, T + 20000), true);
 });
 
 test('a game that was running when this was released has no flags and plays as before', () => {
@@ -168,7 +178,7 @@ test('a game that was running when this was released has no flags and plays as b
     assert.deepStrictEqual(seatsToWaitFor(old), ['p1', 'p2', 'p3']);
     assert.strictEqual(everyoneSent(old, old.answers), false, 'every seat is waited for');
     assert.strictEqual(leftOutGuardWait(old, T), 0);
-    assert.strictEqual(endsAfterGuard(old, T + 10000), false);
+    assert.strictEqual(endsAfterGuard(old, T + 20000), false);
     old.answers.p3 = lie('c');
     assert.strictEqual(everyoneSent(old, old.answers), true, 'and a full table still ends early');
 
@@ -176,6 +186,22 @@ test('a game that was running when this was released has no flags and plays as b
     assert.deepStrictEqual(closeQuestion(old, ['p1', 'p2'], ['p1', 'p2']), {});
     const reveal = game(3, 3, S.RevealTheTruth, { revealDone: { p1: true, p2: true } });
     assert.strictEqual(revealEndWait(reveal, T + 60000), undefined);
+});
+
+test('a pick that is not a player\'s pick does not bring a seat back', () => {
+    const flags = { played: { p1: true, p2: true }, playedFrom: 0 };
+    const answers = { p1: lie('a'), p2: lie('b') };
+    // Under the empty seat's id: no text, an empty text, not an object. And under an id that is no seat.
+    [{ score: 5000 }, { text: '' }, 'x', 7].forEach(stray => {
+        const picks = game(3, 1, S.ShowAnswers, Object.assign({ answers, answerSelections: { p1: { text: 'b' }, p2: { text: 'a' }, p3: stray, nobody: { text: 'a' } } }, flags));
+        assert.deepStrictEqual(seatsToWaitFor(picks), ['p1', 'p2'], JSON.stringify(stray));
+        assert.strictEqual(endsAfterGuard(picks, T + 10000), true, 'the picks still end without that seat');
+        assert.deepStrictEqual(playedUpdate(picks), { played: { p1: true, p2: true } }, 'and it gets no flag');
+    });
+    // A player who "picks" their own lie has not picked: they are still waited for.
+    const own = game(2, 1, S.ShowAnswers, { answers, answerSelections: { p1: { text: 'a' }, p2: { text: 'a' } }, played: { p1: true, p2: true }, playedFrom: 0 });
+    assert.strictEqual(everyoneSent(own, own.answerSelections), true, 'the raw node would say everyone picked');
+    assert.strictEqual(endsAfterGuard(Object.assign({}, own, { players: seats(3) }), T + 10000), false, 'the picks that count say p1 has not');
 });
 
 test('odd input never throws', () => {

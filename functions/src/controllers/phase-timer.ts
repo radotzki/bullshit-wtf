@@ -2,7 +2,7 @@ import { GameScheme, GameStateInfo } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { advance } from './tick';
 import { maxPhaseDuration, stateKey } from './phase';
-import { LEFT_OUT_GUARD_MS, endsAfterGuard, guardedPhase } from './seats';
+import { leftOutGuardMs, endsAfterGuard, guardedPhase } from './seats';
 
 // How long the timer waits before its second try when moving the game on failed.
 const retryDelay = 2000;
@@ -17,7 +17,8 @@ const guardMargin = 250;
  * wait for it and move the game on. Phones no longer need to be awake for the game to keep going;
  * their own timers stay as a fallback in case this run fails.
  *
- * On the way it looks once at the game, 10 seconds into the phase: if a seat nobody plays is left out
+ * On the way it looks once at the game, when the phase's guard is over (20 seconds into the lies,
+ * 10 into the picks): if a seat nobody plays is left out
  * and everyone else has already answered or picked, the phase ends then (see seats.ts).
  */
 export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date.now(), retryAfter = retryDelay) {
@@ -32,7 +33,7 @@ export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date
         return;
     }
 
-    const guardWait = state.timestamp + LEFT_OUT_GUARD_MS + guardMargin - now;
+    const guardWait = state.timestamp + leftOutGuardMs(state.id) + guardMargin - now;
 
     if (guardedPhase(state.id) && guardWait < wait) {
         if (guardWait > 0) {

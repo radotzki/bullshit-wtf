@@ -176,7 +176,7 @@ const games = {
         if (CHECK) {
             assert.ok(near(r.rows[0].lie, 25) && near(r.rows[0].pick, 20), 'question 1 still waits out both clocks');
             r.rows.slice(1).forEach(x => {
-                assert.ok(near(x.lie, 15), `question ${x.q}: lies end with the last lie of those who play (${x.lie} s)`);
+                assert.ok(near(x.lie, 20.25), `question ${x.q}: lies end when their guard of 20 s is over (${x.lie} s)`);
                 assert.ok(near(x.pick, 10.25), `question ${x.q}: picks end when the guard is over (${x.pick} s)`);
             });
             assert.deepStrictEqual(r.game.played, { p1: true, p2: true, p3: true });
@@ -191,7 +191,7 @@ const games = {
         await gamesRef.child(pin).set(newGame(4));
         const r = await play(pin, 'One seat joins in on question 3 (3 of 4, then 4 of 4)', (pid, q) => pid !== 'p4' || q >= 2);
         if (CHECK) {
-            assert.ok(near(r.rows[1].lie, 15), 'question 2 does not wait for the silent seat');
+            assert.ok(near(r.rows[1].lie, 20.25), 'question 2 does not wait for the silent seat beyond the guard');
             // Question 3: p4 sends its lie at 13 s, before the others are all in, and is waited for from then on.
             r.rows.slice(2).forEach(x => {
                 assert.strictEqual(x.lies, 4, `question ${x.q}: the late seat's lie is in`);
@@ -211,7 +211,7 @@ const games = {
         if (CHECK) {
             assert.ok(near(r.rows[0].lie, 25), 'question 1 waits');
             r.rows.slice(1).forEach(x => {
-                assert.ok(near(x.lie, 10.25), `question ${x.q}: the lone player's lie ends the phase when the guard is over (${x.lie} s)`);
+                assert.ok(near(x.lie, 20.25), `question ${x.q}: the lone player's lie ends the phase when the guard is over (${x.lie} s)`);
                 assert.ok(near(x.pick, 10.25), `question ${x.q}: and the pick (${x.pick} s)`);
             });
         }
@@ -238,7 +238,7 @@ const games = {
         const r = await play(pin, 'A rematch that copied a dead seat (2 of 3)', pid => pid !== 'p3');
         if (CHECK) {
             assert.ok(near(r.rows[0].lie, 25), 'question 1 of the rematch waits for the dead seat once');
-            r.rows.slice(1).forEach(x => assert.ok(near(x.lie, 12), `question ${x.q}: then it is dropped (${x.lie} s)`));
+            r.rows.slice(1).forEach(x => assert.ok(near(x.lie, 20.25), `question ${x.q}: then it is dropped, once the guard is over (${x.lie} s)`));
             assert.deepStrictEqual(r.game.played, { p1: true, p2: true });
         }
         return r;

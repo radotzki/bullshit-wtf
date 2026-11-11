@@ -3,10 +3,21 @@ import { revealDoneWait } from './phase';
 import { playerPicks } from './scoring';
 
 /**
- * While a seat is left out, no phase ends early in its first 10 seconds: a player who missed all of
- * question 1 and is back gets at least this long to send something and count again.
+ * While a seat is left out, no phase ends early in its first seconds: a player who missed all of
+ * question 1 and is back gets at least this long to send something and count again. Writing a lie
+ * takes longer than a tap, so the lies get 20 seconds; a pick and NEXT are one tap, and get 10.
+ * This is the one place the lengths are set.
  */
-export const LEFT_OUT_GUARD_MS = 10 * 1000;
+export const LEFT_OUT_GUARD_MS: { [stateId: number]: number } = {
+    [GameState.ShowQuestion]: 20 * 1000,
+    [GameState.ShowAnswers]: 10 * 1000,
+    [GameState.RevealTheTruth]: 10 * 1000,
+};
+
+/** The guard's length (ms) for a phase; 0 for a phase that has none. */
+export function leftOutGuardMs(stateId: number): number {
+    return LEFT_OUT_GUARD_MS[stateId] || 0;
+}
 
 const guardedPhases = [GameState.ShowQuestion, GameState.ShowAnswers];
 
@@ -46,15 +57,15 @@ export function everyoneSent(game: GameScheme, sent: { [pid: string]: any } | nu
 }
 
 /**
- * How long (ms) the current phase must still run before it may end early: the rest of its first
- * LEFT_OUT_GUARD_MS while a seat is left out, 0 when no seat is.
+ * How long (ms) the current phase must still run before it may end early: the rest of its guard
+ * (leftOutGuardMs) while a seat is left out, 0 when no seat is.
  */
 export function leftOutGuardWait(game: GameScheme, now: number): number {
     const seats = Object.keys(game && game.players || {}).length;
     if (!game || !game.state || seatsToWaitFor(game).length === seats) {
         return 0;
     }
-    return Math.max(0, game.state.timestamp + LEFT_OUT_GUARD_MS - now);
+    return Math.max(0, game.state.timestamp + leftOutGuardMs(game.state.id) - now);
 }
 
 /**
