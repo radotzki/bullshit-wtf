@@ -23,6 +23,7 @@ test('the steps run in the intended order', () => {
         'Install and build the site',
         'Check again that this commit is still the head of master',
         'Write the Firebase key',
+        'Check the deploy account\'s permissions (releases nothing)',
         'Check access to the database and the site (releases nothing)',
         '1. Deploy all functions',
         '2. Deploy the database rules',
@@ -46,6 +47,29 @@ test('the only commands that change production are the three deploys, each for t
     ]);
     const code = yml.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
     assert.doesNotMatch(code, /--force/);
+});
+
+test('the permissions are asked once, for the run\'s project, before any Firebase command', () => {
+    const code = yml.split('\n').filter(l => !l.trim().startsWith('#'));
+    const calls = code.filter(l => l.includes('check-deploy-permissions.js'));
+    assert.deepStrictEqual(calls.map(l => l.trim()), ['run: node .github/scripts/check-deploy-permissions.js "$FIREBASE_PROJECT"']);
+    const asked = code.findIndex(l => l.includes('check-deploy-permissions.js'));
+    const firstFirebase = code.findIndex(l => /npx firebase /.test(l));
+    assert.ok(asked !== -1 && asked < firstFirebase);
+    // The step has no condition and no continue-on-error: when it fails, every later step is skipped.
+    const step = yml.slice(yml.indexOf('      - name: Check the deploy account\'s permissions'), yml.indexOf('      # A release must not stop halfway'));
+    assert.strictEqual(step.trim(), [
+        '- name: Check the deploy account\'s permissions (releases nothing)',
+        '        run: node .github/scripts/check-deploy-permissions.js "$FIREBASE_PROJECT"',
+    ].join('\n'));
+    assert.doesNotMatch(code.join('\n'), /continue-on-error/);
+});
+
+test('only the deploy job names the production environment', () => {
+    const code = yml.split('\n').filter(l => !l.trim().startsWith('#'));
+    assert.deepStrictEqual(code.filter(l => /^\s*environment:/.test(l)), ['    environment: production']);
+    const ci = fs.readFileSync(path.join(__dirname, '..', 'workflows', 'ci.yml'), 'utf8');
+    assert.doesNotMatch(ci, /^\s*environment:/m);
 });
 
 test('both guard steps check master against this run\'s own commit', () => {

@@ -97,6 +97,16 @@ jobs:
           node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
 
+      # A release must be whole or nothing, also when the deploy account lacks a role. So before
+      # the first deploy, ask Google which of the permissions the three release steps need the
+      # account holds on the project (Google's "test permissions" question, the one the Firebase
+      # tool asks itself and then ignores). It only reads. Anything but a full yes stops the run
+      # here: a missing permission is named, and so is a refused question, for example because
+      # the Cloud Resource Manager API is off. The script never opens the key file: Google's own
+      # library reads it and signs the request. See the script's header and DEPLOYING.md.
+      - name: Check the deploy account's permissions (releases nothing)
+        run: node .github/scripts/check-deploy-permissions.js "$FIREBASE_PROJECT"
+
       # A release must not stop halfway: on 2026-11-11 the functions went out, then the rules step
       # could not read the database instance, and the site was never released. So before the
       # first deploy, make the same first calls the rules and site deploys make, and release nothing:
@@ -106,8 +116,8 @@ jobs:
       # - `hosting:channel:list` finds the project's hosting site, as the site deploy does, and
       #   reads its channels.
       # Hosting gets a read and not a dry run on purpose: the tool's hosting dry run creates a
-      # new, empty version on the live site. So this proves the account can reach the site, not
-      # that it may write to it.
+      # new, empty version on the live site. So this step proves the account can reach the site;
+      # that it may write to it is what the step before this one asked.
       # One call here is not a read. `hosting:channel:list` first asks whether the Hosting API
       # (firebasehosting.googleapis.com) is on in the project, and if it is off, tries to switch
       # it on. With the API on, as it is while the site is served, both commands only read. The

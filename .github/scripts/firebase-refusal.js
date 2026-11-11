@@ -257,4 +257,4 @@ if (require.main === module) {
     }
 }
 
-module.exports = { scrub, findRefusals, report, reset, read, remove, LOG, KEPT };
+module.exports = { scrub, errorFields, findRefusals, report, reset, read, remove, LOG, KEPT };

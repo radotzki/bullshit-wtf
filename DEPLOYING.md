@@ -26,8 +26,9 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
 4. Builds the functions and the site. A broken build deploys nothing. Then it checks the head of
    `master` once more, and only then is the key written to a temporary file, so no package's
    install or build script can read it.
-5. Checks, without releasing anything, that the account can reach the database and the site (see
-   "The access check" below). If it cannot, the run stops before the functions are released.
+5. Checks, without releasing anything, that the account holds the permissions the three deploys
+   need, and that it can reach the database and the site (see "The permission check" and "The
+   access check" below). If either fails, the run stops before the functions are released.
 6. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
@@ -52,6 +53,35 @@ Things to know:
 - **Rolling back** is therefore not "re-run an old run". Revert the change in a pull request and
   merge it (it is tested and released like any other), or deploy the older commit by hand from a
   computer (below).
+- **The permission check.** Before the first deploy the run asks Google which permissions the
+  deploy account holds on the project (`.github/scripts/check-deploy-permissions.js`). It is
+  Google's "test permissions" question, `projects.testIamPermissions` of the Cloud Resource
+  Manager API, and it only reads. The Firebase tool asks the same before every deploy, but it only
+  notes a missing permission in its debug file and goes on; this step stops the run instead. The
+  list is the tool's own for the three deploys (firebase-tools 15.35.0, `TARGET_PERMISSIONS` in
+  `src/deploy/index.ts` and `BASE_PERMISSIONS` in `src/requirePermissions.ts`):
+  - every step: `firebase.projects.get`;
+  - functions: `cloudfunctions.functions.list`, `.create`, `.get`, `.update`, `.delete` and
+    `cloudfunctions.operations.get`;
+  - database rules: `firebasedatabase.instances.update`;
+  - site: `firebasehosting.sites.update`.
+
+  If the installed tool lists more for these three, those are asked too. The run goes on only
+  when Google answers that all are held. If one is missing, the step fails, names it and the
+  deploy that needs it, and nothing is released. If Google does not answer the question (an API
+  is off, the sign-in fails, no network), the step fails too and prints the answer: not knowing
+  counts as no. The question needs two things in the Google project, which the step cannot
+  switch on or grant by itself: the **Cloud Resource Manager API**
+  (`cloudresourcemanager.googleapis.com`) switched on, and for the account the permission
+  `serviceusage.services.use` (role Service Usage Consumer, or any wider role that holds it).
+  The script never opens the key file: Google's own library (`google-auth-library`, installed
+  with the Firebase tool) reads it and signs the request, and the step prints permission names
+  and Google's error fields only.
+  What it does not prove: a permission given for one resource only (not on the project), or
+  under a condition, can read as missing here; the functions deploy also needs the right to act
+  as the functions' service account (`iam.serviceAccounts.actAs`), which the tool checks itself
+  at the start of the functions step, before it releases anything; and Google can still refuse
+  a deploy for a reason that is not a permission.
 - **The access check.** Before the first deploy the run makes the same first calls that the rules
   and site deploys make, and releases nothing: `firebase deploy --only database --dry-run` reads the
   database instance and sends the rules with `dryRun=true` (checked, not stored), and
@@ -64,10 +94,10 @@ Things to know:
   to skip it, and a plain request to Google
   instead would need new code that handles the key. This is there
   because on 2026-11-11 a run released the functions, then failed at the rules ("Failed to get
-  instance details"), and the site never went out. What it does not prove: that the account may
-  *write* to hosting. The tool's hosting dry run creates a new empty version on the live site, so
-  it is not used; a hosting account that can read but not write would still fail at step 3, after
-  the functions and the rules.
+  instance details"), and the site never went out. By itself it does not prove that the account
+  may *write* to hosting: the tool's hosting dry run creates a new empty version on the live site,
+  so it is not used. The permission check above asks that instead
+  (`firebasehosting.sites.update`).
 - The workflow never passes `--force`. So if a change **removes or renames a function**, the
   functions step stops and lists the functions that are live but gone from the code; nothing is
   deleted by a machine. A person deletes them with the `firebase functions:delete` commands the log
@@ -122,7 +152,12 @@ key in the console.
 
 ### When a deploy step fails
 
-The Firebase tool's own error is one general line, such as "Failed to get instance details", and
+The step "Check the deploy account's permissions" prints its own reason, in the log and on the
+run's summary page under "The deploy account's permissions": the permissions that are missing,
+or Google's answer when the question was refused. Nothing was released then. The step after it,
+"Show why the step failed", has no debug file to read in that case and says so.
+
+For the other steps: the Firebase tool's own error is one general line, such as "Failed to get instance details", and
 it does not name a missing permission. Google's answer is in the tool's debug file, which the run
 never prints or uploads whole: after the functions step it holds config values and signed upload
 addresses. So when a step fails, the next step, "Show why the step failed", prints a filtered
