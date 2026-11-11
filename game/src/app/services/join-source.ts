@@ -104,6 +104,19 @@ export function setPreferredLocale(locale: string) {
     } catch (e) { }
 }
 
+/**
+ * Tell the visit beacon (the inline script in index.html) that this page view created or joined a
+ * game. It sends no PIN and no name: only that it happened, for the visits table.
+ */
+export function markVisit(what: 'create' | 'join') {
+    try {
+        const beacon = (window as any).bsVisit;
+        if (typeof beacon === 'function') {
+            beacon(what);
+        }
+    } catch (e) { }
+}
+
 /** The browser that created this game joins it as the host. */
 export function markHosted(pin: string) {
     const s = storage();

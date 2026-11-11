@@ -3,8 +3,6 @@ import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
-declare var gtag;
-
 const playerKey = 'BS_PLAYER';
 const presenterKey = 'BS_PRESENTER';
 
@@ -24,7 +22,6 @@ export class SessionService implements CanActivate {
         this._user = user;
         this.storageService.setItem(playerKey, JSON.stringify(user));
         setSentryUser({ id: user.uid });
-        gtag('set', { 'user_id': user.uid });
     }
 
     get user(): User {

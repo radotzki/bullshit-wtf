@@ -160,16 +160,44 @@ Deploy functions first, then the game: the new client reads the error `message` 
 
 ## Visit beacon
 
-`game/src/index.html` runs a tiny script before everything else. When a page is hidden or closed
-(up to 3 times), and once at 12 s if the app has still not drawn, it posts one line to `/_v` on the
-game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to another site is
-dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon still reports success).
-Deploy hosting for the rewrite; the `visit` function itself is unchanged. It posts: first and last path, whether the app started, the first script error, browser language,
-referrer host, and a random id per page load (`view`, never stored on the phone) that groups the
-rows of one page view. The function logs it as `visit {...}` with device and browser from the user agent;
-no IP, no player data. Count visits (distinct `view`), stuck loads and how far people got (the last row of each view) from the function log
-(filter `textPayload:"visit "`). Test phones say `HeadlessChrome` nowhere, so tell them apart by
-time or by the scripted paths.
+`game/src/index.html` runs a tiny script before everything else (between the `BS:VISIT` markers),
+and `game/seo/build-pages.js` copies the same script into every plain page. It posts small rows to
+`/_v` on the game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to
+another site is dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon
+still reports success):
+
+- `view` once, as the page opens;
+- `create` when that page view creates a game and `join` when it joins one (the app calls
+  `window.bsVisit`, through `markVisit` in `join-source.ts`);
+- `end` when the page is hidden or closed (up to 3 times);
+- `stuck` once at 12 s if the app has still not drawn (never on a plain page).
+
+Each row carries a random id per page load (`view`, never stored on the phone) that groups the rows
+of one page view, the first and last path, the referring site's host, the `?via=` tag of the link
+(else the post tag the tab arrived with), the browser language, whether the browser held nothing of
+the game yet (a first visit, read from what the game already keeps), whether the app started, and
+the first script error.
+
+The function writes each row to BigQuery `analytics.visits` and also logs it as `visit {...}`. It
+adds device, kind of device and browser from the user agent, and replaces every PIN and crew id in
+the paths (`/join-game/:pin`). A row holds no IP address, no user agent, no uid, no nickname and no
+PIN, and the beacon sets no cookie and stores nothing, so nothing in the table names a person.
+The retired Google Analytics tag is gone from the page.
+
+- **BigQuery: run `functions/bigquery/2026-11-visits.sql` once** (creates the table), before the
+  merge. Until then the function logs "Bigquery Insert failed" for each row and visits are not
+  counted; the site is unaffected. The same file holds the read-only queries, first of all home
+  views that become created games, by referring site and tag.
+- Deploy functions and hosting together (a merge does both). An old page still open in a tab keeps
+  sending the old `end` and `stuck` rows, which land with the new columns empty.
+- Count page views as `COUNT(DISTINCT view)`; a view made a game when any of its rows has `created`.
+- Tests and bots: a play-test link (`?via=test`, `?via=test-<name>`) sets `test` on every row of the
+  tab, and a scripted browser or a crawler sets `bot`. The saved queries leave both out. A test in
+  a tab that arrived without the tag is not marked.
+- First visit means the browser held nothing of the game when the page opened. A visitor who only
+  looked at the English home page and left stores nothing, so a second look counts as first again.
+- Check locally: `cd functions && npm test` prints the rows of one visit (`# visits {...}`, from
+  `test/visit-row.test.js`, which runs the shipped beacon against the function and a fake BigQuery).
 
 ## What a deploy changes compared with what is live (checked 2026-11-05)
 

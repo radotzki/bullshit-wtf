@@ -2,7 +2,7 @@ import { reportError } from './../../sentry/sentry.module';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { markHosted, arrivalCampaign, preferredLocale } from '../../services/join-source';
+import { markHosted, markVisit, arrivalCampaign, preferredLocale } from '../../services/join-source';
 import { questionPacks, isPack, seasonalPack } from '../../game-model';
 
 @Component({
@@ -49,6 +49,7 @@ export class CreateGameComponent implements OnInit {
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);
+                markVisit('create');
                 this.router.navigate(['/join-game', resp.pin]);
             })
             .catch(err => {
