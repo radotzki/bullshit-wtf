@@ -117,11 +117,46 @@ accounts, create an account for deploys, add a JSON key, paste the whole file as
 secret's value. The account needs to deploy 1st gen functions, database rules and hosting. These roles should
 cover it (not yet tried on this project): Cloud Functions Admin, Service Account User, Firebase Rules Admin, Firebase Realtime
 Database Admin, Firebase Hosting Admin, Artifact Registry Reader, Service Usage Consumer (or, more
-simply and more widely, Firebase Admin plus Service Account User). If a role is missing, the
-failing step's log does not name the permission: the Firebase tool writes its "missing
-permissions" finding only to a debug file that the run does not keep, and the step fails later
-with a general message such as "Failed to get instance details". Go by which step failed, and
-compare the account's roles with this list. To revoke access, delete the key in the console.
+simply and more widely, Firebase Admin plus Service Account User). To revoke access, delete the
+key in the console.
+
+### When a deploy step fails
+
+The Firebase tool's own error is one general line, such as "Failed to get instance details", and
+it does not name a missing permission. Google's answer is in the tool's debug file, which the run
+never prints or uploads whole: after the functions step it holds config values and signed upload
+addresses. So when a step fails, the next step, "Show why the step failed", prints a filtered
+reading of that file (`.github/scripts/firebase-refusal.js`), also on the run's summary page:
+
+- each request Google refused: the status (403, 404...), the address without its query string,
+  and from the error only its status word (`PERMISSION_DENIED`), message, reason, service and
+  permission;
+- the tool's own permission check, with the permissions it found missing;
+- a request that got no answer at all.
+
+Read it from the bottom: the last refusal is usually the cause, and an early 404 can be an
+ordinary lookup. A 403 with a permission names what the account lacks; give the account a role
+from the list above that holds it. A 403 that says an API is disabled or has not been used names
+the API to switch on in the Google Cloud console. Google does not always send the permission's
+name; then go by the address that was refused and compare the account's roles with the list. If
+the step prints that the debug file holds no refused request, the failed step's own error is all
+there is (a build error, a function that would be deleted, the cleanup policy).
+
+One limit, to know before the functions are ever given secret values (`functions.config()`,
+secret parameters, a `.env` file; they have none today): the step prints Google's error message,
+and it can only remove a secret from that text by its shape. A key, a token, a signed address or
+a long random string is removed. A secret without such a shape, like a short password or a
+phrase of words, is not: if a deploy sends one and Google quotes it back in an error message, it
+is printed in the run's log, which anyone can read. The Firebase tool's own error line prints the
+same message. So give a secret value a long random form, or check this step again first.
+
+The job's last step removes the key file and both copies of the debug file, whether the job
+passed or failed.
+
+This was added after the run of 2026-11-11 and has not yet read a real failed run: its format is
+taken from the source of firebase-tools 15.35 and checked with a made-up file
+(`firebase-refusal.test.js`). A new version of the tool may change the format; the step then
+prints less, never more.
 
 ### What the pipeline does not do (still a person's step)
 
