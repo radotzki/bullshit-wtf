@@ -73,6 +73,7 @@ test('BACK HOME during the read: the phone is not sent back to the game it left'
         const p = phone('/reveal-the-truth/AAAA');
         p.service.register('AAAA');
         p.step('AAAA', GameState.ScoreBoard);
+        await p.settle();
         p.service.unregister();
         p.router.url = '/';
         p.reads[0](staged);
@@ -85,6 +86,8 @@ test('another game during the read: the phone is not sent to the old game\'s sco
     const p = phone('/reveal-the-truth/AAAA');
     p.service.register('AAAA');
     p.step('AAAA', GameState.ScoreBoard);
+    // The player's tap comes in a later turn of the browser than the game's step.
+    await p.settle();
     p.service.unregister();
     p.service.register('BBBB');
     // The new game reaches its own scoreboard step before the old game's read returns.
@@ -97,4 +100,16 @@ test('another game during the read: the phone is not sent to the old game\'s sco
     p.reads[1](false);
     await p.settle();
     assert.deepStrictEqual(p.pages, ['score-board/BBBB']);
+});
+
+test('the first step arrives while the phone is still starting to follow: it still gets the scoreboard', async () => {
+    const p = phone('/');
+    // A database that already knows the step answers inside subscribe itself.
+    const api = p.service.apiService;
+    api.gameState = () => ({ subscribe(fn) { fn(GameState.ScoreBoard); return { unsubscribe() { } }; } });
+    p.service.register('AAAA');
+    await p.settle();
+    p.reads[0](false);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['score-board/AAAA']);
 });
