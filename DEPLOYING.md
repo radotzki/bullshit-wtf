@@ -142,6 +142,17 @@ name; then go by the address that was refused and compare the account's roles wi
 the step prints that the debug file holds no refused request, the failed step's own error is all
 there is (a build error, a function that would be deleted, the cleanup policy).
 
+One limit, to know before the functions are ever given secret values (`functions.config()`,
+secret parameters, a `.env` file; they have none today): the step prints Google's error message,
+and it can only remove a secret from that text by its shape. A key, a token, a signed address or
+a long random string is removed. A secret without such a shape, like a short password or a
+phrase of words, is not: if a deploy sends one and Google quotes it back in an error message, it
+is printed in the run's log, which anyone can read. The Firebase tool's own error line prints the
+same message. So give a secret value a long random form, or check this step again first.
+
+The job's last step removes the key file and both copies of the debug file, whether the job
+passed or failed.
+
 This was added after the run of 2026-11-11 and has not yet read a real failed run: its format is
 taken from the source of firebase-tools 15.35 and checked with a made-up file
 (`firebase-refusal.test.js`). A new version of the tool may change the format; the step then

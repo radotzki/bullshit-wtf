@@ -2,6 +2,7 @@
 //
 //   node .github/scripts/firebase-refusal.js reset [dir]   before each firebase command
 //   node .github/scripts/firebase-refusal.js print [dir]   after a failed step
+//   node .github/scripts/firebase-refusal.js remove [dir]  in the job's last step
 //
 // The Firebase tool prints one line when it fails ("Failed to get instance details ... See
 // firebase-debug.log"). Google's answer, with the status and the reason, is only in
@@ -18,12 +19,16 @@
 // Every printed value also goes through scrub(), which removes anything shaped like a token, a
 // key or an address with a query string. Nothing else from the file is printed: no request, no
 // answer with a status below 400, no body that is not a JSON error.
+// scrub() knows a secret by its shape alone. A secret without one (a short password, a phrase)
+// that Google quotes in an error message is printed with the message. See DEPLOYING.md.
 //
 // `reset` exists because of how the tool treats the file (firebase-tools 15.35, src/bin/cli.ts
 // and src/logger.ts): it appends to an existing file, and it deletes the file when it exits
 // with code 0 or 1, which is the code of most refused requests. `reset` empties the file, so it
 // holds one command alone, and gives it a second name (a hard link). The tool's delete then
 // removes only the first name, and `print` reads the second.
+//
+// `remove` deletes both names, so no copy of the file outlives the job's steps.
 const fs = require('fs');
 const path = require('path');
 
@@ -145,7 +150,7 @@ function findRefusals(text) {
                 if (!perm) {
                     break;
                 }
-                out.push(`    missing: ${perm[1]}`);
+                out.push(`    missing: ${scrub(perm[1])}`);
             }
             found.push(out.join('\n'));
             continue;
@@ -187,6 +192,22 @@ function reset(dir) {
     }
 }
 
+// Deletes both names of the debug file. A name that is not there is fine; one that cannot be
+// deleted is an error, after the other has been tried.
+function remove(dir) {
+    let failed = null;
+    for (const name of [KEPT, LOG]) {
+        try {
+            fs.rmSync(path.join(dir, name), { force: true });
+        } catch (e) {
+            failed = failed || e;
+        }
+    }
+    if (failed) {
+        throw failed;
+    }
+}
+
 function read(dir) {
     for (const name of [KEPT, LOG]) {
         try {
@@ -223,10 +244,17 @@ if (require.main === module) {
         } catch (e) {
             console.log('Could not read the Firebase debug file: ' + (e.code || e.name));
         }
+    } else if (mode === 'remove') {
+        try {
+            remove(dir);
+        } catch (e) {
+            console.error('Could not remove the Firebase debug file: ' + (e.code || e.name));
+            process.exit(1);
+        }
     } else {
-        console.error('Usage: firebase-refusal.js reset|print [dir]');
+        console.error('Usage: firebase-refusal.js reset|print|remove [dir]');
         process.exit(1);
     }
 }
 
-module.exports = { scrub, findRefusals, report, reset, read, LOG, KEPT };
+module.exports = { scrub, findRefusals, report, reset, read, remove, LOG, KEPT };

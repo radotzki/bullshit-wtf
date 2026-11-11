@@ -29,6 +29,7 @@ test('the steps run in the intended order', () => {
         '3. Deploy the site',
         'Show why the step failed',
         'Summary',
+        'Remove the key file and the Firebase debug files',
     ];
     const found = order.map(at);
     assert.deepStrictEqual(found, [...found].sort((a, b) => a - b));
@@ -74,4 +75,20 @@ test('every Firebase command starts from an empty debug file, and a failure prin
     assert.doesNotMatch(text, /upload-artifact/);
     assert.doesNotMatch(text, /firebase-debug/);
     assert.doesNotMatch(text, /--debug|DEBUG/);
+});
+
+test('the job\'s last step removes the key file and both debug files, whether the job passed or failed', () => {
+    const last = names[names.length - 1];
+    assert.strictEqual(last, 'Remove the key file and the Firebase debug files');
+    const step = yml.slice(yml.indexOf('      - name: ' + last));
+    assert.strictEqual(step.trim(), [
+        '- name: ' + last,
+        // always(): after a passed job, a failed one and a cancelled one.
+        '        if: always()',
+        '        run: |',
+        '          rm -f "$RUNNER_TEMP/firebase-key.json"',
+        '          node .github/scripts/firebase-refusal.js remove',
+    ].join('\n'));
+    // Nothing reads the debug file after it: `print` comes before.
+    assert.ok(at('Show why the step failed') < at(last));
 });

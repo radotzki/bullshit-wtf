@@ -9,7 +9,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const SCRIPT = path.join(__dirname, 'firebase-refusal.js');
-const { scrub, report, LOG, KEPT } = require('./firebase-refusal.js');
+const { scrub, report, findRefusals, LOG, KEPT } = require('./firebase-refusal.js');
 
 const T = '[2026-11-11T18:58:53.100Z]';
 const SECRETS = {
@@ -151,4 +151,84 @@ test('with no debug file, or one without a refusal, it says so and still exits 0
     out = run('print', dir);
     assert.strictEqual(out.status, 0);
     assert.match(out.stdout, /holds no refused request/);
+});
+
+test('a secret on a permission line under the tool\'s permission check is not printed', t => {
+    // Each made-up value passes as a permission name (words joined by dots), so the line is read.
+    const shaped = {
+        token: 'ya29.MadeUpAccessToken0123456789abcdefghij',
+        apiKey: 'a.AIzaSyMadeUp0123456789abcdefghijklmnopq',
+        jwt: 'eyJhbGciOiJSUzI1NiJ9.eyJtYWRlIjoidXAifQ.c2lnbmF0dXJlTWFkZVVw',
+        longKey: 'key.MadeUpKey0123456789abcdefghijklmnopqrstuv',
+    };
+    const text = [
+        `[debug] ${T} [iam] error while checking permissions, command may fail: Authorization failed. This account is missing the following required permissions on project bullshit-wtf-prod:`,
+        '',
+        '  firebasehosting.sites.update',
+        ...Object.values(shaped).map(v => '  ' + v),
+        '  firebasedatabase.instances.get',
+        '',
+    ].join('\n');
+    const dir = tmp(t);
+    fs.writeFileSync(path.join(dir, LOG), text);
+    const summary = path.join(dir, 'summary.md');
+    const out = run('print', dir, { GITHUB_STEP_SUMMARY: summary });
+    assert.strictEqual(out.status, 0);
+    for (const printed of [out.stdout + out.stderr, fs.readFileSync(summary, 'utf8')]) {
+        for (const [name, value] of Object.entries(shaped)) {
+            assert.ok(!printed.includes(value), 'printed the made-up ' + name);
+            assert.ok(!printed.includes(value.split('.').pop()), 'printed a piece of the made-up ' + name);
+        }
+        assert.doesNotMatch(printed, /ya29|AIza|eyJ|MadeUp/);
+    }
+    // The real permission names around them are still shown, and each secret's line says so.
+    assert.match(out.stdout, /missing: firebasehosting\.sites\.update/);
+    assert.match(out.stdout, /missing: firebasedatabase\.instances\.get/);
+    assert.strictEqual(out.stdout.match(/missing: .*\[removed\]/g).length, 4);
+    // Every printed permission line is what scrub makes of it.
+    for (const line of findRefusals(text)[0].split('\n').slice(1)) {
+        const value = line.replace('    missing: ', '');
+        assert.strictEqual(value, scrub(value));
+    }
+});
+
+test('remove deletes both debug files, and is content with one or none', t => {
+    const dir = tmp(t);
+    const both = () => [LOG, KEPT].filter(n => fs.existsSync(path.join(dir, n)));
+    // As after a command that failed with code 2: both names hold the file.
+    run('reset', dir);
+    fs.appendFileSync(path.join(dir, LOG), LOG_TEXT);
+    assert.deepStrictEqual(both(), [LOG, KEPT]);
+    let out = run('remove', dir);
+    assert.strictEqual(out.status, 0);
+    assert.strictEqual(out.stdout + out.stderr, '');
+    assert.deepStrictEqual(both(), []);
+    // As after a command that succeeded: the tool deleted its own name, the kept copy is left.
+    run('reset', dir);
+    fs.appendFileSync(path.join(dir, LOG), LOG_TEXT);
+    fs.unlinkSync(path.join(dir, LOG));
+    assert.strictEqual(run('remove', dir).status, 0);
+    assert.deepStrictEqual(both(), []);
+    // Two separate files, not two names of one.
+    fs.writeFileSync(path.join(dir, LOG), LOG_TEXT);
+    fs.writeFileSync(path.join(dir, KEPT), LOG_TEXT);
+    assert.strictEqual(run('remove', dir).status, 0);
+    assert.deepStrictEqual(both(), []);
+    // No Firebase command ran: nothing to remove.
+    assert.strictEqual(run('remove', dir).status, 0);
+    assert.deepStrictEqual(fs.readdirSync(dir), []);
+});
+
+test('remove says so, without the file\'s text, when a debug file cannot be deleted', t => {
+    const dir = tmp(t);
+    // A folder with something in it stands where the kept copy would be: it cannot be deleted.
+    fs.mkdirSync(path.join(dir, KEPT));
+    fs.writeFileSync(path.join(dir, KEPT, 'x'), SECRETS.token);
+    fs.writeFileSync(path.join(dir, LOG), LOG_TEXT);
+    const out = run('remove', dir);
+    assert.strictEqual(out.status, 1);
+    assert.match(out.stderr, /^Could not remove the Firebase debug file: \w+\n$/);
+    noSecret(out.stdout + out.stderr);
+    // The other one is removed all the same.
+    assert.ok(!fs.existsSync(path.join(dir, LOG)));
 });
