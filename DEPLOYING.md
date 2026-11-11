@@ -28,7 +28,9 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    install or build script can read it.
 5. Checks, without releasing anything, that the account holds the permissions the three deploys
    need, and that it can reach the database and the site (see "The permission check" and "The
-   access check" below). If either fails, the run stops before the functions are released.
+   access check" below). If either fails, the run stops before the functions are released. The
+   access check tries both the database and the site before it fails, so one run names
+   everything that is off.
 6. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
@@ -70,29 +72,47 @@ Things to know:
   when Google answers that all are held. If one is missing, the step fails, names it and the
   deploy that needs it, and nothing is released. If Google does not answer the question (an API
   is off, the sign-in fails, no network), the step fails too and prints the answer: not knowing
-  counts as no. The question needs two things in the Google project, which the step cannot
+  counts as no. Only an answer from the address that was asked counts: a redirect is not followed
+  and stops the run with its 3xx status. The sign-in and the question together get 60 seconds
+  (the question alone 30); after that the step fails and says "timed out", so a sign-in that
+  never answers cannot hold the release queue until the job's 30-minute limit. The question needs
+  two things in the Google project, which the step cannot
   switch on or grant by itself: the **Cloud Resource Manager API**
   (`cloudresourcemanager.googleapis.com`) switched on, and for the account the permission
   `serviceusage.services.use` (role Service Usage Consumer, or any wider role that holds it).
   The script never opens the key file: Google's own library (`google-auth-library`, installed
   with the Firebase tool) reads it and signs the request, and the step prints permission names
-  and Google's error fields only.
+  and Google's error fields only. The sign-in asks for the scope `cloud-platform`, the one the
+  Firebase tool uses for the deploys. A read-only scope was considered and left out: whether
+  Google accepts it for this question can only be seen on a run from `master`, where a wrong
+  guess stops a release.
   What it does not prove: a permission given for one resource only (not on the project), or
   under a condition, can read as missing here; the functions deploy also needs the right to act
   as the functions' service account (`iam.serviceAccounts.actAs`), which the tool checks itself
   at the start of the functions step, before it releases anything; and Google can still refuse
   a deploy for a reason that is not a permission.
-- **The access check.** Before the first deploy the run makes the same first calls that the rules
-  and site deploys make, and releases nothing: `firebase deploy --only database --dry-run` reads the
-  database instance and sends the rules with `dryRun=true` (checked, not stored), and
-  `firebase hosting:channel:list` finds the hosting site and reads its channels. One of its calls
-  is not a read: the tool first asks whether the Hosting API (`firebasehosting.googleapis.com`) is
-  on in the project, and if it is off, tries to switch it on. The site deploy does the same, and
-  the API is on for as long as the site is served, so in practice the check only reads. It cannot
-  be made a pure read with the Firebase tool: its read-only hosting commands (`hosting:channel:list`
-  and `hosting:sites:list`, read at version 15.35.0) both start with that step and have no option
-  to skip it, and a plain request to Google
-  instead would need new code that handles the key. This is there
+- **The access check.** Before the first deploy the run reads the database and the site, releases
+  nothing, and switches nothing on in the Google project (`.github/scripts/check-access.js`):
+  - the database, with the Firebase tool: `firebase deploy --only database --dry-run` makes the
+    first calls of the rules deploy. It reads the database instance and sends the rules with
+    `dryRun=true` (checked, not stored). The tool's database path has no call that switches an
+    API on (read at version 15.35.0);
+  - the site, with one plain `GET` of the project's list of hosting sites
+    (`firebasehosting.googleapis.com/v1beta1/projects/<id>/sites`), sent through Google's
+    library like the permission check: redirects refused, the same time-outs, the same cleaning
+    of what is printed. It passes when Google lists one site or more.
+
+  The site is not read with the Firebase tool. Each of its hosting commands, also the read-only
+  ones (`hosting:channel:list`, `hosting:sites:list`), first asks whether the Hosting API
+  (`firebasehosting.googleapis.com`) is on, and if it is off, tries to switch it on. Until
+  2026-11-11 this check ran `hosting:channel:list`, so it could have switched the API on if the
+  deploy account was allowed to. Switching an API on is the owner's step, never a side effect
+  of a check: with the API off, the `GET` is refused and the step names the API and fails. The
+  release step "3. Deploy the site" still uses the tool and would try the same, but it only runs
+  after this check has seen the API on.
+  Both reads always run, also when the first fails, and the step fails afterwards if either
+  did: on 2026-11-11 the database read failed first, the site read never ran, and the run could
+  not say whether the Hosting API was off too. The database read gets five minutes. This is there
   because on 2026-11-11 a run released the functions, then failed at the rules ("Failed to get
   instance details"), and the site never went out. By itself it does not prove that the account
   may *write* to hosting: the tool's hosting dry run creates a new empty version on the live site,
@@ -156,6 +176,15 @@ The step "Check the deploy account's permissions" prints its own reason, in the 
 run's summary page under "The deploy account's permissions": the permissions that are missing,
 or Google's answer when the question was refused. Nothing was released then. The step after it,
 "Show why the step failed", has no debug file to read in that case and says so.
+
+The step "Check access to the database and the site" prints its own reasons too, in the log and
+on the summary page under "Access to the database and the site": one line for the database and
+one for the site, "reached" or "NOT reached", and under them the reason for each that was not
+reached: for the database the same filtered reading of the tool's debug file as described
+below, for the site the status and the error fields of Google's answer. When the Hosting API is
+off it says so by name; the owner switches it on in the Google Cloud console, the step never
+does. Fix everything it names before the next run. It then removes the debug file, so "Show why
+the step failed" has none to read here either.
 
 For the other steps: the Firebase tool's own error is one general line, such as "Failed to get instance details", and
 it does not name a missing permission. Google's answer is in the tool's debug file, which the run
