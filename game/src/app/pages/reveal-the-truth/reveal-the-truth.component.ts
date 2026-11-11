@@ -11,6 +11,7 @@ import {
     revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings,
 } from '../../game-model';
 import { RevealStrings, revealStringsFor, resultLines, stingFor } from './reveal-strings';
+import { followScrollTop } from './reveal-follow';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
 // stand in their old order before they move to the new one (staged reveal only).
@@ -249,7 +250,8 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
     /**
      * Keep the newest thing in view: on a big screen (which nobody scrolls) whenever something appears,
-     * and on a phone in the staged reveal, where the scores and NEXT arrive below the rows.
+     * and on a phone in the staged reveal, where the scores and NEXT arrive below the rows. On a phone
+     * the truth row stays in view when the scores arrive: the page never goes down past its top.
      */
     private follow() {
         const key = [this.visibleRows, this.pickersShown, this.writersShown, this.truthIntro, this.allShown].join();
@@ -264,9 +266,17 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
 
         setTimeout(() => {
             const main: HTMLElement = this.element.nativeElement.querySelector('.game-main');
-            if (main) {
-                main.scrollTop = main.scrollHeight;
+            if (!main) {
+                return;
             }
+
+            // Where the truth row starts in the scrolled content.
+            const truth: Element = this.presenter ? null : main.querySelector('.srow.truth');
+            let truthTop: number = null;
+            if (truth) {
+                truthTop = main.scrollTop + truth.getBoundingClientRect().top - main.getBoundingClientRect().top;
+            }
+            main.scrollTop = followScrollTop(main.scrollHeight, main.clientHeight, truthTop);
         });
     }
 

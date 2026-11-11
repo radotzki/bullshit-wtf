@@ -548,6 +548,30 @@
         }
     }
 
+    // Phones and screens that ask for less motion: no full-screen flash (the same words are in the
+    // player's own result at the end), and nothing in the staged reveal pops, slams or slides.
+    @media (prefers-reduced-motion: reduce) {
+        &.is-staged {
+            .flash {
+                display: none;
+            }
+
+            .srow,
+            .srow.truth,
+            .srow .pickers.shown,
+            .srow .writer.shown,
+            .truth-intro,
+            .after,
+            .score-row .change {
+                animation: none;
+            }
+
+            .score-row {
+                transition: none;
+            }
+        }
+    }
+
     // The staged reveal on a big screen: the rows as above (sizes by the screen's height), and at the
     // end the rows on one side and the scores on the other, so that all of it fits without scrolling.
     &.is-staged.is-presenter {

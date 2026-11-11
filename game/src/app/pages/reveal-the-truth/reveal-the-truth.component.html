@@ -95,18 +95,18 @@
 
                                 <div class="writer" [class.shown]="i < writersShown">
                                     <ng-container *ngIf="row.realAnswer">
-                                        <span class="points" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                        <span class="points" dir="ltr" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
                                     </ng-container>
                                     <ng-container *ngIf="row.houseLie">
                                         <span class="tag-house">{{ s.houseLie }}</span>
-                                        <span class="points negative" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                        <span class="points negative" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                     </ng-container>
                                     <ng-container *ngIf="!row.realAnswer && !row.houseLie">
                                         <span class="label">{{ s.bullshitBy }}</span>
                                         <span class="player" *ngFor="let c of row.creators">
                                             <img [src]="'/assets/' + c.picture"> <span class="name">{{ c.nickname }}</span>
                                         </span>
-                                        <span class="points" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                        <span class="points" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                     </ng-container>
                                 </div>
                             </div>
