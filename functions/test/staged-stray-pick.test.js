@@ -50,9 +50,16 @@ function ref(parts) {
             if (v !== undefined) put(parts.concat(key), v);
             return { key };
         },
-        // Returning undefined aborts, as in the real database.
+        // As the real client does it: the function first runs on what the client holds locally, which
+        // is nothing (null), whatever the server holds. Returning undefined stops there, and the server
+        // is never asked. Otherwise the server is asked, and if it holds something else the function
+        // runs again on that.
         transaction: (fn, done) => {
-            const v = fn(clone(at(parts)));
+            const guess = fn(null);
+            if (guess === undefined) return done(null, false);
+            const actual = clone(at(parts));
+            if (actual === null) { put(parts, guess); return done(null, true); }
+            const v = fn(actual);
             if (v === undefined) return done(null, false);
             put(parts, v);
             done(null, true);
@@ -117,6 +124,15 @@ async function next(pin, retryAfter = 20) {
     return state(pin);
 }
 
+/** Timer after timer until the game is in `want`. A game that does not get there fails the test; it does not hang it. */
+async function until(pin, want, onQuestion) {
+    for (let i = 0; state(pin) !== want; i++) {
+        assert.ok(i < 12, `the game is stuck in state ${state(pin)}, lock ${game(pin).advanceLock}`);
+        if (onQuestion && state(pin) === S.ShowQuestion) await onQuestion(); else await next(pin);
+    }
+}
+const lies = pin => async () => { for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie`); };
+
 async function write(pin, pid, value) {
     game(pin).answerSelections = game(pin).answerSelections || {};
     game(pin).answerSelections[pid] = clone(value);
@@ -139,7 +155,7 @@ async function wholeGame(bigReveal, stray, eachReveal, afterReveal) {
     const pin = newGame(bigReveal);
     const reveals = [];
     for (let q = 0; q < TOTAL_Q; q++) {
-        while (state(pin) !== S.ShowQuestion) await next(pin);
+        await until(pin, S.ShowQuestion);
         for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie ${q}`);
         assert.strictEqual(state(pin), S.ShowAnswers, 'everyone answered: the question ends');
         const house = Object.keys(game(pin).answers).map(k => game(pin).answers[k]).find(a => a.houseLie).text;
@@ -159,7 +175,7 @@ async function wholeGame(bigReveal, stray, eachReveal, afterReveal) {
         await (afterReveal ? afterReveal(pin, q) : next(pin));
         reveals[q].after = clone(game(pin).players);
     }
-    while (state(pin) !== S.ScoreBoardFinal) await next(pin);
+    await until(pin, S.ScoreBoardFinal);
     const scores = {};
     Object.keys(game(pin).players).forEach(pid => scores[pid] = game(pin).players[pid].score);
     return { pin, scores, reveals, states: states[pin].slice(), shapes: reveals.map(r => ({ rows: r.shape, before: r.before, after: r.after })) };
@@ -219,18 +235,12 @@ test('the rows a staged reveal plays hold only real picks, and the score changes
 
 test('the staged scoreboard is left in the same run; the control one waits for its timer', async () => {
     const staged = newGame(true);
-    while (state(staged) !== S.RevealTheTruth) {
-        if (state(staged) === S.ShowQuestion) for (const pid of ['p1', 'p2', 'p3']) await answer(staged, pid, `${pid} lie`);
-        else await next(staged);
-    }
+    await until(staged, S.RevealTheTruth, lies(staged));
     assert.strictEqual(await next(staged), S.ShowQuestion, 'one call: the scoreboard and on to the next question');
     assert.deepStrictEqual(states[staged].slice(-3), [S.RevealTheTruth, S.ScoreBoard, S.ShowQuestion]);
 
     const control = newGame(false);
-    while (state(control) !== S.RevealTheTruth) {
-        if (state(control) === S.ShowQuestion) for (const pid of ['p1', 'p2', 'p3']) await answer(control, pid, `${pid} lie`);
-        else await next(control);
-    }
+    await until(control, S.RevealTheTruth, lies(control));
     assert.strictEqual(await next(control), S.ScoreBoard);
     assert.strictEqual(game(control).state.deadline - game(control).state.timestamp, 3000);
 });
@@ -252,10 +262,7 @@ test('leaving the staged scoreboard fails once: the run tries again itself, and 
 
 test('leaving the staged scoreboard fails twice: the reveal\'s own step is not reported as failed, and a later call moves on', async () => {
     const pin = newGame(true);
-    while (state(pin) !== S.ShowAnswers) {
-        if (state(pin) === S.ShowQuestion) for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie`);
-        else await next(pin);
-    }
+    await until(pin, S.ShowAnswers, lies(pin));
     await write(pin, 'p1', { text: 'truth0' });
     await write(pin, 'ghost', { text: 'truth0' });
     assert.strictEqual(await next(pin), S.RevealTheTruth);
@@ -273,10 +280,7 @@ test('leaving the staged scoreboard fails twice: the reveal\'s own step is not r
 test('a failure of the reveal\'s own step is still passed on, and the phase given back', async () => {
     const scoring = require(path.join(dist, 'controllers', 'scoring'));
     const pin = newGame(true);
-    while (state(pin) !== S.ShowAnswers) {
-        if (state(pin) === S.ShowQuestion) for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie`);
-        else await next(pin);
-    }
+    await until(pin, S.ShowAnswers, lies(pin));
     const real = scoring.scoreQuestion;
     scoring.scoreQuestion = () => { throw new Error('boom'); };
     try {
@@ -287,4 +291,23 @@ test('a failure of the reveal\'s own step is still passed on, and the phase give
     assert.strictEqual(state(pin), S.ShowAnswers);
     assert.ok(!game(pin).advanceLock);
     assert.strictEqual(await next(pin), S.RevealTheTruth);
+});
+
+test('a phase given back is free on the server, though the database client starts from nothing', async () => {
+    const pin = newGame(true);
+    await next(pin);
+    assert.strictEqual(state(pin), S.RoundIntro);
+    const questions = db.questions;
+    db.questions = null; // the question cannot be read
+    await assert.rejects(next(pin));
+    assert.strictEqual(state(pin), S.RoundIntro, 'the game has not moved');
+    assert.ok(!game(pin).advanceLock, 'the phase is not left taken');
+    db.questions = questions;
+    // A phase that someone else holds is not given away by a caller that has moved on.
+    game(pin).advanceLock = 'held by another';
+    const { advance: again } = require(path.join(dist, 'controllers', 'tick'));
+    await again(pin, { id: S.GameStaging, timestamp: 1 });
+    assert.strictEqual(game(pin).advanceLock, 'held by another');
+    delete game(pin).advanceLock;
+    assert.strictEqual(await next(pin), S.ShowQuestion, 'a later call moves it on');
 });

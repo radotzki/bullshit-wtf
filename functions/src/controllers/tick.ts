@@ -113,7 +113,11 @@ function claim(pin: string, key: string): Promise<boolean> {
 function release(pin: string, key: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         gamesRef.child(pin).child('advanceLock').transaction(
-            current => current === key ? null : undefined,
+            // The database client first runs this on what it holds locally, which is nothing (null) here,
+            // and only asks the server if a value comes back. Returning undefined for null would stop it
+            // there, with the phase still taken on the server and the game stuck for good. So null also
+            // answers null: the server then says what the lock really is, and this runs again on that.
+            current => current === key || current === null ? null : undefined,
             (error, committed) => error ? reject(error) : resolve(committed),
             false,
         );
