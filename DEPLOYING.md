@@ -7,6 +7,9 @@ tests, merge it to `master`.
 
 **Tests** (`ci.yml`) run on every pull request, with no secrets and no Firebase project:
 
+- Deploy scripts: `node --test .github/scripts/*.test.js` (the checks the deploy runs before a
+  release, and the order of its steps).
+
 - Functions: `npm ci`, then `npm test` (builds, then runs every function test).
 - Game client: `npm ci`, `npm run build` (lint, production build, Hebrew shell, search pages), `npm test`,
   and a check that the main files landed in `game/dist`.
@@ -16,30 +19,63 @@ request, and by hand (Actions tab, "Deploy to production", "Run workflow", branc
 that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to `bullshit-wtf-prod`:
 
 1. Runs the same tests again, on the merged code. If they fail, nothing is deployed.
-2. Checks the Firebase key (below). No key, or a wrong one: the run fails with a plain message
+2. Checks that the run's commit is still the head of `master` (see "Old runs" below). If `master`
+   holds newer code, the run stops and nothing is built or deployed.
+3. Checks the Firebase key (below). No key, or a wrong one: the run fails with a plain message
    before anything is built or deployed. The check writes nothing to disk.
-3. Builds the functions and the site. A broken build deploys nothing. Only after the last build
-   is the key written to a temporary file, so no package's install or build script can read it.
-4. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
+4. Builds the functions and the site. A broken build deploys nothing. Then it checks the head of
+   `master` once more, and only then is the key written to a temporary file, so no package's
+   install or build script can read it.
+5. Checks, without releasing anything, that the account can reach the database and the site (see
+   "The access check" below). If it cannot, the run stops before the functions are released.
+6. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
-   keep old clients working, so that state is safe, and a re-run finishes the release.
+   keep old clients working, so that state is safe, and a new run finishes the release.
 
 Things to know:
 
 - One release runs at a time and is never cancelled halfway. If several merges queue up behind a
   running release, GitHub keeps only the newest waiting one, which holds all the others' code.
-- To retry, re-run the failed run or start a manual run. Every step is safe to repeat.
-- "Re-run" on an **old** run deploys that old commit again. That is the rollback; do not use it by
-  accident. A manual run always deploys the tip of `master`.
+- To retry, and after adding or changing the key, **start a new run by hand**: Actions tab,
+  "Deploy to production", "Run workflow", branch `master`. A manual run always deploys the tip of
+  `master`. Every step is safe to repeat.
+- **Old runs.** "Re-run" on a run does not take today's `master`: it checks out the commit of
+  that run. So the run compares its commit with the head of `master`
+  (`.github/scripts/check-master-head.js`), before the builds and again right before the first
+  deploy, and stops with "Deploy stopped, nothing released" when `master` has moved on. It still
+  goes ahead when the newer commits changed only files that are never deployed (`*.md`, `docs/`,
+  `graphics/`): a push of those starts no run of its own, and the code is the same. A deployed
+  file that was moved into `docs/` or renamed to `.md` counts as changed, so that stops the run. The list in
+  the script must stay equal to `paths-ignore` in `deploy.yml`; a test compares them.
+  Runs that started before this check existed (2026-11-11) do not have it: never re-run those.
+- **Rolling back** is therefore not "re-run an old run". Revert the change in a pull request and
+  merge it (it is tested and released like any other), or deploy the older commit by hand from a
+  computer (below).
+- **The access check.** Before the first deploy the run makes the same first calls that the rules
+  and site deploys make, and releases nothing: `firebase deploy --only database --dry-run` reads the
+  database instance and sends the rules with `dryRun=true` (checked, not stored), and
+  `firebase hosting:channel:list` finds the hosting site and reads its channels. One of its calls
+  is not a read: the tool first asks whether the Hosting API (`firebasehosting.googleapis.com`) is
+  on in the project, and if it is off, tries to switch it on. The site deploy does the same, and
+  the API is on for as long as the site is served, so in practice the check only reads. It cannot
+  be made a pure read with the Firebase tool: its read-only hosting commands (`hosting:channel:list`
+  and `hosting:sites:list`, read at version 15.35.0) both start with that step and have no option
+  to skip it, and a plain request to Google
+  instead would need new code that handles the key. This is there
+  because on 2026-11-11 a run released the functions, then failed at the rules ("Failed to get
+  instance details"), and the site never went out. What it does not prove: that the account may
+  *write* to hosting. The tool's hosting dry run creates a new empty version on the live site, so
+  it is not used; a hosting account that can read but not write would still fail at step 3, after
+  the functions and the rules.
 - The workflow never passes `--force`. So if a change **removes or renames a function**, the
   functions step stops and lists the functions that are live but gone from the code; nothing is
   deleted by a machine. A person deletes them with the `firebase functions:delete` commands the log
-  prints, then re-runs. The same goes for a function that gains a retry policy or minimum instances.
+  prints, then starts a new run. The same goes for a function that gains a retry policy or minimum instances.
 - If the functions step ends with "Functions successfully deployed but could not set up cleanup
   policy", the functions are live but the rules and site were not deployed. Run
   `npx firebase functions:artifacts:setpolicy -P bullshit-wtf-prod` once with the owner's sign-in,
-  then re-run the workflow.
+  then start a new run by hand on `master`.
 
 ### The Firebase key
 
@@ -57,12 +93,16 @@ environment's rule. So the rule "nothing ships unless it was merged" is held by 
 
 The environment's settings (owner, once, and before the secret is added):
 
-1. Settings, Environments, New environment, name `production`.
+1. Settings, Environments. If `production` is already listed (GitHub makes it by itself the
+   first time the deploy runs), open it and do not make a new one. Otherwise: New environment,
+   name `production`.
 2. Deployment branches and tags: "Selected branches and tags", then add the branch `master` and
    nothing else.
 3. Environment secrets: add `FIREBASE_SERVICE_ACCOUNT`.
 4. If a repository secret of that name exists (Settings, Secrets and variables, Actions), delete
    it: it would still be readable from any branch.
+5. Start a new run by hand: Actions, "Deploy to production", "Run workflow", branch `master`. Do
+   not re-run an old failed run.
 
 Set the branch rule before the secret. GitHub creates a missing environment by itself, with no
 rule, the first time a job names it; an environment without the rule protects nothing. Do not
@@ -78,7 +118,10 @@ secret's value. The account needs to deploy 1st gen functions, database rules an
 cover it (not yet tried on this project): Cloud Functions Admin, Service Account User, Firebase Rules Admin, Firebase Realtime
 Database Admin, Firebase Hosting Admin, Artifact Registry Reader, Service Usage Consumer (or, more
 simply and more widely, Firebase Admin plus Service Account User). If a role is missing, the
-failing step's log names the permission. To revoke access, delete the key in the console.
+failing step's log does not name the permission: the Firebase tool writes its "missing
+permissions" finding only to a debug file that the run does not keep, and the step fails later
+with a general message such as "Failed to get instance details". Go by which step failed, and
+compare the account's roles with this list. To revoke access, delete the key in the console.
 
 ### What the pipeline does not do (still a person's step)
 

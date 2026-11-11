@@ -56,7 +56,13 @@ jobs:
             functions/package-lock.json
             game/package-lock.json
 
-      # First of all: no key, no release. This fails with a plain message before anything is built.
+      # A re-run of an old run checks out that run's old commit, not today's master. Stop here,
+      # before anything is built, unless this commit is still what master holds (or differs from
+      # it only in files that are never deployed). The repository is public: no token is needed.
+      - name: Check this commit is still the head of master
+        run: node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"
+
+      # No key, no release. This fails with a plain message before anything is built.
       # It only checks: nothing is written to disk here, and the secret is in this step's
       # environment alone, so the installs and builds below cannot read it.
       - name: Check the Firebase key
@@ -78,6 +84,11 @@ jobs:
           npm ci
           npm run build
 
+      # The builds took minutes and master may have moved meanwhile: look once more, right before
+      # the first step that can change production.
+      - name: Check again that this commit is still the head of master
+        run: node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"
+
       # Only now, with every install and build done, does the key touch the disk.
       - name: Write the Firebase key
         env:
@@ -85,6 +96,28 @@ jobs:
         run: |
           node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
+
+      # A release must not stop halfway: on 2026-11-11 the functions went out, then the rules step
+      # could not read the database instance, and the site was never released. So before the
+      # first deploy, make the same first calls the rules and site deploys make, and release nothing:
+      # - `deploy --only database --dry-run` reads the database instance and sends the rules with
+      #   dryRun=true (the server checks them and stores nothing). The tool skips its deploy and
+      #   release phases on a dry run.
+      # - `hosting:channel:list` finds the project's hosting site, as the site deploy does, and
+      #   reads its channels.
+      # Hosting gets a read and not a dry run on purpose: the tool's hosting dry run creates a
+      # new, empty version on the live site. So this proves the account can reach the site, not
+      # that it may write to it.
+      # One call here is not a read. `hosting:channel:list` first asks whether the Hosting API
+      # (firebasehosting.googleapis.com) is on in the project, and if it is off, tries to switch
+      # it on. With the API on, as it is while the site is served, both commands only read. The
+      # tool's other read-only hosting command (`hosting:sites:list`) starts with the same step,
+      # and a plain request to Google would need new code that handles the key, so the step
+      # stays and its name says "releases nothing".
+      - name: Check access to the database and the site (releases nothing)
+        run: |
+          npx firebase deploy --only database --dry-run --project "$FIREBASE_PROJECT" --non-interactive
+          npx firebase hosting:channel:list --project "$FIREBASE_PROJECT" --non-interactive
 
       # The order matters: new clients call functions that must already exist, and read paths the
       # new rules open. Each step runs only if the one before it succeeded.
@@ -102,8 +135,9 @@ jobs:
         run: |
           {
             echo "### Deploy of ${GITHUB_SHA::7} to $FIREBASE_PROJECT: ${{ job.status }}"
-            echo "Order: all functions, database rules, site. A failed step stops the ones after it;"
-            echo "re-run this workflow to retry (every step is safe to repeat)."
+            echo "Order: all functions, database rules, site. A failed step stops the ones after it."
+            echo "To retry, start a new run by hand: Actions > Deploy to production > Run workflow > branch master"
+            echo "(every step is safe to repeat). A re-run of an old run stops by itself once master holds newer code."
             echo "Not done here: BigQuery schema SQL, loading questions, Search Console. See DEPLOYING.md."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Remove the key file

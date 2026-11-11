@@ -30,6 +30,20 @@ jobs:
       # npm test builds first, then runs every function test. No Firebase sign-in needed.
       - run: npm test
 
+  deploy-scripts:
+    name: Deploy scripts (test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The scripts deploy.yml runs before a release. Plain Node and git, nothing to install.
+      - run: node --test .github/scripts/*.test.js
+
   game:
     name: Game client (lint, build and test)
     runs-on: ubuntu-latest
