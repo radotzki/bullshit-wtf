@@ -192,8 +192,20 @@ The retired Google Analytics tag is gone from the page.
   sending the old `end` and `stuck` rows, which land with the new columns empty.
 - Count page views as `COUNT(DISTINCT view)`; a view made a game when any of its rows has `created`.
 - Tests and bots: a play-test link (`?via=test`, `?via=test-<name>`) sets `test` on every row of the
-  tab, and a scripted browser or a crawler sets `bot`. The saved queries leave both out. A test in
-  a tab that arrived without the tag is not marked.
+  tab from then on, also when the tab later opens an invite link or a lobby code with its own tag
+  (`?via=link`, `?via=qr`): the test tag stays the row's `tag`. A scripted browser or a crawler
+  sets `bot`. The saved queries leave both out. Not marked: a test in a tab that arrived without
+  the tag, another tab or another phone (a code scanned with a camera opens a new tab), and a
+  browser that blocks session storage once it leaves the address that carries the tag. So open
+  every play-test tab, guests too, from a `?via=test` link first.
+- Post tags on the plain pages: every link of a plain page that stays on the site (the buttons,
+  the logo, the links in the text, the other pages, the other language) carries the page's
+  `?via=` tag on, so a game created after any of them is credited to the post.
+- The visit function runs at most 3 copies at once (`VISIT_MAX_INSTANCES` in
+  `functions/src/controllers/visit.ts`, with the reason). The endpoint is still public, with no
+  rate limit and no check that a row came from the site: the cap bounds what a flood can cost,
+  not whether rows can be forged, so a number from this table can be inflated by someone who
+  wants to. A merge deploys the cap with the function; there is nothing to set by hand.
 - First visit means the browser held nothing of the game when the page opened. A visitor who only
   looked at the English home page and left stores nothing, so a second look counts as first again.
 - Check locally: `cd functions && npm test` prints the rows of one visit (`# visits {...}`, from

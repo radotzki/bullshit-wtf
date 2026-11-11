@@ -14,7 +14,7 @@ import { startGame, hostHere } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
-import { cleanVisit, visitRecord } from './controllers/visit';
+import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visit';
 
 // Error bodies always carry a readable message and a code, so the client
 // (and Sentry) never sees an empty object.
@@ -204,7 +204,8 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
 // (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,
 // so no CORS preflight. Written to BigQuery `visits` and logged as one line starting "visit ".
 // Reads no IP and stores no user agent. Always answers 204, whatever BigQuery says.
-exports.visit = functions.https.onRequest(async (req, res) => {
+// At most VISIT_MAX_INSTANCES copies run at once (controllers/visit.ts says why).
+exports.visit = functions.runWith({ maxInstances: VISIT_MAX_INSTANCES }).https.onRequest(async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'POST') {
         try {

@@ -30,9 +30,12 @@
       : 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/visit';
     // The tag of the link that brought the visitor (?via=fb-he-hanukkah, ?via=qr, ?via=test), else
     // the post tag this tab arrived with earlier (the game keeps it in sessionStorage for Create).
-    var tag = '';
+    // A tab that arrived as a play-test (test, test-<name>) stays one: its tag wins over the tag
+    // of an invite link or a lobby code opened later in the same tab (?via=link, ?via=qr).
+    var tag = '', kept = '';
     try { var m = /[?&]via=([^&#]*)/.exec(location.search); tag = m ? decodeURIComponent(m[1]) : ''; } catch (e) { }
-    try { tag = tag || w.sessionStorage.getItem('BS_CAMPAIGN') || ''; } catch (e) { }
+    try { kept = w.sessionStorage.getItem('BS_CAMPAIGN') || ''; } catch (e) { }
+    if (!tag || /^test(-|$)/.test(kept)) { tag = kept || tag; }
     // First visit: the browser holds nothing of the game yet (no player, crew, language or sign-in).
     // Read from what the game already keeps; the beacon itself stores nothing.
     var fresh = null;

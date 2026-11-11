@@ -95,6 +95,16 @@ function tagOf(v: any): string {
     return /^[a-z0-9][a-z0-9-]{0,39}$/.test(t) ? t : '';
 }
 
+// The most copies of the visit function that may run at once. The endpoint is public and has no rate limit, so without a cap a
+// flood of posts is served by as many copies as it asks for, and each one costs run time, a log
+// line and a BigQuery row. The site has a few hundred visits a day, each sending about five small
+// rows: far below one a second, and one warm copy answers a row in well under a second. Three
+// leaves room for a full lobby of 8 phones opening the join page at once and for a copy held by
+// a slow BigQuery call. Over the cap a row waits a moment or is dropped (the beacon reads no
+// answer and never retries on failure), which no player sees. Raise it if real traffic grows
+// about a hundredfold.
+export const VISIT_MAX_INSTANCES = 3;
+
 /** A test tag: `test` or `test-<name>`, the mark a play-test link carries (?via=test). */
 export function isTestTag(tag: string): boolean {
     return /^test(-|$)/.test(tag || '');

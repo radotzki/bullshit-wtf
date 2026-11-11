@@ -132,14 +132,19 @@ ${p.body.trim().split('\n').map(l => '    ' + l).join('\n')}
   </main>
   <footer>${esc(s.footer)}</footer>
   <script>
-    // Keep a post's ?via= tag on the way into the game, so the game records which post it came from.
+    // Keep a post's ?via= tag on every link of this page that stays on the site (the two buttons,
+    // the logo, the links in the text, the other pages and the other language), so the game
+    // records which post a visitor came from whichever link they tap.
     (function () {
-      var m = /[?&]via=([a-z0-9-]{1,40})/i.exec(location.search);
+      var m = /[?&]via=([a-z0-9-]{1,40})(?=[&#]|$)/i.exec(location.search);
       if (!m) return;
-      var links = document.querySelectorAll('a.btn');
+      var links = document.querySelectorAll('a[href]');
       for (var i = 0; i < links.length; i++) {
         var h = links[i].getAttribute('href');
-        links[i].setAttribute('href', h + (h.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1]);
+        // Only a path of this site ("/create-game"), never another site ("//x", "https://x").
+        if (h.charAt(0) !== '/' || h.charAt(1) === '/' || /[?&]via=/.test(h)) continue;
+        var at = h.indexOf('#'), hash = at < 0 ? '' : h.slice(at), path = at < 0 ? h : h.slice(0, at);
+        links[i].setAttribute('href', path + (path.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1] + hash);
       }
     })();
   </script>

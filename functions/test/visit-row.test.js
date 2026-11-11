@@ -26,7 +26,11 @@ const fakeFunctions = {
     https: { onRequest: (h) => ({ __handler: h }) },
     database: { ref: () => ({ onWrite: (h) => ({ __trigger: h }) }) },
 };
-fakeFunctions.runWith = () => fakeFunctions;
+// runWith keeps its options on the handler, so a test can read a function's limits.
+fakeFunctions.runWith = (opts) => ({
+    https: { onRequest: (h) => ({ __handler: h, __runWith: opts }) },
+    database: fakeFunctions.database,
+});
 const noRef = () => ({ child: noRef, once: async () => ({ val: () => null }) });
 const fakeFirebase = {
     gamesRef: noRef(), qHistoryRef: noRef(), gameCounterRef: noRef(), questionsRef: noRef(),
@@ -206,6 +210,56 @@ test('a play-test link marks its rows as tests, and the mark stays for the tab',
     const got = visits();
     assert.deepStrictEqual(got.map(r => [r.tag, r.test, r.bot]), [['test', true, false], ['test', true, false], [null, false, true]]);
     assert.strictEqual(got[1].ref, 'bullshit.wtf');
+});
+
+test('a tab that arrived as a play-test stays marked test on an invite link and a lobby code', async () => {
+    rows.length = 0;
+    quiet();
+    // What the game keeps for the tab after it opened /he?via=test or /?via=test-qa.
+    const cases = [
+        ['https://bullshit.wtf/join-game/ABCD?via=link', 'test'],
+        ['https://bullshit.wtf/he/join-game/ABCD?via=qr', 'test'],
+        ['https://bullshit.wtf/join-game/ABCD?via=results', 'test-qa'],
+        ['https://bullshit.wtf/?via=fb-he-hanukkah', 'test'],
+        ['https://bullshit.wtf/join-game/ABCD', 'test'],
+    ];
+    for (const [href, kept] of cases) {
+        const page = openPage({ href, ua: IPHONE, sessionStored: { BS_CAMPAIGN: kept } });
+        page.boot();
+        page.window.bsVisit('join');
+        page.hide();
+        await page.deliver();
+        assert.deepStrictEqual(page.writes, []);
+    }
+    // A tab that did not arrive as a test is untouched: the link's own tag wins, as before.
+    const real = openPage({ href: 'https://bullshit.wtf/join-game/ABCD?via=link', ua: IPHONE, sessionStored: { BS_CAMPAIGN: 'fb-he-hanukkah' } });
+    await real.deliver();
+    const fresh = openPage({ href: 'https://bullshit.wtf/join-game/ABCD?via=qr', ua: IPHONE });
+    await fresh.deliver();
+    // Words that only start like test are not test tags, kept or on the link.
+    const tester = openPage({ href: 'https://bullshit.wtf/join-game/ABCD?via=link', ua: IPHONE, sessionStored: { BS_CAMPAIGN: 'testing' } });
+    await tester.deliver();
+    loud();
+    const got = visits();
+    const marked = got.slice(0, 15);
+    assert.strictEqual(marked.length, 15);                    // view, join, end for each of the five
+    assert.ok(marked.every(r => r.test === true), 'every row of a test tab is a test');
+    assert.deepStrictEqual(marked.filter(r => r.kind === 'view').map(r => r.tag), ['test', 'test', 'test-qa', 'test', 'test']);
+    assert.deepStrictEqual(got.slice(15).map(r => [r.tag, r.test]), [['link', false], ['qr', false], ['link', false]]);
+});
+
+test('the visit function has a cap on running copies, and only it', () => {
+    const { VISIT_MAX_INSTANCES } = require(path.join(__dirname, '..', 'dist', 'controllers', 'visit'));
+    assert.deepStrictEqual(api.visit.__runWith, { maxInstances: VISIT_MAX_INSTANCES });
+    // Small enough to bound a flood, with room for a full lobby opening the join page at once.
+    assert.ok(Number.isInteger(VISIT_MAX_INSTANCES) && VISIT_MAX_INSTANCES >= 2 && VISIT_MAX_INSTANCES <= 10, String(VISIT_MAX_INSTANCES));
+    // The game's own functions keep their settings: none of them gets a cap by this change.
+    for (const name of ['newGame', 'join', 'answer', 'startGame', 'onJoinGame', 'onShare']) {
+        assert.strictEqual(api[name].__runWith, undefined, name);
+    }
+    // The source says it too, so a deploy sets it: 1st-gen runWith on the exported function.
+    const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.ts'), 'utf8');
+    assert.match(src, /exports\.visit = functions\.runWith\(\{ maxInstances: VISIT_MAX_INSTANCES \}\)\.https\.onRequest\(/);
 });
 
 test('a plain page is counted and never called stuck; a stuck app is', async () => {
