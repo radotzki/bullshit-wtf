@@ -20,6 +20,8 @@ export class GameService implements CanActivate {
     private game: Subscription;
     private timeout;
     private current: GameState;
+    /** Goes up each time the phone stops following a game: an answer that was asked for before is then stale. */
+    private follows = 0;
 
     constructor(
         private router: Router,
@@ -37,6 +39,9 @@ export class GameService implements CanActivate {
             this.game.unsubscribe();
             this.game = undefined;
             this.clearTimer();
+            // Whatever is still being read for the game just left must not move the phone.
+            this.current = undefined;
+            this.follows++;
         }
     }
 
@@ -73,9 +78,12 @@ export class GameService implements CanActivate {
                 // The staged reveal shows the scores itself, and the server gives this phase no time:
                 // the reveal page stays up until the next question. (A phone that opens the game right
                 // in this phase is not on the reveal page, and gets the scoreboard as before.)
+                // A phone that has left this game while that was read (BACK HOME, another game) stays
+                // where it went: the scoreboard page would make it follow the old game again.
+                const follow = this.follows;
                 this.apiService.isStagedReveal(pin).then(staged => {
                     const onReveal = this.router.url.indexOf('/reveal-the-truth/') === 0;
-                    if (this.current === GameState.ScoreBoard && !(staged && onReveal)) {
+                    if (follow === this.follows && this.current === GameState.ScoreBoard && !(staged && onReveal)) {
                         this.router.navigate(['score-board', pin]);
                     }
                 });
