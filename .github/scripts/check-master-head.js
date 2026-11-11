@@ -37,7 +37,9 @@ function check(url, branch, sha) {
     }
     let changed;
     try {
-        changed = git(['diff', '--name-only', '-z', sha, head]).split('\0').filter(Boolean);
+        // --no-renames: a file that moved counts under its old name too. Without it git prints
+        // only the new name, and a deployed file moved into docs/ or renamed to .md would pass.
+        changed = git(['diff', '--no-renames', '--name-only', '-z', sha, head]).split('\0').filter(Boolean);
     } catch (e) {
         return { ok: false, message: 'Could not compare this run\'s commit ' + sha.slice(0, 7) + ' with the head of ' +
             branch + ' (' + head.slice(0, 7) + '). Nothing was deployed.' };

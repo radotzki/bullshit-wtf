@@ -26,7 +26,7 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
 4. Builds the functions and the site. A broken build deploys nothing. Then it checks the head of
    `master` once more, and only then is the key written to a temporary file, so no package's
    install or build script can read it.
-5. Checks, without changing anything, that the account can reach the database and the site (see
+5. Checks, without releasing anything, that the account can reach the database and the site (see
    "The access check" below). If it cannot, the run stops before the functions are released.
 6. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
@@ -45,16 +45,24 @@ Things to know:
   (`.github/scripts/check-master-head.js`), before the builds and again right before the first
   deploy, and stops with "Deploy stopped, nothing released" when `master` has moved on. It still
   goes ahead when the newer commits changed only files that are never deployed (`*.md`, `docs/`,
-  `graphics/`): a push of those starts no run of its own, and the code is the same. The list in
+  `graphics/`): a push of those starts no run of its own, and the code is the same. A deployed
+  file that was moved into `docs/` or renamed to `.md` counts as changed, so that stops the run. The list in
   the script must stay equal to `paths-ignore` in `deploy.yml`; a test compares them.
   Runs that started before this check existed (2026-11-11) do not have it: never re-run those.
 - **Rolling back** is therefore not "re-run an old run". Revert the change in a pull request and
   merge it (it is tested and released like any other), or deploy the older commit by hand from a
   computer (below).
 - **The access check.** Before the first deploy the run makes the same first calls that the rules
-  and site deploys make, and changes nothing: `firebase deploy --only database --dry-run` reads the
+  and site deploys make, and releases nothing: `firebase deploy --only database --dry-run` reads the
   database instance and sends the rules with `dryRun=true` (checked, not stored), and
-  `firebase hosting:channel:list` finds the hosting site and reads its channels. This is there
+  `firebase hosting:channel:list` finds the hosting site and reads its channels. One of its calls
+  is not a read: the tool first asks whether the Hosting API (`firebasehosting.googleapis.com`) is
+  on in the project, and if it is off, tries to switch it on. The site deploy does the same, and
+  the API is on for as long as the site is served, so in practice the check only reads. It cannot
+  be made a pure read with the Firebase tool: its read-only hosting commands (`hosting:channel:list`
+  and `hosting:sites:list`, read at version 15.35.0) both start with that step and have no option
+  to skip it, and a plain request to Google
+  instead would need new code that handles the key. This is there
   because on 2026-11-11 a run released the functions, then failed at the rules ("Failed to get
   instance details"), and the site never went out. What it does not prove: that the account may
   *write* to hosting. The tool's hosting dry run creates a new empty version on the live site, so
@@ -110,7 +118,10 @@ secret's value. The account needs to deploy 1st gen functions, database rules an
 cover it (not yet tried on this project): Cloud Functions Admin, Service Account User, Firebase Rules Admin, Firebase Realtime
 Database Admin, Firebase Hosting Admin, Artifact Registry Reader, Service Usage Consumer (or, more
 simply and more widely, Firebase Admin plus Service Account User). If a role is missing, the
-failing step's log names the permission. To revoke access, delete the key in the console.
+failing step's log does not name the permission: the Firebase tool writes its "missing
+permissions" finding only to a debug file that the run does not keep, and the step fails later
+with a general message such as "Failed to get instance details". Go by which step failed, and
+compare the account's roles with this list. To revoke access, delete the key in the console.
 
 ### What the pipeline does not do (still a person's step)
 

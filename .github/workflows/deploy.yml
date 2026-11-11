@@ -99,7 +99,7 @@ jobs:
 
       # A release must not stop halfway: on 2026-11-11 the functions went out, then the rules step
       # could not read the database instance, and the site was never released. So before the
-      # first deploy, make the same first calls the rules and site deploys make, and change nothing:
+      # first deploy, make the same first calls the rules and site deploys make, and release nothing:
       # - `deploy --only database --dry-run` reads the database instance and sends the rules with
       #   dryRun=true (the server checks them and stores nothing). The tool skips its deploy and
       #   release phases on a dry run.
@@ -108,7 +108,13 @@ jobs:
       # Hosting gets a read and not a dry run on purpose: the tool's hosting dry run creates a
       # new, empty version on the live site. So this proves the account can reach the site, not
       # that it may write to it.
-      - name: Check access to the database and the site (changes nothing)
+      # One call here is not a read. `hosting:channel:list` first asks whether the Hosting API
+      # (firebasehosting.googleapis.com) is on in the project, and if it is off, tries to switch
+      # it on. With the API on, as it is while the site is served, both commands only read. The
+      # tool's other read-only hosting command (`hosting:sites:list`) starts with the same step,
+      # and a plain request to Google would need new code that handles the key, so the step
+      # stays and its name says "releases nothing".
+      - name: Check access to the database and the site (releases nothing)
         run: |
           npx firebase deploy --only database --dry-run --project "$FIREBASE_PROJECT" --non-interactive
           npx firebase hosting:channel:list --project "$FIREBASE_PROJECT" --non-interactive

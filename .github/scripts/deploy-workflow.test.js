@@ -23,7 +23,7 @@ test('the steps run in the intended order', () => {
         'Install and build the site',
         'Check again that this commit is still the head of master',
         'Write the Firebase key',
-        'Check access to the database and the site (changes nothing)',
+        'Check access to the database and the site (releases nothing)',
         '1. Deploy all functions',
         '2. Deploy the database rules',
         '3. Deploy the site',

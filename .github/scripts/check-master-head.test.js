@@ -78,6 +78,31 @@ test('stops when a newer commit mixes a guide with code', t => {
     assert.strictEqual(r.run(r.first).status, 1);
 });
 
+// git follows renames by default and would print only the new name: a deployed file that master
+// moved out of the deployed set would then look like a never-deployed file. The old run still
+// holds the file, so it must stop.
+const move = (r, from, to) => {
+    fs.mkdirSync(path.dirname(path.join(r.remote, to)), { recursive: true });
+    git(r.remote, 'mv', from, to);
+    git(r.remote, 'commit', '--quiet', '-m', 'move ' + from + ' to ' + to);
+};
+
+test('stops when master moved a deployed file into docs/', t => {
+    const r = setup(t);
+    move(r, 'functions/src/index.ts', 'docs/index.ts');
+    const out = r.run(r.first);
+    assert.strictEqual(out.status, 1, out.stdout + out.stderr);
+    assert.match(out.stdout, /differs in deployed files \(functions\/src\/index\.ts\)/);
+});
+
+test('stops when master renamed a deployed file to end in .md', t => {
+    const r = setup(t);
+    move(r, 'functions/src/index.ts', 'functions/src/index.md');
+    const out = r.run(r.first);
+    assert.strictEqual(out.status, 1, out.stdout + out.stderr);
+    assert.match(out.stdout, /differs in deployed files \(functions\/src\/index\.ts\)/);
+});
+
 test('passes for the newest commit after several', t => {
     const r = setup(t);
     r.commit('functions/src/index.ts', 'two');
