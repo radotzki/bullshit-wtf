@@ -201,7 +201,7 @@ export function revealMoment(schedule: RevealSchedule, elapsed: number): RevealM
  * What one question did to each player's score, from the reveal rows alone (so a phone can show it
  * during the reveal, before the server adds it up): a lie's writer gets the row's points, a player who
  * found the truth gets the row's points, and a player who picked a house lie loses what `pointsBy` says.
- * Must agree with calcPlayersScore in the functions' tick.ts (functions/test/big-reveal.test.js checks).
+ * Must agree with addQuestionScores in the functions' scoring.ts (functions/test/big-reveal.test.js checks).
  */
 export function revealScoreChanges(revealAnswers: RevealAnswer[] | undefined | null): { [pid: string]: number } {
     const changes: { [pid: string]: number } = {};

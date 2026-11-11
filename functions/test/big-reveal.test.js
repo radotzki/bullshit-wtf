@@ -7,7 +7,7 @@ const Module = require('module');
 const path = require('path');
 const fs = require('fs');
 
-// ---- fakes, so tick.js and fork.js load without a Firebase project ----
+// ---- fakes, so fork.js loads without a Firebase project ----
 const noRef = { child: () => noRef, once: async () => ({ val: () => null }), set: async () => undefined, update: async () => undefined };
 const fakeFirebase = {
     gamesRef: noRef, qHistoryRef: noRef, gameCounterRef: noRef, questionsRef: noRef, seenQuestionsRef: noRef, crewsRef: noRef,
@@ -25,7 +25,7 @@ const model = require(path.join(dist, 'game-model'));
 const { drawBigReveal, bigRevealArm } = require(path.join(dist, 'controllers', 'big-reveal'));
 const { pickCoach, questionResult } = require(path.join(dist, 'controllers', 'lie-helper'));
 const phase = require(path.join(dist, 'controllers', 'phase'));
-const tick = require(path.join(dist, 'controllers', 'tick'));
+const scoring = require(path.join(dist, 'controllers', 'scoring'));
 const { createFork } = require(path.join(dist, 'controllers', 'fork'));
 const { cleanShare } = require(path.join(dist, 'controllers', 'analytics'));
 
@@ -226,7 +226,7 @@ test('a staged reveal, beat by beat: the answer, who picked it, who wrote it; a 
 
 // ---------------------------------------------------------------------------- the scores
 
-function playedQuestion() {
+function playedQuestion(strayPicks) {
     // a and b wrote the same lie; c wrote another; d wrote none. Round 2 (750 a fooled friend, 1500 the truth).
     const game = {
         roundIndex: 1,
@@ -239,25 +239,23 @@ function playedQuestion() {
             c: { text: 'paperclips', houseLie: false, realAnswer: false },
             h1: { text: 'soup', houseLie: true, realAnswer: false }, truth: { text: 'pills', houseLie: false, realAnswer: true },
         },
-        answerSelections: {
+        answerSelections: Object.assign({
             a: { text: 'soup' },        // falls for the house: loses points
             b: { text: 'pills' },       // finds the truth
             c: { text: 'soup' },        // falls for the house with nothing to lose
             d: { text: 'a goat' },      // fooled by a and b
-        },
+        }, strayPicks || {}),
     };
     const before = JSON.parse(JSON.stringify(game.players));
-    const scored = tick.calcAnswersScore(game);
-    game.answers = scored.answers;
-    game.answerSelections = scored.answerSelections;
-    game.revealAnswers = tick.generateRevealAnswers(game);
+    // As tick.ts does when picking closes: the points, the picks that count and the reveal rows.
+    Object.assign(game, scoring.scoreQuestion(game));
     return { game, before };
 }
 
 test('the changes a phone works out from the reveal rows are the ones the server adds', () => {
     const { game, before } = playedQuestion();
     const changes = revealScoreChanges(game.revealAnswers);
-    const after = tick.calcPlayersScore(JSON.parse(JSON.stringify(game)));
+    const after = scoring.addQuestionScores(game);
     Object.keys(before).forEach(pid =>
         assert.strictEqual(before[pid].score + (changes[pid] || 0), after[pid].score, `${pid}: ${JSON.stringify(changes)}`));
     assert.strictEqual(changes.a + changes.b + changes.d !== 0, true);
@@ -265,6 +263,31 @@ test('the changes a phone works out from the reveal rows are the ones the server
     assert.ok(changes.a < 750, 'the house took points back');
     assert.strictEqual(changes.c || 0, 0, 'nothing to lose');
     assert.deepStrictEqual(revealScoreChanges(null), {});
+});
+
+test('picks that are no player\'s change no reveal row, no score change on a phone and no total', () => {
+    const clean = playedQuestion();
+    const { game, before } = playedQuestion({
+        ghost: { text: 'pills' },                       // an id that is no player's, on the truth
+        constructor: { text: 'paperclips' },            // an id that every object has, on a player's lie
+        '-Nstray': { text: 'soup', score: 999999 },     // on the house lie, carrying its own points
+        nobody: 'pills',                                // not shaped like a pick
+    });
+
+    assert.deepStrictEqual(game.revealAnswers, clean.game.revealAnswers, 'the rows a staged reveal plays are the same');
+    assert.deepStrictEqual(Object.keys(game.answerSelections).sort(), ['a', 'b', 'c', 'd'], 'only the players\' picks are kept');
+    const ids = [].concat(...game.revealAnswers.map(row => row.selectors.concat(Object.keys(row.pointsBy || {}))));
+    assert.deepStrictEqual(ids.filter(pid => !before[pid]), [], 'no row names an id that is no player\'s');
+
+    const changes = revealScoreChanges(game.revealAnswers);
+    assert.deepStrictEqual(changes, revealScoreChanges(clean.game.revealAnswers));
+    const after = scoring.addQuestionScores(game);
+    assert.deepStrictEqual(after, scoring.addQuestionScores(clean.game));
+    Object.keys(before).forEach(pid => assert.strictEqual(before[pid].score + (changes[pid] || 0), after[pid].score, pid));
+    // The folded scoreboard of the staged reveal: only the four players, before and after.
+    const standings = revealStandings(before, changes);
+    assert.deepStrictEqual(standings.map(p => p.nickname).sort(), ['Alice', 'Ben', 'Chen', 'Dana']);
+    standings.forEach(p => assert.strictEqual(p.after, after[p.pid].score));
 });
 
 test('the folded scoreboard: before, change, after, places and the order on screen', () => {
