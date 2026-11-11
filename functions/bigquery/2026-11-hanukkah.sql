@@ -19,6 +19,7 @@ ALTER TABLE `bullshit-wtf-prod.analytics.closed_games`
 -- through parent_pin: see the second query.
 -- SELECT DATE(time, 'Asia/Jerusalem') AS day, campaign, COUNT(*) AS games, SUM(players) AS players
 -- FROM `bullshit-wtf-prod.analytics.opened_games`
+-- WHERE campaign IS NOT NULL
 --   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')   -- test games out (2026-11-test-mark.sql)
 -- GROUP BY day, campaign ORDER BY day, games DESC;
 
