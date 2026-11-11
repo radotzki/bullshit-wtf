@@ -1,0 +1,55 @@
+# Tests for every pull request. Needs no secrets and touches no Firebase project.
+# deploy.yml calls this same file before it releases, so a release never skips the tests.
+name: Tests
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  functions:
+    name: Functions (build and test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+      # npm test builds first, then runs every function test. No Firebase sign-in needed.
+      - run: npm test
+
+  game:
+    name: Game client (lint, build and test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: game/package-lock.json
+      # The workarounds for the 2017 toolchain live in the repository itself: game/.npmrc
+      # (legacy-peer-deps), the node-sass override in package.json, and the OpenSSL legacy
+      # flag inside the build script. Nothing extra is set here.
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - name: Check the build output
+        run: |
+          for f in index.html he.html sitemap.xml robots.txt how-to-play.html; do
+            test -s "dist/$f" || { echo "::error::game/dist/$f is missing or empty"; exit 1; }
+          done

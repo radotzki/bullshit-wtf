@@ -1,0 +1,96 @@
+# Releases master to production (Firebase project bullshit-wtf-prod), in the fixed order from
+# DEPLOYING.md: all functions, then the database rules, then the site.
+# Runs on every push to master (a merged pull request) and by hand from the Actions tab.
+name: Deploy to production
+
+on:
+  push:
+    branches: [master]
+    # Nothing in these is deployed.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'graphics/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One release at a time, in the order the merges arrived. A running release is never cancelled:
+# stopping between the functions and the site would leave production half released.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  FIREBASE_PROJECT: bullshit-wtf-prod
+
+jobs:
+  test:
+    name: Tests
+    # Production is released from master only, also on a manual run.
+    if: github.ref == 'refs/heads/master'
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy (functions, rules, site)
+    needs: test
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+            game/package-lock.json
+
+      # First of all: no key, no release. This fails with a plain message before anything is built.
+      - name: Check the Firebase key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
+
+      # Build everything before the first deploy step, so a broken build releases nothing.
+      - name: Install the Firebase CLI
+        run: npm ci
+      - name: Install and build the functions
+        working-directory: functions
+        run: |
+          npm ci
+          npm run build
+      - name: Install and build the site
+        working-directory: game
+        run: |
+          npm ci
+          npm run build
+
+      # The order matters: new clients call functions that must already exist, and read paths the
+      # new rules open. Each step runs only if the one before it succeeded.
+      # Always all functions, never one by name: each carries its own copy of the shared code.
+      # No --force: the CLI must never delete a function on its own.
+      - name: 1. Deploy all functions
+        run: npx firebase deploy --only functions --project "$FIREBASE_PROJECT" --non-interactive
+      - name: 2. Deploy the database rules
+        run: npx firebase deploy --only database --project "$FIREBASE_PROJECT" --non-interactive
+      - name: 3. Deploy the site
+        run: npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Deploy of ${GITHUB_SHA::7} to $FIREBASE_PROJECT: ${{ job.status }}"
+            echo "Order: all functions, database rules, site. A failed step stops the ones after it;"
+            echo "re-run this workflow to retry (every step is safe to repeat)."
+            echo "Not done here: BigQuery schema SQL, loading questions, Search Console. See DEPLOYING.md."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove the key file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-key.json"
