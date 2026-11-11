@@ -52,3 +52,12 @@ test('every points figure of the staged reveal is marked left to right', () => {
     assert.ok(spans.length >= 5, `found ${spans.length} points figures`);
     spans.forEach(tag => assert.ok(/dir="ltr"/.test(tag), tag));
 });
+
+test('on a phone NEXT stays at the bottom edge while the scores scroll', () => {
+    const scss = fs.readFileSync(path.join(dir, 'reveal-the-truth.component.scss'), 'utf8');
+    const block = scss.slice(scss.indexOf('&.is-staged:not(.is-presenter) {'));
+    assert.ok(block.length > 10, 'the phone-only block is there');
+    const rule = block.slice(0, block.indexOf('}'));
+    assert.ok(/\.after \.next/.test(rule) && /\.after \.waiting/.test(rule), rule);
+    assert.ok(/position: sticky;\s*bottom: 0;/.test(rule), rule);
+});

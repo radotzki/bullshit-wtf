@@ -548,6 +548,25 @@
         }
     }
 
+    // On a phone NEXT (and "Waiting for …" after it) stays at the bottom edge of the scrolled area: on a
+    // short phone with many players the scores run below the edge, and the table must not have to
+    // scroll to move on. The scores pass under it.
+    &.is-staged:not(.is-presenter) {
+        .after .next,
+        .after .waiting {
+            position: -webkit-sticky;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            box-shadow: 0 0 0 6px white, 0 -12px 10px 4px rgba(255, 255, 255, 0.9);
+        }
+
+        .after .waiting {
+            background: white;
+            padding: 6px 0;
+        }
+    }
+
     // Phones and screens that ask for less motion: no full-screen flash (the same words are in the
     // player's own result at the end), and nothing in the staged reveal pops, slams or slides.
     @media (prefers-reduced-motion: reduce) {
