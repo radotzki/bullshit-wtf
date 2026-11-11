@@ -30,18 +30,37 @@ export async function tick(pin) {
  * Move the game on from the phase `from`, exactly once.
  * Safe to call from the server timer, a client tick and the "everyone answered" checks at the same time:
  * whoever claims the lock for this phase first does the work, everyone else is a no-op.
+ * A phase that was moved stays taken for the rest of the game (see takePhase), so a caller that is
+ * late for it finds nothing to do.
  */
 export async function advance(pin: string, from: GameStateInfo, retryAfter = leaveRetryDelay) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    let game = await get<GameScheme>(gamesRef.child(pin));
 
-    if (!game || !game.state || stateKey(game.state) !== stateKey(from)) {
+    if (!onPhase(game, from)) {
         console.log(`[PIN: ${pin}] State already moved on from ${stateKey(from)}`);
+        return;
+    }
+
+    const phase = phaseKey(game);
+
+    if (!(await takePhase(pin, phase))) {
+        console.log(`[PIN: ${pin}] The move on from ${stateKey(from)} is taken`);
         return;
     }
 
     if (!(await claim(pin, stateKey(from)))) {
         console.log(`[PIN: ${pin}] Another caller is advancing from ${stateKey(from)}`);
+        await freePhase(pin, phase).catch(err => console.error(`[PIN: ${pin}] Failed to free ${phase}`, err));
+        return;
+    }
+
+    // The step works on the game as it is now that the phase is this run's, not as it was read before:
+    // if the game has left the phase meanwhile, there is nothing to do, and the phase stays taken.
+    game = await get<GameScheme>(gamesRef.child(pin));
+
+    if (!onPhase(game, from)) {
+        console.log(`[PIN: ${pin}] State moved on from ${stateKey(from)} before this run took it`);
         return;
     }
 
@@ -66,6 +85,8 @@ export async function advance(pin: string, from: GameStateInfo, retryAfter = lea
         // (the timer's second try, a phone's own timer, the last answer) can move it on.
         console.error(`[PIN: ${pin}] Failed to advance from ${stateKey(from)}`, e);
         await release(pin, stateKey(from)).catch(err => console.error(`[PIN: ${pin}] Failed to release ${stateKey(from)}`, err));
+        // The lock first, then the phase: the next caller takes them in the other order.
+        await freePhase(pin, phase).catch(err => console.error(`[PIN: ${pin}] Failed to free ${phase}`, err));
         throw e;
     }
 
@@ -98,6 +119,36 @@ async function leaveAtOnce(pin: string, state: GameStateInfo, retryAfter: number
     } catch (e) {
         console.error(`[PIN: ${pin}] Failed again to leave ${stateKey(state)}; left to the phones' timers`, e);
     }
+}
+
+function onPhase(game: GameScheme | null | undefined, phase: GameStateInfo): boolean {
+    return !!game && !!game.state && stateKey(game.state) === stateKey(phase);
+}
+
+/** Names one occurrence of a phase for the whole game: the phase's key and the question it belongs to. */
+function phaseKey(game: GameScheme): string {
+    return `${stateKey(game.state)}:q${game.questionIndex || 0}`;
+}
+
+/**
+ * games/{pin}/advanceTaken holds one entry for each phase whose move is taken or done. The lock below
+ * remembers only the phase claimed last; an entry here is that phase's own and stays, so taking one
+ * phase never undoes another's. Only the run that took a phase and could not move it frees it.
+ */
+function takePhase(pin: string, phase: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('advanceTaken').child(phase).transaction(
+            // The database client first runs this on what it holds locally, which is nothing (null) here.
+            // If the server holds an entry, this runs again on that, and stops.
+            current => current === null ? true : undefined,
+            (error, committed) => error ? reject(error) : resolve(committed),
+            false,
+        );
+    });
+}
+
+function freePhase(pin: string, phase: string): Promise<void> {
+    return gamesRef.child(pin).child('advanceTaken').child(phase).set(null);
 }
 
 function claim(pin: string, key: string): Promise<boolean> {
