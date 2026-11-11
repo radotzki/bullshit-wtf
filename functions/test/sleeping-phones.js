@@ -136,7 +136,9 @@ async function earlyEndAndStaleTick() {
     assert.ok(answers.timestamp - question.timestamp < 25000 - 20000, 'question ended early');
 
     console.log(`${at()} [${pin}] the only player picks an answer`);
-    await gamesRef.child(pin).child('answerSelections').child('p1').set({ text: 'truth0' });
+    // The question is picked again for the room at START, so read the truth off the table.
+    const truth = (await gamesRef.child(pin).child('answers').child('truth').once('value')).val().text;
+    await gamesRef.child(pin).child('answerSelections').child('p1').set({ text: truth });
     const reveal = await waitFor(log, 4, 3000);
     assert.ok(reveal.timestamp - answers.timestamp < 3000, 'answers ended early');
 
