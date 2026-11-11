@@ -154,6 +154,24 @@ test('both languages have every string of the ask and of the rematch offer', () 
     assert.ok(h.rematchStrings.he.waiting('דנה').includes('דנה'));
 });
 
+test('after REMIND ME the card does not claim the entry is saved: it says to open the file, or use Google Calendar', () => {
+    const en = h.hostAskStrings.en;
+    const he = h.hostAskStrings.he;
+    assert.strictEqual(en.saved, 'One more step. If a calendar file downloaded, open it to save game night.');
+    assert.strictEqual(en.google, 'Or add it to Google Calendar');
+    assert.strictEqual(he.saved, 'עוד צעד אחד. אם ירד קובץ יומן, פתחו אותו כדי לשמור את ערב המשחק.');
+    assert.strictEqual(he.google, 'או הוסיפו ליומן Google');
+    // Pressing the button only hands a file to the browser, and some browsers drop it. So no line
+    // may say the night is already in a calendar, and the Google link is a second way, not a rescue.
+    [en.saved, en.google].forEach(s => assert.ok(!/is in your calendar|saved to|added to|nothing happened/i.test(s), s));
+    [he.saved, he.google].forEach(s => assert.ok(!/נשמר ביומן|נוסף ליומן|לא קרה כלום/.test(s), s));
+    assert.ok(/open it/i.test(en.saved) && /^If |\. If /.test(en.saved));
+    assert.ok(/פתחו אותו/.test(he.saved) && /אם ירד/.test(he.saved));
+    assert.ok(/^Or /.test(en.google) && /^או /.test(he.google));
+    // Short enough for two lines on a phone.
+    [en.saved, he.saved].forEach(s => assert.ok(s.length <= 80, s));
+});
+
 // ---------------------------------------------------------------------------
 // REMATCH pressed on another phone.
 
