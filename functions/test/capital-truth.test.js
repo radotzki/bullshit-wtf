@@ -252,3 +252,32 @@ test('isSamePick: case is the only difference it forgives', () => {
     assert.strictEqual(isSamePick('KFC', undefined), false);
     assert.strictEqual(isSamePick('1', 1), false);
 });
+
+// With the stray pick fix (scoring.ts): picks are written by phones, so anything can be under
+// answerSelections. Matching without case must not let any of it count.
+test('with a capital truth, stray picks still count for nothing', async () => {
+    const pin = newGame([KFC, ORDINARY, ORDINARY]);
+    await toAnswers(pin);
+
+    // Written straight to the database, not through the game: a pick by somebody who is no player,
+    // a pick with no text, and p3 "picking" their own lie in capitals.
+    game(pin).answerSelections = {
+        ghost: { text: 'kfc', score: 99999 },
+        p2: { score: 99999 },
+        p3: { text: 'P3 LIE', score: 99999 },
+    };
+    await pick(pin, 'p1', 'KFC');
+    assert.strictEqual(state(pin), S.ShowAnswers, 'p2 and p3 have not picked: picking goes on');
+    assert.strictEqual(await next(pin), S.RevealTheTruth, 'the deadline ends picking');
+
+    const truth = row(pin, r => r.realAnswer);
+    assert.deepStrictEqual(truth.selectors, ['p1'], 'only the player who found the truth is under it');
+    assert.strictEqual(truth.points, 1000);
+    const own = row(pin, r => r.text === 'p3 lie');
+    assert.deepStrictEqual(own.selectors, [], 'a player\'s own lie, in any case, is no pick');
+    assert.strictEqual(own.points, 0, 'and earns its writer nothing');
+    assert.deepStrictEqual(Object.keys(game(pin).answerSelections), ['p1'], 'only the pick that counts is kept');
+
+    assert.strictEqual(await next(pin), S.ScoreBoard);
+    assert.deepStrictEqual(scores(pin), { p1: 1000, p2: 0, p3: 0 });
+});
