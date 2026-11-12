@@ -1,3 +1,4 @@
+import { replayLength } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
@@ -27,6 +28,11 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     const game = await get<GameScheme>(gamesRef.child(pin));
     const gameCounter = await incGameCounter();
     const forkedGamePin = generateGameName(gameCounter);
+
+    // A Replay of a taste (a game played alone, see taste.ts) is a whole game, of the length its host chose.
+    if (game) {
+        game.totalQ = replayLength(game);
+    }
 
     const claimed = await claimFork(pin, forkedGamePin);
     if (claimed && claimed !== forkedGamePin) {
@@ -154,7 +160,11 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
 }
 
 function resetPlayersScore(players: GamePlayers) {
-    Object.keys(players || {}).forEach(k => players[k].score = 0);
+    Object.keys(players || {}).forEach(k => {
+        players[k].score = 0;
+        // Nobody has sent anything in the new game yet (see sent.ts).
+        delete players[k].sent;
+    });
     return players;
 }
 

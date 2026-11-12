@@ -1,24 +1,41 @@
-<div class="arcade-form learn">
+<div class="arcade-form learn" [attr.dir]="t.dir === 'rtl' ? 'rtl' : null" [attr.lang]="t.dir === 'rtl' ? t.lang : null"
+    [class.is-rtl]="t.dir === 'rtl'">
     <div class="title-area">
-        <h1 class="title" routerLink="/">Bullshit</h1>
-        <h3 class="sub-title">How do I play?</h3>
+        <h1 class="title" routerLink="/">{{ t.title }}</h1>
+        <h3 class="sub-title">{{ t.heading }}</h3>
         <div class="separator">♦</div>
+        <a class="lang-switch" *ngIf="t.lang === 'he'" [attr.lang]="t.switchTo" (click)="switchLanguage()">{{ t.switchLabel }}</a>
     </div>
 
-    <div class="controls f">
-        <p>During this game you will be shown some remarkably strange facts, however the interesting bits are missing.</p>
-        <p>Everyone plays with their smartphones and fills in the blanks with the best lies they can come up with, hopefully
-            the kind which will fool their friends.</p>
-        <p>All the lies will then be displayed including the actual and citated truth. Your goal is to avoid falling for your
-            friends bullshit and select the truth.</p>
-        <p>If you select the real answer than you are awarded points. You also get points for each friend you fool.
-            The game adds a few lies of its own: fall for one of those and you lose points.</p>
-        <br>
-        <p>When you ready to start choose the most responsible person in your group and ask him to
-            <a routerLink="/create-game">create a new game</a>. </p>
-        <p>Everyone else can
-            <a routerLink="/join-game">join</a> by entering the game PIN.</p>
-        <p>For the best experience we recommend you get your hands on another screen and
-            <a routerLink="/present-game">present</a> the game there.</p>
+    <div class="learn-wrapper">
+        <div class="controls">
+            <p class="intro">{{ t.intro }}</p>
+            <ol>
+                <li *ngFor="let step of t.steps">{{ step }}</li>
+            </ol>
+
+            <h4>{{ t.pointsHeading }}</h4>
+            <ul class="points">
+                <li *ngFor="let row of t.points">
+                    <span>{{ row.label }}</span>
+                    <span class="value" dir="ltr" [class.negative]="row.value.charAt(0) === '-'">{{ row.value }}</span>
+                </li>
+            </ul>
+            <p>{{ t.rounds }}</p>
+
+            <h4>{{ t.startHeading }}</h4>
+            <ol>
+                <li *ngFor="let step of t.start">{{ step }}</li>
+            </ol>
+            <p>{{ t.screenBefore }} <bdi dir="ltr">{{ t.screenAddress }}</bdi>{{ t.screenAfter }}</p>
+            <p>{{ t.rematch }}</p>
+        </div>
+
+        <p class="control action">
+            <a class="button is-primary is-medium is-fullwidth create" routerLink="/create-game" [queryParams]="langQuery">{{ t.create }}</a>
+        </p>
+        <p class="join-line">
+            {{ t.havePin }} <a class="join" routerLink="/join-game" [queryParams]="langQuery">{{ t.join }}</a>
+        </p>
     </div>
 </div>

@@ -748,3 +748,270 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Final question card
+
+The card before a game's last question is its own: FINAL QUESTION, one line on how far first place is
+ahead, then the round's points as before. Everything else about the round intro is unchanged.
+
+- Site only (`game/src/app/pages/round-intro`, words in `game-strings.ts`). No function, rule,
+  points or phase length changes: the card shows inside the 3 seconds the round intro already has.
+  A merge releases the site alone.
+- What it reads: `questionIndex`, `totalQ` and `players` of the game, which every phone could
+  already read. The last question is the one at `totalQ - 1`; in a game of 5, 7 or 9 questions that
+  is always the single question of round 3.
+- The line. On a phone it is about that player: "You lead by 500 points", "500 points behind Dana",
+  "You are tied for first with Ben". On a big screen it is about the room: "Dana leads by 500
+  points", "Dana and Ben are tied for first". More than two names are counted, not listed. One
+  player alone gets no line. The words follow the game's language.
+- Nothing is drawn before it is read: the card's middle stays empty until the round, the question's
+  number and, before the last question, the scores have arrived, then shows whole. A number that
+  cannot be read leaves its line out.
+- Big screen: the sound of the truth plays once with the card. Phones stay silent.
+- No BigQuery change.
+
+How to read it (read-only; replace `<release time>`, and put `test_pins` from
+`functions/bigquery/2026-11-test-mark.sql` first):
+
+```sql
+-- Rematches per game that was still played on its last question (half or more of the players
+-- picked an answer there). Compare the weeks before and after the release.
+SELECT COUNT(*) AS played_last_question, COUNTIF(f.replays > 0) AS with_a_rematch,
+  COUNTIF(f.replays > 0) / COUNT(*) AS rematch_rate
+FROM `bullshit-wtf-prod.analytics.opened_games` o
+JOIN (SELECT id FROM `bullshit-wtf-prod.analytics.question_results`
+  WHERE time >= TIMESTAMP('<release time>') AND q_index = total_q - 1 AND picks * 2 >= players
+  GROUP BY id) q USING (id)
+LEFT JOIN (SELECT origin, COUNT(*) AS replays FROM `bullshit-wtf-prod.analytics.forks`
+  WHERE time >= TIMESTAMP('<release time>') GROUP BY origin) f ON f.origin = o.id
+WHERE o.time >= TIMESTAMP('<release time>') AND o.players >= 2
+  AND o.id NOT IN (SELECT pin FROM test_pins);
+```
+
+Before the release (5 November to 12 November 2026, 08:00 UTC, tests out): 38 games with two or more
+players were still played on the last question, and 28 of them had a rematch.
+
+Not readable yet: the share of games where first place changes on the last question. No table
+holds the scores before the last question, so that needs two numbers written by the server with
+the last question's row (who led before it, who won); it is not part of this change.
+
+## Server errors in Sentry
+
+The functions report their unexpected errors to the same Sentry project as the site (`bullshit`;
+the dev Google project reports to `bullshit-dev`). The code is `functions/src/report.ts`: a small
+sender of our own, not the Sentry library, so nothing is added to a function's start.
+
+**How to find them.** In Sentry, search `side:server`. Every report carries these tags:
+
+- `side`: always `server` (the site's reports have no such tag).
+- `function`: the function's name, e.g. `tick`, `join`, `phaseTimer`.
+- `test`: `yes` for a test game (see "Test games"), `no`, or `unknown` when there is no game to
+  ask or its mark could not be read in 0.3 s. Leave tests out with `side:server !test:yes`.
+- `pin`: the game's PIN, when the function works on one.
+- `code`: the error's own code, when it has one (a database refusal, for instance).
+
+After a release, look for `side:server firstSeen:-1h`.
+
+**The release name.** A report's release is the name of the functions' build, like
+`functions-5a3dea69b5bb`: `functions/write-release.js` writes it to `functions/dist/release.json`
+at the end of `npm run build`, and the build prints it. It is a fingerprint of the server's code
+(every built file in `dist`, `package.json` and `package-lock.json`), not the commit. So:
+
+- It changes when the server's code changes, and only then. Two releases with different server
+  code have different names; `side:server release:<name>` shows what one build broke.
+- A merge that changes only the site, a test or this guide builds the same name and the same
+  `release.json`. This is on purpose, and must stay so: the Firebase tool sends a function only
+  when the `functions` folder differs from what is live. A name that held the commit would
+  differ at every commit, and every release would replace all the functions under the games that
+  are running. Never write the commit, a date or anything else that changes from build to build
+  into the `functions` folder.
+- To find the commit behind a name: the "Install and build the functions" step of each deploy
+  run prints `write-release: this build of the functions is <name>`. The first run that prints
+  the name is the merge that brought that server code. Or build a commit yourself
+  (`npm ci && npm run build` in `functions`) and read the name.
+- The name follows the built files. A file under `functions` that is not built (a test, an SQL
+  file) does not change it, although the Firebase tool does send the functions again for it.
+
+**What is reported.**
+
+- An error that reaches a function's edge: the `catch` of an HTTP function, or a trigger that
+  fails. A trigger that fails is one report.
+- An error a step logs with `console.error` and swallows, so the game plays on (a score that could
+  not be counted, a usage row BigQuery refused). With an Error in the line, that error; without one,
+  the line's first words alone. So a new `console.error` in the functions is a report in Sentry:
+  use `console.log` or `console.warn` for anything that is no fault.
+- Only the functions' own lines count: a `console.error` written from a file of the build
+  (`functions/dist`). A line that Node writes (a deprecation warning), that the functions
+  framework writes (it prints a failed trigger's crash, and a request body it could not read) or
+  that a library under `node_modules` writes is no report.
+- Not reported: an answer a function gives on purpose. The controllers reject with a plain
+  `{ message, code }` for those ("Sorry, game is full"); keep to that form for a new one.
+- Not reported: the answer to a request the site never sends. That is anything but a POST; a
+  call to a function that works on a game without a PIN, or with a PIN that is not 2 to 12
+  letters and digits (a number, a PIN with a dot); a call to `crewRematch` without a crew id; a
+  `newGame` without a language; and a call about a PIN that no game has (a Replay of an unknown PIN, say). Such a request gets
+  exactly the answer it got before. For the last kind the reporter reads the game's `timestamp`
+  once, on the error path only; when that read fails or takes over 0.3 s, the fault is reported.
+  A trigger never asks this. `http()` in `report.ts` is told what each function works on
+  (`'game'`, `'crew'`, `'new'`): say so for a new function in `index.ts`.
+
+**What a report holds, and what it can hold.** A report holds the tags above, the release name,
+the error's type, its message and the stack's function names, file names and line numbers (of
+the compiled files in `dist`). The reporter never puts in the request's body or headers, a
+nickname, an answer's text, a browser or host id, or an address.
+
+The message is an error's own text, and it is cleaned before it is sent: what the request
+carried is cut out of it as it was typed, in lower and in upper case; so are two or more words in
+quotes, every letter outside ASCII (Hebrew), and email and IPv4 addresses. This is a filter, not
+a guarantee. What can pass it:
+
+- A player's database id (a push key like `-Nx1...`), inside a database path in an error's text.
+  An HTTP function cuts the id when the request carried it; a trigger's request carries nothing,
+  so there it stays. The id is a random key of one game, not a name.
+- One plain English word in an error's text, bare or in quotes.
+- A value the server holds in another form than it was typed (a nickname with its spaces
+  collapsed or cut short), or one nested inside the request's body.
+- A short IPv6 address; the server's own file paths in a logged stack.
+
+Today none of this carries a player's words, because the functions never build an error's text
+from one: the texts come from Node and Firebase, which name fields, keys and paths. Keep it so:
+**never put a nickname, an answer or anything else a player typed into an error's message**
+(no `new Error('... ' + nickname)`), and never into the first argument of a `console.error`.
+Put such things in a later argument of the log line, which is never sent.
+
+**It cannot fail or hold a game.** A report is sent once and given up after 1 second; a failed send
+is dropped. A function waits for a report that is on its way before it ends, so the report is not
+lost; with no fault there is nothing to wait for. After two failed sends in a row, or when Sentry
+says to slow down, sending rests (10 minutes, or as long as Sentry says, an hour at most).
+
+**The cap.** Each running copy of a function sends one fault at most twice an hour, 10 reports an
+hour in all and 50 in its life; the next report says how many were held back. A request the site
+never sends does not count towards the cap. The cap is per copy:
+there is no count across copies, since that would need a shared counter in the database. Sentry's
+own quota is the last stop: past it, Sentry drops events and does not bill, unless a pay-as-you-go
+budget has been set in Sentry.
+
+**Locally and in tests.** An emulator sends nothing: it writes each report to the functions log as
+one line starting `server error report (local, not sent)`. `npm test` sends nothing either
+(`functions/test/report.test.js`; `PRINT_REPORTS=1 node --test test/report.test.js` prints them).
+Only the two Google projects named in `report.ts` send at all.
+
+**Known gaps.** A crash outside any request (while a function loads) is not reported. A report that
+was logged first says `handled: true` even if the error then failed the function. An error line
+is told to be the functions' own by the file that wrote it, read from the call stack: a line
+written through a helper outside `dist` would not be a report.
+
+## A taste for a host who starts alone
+
+A stranger who creates a game and has nobody to send the link to could press "Start alone anyway"
+and got a whole game: 25 seconds to write a lie that nobody reads, on every question. From 6 to 12
+November, tests out, 10 games were started alone; 2 were played to the end.
+
+**What a lone host gets now.** The lobby's link reads "Try 5 quick questions alone" ("לנסות לבד 5
+שאלות מהירות"). The game it starts is a taste:
+
+- Five questions, whatever length the host chose. Nothing to write: each question goes straight
+  to the answers, the truth among three house lies, with the question shown above them.
+- The first card says "5 QUICK QUESTIONS. No lies to write. Find the truth among ours."
+- Picking, the reveal and the points are the game's own: the truth scores, a house lie costs.
+- The last screen says "YOU FOUND 3 OF 5 TRUTHS", the points, then "Now try it with friends" and
+  one button, INVITE FRIENDS. The button is the Replay: it opens a new lobby, with the invite
+  on it and the length the host first chose. SHARE RESULTS stays.
+
+**What decides it.** The server, when the game leaves the lobby: exactly one player and no big
+screen (`functions/src/controllers/taste.ts`). A game of two or more, and a game with a big screen,
+take no new path. If a friend joins before the host presses the link, the whole game starts. A
+Replay of a taste that is again started alone is a taste again; with a friend in it is a whole
+game.
+
+**How phones know.** Every state of a taste carries `taste: { found, length }` (the truths found
+so far, the length the host chose). Phones may read the state and only the server writes it, so the
+database rules do not change. A game without the mark plays as before.
+
+**Old and new together.** An old site on the new functions plays the taste: it shows the question
+only behind "WHAT WAS THE QUESTION AGAIN?" and ends on the old final screen with REMATCH. A new
+site on the old functions (the seconds of a release) runs a whole game under the new link.
+A game that was started alone before the release stays a whole game.
+
+**With the staged reveal.** A taste can fall in either half of that test. In the staged half the
+reveal shows the truth, the lone player's row and NEXT on one screen and there is no scoreboard
+screen; in the other half the reveal is followed by the 3-second scoreboard. Both were played.
+
+**Known limits.** A friend who joins a taste that is running picks too; the game stays pick-only.
+Picking keeps its 20 seconds (a lone player's pick ends it at once).
+
+**In the usage rows.** No new column. A taste is `players = 1`, `presenter = false`,
+`questions = 5` in `opened_games` and `closed_games`, and `players = 1`, `lies = 0`, `total_q = 5`
+in `question_results`. The table a taste leads to is an `opened_games` row with `players >= 2` and
+the same `creator_uid`, and `parent_pin` the taste when it came from INVITE FRIENDS.
+
+**How it is measured** (`functions/bigquery/2026-11-taste.sql`, tests out): tastes played to the
+end per day (a pick on the fifth question), against 2 of 10 games alone in the week before; and
+the browsers that created a game of two or more within 7 days of their taste, against 1 of 8.
+
+## Who the room is waiting for
+
+After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.
+It shows every player's picture: a green tick on those who are in, orange dots (and a wobble) on
+those the room still waits for, and "Waiting for Chen" when one is left. The big screen shows the
+same row: under the question while lies are written, and in the bar on top while answers are picked
+(the answers fill that screen), where the last player stands alone beside "Waiting for Chen".
+
+- Functions and site. No rule change, no BigQuery change, no new function, none removed or renamed.
+  A merge sends all functions and the site.
+- What the server writes: when a seat's lie is stored (`answer`) or its pick is seen
+  (`onAnswerSelection`), the name of the phase on that seat, `games/<pin>/players/<pid>/sent`
+  ("<state id>:<state timestamp>", see `sentMark` in `game-model.ts` and
+  `functions/src/controllers/sent.ts`). It says that the seat has sent, never what. Phones could
+  already read `players`, `state`, `questionIndex` and `timestamp` of a game, which is all the row
+  reads; the lies and the picks are not read for it. Only the server can write under `players`.
+- A mark is for showing only. Who the game waits for, when a phase ends and every point are worked
+  out from the lies and the picks themselves, as before. The mark is written alongside the step
+  that may end the phase, not before it, so no phase is longer. A mark that cannot be written is
+  logged and costs a tick on a screen; the game goes on.
+- Nothing is cleared between phases: a seat is done with the phase the game is on when its mark
+  names that phase. Replay starts with no marks.
+- The empty seats rule: from the second question on, a seat that has no mark from this game is one
+  nobody plays. It is shown faded, with no dots, and is never named; it counts again from the
+  moment it sends something. This follows `seatsToWaitFor` in `seats.ts`, and a test plays whole
+  games in small to hold the two together (`functions/test/sent.test.js`).
+- The row never tells who wrote which lie: it holds names, pictures and marks, in the order the
+  players joined, and while answers are picked the marks of the lies show nothing.
+- Old and new together. A phone with the old site ignores the marks and shows its old line. The new
+  site shows the row only while the server is seen to mark the phase the game is on: a phone when
+  its own seat is marked, the big screen from the first tick. So on functions from before this
+  change, or rolled back to them in the middle of a game, it shows the old line and no row.
+  A game that is being played while the new functions come in gets marks from that moment: until
+  a seat sends again, the new site can show it faded on that one question.
+- A player alone gets no row. The words follow the game's language (`game-strings.ts`).
+
+How to read it (read-only; replace `<release time>`, and put `test_pins` from
+`functions/bigquery/2026-11-test-mark.sql` first):
+
+```sql
+-- Seats that sent no lie, and seats that picked nothing, on questions that were still played
+-- (half or more of the seats picked an answer), in games of two or more. Both should fall.
+SELECT COUNT(DISTINCT id) AS games, COUNT(*) AS questions,
+  1 - SUM(lies) / SUM(players) AS no_lie_share, 1 - SUM(picks) / SUM(players) AS no_pick_share
+FROM `bullshit-wtf-prod.analytics.question_results`
+WHERE time >= TIMESTAMP('<release time>') AND players >= 2 AND picks * 2 >= players
+  AND id NOT IN (SELECT pin FROM test_pins);
+```
+
+Before the release (5 November to 12 November 2026, 10:00 UTC, tests out): 52 games of two or more
+players with a question still played, 375 such questions; 8.8% of the seats sent no lie and 5.6%
+picked nothing.
+
+To get these numbers again, run the query above with
+`time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2026-11-12 10:00:00')` in place of the
+release time, and with the PINs of the tests from before the mark added to `test_pins` (the query
+under "Tests from before the mark" in `2026-11-test-mark.sql`, joined on with `UNION DISTINCT`).
+Those days' tests carry no mark, so `test_pins` alone takes nothing out of that week: the same
+query then gives 78 games, 509 questions, 7.6% and 4.7%, which is tests and people together and not
+the number to compare with.
+
+Not readable yet: the seconds between the first and the last answer of a phase, the measure this
+change is really about. No table holds when an answer came in. It needs the two wait columns of
+pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
+whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
+above.

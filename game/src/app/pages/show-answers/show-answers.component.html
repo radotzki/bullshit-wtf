@@ -18,9 +18,13 @@
                     </button>
                 </p>
             </div>
+
+            <app-waiting-row [pin]="pin" [t]="t" [presenter]="true" [compact]="true"></app-waiting-row>
         </div>
 
         <div *ngIf="answers && !answerSelected && !presenter">
+            <p *ngIf="taste" class="taste-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+
             <p *ngFor="let answer of answers" class="control">
                 <button class="button is-primary is-fullwidth answer" (click)="submit(answer)" [disabled]="loading" [class.rtl]="rtl">
                     {{ answer | uppercase }}
@@ -28,14 +32,14 @@
             </p>
 
             <p class="control">
-                <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">{{t.whatWasTheQuestion}}</button>
+                <button *ngIf="!showQuestion && !taste" class="button is-info is-fullwidth" (click)="showQuestion = true">{{t.whatWasTheQuestion}}</button>
             </p>
 
             <p *ngIf="showQuestion" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
         </div>
 
         <div *ngIf="answerSelected" class="screen-center">
-            {{t.waitForFriends}}
+            <app-waiting-row [pin]="pin" [t]="t" [line]="t.waitForFriends"></app-waiting-row>
         </div>
 
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

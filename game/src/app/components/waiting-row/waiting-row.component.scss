@@ -1,0 +1,222 @@
+.waiting-row {
+    width: 100%;
+    text-align: center;
+}
+
+.waiting-line {
+    margin: 0 0 20px;
+}
+
+.seats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto;
+    padding: 0;
+    // Four to a line on a phone, so eight players make two even lines.
+    max-width: 340px;
+    list-style: none;
+}
+
+.seat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 25%;
+    min-width: 64px;
+    padding: 6px 2px;
+}
+
+.picture-box {
+    position: relative;
+    display: block;
+    width: 48px;
+    height: 48px;
+}
+
+.picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.name {
+    display: block;
+    max-width: 100%;
+    margin-top: 4px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mark {
+    position: absolute;
+    right: -6px;
+    bottom: -4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+[dir="rtl"] .mark {
+    right: auto;
+    left: -6px;
+}
+
+.is-done .mark {
+    background: #23d160;
+}
+
+.is-waiting .mark {
+    background: #ff9f1a;
+
+    i {
+        width: 3px;
+        height: 3px;
+        margin: 0 1px;
+        border-radius: 50%;
+        background: #fff;
+    }
+}
+
+// The seats the room waits for wobble; a seat that is in stands still.
+.is-waiting .picture {
+    animation: waiting-wobble 1.2s ease-in-out infinite;
+    transform-origin: 50% 90%;
+}
+
+// A seat nobody plays: there, but not waited for.
+.is-away {
+    opacity: 0.35;
+
+    .picture {
+        filter: grayscale(1);
+    }
+}
+
+@keyframes waiting-wobble {
+    0%, 100% { transform: rotate(-7deg); }
+    50% { transform: rotate(7deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .is-waiting .picture {
+        animation: none;
+    }
+}
+
+.on-big-screen {
+    // Smaller than the question above it: the question stays the screen's first line.
+    .waiting-line {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    .seats {
+        max-width: none;
+    }
+
+    .seat {
+        width: auto;
+        min-width: 110px;
+        padding: 8px 10px;
+    }
+
+    .picture-box {
+        width: 72px;
+        height: 72px;
+    }
+
+    .name {
+        font-size: 1.1rem;
+    }
+
+    .mark {
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+
+        i {
+            width: 4px;
+            height: 4px;
+        }
+    }
+}
+
+// The big screen while answers are picked. The answers fill the screen (nine of them reach its
+// bottom edge), so the row sits in the free middle of the bar on top, clear of the PIN on one side
+// and of "1 OF 5" on the other, and takes no room from the answers.
+.in-top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 120px;
+    padding: 0 6rem 0 9.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+
+    &[dir="rtl"] {
+        padding: 0 9.5rem 0 6rem;
+    }
+
+    .waiting-line {
+        margin: 0 0.5rem;
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+
+    .seats {
+        flex-wrap: nowrap;
+        margin: 0;
+    }
+
+    .seat {
+        min-width: 0;
+        width: 2.2rem;
+        padding: 0;
+    }
+
+    .picture-box {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .name {
+        margin-top: 2px;
+        font-size: 0.5rem;
+    }
+
+    .mark {
+        right: -0.2rem;
+        bottom: -0.1rem;
+        width: 0.7rem;
+        height: 0.7rem;
+        font-size: 0.4rem;
+
+        i {
+            width: 3px;
+            height: 3px;
+            margin: 0 1px;
+        }
+    }
+
+    &[dir="rtl"] .mark {
+        right: auto;
+        left: -0.2rem;
+    }
+}

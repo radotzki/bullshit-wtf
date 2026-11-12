@@ -8,8 +8,9 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="question && presenter" class="screen-center">
+        <div *ngIf="question && presenter" class="screen-center on-big-screen">
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <app-waiting-row [pin]="pin" [t]="t" [presenter]="true"></app-waiting-row>
         </div>
 
         <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()">
@@ -42,7 +43,7 @@
         </form>
 
         <div *ngIf="questionSubmitted" class="screen-center">
-            {{t.answerSubmitted}}
+            <app-waiting-row [pin]="pin" [t]="t" [line]="t.answerSubmitted"></app-waiting-row>
         </div>
 
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

@@ -294,6 +294,74 @@ export interface GamePlayer {
     uid: string;
     // The game's host (the phone that created it, or pressed Replay), marked by the server.
     host?: boolean;
+    // The phase in which this seat last sent a lie or a pick (see sentMark), written by the server.
+    // It says that the seat has sent, never what: the waiting screens show who the room waits for.
+    sent?: string;
+}
+
+/**
+ * The mark a seat gets when its lie or its pick is in: the name of the phase it was sent in,
+ * "<state id>:<state timestamp>". A seat is done with the phase the game is on when its mark names
+ * that phase, so nothing has to be cleared between phases, and a mark that arrives late marks nothing.
+ */
+export function sentMark(state: GameStateInfo): string {
+    return `${state.id}:${state.timestamp}`;
+}
+
+/** When the phase a mark names started (ms), or 0 for anything that is no mark. */
+export function sentMarkTime(mark: any): number {
+    const m = typeof mark === 'string' ? /^\d+:(\d+)$/.exec(mark) : null;
+    return m ? Number(m[1]) : 0;
+}
+
+export interface WaitingSeat {
+    pid: string;
+    nickname: string;
+    /** The seat's place among the players: its picture is avatar<index>.png, as on every screen. */
+    index: number;
+    /** Its lie (while lies are written) or its pick (while answers are picked) is in. */
+    done: boolean;
+    /** Nobody plays this seat, so the game does not wait for it (the empty seats rule, seats.ts). */
+    away: boolean;
+}
+
+export interface WaitingRow {
+    /** False until the server is seen to mark seats in this game: an older server never does. */
+    known: boolean;
+    seats: WaitingSeat[];
+    /** The seats the room is waiting for: not done, and not away. */
+    waiting: WaitingSeat[];
+}
+
+/**
+ * Who is done and who the room waits for, from what every phone may read: the players with their
+ * marks, the phase the game is on, the question's index and the time the game was made.
+ *
+ * It follows the server's own rule (seatsToWaitFor in the functions' seats.ts): on the first
+ * question every seat is waited for; from the second on, a seat that has sent no lie and no pick
+ * in this game is away until it sends one. A mark older than the game (carried over by a Replay
+ * from an older server) does not count.
+ */
+export function waitingRow(players: GamePlayers | null | undefined, state: GameStateInfo | null | undefined,
+    questionIndex: number | null | undefined, gameTimestamp: number | null | undefined): WaitingRow {
+    const pids = Object.keys(players || {}).filter(pid => !!players[pid] && typeof players[pid] === 'object');
+    const mark = state && typeof state.timestamp === 'number' ? sentMark(state) : '';
+    const since = typeof gameTimestamp === 'number' ? gameTimestamp : 0;
+    const later = (questionIndex || 0) > 0;
+
+    const seats = pids.map((pid, index) => {
+        const sent = players[pid].sent;
+        const done = !!mark && sent === mark;
+        const played = sentMarkTime(sent) > 0 && sentMarkTime(sent) >= since;
+        return { pid, nickname: String(players[pid].nickname || ''), index, done, away: later && !done && !played, played };
+    });
+
+    return {
+        known: seats.some(s => s.played),
+        seats: seats.map(s => ({ pid: s.pid, nickname: s.nickname, index: s.index, done: s.done, away: s.away })),
+        waiting: seats.filter(s => !s.done && !s.away)
+            .map(s => ({ pid: s.pid, nickname: s.nickname, index: s.index, done: s.done, away: s.away })),
+    };
 }
 
 export interface Answers {
@@ -591,4 +659,39 @@ export function highlightsStart(previous: number | null | undefined, questionInd
 /** The players' rank order on the final screen: by score, ties share a place (1, 1, 3). */
 export function finalPlaces(scores: number[]): number[] {
     return scores.map(s => 1 + scores.filter(o => (o || 0) > (s || 0)).length);
+}
+
+/**
+ * The taste: what a host who starts alone gets in place of a whole game. Nobody would read a lie
+ * they wrote, so there is no writing: TASTE_QUESTIONS questions, each with the truth among
+ * TASTE_OPTIONS - 1 house lies, a score, and then an invitation to play with friends.
+ *
+ * A game is a taste when it leaves the lobby with one player and no big screen (see taste.ts in the
+ * functions). Phones learn it from the game's state, which every phone may read and only the server
+ * may write: every state of a taste carries `taste`, from the first round card to the final screen.
+ * A game of two or more players never carries it and plays exactly as before.
+ */
+export const TASTE_QUESTIONS = 5;
+export const TASTE_OPTIONS = 4;
+
+export interface Taste {
+    // Questions on which the truth was picked, so far.
+    found: number;
+    // The length the host chose for the game. A Replay of a taste is a whole game of this length.
+    length: number;
+}
+
+/** The game's state as a taste carries it. */
+export interface TasteState extends GameStateInfo {
+    taste?: Taste;
+}
+
+/** The taste a state carries, or null: for any game that is not one, and for anything unreadable. */
+export function tasteOf(state: any): Taste | null {
+    const taste = state && typeof state === 'object' ? state.taste : null;
+    if (!taste || typeof taste !== 'object') {
+        return null;
+    }
+    const count = (n: any) => typeof n === 'number' && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+    return { found: count(taste.found), length: count(taste.length) };
 }

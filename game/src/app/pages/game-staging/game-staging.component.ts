@@ -201,7 +201,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** "Start alone anyway": counted, so we can see how many lone hosts insist, then a normal start. */
+    /**
+     * "Try 5 quick questions alone": counted as before (invite, solo-start), then a normal start.
+     * The server makes a game that starts with one player a taste (see TASTE_QUESTIONS in game-model).
+     */
     startAlone() {
         if (this.loading) {
             return;

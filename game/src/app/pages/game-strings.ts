@@ -47,6 +47,19 @@ export interface GameStrings {
     forEveryoneYouBullshit: string;
     forFindingTheTruth: string;
 
+    // Before the last question (round-intro/final-question.ts builds the line about the gap).
+    finalQuestion: string;
+    /** A big screen: "Dana leads by 500 points", "Dana and Ben are tied for first". */
+    leadsBy: (name: string, gap: number) => string;
+    tiedForFirst: (names: string) => string;
+    manyTiedForFirst: (count: number) => string;
+    /** A phone, about its own player. */
+    youLeadBy: (gap: number) => string;
+    youAreTiedWith: (names: string) => string;
+    youAreTiedWithMany: (others: number) => string;
+    behind: (gap: number, names: string) => string;
+    behindFirstPlace: (gap: number) => string;
+
     // Writing a lie.
     send: string;
     tooCloseToTruth: string;
@@ -55,6 +68,13 @@ export interface GameStrings {
     // Picking an answer.
     whatWasTheQuestion: string;
     waitForFriends: string;
+
+    // The row of players under both waiting lines: who is in, and who the room waits for.
+    /** One player left: "Waiting for Chen". */
+    waitingForName: (name: string) => string;
+    /** For a screen reader, on a player's picture. */
+    seatIn: (name: string) => string;
+    seatNotYet: (name: string) => string;
 
     // The reveal.
     pickedBy: string;
@@ -126,12 +146,26 @@ const en: GameStrings = {
     forEveryoneYouBullshit: 'for everyone you bullshit',
     forFindingTheTruth: 'for finding the truth',
 
+    finalQuestion: 'FINAL QUESTION',
+    leadsBy: (name, gap) => known(gap) ? `${name} leads by ${gap} points` : '',
+    tiedForFirst: names => `${names} are tied for first`,
+    manyTiedForFirst: count => known(count) ? `${count} players are tied for first` : '',
+    youLeadBy: gap => known(gap) ? `You lead by ${gap} points` : '',
+    youAreTiedWith: names => `You are tied for first with ${names}`,
+    youAreTiedWithMany: others => known(others) ? `You are tied for first with ${others} others` : '',
+    behind: (gap, names) => known(gap) ? `${gap} points behind ${names}` : '',
+    behindFirstPlace: gap => known(gap) ? `${gap} points behind first place` : '',
+
     send: 'SEND',
     tooCloseToTruth: 'You entered the correct answer! Try something else',
     answerSubmitted: 'Your answer has been submitted',
 
     whatWasTheQuestion: 'WHAT WAS THE QUESTION AGAIN?',
     waitForFriends: 'Let\'s wait for your friends',
+
+    waitingForName: name => `Waiting for ${name}`,
+    seatIn: name => `${name} is in`,
+    seatNotYet: name => `${name}, not yet`,
 
     pickedBy: 'picked by',
     truthIs: 'AND THE TRUTH IS…',
@@ -194,12 +228,26 @@ const he: GameStrings = {
     forEveryoneYouBullshit: 'על כל מי שנופל בשקר שלכם',
     forFindingTheTruth: 'על מציאת האמת',
 
+    finalQuestion: 'שאלה אחרונה',
+    leadsBy: (name, gap) => known(gap) ? `ל־${name} יתרון של ${gap} נקודות` : '',
+    tiedForFirst: names => `תיקו בראש: ${names}`,
+    manyTiedForFirst: count => known(count) ? `תיקו בראש בין ${count} שחקנים` : '',
+    youLeadBy: gap => known(gap) ? `היתרון שלך: ${gap} נקודות` : '',
+    youAreTiedWith: names => `תיקו בראש עם ${names}`,
+    youAreTiedWithMany: others => known(others) ? `תיקו בראש עם עוד ${others}` : '',
+    behind: (gap, names) => known(gap) ? `${gap} נקודות אחרי ${names}` : '',
+    behindFirstPlace: gap => known(gap) ? `${gap} נקודות אחרי המקום הראשון` : '',
+
     send: 'שליחה',
     tooCloseToTruth: 'זאת התשובה הנכונה! נסו משהו אחר',
     answerSubmitted: 'התשובה נשלחה',
 
     whatWasTheQuestion: 'מה הייתה השאלה?',
     waitForFriends: 'מחכים לחברים',
+
+    waitingForName: name => `מחכים ל־${name}`,
+    seatIn: name => `${name} בפנים`,
+    seatNotYet: name => `${name}, עוד לא`,
 
     pickedBy: 'בחרו בזה:',
     truthIs: 'והאמת היא…',
