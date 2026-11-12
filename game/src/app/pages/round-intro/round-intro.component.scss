@@ -1,3 +1,7 @@
+$primary: #db7151;
+$gold: #f3d467;
+$dark: #363636;
+
 .round-intro {
     .screen-center {
         flex-direction: column;
@@ -7,5 +11,56 @@
 
     .bullshit {
         margin-bottom: 50px;
+    }
+
+    // Before the last question: its name first, then how far first place is ahead, then the points.
+    .final-question {
+        padding: 0 16px;
+
+        .final-title {
+            margin-bottom: 0.4em;
+            color: $primary;
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: 0.02em;
+            animation: final-pop 0.35s ease-out 1;
+        }
+
+        .final-gap {
+            max-width: 100%;
+            margin-bottom: 1em;
+            padding: 0.35em 0.8em;
+            border-radius: 0.5em;
+            background: $gold;
+            color: $dark;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        .bullshit,
+        .truth {
+            font-size: 1.2rem;
+        }
+
+        .bullshit {
+            margin-bottom: 0.7em;
+        }
+    }
+
+    // Hebrew has no capitals to space out.
+    &[dir="rtl"] .final-title {
+        letter-spacing: 0;
+    }
+
+    @keyframes final-pop {
+        0% { transform: scale(0.6); opacity: 0; }
+        70% { transform: scale(1.08); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .final-title { animation: none; }
     }
 }

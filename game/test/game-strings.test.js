@@ -23,6 +23,8 @@ const { lobbyText } = load(path.join(app, 'pages', 'game-staging', 'lobby-host.t
 function words(t) {
     const samples = {
         pin: ['ABCD'], round: [2], questionOf: [3, 7], scanLabel: ['ABCD'], points: [500],
+        leadsBy: ['Dan', 500], tiedForFirst: ['Dan and Ben'], manyTiedForFirst: [4], youLeadBy: [500],
+        youAreTiedWith: ['Ben'], youAreTiedWithMany: [3], behind: [500, 'Dan'], behindFirstPlace: [1500],
         foundTheTruth: ['+1000'], fellForOurs: ['-500'], fellFor: ['Dan'], fooled: ['Dan and Ben', '+500'],
     };
     const out = {};
@@ -76,6 +78,15 @@ test('every game that is not Hebrew keeps the English words, letter for letter',
         points: '500 points',
         forEveryoneYouBullshit: 'for everyone you bullshit',
         forFindingTheTruth: 'for finding the truth',
+        finalQuestion: 'FINAL QUESTION',
+        leadsBy: 'Dan leads by 500 points',
+        tiedForFirst: 'Dan and Ben are tied for first',
+        manyTiedForFirst: '4 players are tied for first',
+        youLeadBy: 'You lead by 500 points',
+        youAreTiedWith: 'You are tied for first with Ben',
+        youAreTiedWithMany: 'You are tied for first with 3 others',
+        behind: '500 points behind Dan',
+        behindFirstPlace: '1500 points behind first place',
         send: 'SEND',
         tooCloseToTruth: 'You entered the correct answer! Try something else',
         answerSubmitted: 'Your answer has been submitted',
