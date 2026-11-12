@@ -39,6 +39,7 @@ import { ResultsCardService } from './services/results-card.service';
 import { CrewService } from './services/crew.service';
 import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
+import { StepComponent } from './pages/step/step.component';
 
 @NgModule({
     declarations: [
@@ -68,6 +69,7 @@ import { CrewComponent } from './pages/crew/crew.component';
         HostAskComponent,
         WaitingRowComponent,
         CrewComponent,
+        StepComponent,
     ],
     imports: [
         BrowserModule,

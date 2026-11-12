@@ -34,10 +34,12 @@ function phone(url) {
     const watchers = {};
     const pages = [];
     const reads = [];
+    let clock = 1000;
     const api = {
-        gameState: pin => ({
+        // The whole step, as the database gives it: each new step has a time of its own.
+        gamePhase: pin => ({
             subscribe(fn) {
-                watchers[pin] = fn;
+                watchers[pin] = id => fn(id === undefined ? undefined : { id, timestamp: clock += 1000 });
                 return { unsubscribe() { delete watchers[pin]; } };
             },
         }),
@@ -45,7 +47,18 @@ function phone(url) {
         tickFrom() { },
         isStagedReveal: () => new Promise(resolve => reads.push(resolve)),
     };
-    const router = { url: url || '/show-answers/AAAA', navigate: parts => { pages.push(parts.join('/')); router.url = '/' + parts.join('/'); } };
+    const router = {
+        url: url || '/show-answers/AAAA',
+        navigate: (parts, extras) => {
+            if (extras && extras.skipLocationChange) {
+                pages.push(parts.join('/') + ' (unseen)');
+            } else {
+                pages.push(parts.join('/'));
+                router.url = '/' + parts.join('/');
+            }
+            return Promise.resolve(true);
+        },
+    };
     const settle = () => new Promise(resolve => setImmediate(resolve));
     return { service: new GameService(router, api), step: (pin, state) => watchers[pin] && watchers[pin](state), pages, reads, router, settle };
 }
@@ -106,10 +119,62 @@ test('the first step arrives while the phone is still starting to follow: it sti
     const p = phone('/');
     // A database that already knows the step answers inside subscribe itself.
     const api = p.service.apiService;
-    api.gameState = () => ({ subscribe(fn) { fn(GameState.ScoreBoard); return { unsubscribe() { } }; } });
+    api.gamePhase = () => ({ subscribe(fn) { fn({ id: GameState.ScoreBoard, timestamp: 1 }); return { unsubscribe() { } }; } });
     p.service.register('AAAA');
     await p.settle();
     p.reads[0](false);
     await p.settle();
     assert.deepStrictEqual(p.pages, ['score-board/AAAA']);
+});
+
+test('the next step arrives during the read: the phone is not sent back to the scoreboard', async () => {
+    const p = phone('/reveal-the-truth/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.ScoreBoard);
+    p.step('AAAA', GameState.ShowQuestion);
+    p.reads[0](false);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['show-question/AAAA']);
+});
+
+// Since a phone that comes back to the same step gets its page built again (GameService.showAgain),
+// the scoreboard step reaches a phone by two paths. The staged reveal's rule must hold on both.
+
+test('both paths, a staged game: a phone that saw the reveal again keeps it through the scoreboard step', async () => {
+    const p = phone('/reveal-the-truth/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.RevealTheTruth);
+    // Away for a whole question, back in the next reveal: its page is built again.
+    p.step('AAAA', GameState.RevealTheTruth);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['reveal-the-truth/AAAA', 'step/AAAA (unseen)', 'reveal-the-truth/AAAA']);
+    p.pages.length = 0;
+    p.step('AAAA', GameState.ScoreBoard);
+    p.reads[0](true);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, []);
+});
+
+test('both paths, a staged game: a phone back in a later scoreboard step missed its reveal, and gets the scoreboard', async () => {
+    const p = phone('/reveal-the-truth/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.ScoreBoard);
+    p.reads[0](true);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, []);
+    // Away from here to the next question's scoreboard step: the reveal on its screen is the old one.
+    p.step('AAAA', GameState.ScoreBoard);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['step/AAAA (unseen)', 'score-board/AAAA']);
+});
+
+test('both paths, a control game: the scoreboard each time, built again for a phone that comes back to it', async () => {
+    const p = phone('/reveal-the-truth/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.ScoreBoard);
+    p.reads[0](false);
+    await p.settle();
+    p.step('AAAA', GameState.ScoreBoard);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['score-board/AAAA', 'step/AAAA (unseen)', 'score-board/AAAA']);
 });
