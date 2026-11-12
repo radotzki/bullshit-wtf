@@ -49,7 +49,7 @@ const howEn = `
   <li><strong>Everyone writes a lie</strong> that sounds true enough to fool the others. If you type the real answer by accident, the game tells you to try another.</li>
   <li><strong>All the answers appear together</strong>: every player's lie, a few lies from the house, and the truth.</li>
   <li><strong>Everyone picks the answer they believe.</strong> Find the truth and you score. Every friend who picks your lie scores for you too. Fall for one of the house lies and you lose points.</li>
-  <li><strong>The truth is revealed</strong>, with its source, and you see who fooled whom.</li>
+  <li><strong>The truth is revealed</strong>, and you see who fooled whom.</li>
 </ol>
 <h2>Rounds and points</h2>
 <p>A game has 5, 7 or 9 questions over three rounds, and points grow each round, so nobody is out of it until the end.</p>
@@ -80,7 +80,7 @@ const howHe = `
   <li><strong>כל אחד ממציא תשובה</strong> שנשמעת אמיתית מספיק כדי לעבוד על האחרים. מי שכותב בטעות את התשובה הנכונה מתבקש לנסות משהו אחר.</li>
   <li><strong>כל התשובות מופיעות יחד</strong>: השקרים של כל השחקנים, כמה שקרים של הבית, והאמת.</li>
   <li><strong>כל אחד בוחר את התשובה שהוא מאמין לה.</strong> מצאתם את האמת? קיבלתם נקודות. כל חבר שבחר בשקר שלכם מביא לכם נקודות. נפלתם בשקר של הבית? מפסידים נקודות.</li>
-  <li><strong>האמת נחשפת</strong>, עם המקור, ורואים מי עבד על מי.</li>
+  <li><strong>האמת נחשפת</strong>, ורואים מי עבד על מי.</li>
 </ol>
 <h2>סבבים ונקודות</h2>
 <p>במשחק יש 5, 7 או 9 שאלות בשלושה סבבים, והנקודות גדלות בכל סבב, כך שאף אחד לא בחוץ עד הסוף.</p>
