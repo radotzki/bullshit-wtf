@@ -1,4 +1,4 @@
-import { GameScheme, GameState, GamePlayers } from '../game-model';
+import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
@@ -132,6 +132,11 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).
     if (game.pack) {
         forked.pack = game.pack;
+    }
+
+    // A Replay of a test game is a test game (other campaign tags count the first game only).
+    if (isTestCampaign(game.campaign)) {
+        forked.campaign = game.campaign;
     }
 
     return forked;

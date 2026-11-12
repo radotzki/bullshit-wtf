@@ -19,13 +19,15 @@ OPTIONS (description = 'Counted shares, one row per send (see functions/src/cont
 -- Same columns; crew_id is null for these. No schema change.
 
 -- ---------------------------------------------------------------------------
--- Read-only queries.
+-- Read-only queries. A share row has no PIN, so test sends are left out by browser: any browser
+-- that joined a test game (users.via = 'test', see 2026-11-test-mark.sql).
 
 -- Game night sends per method per day (UTC), with how many crews and browsers sent them.
 -- SELECT DATE(time) AS day, method, COUNT(*) AS sends,
 --   COUNT(DISTINCT crew_id) AS crews, COUNT(DISTINCT uid) AS senders
 -- FROM `bullshit-wtf-prod.analytics.shares`
 -- WHERE content_type = 'crew-night'
+--   AND IFNULL(uid, '') NOT IN (SELECT uid FROM `bullshit-wtf-prod.analytics.users` WHERE via = 'test' AND uid IS NOT NULL)
 -- GROUP BY day, method
 -- ORDER BY day DESC, sends DESC;
 
@@ -33,11 +35,13 @@ OPTIONS (description = 'Counted shares, one row per send (see functions/src/cont
 -- SELECT method, COUNT(*) AS sends, ROUND(COUNT(*) / SUM(COUNT(*)) OVER (), 3) AS share
 -- FROM `bullshit-wtf-prod.analytics.shares`
 -- WHERE content_type = 'crew-night' AND time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 28 DAY)
+--   AND IFNULL(uid, '') NOT IN (SELECT uid FROM `bullshit-wtf-prod.analytics.users` WHERE via = 'test' AND uid IS NOT NULL)
 -- GROUP BY method ORDER BY sends DESC;
 
 -- Lobby invites per method per day, and "Start alone anyway" taps (method solo-start).
 -- SELECT DATE(time) AS day, method, COUNT(*) AS sends, COUNT(DISTINCT uid) AS senders
 -- FROM `bullshit-wtf-prod.analytics.shares`
 -- WHERE content_type = 'invite'
+--   AND IFNULL(uid, '') NOT IN (SELECT uid FROM `bullshit-wtf-prod.analytics.users` WHERE via = 'test' AND uid IS NOT NULL)
 -- GROUP BY day, method
 -- ORDER BY day DESC, sends DESC;

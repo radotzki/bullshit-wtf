@@ -47,9 +47,9 @@ const howEn = `
 <p>A game has 5, 7 or 9 questions over three rounds, and points grow each round, so nobody is out of it until the end.</p>
 <table>
   <tr><th>Round</th><th>Find the truth</th><th>Each friend you fool</th><th>Fall for a house lie</th></tr>
-  <tr><td>1</td><td>+1000</td><td>+500</td><td>-500</td></tr>
-  <tr><td>2</td><td>+1500</td><td>+750</td><td>-750</td></tr>
-  <tr><td>3</td><td>+2000</td><td>+1000</td><td>-1000</td></tr>
+  <tr><td>1</td><td>+1000</td><td>+500</td><td>-250</td></tr>
+  <tr><td>2</td><td>+1500</td><td>+750</td><td>-375</td></tr>
+  <tr><td>3</td><td>+2000</td><td>+1000</td><td>-500</td></tr>
 </table>
 <h2>How to start</h2>
 <ol>
@@ -78,9 +78,9 @@ const howHe = `
 <p>במשחק יש 5, 7 או 9 שאלות בשלושה סבבים, והנקודות גדלות בכל סבב, כך שאף אחד לא בחוץ עד הסוף.</p>
 <table>
   <tr><th>סבב</th><th>מצאתם את האמת</th><th>על כל חבר שעבדתם עליו</th><th>נפלתם בשקר של הבית</th></tr>
-  <tr><td>1</td><td><bdi dir="ltr">+1000</bdi></td><td><bdi dir="ltr">+500</bdi></td><td><bdi dir="ltr">-500</bdi></td></tr>
-  <tr><td>2</td><td><bdi dir="ltr">+1500</bdi></td><td><bdi dir="ltr">+750</bdi></td><td><bdi dir="ltr">-750</bdi></td></tr>
-  <tr><td>3</td><td><bdi dir="ltr">+2000</bdi></td><td><bdi dir="ltr">+1000</bdi></td><td><bdi dir="ltr">-1000</bdi></td></tr>
+  <tr><td>1</td><td><bdi dir="ltr">+1000</bdi></td><td><bdi dir="ltr">+500</bdi></td><td><bdi dir="ltr">-250</bdi></td></tr>
+  <tr><td>2</td><td><bdi dir="ltr">+1500</bdi></td><td><bdi dir="ltr">+750</bdi></td><td><bdi dir="ltr">-375</bdi></td></tr>
+  <tr><td>3</td><td><bdi dir="ltr">+2000</bdi></td><td><bdi dir="ltr">+1000</bdi></td><td><bdi dir="ltr">-500</bdi></td></tr>
 </table>
 <h2>איך מתחילים</h2>
 <ol>

@@ -4,7 +4,7 @@ import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit } from '@angular/core';
-import { takeJoinSource } from '../../services/join-source';
+import { takeJoinSource, preferredLocale } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 
@@ -60,6 +60,11 @@ export class JoinGameComponent implements OnInit {
 
     private isExpected(err) {
         return err && (err.code === 'GAME_NOT_EXIST' || err.code === 'GAME_IS_FULL' || err.code === 'GAME_OVER');
+    }
+
+    /** The language of the "start your own game" ask: the Hebrew entry point, else this browser's. */
+    get askLocale() {
+        return /^\/he(\/|$)/.test(this.router.url) ? 'he' : preferredLocale();
     }
 
     private showGameOver(err) {

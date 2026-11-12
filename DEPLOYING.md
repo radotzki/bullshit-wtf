@@ -28,7 +28,9 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    install or build script can read it.
 5. Checks, without releasing anything, that the account holds the permissions the three deploys
    need, and that it can reach the database and the site (see "The permission check" and "The
-   access check" below). If either fails, the run stops before the functions are released.
+   access check" below). If either fails, the run stops before the functions are released. The
+   access check tries both the database and the site before it fails, so one run names
+   everything that is off.
 6. Deploys **all functions**, then the **database rules**, then the **site**, in that order. Each
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
@@ -70,34 +72,106 @@ Things to know:
   when Google answers that all are held. If one is missing, the step fails, names it and the
   deploy that needs it, and nothing is released. If Google does not answer the question (an API
   is off, the sign-in fails, no network), the step fails too and prints the answer: not knowing
-  counts as no. The question needs two things in the Google project, which the step cannot
+  counts as no. Only an answer from the address that was asked counts: a redirect is not followed
+  and stops the run with its 3xx status. The sign-in and the question together get 60 seconds
+  (the question alone 30); after that the step fails and says "timed out", so a sign-in that
+  never answers cannot hold the release queue until the job's 30-minute limit. The question needs
+  two things in the Google project, which the step cannot
   switch on or grant by itself: the **Cloud Resource Manager API**
   (`cloudresourcemanager.googleapis.com`) switched on, and for the account the permission
   `serviceusage.services.use` (role Service Usage Consumer, or any wider role that holds it).
   The script never opens the key file: Google's own library (`google-auth-library`, installed
   with the Firebase tool) reads it and signs the request, and the step prints permission names
-  and Google's error fields only.
+  and Google's error fields only. The sign-in asks for the scope `cloud-platform`, one of the
+  five the Firebase tool signs in with for the deploys (`email`, `openid`,
+  `cloudplatformprojects.readonly`, `firebase`, `cloud-platform`; read at version 15.35.0,
+  `src/api.ts` and `src/requireAuth.ts`). A read-only scope was considered and left out: whether
+  Google accepts it for this question can only be seen on a run from `master`, where a wrong
+  guess stops a release.
   What it does not prove: a permission given for one resource only (not on the project), or
   under a condition, can read as missing here; the functions deploy also needs the right to act
   as the functions' service account (`iam.serviceAccounts.actAs`), which the tool checks itself
   at the start of the functions step, before it releases anything; and Google can still refuse
   a deploy for a reason that is not a permission.
-- **The access check.** Before the first deploy the run makes the same first calls that the rules
-  and site deploys make, and releases nothing: `firebase deploy --only database --dry-run` reads the
-  database instance and sends the rules with `dryRun=true` (checked, not stored), and
-  `firebase hosting:channel:list` finds the hosting site and reads its channels. One of its calls
-  is not a read: the tool first asks whether the Hosting API (`firebasehosting.googleapis.com`) is
-  on in the project, and if it is off, tries to switch it on. The site deploy does the same, and
-  the API is on for as long as the site is served, so in practice the check only reads. It cannot
-  be made a pure read with the Firebase tool: its read-only hosting commands (`hosting:channel:list`
-  and `hosting:sites:list`, read at version 15.35.0) both start with that step and have no option
-  to skip it, and a plain request to Google
-  instead would need new code that handles the key. This is there
+- **The access check.** Before the first deploy the run reads the database and the site, releases
+  nothing, and switches nothing on in the Google project (`.github/scripts/check-access.js`):
+  - the database, with the Firebase tool: `firebase deploy --only database --dry-run` makes the
+    first calls of the rules deploy. It reads the database instance and sends the rules with
+    `dryRun=true` (checked, not stored). The tool's database path has no call that switches an
+    API on (read at version 15.35.0);
+  - the site, with one plain `GET` of the project's list of hosting sites
+    (`firebasehosting.googleapis.com/v1beta1/projects/<id>/sites`), sent through Google's
+    library like the permission check: redirects refused, the same time-outs, the same cleaning
+    of what is printed. It passes when Google lists one site or more.
+
+  The site is not read with the Firebase tool. Each of its hosting commands, also the read-only
+  ones (`hosting:channel:list`, `hosting:sites:list`), first asks whether the Hosting API
+  (`firebasehosting.googleapis.com`) is on, and if it is off, tries to switch it on. Until
+  2026-11-11 this check ran `hosting:channel:list`, so it could have switched the API on if the
+  deploy account was allowed to. Switching an API on is the owner's step, never a side effect
+  of a check: with the API off, the `GET` is refused and the step names the API and fails. The
+  release step "3. Deploy the site" still uses the tool and would try the same, but it only runs
+  after this check has seen the API on.
+  Both reads always run, also when the first fails, and the step fails afterwards if either
+  did: on 2026-11-11 the database read failed first, the site read never ran, and the run could
+  not say whether the Hosting API was off too. The database read gets five minutes. This is there
   because on 2026-11-11 a run released the functions, then failed at the rules ("Failed to get
   instance details"), and the site never went out. By itself it does not prove that the account
   may *write* to hosting: the tool's hosting dry run creates a new empty version on the live site,
   so it is not used. The permission check above asks that instead
   (`firebasehosting.sites.update`).
+- **A release while the database API is off.** The rules step, and the database read above,
+  first ask the Firebase Realtime Database Management API for the database's details. While that
+  API is off in the Google project, Google refuses the question, and only the project's owner
+  can switch the API on. A rules deploy of rules that are already live changes nothing, though.
+  So when the database read fails, the access check asks one more thing, with four `GET`s and
+  nothing else (`.github/scripts/live-rules.js`):
+  1. the Firebase project, which names the default database instance;
+  2. that instance at the database API, which must be refused again with `403`, reason
+     `SERVICE_DISABLED`, service `firebasedatabase.googleapis.com`. Any other answer means the
+     database read failed for another reason, and the run stops;
+  3. the project's configuration (`adminSdkConfig`), which holds the database's address. It must
+     be the default instance's own address;
+  4. the rules that are live, at `<the database's address>/.settings/rules.json`. This is the
+     address the rules deploy writes to; here it is only read.
+
+  If the live rules are the same as the commit's rules file, value for value, and the site was
+  reached, the check passes and the run releases the functions and the site and **skips "2.
+  Deploy the database rules"**. Production then holds what a whole release would have left: this
+  commit's functions, rules and site. The run's summary page says so under "What this run
+  released": which parts were released, and that the rules were left alone and why.
+  In every other case the run stops before it releases anything, as before: the live rules
+  differ, they could not be read, they or the commit's file are not plain JSON (rules with
+  comments cannot be compared, and not knowing counts as different), the address is not the
+  default database's, or the site was not reached. A commit that changes the rules cannot be
+  released while the API is off.
+  The four requests cannot write: the script sends nothing but a `GET` without a body to
+  `firebase.googleapis.com`, `firebasedatabase.googleapis.com` or a database's
+  `/.settings/rules.json`, and refuses any other request itself before it is sent. It prints
+  neither the rules nor the database's address. Once the owner switches the API on, the database
+  read passes, none of this runs, and the rules step runs as always.
+  The fourth request has a sign-in of its own. Every other request of the run signs in with the
+  scope `cloud-platform`. The database's own address does not take a token with that scope alone:
+  on 2026-11-12 the first run of this on `master` got `401`, "Unauthorized request.", for the
+  rules, right after the three requests before it were answered as expected with the same token.
+  Google's guide for that address ("Authenticate REST requests", Realtime Database) asks for two
+  other scopes, `https://www.googleapis.com/auth/userinfo.email` and
+  `https://www.googleapis.com/auth/firebase.database`, and the Firebase tool and Google's admin
+  library both sign in with more than `cloud-platform` before they ask that address. So the rules
+  read signs in a second time, with those two scopes and no other. That token is sent to a
+  database's `/.settings/rules.json` and nowhere else, and the run's own token is never sent
+  there: the script refuses either itself (`allowedApi` and `allowedRules` in `live-rules.js`).
+  A scope says what a token may be used for. It gives the deploy account no role and no
+  permission, and it changes nothing in the Google project.
+  What it does not prove: that Google lets the deploy account read the live rules (if not, the
+  run stops and says so), and that nobody changes the live rules by hand between this check and
+  the end of the run. The two scopes are taken from Google's guide and from the source of
+  Google's tools, and were tried with a made-up key and no network (the library asks for exactly
+  them); that Google then answers the read can only be seen on a run from `master`. A `401`
+  with them would mean the scopes were not the reason, and a `403` or "Permission denied" that
+  the account may not read the rules there; either stops the run before anything is released.
+  For the rest it has been tried with made-up answers (`live-rules.test.js`) and, for the shape
+  of the rules answer, a local database emulator.
 - The workflow never passes `--force`. So if a change **removes or renames a function**, the
   functions step stops and lists the functions that are live but gone from the code; nothing is
   deleted by a machine. A person deletes them with the `firebase functions:delete` commands the log
@@ -156,6 +230,26 @@ The step "Check the deploy account's permissions" prints its own reason, in the 
 run's summary page under "The deploy account's permissions": the permissions that are missing,
 or Google's answer when the question was refused. Nothing was released then. The step after it,
 "Show why the step failed", has no debug file to read in that case and says so.
+
+The step "Check access to the database and the site" prints its own reasons too, in the log and
+on the summary page under "Access to the database and the site": one line for the database and
+one for the site, "reached" or "NOT reached", and under them the reason for each that was not
+reached: for the database the same filtered reading of the tool's debug file as described
+below, for the site the status and the error fields of Google's answer. When the Hosting API is
+off it says so by name; the owner switches it on in the Google Cloud console, the step never
+does. Fix everything it names before the next run. It then removes the debug file, so "Show why
+the step failed" has none to read here either.
+
+When the database was not reached, the same step also says what it found about the live rules
+(see "A release while the database API is off" above), in one line: the API is off and the live
+rules are the same as the commit's (the run then goes on without the rules step, with a warning
+and not an error), the live rules differ, they could not be read or compared, or the database
+read failed for another reason than the API being off. Under it are the requests it sent and
+Google's answers.
+
+Every run's summary page has "What this run released": one line for the functions, the database
+rules and the site each, "Released", "Left alone", "Not released" or "NOT released whole", and
+above them whether the release was whole.
 
 For the other steps: the Firebase tool's own error is one general line, such as "Failed to get instance details", and
 it does not name a missing permission. Google's answer is in the tool's debug file, which the run
@@ -442,7 +536,8 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   in `questionPacks` (game-model.ts). The lobby shows a Hanukkah line and the results card says so.
 - `?lang=he` or arriving on a `/he` address makes Hebrew the default on the create page.
 - A post's `?via=<tag>` (not one of the join sources) is sent with the game the tab creates and kept as
-  `campaign`. The SEO pages pass it on to their Start button.
+  `campaign`. The SEO pages pass it on to their Start button. The tags `test` and `test-<anything>` are
+  reserved for play-tests (see "Test games" at the end): never put them on a real post.
 - Database rules: `games/$pin/pack` is readable. BigQuery: run `functions/bigquery/2026-11-hanukkah.sql`
   once (NULLABLE `pack` and `campaign` on opened_games and closed_games).
 - Images: `graphics/hanukkah.html`, rendered with `node graphics/render-hanukkah.js <assets> <posts>`.
@@ -481,6 +576,35 @@ Search Console (needs the owner's Google sign-in).
 Checks: `cd functions && npm test` (all function tests, no Firebase project or
 credentials needed; `PRINT_ROWS=1` prints every row the run would send to BigQuery).
 
+## After a game: the ask to host, counted results shares, and a gentler REMATCH
+
+- **The ask.** On the final screen, a player who did not host the game sees a card under SHARE
+  RESULTS: "Playing with other people this week? Start your own game", with START MY OWN GAME and
+  REMIND ME. The host (the phone with the host key, the marked host row, or the creator of an older
+  game), a big screen and a solo player do not see it. START MY OWN GAME opens Create in the game's
+  language; the game it makes carries the campaign tag `after-game`. REMIND ME downloads a calendar
+  entry for the coming game night (Thursday 21:00 for Hebrew, Friday 21:00 for English, the crew
+  page's default), with a link to Create tagged `after-game-remind`, and then offers Google
+  Calendar. The join page of a game that is over shows the same ask, shorter (tags
+  `after-game-late` and `after-game-late-remind`). Create now reads `?via=` on its own address.
+- **Counting.** `onShare` accepts three more content types in BigQuery `shares`: `results`
+  (whatsapp, native, copy, download: shares of the results card, counted nowhere before),
+  `after-game` and `game-over` (create, remind, remind-google: presses on the ask). No schema
+  change, nothing to run. The saved queries, with the measure (guests who later host: 8% today,
+  target 12%, read on Android) are in `functions/bigquery/2026-11-after-game.sql`.
+- **REMATCH.** It used to move every phone to the new lobby at once, so the fastest finger decided
+  whether anyone else could share, save the crew or read the screen. Now only the phone that
+  pressed REMATCH (and a big screen) goes at once. On the other phones REMATCH becomes JOIN THE
+  REMATCH, with "Alice started a rematch" under it. Every player already has a seat in the new
+  game, so the host can start whenever; when it starts, a phone still on the final screen follows,
+  unless its player has the share sheet or the crew form open, and then it follows when that closes.
+  Client only: the server's Replay is unchanged.
+- **Deploy order:** functions first (all of them, as always), then hosting. With the new client on
+  the old functions the game works and the new presses and results shares are just not counted.
+  No rules change.
+- The share service no longer calls Google Analytics (`gtag`); the tag recorded nothing.
+- Not checked on real phones: how an iPhone and an Android phone open the downloaded calendar file.
+
 ## Known leftovers
 
 - npm audit reports moderate issues in transitive Google libraries (functions) and many
@@ -506,3 +630,55 @@ best lie.
   `onRevealDone` all move the game on), then rules (`highlights` and `highlightsFrom` readable), then
   hosting. Without the new functions or rules the screen still works, just without the lies.
 - No BigQuery change.
+
+## Test games (play-tests that do not count as players)
+
+Every play-test on the live site must start from a test link, so that its rows mark themselves and
+stay out of the usage numbers. Nicknames no longer matter.
+
+**How to set the mark.** The tester who hosts opens the site with a test tag, then creates the game
+in that same tab:
+
+```
+https://bullshit.wtf/?via=test
+https://bullshit.wtf/?via=test-qa-lobby      (any name after "test-": lowercase letters, digits, dashes)
+https://bullshit.wtf/he?via=test             (Hebrew)
+```
+
+The tag stays with the tab until it is closed, so every game created in it is a test game. The other
+testers join as usual (invite link, QR code or typed PIN): the mark is on the game, not on them. To
+check before playing, the create request (`newGame`) in the browser's network panel carries
+`campaign: "test"`.
+
+**What carries the mark.** No new BigQuery column: it travels in columns that already exist.
+
+- `opened_games.campaign` and `closed_games.campaign` are `test` (or `test-...`).
+- Every `users` row of a test game has `via = 'test'` in place of the join's real source. The server
+  writes it from the game, so a lobby that never starts is marked too.
+- Replay keeps the mark (other campaign tags are still not carried by Replay). A crew saved from a
+  test game keeps it for its rematches.
+- `question_results` and `forks` have no column for it: leave them out by PIN. `shares` has no PIN:
+  leave them out by browser (any uid that joined a test game).
+
+**Reading the numbers.** `functions/bigquery/2026-11-test-mark.sql` holds the filters and the
+`test_pins` list to paste into a query, and the three daily numbers with tests out. The saved queries
+in the other files there leave marked games out. The tests of 5 to 11 November 2026 were played
+before the mark and carry none; that file keeps the old rule (nicknames, one campaign, two network
+addresses) for windows that include those days.
+
+**What the mark does not cover.**
+
+- A game created in a tab that arrived without the tag, even when testers play it. Start again from
+  a test link.
+- A tester who joins a real game: that game stays a real game.
+- A crew page opened on its own in a test tab: a rematch is marked only when the crew was saved from
+  a test game.
+- Page views in the visit beacon's log lines and errors in Sentry are not marked.
+
+**Deploy.** Functions only (`fork`, `onJoinGame`, `createCrew`, `crewRematch`; deploy all, as always).
+No BigQuery change, no rules change, no hosting change: the client already sends the tag. The lie
+helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed at the same time:
+"reached round 2" is 100% in both arms since the server moves games on, so it is now "half or more
+of the players picked an answer on a round-2 question".
+
+Checks: `functions/test/test-mark.test.js` (in `npm test`).

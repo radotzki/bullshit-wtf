@@ -26,6 +26,16 @@
 //   - the question got no usable answer (an API is off, the sign-in failed, no network, the
 //     answer is not what Google documents): exit 1, with Google's answer. Not knowing counts as no.
 //
+// Only an answer from the address that was asked counts. A redirect is not followed: it comes
+// back as its own status (a 3xx), which is not a yes. And the sign-in and the question together
+// get TOTAL_TIMEOUT: Google's library gives the sign-in no time-out of its own, and a sign-in that
+// never answers would otherwise hold the release queue until the job's limit.
+//
+// The scope of the sign-in stays "cloud-platform", the one the Firebase tool itself uses for the
+// release steps. A read-only scope may be enough for this question, but whether Google's token
+// service and this API accept it for this account can only be seen on a run from master, where
+// a wrong guess stops a release. So it is left as it is.
+//
 // The key: this script never opens the key file. Google's own library (google-auth-library, which
 // the Firebase tool installs and uses) reads the file named by GOOGLE_APPLICATION_CREDENTIALS and
 // puts the token on the request. The script sees neither, and prints only: permission names, the
@@ -55,6 +65,9 @@ const TARGETS = {
 };
 const ORIGIN = 'https://cloudresourcemanager.googleapis.com';
 const PERMISSION = /^[a-z][A-Za-z0-9]*(\.[A-Za-z][A-Za-z0-9]*){1,4}$/;
+// In milliseconds: the question alone, and the sign-in and the question together.
+const ASK_TIMEOUT = 30000;
+const TOTAL_TIMEOUT = 60000;
 
 // NEEDS, plus whatever the installed tool lists for the same targets. `toolList` is the tool's
 // TARGET_PERMISSIONS, or null when it could not be read.
@@ -104,6 +117,9 @@ async function check(project, needs, request, origin = ORIGIN) {
         } else {
             lines.push('    (the answer carried no JSON error; its text is not shown)');
         }
+        if (status >= 300 && status < 400) {
+            lines.push('    (a redirect: it is not followed, and only an answer from the address that was asked counts)');
+        }
         return { ok: false, kind: 'refused', lines };
     }
     // Google leaves `permissions` out when the caller holds none of them.
@@ -124,8 +140,23 @@ async function check(project, needs, request, origin = ORIGIN) {
     return { ok: true, kind: 'held', lines: permissions.map(p => `held: ${scrub(p)}`) };
 }
 
+// Whether an error is a time-out: this script's own limit, the request library's ("network
+// timeout at: ...", which carries no code and the name "Error"), or the system's. The error's
+// text is only matched here, never printed.
+function timedOut(e) {
+    if (!e || typeof e !== 'object') {
+        return false;
+    }
+    const code = typeof e.code === 'string' ? e.code : '';
+    return /TIMEDOUT|TIMED_OUT|TIMEOUT|ABORT_ERR/.test(code) ||
+        e.type === 'request-timeout' ||
+        e.name === 'AbortError' || e.name === 'TimeoutError' ||
+        (typeof e.message === 'string' && /\btime-?out\b|\btimed out\b/i.test(e.message));
+}
+
 // An error without an answer. Its own text can quote the request, so only these are shown: an
-// HTTP status and JSON error if the sign-in itself was refused, else the error's code or name.
+// HTTP status and JSON error if the sign-in itself was refused, that it was a time-out, else the
+// error's code or name.
 function noAnswer(place, e) {
     const res = e && e.response;
     if (res && res.status) {
@@ -141,6 +172,11 @@ function noAnswer(place, e) {
             }
         }
         return lines;
+    }
+    if (timedOut(e)) {
+        const seconds = Number.isFinite(e.seconds) ? ` after ${Number(e.seconds)} seconds` : '';
+        const where = e.code === 'CHECK_TIMED_OUT' ? ' (the sign-in and the question together)' : '';
+        return [`No answer from ${scrub(place)}: timed out${seconds}${where}`];
     }
     const code = e && (typeof e.code === 'string' || typeof e.code === 'number') ? e.code : (e && e.name) || 'error';
     return [`No answer from ${scrub(place)}: ${scrub(String(code)).slice(0, 80)}`];
@@ -162,8 +198,9 @@ function report(project, result) {
         result.lines.map(l => '  ' + l).join('\n') + '\n\n' +
         'A 403 that says an API is disabled names the API to switch on in the Google Cloud console (here\n' +
         'most likely cloudresourcemanager.googleapis.com, the Cloud Resource Manager API). A 403 without\n' +
-        'that can mean the account lacks serviceusage.services.use (role "Service Usage Consumer"). Then\n' +
-        'start a new run by hand on master. Do not re-run this one.';
+        'that can mean the account lacks serviceusage.services.use (role "Service Usage Consumer"). A\n' +
+        '"timed out" means Google or the network did not answer in time; a 3xx is a redirect, which is\n' +
+        'never followed. Then start a new run by hand on master. Do not re-run this one.';
 }
 
 function toolPermissions() {
@@ -174,23 +211,50 @@ function toolPermissions() {
     }
 }
 
+// The scope every request of the run signs in with, but one: the read of the live database
+// rules, which hands in its own (live-rules.js, RULES_SCOPES).
+const SCOPES = Object.freeze(['https://www.googleapis.com/auth/cloud-platform']);
+
 // The real request: Google's library signs in with the key file and adds the token itself.
-// `auth` is given only by a test.
-function googleRequest(auth) {
-    return async options => {
+// `auth` and `limits` are given only by a test. `scopes` is what the sign-in asks for; each call
+// of googleRequest() is a sign-in of its own, so a token never serves two sets of scopes.
+function googleRequest(auth, limits = {}, scopes = SCOPES) {
+    const ask = limits.ask || ASK_TIMEOUT;
+    const total = limits.total || TOTAL_TIMEOUT;
+    const work = async options => {
         if (!auth) {
-            const { GoogleAuth } = require('google-auth-library');
-            auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+            // `limits.GoogleAuth` stands in for Google's library in a test.
+            const GoogleAuth = limits.GoogleAuth || require('google-auth-library').GoogleAuth;
+            auth = new GoogleAuth({ scopes: Array.from(scopes) });
         }
         const client = await auth.getClient();
         const res = await client.request(Object.assign({}, options, {
-            timeout: 30000,
+            timeout: ask,
             responseType: 'json',
             retry: false,
+            // A redirect is not followed: it comes back as its own 3xx answer, which is not a yes.
+            redirect: 'manual',
+            maxRedirects: 0,
             // Every answer comes back as an answer, whatever its status.
             validateStatus: () => true,
         }));
+        // Should the library follow a redirect all the same, the answer is from another address.
+        const from = res && res.request && res.request.responseURL;
+        if (typeof from === 'string' && from && from !== options.url) {
+            throw Object.assign(new Error('answer from another address'), { code: 'ANSWER_FROM_ANOTHER_ADDRESS' });
+        }
         return { status: res.status, data: res.data };
+    };
+    // The sign-in has no time-out of its own in Google's library, so the whole of it gets one
+    // here. The caller exits the process, so a request still open is not waited for.
+    return options => {
+        let timer;
+        const late = new Promise((resolve, reject) => {
+            timer = setTimeout(() => reject(Object.assign(new Error('timed out'), { code: 'CHECK_TIMED_OUT', seconds: total / 1000 })), total);
+        });
+        const done = work(options);
+        done.catch(() => {});
+        return Promise.race([done, late]).finally(() => clearTimeout(timer));
     };
 }
 
@@ -231,4 +295,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { NEEDS, TARGETS, wanted, check, report, googleRequest };
+module.exports = { NEEDS, TARGETS, SCOPES, ASK_TIMEOUT, TOTAL_TIMEOUT, wanted, check, report, googleRequest, noAnswer };
