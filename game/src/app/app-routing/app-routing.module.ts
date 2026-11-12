@@ -14,6 +14,7 @@ import { CreateGameComponent } from '../pages/create-game/create-game.component'
 import { LearnComponent } from '../pages/learn/learn.component';
 import { SessionService } from '../services/session.service';
 import { CrewComponent } from '../pages/crew/crew.component';
+import { StepComponent } from '../pages/step/step.component';
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -43,6 +44,8 @@ const routes: Routes = [
     { path: 'reveal-the-truth/:pin', component: RevealTheTruthComponent, canActivate: [SessionService, GameService] },
     { path: 'score-board/:pin', component: ScoreBoardComponent, canActivate: [SessionService, GameService] },
     { path: 'score-board-final/:pin', component: ScoreBoardFinalComponent, canActivate: [SessionService, GameService] },
+    // Passed through, unseen, when a step's page is built again (GameService.showAgain)
+    { path: 'step/:pin', component: StepComponent, canActivate: [SessionService, GameService] },
     { path: '**', component: LandingComponent},
 ];
 

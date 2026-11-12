@@ -223,6 +223,15 @@ export class ApiService {
         return this.observe<number>(this.gamesRef.child(pin).child('state').child('id'));
     }
 
+    /**
+     * The game's step with the time it began, live. Unlike gameState, a new question (or new picks)
+     * after a phone was away is news even when the step's id is the same as the one the phone last saw.
+     */
+    gamePhase(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<GameStateInfo>(this.gamesRef.child(pin).child('state'));
+    }
+
     getRoundIndex(pin: string) {
         pin = pin.toUpperCase();
         return this.get<number>(this.gamesRef.child(pin).child('roundIndex'));

@@ -11,6 +11,31 @@ export const durations = {
     [GameState.ScoreBoard]: 3000,
 };
 
+/** The page of each step of a game. */
+const pages = {
+    [GameState.GameStaging]: 'game-staging',
+    [GameState.RoundIntro]: 'round-intro',
+    [GameState.ShowQuestion]: 'show-question',
+    [GameState.ShowAnswers]: 'show-answers',
+    [GameState.RevealTheTruth]: 'reveal-the-truth',
+    [GameState.ScoreBoard]: 'score-board',
+    [GameState.ScoreBoardFinal]: 'score-board-final',
+};
+
+/** The steps with a deadline, on which every phone keeps a backup timer. */
+const timedSteps = [GameState.RoundIntro, GameState.ShowQuestion, GameState.ShowAnswers, GameState.RevealTheTruth, GameState.ScoreBoard];
+
+/** The steps that come round again in a game, each time with its own page. */
+const rebuiltSteps = timedSteps;
+
+/**
+ * Names one occurrence of a step: its id and the time it began, as the server's stateKey does.
+ * Undefined for a game that has no step (gone, or not there yet).
+ */
+export function phaseKey(state: GameStateInfo): string {
+    return state && typeof state.id === 'number' ? `${state.id}:${state.timestamp}` : undefined;
+}
+
 // The server ends each phase at its deadline. Phones only step in if the server is late,
 // so they wait this much longer before ticking themselves.
 const clientFallbackDelay = 2500;
@@ -21,6 +46,9 @@ export class GameService implements CanActivate {
     /** The game this phone follows, in capitals. */
     private pin: string;
     private timeout;
+    /** The step this phone was last sent to: its id and the time it began (see phaseKey). */
+    private phase: string;
+    private stepId: GameState;
 
     constructor(
         private router: Router,
@@ -40,7 +68,7 @@ export class GameService implements CanActivate {
         }
         this.unregister();
         this.pin = next;
-        this.game = this.apiService.gameState(pin).subscribe(state => {
+        this.game = this.apiService.gamePhase(pin).subscribe(state => {
             // A step of a game this phone has left since must not move it.
             if (this.pin === next) {
                 this.handleGameState(pin, state);
@@ -50,6 +78,8 @@ export class GameService implements CanActivate {
 
     unregister() {
         this.pin = undefined;
+        this.phase = undefined;
+        this.stepId = undefined;
         this.clearTimer();
         if (this.game) {
             this.game.unsubscribe();
@@ -57,43 +87,51 @@ export class GameService implements CanActivate {
         }
     }
 
-    private handleGameState(pin: string, state: GameState) {
+    private handleGameState(pin: string, state: GameStateInfo) {
+        const id = state ? state.id : undefined;
+        const key = phaseKey(state);
+
+        // The same step as before, with only something else on it changed: nothing to do.
+        if (key && key === this.phase) {
+            return;
+        }
+
+        // A new question, new picks or a new round on the page the phone already shows: a phone that
+        // was away while the game went round once comes back to the same page. Angular keeps a page
+        // whose address has not changed, with what it knew of the step before (that its lie was sent,
+        // its pick made, the old question), so that page is built again, as a phone that never left gets it.
+        const again = !!key && !!this.phase && id === this.stepId && rebuiltSteps.indexOf(id) >= 0;
+        this.phase = key;
+        this.stepId = id;
         this.clearTimer();
 
-        switch (state) {
-            case GameState.GameStaging:
-                this.router.navigate(['game-staging', pin]);
-                break;
-
-            case GameState.RoundIntro:
-                this.router.navigate(['round-intro', pin]);
-                this.fallbackTick(pin, state);
-                break;
-
-            case GameState.ShowQuestion:
-                this.router.navigate(['show-question', pin]);
-                this.fallbackTick(pin, state);
-                break;
-
-            case GameState.ShowAnswers:
-                this.router.navigate(['show-answers', pin]);
-                this.fallbackTick(pin, state);
-                break;
-
-            case GameState.RevealTheTruth:
-                this.router.navigate(['reveal-the-truth', pin]);
-                this.fallbackTick(pin, state);
-                break;
-
-            case GameState.ScoreBoard:
-                this.router.navigate(['score-board', pin]);
-                this.fallbackTick(pin, state);
-                break;
-
-            case GameState.ScoreBoardFinal:
-                this.router.navigate(['score-board-final', pin]);
-                break;
+        const page = pages[id];
+        if (!page) {
+            return;
         }
+
+        if (again) {
+            this.showAgain(pin, page, key);
+        } else {
+            this.router.navigate([page, pin]);
+        }
+
+        if (timedSteps.indexOf(id) >= 0) {
+            this.fallbackTick(pin, id);
+        }
+    }
+
+    /**
+     * Build the page again at the same address: the router keeps a page whose address has not changed,
+     * so the phone passes through the empty step page first, without the address bar or the history seeing it.
+     */
+    private showAgain(pin: string, page: string, key: string) {
+        Promise.resolve(this.router.navigate(['step', pin], { skipLocationChange: true })).then(() => {
+            // Unless the phone moved on, or left the game, meanwhile.
+            if (this.phase === key && this.pin !== undefined) {
+                this.router.navigate([page, pin]);
+            }
+        }, () => undefined);
     }
 
     /**
