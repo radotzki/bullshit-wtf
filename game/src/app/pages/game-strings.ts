@@ -69,6 +69,13 @@ export interface GameStrings {
     whatWasTheQuestion: string;
     waitForFriends: string;
 
+    // The row of players under both waiting lines: who is in, and who the room waits for.
+    /** One player left: "Waiting for Chen". */
+    waitingForName: (name: string) => string;
+    /** For a screen reader, on a player's picture. */
+    seatIn: (name: string) => string;
+    seatNotYet: (name: string) => string;
+
     // The reveal.
     pickedBy: string;
     nobodyFoundIt: string;
@@ -148,6 +155,10 @@ const en: GameStrings = {
     whatWasTheQuestion: 'WHAT WAS THE QUESTION AGAIN?',
     waitForFriends: 'Let\'s wait for your friends',
 
+    waitingForName: name => `Waiting for ${name}`,
+    seatIn: name => `${name} is in`,
+    seatNotYet: name => `${name}, not yet`,
+
     pickedBy: 'picked by',
     nobodyFoundIt: 'nobody found it',
     theTruth: 'THE TRUTH',
@@ -220,6 +231,10 @@ const he: GameStrings = {
 
     whatWasTheQuestion: 'מה הייתה השאלה?',
     waitForFriends: 'מחכים לחברים',
+
+    waitingForName: name => `מחכים ל־${name}`,
+    seatIn: name => `${name} בפנים`,
+    seatNotYet: name => `${name}, עוד לא`,
 
     pickedBy: 'בחרו בזה:',
     nobodyFoundIt: 'אף אחד לא מצא',

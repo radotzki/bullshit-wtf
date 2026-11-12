@@ -861,3 +861,61 @@ Only the two Google projects named in `report.ts` send at all.
 was logged first says `handled: true` even if the error then failed the function. An error line
 is told to be the functions' own by the file that wrote it, read from the call stack: a line
 written through a helper outside `dist` would not be a report.
+
+## Who the room is waiting for
+
+After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.
+It shows every player's picture: a green tick on those who are in, orange dots (and a wobble) on
+those the room still waits for, and "Waiting for Chen" when one is left. The big screen shows the
+same row: under the question while lies are written, and in the bar on top while answers are picked
+(the answers fill that screen), where the last player stands alone beside "Waiting for Chen".
+
+- Functions and site. No rule change, no BigQuery change, no new function, none removed or renamed.
+  A merge sends all functions and the site.
+- What the server writes: when a seat's lie is stored (`answer`) or its pick is seen
+  (`onAnswerSelection`), the name of the phase on that seat, `games/<pin>/players/<pid>/sent`
+  ("<state id>:<state timestamp>", see `sentMark` in `game-model.ts` and
+  `functions/src/controllers/sent.ts`). It says that the seat has sent, never what. Phones could
+  already read `players`, `state`, `questionIndex` and `timestamp` of a game, which is all the row
+  reads; the lies and the picks are not read for it. Only the server can write under `players`.
+- A mark is for showing only. Who the game waits for, when a phase ends and every point are worked
+  out from the lies and the picks themselves, as before. The mark is written alongside the step
+  that may end the phase, not before it, so no phase is longer. A mark that cannot be written is
+  logged and costs a tick on a screen; the game goes on.
+- Nothing is cleared between phases: a seat is done with the phase the game is on when its mark
+  names that phase. Replay starts with no marks.
+- The empty seats rule: from the second question on, a seat that has no mark from this game is one
+  nobody plays. It is shown faded, with no dots, and is never named; it counts again from the
+  moment it sends something. This follows `seatsToWaitFor` in `seats.ts`, and a test plays whole
+  games in small to hold the two together (`functions/test/sent.test.js`).
+- The row never tells who wrote which lie: it holds names, pictures and marks, in the order the
+  players joined, and while answers are picked the marks of the lies show nothing.
+- Old and new together. A phone with the old site ignores the marks and shows its old line. The new
+  site shows the row only while the server is seen to mark the phase the game is on: a phone when
+  its own seat is marked, the big screen from the first tick. So on functions from before this
+  change, or rolled back to them in the middle of a game, it shows the old line and no row.
+  A game that is being played while the new functions come in gets marks from that moment: until
+  a seat sends again, the new site can show it faded on that one question.
+- A player alone gets no row. The words follow the game's language (`game-strings.ts`).
+
+How to read it (read-only; replace `<release time>`, and put `test_pins` from
+`functions/bigquery/2026-11-test-mark.sql` first):
+
+```sql
+-- Seats that sent no lie, and seats that picked nothing, on questions that were still played
+-- (half or more of the seats picked an answer), in games of two or more. Both should fall.
+SELECT COUNT(DISTINCT id) AS games, COUNT(*) AS questions,
+  1 - SUM(lies) / SUM(players) AS no_lie_share, 1 - SUM(picks) / SUM(players) AS no_pick_share
+FROM `bullshit-wtf-prod.analytics.question_results`
+WHERE time >= TIMESTAMP('<release time>') AND players >= 2 AND picks * 2 >= players
+  AND id NOT IN (SELECT pin FROM test_pins);
+```
+
+Before the release (5 November to 12 November 2026, 10:00 UTC, tests out): 64 games of two or more
+players, 375 questions still played; 8.8% of the seats sent no lie and 5.6% picked nothing.
+
+Not readable yet: the seconds between the first and the last answer of a phase, the measure this
+change is really about. No table holds when an answer came in. It needs the two wait columns of
+pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
+whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
+above.

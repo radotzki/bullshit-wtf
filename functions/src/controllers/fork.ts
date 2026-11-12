@@ -143,7 +143,11 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
 }
 
 function resetPlayersScore(players: GamePlayers) {
-    Object.keys(players || {}).forEach(k => players[k].score = 0);
+    Object.keys(players || {}).forEach(k => {
+        players[k].score = 0;
+        // Nobody has sent anything in the new game yet (see sent.ts).
+        delete players[k].sent;
+    });
     return players;
 }
 
