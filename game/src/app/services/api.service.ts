@@ -465,7 +465,8 @@ export class ApiService {
     }
 
     /**
-     * Counts one share in BigQuery (game night sends from a crew page, lobby invites). Fire and forget:
+     * Counts one share in BigQuery (game night sends from a crew page, lobby invites, results-card shares,
+     * presses on the after-game ask). Fire and forget:
      * never throws, and the page does not wait on it.
      */
     async logShare(contentType: string, method: string, extra: { crew?: string; locale?: string } = {}) {

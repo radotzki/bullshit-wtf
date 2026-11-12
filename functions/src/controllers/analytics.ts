@@ -96,9 +96,23 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     native             sent through the phone's share sheet (SHARE LINK)
 //     copy               copied the link (COPY LINK, or SHARE LINK on a phone with no share sheet)
 //     solo-start         a lone host tapped "Start alone anyway" (not a send: counts who insists)
+//   results     the final screen's SHARE RESULTS sheet (the results card):
+//     whatsapp           tapped WHATSAPP
+//     native             sent through the phone's share sheet (SHARE)
+//     copy               SHARE on a phone with no share sheet: the text and link were copied
+//     download           tapped SAVE IMAGE
+//   after-game  the "start your own game" ask a guest sees on the final screen (presses, not sends):
+//     create             tapped START MY OWN GAME (the game it makes carries campaign after-game)
+//     remind             tapped REMIND ME (saves a calendar entry; its link carries after-game-remind)
+//     remind-google      then tapped "Add it to Google Calendar"
+//   game-over   the same ask on the join page of a game that is over (campaigns after-game-late and
+//               after-game-late-remind): create, remind, remind-google
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
+    'results': ['whatsapp', 'native', 'copy', 'download'],
+    'after-game': ['create', 'remind', 'remind-google'],
+    'game-over': ['create', 'remind', 'remind-google'],
 };
 
 export interface ShareRow {

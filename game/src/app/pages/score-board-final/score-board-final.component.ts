@@ -9,6 +9,8 @@ import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
 import { Highlight, Highlights, finalPlaces } from './../../game-model';
 import { finalStrings, FinalStrings } from './final-strings';
+import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
+import { GameState } from './../../game-model';
 
 export interface FinalPlayer {
     nickname: string;
@@ -49,6 +51,19 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     crewError: string;
     crewSubscription: Subscription;
     myNickname: string;
+    /** This player did not host the game: show the "start your own game" ask. */
+    hostAsk: boolean;
+    /**
+     * Someone else pressed REMATCH: the new game's pin. This phone stays on the final screen and its
+     * REMATCH button becomes JOIN THE REMATCH (see rematchMove).
+     */
+    rematchPin: string;
+    rematchHost: string;
+    rematchStarted: boolean;
+    private rematchSubscription: Subscription;
+    private sheetOpen: boolean;
+    /** This phone is on its way to the rematch. */
+    private leaving: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -84,35 +99,122 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
                 this.crewService.remember(this.crewId, this.crewName, this.myNickname);
             }
             this.setPlayers(resp, highlights || {}, user ? user.pid : undefined);
+            this.setHostAsk(resp, user);
         });
 
         this.crewSubscription = this.apiService.getGameCrewObservable(this.pin).subscribe(id => this.onCrew(id));
 
-        this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(async fork => {
-            if (fork) {
-                // The phone that pressed Replay goes once its host key for the new game is saved, so its
-                // lobby knows it is the host from the start (START works at once, and it reports in).
-                if (this.forkCall) {
-                    await this.forkCall.catch(() => null);
-                }
-                if (!this.presenter) {
-                    await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
-                }
+        this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(fork => this.onFork(fork));
+    }
 
-                this.gameService.unregister();
-                this.gameService.register(fork);
-            }
+    /** A rematch of this game exists: go to it, or stay here with a button that goes. */
+    private async onFork(fork: string) {
+        if (!fork || this.rematchPin === fork) {
+            return;
+        }
+        // The phone that pressed Replay goes once its host key for the new game is saved, so its
+        // lobby knows it is the host from the start (START works at once, and it reports in).
+        const pressed = !!this.forkCall;
+        if (pressed) {
+            await this.forkCall.catch(() => null);
+        }
+        this.rematchPin = fork;
+        if (this.followRematch(pressed)) {
+            return;
+        }
+        this.loading = false;
+        this.apiService.getPlayers(fork).then(players => {
+            const host = Object.keys(players || {}).map(k => players[k]).filter(p => p && p.host)[0];
+            this.rematchHost = host ? host.nickname : '';
+        }).catch(() => null);
+        // When the host starts the rematch, a phone that is still here follows.
+        if (this.rematchSubscription) {
+            this.rematchSubscription.unsubscribe();
+        }
+        this.rematchSubscription = this.apiService.gameState(fork).subscribe(state => {
+            this.rematchStarted = typeof state === 'number' && state !== GameState.GameStaging;
+            this.followRematch();
         });
+    }
+
+    /** Sharing or saving: a started rematch waits for this player until the sheet or form closes. */
+    private get busy() {
+        return !!this.sheetOpen || !!this.naming || !!this.savingCrew;
+    }
+
+    /** Goes to the rematch when rematchMove says so. Resolves to whether it went. */
+    private followRematch(pressed = false): boolean {
+        if (!this.rematchPin || this.leaving) {
+            return !!this.leaving;
+        }
+        const move = rematchMove({ presenter: this.presenter, pressed, started: !!this.rematchStarted, busy: this.busy });
+        if (move === 'go') {
+            this.goToRematch();
+            return true;
+        }
+        return false;
+    }
+
+    private async goToRematch() {
+        const fork = this.rematchPin;
+        this.leaving = true;
+        this.loading = true;
+        if (!this.presenter) {
+            await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
+        }
+        this.gameService.unregister();
+        this.gameService.register(fork);
+    }
+
+    /** JOIN THE REMATCH: this player is done here. */
+    joinRematch() {
+        if (this.rematchPin && !this.leaving) {
+            this.goToRematch();
+        }
+    }
+
+    /** The share sheet opened or closed. */
+    onSheet(open: boolean) {
+        this.sheetOpen = open;
+        if (!open) {
+            this.followRematch();
+        }
+    }
+
+    get rematchLine() {
+        const t = rematchStrings[this.locale === 'he' ? 'he' : 'en'];
+        return this.rematchStarted ? t.started : t.waiting(this.rematchHost);
+    }
+
+    get rematchJoin() {
+        return rematchStrings[this.locale === 'he' ? 'he' : 'en'].join;
     }
 
     ngOnDestroy() {
         this.forkGameSubscription.unsubscribe();
         this.crewSubscription.unsubscribe();
+        if (this.rematchSubscription) {
+            this.rematchSubscription.unsubscribe();
+        }
 
         if (this.sound) {
             this.sound.fade(1, 0, 1000);
             setTimeout(this.sound.stop, 1000);
         }
+    }
+
+    /** The ask is for a player of this game who did not host it. */
+    private async setHostAsk(resp, user) {
+        const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
+        this.hostAsk = showHostAsk({
+            presenter: this.presenter,
+            myPid: user ? user.pid : null,
+            myUid: user ? user.uid : null,
+            // For a game from before host marks: the browser that created it.
+            creator: await this.apiService.getGameCreator(this.pin).catch(() => null),
+            holdsHostKey: this.apiService.holdsHostKey(this.pin),
+            players,
+        });
     }
 
     private setPlayers(resp, highlights: Highlights, myPid: string) {
@@ -222,6 +324,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }
         }
         this.savingCrew = false;
+        this.followRematch();
     }
 
     playMusic() {

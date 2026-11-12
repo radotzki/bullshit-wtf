@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 
-declare var gtag;
-
 export type Locale = 'en' | 'he';
 
 export interface SharePayload {
@@ -169,12 +167,9 @@ export class ShareService {
         this.track('download', 'results');
     }
 
-    track(method: string, contentType: string | null) {
-        if (!contentType) {
-            return;
-        }
-        try {
-            gtag('event', 'share', { method, content_type: contentType });
-        } catch (e) { }
-    }
+    /**
+     * Used to send a Google Analytics event. That tag recorded nothing and is gone; counted shares
+     * go to BigQuery through ApiService.logShare. Kept as a no-op so its callers need no change.
+     */
+    track(method: string, contentType: string | null) { }
 }

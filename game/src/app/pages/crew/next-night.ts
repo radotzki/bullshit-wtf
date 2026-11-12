@@ -120,11 +120,19 @@ function fold(line: string) {
     return out.join('\r\n ');
 }
 
+/** One calendar entry, whatever it is for: a crew's game night, or a guest's reminder to host. */
+export interface CalendarEvent {
+    title: string;
+    /** The text of the entry; the link goes on its own line after it. */
+    text: string;
+    url: string;
+    /** Unique per entry: `<uid>@bullshit.wtf`. */
+    uid: string;
+}
+
 /** A one-event calendar file, with a reminder an hour before. */
-export function buildIcs(start: Date, info: NightInfo, crewId: string, now: Date) {
+export function buildEventIcs(start: Date, event: CalendarEvent, now: Date) {
     const end = new Date(start.getTime() + NIGHT_MINUTES * 60 * 1000);
-    const title = nightTitle(info);
-    const description = `${nightText(start, info)}\n${info.url}`;
     const lines = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
@@ -132,16 +140,16 @@ export function buildIcs(start: Date, info: NightInfo, crewId: string, now: Date
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         'BEGIN:VEVENT',
-        `UID:${crewId}-${utcStamp(start)}@bullshit.wtf`,
+        `UID:${event.uid}@bullshit.wtf`,
         `DTSTAMP:${utcStamp(now)}`,
         `DTSTART:${utcStamp(start)}`,
         `DTEND:${utcStamp(end)}`,
-        `SUMMARY:${icsText(title)}`,
-        `DESCRIPTION:${icsText(description)}`,
-        `URL:${info.url}`,
+        `SUMMARY:${icsText(event.title)}`,
+        `DESCRIPTION:${icsText(`${event.text}\n${event.url}`)}`,
+        `URL:${event.url}`,
         'BEGIN:VALARM',
         'ACTION:DISPLAY',
-        `DESCRIPTION:${icsText(title)}`,
+        `DESCRIPTION:${icsText(event.title)}`,
         'TRIGGER:-PT1H',
         'END:VALARM',
         'END:VEVENT',
@@ -150,13 +158,27 @@ export function buildIcs(start: Date, info: NightInfo, crewId: string, now: Date
     return lines.map(fold).join('\r\n') + '\r\n';
 }
 
-/** Google Calendar's "add event" link, for phones that do nothing with a downloaded .ics. */
-export function googleCalendarUrl(start: Date, info: NightInfo) {
+/** Google Calendar's "add event" link for one entry, for phones that do nothing with a downloaded .ics. */
+export function googleEventUrl(start: Date, event: CalendarEvent) {
     const end = new Date(start.getTime() + NIGHT_MINUTES * 60 * 1000);
     return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-        `&text=${encodeURIComponent(nightTitle(info))}` +
+        `&text=${encodeURIComponent(event.title)}` +
         `&dates=${utcStamp(start)}/${utcStamp(end)}` +
-        `&details=${encodeURIComponent(`${nightText(start, info)}\n${info.url}`)}`;
+        `&details=${encodeURIComponent(`${event.text}\n${event.url}`)}`;
+}
+
+function nightEvent(start: Date, info: NightInfo, crewId: string): CalendarEvent {
+    return { title: nightTitle(info), text: nightText(start, info), url: info.url, uid: `${crewId}-${utcStamp(start)}` };
+}
+
+/** A crew's game night as a calendar file. */
+export function buildIcs(start: Date, info: NightInfo, crewId: string, now: Date) {
+    return buildEventIcs(start, nightEvent(start, info, crewId), now);
+}
+
+/** A crew's game night as a Google Calendar link. */
+export function googleCalendarUrl(start: Date, info: NightInfo) {
+    return googleEventUrl(start, nightEvent(start, info, ''));
 }
 
 export function icsFileName(crewName: string) {

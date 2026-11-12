@@ -576,6 +576,35 @@ Search Console (needs the owner's Google sign-in).
 Checks: `cd functions && npm test` (all function tests, no Firebase project or
 credentials needed; `PRINT_ROWS=1` prints every row the run would send to BigQuery).
 
+## After a game: the ask to host, counted results shares, and a gentler REMATCH
+
+- **The ask.** On the final screen, a player who did not host the game sees a card under SHARE
+  RESULTS: "Playing with other people this week? Start your own game", with START MY OWN GAME and
+  REMIND ME. The host (the phone with the host key, the marked host row, or the creator of an older
+  game), a big screen and a solo player do not see it. START MY OWN GAME opens Create in the game's
+  language; the game it makes carries the campaign tag `after-game`. REMIND ME downloads a calendar
+  entry for the coming game night (Thursday 21:00 for Hebrew, Friday 21:00 for English, the crew
+  page's default), with a link to Create tagged `after-game-remind`, and then offers Google
+  Calendar. The join page of a game that is over shows the same ask, shorter (tags
+  `after-game-late` and `after-game-late-remind`). Create now reads `?via=` on its own address.
+- **Counting.** `onShare` accepts three more content types in BigQuery `shares`: `results`
+  (whatsapp, native, copy, download: shares of the results card, counted nowhere before),
+  `after-game` and `game-over` (create, remind, remind-google: presses on the ask). No schema
+  change, nothing to run. The saved queries, with the measure (guests who later host: 8% today,
+  target 12%, read on Android) are in `functions/bigquery/2026-11-after-game.sql`.
+- **REMATCH.** It used to move every phone to the new lobby at once, so the fastest finger decided
+  whether anyone else could share, save the crew or read the screen. Now only the phone that
+  pressed REMATCH (and a big screen) goes at once. On the other phones REMATCH becomes JOIN THE
+  REMATCH, with "Alice started a rematch" under it. Every player already has a seat in the new
+  game, so the host can start whenever; when it starts, a phone still on the final screen follows,
+  unless its player has the share sheet or the crew form open, and then it follows when that closes.
+  Client only: the server's Replay is unchanged.
+- **Deploy order:** functions first (all of them, as always), then hosting. With the new client on
+  the old functions the game works and the new presses and results shares are just not counted.
+  No rules change.
+- The share service no longer calls Google Analytics (`gtag`); the tag recorded nothing.
+- Not checked on real phones: how an iPhone and an Android phone open the downloaded calendar file.
+
 ## Known leftovers
 
 - npm audit reports moderate issues in transitive Google libraries (functions) and many
