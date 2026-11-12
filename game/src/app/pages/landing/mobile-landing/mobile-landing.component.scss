@@ -330,6 +330,20 @@
     }
 }
 
+// A phone held sideways has no room for the picture: the line stays, and Create and Join both
+// keep their place on the first screen.
+@media (orientation: landscape) and (max-height: 480px) {
+    .front-door {
+        &.has-picture {
+            padding-bottom: 9px;
+        }
+
+        .picture {
+            display: none;
+        }
+    }
+}
+
 // Each frame is on for a third of the loop, with a short fade at each end.
 @keyframes front-door-frame {
     0% { opacity: 0; }
