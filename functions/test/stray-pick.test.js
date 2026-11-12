@@ -103,7 +103,6 @@ function newGame(playerIds = ['p1', 'p2', 'p3']) {
 }
 
 const game = pin => db.games[pin];
-const stateKeyOf = s => `${s.id}:${s.timestamp}`;
 const state = pin => game(pin).state.id;
 
 /** The phase timer firing: move on from the current phase. */
@@ -375,15 +374,20 @@ test('a phase given back is free on the server, though the database client start
 test('a whole game in which one step fails in every phase still reaches the final scoreboard', async () => {
     const pin = newGame();
     const realChild = fakeFirebase.gamesRef.child;
-    const failed = {};
+    // Phases are told apart by counting them as the game enters them, not by the clock: a whole game
+    // takes a few milliseconds here, so two phases can carry the same id and the same timestamp.
+    let entered = 0;
+    let refusedIn = -1;
+    let refusals = 0;
     // The first write that would move the game out of each phase is refused, once.
     fakeFirebase.gamesRef.child = p => {
         const r = realChild(p);
         const update = r.update;
         r.update = async v => {
-            const from = game(pin) && stateKeyOf(game(pin).state);
-            if (String(p) === pin && v && v.state && !failed[from]) { failed[from] = true; throw new Error('write refused'); }
-            return update(v);
+            const moves = String(p) === pin && v && v.state;
+            if (moves && refusedIn !== entered) { refusedIn = entered; refusals++; throw new Error('write refused'); }
+            await update(v);
+            if (moves) entered++;
         };
         return r;
     };
@@ -399,6 +403,7 @@ test('a whole game in which one step fails in every phase still reaches the fina
             await next(pin).catch(() => { refused++; });
         }
         assert.ok(refused >= 3 * TOTAL_Q, `steps did fail on the way (${refused})`);
+        assert.strictEqual(refusals, entered, 'every phase the game left had its first step refused');
     } finally {
         fakeFirebase.gamesRef.child = realChild;
     }
