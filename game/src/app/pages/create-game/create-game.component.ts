@@ -2,7 +2,7 @@ import { reportError } from './../../sentry/sentry.module';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { markHosted, arrivalCampaign, preferredLocale } from '../../services/join-source';
+import { markHosted, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
 import { questionPacks, isPack, seasonalPack } from '../../game-model';
 
 @Component({
@@ -18,6 +18,8 @@ export class CreateGameComponent implements OnInit {
     // The seasonal pack on offer (in season, or asked for with ?pack=), and whether it is switched on.
     pack: string = null;
     usePack = false;
+    // A tag on this page's own address (the after-game ask links here with ?via=after-game).
+    private campaign: string = null;
 
     constructor(
         private apiService: ApiService,
@@ -30,6 +32,8 @@ export class CreateGameComponent implements OnInit {
         this.apiService.warmUpSignIn();
         const params = this.route.snapshot.queryParams || {};
         this.locale = params.lang === 'he' || params.lang === 'en' ? params.lang : preferredLocale();
+
+        this.campaign = typeof params.via === 'string' ? readCampaign(`?via=${encodeURIComponent(params.via)}`) : null;
 
         const asked = isPack(params.pack) ? params.pack : null;
         this.pack = asked || seasonalPack() || null;
@@ -45,7 +49,7 @@ export class CreateGameComponent implements OnInit {
         this.errorMsg = '';
         const pack = this.usePack && this.pack ? this.pack : undefined;
 
-        this.apiService.createGame(this.locale, this.length, pack, arrivalCampaign())
+        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign())
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);

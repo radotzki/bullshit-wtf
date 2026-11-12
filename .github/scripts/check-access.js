@@ -38,11 +38,24 @@
 // answer's text, or a site's name. After a failed database read both names of the debug file
 // are removed, so the later step "Show why the step failed" does not print it a second time.
 //
-// Exit 0 only when both reads passed.
+// One way on without the database read (live-rules.js has the whole reasoning): when the
+// database read failed, four GETs ask whether that is only because the Firebase Realtime
+// Database Management API is off, and whether the rules that are live equal this commit's. If
+// The fourth, the read of the live rules at the database's own address, has a sign-in of its
+// own with the two scopes that address asks for; no other request of the run carries it. If
+// both are so, and the site was reached, this step passes and writes `rules=unchanged` to the
+// step's outputs. The workflow then skips "2. Deploy the database rules", which could only fail
+// and had nothing to change, and releases the functions and the site. In every other case the
+// step fails as before, and now also says what the four GETs found.
+//
+// Exit 0 only when both reads passed, or the site was reached and the rules are unchanged as
+// above. The step's output `rules` is `deploy` when both reads passed, `unchanged` in that one
+// case, and is not written when the step fails.
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 const refusal = require('./firebase-refusal.js');
 const { googleRequest, noAnswer } = require('./check-deploy-permissions.js');
+const { liveRules, RULES_SCOPES } = require('./live-rules.js');
 
 const { scrub, errorFields } = refusal;
 const DATABASE_READ = ['deploy', '--only', 'database', '--dry-run'];
@@ -137,15 +150,44 @@ async function readSite(project, request, origin = SITE_ORIGIN) {
     return Object.assign(base, { ok: true, note: `${count} site${count === 1 ? '' : 's'}`, why: null });
 }
 
-function report(project, results) {
+const RULES_VERDICT = {
+    unchanged: 'the Firebase Realtime Database Management API is off, and the live rules are the same as this commit\'s',
+    changed: 'the live rules differ from this commit\'s',
+    unknown: 'the live rules could not be read or compared',
+    other: 'the database read did not fail because the Firebase Realtime Database Management API is off',
+};
+
+// `rules` is null when the database was reached, else what liveRules() found.
+function report(project, results, rules = null) {
     const failed = results.filter(r => !r.ok);
     const lines = results.map(r => `  ${r.what} (${r.shown}): ${r.ok ? 'reached' : 'NOT reached'}${r.note ? ', ' + r.note : ''}`);
     if (!failed.length) {
         return `The deploy account reached the database and the site of ${project}. Nothing was released.\n\n` + lines.join('\n');
     }
-    let out = `Deploy stopped, nothing released. Both reads were tried on ${project}:\n\n` + lines.join('\n');
+    const onlyDatabase = failed.length === 1 && failed[0].what === 'the database';
+    const goesOn = Boolean(onlyDatabase && rules && rules.verdict === 'unchanged');
+    let out = goesOn
+        ? `The run goes on WITHOUT the database rules step. Both reads were tried on ${project}:\n\n` + lines.join('\n')
+        : `Deploy stopped, nothing released. Both reads were tried on ${project}:\n\n` + lines.join('\n');
     for (const r of failed) {
         out += `\n\nWhy ${r.what} was not reached:\n\n` + r.why.split('\n').map(l => '  ' + l).join('\n');
+    }
+    if (rules) {
+        out += `\n\nThe live database rules, read without the API that is off: ${RULES_VERDICT[rules.verdict] || RULES_VERDICT.unknown}.\n\n` +
+            rules.lines.map(l => '  ' + l).join('\n');
+    }
+    if (goesOn) {
+        return out + '\n\nThe rules step would ask the API that is off, and it has nothing to change: the rules that are live\n' +
+            'are already this commit\'s. So this run releases the functions and the site, and leaves the rules\n' +
+            'alone. Nothing was released by this step. A commit that changes the rules still needs the owner to\n' +
+            'switch the API on in the Google Cloud console (APIs and services, Library, "Firebase Realtime\n' +
+            'Database Management API"); this step switches nothing on.';
+    }
+    if (rules && rules.verdict === 'unchanged') {
+        out += '\n\nThe rules alone would not have stopped this run; the site did.';
+    } else if (rules && rules.verdict === 'changed') {
+        out += '\n\nSo this commit\'s rules have to be released, and that needs the API. A run never releases the\n' +
+            'functions and the site without rules that differ.';
     }
     out += '\n\nA 403 that says an API is disabled names the API to switch on in the Google Cloud console. This\n' +
         'step switches nothing on. Fix everything named here, then start a new run by hand on master.\n' +
@@ -153,24 +195,51 @@ function report(project, results) {
     return out;
 }
 
-// Both reads run, whatever the first did. `run` and `request` are given only by a test.
-async function main(project, dir, run, request) {
+// The request that reads the live rules: a sign-in of its own with RULES_SCOPES, made only when
+// the rules have to be read. The other two arguments are a test's; `make` is given only by a test.
+function rulesSignIn(request, rulesRequest, make = googleRequest) {
+    return rulesRequest || request || make(undefined, {}, RULES_SCOPES);
+}
+
+// Both reads run, whatever the first did. `run`, `request` and `rulesRequest` are given only by
+// a test; a test that gives `request` alone has it answer the rules read too.
+async function main(project, dir, run, request, rulesRequest) {
     console.log(`\n--- Reading the database: npx ${command(project).join(' ')}`);
     const database = readDatabase(project, dir, run);
     console.log('\n--- Reading the site: one GET, the list of the project\'s hosting sites');
+    let ask = request;
     let site;
     try {
-        site = await readSite(project, request || googleRequest());
+        ask = ask || googleRequest();
+        site = await readSite(project, ask);
     } catch (e) {
         site = { what: 'the site', shown: 'GET', ok: false, note: 'not asked', why: 'The site could not be asked: ' + scrub(String((e && (e.code || e.name)) || 'error')).slice(0, 80) };
     }
+    let rules = null;
+    if (!database.ok) {
+        console.log('\n--- The database was not reached. Reading the live rules another way: four GETs, nothing else');
+        try {
+            rules = await liveRules(project, dir, ask, noAnswer, rulesSignIn(request, rulesRequest));
+        } catch (e) {
+            rules = { verdict: 'unknown', lines: ['The live rules could not be asked for: ' + scrub(String((e && (e.code || e.name)) || 'error')).slice(0, 80)] };
+        }
+        if (!rules || !Object.prototype.hasOwnProperty.call(RULES_VERDICT, rules.verdict) || !Array.isArray(rules.lines)) {
+            rules = { verdict: 'unknown', lines: ['The reading of the live rules gave no answer this step knows.'] };
+        }
+    }
     const results = [database, site];
     const failed = results.filter(r => !r.ok);
-    const out = report(project, results);
+    const goesOn = !database.ok && site.ok === true && rules.verdict === 'unchanged';
+    const stops = failed.length > 0 && !goesOn;
+    const out = report(project, results, rules);
     console.log('\n' + out);
-    if (failed.length) {
+    if (stops) {
         console.log('::error title=Deploy stopped, nothing released: no access to ' + failed.map(r => r.what).join(' and ') +
             '::Both reads were tried. Not reached: ' + failed.map(r => r.what).join(', ') + '. The reasons are in this step\'s log and on the summary page.');
+    } else if (goesOn) {
+        console.log('::warning title=The database rules are left alone::The Firebase Realtime Database Management API is off, and the live rules are the same as this commit\'s. The run releases the functions and the site, and skips the rules step.');
+    }
+    if (failed.length) {
         // The reasons are printed above. Leave no debug file for the next step to print again.
         try {
             refusal.remove(dir);
@@ -181,7 +250,12 @@ async function main(project, dir, run, request) {
     if (process.env.GITHUB_STEP_SUMMARY) {
         fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '### Access to the database and the site\n\n```\n' + out.replace(/```/g, "'''") + '\n```\n');
     }
-    return failed.length ? 1 : 0;
+    // Only a step that passes says what the rules step is to do. Without this line the workflow
+    // runs the rules step, as it always did.
+    if (!stops && process.env.GITHUB_OUTPUT) {
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `rules=${goesOn ? 'unchanged' : 'deploy'}\n`);
+    }
+    return stops ? 1 : 0;
 }
 
 if (require.main === module) {
@@ -197,4 +271,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, command, readDatabase, readSite, report, main };
+module.exports = { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, RULES_VERDICT, command, readDatabase, readSite, rulesSignIn, report, main };

@@ -67,6 +67,8 @@ test('both reads of the access check run in one step, for the run\'s project, be
     const step = yml.slice(yml.indexOf('      - name: Check access to the database and the site'), yml.indexOf('      # The order matters'));
     assert.strictEqual(step.trim(), [
         '- name: Check access to the database and the site (releases nothing)',
+        // The id only gives the step's output a name: the rules step reads it.
+        '        id: access',
         '        run: node .github/scripts/check-access.js "$FIREBASE_PROJECT"',
     ].join('\n'));
 });
@@ -81,18 +83,23 @@ test('no check and no release step has a condition: a failed step skips every on
     const title = text => (text.match(/^      - (?:name: (.+)|uses: (.+))$/m) || []).slice(1).find(Boolean);
     const conditional = steps.filter(text => /^\s+(if|continue-on-error)\s*:/m.test(text)).map(title);
     assert.deepStrictEqual(conditional, [
+        // Its one condition is checked below: it can only skip the step, never run it after a failure.
+        '2. Deploy the database rules',
         'Show why the step failed',
         'Summary',
         'Remove the key file and the Firebase debug files',
     ]);
     // And those three are the job's last, after the last release.
-    assert.deepStrictEqual(steps.slice(-3).map(title), conditional);
+    assert.deepStrictEqual(steps.slice(-3).map(title), conditional.slice(1));
     assert.strictEqual(title(steps[steps.length - 4]), '3. Deploy the site');
     for (const name of ['1. Deploy all functions', '2. Deploy the database rules', '3. Deploy the site']) {
         const target = { 1: 'functions', 2: 'database', 3: 'hosting' }[name[0]];
         const step = steps.find(text => title(text) === name);
         assert.strictEqual(step.trim(), [
             '- name: ' + name,
+            '        id: ' + { 1: 'functions', 2: 'rules', 3: 'site' }[name[0]],
+            // A condition without always() or failure() is "every step before passed, and this".
+            ...(name[0] === '2' ? ['        if: steps.access.outputs.rules != \'unchanged\''] : []),
             '        run: |',
             '          node .github/scripts/firebase-refusal.js reset',
             `          npx firebase deploy --only ${target} --project "$FIREBASE_PROJECT" --non-interactive`,
@@ -169,4 +176,45 @@ test('the job\'s last step removes the key file and both debug files, whether th
     ].join('\n'));
     // Nothing reads the debug file after it: `print` comes before.
     assert.ok(at('Show why the step failed') < at(last));
+});
+
+// The rules step is the only release step that can be skipped while the run goes on, and only
+// by the access check's own output. Any other value, and no value, runs it.
+test('only the access check\'s output rules=unchanged skips the rules step, and nothing skips the other two', () => {
+    const code = yml.split('\n').filter(l => !l.trim().startsWith('#'));
+    const conditions = code.filter(l => /^\s+if\s*:/.test(l)).map(l => l.trim());
+    assert.deepStrictEqual(conditions, [
+        'if: github.ref == \'refs/heads/master\'',
+        'if: github.ref == \'refs/heads/master\'',
+        'if: steps.access.outputs.rules != \'unchanged\'',
+        'if: failure()',
+        'if: always()',
+        'if: always()',
+    ]);
+    // The output is read in two places only: that condition and the summary.
+    const reads = code.filter(l => l.includes('steps.access.outputs')).map(l => l.trim());
+    assert.deepStrictEqual(reads, [
+        'if: steps.access.outputs.rules != \'unchanged\'',
+        'RULES_MODE: ${{ steps.access.outputs.rules }}',
+    ]);
+    // Nothing in the workflow writes a step output itself: only check-access.js does.
+    assert.doesNotMatch(code.join('\n'), /GITHUB_OUTPUT/);
+    assert.ok(at('Check access to the database and the site (releases nothing)') < at('1. Deploy all functions'));
+});
+
+test('the summary says what was released from each release step\'s own outcome', () => {
+    const step = yml.slice(yml.indexOf('      - name: Summary'), yml.indexOf('      # Last, whether the job passed or failed'));
+    const code = step.split('\n').filter(l => !l.trim().startsWith('#')).map(l => l.trim());
+    assert.deepStrictEqual(code.slice(0, 7), [
+        '- name: Summary',
+        'if: always()',
+        'env:',
+        'FUNCTIONS_STEP: ${{ steps.functions.outcome }}',
+        'RULES_STEP: ${{ steps.rules.outcome }}',
+        'SITE_STEP: ${{ steps.site.outcome }}',
+        'RULES_MODE: ${{ steps.access.outputs.rules }}',
+    ]);
+    assert.ok(code.includes('node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE"'));
+    // No expression is written into the shell text of a release step or of this call.
+    assert.doesNotMatch(code.filter(l => l.includes('release-summary.js')).join('\n'), /\$\{\{/);
 });
