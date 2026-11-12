@@ -70,7 +70,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.chooseAnswer(this.pin, answer)
+        this.apiService.chooseAnswer(this.pin, answer, this.gameService.currentStep())
             .then(() => {
                 this.answerSelected = true;
                 this.loading = false;

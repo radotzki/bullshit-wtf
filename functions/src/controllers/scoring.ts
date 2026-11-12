@@ -10,7 +10,7 @@
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
-import { GameScheme, Answers, AnswerSelections, GamePlayers, RevealAnswer } from '../game-model';
+import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor } from '../game-model';
 import { houseLiePoints } from './house-lie';
 import { isSamePick } from './same-pick';
 
@@ -36,6 +36,8 @@ function ownLie(game: Partial<GameScheme>, pid: string) {
 /**
  * The picks that count, as `{ text }` and nothing else: one per player, made by a player of this
  * game, with a text, and not the player's own lie (the game never offers a player their own lie).
+ * While picks are open, a pick that names another step (made in an earlier question by a phone that
+ * was offline, see pickIsFor) does not count either.
  * Everything else under answerSelections is ignored.
  */
 export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
@@ -50,6 +52,10 @@ export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
         const pick = selections[pid];
 
         if (!isPlayer(game, pid) || !pick || typeof pick !== 'object' || typeof pick.text !== 'string' || !pick.text) {
+            return;
+        }
+
+        if (game.state && game.state.id === GameState.ShowAnswers && !pickIsFor(pick, game.state)) {
             return;
         }
 
