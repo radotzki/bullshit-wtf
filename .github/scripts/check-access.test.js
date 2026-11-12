@@ -10,7 +10,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const SCRIPT = path.join(__dirname, 'check-access.js');
-const { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, RULES_VERDICT, command, readDatabase, readSite, report, main } = require('./check-access.js');
+const { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, RULES_VERDICT, command, readDatabase, readSite, rulesSignIn, report, main } = require('./check-access.js');
 const { googleRequest, ASK_TIMEOUT } = require('./check-deploy-permissions.js');
 const { LOG, KEPT } = require('./firebase-refusal.js');
 
@@ -421,6 +421,45 @@ const checkout = t => {
     });
     return { dir, output: () => fs.readFileSync(path.join(pages, 'output.txt'), 'utf8'), page: () => fs.readFileSync(path.join(pages, 'summary.md'), 'utf8') };
 };
+
+test('the rules read gets a sign-in of its own, with the database address\'s two scopes and no other', () => {
+    const calls = [];
+    const make = (...args) => {
+        calls.push(args);
+        return 'the rules sign-in';
+    };
+    assert.strictEqual(rulesSignIn(undefined, undefined, make), 'the rules sign-in');
+    assert.strictEqual(calls.length, 1);
+    assert.strictEqual(calls[0][0], undefined);
+    assert.deepStrictEqual(Array.from(calls[0][2]), ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/firebase.database']);
+    // A test's made-up Google is used as it is, and no sign-in is made.
+    assert.strictEqual(rulesSignIn('a', undefined, make), 'a');
+    assert.strictEqual(rulesSignIn('a', 'b', make), 'b');
+    assert.strictEqual(calls.length, 1);
+});
+
+test('the run\'s sign-in never asks the database\'s address, and the rules sign-in asks nothing else', async t => {
+    quiet(t);
+    const { dir, output } = checkout(t);
+    const run = [];
+    const rules = [];
+    assert.strictEqual(await main(PROJECT, dir, tool(1, DATABASE_OFF), wholeGoogle(undefined, run), wholeGoogle(undefined, rules)), 0);
+    assert.strictEqual(output(), 'rules=unchanged\n');
+    assert.strictEqual(run.length, 4);
+    assert.ok(!run.some(o => o.url === RULES_URL));
+    assert.deepStrictEqual(rules, [{ url: RULES_URL, method: 'GET' }]);
+    // Refused or different with its own sign-in: the run still stops, and writes no output.
+    for (const change of [a => { a[RULES_URL] = { status: 401, data: { error: 'Unauthorized request.' } }; }, a => { a[RULES_URL].data.rules['.read'] = true; }]) {
+        const again = checkout(t);
+        assert.strictEqual(await main(PROJECT, again.dir, tool(1, DATABASE_OFF), wholeGoogle(), wholeGoogle(change)), 1);
+        assert.strictEqual(again.output(), '');
+    }
+    // The database reached: the rules sign-in is not used at all.
+    const reached = [];
+    const fine = checkout(t);
+    assert.strictEqual(await main(PROJECT, fine.dir, tool(0), wholeGoogle(), wholeGoogle(undefined, reached)), 0);
+    assert.deepStrictEqual(reached, []);
+});
 
 test('the database API off, the site reached, the live rules unchanged: the step passes and says rules=unchanged', async t => {
     const out = quiet(t);

@@ -7,8 +7,8 @@ const http = require('http');
 const os = require('os');
 const path = require('path');
 
-const { allowed, locked, databaseApiOff, rulesFile, canonical, compareRules, liveRules } = require('./live-rules.js');
-const { googleRequest, noAnswer } = require('./check-deploy-permissions.js');
+const { RULES_SCOPES, allowed, allowedApi, allowedRules, locked, databaseApiOff, rulesFile, canonical, compareRules, liveRules } = require('./live-rules.js');
+const { SCOPES, googleRequest, noAnswer } = require('./check-deploy-permissions.js');
 
 const PROJECT = 'made-up-project';
 const INSTANCE = 'made-up-project';
@@ -290,6 +290,98 @@ test('unknown, and nothing is asked, when the commit has no one plain rules file
         assert.strictEqual(out.verdict, 'unknown');
         assert.deepStrictEqual(seen, []);
     }
+});
+
+test('the rules read has a sign-in of its own: the two scopes of the database\'s own address', () => {
+    assert.deepStrictEqual(Array.from(RULES_SCOPES), ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/firebase.database']);
+    assert.deepStrictEqual(Array.from(SCOPES), ['https://www.googleapis.com/auth/cloud-platform']);
+    assert.throws(() => RULES_SCOPES.push('https://www.googleapis.com/auth/cloud-platform'));
+    assert.throws(() => SCOPES.push('https://www.googleapis.com/auth/firebase.database'));
+});
+
+test('each sign-in has its own lock: the APIs for one, a database\'s rules address for the other', async () => {
+    for (const url of [URLS.project, URLS.instance, URLS.config]) {
+        assert.strictEqual(allowedApi({ url, method: 'GET' }), true, url);
+        assert.strictEqual(allowedRules({ url, method: 'GET' }), false, url);
+    }
+    assert.strictEqual(allowedRules({ url: URLS.rules, method: 'GET' }), true);
+    assert.strictEqual(allowedApi({ url: URLS.rules, method: 'GET' }), false);
+    for (const may of [allowedApi, allowedRules]) {
+        for (const url of Object.values(URLS)) {
+            for (const method of ['PUT', 'POST', 'PATCH', 'DELETE', undefined]) {
+                assert.strictEqual(may({ url, method }), false);
+            }
+            assert.strictEqual(may({ url, method: 'GET', data: {} }), false);
+            assert.strictEqual(may({ url: url + '?print=silent', method: 'GET' }), false);
+        }
+    }
+    // The rules sign-in reads the rules and nothing else at a database address.
+    for (const url of [`https://${INSTANCE}.firebaseio.com/.json`, `https://${INSTANCE}.firebaseio.com/games.json`,
+        `https://${INSTANCE}.firebaseio.com/.settings/rules.json/x`, 'https://example.com/.settings/rules.json',
+        'https://firebasehosting.googleapis.com/v1beta1/projects/made-up-project/sites']) {
+        assert.strictEqual(allowedRules({ url, method: 'GET' }), false, url);
+    }
+    const sent = [];
+    const rulesOnly = locked(async o => sent.push(o), allowedRules);
+    await assert.rejects(rulesOnly({ url: URLS.project, method: 'GET' }), { code: 'REQUEST_NOT_ALLOWED_IN_A_CHECK' });
+    await assert.rejects(rulesOnly({ url: URLS.rules, method: 'PUT' }), { code: 'REQUEST_NOT_ALLOWED_IN_A_CHECK' });
+    const apiOnly = locked(async o => sent.push(o), allowedApi);
+    await assert.rejects(apiOnly({ url: URLS.rules, method: 'GET' }), { code: 'REQUEST_NOT_ALLOWED_IN_A_CHECK' });
+    assert.deepStrictEqual(sent, []);
+});
+
+test('requests 1 to 3 go out with the run\'s sign-in, the rules read with its own, and neither sends the other\'s', async t => {
+    const api = [];
+    const rules = [];
+    const out = await liveRules(PROJECT, checkout(t), google(good(), api), noAnswer, google(good(), rules));
+    assert.strictEqual(out.verdict, 'unchanged');
+    assert.deepStrictEqual(api, [URLS.project, URLS.instance, URLS.config].map(url => ({ url, method: 'GET' })));
+    assert.deepStrictEqual(rules, [{ url: URLS.rules, method: 'GET' }]);
+});
+
+test('with its own sign-in a refused rules read still stops the reading, and rules that differ are still said to differ', async t => {
+    const refused = good();
+    refused[URLS.rules] = { status: 401, data: { error: 'Unauthorized request.' } };
+    const no = await liveRules(PROJECT, checkout(t), google(good()), noAnswer, google(refused));
+    assert.strictEqual(no.verdict, 'unknown');
+    assert.match(no.lines.join('\n'), /401 to GET the live rules/);
+    assert.match(no.lines.join('\n'), /userinfo\.email and\n? *firebase\.database/);
+    const differs = good();
+    differs[URLS.rules].data.rules['.read'] = true;
+    assert.strictEqual((await liveRules(PROJECT, checkout(t), google(good()), noAnswer, google(differs))).verdict, 'changed');
+    // The run's own sign-in answering the rules address changes nothing: it is never asked there.
+    const lure = good();
+    const seen = [];
+    const out = await liveRules(PROJECT, checkout(t), google(lure, seen), noAnswer, google(refused));
+    assert.strictEqual(out.verdict, 'unknown');
+    assert.ok(!seen.some(o => o.url === URLS.rules));
+    // No sign-in for the rules read at all: unknown, never the same.
+    const none = await liveRules(PROJECT, checkout(t), google(good()), noAnswer, null);
+    assert.strictEqual(none.verdict, 'unknown');
+});
+
+test('each sign-in asks Google\'s library for its own scopes, and a token never serves both', async () => {
+    const made = [];
+    class GoogleAuth {
+        constructor(config) {
+            this.scopes = config.scopes;
+            made.push(this);
+        }
+
+        async getClient() {
+            return { request: async options => ({ status: 200, data: { scopes: this.scopes, url: options.url } }) };
+        }
+    }
+    const run = googleRequest(undefined, { GoogleAuth });
+    const rules = googleRequest(undefined, { GoogleAuth }, RULES_SCOPES);
+    const one = await run({ url: URLS.project, method: 'GET' });
+    const two = await rules({ url: URLS.rules, method: 'GET' });
+    await rules({ url: URLS.rules, method: 'GET' });
+    assert.deepStrictEqual(one.data.scopes, ['https://www.googleapis.com/auth/cloud-platform']);
+    assert.deepStrictEqual(two.data.scopes, ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/firebase.database']);
+    // Two sign-ins, one for each, and the second request of one reuses its own.
+    assert.strictEqual(made.length, 2);
+    assert.notStrictEqual(made[0], made[1]);
 });
 
 // The rules read through Google's real library, to a server on this machine. It needs the
