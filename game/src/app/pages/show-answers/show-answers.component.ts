@@ -25,6 +25,8 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     answerSelected: boolean;
     answers: string[];
     showQuestion: boolean;
+    /** A taste (a game started alone) has no writing screen: its question is first read here, above the answers. */
+    taste = false;
     duration: number;
     past: number;
     timer;
@@ -47,6 +49,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         this.apiService.getAnswers(this.pin).then(a => this.answers = a);
+        this.apiService.getTaste(this.pin).then(taste => this.taste = !!taste);
         this.startTimer();
         this.playBackground();
     }
