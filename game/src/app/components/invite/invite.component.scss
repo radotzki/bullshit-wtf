@@ -104,3 +104,9 @@
         letter-spacing: 2px;
     }
 }
+
+// A Hebrew game: Bulma's icon spacing assumes left to right, so mirror it inside the buttons.
+[dir="rtl"] .button .icon:first-child:not(:last-child) {
+    margin-left: .25em;
+    margin-right: calc(-.5em - 1px);
+}

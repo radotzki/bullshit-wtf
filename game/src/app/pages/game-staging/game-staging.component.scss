@@ -136,3 +136,9 @@
     from { opacity: 0; transform: translate(-50%, 12px); }
     to { opacity: 1; transform: translate(-50%, 0); }
 }
+
+// A Hebrew game reads right to left: the big screen's invite card sits on the other side.
+.game-staging[dir="rtl"] .lobby.with-invite .lobby-invite {
+    margin-left: 0;
+    margin-right: 1rem;
+}

@@ -8,6 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameState } from '../../game-model';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
+import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
     selector: 'app-show-question',
@@ -24,6 +25,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     questionSubmitted: boolean;
     enteredCorrectAnswer: boolean;
     rtl: boolean;
+    t: GameStrings = gameStrings('en');
     duration: number;
     past: number;
     timer;
@@ -45,7 +47,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
-        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
         this.startTimer();
@@ -55,6 +58,11 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
             this.loadHelper();
         }
+    }
+
+    private useLocale(locale: string) {
+        this.rtl = locale === 'he';
+        this.t = gameStrings(locale);
     }
 
     /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */
@@ -113,7 +121,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                     this.enteredCorrectAnswer = true;
                 } else {
                     reportError(err, 'answer', { pin: this.pin });
-                    this.errorMsg = 'oops, something went wrong. Please try again';
+                    this.errorMsg = this.t.oops;
                 }
             });
     }

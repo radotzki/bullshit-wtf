@@ -151,7 +151,7 @@ test('the first friend in is greeted by name, then the usual line once a third j
     const friend = firstFriend(two, [alice, ben], 'uid-alice', true);
     assert.strictEqual(friend, 'Ben');
     assert.strictEqual(lobbyText(two, 2, 'en', friend).message, 'Ben is in! Press START when everyone is in');
-    assert.strictEqual(lobbyText(two, 2, 'he', friend).message, 'Ben בפנים! לחצו START כשכולם בפנים');
+    assert.strictEqual(lobbyText(two, 2, 'he', friend).message, 'Ben בפנים! לחצו על "מתחילים" כשכולם בפנים');
     assert.strictEqual(firstFriend(view({ myUid: 'uid-alice' }), three, 'uid-alice', true), null);
     assert.strictEqual(lobbyText(view({ myUid: 'uid-alice' }), 3, 'en', null).message, 'Press START when everyone is in');
 });
@@ -259,7 +259,7 @@ test('once the joined host has been gone HOST_GONE_MS (5 minutes), anyone may st
     assert.strictEqual(v.hostGone, 'Alice');
     assert.strictEqual(lobbyText(v, 3, 'en').message, 'Alice seems to be gone. Anyone can press START');
     const he = lobbyText(v, 3, 'he');
-    assert.ok(he.message.indexOf('Alice') >= 0 && he.message.indexOf('START') >= 0);
+    assert.ok(he.message.indexOf('Alice') >= 0 && he.message.indexOf('"מתחילים"') >= 0);
     assert.strictEqual(he.rtl, true);
     // The big screen too.
     const big = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, players: marked, hostAwayMs: HOST_GONE_MS * 3 });

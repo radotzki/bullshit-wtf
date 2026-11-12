@@ -1,4 +1,4 @@
-<section class="game-container show-answers">
+<section class="game-container show-answers" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
     <progress *ngIf="answers && past && duration" class="progress" [class.is-primary]="!panic" [class.is-danger]="panic"
         [value]="past" [max]="duration"></progress>
@@ -28,14 +28,14 @@
             </p>
 
             <p class="control">
-                <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">WHAT WAS THE QUESTION AGAIN?</button>
+                <button *ngIf="!showQuestion" class="button is-info is-fullwidth" (click)="showQuestion = true">{{t.whatWasTheQuestion}}</button>
             </p>
 
             <p *ngIf="showQuestion" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
         </div>
 
         <div *ngIf="answerSelected" class="screen-center">
-            Let's wait for your friends
+            {{t.waitForFriends}}
         </div>
 
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

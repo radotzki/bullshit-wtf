@@ -13,6 +13,8 @@ import { ActivatedRoute } from '@angular/router';
 export class GameFooterComponent implements OnInit {
     name: string;
     score: Observable<number>;
+    /** A Hebrew game: the name sits on the right, like the rest of the screen. */
+    rtl = false;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -22,6 +24,8 @@ export class GameFooterComponent implements OnInit {
 
     ngOnInit() {
         const pin = this.activatedRoute.snapshot.params['pin'];
+        this.rtl = this.apiService.knownGameLocale(pin) === 'he';
+        this.apiService.getGameLocale(pin).then(locale => this.rtl = locale === 'he', () => null);
 
         if (!this.sessionService.presenter) {
             this.name = this.sessionService.user.nickname;

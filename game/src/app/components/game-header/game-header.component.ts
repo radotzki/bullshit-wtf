@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { GameState } from './../../game-model';
+import { gameStrings, GameStrings } from './../../pages/game-strings';
 
 @Component({
     selector: 'app-game-header',
@@ -13,7 +14,12 @@ import { GameState } from './../../game-model';
 })
 export class GameHeaderComponent implements OnInit, OnDestroy {
     pin: string;
-    text: string;
+    /** The game's words: the header follows the game's language, like every game screen. */
+    t: GameStrings = gameStrings('en');
+    private round: number = null;
+    private questionOf: number[] = null;
+    private stateSeen = false;
+    private localeSeen = false;
     gameOver: boolean;
     registration: boolean;
     gameSubscription: Subscription;
@@ -36,7 +42,27 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
+        this.t = gameStrings(this.apiService.knownGameLocale(this.pin));
+        // The header shows once the game's language is known, so a Hebrew game never flashes English.
+        const known = (locale: string) => {
+            this.t = gameStrings(locale);
+            this.localeSeen = true;
+            this.loading = !this.stateSeen;
+        };
+        this.apiService.getGameLocale(this.pin).then(known, () => known('en'));
         this.gameSubscription = this.apiService.gameState(this.pin).subscribe(this.onStateChange.bind(this));
+    }
+
+    get pinUpper() {
+        return String(this.pin || '').toUpperCase();
+    }
+
+    /** "ROUND 2" before a round, "3 OF 7" during a question. */
+    get text(): string {
+        if (this.questionOf) {
+            return this.t.questionOf(this.questionOf[0], this.questionOf[1]);
+        }
+        return this.round !== null ? this.t.round(this.round) : undefined;
     }
 
     ngOnDestroy() {
@@ -70,7 +96,8 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
                 break;
         }
 
-        this.loading = false;
+        this.stateSeen = true;
+        this.loading = !this.localeSeen;
     }
 
     getCurrentQuestionIndex() {
@@ -79,11 +106,14 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
 
         Promise
             .all([qidxPromise, totalQPromise])
-            .then(([qidx, totalQ]) => this.text = `${qidx + 1} OF ${totalQ}`);
+            .then(([qidx, totalQ]) => this.questionOf = [qidx + 1, totalQ]);
     }
 
     getCurrentRoundIndex() {
-        this.apiService.getRoundIndex(this.pin).then(ridx => this.text = `ROUND ${ridx + 1}`);
+        this.apiService.getRoundIndex(this.pin).then(ridx => {
+            this.round = ridx + 1;
+            this.questionOf = null;
+        });
     }
 
     homeModal() {

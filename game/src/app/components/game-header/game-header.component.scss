@@ -36,3 +36,16 @@
         margin-left: 10px;
     }
 }
+
+// A Hebrew game: the bar reads right to left, so the spacing is mirrored.
+.game-header[dir="rtl"] {
+    .pin {
+        margin-left: 0;
+        margin-right: 10px;
+    }
+}
+
+.leave-modal[dir="rtl"] .modal-card-foot .button:not(:last-child) {
+    margin-right: 0;
+    margin-left: .5em;
+}
