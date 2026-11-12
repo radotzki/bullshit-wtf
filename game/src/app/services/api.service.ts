@@ -7,6 +7,7 @@ import {
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
+import { startReconnectNudge, pageVisible } from './reconnect-nudge';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
 import { Injectable, NgZone } from '@angular/core';
@@ -19,6 +20,27 @@ import 'rxjs/add/operator/toPromise';
 import 'rxjs/add/operator/publish';
 
 const firebase = initializeApp(environment.firebaseConfig);
+
+/** The page's one reconnect nudge (see reconnect-nudge.ts), started with the first ApiService. */
+let nudging = false;
+function keepReconnecting() {
+    if (nudging) {
+        return;
+    }
+    nudging = true;
+    const db = firebase.database();
+    const connected = db.ref('.info/connected');
+    startReconnectNudge({
+        onConnected: listener => {
+            const cb = connected.on('value', snap => listener(snap.val() === true));
+            return () => connected.off('value', cb);
+        },
+        goOnline: () => db.goOnline(),
+        isVisible: pageVisible,
+        setInterval: (fn, ms) => setInterval(fn, ms),
+        clearInterval: handle => clearInterval(handle),
+    });
+}
 
 /** The longest a tap on Create, Join, Replay or Rematch waits for sign-in. */
 export const SIGN_IN_WAIT_MS = 1500;
@@ -72,6 +94,7 @@ export class ApiService {
     ) {
         this.gamesRef = firebase.database().ref('games');
         this.crewsRef = firebase.database().ref('crews');
+        this.zone.runOutsideAngular(() => keepReconnecting());
     }
 
     gameHasPresenter(pin: string) {
