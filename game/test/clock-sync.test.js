@@ -61,3 +61,27 @@ test('callers waiting on the failed call all get the fallback, not a rejection',
     const results = await Promise.all([offset(), offset(), offset()]);
     assert.deepStrictEqual(results, [0, 0, 0]);
 });
+
+test('a caller that passes null gets null, not a guessed 0, when the call failed', async () => {
+    let calls = 0;
+    const answers = [
+        () => Promise.reject(new Error('offline')),
+        () => Promise.resolve(300000),
+    ];
+    const offset = clockSync(() => answers[calls++]());
+    assert.strictEqual(await offset(null), null);
+    assert.strictEqual(await offset(null), 300000);
+    assert.strictEqual(await offset(), 300000);
+});
+
+test('callers sharing one failed call each get their own fallback', async () => {
+    const offset = clockSync(() => Promise.reject(new Error('offline')));
+    const results = await Promise.all([offset(), offset(null), offset(0)]);
+    assert.deepStrictEqual(results, [0, null, 0]);
+});
+
+test('a measured offset of 0 is kept as 0 for every caller', async () => {
+    const offset = clockSync(() => Promise.resolve(0));
+    assert.strictEqual(await offset(null), 0);
+    assert.strictEqual(await offset(), 0);
+});

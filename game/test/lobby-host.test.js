@@ -16,7 +16,8 @@ function load() {
     return mod.exports;
 }
 
-const { lobbyHost, lobbyText, firstFriend, HOST_GRACE_MS, HOST_GONE_MS, HOST_PING_MS } = load();
+const { lobbyHost, lobbyText, firstFriend, HOST_GRACE_MS, HOST_GONE_MS, HOST_PING_MS,
+    hostAwayMs, shouldAskClock, CLOCK_RETRY_MS } = load();
 
 const alice = { nickname: 'Alice', score: 0, uid: 'uid-alice' };
 const ben = { nickname: 'Ben', score: 0, uid: 'uid-ben' };
@@ -296,4 +297,31 @@ test('two phones pressed Replay at once: the second holds the key too and gets S
     assert.deepStrictEqual([first.canStart, second.canStart, third.canStart], [true, true, false]);
     assert.strictEqual(third.hostName, 'Alice');
     assert.strictEqual(second.alone, false);
+});
+
+test('host away time: unknown clock offset or unknown host time gives null', () => {
+    assert.strictEqual(hostAwayMs(1000000, null, 900000), null);
+    assert.strictEqual(hostAwayMs(1000000, 0, null), null);
+    assert.strictEqual(hostAwayMs(1000000, 2000, 900000), 98000);
+});
+
+test('a phone 6 minutes fast whose clock sync failed never sees a present host as gone', () => {
+    const serverNow = 10000000;
+    const hostSeen = serverNow - HOST_PING_MS;
+    const phoneNow = serverNow + 6 * 60 * 1000;
+    // Before: the failed sync was stored as an offset of 0, so the host looked 6+ minutes away.
+    assert.ok(phoneNow - 0 - hostSeen >= HOST_GONE_MS);
+    const v = view({ myUid: 'uid-ben', hasHost: true, players: [Object.assign({ host: true }, alice), ben],
+        hostAwayMs: hostAwayMs(phoneNow, null, hostSeen) });
+    assert.strictEqual(v.canStart, false);
+    // Once the offset is measured, the host is judged by server time and is still here.
+    assert.ok(hostAwayMs(phoneNow, 6 * 60 * 1000, hostSeen) < HOST_GONE_MS);
+});
+
+test('the lobby asks for the clock again only while it is unknown, and at most once a CLOCK_RETRY_MS', () => {
+    assert.strictEqual(shouldAskClock(null, false, null, 0), true);
+    assert.strictEqual(shouldAskClock(null, true, null, 0), false);
+    assert.strictEqual(shouldAskClock(1500, false, 0, CLOCK_RETRY_MS * 5), false);
+    assert.strictEqual(shouldAskClock(null, false, 1000, 1000 + CLOCK_RETRY_MS - 1), false);
+    assert.strictEqual(shouldAskClock(null, false, 1000, 1000 + CLOCK_RETRY_MS), true);
 });
