@@ -1,15 +1,12 @@
 import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
-import { GameScheme, Answer, Answers, GameState, GameStateInfo, RevealAnswer, GamePlayer, addHighlights, highlightsStart } from '../game-model';
+import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, highlightsStart } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline } from './phase';
 import { pickHouseLies } from './answer-options';
-import { houseLiePoints } from './house-lie';
 import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
-
-const pointsForCorrectAnswer = [1000, 1500, 2000];
-const pointsForBullshitting = [500, 750, 1000];
+import * as scoring from './scoring';
 
 /** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
 export async function tick(pin) {
@@ -44,23 +41,46 @@ export async function advance(pin: string, from: GameStateInfo) {
     }
 
     console.log(`[PIN: ${pin}] Advancing from state ${game.state.id}`);
-    const update = await nextUpdate(pin, game);
 
-    if (!update) {
-        return;
+    try {
+        const update = await nextUpdate(pin, game);
+
+        if (!update) {
+            return;
+        }
+
+        if (update.state) {
+            update.state = withDeadline(update.state, Object.assign({}, game, update));
+        }
+
+        return await updateGame(pin, update);
+    } catch (e) {
+        // The phase was claimed but the game did not move. Give the phase back, so the next caller
+        // (the timer's second try, a phone's own timer, the last answer) can move it on.
+        console.error(`[PIN: ${pin}] Failed to advance from ${stateKey(from)}`, e);
+        await release(pin, stateKey(from)).catch(err => console.error(`[PIN: ${pin}] Failed to release ${stateKey(from)}`, err));
+        throw e;
     }
-
-    if (update.state) {
-        update.state = withDeadline(update.state, Object.assign({}, game, update));
-    }
-
-    return updateGame(pin, update);
 }
 
 function claim(pin: string, key: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         gamesRef.child(pin).child('advanceLock').transaction(
             current => current === key ? undefined : key,
+            (error, committed) => error ? reject(error) : resolve(committed),
+            false,
+        );
+    });
+}
+
+function release(pin: string, key: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('advanceLock').transaction(
+            // The database client first runs this on what it holds locally, which is nothing (null) here,
+            // and only asks the server if a value comes back. Returning undefined for null would stop it
+            // there, with the phase still taken on the server and the game stuck for good. So null also
+            // answers null: the server then says what the lock really is, and this runs again on that.
+            current => current === key || current === null ? null : undefined,
             (error, committed) => error ? reject(error) : resolve(committed),
             false,
         );
@@ -92,12 +112,12 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
             };
 
         case GameState.ShowAnswers:
-            const { answers, answerSelections } = calcAnswersScore(game);
-            const revealAnswers = generateRevealAnswers(game);
+            const { answers, answerSelections, revealAnswers } = scoreAnswers(pin, game);
 
             return {
                 state: updateState(GameState.RevealTheTruth),
                 answers,
+                // Only the picks that count are kept: see scoring.ts.
                 answerSelections,
                 revealAnswers,
                 revealDone: null,
@@ -109,7 +129,7 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
         case GameState.RevealTheTruth:
             return {
                 state: updateState(GameState.ScoreBoard),
-                players: calcPlayersScore(game),
+                players: playersScore(pin, game),
             };
 
         case GameState.ScoreBoard:
@@ -210,106 +230,27 @@ async function getRealAnswer(game: GameScheme) {
     return realAnswer;
 }
 
-function calcAnswersScore(game: GameScheme) {
-    const answers = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
-    const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
-
-    answerSelections.forEach(answerSelection => {
-        const relatedAnswers = answers.filter(answer => answer.text === answerSelection.text);
-
-        if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
-            game.answerSelections[answerSelection.pid].score = pointsForCorrectAnswer[game.roundIndex];
-        } else if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
-            // Set below, once every player's points for their own lie are known.
-            game.answerSelections[answerSelection.pid].score = 0;
-        } else {
-            game.answerSelections[answerSelection.pid].score = 0;
-            relatedAnswers.forEach(answer => {
-                if (!game.answers[answer.pid].score) {
-                    game.answers[answer.pid].score = 0;
-                }
-
-                game.answers[answer.pid].score += pointsForBullshitting[game.roundIndex]
-            });
-        }
-    });
-
-    // A house lie only takes back points the player has: it never pushes a score below zero.
-    answerSelections.forEach(answerSelection => {
-        const relatedAnswers = answers.filter(answer => answer.text === answerSelection.text);
-
-        if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
-            const player = (game.players || {})[answerSelection.pid];
-            const ownLie = (game.answers || {})[answerSelection.pid];
-            game.answerSelections[answerSelection.pid].score = houseLiePoints(
-                game.roundIndex,
-                player ? player.score : 0,
-                ownLie && !ownLie.realAnswer && !ownLie.houseLie ? ownLie.score || 0 : 0,
-            );
-        }
-    });
-
-    return { answers: game.answers || {}, answerSelections: game.answerSelections || {} };
+/**
+ * Picking has closed: points and reveal rows. Whatever the picks node holds, the game goes on:
+ * if the points cannot be worked out, the question is revealed as if nobody had picked.
+ */
+function scoreAnswers(pin: string, game: GameScheme) {
+    try {
+        return scoring.scoreQuestion(game);
+    } catch (e) {
+        console.error(`[PIN: ${pin}] Failed to score the picks, revealing without them`, e);
+        return scoring.scoreQuestion(Object.assign({}, game, { answerSelections: null }));
+    }
 }
 
-function generateRevealAnswers(game: GameScheme) {
-    const playersArray = Object.keys(game.players || {}).map(k => Object.assign({}, { pid: k }, game.players[k]));
-    const answersArray = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
-    const answerSelectionsArray = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
-    const revealAnswers: RevealAnswer[] = [];
-
-    answersArray.forEach(answer => {
-        const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
-        const selectors = answerSelection.map(a => a.pid);
-        const text = answer.text;
-        const realAnswer = answer.realAnswer;
-        const houseLie = answer.houseLie;
-        const creators = answersArray
-            .filter(a => a.text === answer.text)
-            .map(a => a.houseLie || a.realAnswer ? '' : a.pid);
-        let points = 0;
-
-        if (revealAnswers.find(w => w.text === answer.text)) {
-            return;
-        }
-
-        let pointsBy: { [pid: string]: number };
-
-        if (houseLie && answerSelection[0]) {
-            // The row shows the most any picker lost; a picker with no points to lose lost nothing.
-            pointsBy = {};
-            answerSelection.forEach(a => pointsBy[a.pid] = a.score || 0);
-            points = Math.min(0, ...answerSelection.map(a => a.score || 0));
-        } else if (realAnswer && answerSelection[0]) {
-            points = answerSelection[0].score;
-        } else {
-            points = answer.score || 0;
-        }
-
-        revealAnswers.push(Object.assign(
-            { creators, selectors, points, text, realAnswer, houseLie },
-            pointsBy ? { pointsBy } : {},
-        ));
-    });
-
-    return revealAnswers.sort((a, b) => a.text > b.text ? 1 : -1).sort(a => a.realAnswer ? 1 : -1);
-}
-
-function calcPlayersScore(game: GameScheme) {
-    const answers = Object.keys(game.answers || {}).map(k => Object.assign({}, { pid: k }, game.answers[k]));
-    const answerSelections = Object.keys(game.answerSelections || {}).map(k => Object.assign({}, { pid: k }, game.answerSelections[k]));
-
-    answers.forEach(answer => {
-        if (!answer.realAnswer && !answer.houseLie) {
-            game.players[answer.pid].score += answer.score || 0;
-        }
-    })
-
-    answerSelections.forEach(answerSelection => {
-        game.players[answerSelection.pid].score += answerSelection.score || 0;
-    })
-
-    return game.players;
+/** The reveal is over: the players with this question's points. If that fails, the scores stay as they were. */
+function playersScore(pin: string, game: GameScheme) {
+    try {
+        return scoring.addQuestionScores(game);
+    } catch (e) {
+        console.error(`[PIN: ${pin}] Failed to add up the scores, keeping them as they were`, e);
+        return game.players;
+    }
 }
 
 async function handleScoreBoardState(game: GameScheme, pin: string) {
@@ -318,11 +259,11 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
     const secondRound = game.questionIndex === Math.floor(game.totalQ / 2) - 1;
     let res;
 
-    // question_results measures the round-1 helper. It is awaited (a function may stop once it returns),
+    // question_results measures the round-1 helper; it counts only players' picks. It is awaited (a function may stop once it returns),
     // alongside the history write; a BigQuery failure is logged and never fails the game.
     await Promise.all([
         saveQuestionHistory(game, pin),
-        onQuestionResult(questionResult(pin, game)).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
+        onQuestionResult(questionResult(pin, Object.assign({}, game, { answerSelections: scoring.playerPicks(game) }))).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
     ]);
 
     if (secondRound || lastRound) {
