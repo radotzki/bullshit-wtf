@@ -4,10 +4,15 @@
 // first touched on the error path. See DEPLOYING.md, "Server errors in Sentry".
 //
 // What it promises:
-// - Only unexpected errors. An answer a function gives on purpose ("game is full") is not one.
-// - Nothing personal: the function's name, the release, the game's PIN, the error's type, a
-//   cleaned message and the stack's file names and line numbers. No request body, no headers,
-//   no nickname, no answer text, no player or browser id, no address.
+// - Only unexpected errors. An answer a function gives on purpose ("game is full") is not one,
+//   and neither is the answer to a request the site never sends (no PIN, a PIN that is no PIN,
+//   a game that does not exist, anything but a POST).
+// - Only the functions' own error lines: a line that Node, the functions framework or a library
+//   writes with console.error is not a report.
+// - Nothing personal is put in: the function's name, the release, the game's PIN, the error's
+//   type, a cleaned message and the stack's file names and line numbers. No request body, no
+//   headers, no nickname, no answer text, no browser or host id, no address. The cleaning of the
+//   message is a filter, not a guarantee: see DEPLOYING.md for what can pass it.
 // - It never fails a function and never holds one for long: report() never throws, a send is
 //   given up after sendTimeoutMs, and a failed send is dropped (no retry, no queue).
 // - It is capped: see the limits below.
@@ -64,12 +69,18 @@ export interface ReportContext {
     logged?: boolean;
     /** False when the error escapes the function (a trigger); true when the function answers it. */
     handled?: boolean;
+    /** True for a request the site never sends: whatever it runs into is no fault of ours. */
+    unasked?: boolean;
+    /** True for an HTTP function that works on a game: an error about a game that does not exist is no fault. */
+    needsGame?: boolean;
 }
 
 /** What a send came to. */
 export type SendResult = { ok: true } | { ok: false, restMs?: number };
 export type Transport = (event: any, target: Target | null) => Promise<SendResult>;
 export type MarkLookup = (pin: string | undefined, crew: string | undefined) => Promise<any>;
+/** Is there a game under this PIN? */
+export type GameLookup = (pin: string) => Promise<boolean>;
 
 /**
  * An answer a function gives on purpose: the controllers reject with a plain
@@ -105,14 +116,17 @@ export function liveTarget(): Target | null {
 
 let release: string | undefined;
 
-/** The commit this build was made from (dist/release.json, written by write-release.js). */
+/**
+ * The name of this build of the functions (dist/release.json, written by write-release.js): a
+ * fingerprint of the built code, so it changes when the server's code changes and only then.
+ */
 export function currentRelease(): string {
     if (release === undefined) {
         try {
             const fs = require('fs');
             const path = require('path');
             const read = JSON.parse(fs.readFileSync(path.join(__dirname, 'release.json'), 'utf8')).release;
-            release = typeof read === 'string' && /^[0-9a-f]{7,40}$/.test(read) ? read : 'unknown';
+            release = typeof read === 'string' && /^(functions-)?[0-9a-f]{7,40}$/.test(read) ? read : 'unknown';
         } catch (e) {
             release = 'unknown';
         }
@@ -261,8 +275,8 @@ function faultKey(fn: string, e: any): string {
     return fn + '|' + name + '|' + message.replace(/\d+/g, '0').slice(0, 80);
 }
 
-/** May this fault be sent now? Counts it when it may. */
-function allow(fn: string, e: any, now: number): boolean {
+/** May this fault be sent now? Counts it when it may, and resolves to what it was counted under. */
+function allow(fn: string, e: any, now: number): string | null {
     if (now - limits.windowStart >= hour) {
         limits.windowStart = now;
         limits.inWindow = 0;
@@ -272,12 +286,21 @@ function allow(fn: string, e: any, now: number): boolean {
     const sameFault = limits.perFault[key] || 0;
     if (now < limits.restUntil || limits.life >= perLife || limits.inWindow >= perHour || sameFault >= perFaultPerHour) {
         limits.heldBack++;
-        return false;
+        return null;
     }
     limits.perFault[key] = sameFault + 1;
     limits.inWindow++;
     limits.life++;
-    return true;
+    return key;
+}
+
+/** Gives back what allow() counted, for a report that turned out to be none. */
+function uncount(key: string) {
+    if (limits.perFault[key] > 0) {
+        limits.perFault[key]--;
+    }
+    limits.inWindow = Math.max(0, limits.inWindow - 1);
+    limits.life = Math.max(0, limits.life - 1);
 }
 
 // ---- sending ----
@@ -352,8 +375,16 @@ const readMark: MarkLookup = async (pin, crew) => {
     return undefined;
 };
 
+// Every game has its creation time from its first write on (new-game.ts, fork.ts).
+const readGame: GameLookup = async (pin) => {
+    const { get, gamesRef } = require('./firebase');
+    const made = await get(gamesRef.child(pin).child('timestamp'));
+    return made !== null && made !== undefined;
+};
+
 let transport: Transport = sendToSentry;
 let markLookup: MarkLookup = readMark;
+let gameLookup: GameLookup = readGame;
 let target: Target | null | undefined;
 
 async function testMark(ctx: ReportContext): Promise<string> {
@@ -369,6 +400,19 @@ async function testMark(ctx: ReportContext): Promise<string> {
     const unread = {};
     const mark = await timeout(Promise.resolve().then(() => markLookup(pin, crew)), markTimeoutMs, unread);
     return mark === unread ? 'unknown' : (isTestCampaign(mark) ? 'yes' : 'no');
+}
+
+/**
+ * False only when an HTTP function was asked about a game that is known not to exist: the site
+ * never asks that, and the function's answer to it is no fault. When the read fails or takes
+ * too long, the game counts as there, so a real fault is not lost.
+ */
+async function gameIsThere(ctx: ReportContext): Promise<boolean> {
+    const pin = cleanPin(ctx.pin);
+    if (!ctx.needsGame || !pin) {
+        return true;
+    }
+    return timeout(Promise.resolve().then(() => gameLookup(pin)), markTimeoutMs, true);
 }
 
 // ---- what is running now ----
@@ -404,12 +448,17 @@ async function deliver(fn: string, e: any, ctx: ReportContext): Promise<any> {
             return null;
         }
         const now = Date.now();
-        if (!allow(fn, e, now)) {
+        const counted = allow(fn, e, now);
+        if (counted === null) {
+            return null;
+        }
+        const [test, there] = await Promise.all([testMark(ctx), gameIsThere(ctx)]);
+        if (!there) {
+            uncount(counted);
             return null;
         }
         const heldBack = limits.heldBack;
         limits.heldBack = 0;
-        const test = await testMark(ctx);
         const event = buildEvent(fn, e, ctx, test, heldBack, target ? target.environment : 'local', now);
         const failed: SendResult = { ok: false };
         const result = await timeout(Promise.resolve().then(() => transport(event, target)), sendTimeoutMs + 100, failed);
@@ -441,7 +490,7 @@ function quiet(f: () => void) {
  */
 export function report(fn: string, e: any, ctx: ReportContext = {}): Promise<any> {
     try {
-        if (isExpected(e)) {
+        if (isExpected(e) || ctx.unasked) {
             return Promise.resolve(null);
         }
         if (e && typeof e === 'object') {
@@ -487,14 +536,25 @@ export function watched<T extends (...args: any[]) => any>(fn: string, handler: 
 /**
  * Wraps an HTTP function's handler. It names the request for the reports, and holds the answer
  * back until a report that is on its way is out: only then, so an answer with no fault behind
- * it leaves exactly as before. `newGame` says so: a game that does not exist yet has its test
- * mark in the request, not in the database.
+ * it leaves exactly as before.
+ *
+ * `works` says what the function works on, as the site calls it: 'game' (the request names a
+ * game by its PIN), 'crew' (it names a crew), 'new' (it makes a game, whose test mark is in the
+ * request and not yet in the database) or nothing. A request the site never sends (not a POST,
+ * or without the PIN or crew the function works on) is answered exactly as before, and whatever
+ * it runs into is not reported.
  */
-export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, newGame = false): T {
+export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, works: 'game' | 'crew' | 'new' | '' = ''): T {
+    const newGame = works === 'new';
     return (function (this: any, req: any, res: any) {
         const body = req && req.body;
         const field = (name: string) => body && typeof body === 'object' ? body[name] : undefined;
         const ctx: ReportContext = { pin: field('pin'), crew: field('crew'), body, handled: true };
+        const method = req && req.method;
+        ctx.unasked = (typeof method === 'string' && method.toUpperCase() !== 'POST')
+            || (works === 'game' && !cleanPin(ctx.pin))
+            || (works === 'crew' && !cleanCrew(ctx.crew));
+        ctx.needsGame = works === 'game';
         quiet(() => {
             const from = String((req.headers && req.headers['x-forwarded-for']) || '');
             const browser = String((req.headers && req.headers['user-agent']) || '');
@@ -528,9 +588,14 @@ export function http<T extends (req: any, res: any) => any>(fn: string, handler:
 // ---- errors that are logged and swallowed ----
 // The game's steps catch some faults, log them with console.error and play on ("Failed to score
 // the picks, revealing without them"). Those never reach a function's edge, so the log line itself
-// is the signal: every console.error is also a report. With an Error among its arguments, that
-// error; without one, the line's first argument alone (the fixed words the code wrote), never the
-// rest, which can hold rows.
+// is the signal: a console.error written by the functions' own code is also a report. With an
+// Error among its arguments, that error; without one, the line's first argument alone (the fixed
+// words the code wrote), never the rest, which can hold rows.
+//
+// Only the functions' own lines: the line must be written from a file of this build (the folder
+// this file is in). Node's warnings, the functions framework's lines (it prints a failed
+// trigger's crash, which the trigger's wrapper has reported already) and a library's lines are
+// written from elsewhere and are no reports.
 
 const plainError = console.error;
 
@@ -542,6 +607,29 @@ class LoggedLine extends Error {
         this.stack = undefined;
     }
 }
+
+let ownFolders: string[] = [__dirname];
+
+/** Was the console.error that is running now called from the functions' own code? */
+function calledFromOwnCode(): boolean {
+    const stack = new Error().stack;
+    if (typeof stack !== 'string') {
+        return false;
+    }
+    const lines = stack.split('\n').slice(1);
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].replace(/\\/g, '/');
+        // The first call that is not in this file is the one that wrote the line.
+        if (line.indexOf(ownFile) >= 0) {
+            continue;
+        }
+        return line.indexOf('/node_modules/') < 0
+            && ownFolders.some(folder => line.indexOf(folder.replace(/\\/g, '/') + '/') >= 0);
+    }
+    return false;
+}
+
+const ownFile = __filename.replace(/\\/g, '/');
 
 let inHook = false;
 
@@ -565,15 +653,25 @@ function onErrorLine(args: any[]) {
 
 console.error = function (this: any, ...args: any[]) {
     plainError.apply(this, args);
-    quiet(() => onErrorLine(args));
+    quiet(() => {
+        if (calledFromOwnCode()) {
+            onErrorLine(args);
+        }
+    });
 };
 
 /** For tests only: swap the sender, the test mark's reader and the target, and clear the cap. */
 export const testing = {
-    reset(options: { transport?: Transport, markLookup?: MarkLookup, target?: Target | null, release?: string } = {}) {
+    reset(options: {
+        transport?: Transport, markLookup?: MarkLookup, gameLookup?: GameLookup, target?: Target | null, release?: string,
+        ownFolders?: string[],
+    } = {}) {
         limits = freshLimits();
         transport = options.transport || sendToSentry;
         markLookup = options.markLookup || readMark;
+        // A test that stands in for the database's test mark stands in for the whole database.
+        gameLookup = options.gameLookup || (options.markLookup ? (async () => true) : readGame);
+        ownFolders = options.ownFolders || [__dirname];
         target = options.target;
         release = options.release;
         current = null;

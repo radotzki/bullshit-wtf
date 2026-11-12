@@ -78,7 +78,7 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             return res.status(500).send(errorBody(e));
         }
     });
-}, true));
+}, 'new'));
 
 exports.fork = functions.https.onRequest(http('fork', (req, res) => {
     cors(req, res, async () => {
@@ -93,7 +93,7 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
             return res.status(400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 // Save the players of a finished game as a crew.
 exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => {
@@ -106,7 +106,7 @@ exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => 
             return res.status(400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 // One tap on a crew page: a new game for the crew (or the rematch lobby already waiting).
 exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) => {
@@ -120,7 +120,7 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
             return res.status(400).send(errorBody(e));
         }
     });
-}));
+}, 'crew'));
 
 // START in the lobby. In a game with a host key only the host's phone may start it, unless the host
 // never joined within 90 s or has been gone 5 minutes: see startVerdict in controllers/start.ts.
@@ -133,7 +133,7 @@ exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 // The host's lobby page reports in, so the group can start without a host whose phone died.
 exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
@@ -145,7 +145,7 @@ exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 exports.answer = functions.https.onRequest(http('answer', (req, res) => {
     cors(req, res, async () => {
@@ -161,7 +161,7 @@ exports.answer = functions.https.onRequest(http('answer', (req, res) => {
             return res.status(400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 exports.join = functions.https.onRequest(http('join', (req, res) => {
     cors(req, res, async () => {
@@ -177,7 +177,7 @@ exports.join = functions.https.onRequest(http('join', (req, res) => {
             return res.status(400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 exports.validateGameName = functions.https.onRequest(http('validateGameName', (req, res) => {
     cors(req, res, async () => {
@@ -190,7 +190,7 @@ exports.validateGameName = functions.https.onRequest(http('validateGameName', (r
             return res.status(400).send(errorBody(e));
         }
     });
-}));
+}, 'game'));
 
 exports.onJoinGame = functions.https.onRequest(http('onJoinGame', (req, res) => {
     cors(req, res, async () => {
@@ -209,7 +209,7 @@ exports.onJoinGame = functions.https.onRequest(http('onJoinGame', (req, res) => 
         }
         return res.status(200).send({});
     });
-}));
+}, 'game'));
 
 // One page view from the visit beacon (game/src/index.html), sent to /_v on the game's own site
 // (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,

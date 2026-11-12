@@ -61,6 +61,8 @@ function fresh(options = {}) {
         release: 'a'.repeat(40),
         transport: async (event) => { sent.push(event); return { ok: true }; },
         markLookup: async () => undefined,
+        // The stand-in steps write their error lines from this file: here it counts as the functions' own code.
+        ownFolders: [dist, __dirname],
     }, options));
     Object.keys(steps).forEach(k => delete steps[k]);
 }
@@ -195,6 +197,146 @@ test('an error that is logged, caught and thrown on is one report', async () => 
     assert.strictEqual(sent.length, 1);
 });
 
+// ---- only the functions' own error lines ----
+
+test('an error line that the functions\' own code did not write is no report', async () => {
+    const fs = require('fs');
+    const os = require('os');
+    // A file outside the build, as Node's own code, the functions framework and every library are.
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'not-ours-'));
+    const outside = path.join(folder, 'outside.js');
+    fs.writeFileSync(outside, 'exports.line = (...args) => console.error(...args);\n');
+    // And one inside the build: the real rule, with nothing swapped.
+    const inside = path.join(dist, 'own-line-check.js');
+    fs.writeFileSync(inside, 'exports.line = (...args) => console.error(...args);\n');
+    // The reporter's own console.error, without this file's quiet wrapper between it and the line's writer.
+    const wrapped = console.error;
+    console.error = hooked;
+    const stderr = process.stderr.write;
+    process.stderr.write = () => true;
+    try {
+        fresh({ ownFolders: undefined });
+        steps.tick = async () => {
+            require(outside).line('(node:1) [DEP0040] DeprecationWarning: The `punycode` module is deprecated.');
+            require(outside).line(boom('printed by the framework').stack);
+            require(outside).line('a library says', boom('a library fault'));
+            console.error('written from the test file, which is not the build either', boom('not ours'));
+        };
+        await trigger('tick', 'wxyz');
+        assert.strictEqual(sent.length, 0);
+        steps.tick = async () => { require(inside).line('Failed to advance', boom('ours')); };
+        await trigger('tick', 'wxyz');
+        assert.strictEqual(sent.length, 1);
+        assert.strictEqual(sent[0].exception.values[0].value, 'ours');
+    } finally {
+        console.error = wrapped;
+        process.stderr.write = stderr;
+        fs.rmSync(inside, { force: true });
+        fs.rmSync(folder, { recursive: true, force: true });
+    }
+});
+
+test('a trigger that fails is one report, also when the framework then prints the crash', async () => {
+    const fs = require('fs');
+    const os = require('os');
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'framework-'));
+    const framework = path.join(folder, 'framework.js');
+    // As the functions framework does: run the trigger, and print the crash's stack as text.
+    fs.writeFileSync(framework, 'exports.run = (f) => f().catch(e => { console.error(e.stack); });\n');
+    const wrapped = console.error;
+    console.error = hooked;
+    const stderr = process.stderr.write;
+    process.stderr.write = () => true;
+    try {
+        fresh({ ownFolders: undefined });
+        steps.tick = async () => { throw boom(); };
+        await require(framework).run(() => trigger('tick', 'wxyz'));
+        await reporter.settled();
+        assert.strictEqual(sent.length, 1);
+        assert.strictEqual(sent[0].exception.values[0].type, 'TypeError');
+        assert.deepStrictEqual(sent[0].exception.values[0].mechanism, { type: 'generic', handled: false });
+    } finally {
+        console.error = wrapped;
+        process.stderr.write = stderr;
+        fs.rmSync(folder, { recursive: true, force: true });
+    }
+});
+
+// ---- a request the site never sends ----
+
+test('a request the site never sends is answered as before and is no report', async () => {
+    const lookups = [];
+    fresh({ gameLookup: async (pin) => { lookups.push(pin); return false; } });
+    const fault = () => { throw boom("Cannot read properties of undefined (reading 'toUpperCase')"); };
+    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'validateGameName', 'createCrew']) {
+        const step = name === 'validateGameName' ? 'validateGameName' : name;
+        steps[step] = async () => fault();
+        for (const body of [{}, { nickname: 'Dana' }, { pin: 1234 }, { pin: 'AB.CD' }, { pin: 'ABCD/../x' }, { pin: '' }, { pin: null }, { pin: ['ABCD'] }]) {
+            const res = await call(name, body);
+            assert.deepStrictEqual([res.code, res.body.code], [400, 'INTERNAL'], name);
+        }
+    }
+    steps.crewRematch = async () => fault();
+    for (const body of [{}, { crew: 7 }, { crew: 'a b' }, { crew: 'x'.repeat(41) }]) {
+        assert.strictEqual((await call('crewRematch', body)).code, 400);
+    }
+    // A step that logs its fault and plays on, inside such a request: no report either.
+    steps.onJoinGame = async () => { console.error('Bigquery Insert failed', 'rows'); throw boom(); };
+    assert.strictEqual((await call('onJoinGame', { pin: 'AB.CD' })).code, 200);
+    assert.strictEqual(sent.length, 0);
+    assert.deepStrictEqual(lookups, [], 'no database read for a request with no PIN to read');
+});
+
+test('anything but a POST is no report', async () => {
+    fresh();
+    const get = (name, body) => new Promise((resolve) => {
+        const res = { code: 200, status(c) { this.code = c; return this; }, send(b) { resolve({ code: this.code, body: b }); return this; }, set() { return this; } };
+        api[name].__handler({ body, headers: {}, method: 'GET' }, res);
+    });
+    steps.join = async () => { throw boom(); };
+    steps.newGame = async () => { throw boom(); };
+    assert.strictEqual((await get('join', { pin: 'abcd' })).code, 400);
+    assert.strictEqual((await get('newGame', {})).code, 500);
+    assert.strictEqual(sent.length, 0);
+    // The same faults on a POST are reports.
+    await call('join', { pin: 'abcd' });
+    await call('newGame', { locale: 'en' });
+    assert.strictEqual(sent.length, 2);
+});
+
+test('a fault about a game that does not exist is no report, and does not use up the cap', async () => {
+    const there = { ABCD: true };
+    const lookups = [];
+    fresh({ gameLookup: async (pin) => { lookups.push(pin); return !!there[pin]; } });
+    steps.fork = async () => { throw boom("Cannot read properties of null (reading 'locale')"); };
+    // A Replay of a PIN no game has, 30 times: more than the cap of 10 an hour.
+    for (let i = 0; i < 30; i++) {
+        const res = await call('fork', { pin: 'zzzz' });
+        assert.deepStrictEqual([res.code, res.body], [400, { message: "Cannot read properties of null (reading 'locale')", code: 'INTERNAL' }]);
+    }
+    assert.strictEqual(sent.length, 0);
+    assert.strictEqual(lookups.length, 30);
+    // The same fault in a game that exists is a report, with nothing said to be held back.
+    await call('fork', { pin: 'abcd' });
+    assert.strictEqual(sent.length, 1);
+    assert.strictEqual(sent[0].tags.pin, 'ABCD');
+    assert.strictEqual(sent[0].extra, undefined);
+    // A trigger never asks: its game is the one whose write started it.
+    steps.tick = async () => { throw boom('a trigger fault'); };
+    await assert.rejects(trigger('tick', 'zzzz'));
+    assert.strictEqual(sent.length, 2);
+    assert.strictEqual(lookups.length, 31);
+});
+
+test('when the game cannot be looked up, the fault is still reported', async () => {
+    for (const gameLookup of [() => { throw new Error('reader broke'); }, () => new Promise(() => undefined), async () => { throw new Error('rejected'); }]) {
+        fresh({ gameLookup });
+        steps.join = async () => { throw boom(); };
+        await call('join', { pin: 'abcd' });
+        assert.strictEqual(sent.length, 1);
+    }
+});
+
 // ---- nothing personal ----
 
 test('nothing a player typed or sent is in a report', async () => {
@@ -233,7 +375,7 @@ test('the join usage call cuts the address and the browser out of the message to
 test('a PIN that is not a PIN is left out; a message is cut to 300 characters; a code is kept', async () => {
     fresh();
     steps.join = async () => { throw Object.assign(new Error('x'.repeat(5000)), { code: 'PERMISSION_DENIED' }); };
-    await call('join', { pin: 'Dana Levi <dana@example.com>', nickname: 'n' });
+    await reporter.report('join', await steps.join().catch(e => e), { pin: 'Dana Levi <dana@example.com>', body: { nickname: 'n' } });
     assert.strictEqual(sent[0].tags.pin, undefined);
     assert.strictEqual(sent[0].tags.code, 'PERMISSION_DENIED');
     assert.strictEqual(sent[0].tags.test, 'unknown');
@@ -552,12 +694,53 @@ test('the sender gives up on a Sentry that does not answer, and rests when told 
 
 // ---- the build ----
 
-test('the build writes the commit it was made from, and a report with no such file says "unknown"', () => {
+test('the build writes its name, and a report reads it', () => {
     const fs = require('fs');
     const written = JSON.parse(fs.readFileSync(path.join(dist, 'release.json'), 'utf8')).release;
-    assert.match(written, /^([0-9a-f]{40}|unknown)$/);
+    assert.match(written, /^functions-[0-9a-f]{12}$/);
     reporter.testing.reset({});
     assert.strictEqual(reporter.currentRelease(), written);
+});
+
+// A copy of the build in a folder of its own, with no git and no commit anywhere near it.
+function buildCopy(change) {
+    const fs = require('fs');
+    const os = require('os');
+    const { execFileSync } = require('child_process');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'release-name-'));
+    fs.cpSync(dist, path.join(root, 'dist'), { recursive: true });
+    for (const name of ['package.json', 'package-lock.json', 'write-release.js']) {
+        fs.copyFileSync(path.join(__dirname, '..', name), path.join(root, name));
+    }
+    fs.rmSync(path.join(root, 'dist', 'release.json'));
+    if (change) change(root, fs);
+    const env = Object.assign({}, process.env, { GITHUB_SHA: require('crypto').randomBytes(20).toString('hex') });
+    execFileSync(process.execPath, [path.join(root, 'write-release.js')], { env, stdio: 'pipe' });
+    const file = fs.readFileSync(path.join(root, 'dist', 'release.json'), 'utf8');
+    fs.rmSync(root, { recursive: true, force: true });
+    return file;
+}
+
+test('the same server code gives the same name at any commit, so a release with no server change sends no function', () => {
+    const fs = require('fs');
+    const here = fs.readFileSync(path.join(dist, 'release.json'), 'utf8');
+    // Two more builds of the same code, each told it is at another commit, in another folder.
+    assert.strictEqual(buildCopy(), here);
+    assert.strictEqual(buildCopy(), here);
+    // A second run over a folder that already holds a name does not count the name itself.
+    assert.strictEqual(buildCopy((root, f) => f.writeFileSync(path.join(root, 'dist', 'release.json'), '{"release":"stale"}\n')), here);
+});
+
+test('a change in the server\'s code gives another name', () => {
+    const fs = require('fs');
+    const here = fs.readFileSync(path.join(dist, 'release.json'), 'utf8');
+    const names = new Set([here]);
+    names.add(buildCopy((root, f) => f.appendFileSync(path.join(root, 'dist', 'controllers', 'tick.js'), '\n// one more line\n')));
+    names.add(buildCopy((root, f) => f.writeFileSync(path.join(root, 'dist', 'controllers', 'a-new-step.js'), 'exports.x = 1;\n')));
+    names.add(buildCopy((root, f) => f.renameSync(path.join(root, 'dist', 'controllers', 'tick.js'), path.join(root, 'dist', 'controllers', 'tock.js'))));
+    names.add(buildCopy((root, f) => f.appendFileSync(path.join(root, 'package-lock.json'), '\n')));
+    assert.strictEqual(names.size, 5);
+    names.forEach(n => assert.match(JSON.parse(n).release, /^functions-[0-9a-f]{12}$/));
 });
 
 test('loading the reporter loads nothing else', () => {
