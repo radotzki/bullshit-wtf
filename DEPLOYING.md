@@ -959,8 +959,17 @@ WHERE time >= TIMESTAMP('<release time>') AND players >= 2 AND picks * 2 >= play
   AND id NOT IN (SELECT pin FROM test_pins);
 ```
 
-Before the release (5 November to 12 November 2026, 10:00 UTC, tests out): 64 games of two or more
-players, 375 questions still played; 8.8% of the seats sent no lie and 5.6% picked nothing.
+Before the release (5 November to 12 November 2026, 10:00 UTC, tests out): 52 games of two or more
+players with a question still played, 375 such questions; 8.8% of the seats sent no lie and 5.6%
+picked nothing.
+
+To get these numbers again, run the query above with
+`time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2026-11-12 10:00:00')` in place of the
+release time, and with the PINs of the tests from before the mark added to `test_pins` (the query
+under "Tests from before the mark" in `2026-11-test-mark.sql`, joined on with `UNION DISTINCT`).
+Those days' tests carry no mark, so `test_pins` alone takes nothing out of that week: the same
+query then gives 78 games, 509 questions, 7.6% and 4.7%, which is tests and people together and not
+the number to compare with.
 
 Not readable yet: the seconds between the first and the last answer of a phase, the measure this
 change is really about. No table holds when an answer came in. It needs the two wait columns of
