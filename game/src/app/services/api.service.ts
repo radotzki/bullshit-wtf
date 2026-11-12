@@ -1,6 +1,7 @@
 import { reportError } from './../sentry/sentry.module';
 import {
     GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
+    Taste, tasteOf,
     WaitingRow, waitingRow,
 } from './../game-model';
 import { SessionService } from './session.service';
@@ -284,6 +285,15 @@ export class ApiService {
     getHighlightsFrom(pin: string) {
         pin = pin.toUpperCase();
         return this.get<number>(this.gamesRef.child(pin).child('highlightsFrom'));
+    }
+
+    /**
+     * The taste this game is (five pick-only questions for a host who started alone), or null for any
+     * other game. The server says so on the game's state; a state that cannot be read is no taste.
+     */
+    getTaste(pin: string): Promise<Taste> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => tasteOf(state), () => null);
     }
 
     getGameLocale(pin: string) {

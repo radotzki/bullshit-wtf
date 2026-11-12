@@ -862,6 +862,54 @@ was logged first says `handled: true` even if the error then failed the function
 is told to be the functions' own by the file that wrote it, read from the call stack: a line
 written through a helper outside `dist` would not be a report.
 
+## A taste for a host who starts alone
+
+A stranger who creates a game and has nobody to send the link to could press "Start alone anyway"
+and got a whole game: 25 seconds to write a lie that nobody reads, on every question. From 6 to 12
+November, tests out, 10 games were started alone; 2 were played to the end.
+
+**What a lone host gets now.** The lobby's link reads "Try 5 quick questions alone" ("לנסות לבד 5
+שאלות מהירות"). The game it starts is a taste:
+
+- Five questions, whatever length the host chose. Nothing to write: each question goes straight
+  to the answers, the truth among three house lies, with the question shown above them.
+- The first card says "5 QUICK QUESTIONS. No lies to write. Find the truth among ours."
+- Picking, the reveal and the points are the game's own: the truth scores, a house lie costs.
+- The last screen says "YOU FOUND 3 OF 5 TRUTHS", the points, then "Now try it with friends" and
+  one button, INVITE FRIENDS. The button is the Replay: it opens a new lobby, with the invite
+  on it and the length the host first chose. SHARE RESULTS stays.
+
+**What decides it.** The server, when the game leaves the lobby: exactly one player and no big
+screen (`functions/src/controllers/taste.ts`). A game of two or more, and a game with a big screen,
+take no new path. If a friend joins before the host presses the link, the whole game starts. A
+Replay of a taste that is again started alone is a taste again; with a friend in it is a whole
+game.
+
+**How phones know.** Every state of a taste carries `taste: { found, length }` (the truths found
+so far, the length the host chose). Phones may read the state and only the server writes it, so the
+database rules do not change. A game without the mark plays as before.
+
+**Old and new together.** An old site on the new functions plays the taste: it shows the question
+only behind "WHAT WAS THE QUESTION AGAIN?" and ends on the old final screen with REMATCH. A new
+site on the old functions (the seconds of a release) runs a whole game under the new link.
+A game that was started alone before the release stays a whole game.
+
+**With the staged reveal.** A taste can fall in either half of that test. In the staged half the
+reveal shows the truth, the lone player's row and NEXT on one screen and there is no scoreboard
+screen; in the other half the reveal is followed by the 3-second scoreboard. Both were played.
+
+**Known limits.** A friend who joins a taste that is running picks too; the game stays pick-only.
+Picking keeps its 20 seconds (a lone player's pick ends it at once).
+
+**In the usage rows.** No new column. A taste is `players = 1`, `presenter = false`,
+`questions = 5` in `opened_games` and `closed_games`, and `players = 1`, `lies = 0`, `total_q = 5`
+in `question_results`. The table a taste leads to is an `opened_games` row with `players >= 2` and
+the same `creator_uid`, and `parent_pin` the taste when it came from INVITE FRIENDS.
+
+**How it is measured** (`functions/bigquery/2026-11-taste.sql`, tests out): tastes played to the
+end per day (a pick on the fifth question), against 2 of 10 games alone in the week before; and
+the browsers that created a game of two or more within 7 days of their taste, against 1 of 8.
+
 ## Who the room is waiting for
 
 After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.

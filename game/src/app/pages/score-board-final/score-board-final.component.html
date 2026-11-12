@@ -23,11 +23,22 @@
             </div>
 
             <div class="actions" *ngIf="!presenter">
-                <button *ngIf="!rematchPin" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
+                <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
+                     and its lobby opens on the invite. -->
+                <div *ngIf="soloTaste && !rematchPin" class="taste-ask">
+                    <h2 class="taste-ask-title">{{ tasteWords.askTitle }}</h2>
+                    <p class="taste-ask-text">{{ tasteWords.askText }}</p>
+                    <button class="button is-primary is-medium is-fullwidth rematch taste-invite" (click)="replay()"
+                        [class.is-loading]="loading">
+                        {{ tasteWords.invite }}
+                    </button>
+                    <p class="hint">{{ tasteWords.inviteHint }}</p>
+                </div>
+                <button *ngIf="!rematchPin && !soloTaste" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
                     [class.is-loading]="loading">
                     {{ t.rematch }}
                 </button>
-                <p *ngIf="!rematchPin" class="hint">{{ t.rematchHint }}</p>
+                <p *ngIf="!rematchPin && !soloTaste" class="hint">{{ t.rematchHint }}</p>
                 <!-- Someone else pressed REMATCH: this player joins when ready, not when they pressed. -->
                 <button *ngIf="rematchPin" class="button is-primary is-medium is-fullwidth rematch join-rematch"
                     (click)="joinRematch()" [class.is-loading]="loading">
@@ -39,7 +50,7 @@
 
             <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
 
-            <ol class="players" [class.many]="displayPlayers.length > 4">
+            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
                     <div class="row">
                         <span class="place">{{ player.place }}</span>
@@ -53,7 +64,7 @@
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
                     </div>
-                    <div class="lie none" *ngIf="!player.best && wholeGame">{{ t.fooledNobody }}</div>
+                    <div class="lie none" *ngIf="!player.best && wholeGame && !taste">{{ t.fooledNobody }}</div>
                 </li>
             </ol>
 

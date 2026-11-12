@@ -49,8 +49,33 @@ $dark: #363636;
         }
     }
 
+    // A taste's first card: its name, one line on how it goes, then the points for the truth.
+    .taste-intro {
+        padding: 0 16px;
+
+        .taste-title {
+            margin-bottom: 0.3em;
+            color: $primary;
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: 0.02em;
+        }
+
+        .taste-how {
+            margin-bottom: 1em;
+            font-size: 1.4rem;
+            line-height: 1.25;
+        }
+
+        .truth {
+            font-size: 1.2rem;
+        }
+    }
+
     // Hebrew has no capitals to space out.
-    &[dir="rtl"] .final-title {
+    &[dir="rtl"] .final-title,
+    &[dir="rtl"] .taste-title {
         letter-spacing: 0;
     }
 

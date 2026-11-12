@@ -112,7 +112,7 @@ test('a player whose sign-in failed (no uid) still waits for the host', () => {
     assert.strictEqual(view({ myUid: null }).canStart, false);
 });
 
-// Lone host: invite first, START held back behind "Start alone anyway".
+// Lone host: invite first, START held back behind the link that starts the taste.
 
 test('a host alone in the lobby gets the invite-first lobby', () => {
     const v = view({ myUid: 'uid-alice', players: [alice] });
@@ -122,7 +122,7 @@ test('a host alone in the lobby gets the invite-first lobby', () => {
     assert.strictEqual(t.alone, true);
     assert.strictEqual(t.message, 'Bullshit needs friends: you score by fooling them');
     assert.strictEqual(t.sub, 'Send them the link. It takes them 10 seconds to join.');
-    assert.strictEqual(t.startAlone, 'Start alone anyway');
+    assert.strictEqual(t.startAlone, 'Try 5 quick questions alone');
     assert.strictEqual(t.count, '1 player in');
 });
 
@@ -130,7 +130,7 @@ test('a lone host in a Hebrew game reads it in Hebrew, right to left', () => {
     const t = lobbyText(view({ myUid: 'uid-alice', players: [alice] }), 1, 'he');
     assert.strictEqual(t.message, 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו');
     assert.strictEqual(t.sub, 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.');
-    assert.strictEqual(t.startAlone, 'להתחיל לבד בכל זאת');
+    assert.strictEqual(t.startAlone, 'לנסות לבד 5 שאלות מהירות');
     assert.strictEqual(t.rtl, true);
 });
 

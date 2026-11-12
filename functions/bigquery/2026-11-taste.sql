@@ -1,0 +1,85 @@
+-- A taste for a host who starts alone. NO SCHEMA CHANGE: there is nothing to run in this file.
+-- It holds only read-only queries (in comments, like the other files here).
+--
+-- A game that leaves the lobby with one player and no big screen is a taste: five questions,
+-- nothing to write, the truth among three house lies (functions/src/controllers/taste.ts).
+-- It is told from a table's game by columns that already exist:
+--   opened_games, closed_games   players = 1, presenter = false, questions = 5
+--   question_results             players = 1, lies = 0, total_q = 5 (picks is 1 or 0)
+-- A game of two or more has players >= 2 in every row. A game with a big screen and one phone has
+-- presenter = true and stays a whole game. Before the release of this change a row with
+-- players = 1 was a whole game played alone: set <release> to the time of that release.
+-- A friend who joins a taste that is running picks too: its later question rows have players = 2
+-- and lies = 0, and its closed_games row has players = 2, questions = 5.
+-- The lobby's link ("Try 5 quick questions alone") still logs shares: invite / solo-start.
+-- Replace <from> and <to>; put test_pins from 2026-11-test-mark.sql first. See DEPLOYING.md,
+-- "A taste for a host who starts alone".
+
+-- ---------------------------------------------------------------------------
+-- 1. Tastes per day: started, played (a pick on any question), played to the end (a pick on the
+--    fifth question), and the truths found in those that reached the end.
+-- WITH test_pins AS (... see 2026-11-test-mark.sql ...),
+-- q AS (SELECT id, COUNTIF(picks > 0) AS picked, LOGICAL_OR(q_index = total_q - 1 AND picks > 0) AS to_the_end
+--   FROM `bullshit-wtf-prod.analytics.question_results`
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') GROUP BY id)
+-- SELECT DATE(o.time) AS day, COUNT(*) AS tastes, COUNT(DISTINCT o.creator_uid) AS browsers,
+--   COUNTIF(q.picked > 0) AS played, COUNTIF(q.to_the_end) AS played_to_the_end
+-- FROM `bullshit-wtf-prod.analytics.opened_games` o LEFT JOIN q USING (id)
+-- WHERE o.time >= TIMESTAMP('<from>') AND o.time < TIMESTAMP('<to>') AND o.time >= TIMESTAMP('<release>')
+--   AND o.players = 1 AND NOT IFNULL(o.presenter, FALSE)
+--   AND o.id NOT IN (SELECT pin FROM test_pins)
+-- GROUP BY day ORDER BY day;
+--
+-- Before the change, for the same days of the week: drop the <release> line. From 6 to 12
+-- November 2026, tests out (read 12 November): 10 games alone, 7 with a pick, 2 played to the end
+-- (all 9 questions).
+
+-- ---------------------------------------------------------------------------
+-- 2. What the taste is for: of the browsers that played a taste, how many created a game that
+--    started with two or more players within 7 days. "by_invite_button" counts the tables that
+--    came from the final screen's INVITE FRIENDS (a Replay whose parent is the taste).
+--    Read it only for tastes that are 7 days old, or say that the week is not over.
+-- WITH test_pins AS (... see 2026-11-test-mark.sql ...),
+-- taste AS (SELECT id, creator_uid, time
+--   FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND time >= TIMESTAMP('<release>')
+--     AND players = 1 AND NOT IFNULL(presenter, FALSE) AND creator_uid IS NOT NULL
+--     AND id NOT IN (SELECT pin FROM test_pins)),
+-- tbl AS (SELECT id, creator_uid, parent_pin, time
+--   FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP_ADD(TIMESTAMP('<to>'), INTERVAL 7 DAY)
+--     AND players >= 2 AND id NOT IN (SELECT pin FROM test_pins))
+-- SELECT COUNT(DISTINCT t.creator_uid) AS taste_browsers,
+--   COUNT(DISTINCT IF(b.id IS NOT NULL, t.creator_uid, NULL)) AS hosted_a_table_within_7_days,
+--   COUNT(DISTINCT IF(b.parent_pin = t.id, t.creator_uid, NULL)) AS by_invite_button
+-- FROM taste t LEFT JOIN tbl b
+--   ON b.creator_uid = t.creator_uid AND b.time > t.time AND b.time < TIMESTAMP_ADD(t.time, INTERVAL 7 DAY);
+--
+-- Before the change, 6 to 12 November 2026 (read 12 November, the week not over): 8 browsers
+-- created a game alone, 1 of them hosted a table later (a returning player), 0 by a Replay of
+-- the game alone.
+
+-- ---------------------------------------------------------------------------
+-- 3. Where a taste is left: the last question with a pick, per taste.
+-- SELECT last_q, COUNT(*) AS tastes FROM (
+--   SELECT o.id, IFNULL(MAX(IF(r.picks > 0, r.q_index + 1, NULL)), 0) AS last_q
+--   FROM `bullshit-wtf-prod.analytics.opened_games` o
+--   LEFT JOIN `bullshit-wtf-prod.analytics.question_results` r
+--     ON r.id = o.id AND r.time >= TIMESTAMP('<from>') AND r.time < TIMESTAMP('<to>')
+--   WHERE o.time >= TIMESTAMP('<from>') AND o.time < TIMESTAMP('<to>') AND o.time >= TIMESTAMP('<release>')
+--     AND o.players = 1 AND NOT IFNULL(o.presenter, FALSE)
+--     AND o.id NOT IN (SELECT pin FROM test_pins)
+--   GROUP BY o.id)
+-- GROUP BY last_q ORDER BY last_q;
+
+-- ---------------------------------------------------------------------------
+-- 4. A check that games of two or more did not change: any row since the release where a game of
+--    two or more players on question 1 has no lie written and yet was not born alone. Expect none
+--    (a table where nobody wrote in time has lies = 0 too: look at its opened_games row).
+-- SELECT r.id, r.q_index, r.players, r.lies, r.picks, r.total_q
+-- FROM `bullshit-wtf-prod.analytics.question_results` r
+-- JOIN `bullshit-wtf-prod.analytics.opened_games` o
+--   ON o.id = r.id AND o.time >= TIMESTAMP('<release>') AND o.time < TIMESTAMP('<to>')
+-- WHERE r.time >= TIMESTAMP('<release>') AND r.time < TIMESTAMP('<to>')
+--   AND o.players >= 2 AND r.lies = 0 AND r.total_q = 5
+-- ORDER BY r.time;
