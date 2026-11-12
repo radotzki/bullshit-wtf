@@ -12,25 +12,72 @@
         </a>
     </div>
 
-    <div class="menu-button join-game" routerLink="/join-game">
-        <div class="menu-button-icon">
-            <i class="fa fa-gamepad"></i>
-        </div>
-        <div class="menu-button-text">
-            <p class="menu-button-text-main"> {{ t.join }} </p>
-            <p class="menu-button-text-second"> {{ t.joinHint }} </p>
+    <!-- The front door: what the game is, in one line, and for someone who never played, a small
+         looping picture of one round. Text and CSS only: no image to download. -->
+    <div class="front-door" [class.has-picture]="picture">
+        <p class="pitch">{{ t.pitch }}</p>
+
+        <div class="picture" *ngIf="picture" role="img" [attr.aria-label]="p.alt">
+            <div class="screen" aria-hidden="true">
+                <p class="question">{{ p.before }} <span class="blank"></span> {{ p.after }}</p>
+
+                <div class="frame frame-write">
+                    <p class="step">{{ p.steps[0] }}</p>
+                    <p class="typed">{{ p.lie }}</p>
+                    <p class="send">{{ p.send }}</p>
+                </div>
+
+                <div class="frame frame-pick">
+                    <p class="step">{{ p.steps[1] }}</p>
+                    <p class="answer">{{ p.otherLie }}</p>
+                    <p class="answer">{{ p.truth }}</p>
+                    <p class="answer">{{ p.lie }}</p>
+                </div>
+
+                <div class="frame frame-reveal">
+                    <p class="step">{{ p.steps[2] }}</p>
+                    <div class="row">
+                        <p class="text">{{ p.lie }}</p>
+                        <p class="who"><span>{{ p.fooled }}</span> <span class="points">{{ p.yourLie }} <span dir="ltr">+500</span></span></p>
+                    </div>
+                    <div class="row truth">
+                        <p class="text">{{ p.truth }}</p>
+                        <p class="who"><span></span> <span class="points">{{ p.theTruth }} <span dir="ltr">+1000</span></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
         </div>
     </div>
 
-    <div class="menu-button create-game" routerLink="/create-game">
-        <div class="menu-button-icon">
-            <i class="fa fa-plus-square"></i>
+    <!-- Create leads for a visitor with no PIN; a returning guest keeps Join on top (front-door.ts). -->
+    <ng-container *ngTemplateOutlet="first === 'create' ? create : join"></ng-container>
+    <ng-container *ngTemplateOutlet="first === 'create' ? join : create"></ng-container>
+
+    <ng-template #join>
+        <div class="menu-button join-game" [class.is-first]="first === 'join'" routerLink="/join-game">
+            <div class="menu-button-icon">
+                <i class="fa fa-gamepad"></i>
+            </div>
+            <div class="menu-button-text">
+                <p class="menu-button-text-main"> {{ t.join }} </p>
+                <p class="menu-button-text-second"> {{ t.joinHint }} </p>
+            </div>
         </div>
-        <div class="menu-button-text">
-            <p class="menu-button-text-main"> {{ t.create }} </p>
-            <p class="menu-button-text-second"> {{ t.createHint }} </p>
+    </ng-template>
+
+    <ng-template #create>
+        <div class="menu-button create-game" [class.is-first]="first === 'create'" routerLink="/create-game"
+            [queryParams]="createQuery">
+            <div class="menu-button-icon">
+                <i class="fa fa-plus-square"></i>
+            </div>
+            <div class="menu-button-text">
+                <p class="menu-button-text-main"> {{ t.create }} </p>
+                <p class="menu-button-text-second"> {{ t.createHint }} </p>
+            </div>
         </div>
-    </div>
+    </ng-template>
 
     <div class="menu-button present-game" routerLink="/present-game">
         <div class="menu-button-icon">

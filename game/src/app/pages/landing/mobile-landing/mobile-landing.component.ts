@@ -1,7 +1,23 @@
 import { Component } from '@angular/core';
 import { CrewService, RememberedCrew } from '../../../services/crew.service';
-import { preferredLocale, setPreferredLocale } from '../../../services/join-source';
+import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
+import { PictureStrings, createQuery, firstButton, pictureStrings, readVisitor, showPicture } from '../front-door';
+
+/** Reads a key the game keeps in this browser: localStorage, else the tab's storage, else nothing. */
+function readStored(key: string): string | null {
+    try {
+        const value = window.localStorage.getItem(key);
+        if (value !== null) {
+            return value;
+        }
+    } catch (e) { }
+    try {
+        return window.sessionStorage.getItem(key);
+    } catch (e) {
+        return null;
+    }
+}
 
 @Component({
     selector: 'app-mobile-landing',
@@ -13,14 +29,32 @@ export class MobileLandingComponent {
     crews: RememberedCrew[];
     // The menu's words: Hebrew, right to left, for visitors who came on /he or whose browser is in Hebrew.
     t: HomeStrings;
+    // The words of the picture of the game, in the same language.
+    p: PictureStrings;
+    // The front door (see front-door.ts): which button leads, whether the picture shows, and the
+    // post tag the Create button carries on.
+    first: 'create' | 'join';
+    picture: boolean;
+    createQuery: { via?: string };
 
     constructor(crewService: CrewService) {
         this.crews = crewService.list().slice(0, 3);
-        this.t = homeStrings(preferredLocale());
+        this.setLocale(preferredLocale());
+
+        const tag = arrivalCampaign();
+        const visitor = readVisitor(readStored, tag);
+        this.first = firstButton(visitor);
+        this.picture = showPicture(visitor);
+        this.createQuery = createQuery(tag);
     }
 
     switchLanguage() {
         setPreferredLocale(this.t.switchTo);
-        this.t = homeStrings(this.t.switchTo);
+        this.setLocale(this.t.switchTo);
+    }
+
+    private setLocale(locale: string) {
+        this.t = homeStrings(locale);
+        this.p = pictureStrings(locale);
     }
 }

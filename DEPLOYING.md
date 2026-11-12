@@ -605,6 +605,33 @@ credentials needed; `PRINT_ROWS=1` prints every row the run would send to BigQue
 - The share service no longer calls Google Analytics (`gtag`); the tag recorded nothing.
 - Not checked on real phones: how an iPhone and an Android phone open the downloaded calendar file.
 
+## Front door: the phone home page says what the game is
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- Above the menu, one line: "Everyone writes a lie. One answer is true. Fool your friends." and its
+  Hebrew (`pitch` in `home-strings.ts`).
+- A browser that holds nothing of the game (no seat, host key or crew) also gets a small picture of
+  one round in three frames: write a lie, find the truth, see who fell for it. It is text and CSS
+  drawn like the game's own screens, with one real opening question, so it adds no image and no
+  request (about 2.7 KB to the compressed app). A phone that asks for reduced motion gets the reveal
+  frame, still.
+- Create leads the menu for a stranger, for anyone who came from a post, and for a browser that has
+  hosted. Join stays on top only for a browser that has played and never hosted. Both are always on
+  the first screen, one tap each; crews stay above everything. The rules are in
+  `game/src/app/pages/landing/front-door.ts`, tested by `game/test/front-door.test.js`.
+- The Create button carries the post's tag on its own address (`/create-game?via=<tag>`), and the tag
+  of the page load is also kept in memory, so a game is counted for its post even where the tab's
+  storage is blocked or the Create page is reloaded.
+- The desktop home page and the plain search pages are unchanged.
+
+How to read it (compare the two weeks before the release with the two after, test games out):
+
+- New hosts a day: browsers in `opened_games` not seen in the year before.
+- The share of new lobbies that reach 2 players, and "start alone" presses in `shares`.
+- Games by `campaign` in `opened_games`, once posts go out.
+- Once the visits table exists: created games per first home page view.
+
 ## Known leftovers
 
 - npm audit reports moderate issues in transitive Google libraries (functions) and many
