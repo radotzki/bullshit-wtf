@@ -30,6 +30,20 @@
 // 4 is the database's own address. Whether Google lets the deploy account read the rules there
 // is decided by Google on the run; a refusal stops the run like any other.
 //
+// The sign-in of request 4: RULES_SCOPES below, and not the scope `cloud-platform` of every other
+// request in the run. The database's own address does not take a token with `cloud-platform`
+// alone: on 2026-11-12 the first run of this file on master (run 7) got 401 "Unauthorized
+// request." there, right after requests 1 to 3 were answered as expected with the same token.
+// Google's guide for that address ("Authenticate REST requests", Realtime Database) asks for the
+// two scopes below, and Google's own tools ask for more than `cloud-platform` too: the Firebase
+// tool signs in with `email`, `openid`, `cloudplatformprojects.readonly`, `firebase` and
+// `cloud-platform` (firebase-tools 15.35, src/api.ts setScopes and src/requireAuth.ts), and the
+// admin library with `userinfo.email` and `firebase.database` among others (firebase-admin 14.5,
+// src/app/credential-internal.ts). A scope is what a token may be used for; it gives the deploy
+// account no role and no permission it does not hold. The token with these two scopes is its
+// own sign-in, is sent to a database address's /.settings/rules.json and nowhere else
+// (allowedRules below), and requests 1 to 3 never carry it (allowedApi).
+//
 // The lock: allowed() below. Nothing is sent but a GET without a body to those two Google APIs
 // or to a database address's /.settings/rules.json. No PUT, POST, PATCH or DELETE exists here,
 // so this file cannot write rules or data, and cannot switch an API on.
@@ -53,33 +67,56 @@ const READ_HOSTS = new Set([PROJECT_ORIGIN, INSTANCE_ORIGIN].map(o => new URL(o)
 const DATABASE_HOST = /^[a-z0-9][a-z0-9-]*\.(firebaseio\.com|[a-z0-9-]+\.firebasedatabase\.app)$/;
 const INSTANCE = /^[a-z0-9][a-z0-9-]{1,62}$/;
 
-// The only requests this file may send.
-function allowed(options) {
+// The sign-in of the rules read, request 4, and of nothing else: the two scopes Google's guide
+// for the database's own address names. See the header.
+const RULES_SCOPES = Object.freeze([
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/firebase.database',
+]);
+
+// A plain GET to an https address: no body, no query, no user, no port. The parsed address, or
+// null.
+function plainGet(options) {
     if (!options || typeof options !== 'object' || typeof options.url !== 'string' || options.method !== 'GET') {
-        return false;
+        return null;
     }
     if ('data' in options || 'body' in options) {
-        return false;
+        return null;
     }
     let u;
     try {
         u = new URL(options.url);
     } catch (e) {
-        return false;
+        return null;
     }
     if (u.protocol !== 'https:' || u.username || u.password || u.port || u.hash || u.search) {
-        return false;
+        return null;
     }
-    if (READ_HOSTS.has(u.hostname)) {
-        // A colon in the path is how Google's APIs name an action, such as ":enable".
-        return !u.pathname.includes(':');
-    }
-    return DATABASE_HOST.test(u.hostname) && u.pathname === RULES_PATH;
+    return u;
 }
 
-function locked(request) {
+// Requests 1 to 3: the two Google APIs.
+function allowedApi(options) {
+    const u = plainGet(options);
+    // A colon in the path is how Google's APIs name an action, such as ":enable".
+    return Boolean(u) && READ_HOSTS.has(u.hostname) && !u.pathname.includes(':');
+}
+
+// Request 4: a database address's rules, and nothing else there.
+function allowedRules(options) {
+    const u = plainGet(options);
+    return Boolean(u) && DATABASE_HOST.test(u.hostname) && u.pathname === RULES_PATH;
+}
+
+// The only requests this file may send.
+function allowed(options) {
+    return allowedApi(options) || allowedRules(options);
+}
+
+// `may` is one of the three above.
+function locked(request, may = allowed) {
     return async options => {
-        if (!allowed(options)) {
+        if (!may(options)) {
             throw Object.assign(new Error('not sent'), { code: 'REQUEST_NOT_ALLOWED_IN_A_CHECK' });
         }
         return request(options);
@@ -178,17 +215,20 @@ function compareRules(fileText, live) {
 
 // `request` sends one request with the deploy account's sign-in and resolves to
 // { status, data } for any answer; it rejects when there is none. `noAnswer` turns such an
-// error into lines to print.
+// error into lines to print. `rulesRequest` is the same with the sign-in of RULES_SCOPES: it
+// sends request 4 and no other, and `request` sends requests 1 to 3 and never request 4, unless
+// a test hands in one made-up Google for both.
 // Resolves to { verdict, lines }: 'unchanged' only when the database API is off and the live
 // rules equal this commit's. Else 'changed' (they differ), 'unknown' (they could not be read or
 // compared) or 'other' (the database read failed for another reason than the API being off).
-async function liveRules(project, dir, request, noAnswer) {
-    const send = locked(request);
+async function liveRules(project, dir, request, noAnswer, rulesRequest = request) {
+    const send = locked(request, allowedApi);
+    const sendRules = locked(rulesRequest, allowedRules);
     const lines = [];
     const stop = (verdict, more) => ({ verdict, lines: lines.concat(more) });
-    const get = async (url, shown) => {
+    const get = async (url, shown, by = send) => {
         try {
-            const answer = await send({ url, method: 'GET' });
+            const answer = await by({ url, method: 'GET' });
             return { status: answer && Number(answer.status), data: answer ? answer.data : null };
         } catch (e) {
             return { failed: noAnswer(shown.slice(4), e) };
@@ -258,13 +298,15 @@ async function liveRules(project, dir, request, noAnswer) {
 
     // 4. The live rules.
     const rulesShown = 'GET the live rules (the database\'s own address, /.settings/rules.json)';
-    const four = await get(address + RULES_PATH, rulesShown);
+    const four = await get(address + RULES_PATH, rulesShown, sendRules);
     if (four.failed) {
         return stop('unknown', four.failed);
     }
     if (four.status !== 200) {
         return stop('unknown', answerLines(four.status, four.data, rulesShown).concat(
-            '    The live rules could not be read, so the run cannot know that they are the same.'));
+            '    The live rules could not be read, so the run cannot know that they are the same.',
+            '    (asked with the sign-in for the database\'s own address, the scopes userinfo.email and',
+            '    firebase.database, and not with cloud-platform)'));
     }
     const verdict = compareRules(fileText, four.data);
     if (verdict === 'unknown') {
@@ -276,4 +318,4 @@ async function liveRules(project, dir, request, noAnswer) {
     return stop('unchanged', [`200 to ${rulesShown}`, '    The live rules are the same as this commit\'s rules file, value for value.']);
 }
 
-module.exports = { PROJECT_ORIGIN, INSTANCE_ORIGIN, RULES_PATH, allowed, locked, databaseApiOff, rulesFile, canonical, compareRules, liveRules };
+module.exports = { PROJECT_ORIGIN, INSTANCE_ORIGIN, RULES_PATH, RULES_SCOPES, allowed, allowedApi, allowedRules, locked, databaseApiOff, rulesFile, canonical, compareRules, liveRules };

@@ -129,7 +129,9 @@ jobs:
       # of "Show why the step failed". See the script's header and DEPLOYING.md.
       # One way on without the database read: when it failed only because the Firebase Realtime
       # Database Management API is off, and the rules that are live are the same as this commit's
-      # (four GETs, in live-rules.js), the step passes with the output rules=unchanged. The rules
+      # (four GETs, in live-rules.js; the fourth, the rules at the database's own address, signs in
+      # by itself with the two scopes that address asks for, userinfo.email and firebase.database,
+      # and that sign-in is used for nothing else), the step passes with the output rules=unchanged. The rules
       # step below is then skipped: it could only fail, and it had nothing to change. Rules that
       # differ, or that could not be read, stop the run here, before anything is released.
       - name: Check access to the database and the site (releases nothing)

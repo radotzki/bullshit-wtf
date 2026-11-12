@@ -82,8 +82,10 @@ Things to know:
   `serviceusage.services.use` (role Service Usage Consumer, or any wider role that holds it).
   The script never opens the key file: Google's own library (`google-auth-library`, installed
   with the Firebase tool) reads it and signs the request, and the step prints permission names
-  and Google's error fields only. The sign-in asks for the scope `cloud-platform`, the one the
-  Firebase tool uses for the deploys. A read-only scope was considered and left out: whether
+  and Google's error fields only. The sign-in asks for the scope `cloud-platform`, one of the
+  five the Firebase tool signs in with for the deploys (`email`, `openid`,
+  `cloudplatformprojects.readonly`, `firebase`, `cloud-platform`; read at version 15.35.0,
+  `src/api.ts` and `src/requireAuth.ts`). A read-only scope was considered and left out: whether
   Google accepts it for this question can only be seen on a run from `master`, where a wrong
   guess stops a release.
   What it does not prove: a permission given for one resource only (not on the project), or
@@ -148,11 +150,28 @@ Things to know:
   `/.settings/rules.json`, and refuses any other request itself before it is sent. It prints
   neither the rules nor the database's address. Once the owner switches the API on, the database
   read passes, none of this runs, and the rules step runs as always.
+  The fourth request has a sign-in of its own. Every other request of the run signs in with the
+  scope `cloud-platform`. The database's own address does not take a token with that scope alone:
+  on 2026-11-12 the first run of this on `master` got `401`, "Unauthorized request.", for the
+  rules, right after the three requests before it were answered as expected with the same token.
+  Google's guide for that address ("Authenticate REST requests", Realtime Database) asks for two
+  other scopes, `https://www.googleapis.com/auth/userinfo.email` and
+  `https://www.googleapis.com/auth/firebase.database`, and the Firebase tool and Google's admin
+  library both sign in with more than `cloud-platform` before they ask that address. So the rules
+  read signs in a second time, with those two scopes and no other. That token is sent to a
+  database's `/.settings/rules.json` and nowhere else, and the run's own token is never sent
+  there: the script refuses either itself (`allowedApi` and `allowedRules` in `live-rules.js`).
+  A scope says what a token may be used for. It gives the deploy account no role and no
+  permission, and it changes nothing in the Google project.
   What it does not prove: that Google lets the deploy account read the live rules (if not, the
   run stops and says so), and that nobody changes the live rules by hand between this check and
-  the end of the run. Until its first run on `master` it has only been tried with made-up
-  answers (`live-rules.test.js`) and, for the shape of the rules answer, a local database
-  emulator.
+  the end of the run. The two scopes are taken from Google's guide and from the source of
+  Google's tools, and were tried with a made-up key and no network (the library asks for exactly
+  them); that Google then answers the read can only be seen on a run from `master`. A `401`
+  with them would mean the scopes were not the reason, and a `403` or "Permission denied" that
+  the account may not read the rules there; either stops the run before anything is released.
+  For the rest it has been tried with made-up answers (`live-rules.test.js`) and, for the shape
+  of the rules answer, a local database emulator.
 - The workflow never passes `--force`. So if a change **removes or renames a function**, the
   functions step stops and lists the functions that are live but gone from the code; nothing is
   deleted by a machine. A person deletes them with the `firebase functions:delete` commands the log

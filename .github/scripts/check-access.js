@@ -41,6 +41,8 @@
 // One way on without the database read (live-rules.js has the whole reasoning): when the
 // database read failed, four GETs ask whether that is only because the Firebase Realtime
 // Database Management API is off, and whether the rules that are live equal this commit's. If
+// The fourth, the read of the live rules at the database's own address, has a sign-in of its
+// own with the two scopes that address asks for; no other request of the run carries it. If
 // both are so, and the site was reached, this step passes and writes `rules=unchanged` to the
 // step's outputs. The workflow then skips "2. Deploy the database rules", which could only fail
 // and had nothing to change, and releases the functions and the site. In every other case the
@@ -53,7 +55,7 @@ const fs = require('fs');
 const { spawnSync } = require('child_process');
 const refusal = require('./firebase-refusal.js');
 const { googleRequest, noAnswer } = require('./check-deploy-permissions.js');
-const { liveRules } = require('./live-rules.js');
+const { liveRules, RULES_SCOPES } = require('./live-rules.js');
 
 const { scrub, errorFields } = refusal;
 const DATABASE_READ = ['deploy', '--only', 'database', '--dry-run'];
@@ -193,8 +195,15 @@ function report(project, results, rules = null) {
     return out;
 }
 
-// Both reads run, whatever the first did. `run` and `request` are given only by a test.
-async function main(project, dir, run, request) {
+// The request that reads the live rules: a sign-in of its own with RULES_SCOPES, made only when
+// the rules have to be read. The other two arguments are a test's; `make` is given only by a test.
+function rulesSignIn(request, rulesRequest, make = googleRequest) {
+    return rulesRequest || request || make(undefined, {}, RULES_SCOPES);
+}
+
+// Both reads run, whatever the first did. `run`, `request` and `rulesRequest` are given only by
+// a test; a test that gives `request` alone has it answer the rules read too.
+async function main(project, dir, run, request, rulesRequest) {
     console.log(`\n--- Reading the database: npx ${command(project).join(' ')}`);
     const database = readDatabase(project, dir, run);
     console.log('\n--- Reading the site: one GET, the list of the project\'s hosting sites');
@@ -210,7 +219,7 @@ async function main(project, dir, run, request) {
     if (!database.ok) {
         console.log('\n--- The database was not reached. Reading the live rules another way: four GETs, nothing else');
         try {
-            rules = await liveRules(project, dir, ask, noAnswer);
+            rules = await liveRules(project, dir, ask, noAnswer, rulesSignIn(request, rulesRequest));
         } catch (e) {
             rules = { verdict: 'unknown', lines: ['The live rules could not be asked for: ' + scrub(String((e && (e.code || e.name)) || 'error')).slice(0, 80)] };
         }
@@ -262,4 +271,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, RULES_VERDICT, command, readDatabase, readSite, report, main };
+module.exports = { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, RULES_VERDICT, command, readDatabase, readSite, rulesSignIn, report, main };
