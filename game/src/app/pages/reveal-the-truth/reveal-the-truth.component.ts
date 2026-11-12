@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import {
     GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing,
-    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isPlayerLie,
+    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isLie, isPlayerLie,
 } from '../../game-model';
 import { gameStrings, GameStrings } from './../game-strings';
 import { resultLines, stingFor } from './reveal-strings';
@@ -26,9 +26,10 @@ const SCORES_MOVE_AFTER_MS = 900;
  * timed rows: once all is shown they appear together, each in a row of its own. Then each player sees
  * their own result and can tap NEXT; once everyone has, the server moves on without waiting for the deadline.
  *
- * Laughs on lies: every player's lie, picked or not, has a laugh button on the phones of the players who
- * did not write it. Tap as many lies as you like, each once. The counts show beside each lie, on the big
- * screen too, and arrive live. Laughs give no points (see laughCount in the game model).
+ * Laughs on lies: every lie, picked or not, a house lie too, has a laugh button on the phones of the
+ * players who did not write it, so no row shows that the house wrote it before its writer beat. Tap as
+ * many lies as you like, each once. The counts show beside each lie, on the big screen too, and arrive
+ * live. Laughs give no points (see laughCount in the game model).
  *
  * Every phone works out what to show from the server's phase start time, so all screens stay in step
  * even if one loads late.
@@ -202,7 +203,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         const me = !this.presenter && this.sessionService.user ? this.sessionService.user.pid : null;
         this.me = me;
 
-        // Laughs: this phone's player may laugh at every player's lie but their own.
+        // Laughs: this phone's player may laugh at every lie but their own, house lies included.
         (revealAnswers || []).forEach((a, i) => all[i].laughable = !!me && canLaugh(a, me));
         this.serverLaughs = {};
         (revealAnswers || []).forEach(a => {
@@ -354,7 +355,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         const me = this.me;
         (this.rows || []).concat(this.unpicked || []).forEach(row => {
             const view = laughView(this.serverLaughs[row.text], me, !!this.myLaughs[row.text]);
-            row.laughs = row.playerLie ? view.count : 0;
+            row.laughs = row.lie ? view.count : 0;
             row.laughed = view.mine;
         });
     }
@@ -375,6 +376,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             pickerNames: pickers.map(p => p.nickname),
             creatorNames: creators.map(p => p.nickname),
             playerLie: isPlayerLie(answer),
+            lie: isLie(answer),
             laughable: false,
             laughs: 0,
             laughed: false,
@@ -432,6 +434,8 @@ interface Row {
     creatorNames: string[];
     // Laughs on lies.
     playerLie: boolean;
+    // Any lie, a house lie too: it shows a button or a count just like a player's lie.
+    lie: boolean;
     laughable: boolean;
     laughs: number;
     laughed: boolean;

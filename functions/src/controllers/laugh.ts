@@ -11,7 +11,9 @@ import { isPlayer } from './scoring';
  * itself, revealAnswers/<row>/laughs/<pid>. That needs no change to the rules.
  *
  * Taken only from a player of the game, only while this question's reveal is on (or its scoreboard,
- * which in a staged game lasts no time at all), only on a player's lie, and never on the player's own.
+ * which in a staged game lasts no time at all), only on a lie (a player's or a house lie, never the truth),
+ * and never on the player's own. House lies take laughs so that a missing button never gives them away
+ * before the reveal shows the writer; their laughs are credited to nobody (see addLaughs).
  * Laughing twice at the same lie counts once. The lie is named by its text, so a tap that arrives in a
  * later question's reveal never lands on another lie.
  *

@@ -144,8 +144,9 @@
     </div>
 
     <!--
-        Laughs on lies. On a player's phone, every lie they did not write has a laugh button with its count;
-        on the writer's phone and the big screen the count alone shows, once somebody laughed.
+        Laughs on lies. On a player's phone, every lie they did not write, a house lie too, has a laugh button
+        with its count; on the writer's phone and the big screen the count alone shows, once somebody laughed.
+        A house lie looks like any other lie here, so the button and count never tell before the writer beat.
     -->
     <ng-template #laughButton let-row="row">
         <button *ngIf="row.laughable" type="button" class="laugh" [class.laughed]="row.laughed" (click)="laugh(row)"
@@ -153,7 +154,7 @@
             <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
             <span class="laugh-count" *ngIf="row.laughs" dir="ltr">{{ row.laughs }}</span>
         </button>
-        <span *ngIf="!row.laughable && row.playerLie && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
+        <span *ngIf="!row.laughable && row.lie && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
             <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
             <span class="laugh-count" dir="ltr">{{ row.laughs }}</span>
         </span>

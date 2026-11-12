@@ -699,8 +699,11 @@ independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`reveal
 
 ## Laughs on lies
 
-During the reveal, in both the staged reveal and the plain one, every player's lie has a laugh button
-on the phones of the players who did not write it: tap as many lies as you like, each once. The counts
+During the reveal, in both the staged reveal and the plain one, every lie, house lies included, has a
+laugh button on the phones of the players who did not write it: tap as many lies as you like, each once.
+House lies take laughs so that no button or count tells the room that the house wrote a lie before its
+writer beat; their laughs show on the reveal and are credited to nobody, so the funniest lie is always a
+player's. The counts
 show beside each lie, on every phone and the big screen. Players' lies nobody picked are no longer a
 grey footnote: once every row is shown they get rows of their own (the lie, who wrote it, its laughs).
 The final screen marks the writer of the most laughed-at lie FUNNIEST LIE and shows the lie with its
@@ -711,7 +714,7 @@ screen; the words in `game-strings.ts` and `final-strings.ts`.
 - How a laugh is written, with no rules change: phones may not write the reveal rows, so a laugh goes
   through the new HTTP function `laugh` ({ pin, pid, text }), like a lie goes through `answer`. The
   server takes it only from a player of the game, only while the reveal (or its scoreboard) is on, only
-  on a player's lie and never the player's own, and writes `games/$pin/revealAnswers/<row>/laughs/<pid>`
+  on a lie (a player's or a house lie, never the truth) and never the player's own, and writes `games/$pin/revealAnswers/<row>/laughs/<pid>`
   in a transaction on that row. Phones already read `revealAnswers`, so the counts reach them live.
 - Who wrote a lie is never shown earlier than before: a count says how many laughed, not who wrote it,
   and the rows of lies nobody picked appear when the old footnote did (once every row is shown).

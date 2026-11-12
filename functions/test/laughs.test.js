@@ -87,15 +87,45 @@ test('a player laughs at another player\'s lie, picked or not; twice counts once
     assert.deepStrictEqual(db.games.ABCD.revealAnswers[0].selectors, ['c']);
 });
 
-test('never at your own lie, the truth or a house lie, and only from a player of the game', async () => {
+test('never at your own lie or the truth, and only from a player of the game', async () => {
     seed();
     await assert.rejects(laugh('ABCD', 'a', 'kfc'), e => e.code === 'NOT_LAUGHABLE');
     await assert.rejects(laugh('ABCD', 'b', 'tom'), e => e.code === 'NOT_LAUGHABLE');
-    await assert.rejects(laugh('ABCD', 'a', 'a goat'), e => e.code === 'NOT_LAUGHABLE');
     await assert.rejects(laugh('ABCD', 'zz', 'kfc'), e => e.code === 'NOT_A_PLAYER');
     await assert.rejects(laugh('ABCD', undefined, 'kfc'), e => e.code === 'NOT_A_PLAYER');
     await assert.rejects(laugh('NOPE', 'a', 'kfc'), e => e.code === 'GAME_NOT_EXIST');
     assert.strictEqual(db.games.ABCD.revealAnswers.some(r => r.laughs), false);
+});
+
+test('a house lie takes laughs like a player\'s lie, even from the player who picked it', async () => {
+    seed();
+    assert.deepStrictEqual(await laugh('ABCD', 'b', 'a goat'), { laughs: 1, taken: true });
+    assert.deepStrictEqual(await laugh('ABCD', 'a', 'a goat'), { laughs: 2, taken: true });
+    assert.deepStrictEqual(db.games.ABCD.revealAnswers[2].laughs, { b: true, a: true });
+    assert.strictEqual(db.games.ABCD.revealAnswers[2].points, -250);
+});
+
+test('before its writer beat, no button or count tells a house lie from a player\'s lie', () => {
+    // The QA objection on pull request 80: a picked house lie had no laugh button and never a count, so
+    // every phone knew the house wrote it before the reveal said so. What a screen shows on a lie's row
+    // (button, count) must depend only on whether this phone wrote it and on its laughs, not on whose it is.
+    const player = { text: 'kfc', selectors: ['c'], creators: ['a'], realAnswer: false, houseLie: false, points: 500 };
+    const house = { text: 'a goat', selectors: ['c'], creators: [''], realAnswer: false, houseLie: true, points: -250 };
+    for (const laughs of [undefined, { b: true }, { b: true, c: true }]) {
+        const p = Object.assign({}, player, { laughs });
+        const h = Object.assign({}, house, { laughs });
+        // Every phone that did not write the lie (b, c) gets a button on both; the big screen (no pid) on neither.
+        for (const pid of ['b', 'c', null, undefined, '']) {
+            assert.strictEqual(model.canLaugh(h, pid), model.canLaugh(p, pid), `button for ${pid}`);
+        }
+        assert.strictEqual(model.isLie(h), true);
+        assert.strictEqual(model.isLie(p), true);
+        assert.strictEqual(model.laughCount(h), model.laughCount(p));
+    }
+    // The truth never takes a laugh, and nobody can laugh as the house.
+    assert.strictEqual(model.isLie(reveal()[3]), false);
+    assert.strictEqual(model.canLaugh(reveal()[3], 'b'), false);
+    assert.strictEqual(model.canLaugh(house, ''), false);
 });
 
 test('a co-written lie takes no laugh from either of its writers', async () => {
@@ -163,7 +193,8 @@ test('the server keeps each writer\'s most laughed-at lie, and laughs leave poin
     const q1 = reveal();
     q1[0].laughs = { b: true, c: true };
     q1[1].laughs = { a: true };
-    // A laugh on the truth or a house lie (which the function never writes) counts for nobody.
+    // A laugh on a house lie is credited to nobody, and one on the truth (never written) counts for nobody:
+    // the funniest lie is always a player's.
     q1[2].laughs = { a: true, c: true };
     q1[3].laughs = { b: true, c: true };
     const fooled = model.addHighlights(null, q1, 'Q1');

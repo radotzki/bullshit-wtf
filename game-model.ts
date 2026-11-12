@@ -424,33 +424,41 @@ export interface RevealAnswer {
     points: number;
     // House lies only: what each picker actually lost (a house lie never takes a score below zero).
     pointsBy?: { [pid: string]: number };
-    // Players' lies only: the players who laughed at it during the reveal (see laugh.ts in the functions).
-    // Written by the server, one key per player, while the reveal is on. Laughs give no points.
+    // Lies only (players' and house lies): the players who laughed at it during the reveal (see laugh.ts in
+    // the functions). Written by the server, one key per player, while the reveal is on. Laughs give no points.
     laughs?: { [pid: string]: boolean };
 }
 
 /**
- * Laughs on lies. During the reveal every player's lie, picked or not, has a laugh button: a player may
- * laugh at as many lies as they like, once each, but never at their own. A phone cannot write a laugh
- * itself (the database rules let it write only its pick and its NEXT): it calls the `laugh` function,
- * which writes revealAnswers/<row>/laughs/<pid>. The counts show beside each lie; at the end of each
- * question the server keeps each writer's most laughed-at lie in the highlights (addLaughs), and the
- * final screen names the funniest lie. Laughs give no points.
+ * Laughs on lies. During the reveal every lie, picked or not, has a laugh button: a player may laugh at
+ * as many lies as they like, once each, but never at their own. House lies take laughs too, so that no
+ * button or count tells the room that the house wrote a lie before the reveal shows its writer: a row
+ * with no button would. A phone cannot write a laugh itself (the database rules let it write only its
+ * pick and its NEXT): it calls the `laugh` function, which writes revealAnswers/<row>/laughs/<pid>. The
+ * counts show beside each lie; at the end of each question the server keeps each writer's most
+ * laughed-at lie in the highlights (addLaughs), and the final screen names the funniest lie. Laughs on a
+ * house lie are counted on the reveal and credited to nobody, so the funniest lie is always a player's.
+ * Laughs give no points.
  */
 export function laughCount(row: RevealAnswer | null | undefined): number {
     const laughs = row && row.laughs;
     return laughs && typeof laughs === 'object' ? Object.keys(laughs).filter(pid => laughs[pid] === true).length : 0;
 }
 
-/** A row that takes laughs: a player's lie (not the truth, not a house lie). */
+/** A player's lie (not the truth, not a house lie): the lies that can be the funniest lie. */
 export function isPlayerLie(row: RevealAnswer | null | undefined): boolean {
     return !!row && !row.realAnswer && !row.houseLie && typeof row.text === 'string' && !!row.text &&
         (row.creators || []).some(pid => !!pid);
 }
 
-/** May `pid` laugh at this row? Only at a player's lie, and never at a lie they wrote themselves. */
+/** A row that takes laughs: any lie, a player's or the house's (not the truth). */
+export function isLie(row: RevealAnswer | null | undefined): boolean {
+    return !!row && !row.realAnswer && typeof row.text === 'string' && !!row.text && (!!row.houseLie || isPlayerLie(row));
+}
+
+/** May `pid` laugh at this row? At any lie, the house's too, but never at a lie they wrote themselves. */
 export function canLaugh(row: RevealAnswer | null | undefined, pid: string | null | undefined): boolean {
-    return !!pid && isPlayerLie(row) && (row.creators || []).indexOf(pid) === -1;
+    return !!pid && isLie(row) && (row.creators || []).indexOf(pid) === -1;
 }
 
 /** Players' lies nobody picked: on the reveal they get rows of their own, after the truth. */
