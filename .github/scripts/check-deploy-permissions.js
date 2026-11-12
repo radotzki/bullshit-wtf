@@ -211,15 +211,21 @@ function toolPermissions() {
     }
 }
 
+// The scope every request of the run signs in with, but one: the read of the live database
+// rules, which hands in its own (live-rules.js, RULES_SCOPES).
+const SCOPES = Object.freeze(['https://www.googleapis.com/auth/cloud-platform']);
+
 // The real request: Google's library signs in with the key file and adds the token itself.
-// `auth` and `limits` are given only by a test.
-function googleRequest(auth, limits = {}) {
+// `auth` and `limits` are given only by a test. `scopes` is what the sign-in asks for; each call
+// of googleRequest() is a sign-in of its own, so a token never serves two sets of scopes.
+function googleRequest(auth, limits = {}, scopes = SCOPES) {
     const ask = limits.ask || ASK_TIMEOUT;
     const total = limits.total || TOTAL_TIMEOUT;
     const work = async options => {
         if (!auth) {
-            const { GoogleAuth } = require('google-auth-library');
-            auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+            // `limits.GoogleAuth` stands in for Google's library in a test.
+            const GoogleAuth = limits.GoogleAuth || require('google-auth-library').GoogleAuth;
+            auth = new GoogleAuth({ scopes: Array.from(scopes) });
         }
         const client = await auth.getClient();
         const res = await client.request(Object.assign({}, options, {
@@ -289,4 +295,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { NEEDS, TARGETS, ASK_TIMEOUT, TOTAL_TIMEOUT, wanted, check, report, googleRequest, noAnswer };
+module.exports = { NEEDS, TARGETS, SCOPES, ASK_TIMEOUT, TOTAL_TIMEOUT, wanted, check, report, googleRequest, noAnswer };

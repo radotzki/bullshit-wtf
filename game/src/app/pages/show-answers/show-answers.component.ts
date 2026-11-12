@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameState } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
+import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
     selector: 'app-show-answers',
@@ -21,6 +22,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     errorMsg: string;
     question: string;
     rtl: boolean;
+    t: GameStrings = gameStrings('en');
     answerSelected: boolean;
     answers: string[];
     showQuestion: boolean;
@@ -44,11 +46,17 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
-        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         this.apiService.getAnswers(this.pin).then(a => this.answers = a);
         this.startTimer();
         this.playBackground();
+    }
+
+    private useLocale(locale: string) {
+        this.rtl = locale === 'he';
+        this.t = gameStrings(locale);
     }
 
     ngOnDestroy() {
@@ -72,7 +80,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             .catch(err => {
                 this.loading = false;
                 reportError(err, 'chooseAnswer', { pin: this.pin });
-                this.errorMsg = 'oops, something went wrong. Please try again';
+                this.errorMsg = this.t.oops;
             });
     }
 

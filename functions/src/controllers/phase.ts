@@ -45,9 +45,21 @@ export function phaseDuration(stateId: number, game: Partial<GameScheme>): numbe
     return durations[stateId];
 }
 
+/**
+ * The state as the server writes it: with its deadline, and with staged: true in a staged-reveal game.
+ */
 export function withDeadline(state: GameStateInfo, game: Partial<GameScheme>): GameStateInfo {
     const duration = phaseDuration(state.id, game);
-    return duration === undefined ? state : Object.assign({}, state, { deadline: state.timestamp + duration });
+    return withStaged(duration === undefined ? state : Object.assign({}, state, { deadline: state.timestamp + duration }), game);
+}
+
+/**
+ * Phones learn that a game plays the staged reveal from its state, which every phone may read and only
+ * the server may write: every state of such a game carries staged: true, from the lobby on. A game that
+ * keeps today's reveal carries nothing, like a game outside the test.
+ */
+export function withStaged(state: GameStateInfo, game: Partial<GameScheme>): GameStateInfo {
+    return isStaged(game) ? Object.assign({}, state, { staged: true }) : state;
 }
 
 /** A phase that is over as it starts (the scoreboard of a staged-reveal game). */
@@ -104,13 +116,14 @@ export function tickAllowed(game: GameScheme, tick: number | string, now: number
 /**
  * Whether the players' NEXT taps end the reveal now: every player has tapped, and the last row has been shown
  * (give or take clock skew). Returns how long to wait first (0 = now), or undefined if not.
+ * `seats` are the players to wait for, when not all of them (see revealEndWait in seats.ts).
  */
-export function revealDoneWait(game: GameScheme, now: number): number | undefined {
+export function revealDoneWait(game: GameScheme, now: number, seats?: string[]): number | undefined {
     if (!game || !game.state || game.state.id !== GameState.RevealTheTruth) {
         return undefined;
     }
 
-    const players = Object.keys(game.players || {});
+    const players = seats || Object.keys(game.players || {});
     const done = game.revealDone || {};
 
     if (!players.length || !players.every(pid => done[pid] === true)) {

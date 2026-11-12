@@ -1,6 +1,7 @@
 import { ApiService } from './../../services/api.service';
 import { ShareService } from './../../services/share.service';
 import { Component, Input, OnInit } from '@angular/core';
+import { gameStrings, GameStrings } from './../../pages/game-strings';
 
 /**
  * Lobby invite: a QR code and a shareable join link for the game PIN.
@@ -22,6 +23,10 @@ export class InviteComponent implements OnInit {
     open: boolean;
     copied: boolean;
     t: any;
+    /** The invite's own buttons and labels, in the game's language. */
+    g: GameStrings = gameStrings('en');
+    /** Shown once the game's language is known, so a Hebrew game never flashes English. */
+    ready = false;
 
     constructor(
         private apiService: ApiService,
@@ -33,7 +38,9 @@ export class InviteComponent implements OnInit {
         this.apiService.getGameLocale(this.pin).then(locale => {
             this.locale = locale || 'en';
             this.t = this.shareService.strings(this.locale);
-        });
+            this.g = gameStrings(this.locale);
+            this.ready = true;
+        }, () => this.ready = true);
     }
 
     get pinUpper() {

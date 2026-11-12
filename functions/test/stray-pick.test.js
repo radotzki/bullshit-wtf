@@ -36,9 +36,16 @@ function ref(parts) {
         set: async (v) => put(parts, v),
         update: async (v) => Object.keys(v).forEach(k => put(parts.concat(k.split('/')), v[k])),
         push: (v) => { const key = 'k' + (++pushId); if (v !== undefined) put(parts.concat(key), v); return { key }; },
-        // Returning undefined aborts, as in the real database.
+        // As the real client does it: the function first runs on what the client holds locally, which
+        // is nothing (null), whatever the server holds. Returning undefined stops there, and the server
+        // is never asked. Otherwise the server is asked, and if it holds something else the function
+        // runs again on that.
         transaction: (fn, done) => {
-            const v = fn(clone(at(parts)));
+            const guess = fn(null);
+            if (guess === undefined) return done(null, false);
+            const actual = clone(at(parts));
+            if (actual === null) { put(parts, guess); return done(null, true); }
+            const v = fn(actual);
             if (v === undefined) return done(null, false);
             put(parts, v);
             done(null, true);
@@ -345,6 +352,62 @@ test('a step that fails without a way round gives the phase back, so the next ca
     assert.ok(!game(pin).advanceLock, 'and the phase is not left taken');
     db.questions = questions;
     assert.strictEqual(await next(pin), S.ShowQuestion, 'a later call moves it on');
+});
+
+test('a phase given back is free on the server, though the database client starts from nothing', async () => {
+    const pin = newGame();
+    await next(pin);
+    const questions = db.questions;
+    db.questions = null; // the question cannot be read
+    await assert.rejects(next(pin));
+    assert.strictEqual(state(pin), S.RoundIntro, 'the game has not moved');
+    assert.ok(!game(pin).advanceLock, 'the phase is not left taken');
+    db.questions = questions;
+    // A phase that someone else holds is not given away by a caller that has moved on.
+    game(pin).advanceLock = 'held by another';
+    await advance(pin, { id: S.GameStaging, timestamp: 1 });
+    assert.strictEqual(game(pin).advanceLock, 'held by another');
+    delete game(pin).advanceLock;
+    assert.strictEqual(await next(pin), S.ShowQuestion, 'a later call moves it on');
+});
+
+test('a whole game in which one step fails in every phase still reaches the final scoreboard', async () => {
+    const pin = newGame();
+    const realChild = fakeFirebase.gamesRef.child;
+    // Phases are told apart by counting them as the game enters them, not by the clock: a whole game
+    // takes a few milliseconds here, so two phases can carry the same id and the same timestamp.
+    let entered = 0;
+    let refusedIn = -1;
+    let refusals = 0;
+    // The first write that would move the game out of each phase is refused, once.
+    fakeFirebase.gamesRef.child = p => {
+        const r = realChild(p);
+        const update = r.update;
+        r.update = async v => {
+            const moves = String(p) === pin && v && v.state;
+            if (moves && refusedIn !== entered) { refusedIn = entered; refusals++; throw new Error('write refused'); }
+            await update(v);
+            if (moves) entered++;
+        };
+        return r;
+    };
+    try {
+        let refused = 0;
+        for (let i = 0; state(pin) !== S.ScoreBoardFinal; i++) {
+            assert.ok(i < 60, `the game is stuck in state ${state(pin)}, lock ${game(pin).advanceLock}`);
+            if (state(pin) === S.ShowQuestion && !game(pin).answers) {
+                // The last lie ends the question; that step is refused too, and the timer then does it.
+                for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie`).catch(() => {});
+                continue;
+            }
+            await next(pin).catch(() => { refused++; });
+        }
+        assert.ok(refused >= 3 * TOTAL_Q, `steps did fail on the way (${refused})`);
+        assert.strictEqual(refusals, entered, 'every phase the game left had its first step refused');
+    } finally {
+        fakeFirebase.gamesRef.child = realChild;
+    }
+    assert.strictEqual(state(pin), S.ScoreBoardFinal);
 });
 
 test('the phase timer tries once more when moving on fails', async () => {

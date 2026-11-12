@@ -106,7 +106,7 @@ test('a question result counts lies, helper lies, picks and friends fooled', () 
     };
     assert.deepStrictEqual(questionResult('JUPU', game), {
         id: 'JUPU', q_index: 0, round: 1, total_q: 7, players: 4,
-        lies: 2, idea_lies: 1, picks: 4, friend_fooled: 2, coach: true, big_reveal: null, locale: 'he',
+        lies: 2, idea_lies: 1, picks: 4, friend_fooled: 2, coach: true, locale: 'he',
     });
 });
 
@@ -114,6 +114,6 @@ test('a question nobody wrote or picked on still gives a row', () => {
     const r = questionResult('ABCD', { questionIndex: 4, roundIndex: 1, totalQ: 7, locale: 'en', players: { a: {} } });
     assert.deepStrictEqual(r, {
         id: 'ABCD', q_index: 4, round: 2, total_q: 7, players: 1,
-        lies: 0, idea_lies: 0, picks: 0, friend_fooled: 0, coach: false, big_reveal: null, locale: 'en',
+        lies: 0, idea_lies: 0, picks: 0, friend_fooled: 0, coach: false, locale: 'en',
     });
 });

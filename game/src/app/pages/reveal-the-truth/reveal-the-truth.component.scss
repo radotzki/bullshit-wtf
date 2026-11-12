@@ -794,3 +794,26 @@
         transform: none;
     }
 }
+
+// A Hebrew game reads right to left: the gaps between a label, a face and a name are mirrored.
+.revael-the-truth[dir="rtl"] {
+    .label {
+        margin-right: 0;
+        margin-left: 6px;
+    }
+
+    .player {
+        margin-right: 0;
+        margin-left: 8px;
+    }
+
+    .player img {
+        margin-right: 0;
+        margin-left: 3px;
+    }
+
+    .points {
+        margin-left: 0;
+        margin-right: 4px;
+    }
+}

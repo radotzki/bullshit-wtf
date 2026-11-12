@@ -3,6 +3,7 @@ import {
     GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
 } from './../game-model';
 import { SessionService } from './session.service';
+import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
@@ -60,6 +61,7 @@ export class ApiService {
     crewsRef: firebase.database.Reference;
     timeDiff: Promise<number>;
     private stagedReveal: { [pin: string]: Promise<boolean> } = {};
+    private gameLocales: { [pin: string]: string } = {};
 
     constructor(
         private http: Http,
@@ -255,18 +257,30 @@ export class ApiService {
 
     getGameLocale(pin: string) {
         pin = pin.toUpperCase();
-        return this.get<string>(this.gamesRef.child(pin).child('locale'));
+        return this.get<string>(this.gamesRef.child(pin).child('locale')).then(locale => {
+            this.gameLocales[pin] = locale;
+            return locale;
+        });
     }
 
     /**
-     * Whether this game plays the staged reveal (games/$pin/bigReveal === true, a 50/50 test set when
-     * the game is made). Asked once per game. False when it cannot be read (older rules, a network
-     * error): the phone then shows today's reveal, which every game can play.
+     * The game's language as last read on this phone, without waiting: 'en' until it was read once.
+     * The game screens start from it, so a Hebrew game's next screen is in Hebrew from its first paint.
+     */
+    knownGameLocale(pin: string): string {
+        return this.gameLocales[String(pin || '').toUpperCase()] || 'en';
+    }
+
+    /**
+     * Whether this game plays the staged reveal (a 50/50 test set when the game is made). The server
+     * says so on the game's state (state.staged === true), on every state from the lobby on. Asked once
+     * per game. False when it cannot be read (a network error): the phone then shows today's reveal,
+     * which every game can play.
      */
     isStagedReveal(pin: string): Promise<boolean> {
         pin = pin.toUpperCase();
         if (!this.stagedReveal[pin]) {
-            this.stagedReveal[pin] = this.get<boolean>(this.gamesRef.child(pin).child('bigReveal'))
+            this.stagedReveal[pin] = this.get<boolean>(this.gamesRef.child(pin).child('state').child('staged'))
                 .then(v => v === true, () => {
                     delete this.stagedReveal[pin];
                     return false;
@@ -308,9 +322,18 @@ export class ApiService {
         return Array.isArray(ideas) ? ideas.filter(i => typeof i === 'string' && i) : [];
     }
 
+    /** This phone's player id, or undefined on the big screen and on a phone that has not joined. */
+    private myPid(): string {
+        const user = this.sessionService.user;
+        return user && user.pid ? user.pid : undefined;
+    }
+
     async didAnswerSubmitted(pin: string) {
         pin = pin.toUpperCase();
-        const pid = this.sessionService.user.pid;
+        const pid = this.myPid();
+        if (!pid) {
+            return false;
+        }
         const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answers').child(pid));
         return !!userAnswer;
     }
@@ -324,26 +347,16 @@ export class ApiService {
     async getAnswers(pin: string) {
         pin = pin.toUpperCase();
         const allAnswers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
-        let answersArray = Object.keys(allAnswers || {})
-            .map(k => allAnswers[k].text)
-            .filter((v, i, a) => a.indexOf(v) === i)
-            .sort((a, b) => a > b ? 1 : -1);
-
-        if (!this.sessionService.presenter) {
-            const pid = this.sessionService.user.pid;
-            const playerAnswer = allAnswers[pid];
-
-            if (playerAnswer) {
-                answersArray = answersArray.filter(a => a !== playerAnswer.text);
-            }
-        }
-
-        return answersArray;
+        return answersList(allAnswers, this.sessionService.presenter ? undefined : this.myPid());
     }
 
     async didAnswerSelected(pin: string) {
         pin = pin.toUpperCase();
-        const pid = this.sessionService.user.pid;
+        // The big screen has no player: it used to throw here on every answers screen (Sentry BULLSHIT-WV).
+        const pid = this.myPid();
+        if (!pid) {
+            return false;
+        }
         const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answerSelections').child(pid));
         return !!userAnswer;
     }
@@ -497,7 +510,8 @@ export class ApiService {
     }
 
     /**
-     * Counts one share in BigQuery (game night sends from a crew page, lobby invites). Fire and forget:
+     * Counts one share in BigQuery (game night sends from a crew page, lobby invites, results-card shares,
+     * presses on the after-game ask). Fire and forget:
      * never throws, and the page does not wait on it.
      */
     async logShare(contentType: string, method: string, extra: { crew?: string; locale?: string } = {}) {

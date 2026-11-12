@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { swapToast } from './../../name-flag';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend } from './lobby-host';
+import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
     selector: 'app-game-staging',
@@ -33,6 +34,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private myUid: string = null;
     private myPid: string = null;
     locale = 'en';
+    t: GameStrings = gameStrings('en');
     packBanner: string = null;
     /** Only on the phone whose nickname the server swapped, once: why it has a sweet name now. */
     nameToast: string = null;
@@ -64,6 +66,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
+        this.t = gameStrings(this.apiService.knownGameLocale(this.pin));
         this.gameService.register(this.pin);
         this.playMusic();
         this.playersSubscriber = this.apiService.getPlayersObservable(this.pin)
@@ -125,6 +128,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.hasHost = hasHost === true;
             this.myPid = !this.presenter && user && user.pid ? user.pid : null;
             this.locale = locale === 'he' ? 'he' : 'en';
+            this.t = gameStrings(this.locale);
             this.packBanner = packBanner(pack, this.locale);
             this.showNameToast();
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
@@ -215,11 +219,11 @@ export class GameStagingComponent implements OnInit, OnDestroy {
                 this.loading = false;
                 if (err && err.code === 'NOT_HOST') {
                     // Only the host's phone may start this game; the server said this is not it.
-                    this.errorMsg = this.locale === 'he' ? 'רק המארח יכול להתחיל את המשחק' : 'Only the host can start this game';
+                    this.errorMsg = this.t.onlyHostStarts;
                     return;
                 }
                 reportError(err, 'startGame', { pin: this.pin });
-                this.errorMsg = 'oops, something went wrong. Please try again';
+                this.errorMsg = this.t.oops;
             });
     }
 

@@ -152,9 +152,10 @@ const strings = {
         host: (name: string) => `מחכים ל־${name} להתחיל את המשחק`,
         hostToJoin: () => 'מחכים שמי שפתח את המשחק יצטרף',
         bigScreen: () => 'המשחק מתחיל מהמסך הגדול',
-        startHint: () => 'לחצו START כשכולם בפנים',
-        hostGone: (name: string) => `נראה ש־${name} יצא. כל אחד יכול ללחוץ START`,
-        friendIn: (name: string) => `${name} בפנים! לחצו START כשכולם בפנים`,
+        // "מתחילים" is the START button's word in a Hebrew game: gameStrings('he').start.
+        startHint: () => 'לחצו על "מתחילים" כשכולם בפנים',
+        hostGone: (name: string) => `נראה ש־${name} יצא. כל אחד יכול ללחוץ על "מתחילים"`,
+        friendIn: (name: string) => `${name} בפנים! לחצו על "מתחילים" כשכולם בפנים`,
         alone: () => 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו',
         aloneSub: () => 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.',
         startAlone: () => 'להתחיל לבד בכל זאת',

@@ -14,12 +14,15 @@ ALTER TABLE `bullshit-wtf-prod.analytics.closed_games`
 
 -- Adoption: share of finished games that belong to a crew, per week.
 -- SELECT DATE_TRUNC(DATE(time), WEEK) AS week, COUNTIF(crew_id IS NOT NULL) / COUNT(*) AS crew_share
--- FROM `bullshit-wtf-prod.analytics.closed_games` GROUP BY week ORDER BY week;
+-- FROM `bullshit-wtf-prod.analytics.closed_games`
+-- WHERE NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')   -- test games out (2026-11-test-mark.sql)
+-- GROUP BY week ORDER BY week;
 
 -- Crew rematches on a later day than the crew's first game.
 -- WITH first_day AS (
 --   SELECT crew_id, MIN(DATE(time)) AS d FROM `bullshit-wtf-prod.analytics.opened_games`
---   WHERE crew_id IS NOT NULL GROUP BY crew_id)
+--   WHERE crew_id IS NOT NULL AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)') GROUP BY crew_id)
 -- SELECT DATE(g.time) AS day, COUNT(*) AS later_day_crew_games
 -- FROM `bullshit-wtf-prod.analytics.opened_games` g JOIN first_day f USING (crew_id)
--- WHERE DATE(g.time) > f.d GROUP BY day ORDER BY day;
+-- WHERE DATE(g.time) > f.d AND NOT REGEXP_CONTAINS(IFNULL(g.campaign, ''), r'^test(-|$)')
+-- GROUP BY day ORDER BY day;

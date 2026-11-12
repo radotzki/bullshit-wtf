@@ -22,7 +22,11 @@ Module._load = function (request) {
 
 const dist = path.join(__dirname, '..', 'dist');
 const model = require(path.join(dist, 'game-model'));
-const { drawBigReveal, bigRevealArm } = require(path.join(dist, 'controllers', 'big-reveal'));
+const { drawBigReveal, stagedHalf } = require(path.join(dist, 'controllers', 'big-reveal'));
+const { generateGameName } = require(path.join(dist, 'controllers', 'new-game'));
+const crypto = require('crypto');
+// The halves of six PINs, as BigQuery itself gave them for the rule below (read 2026-11-12).
+const KNOWN_HALVES = [false, false, true, false, false, true];
 const { pickCoach, questionResult } = require(path.join(dist, 'controllers', 'lie-helper'));
 const phase = require(path.join(dist, 'controllers', 'phase'));
 const scoring = require(path.join(dist, 'controllers', 'scoring'));
@@ -38,59 +42,93 @@ function rowsOf(n) {
 
 // ---------------------------------------------------------------------------- the flag
 
+// PINs as the server gives them: a counter, in letters.
+const pinAt = i => generateGameName(250000 + i);
+// A PIN of each half.
+const stagedPin = Array.from({ length: 50 }, (_, i) => pinAt(i)).filter(p => stagedHalf(p))[0];
+const ordinaryPin = Array.from({ length: 50 }, (_, i) => pinAt(i)).filter(p => !stagedHalf(p))[0];
+
 test('a game is in the test only when its client can show the staged reveal', () => {
-    assert.strictEqual(drawBigReveal(false, () => 0), undefined);
-    assert.strictEqual(drawBigReveal(undefined, () => 0), undefined);
-    assert.strictEqual(drawBigReveal('true', () => 0), undefined, 'only a real true counts');
-    assert.strictEqual(drawBigReveal(true, () => 0.49), true);
-    assert.strictEqual(drawBigReveal(true, () => 0.5), false);
+    [stagedPin, ordinaryPin].forEach(pin => {
+        assert.strictEqual(drawBigReveal(false, pin), undefined);
+        assert.strictEqual(drawBigReveal(undefined, pin), undefined);
+        assert.strictEqual(drawBigReveal('true', pin), undefined, 'only a real true counts');
+    });
+    assert.strictEqual(drawBigReveal(true, stagedPin), true);
+    assert.strictEqual(drawBigReveal(true, ordinaryPin), false);
 });
 
-test('half of the games in the test get the staged reveal', () => {
+test('a game\'s half follows from its PIN alone, so it can be read wherever the PIN is', () => {
+    // The rule the saved BigQuery queries use: the lowest bit of the first byte of SHA-256('big-reveal:' + PIN).
+    for (let i = 0; i < 500; i++) {
+        const pin = pinAt(i);
+        const byte = crypto.createHash('sha256').update('big-reveal:' + pin).digest()[0];
+        assert.strictEqual(stagedHalf(pin), byte % 2 === 1, pin);
+        assert.strictEqual(stagedHalf(pin), stagedHalf(pin.toLowerCase()), 'capitals or not');
+    }
+    // Fixed values, read the same way in BigQuery (functions/bigquery/2026-11-big-reveal.sql).
+    assert.deepStrictEqual(['QQQQ', 'ABCD', 'JVQP', 'JVRQ', 'JVRR', 'TEST'].map(stagedHalf), KNOWN_HALVES);
+    const sql = fs.readFileSync(path.join(__dirname, '..', 'bigquery', '2026-11-big-reveal.sql'), 'utf8');
+    assert.ok(sql.includes("MOD(TO_CODE_POINTS(SHA256(CONCAT('big-reveal:', UPPER(o.id))))[OFFSET(0)], 2) = 1"), 'the saved queries use the same rule');
+});
+
+test('half of the games in the test get the staged reveal, also among PINs given one after another', () => {
     let on = 0;
-    for (let i = 0; i < 4000; i++) { if (drawBigReveal(true)) on++; }
-    assert.ok(on > 1800 && on < 2200, `${on} of 4000`);
+    let runs = 0;
+    for (let i = 0; i < 4000; i++) {
+        if (drawBigReveal(true, pinAt(i))) on++;
+        if (i && stagedHalf(pinAt(i)) === stagedHalf(pinAt(i - 1))) runs++;
+    }
+    assert.ok(on > 1850 && on < 2150, `${on} of 4000`);
+    // A game and the next one made (a Replay, often) share a half about half the time: no pattern.
+    assert.ok(runs > 1850 && runs < 2150, `${runs} of 3999 neighbours alike`);
 });
 
-test('the draw is independent of the lie helper: each half of one test holds both halves of the other', () => {
+test('the half is independent of the lie helper: each half of one test holds both halves of the other', () => {
     const cells = { tt: 0, tf: 0, ft: 0, ff: 0 };
     for (let i = 0; i < 8000; i++) {
-        // The same order as new-game.ts: the lie helper's draw, then this one.
+        // The lie helper's own random draw, and the half the PIN falls in.
         const coach = pickCoach();
-        const big = drawBigReveal(true);
+        const big = drawBigReveal(true, pinAt(i));
         cells[(coach ? 't' : 'f') + (big ? 't' : 'f')]++;
     }
     Object.keys(cells).forEach(k => assert.ok(cells[k] > 1750 && cells[k] < 2250, `${k}: ${cells[k]} of 8000`));
 });
 
-test('the arm goes to BigQuery as true, false or null', () => {
-    assert.strictEqual(bigRevealArm({ bigReveal: true }), true);
-    assert.strictEqual(bigRevealArm({ bigReveal: false }), false);
-    assert.strictEqual(bigRevealArm({}), null);
-    assert.strictEqual(bigRevealArm(null), null);
+test('the usage rows carry no column for the test: the PIN is enough', () => {
     const game = { questionIndex: 1, roundIndex: 0, totalQ: 5, locale: 'en', players: { a: {} } };
-    assert.strictEqual(questionResult('ABCD', Object.assign({ bigReveal: true }, game)).big_reveal, true);
-    assert.strictEqual(questionResult('ABCD', Object.assign({ bigReveal: false }, game)).big_reveal, false);
-    assert.strictEqual(questionResult('ABCD', game).big_reveal, null);
+    assert.strictEqual('big_reveal' in questionResult(stagedPin, Object.assign({ bigReveal: true }, game)), false);
+    assert.strictEqual(questionResult(stagedPin, game).id, stagedPin);
 });
 
-test('Replay draws again, and only for a phone that can show it', () => {
+test('Replay gets the half of its own new PIN, and only for a phone that can show it', () => {
     const parent = { locale: 'en', totalQ: 5, presenter: false, players: { a: { nickname: 'A', score: 500, uid: 'u' } }, bigReveal: true };
-    const realRandom = Math.random;
-    try {
-        Math.random = () => 0.9;
-        assert.strictEqual(createFork('AAAA', parent, ['q'], 'u', 'a', undefined, true).bigReveal, false, 'a new draw, not the parent\'s arm');
-        Math.random = () => 0.1;
-        assert.strictEqual(createFork('AAAA', parent, ['q'], 'u', 'a', undefined, true).bigReveal, true);
-        assert.strictEqual('bigReveal' in createFork('AAAA', parent, ['q'], 'u', 'a'), false, 'an older phone pressed Replay: not in the test');
-    } finally {
-        Math.random = realRandom;
-    }
+    const ordinary = createFork('AAAA', parent, ['q'], 'u', 'a', undefined, true, ordinaryPin);
+    assert.strictEqual(ordinary.bigReveal, false, 'its own half, not the parent\'s');
+    assert.strictEqual('staged' in ordinary.state, false);
+    const staged = createFork('AAAA', parent, ['q'], 'u', 'a', undefined, true, stagedPin);
+    assert.strictEqual(staged.bigReveal, true);
+    assert.strictEqual(staged.state.staged, true, 'phones read it from the lobby on');
+    const old = createFork('AAAA', parent, ['q'], 'u', 'a', undefined, false, stagedPin);
+    assert.strictEqual('bigReveal' in old, false, 'an older phone pressed Replay: not in the test');
+    assert.strictEqual('staged' in old.state, false);
 });
 
-test('phones may read the flag, and only the server writes it', () => {
+test('phones read the flag from the game\'s state, under the rules as they are', () => {
+    // No rule of its own: the state is readable by every phone and written by the server alone.
     const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'database-rules.json'), 'utf8'));
-    assert.deepStrictEqual(rules.rules.games.$pin.bigReveal, { '.read': 'true', '.write': "auth.uid == 'bl-service-worker'" });
+    assert.deepStrictEqual(rules.rules.games.$pin.state, { '.read': 'true', '.write': "auth.uid == 'bl-service-worker'" });
+    assert.strictEqual('bigReveal' in rules.rules.games.$pin, false);
+
+    // Every state the server writes for a staged game says so; no other game's state does.
+    [0, 1, 2, 3, 4, 5, 6].forEach(id => {
+        const state = { id, timestamp: 1000 };
+        assert.strictEqual(phase.withDeadline(state, { bigReveal: true }).staged, true, `state ${id}`);
+        [{}, { bigReveal: false }, { bigReveal: null }, { bigReveal: 'true' }, { bigReveal: 1 }].forEach(flag =>
+            assert.strictEqual('staged' in phase.withDeadline(state, flag), false, `state ${id} ${JSON.stringify(flag)}`));
+    });
+    // The key that names a phase does not change with it, so old and new functions still agree on a phase.
+    assert.strictEqual(phase.stateKey(phase.withDeadline({ id: 4, timestamp: 1000 }, { bigReveal: true })), '4:1000');
 });
 
 test('mute taps are counted, and nothing else under "sound"', () => {

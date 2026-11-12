@@ -127,7 +127,15 @@ jobs:
       # database read failed first and the site read never ran, so one run could not name
       # everything that was off. What the script prints is filtered and cleaned like the output
       # of "Show why the step failed". See the script's header and DEPLOYING.md.
+      # One way on without the database read: when it failed only because the Firebase Realtime
+      # Database Management API is off, and the rules that are live are the same as this commit's
+      # (four GETs, in live-rules.js; the fourth, the rules at the database's own address, signs in
+      # by itself with the two scopes that address asks for, userinfo.email and firebase.database,
+      # and that sign-in is used for nothing else), the step passes with the output rules=unchanged. The rules
+      # step below is then skipped: it could only fail, and it had nothing to change. Rules that
+      # differ, or that could not be read, stop the run here, before anything is released.
       - name: Check access to the database and the site (releases nothing)
+        id: access
         run: node .github/scripts/check-access.js "$FIREBASE_PROJECT"
 
       # The order matters: new clients call functions that must already exist, and read paths the
@@ -135,14 +143,21 @@ jobs:
       # Always all functions, never one by name: each carries its own copy of the shared code.
       # No --force: the CLI must never delete a function on its own.
       - name: 1. Deploy all functions
+        id: functions
         run: |
           node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only functions --project "$FIREBASE_PROJECT" --non-interactive
+      # Skipped in one case only, decided by the access check before anything was released: the
+      # live rules are already this commit's and the API this step asks first is off. A condition
+      # without always() or failure() still needs every step before it to have passed.
       - name: 2. Deploy the database rules
+        id: rules
+        if: steps.access.outputs.rules != 'unchanged'
         run: |
           node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only database --project "$FIREBASE_PROJECT" --non-interactive
       - name: 3. Deploy the site
+        id: site
         run: |
           node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
@@ -160,9 +175,19 @@ jobs:
 
       - name: Summary
         if: always()
+        env:
+          FUNCTIONS_STEP: ${{ steps.functions.outcome }}
+          RULES_STEP: ${{ steps.rules.outcome }}
+          SITE_STEP: ${{ steps.site.outcome }}
+          RULES_MODE: ${{ steps.access.outputs.rules }}
         run: |
           {
             echo "### Deploy of ${GITHUB_SHA::7} to $FIREBASE_PROJECT: ${{ job.status }}"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          # What was released and what was left alone, in plain words, from each step's outcome.
+          node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE"
+          {
             echo "Order: all functions, database rules, site. A failed step stops the ones after it."
             echo "To retry, start a new run by hand: Actions > Deploy to production > Run workflow > branch master"
             echo "(every step is safe to repeat). A re-run of an old run stops by itself once master holds newer code."

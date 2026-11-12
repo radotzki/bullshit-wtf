@@ -1,4 +1,4 @@
-<div class="game-footer">
+<div class="game-footer" [attr.dir]="rtl ? 'rtl' : null">
     <span class="name"> {{name | uppercase}} </span>
     <span class="score"> {{score | async}} </span>
 </div>

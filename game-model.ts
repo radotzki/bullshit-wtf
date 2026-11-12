@@ -15,6 +15,9 @@ export interface GameStateInfo {
     timestamp: number;
     // Server time at which this phase ends. Set by the server for every timed phase.
     deadline?: number;
+    // The game plays the staged reveal (its bigReveal is true). On every state of such a game, and
+    // only there: this is where phones read it, since they cannot read bigReveal itself.
+    staged?: boolean;
 }
 
 export interface GameScheme {
@@ -55,21 +58,29 @@ export interface GameScheme {
     parent?: string;         // PIN of the finished game this one was replayed from
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.
     revealDone?: { [pid: string]: boolean };
+    // Seats that have sent a lie or a pick in this game, stored as each question's picks close.
+    // From question 2 on, the "everyone answered" checks do not wait for the other seats.
+    played?: { [pid: string]: boolean };
+    // The question index `played` was first kept from: only ever 0. A game without it (one that was
+    // already running when this was released) waits for every seat, as before.
+    playedFrom?: number;
     // The saved crew this game counts for (set by a crew rematch, carried by Replay).
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
     pack?: string;
-    // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay.
+    // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
+    // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
     // The round-1 lie helper is on for this game (a 50/50 test, set when the game is made).
     coach?: boolean;
     // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
     // Each player can read only their own (games/$pin/ideas/$pid).
     ideas?: { [pid: string]: string[] };
-    // The staged reveal, a 50/50 test drawn when the game is made, and only for a game made by a client
-    // that can show it. true: the staged reveal, with the scoreboard folded into it. false: drawn, and
-    // the game keeps today's reveal. Absent: not in the test (an older client made it, or it was made
-    // before the test). Independent of `coach`. Carried by nothing: each Replay is a new draw.
+    // The staged reveal, a 50/50 test set when the game is made, and only for a game made by a client
+    // that can show it. true: the staged reveal, with the scoreboard folded into it. false: in the
+    // test, and the game keeps today's reveal. Absent: not in the test (an older client made it, or it
+    // was made before the test). It follows from the game's PIN and is independent of `coach`; each
+    // Replay is a new game with a half of its own. Phones cannot read it: see state.staged.
     bigReveal?: boolean;
     // Each player's best lie so far (the one that fooled the most players), for the final screen.
     highlights?: Highlights;
@@ -349,6 +360,8 @@ export interface Crew {
     lastPlayed?: number;
     // The latest crew rematch lobby, so everyone who taps Rematch lands in the same game.
     rematch?: { pin: string; time: number };
+    // The test tag of the test game this crew was saved from: its rematches are test games too.
+    test?: string;
 }
 
 export interface CrewMember {
@@ -509,6 +522,18 @@ export function cleanCampaign(tag: any): string | undefined {
     }
     const t = tag.toLowerCase().trim();
     return /^[a-z0-9][a-z0-9-]{0,39}$/.test(t) ? t : undefined;
+}
+
+/**
+ * The mark of a test game: the campaign tag `test`, or any tag that starts with `test-`
+ * (`?via=test`, `?via=test-qa-lobby`). These tags are reserved: a real post must not use them.
+ * A test game's rows are left out of every usage number (see DEPLOYING.md, "Test games").
+ */
+export const TEST_CAMPAIGN = 'test';
+
+export function isTestCampaign(tag: any): boolean {
+    const t = cleanCampaign(tag);
+    return !!t && (t === TEST_CAMPAIGN || t.indexOf(TEST_CAMPAIGN + '-') === 0);
 }
 
 /** A player's best lie of the game, and how many players their lies fooled in all. */

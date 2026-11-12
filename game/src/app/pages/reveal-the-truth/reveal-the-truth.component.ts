@@ -10,7 +10,8 @@ import {
     GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing,
     revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings,
 } from '../../game-model';
-import { RevealStrings, revealStringsFor, resultLines, stingFor } from './reveal-strings';
+import { gameStrings, GameStrings } from './../game-strings';
+import { resultLines, stingFor } from './reveal-strings';
 import { followScrollTop } from './reveal-follow';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
@@ -44,10 +45,10 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     pin: string;
     presenter: boolean;
     rtl: boolean;
+    t: GameStrings = gameStrings('en');
     question: string;
     staged = false;
     me: string = null;
-    s: RevealStrings = revealStringsFor('en');
 
     rows: Row[];
     unpicked: Row[] = [];
@@ -96,8 +97,15 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
-        this.load();
+        // This player's result lines are written once, so the game's language is read first.
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null).then(() => this.load());
+    }
+
+    private useLocale(locale: string) {
+        this.rtl = locale === 'he';
+        this.t = gameStrings(locale);
     }
 
     ngOnDestroy() {
@@ -130,13 +138,12 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     }
 
     private async load() {
-        const [revealAnswers, players, info, hasPresenter, staged, locale] = await Promise.all([
+        const [revealAnswers, players, info, hasPresenter, staged] = await Promise.all([
             this.apiService.getRevealAnswers(this.pin),
             this.apiService.getPlayers(this.pin),
             this.apiService.getGameStateInfo(this.pin),
             this.apiService.gameHasPresenter(this.pin),
             this.apiService.isStagedReveal(this.pin),
-            this.apiService.getGameLocale(this.pin).catch(() => 'en'),
         ]);
 
         if (this.destroyed) {
@@ -144,9 +151,6 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         }
 
         this.staged = staged;
-        this.rtl = locale === 'he';
-        // Today's reveal keeps today's words (English); the staged one speaks the game's language.
-        this.s = revealStringsFor(staged ? locale : 'en');
 
         const playersArray = Object.keys(players || {}).map(k => Object.assign({ pid: k }, players[k]));
         const all = (revealAnswers || []).map(a => this.toRow(a, playersArray));
@@ -163,7 +167,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.me = me;
 
         if (me) {
-            this.myResult = resultLines(me, all, this.s);
+            this.myResult = resultLines(me, all, this.t);
         }
 
         this.schedule = revealSchedule(revealAnswers, !!hasPresenter, staged);
@@ -179,7 +183,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             // The player's own lie, if it fooled somebody: its writer gets the flash.
             this.myRow = me ? this.rows.findIndex(r => !r.realAnswer && !r.houseLie && r.creatorIds.indexOf(me) !== -1) : -1;
             if (this.myRow !== -1) {
-                this.flash = this.s.youFooled(this.rows[this.myRow].pickerNames);
+                this.flash = this.t.youFooled(this.t.names(this.rows[this.myRow].pickerNames));
                 this.flashPoints = this.rows[this.myRow].points;
             }
 

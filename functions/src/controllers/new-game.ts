@@ -1,6 +1,7 @@
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
+import { withStaged } from './phase';
 import { GameScheme, GameState, isPack, cleanCampaign } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
@@ -41,10 +42,11 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
             game.coach = true;
         }
 
-        // The staged reveal, for half of the games made by a client that can show it. Its own draw.
-        const bigReveal = drawBigReveal(options.stagedReveal === true);
+        // The staged reveal, for half of the games made by a client that can show it: the half its PIN falls in.
+        const bigReveal = drawBigReveal(options.stagedReveal === true, gamePin);
         if (bigReveal !== undefined) {
             game.bigReveal = bigReveal;
+            game.state = withStaged(game.state, game);
         }
 
         if (options.hostKey) {

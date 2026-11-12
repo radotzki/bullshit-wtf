@@ -1,9 +1,10 @@
-import { GameScheme, GameState, GamePlayers } from '../game-model';
+import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
+import { withStaged } from './phase';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = 10 * 1000;
@@ -43,7 +44,7 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     }
 
     const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal);
+    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin);
 
     await gamesRef.child(forkedGamePin).set(forkedGame);
     await gamesRef.child(pin).child('forking').set(forkedGamePin);
@@ -77,7 +78,7 @@ async function forkReady(pin: string, claimed: string): Promise<boolean> {
 }
 
 export function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
-    hostKey?: string, stagedReveal = false): GameScheme {
+    hostKey?: string, stagedReveal = false, forkedPin = ''): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -131,15 +132,22 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.coach = true;
     }
 
-    // The staged reveal: each Replay is a new draw too, when the phone that pressed it can show it.
-    const bigReveal = drawBigReveal(stagedReveal === true);
+    // The staged reveal: each Replay is a new game with a half of its own (the one its PIN falls in),
+    // when the phone that pressed it can show it.
+    const bigReveal = drawBigReveal(stagedReveal === true && !!forkedPin, forkedPin);
     if (bigReveal !== undefined) {
         forked.bigReveal = bigReveal;
+        forked.state = withStaged(forked.state, forked);
     }
 
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).
     if (game.pack) {
         forked.pack = game.pack;
+    }
+
+    // A Replay of a test game is a test game (other campaign tags count the first game only).
+    if (isTestCampaign(game.campaign)) {
+        forked.campaign = game.campaign;
     }
 
     return forked;

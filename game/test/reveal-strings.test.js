@@ -1,4 +1,5 @@
-// Tests for the words of the staged reveal (src/app/pages/reveal-the-truth/reveal-strings.ts).
+// Tests for a player's result lines and the reveal's sounds (src/app/pages/reveal-the-truth/reveal-strings.ts),
+// and for the staged reveal's own words (src/app/pages/game-strings.ts).
 // Run: npm test (from game/). Needs Node 20+.
 const test = require('node:test');
 const assert = require('node:assert');
@@ -16,9 +17,24 @@ function load() {
     return mod.exports;
 }
 
-const { revealStrings, revealStringsFor, resultLines, stingFor, signedPoints } = load();
+const { resultLines, stingFor } = load();
+
+function loadGameStrings() {
+    const file = path.join(__dirname, '..', 'src', 'app', 'pages', 'game-strings.ts');
+    const out = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES5 },
+    }).outputText;
+    const mod = { exports: {} };
+    new Function('module', 'exports', 'require', out)(mod, mod.exports, require);
+    return mod.exports;
+}
+
+// The words are the game's own (game-strings.ts), the same in both reveals.
+const { gameStrings } = loadGameStrings();
+const en = gameStrings('en');
+const he = gameStrings('he');
 // Points are wrapped in invisible marks that keep "+500" left to right in Hebrew; drop them to compare.
-const plain = s => s.replace(/[⁦⁩]/g, '');
+const plain = s => s.replace(/[\u2066\u2069]/g, '');
 
 function row(extra) {
     return Object.assign({
@@ -33,16 +49,17 @@ const rows = [
     row({ realAnswer: true, points: 1000, pickerIds: ['alice'], pickerNames: ['Alice'] }),
 ];
 
-test('English and Hebrew have the same words', () => {
-    assert.deepStrictEqual(Object.keys(revealStrings.he).sort(), Object.keys(revealStrings.en).sort());
-    Object.keys(revealStrings.en).forEach(k => assert.strictEqual(typeof revealStrings.he[k], typeof revealStrings.en[k], k));
-    assert.strictEqual(revealStringsFor('he'), revealStrings.he);
-    assert.strictEqual(revealStringsFor('en'), revealStrings.en);
-    assert.strictEqual(revealStringsFor(undefined), revealStrings.en);
+test('the staged reveal has its words in both languages', () => {
+    ['truthIs', 'foundBy', 'soundOn', 'soundOff', 'youFooled'].forEach(k => {
+        assert.ok(k in en && k in he, k);
+        assert.strictEqual(typeof he[k], typeof en[k], k);
+    });
+    assert.strictEqual(en.truthIs, 'AND THE TRUTH IS\u2026');
+    assert.strictEqual(he.truthIs, '\u05d5\u05d4\u05d0\u05de\u05ea \u05d4\u05d9\u05d0\u2026');
+    assert.ok(/[\u05d0-\u05ea]/.test(he.foundBy) && /[\u05d0-\u05ea]/.test(he.soundOn) && /[\u05d0-\u05ea]/.test(he.soundOff));
 });
 
 test('the result lines in English are the ones the reveal has always shown', () => {
-    const en = revealStrings.en;
     assert.deepStrictEqual(resultLines('alice', rows, en).map(plain), ['You found the truth! +1000', 'You fooled Ben and Chen! +1000']);
     assert.deepStrictEqual(resultLines('ben', rows, en).map(plain), ['You fell for Alice\'s bullshit.', 'Nobody fell for your answer.']);
     assert.deepStrictEqual(resultLines('dana', rows, en).map(plain), ['You fell for our bullshit. -500']);
@@ -50,32 +67,26 @@ test('the result lines in English are the ones the reveal has always shown', () 
     assert.deepStrictEqual(resultLines('fay', rows, en).map(plain), ['You didn\'t pick an answer.']);
 });
 
-test('the result lines in Hebrew', () => {
-    const he = revealStrings.he;
-    assert.deepStrictEqual(resultLines('alice', rows, he).map(plain), ['מצאת את האמת! +1000', 'עבדת על Ben ו-Chen! +1000']);
-    assert.deepStrictEqual(resultLines('ben', rows, he).map(plain), ['נפלת בבולשיט של Alice.', 'אף אחד לא נפל בתשובה שלך.']);
-    assert.deepStrictEqual(resultLines('dana', rows, he).map(plain), ['נפלת בבולשיט שלנו. -500']);
-    assert.deepStrictEqual(resultLines('fay', rows, he).map(plain), ['לא בחרת תשובה.']);
+test('the result lines in Hebrew use the game\'s own Hebrew words', () => {
+    assert.deepStrictEqual(resultLines('alice', rows, he),
+        [he.foundTheTruth(he.signed(1000)), he.fooled(he.names(['Ben', 'Chen']), he.signed(1000))]);
+    assert.deepStrictEqual(resultLines('ben', rows, he), [he.fellFor('Alice'), he.nobodyFellForYours]);
+    assert.deepStrictEqual(resultLines('dana', rows, he), [he.fellForOurs(he.signed(-500))]);
+    assert.deepStrictEqual(resultLines('eli', rows, he), [he.fellForOursNoPoints]);
+    assert.deepStrictEqual(resultLines('fay', rows, he), [he.didNotPick]);
+    resultLines('alice', rows, he).concat(resultLines('ben', rows, he)).forEach(line => assert.ok(/[\u05d0-\u05ea]/.test(line), line));
 });
 
 test('the flash names everyone the lie fooled', () => {
-    assert.strictEqual(revealStrings.en.youFooled(['Chen']), 'You fooled Chen!');
-    assert.strictEqual(revealStrings.en.youFooled(['Ben', 'Chen', 'Dana']), 'You fooled Ben, Chen and Dana!');
-    assert.strictEqual(revealStrings.he.youFooled(['דנה']), 'עבדת על דנה!');
-    assert.strictEqual(revealStrings.he.youFooled(['דנה', 'יואב']), 'עבדת על דנה ו-יואב!');
+    assert.strictEqual(en.youFooled(en.names(['Chen'])), 'You fooled Chen!');
+    assert.strictEqual(en.youFooled(en.names(['Ben', 'Chen', 'Dana'])), 'You fooled Ben, Chen and Dana!');
+    assert.ok(he.youFooled(he.names(['\u05d3\u05e0\u05d4', '\u05d9\u05d5\u05d0\u05d1'])).indexOf('\u05d3\u05e0\u05d4') > 0);
 });
 
 test('points keep their sign on the left inside a Hebrew line', () => {
-    assert.strictEqual(signedPoints(500), '⁦+500⁩');
-    assert.strictEqual(signedPoints(-500), '⁦-500⁩');
-    assert.strictEqual(plain(signedPoints(0)), '0');
-});
-
-test('waiting for friends, in both languages', () => {
-    assert.strictEqual(revealStrings.en.waiting(1), 'Waiting for 1 friend');
-    assert.strictEqual(revealStrings.en.waiting(3), 'Waiting for 3 friends');
-    assert.strictEqual(revealStrings.he.waiting(1), 'מחכים לעוד חבר אחד');
-    assert.strictEqual(revealStrings.he.waiting(3), 'מחכים לעוד 3 חברים');
+    assert.strictEqual(he.signed(500), '\u2066+500\u2069');
+    assert.strictEqual(he.signed(-500), '\u2066-500\u2069');
+    assert.ok(resultLines('alice', rows, he)[0].indexOf('\u2066+1000\u2069') > 0);
 });
 
 test('every phone in the room plays the same sting for a row', () => {

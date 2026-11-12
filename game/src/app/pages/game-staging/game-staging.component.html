@@ -1,5 +1,5 @@
-<section class="game-container game-staging">
-    <app-game-header *ngIf="showStartButton && !lobby?.alone" [button]="'START'" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
+<section class="game-container game-staging" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+    <app-game-header *ngIf="showStartButton && !lobby?.alone" [button]="t.start" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
     <app-game-header *ngIf="!showStartButton || lobby?.alone"></app-game-header>
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
@@ -39,7 +39,7 @@
         </div>
 
         <div *ngIf="players && !players.length" class="screen-center waiting-for-players">
-            Waiting for players..
+            {{t.waitingForPlayers}}
         </div>
     </div>
 

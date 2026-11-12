@@ -11,6 +11,8 @@ export interface HomeStrings {
     /** The desktop page's heading. */
     name: string;
     subTitle: string;
+    /** What the game is, in one line, above the phone menu. */
+    pitch: string;
     join: string;
     joinHint: string;
     joinShort: string;
@@ -37,6 +39,7 @@ const en: HomeStrings = {
     title: 'BULLSHIT',
     name: 'Bullshit',
     subTitle: 'Because the truth is overrated',
+    pitch: 'Everyone writes a lie. One answer is true. Fool your friends.',
     join: 'Join Game',
     joinHint: 'Join a game by entering its PIN',
     joinShort: 'Join',
@@ -62,6 +65,7 @@ const he: HomeStrings = {
     title: 'בולשיט',
     name: 'בולשיט',
     subTitle: 'כי האמת מוערכת יותר מדי',
+    pitch: 'כולם ממציאים שקר. רק תשובה אחת נכונה. תעבדו על החברים.',
     join: 'הצטרפות למשחק',
     joinHint: 'הקלידו את קוד המשחק כדי להצטרף',
     joinShort: 'הצטרפות',

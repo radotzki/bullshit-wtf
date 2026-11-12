@@ -1,39 +1,40 @@
-<div class="arcade-form create-game">
+<div class="arcade-form create-game" [attr.dir]="t.dir === 'rtl' ? 'rtl' : null" [attr.lang]="t.dir === 'rtl' ? t.lang : null"
+    [class.is-rtl]="t.dir === 'rtl'">
     <form (submit)="submit()" novalidate>
 
         <div class="title-area">
-            <h1 class="title" routerLink="/">Bullshit</h1>
-            <h3 class="sub-title">Create new game</h3>
+            <h1 class="title" routerLink="/">{{ t.title }}</h1>
+            <h3 class="sub-title">{{ t.heading }}</h3>
             <div class="separator">♦</div>
         </div>
 
         <div class="create-game-controls-wrapper">
             <div class="controls">
-                <label>Language:</label>
+                <label>{{ t.language }}</label>
                 <p class="control">
                     <label class="radio vertical">
-                        <input type="radio" name="locale" [value]="'en'" [(ngModel)]="locale"> English
+                        <input type="radio" name="locale" [value]="'en'" [(ngModel)]="locale"> {{ t.english }}
                     </label>
                     <label class="radio vertical">
-                        <input type="radio" name="locale" [value]="'he'" [(ngModel)]="locale"> Hebrew
+                        <input type="radio" name="locale" [value]="'he'" [(ngModel)]="locale"> {{ t.hebrew }}
                     </label>
                 </p>
 
-                <label>Length:</label>
+                <label>{{ t.length }}</label>
                 <p class="control">
                     <label class="radio vertical">
-                        <input type="radio" name="length" [value]="5" [(ngModel)]="length"> 5 questions
+                        <input type="radio" name="length" [value]="5" [(ngModel)]="length"> 5 {{ t.questions }}
                     </label>
                     <label class="radio vertical">
-                        <input type="radio" name="length" [value]="7" [(ngModel)]="length"> 7 questions
+                        <input type="radio" name="length" [value]="7" [(ngModel)]="length"> 7 {{ t.questions }}
                     </label>
                     <label class="radio vertical">
-                        <input type="radio" name="length" [value]="9" [(ngModel)]="length"> 9 questions
+                        <input type="radio" name="length" [value]="9" [(ngModel)]="length"> 9 {{ t.questions }}
                     </label>
                 </p>
 
                 <ng-container *ngIf="pack">
-                    <label>Special:</label>
+                    <label>{{ t.special }}</label>
                     <p class="control">
                         <label class="checkbox vertical pack-option">
                             <input type="checkbox" name="usePack" [(ngModel)]="usePack"> 🕎 {{ packLabel }}
@@ -45,7 +46,7 @@
             </div>
 
             <p class="control action">
-                <button class="button is-primary is-medium is-fullwidth" type="submit" [class.is-loading]="loading">CREATE</button>
+                <button class="button is-primary is-medium is-fullwidth" type="submit" [class.is-loading]="loading">{{ t.create }}</button>
             </p>
         </div>
     </form>
