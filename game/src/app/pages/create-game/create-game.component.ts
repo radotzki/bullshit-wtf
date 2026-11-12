@@ -60,7 +60,10 @@ export class CreateGameComponent implements OnInit {
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);
-                this.router.navigate(['/join-game', resp.pin]);
+                // The nickname page follows this page's language. It decides by the same rule, so the
+                // language is sent along only when it came from this page's own address.
+                const lang = this.t.lang !== preferredLocale() ? { lang: this.t.lang } : {};
+                this.router.navigate(['/join-game', resp.pin], { queryParams: lang });
             })
             .catch(err => {
                 this.loading = false;
