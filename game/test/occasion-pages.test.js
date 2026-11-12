@@ -14,6 +14,22 @@ const joinSource = fs.readFileSync(path.join(root, 'game', 'src', 'app', 'servic
 const known = JSON.parse(/const known = (\[[^\]]+\])/.exec(joinSource)[1].replace(/'/g, '"'));
 
 const tagged = pages.filter(p => p.tag);
+
+// The Hebrew site's own words, so that a page names only a button its reader will find.
+const ts = require('typescript');
+function load(file) {
+    const out = ts.transpileModule(fs.readFileSync(path.join(root, 'game', 'src', 'app', file), 'utf8'), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES5 },
+    }).outputText;
+    const mod = { exports: {} };
+    new Function('module', 'exports', 'require', out)(mod, mod.exports, require);
+    return mod.exports;
+}
+const home = load('pages/landing/home-strings.ts').homeStrings('he');
+const create = load('pages/create-game/create-strings.ts').createStrings('he');
+const game = load('pages/game-strings.ts').gameStrings('he');
+const final = load('pages/score-board-final/final-strings.ts').finalStrings.he;
+const startOf = p => (p.start || p.site.start).label;
 const words = body => body.replace(/<figure[\s\S]*?<\/figure>/g, ' ').replace(/<[^>]+>/g, ' ')
     .split(/\s+/).filter(w => /[א-ת0-9a-z]/i.test(w)).length;
 
@@ -55,6 +71,23 @@ tagged.forEach(p => {
         const file = fs.readFileSync(path.join(root, 'game', 'src', 'assets', img[1]));
         assert.deepStrictEqual([file.readUInt32BE(16), file.readUInt32BE(20)], [+img[2], +img[3]]);
         assert.ok(p.body.indexOf('<!--start-->') > 0);
+    });
+
+    test(`${p.path}: every button it names is the one the Hebrew site shows there`, () => {
+        // Guests join on a phone, which shows the long name. The big screen is a television or a
+        // computer, whose menu shows the short names: "מסך", never the phone's "הצגה על מסך".
+        const buttons = [startOf(p), create.create, home.join, game.start, final.rematch, home.presentShort];
+        const named = [];
+        p.body.replace(/(?:לוחצים על|לוחצים|לוחץ על|ללחוץ על|בוחרים|בוחר|כפתור) "([^"]+)"/g, (all, name) => named.push(name));
+        assert.ok(named.length >= 2, `names ${named.length} buttons`);
+        named.forEach(name => assert.ok(buttons.indexOf(name) >= 0, `"${name}" is a button of the Hebrew site`));
+        assert.ok(p.body.indexOf(home.present) < 0, `"${home.present}" is the phone's name for the big-screen button`);
+    });
+
+    test(`${p.path}: the address it gives is the Hebrew one, so the menu is in Hebrew on any browser`, () => {
+        const addresses = p.body.match(/<bdi dir="ltr">[^<]+<\/bdi>/g) || [];
+        assert.ok(addresses.length >= 1);
+        addresses.forEach(a => assert.strictEqual(a, '<bdi dir="ltr">bullshit.wtf/he</bdi>'));
     });
 
     test(`${p.path}: every link inside the page leads somewhere`, () => {
