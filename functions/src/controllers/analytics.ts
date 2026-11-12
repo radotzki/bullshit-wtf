@@ -107,12 +107,16 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     remind-google      then tapped "Add it to Google Calendar"
 //   game-over   the same ask on the join page of a game that is over (campaigns after-game-late and
 //               after-game-late-remind): create, remind, remind-google
+//   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
+//     mute               tapped it to silence the game
+//     unmute             tapped it again
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],
+    'sound': ['mute', 'unmute'],
 };
 
 export interface ShareRow {

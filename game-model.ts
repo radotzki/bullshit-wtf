@@ -15,6 +15,9 @@ export interface GameStateInfo {
     timestamp: number;
     // Server time at which this phase ends. Set by the server for every timed phase.
     deadline?: number;
+    // The game plays the staged reveal (its bigReveal is true). On every state of such a game, and
+    // only there: this is where phones read it, since they cannot read bigReveal itself.
+    staged?: boolean;
 }
 
 export interface GameScheme {
@@ -73,6 +76,12 @@ export interface GameScheme {
     // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
     // Each player can read only their own (games/$pin/ideas/$pid).
     ideas?: { [pid: string]: string[] };
+    // The staged reveal, a 50/50 test set when the game is made, and only for a game made by a client
+    // that can show it. true: the staged reveal, with the scoreboard folded into it. false: in the
+    // test, and the game keeps today's reveal. Absent: not in the test (an older client made it, or it
+    // was made before the test). It follows from the game's PIN and is independent of `coach`; each
+    // Replay is a new game with a half of its own. Phones cannot read it: see state.staged.
+    bigReveal?: boolean;
     // Each player's best lie so far (the one that fooled the most players), for the final screen.
     highlights?: Highlights;
     // The question index highlights were first kept from. 0 means the whole game counts, so a player
@@ -95,15 +104,184 @@ export const revealTiming = {
     presenter: { step: 4500, hold: 3000 },
 };
 
+/**
+ * The staged reveal (games with bigReveal: true). Each row is three beats: the answer alone, then who
+ * picked it (`pickersAt` ms into the row), then who wrote it, with the points (`writerAt`). Before the
+ * truth, the last row, "And the truth is…" stands alone for `truthIntro` ms. During `hold` everyone
+ * sees their own result and the scores with each player's change: such a game has no separate
+ * scoreboard (its phase lasts 0 ms, see scoreBoardDuration), which pays for the slower rows.
+ */
+export const stagedRevealTiming = {
+    phones: { step: 2400, pickersAt: 700, writerAt: 1400, truthIntro: 1200, hold: 3500 },
+    presenter: { step: 4500, pickersAt: 1300, writerAt: 2600, truthIntro: 2000, hold: 5500 },
+};
+
+/** How long the scoreboard after each question lasts: not at all once the reveal shows the scores. */
+export function scoreBoardDuration(staged?: boolean): number {
+    return staged ? 0 : 3000;
+}
+
 export function revealRows(revealAnswers: RevealAnswer[] | undefined | null): number {
     return Math.max((revealAnswers || []).filter(a => (a.selectors && a.selectors.length) || a.realAnswer).length, 1);
 }
 
-/** How long the reveal lasts, and when the last row's writer has been shown (ms after it starts). */
-export function revealSchedule(revealAnswers: RevealAnswer[] | undefined | null, presenter: boolean) {
+export interface RevealSchedule {
+    rows: number;
+    step: number;
+    // Into each row: when its pickers and its writer appear.
+    pickersAt: number;
+    writerAt: number;
+    // Before the last row (the truth): how long "And the truth is…" stands alone.
+    truthIntro: number;
+    // When the last row's writer has been shown, and when the reveal ends (ms after it starts).
+    allShown: number;
+    duration: number;
+    staged: boolean;
+}
+
+/**
+ * The timetable of one reveal. `staged` must be the game's own bigReveal === true, on the server and
+ * on every client, so that all of them agree. A client that does not know the staged reveal (an older
+ * build) calls this with two arguments and plays today's faster rows inside the longer phase: its rows
+ * end early, its NEXT button appears early, and the game moves on at the server's deadline all the same.
+ */
+export function revealSchedule(revealAnswers: RevealAnswer[] | undefined | null, presenter: boolean, staged = false): RevealSchedule {
+    const rows = revealRows(revealAnswers);
+
+    if (staged) {
+        const t = presenter ? stagedRevealTiming.presenter : stagedRevealTiming.phones;
+        const allShown = (rows - 1) * t.step + t.truthIntro + t.writerAt;
+        return {
+            rows, step: t.step, pickersAt: t.pickersAt, writerAt: t.writerAt, truthIntro: t.truthIntro,
+            allShown, duration: allShown + t.hold, staged: true,
+        };
+    }
+
     const timing = presenter ? revealTiming.presenter : revealTiming.phones;
-    const allShown = revealRows(revealAnswers) * timing.step - timing.step / 2;
-    return { step: timing.step, allShown, duration: allShown + timing.hold };
+    const allShown = rows * timing.step - timing.step / 2;
+    return {
+        rows, step: timing.step, pickersAt: 0, writerAt: timing.step / 2, truthIntro: 0,
+        allShown, duration: allShown + timing.hold, staged: false,
+    };
+}
+
+/** When row `index` (from 0; the last row is the truth) appears, in ms after the reveal starts. */
+export function revealRowStart(schedule: RevealSchedule, index: number): number {
+    return index * schedule.step + (index >= schedule.rows - 1 ? schedule.truthIntro : 0);
+}
+
+export interface RevealMoment {
+    // Rows on screen, and of those how many show their pickers and their writer.
+    visibleRows: number;
+    pickersShown: number;
+    writersShown: number;
+    // "And the truth is…" stands alone: the truth row is not on screen yet.
+    truthIntro: boolean;
+    allShown: boolean;
+}
+
+/** What the reveal shows `elapsed` ms after it started. Every screen works this out from server time. */
+export function revealMoment(schedule: RevealSchedule, elapsed: number): RevealMoment {
+    const rows = schedule.rows;
+    let visibleRows = 0;
+    let pickersShown = 0;
+    let writersShown = 0;
+
+    for (let i = 0; i < rows; i++) {
+        const into = elapsed - revealRowStart(schedule, i);
+        if (into >= 0 || i === 0) {
+            visibleRows++;
+        }
+        if (into >= schedule.pickersAt) {
+            pickersShown++;
+        }
+        if (into >= schedule.writerAt) {
+            writersShown++;
+        }
+    }
+
+    const truthFrom = (rows - 1) * schedule.step;
+    return {
+        visibleRows, pickersShown, writersShown,
+        truthIntro: schedule.truthIntro > 0 && elapsed >= truthFrom && elapsed < truthFrom + schedule.truthIntro,
+        allShown: elapsed >= schedule.allShown,
+    };
+}
+
+/**
+ * What one question did to each player's score, from the reveal rows alone (so a phone can show it
+ * during the reveal, before the server adds it up): a lie's writer gets the row's points, a player who
+ * found the truth gets the row's points, and a player who picked a house lie loses what `pointsBy` says.
+ * Must agree with addQuestionScores in the functions' scoring.ts (functions/test/big-reveal.test.js checks).
+ */
+export function revealScoreChanges(revealAnswers: RevealAnswer[] | undefined | null): { [pid: string]: number } {
+    const changes: { [pid: string]: number } = {};
+    const add = (pid: string, points: number) => {
+        if (pid) {
+            changes[pid] = (changes[pid] || 0) + (points || 0);
+        }
+    };
+
+    (revealAnswers || []).forEach(row => {
+        if (!row) {
+            return;
+        }
+        const selectors = row.selectors || [];
+        if (row.realAnswer) {
+            selectors.forEach(pid => add(pid, row.points));
+        } else if (row.houseLie) {
+            selectors.forEach(pid => add(pid, row.pointsBy && pid in row.pointsBy ? row.pointsBy[pid] : row.points));
+        } else {
+            (row.creators || []).forEach(pid => add(pid, row.points));
+        }
+    });
+
+    return changes;
+}
+
+export interface Standing {
+    pid: string;
+    nickname: string;
+    // The player's seat (their order in the game), which picks their avatar.
+    seat: number;
+    before: number;
+    change: number;
+    after: number;
+    // Places from 1; players level on points share a place.
+    placeBefore: number;
+    placeAfter: number;
+    // Row order on screen before and after the change (from 0, no ties: seat order breaks them).
+    rowBefore: number;
+    rowAfter: number;
+}
+
+/**
+ * The scoreboard folded into the staged reveal: every player with their score before this question,
+ * the change, and where they stood and stand. `players` hold the scores before the question, or after
+ * it when `scoresIncludeChanges` (the server has already added them). In the order after the change.
+ */
+export function revealStandings(players: GamePlayers | undefined | null, changes: { [pid: string]: number },
+    scoresIncludeChanges = false): Standing[] {
+    const list: Standing[] = Object.keys(players || {}).map((pid, seat) => {
+        const change = (changes || {})[pid] || 0;
+        const score = players[pid].score || 0;
+        const before = scoresIncludeChanges ? score - change : score;
+        return {
+            pid, seat, nickname: players[pid].nickname, before, change, after: before + change,
+            placeBefore: 0, placeAfter: 0, rowBefore: 0, rowAfter: 0,
+        };
+    });
+
+    const placesBefore = finalPlaces(list.map(s => s.before));
+    const placesAfter = finalPlaces(list.map(s => s.after));
+    list.forEach((s, i) => {
+        s.placeBefore = placesBefore[i];
+        s.placeAfter = placesAfter[i];
+    });
+
+    list.slice().sort((a, b) => b.before - a.before || a.seat - b.seat).forEach((s, i) => s.rowBefore = i);
+    list.sort((a, b) => b.after - a.after || a.seat - b.seat).forEach((s, i) => s.rowAfter = i);
+    return list;
 }
 
 export interface GamePlayers {

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { GameState } from './../../game-model';
+import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
 
 @Component({
@@ -26,6 +27,8 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     loading: boolean;
     presenter: boolean;
     showGoHomeModal: boolean;
+    /** A phone that plays the game's sounds (a staged-reveal game with no big screen) gets a mute button. */
+    soundButton = false;
     @Input() button: string;
     @Input() buttonLoading: boolean;
     @Output() onClick: EventEmitter<any> = new EventEmitter();
@@ -36,6 +39,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         private apiService: ApiService,
         private router: Router,
         private gameService: GameService,
+        private soundService: SoundService,
     ) { }
 
     ngOnInit() {
@@ -51,6 +55,31 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         };
         this.apiService.getGameLocale(this.pin).then(known, () => known('en'));
         this.gameSubscription = this.apiService.gameState(this.pin).subscribe(this.onStateChange.bind(this));
+
+        if (!this.presenter && this.pin) {
+            this.apiService.phoneSound(this.pin).then(sound => {
+                this.soundButton = sound;
+                if (sound) {
+                    // Download the sounds now; the phone lets them play after the player's next tap.
+                    this.soundService.arm();
+                }
+            });
+        }
+    }
+
+    get muted() {
+        return this.soundService.muted;
+    }
+
+    get soundLabel() {
+        return this.muted ? this.t.soundOff : this.t.soundOn;
+    }
+
+    toggleSound() {
+        const muted = !this.soundService.muted;
+        this.soundService.setMuted(muted);
+        // Counted, so we learn how many players silence the game. Never waits, never fails.
+        this.apiService.logShare('sound', muted ? 'mute' : 'unmute', { locale: this.t.lang });
     }
 
     get pinUpper() {

@@ -78,6 +78,14 @@ export interface GameStrings {
 
     // The reveal.
     pickedBy: string;
+    // The staged reveal's own words (half of the games, see bigReveal in game-model).
+    truthIs: string;
+    foundBy: string;
+    /** Across the phone of the player whose lie just fooled somebody: "You fooled Dan and Ben!". */
+    youFooled: (names: string) => string;
+    /** What the mute button of a staged game says to a screen reader. */
+    soundOn: string;
+    soundOff: string;
     nobodyFoundIt: string;
     theTruth: string;
     houseLie: string;
@@ -160,6 +168,11 @@ const en: GameStrings = {
     seatNotYet: name => `${name}, not yet`,
 
     pickedBy: 'picked by',
+    truthIs: 'AND THE TRUTH IS…',
+    foundBy: 'found by',
+    youFooled: names => `You fooled ${names}!`,
+    soundOn: 'Sound is on. Tap to mute',
+    soundOff: 'Sound is off. Tap to unmute',
     nobodyFoundIt: 'nobody found it',
     theTruth: 'THE TRUTH',
     houseLie: 'Home Grown Bullshit',
@@ -237,6 +250,11 @@ const he: GameStrings = {
     seatNotYet: name => `${name}, עוד לא`,
 
     pickedBy: 'בחרו בזה:',
+    truthIs: 'והאמת היא…',
+    foundBy: 'מצאו את האמת:',
+    youFooled: names => `עבדת על ${names}!`,
+    soundOn: 'הצליל פועל. לחיצה להשתקה',
+    soundOff: 'הצליל מושתק. לחיצה להפעלה',
     nobodyFoundIt: 'אף אחד לא מצא',
     theTruth: 'האמת',
     houseLie: 'בולשיט של הבית',

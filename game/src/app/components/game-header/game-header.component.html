@@ -9,6 +9,16 @@
         <span *ngIf="!gameOver && !(registration && presenter)" class="pin"> {{t.pin(pinUpper)}} </span>
     </div>
 
+    <a *ngIf="soundButton" class="button is-primary is-outlined sound" [class.is-muted]="muted" (click)="toggleSound()"
+        role="button" [attr.aria-label]="soundLabel" [attr.aria-pressed]="muted" [attr.title]="soundLabel">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/>
+            <path *ngIf="!muted" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round"/>
+            <path *ngIf="muted" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </a>
+
     <button *ngIf="button" (click)="onClick.next()" class="button is-primary" [class.is-loading]="buttonLoading"> {{button}} </button>
 
     <span *ngIf="text" class="text"> {{text | uppercase}} </span>

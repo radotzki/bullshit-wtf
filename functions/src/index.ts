@@ -69,7 +69,11 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
         const hostKey = cleanHostKey(req.body.hostKey);
         try {
             const serverStart = req.body.serverStart === true;
-            const pin = await newGame(locale, count, uid, { pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart });
+            // The phone can show the staged reveal: the game is in that 50/50 test (see big-reveal.ts).
+            const stagedReveal = req.body.stagedReveal === true;
+            const pin = await newGame(locale, count, uid, {
+                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal,
+            });
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {
@@ -86,7 +90,8 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
         const uid = cleanUid(req.body.uid);
 
         try {
-            const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey));
+            const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
+                req.body.stagedReveal === true);
             return res.status(200).send(forked);
         } catch (e) {
             caught(e);
@@ -113,7 +118,7 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
     cors(req, res, async () => {
         try {
             const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
-                req.body.serverStart === true);
+                req.body.serverStart === true, req.body.stagedReveal === true);
             return res.status(200).send(result);
         } catch (e) {
             caught(e);

@@ -116,7 +116,12 @@ export class GameService implements CanActivate {
         }
 
         if (again) {
+            // A phone that comes back to this step missed what came before it here (on the scoreboard
+            // step, the reveal of this question), so it gets the step's own page, as a phone that opens
+            // the game right in this step does.
             this.showAgain(pin, page, key);
+        } else if (id === GameState.ScoreBoard) {
+            this.scoreBoard(pin, key);
         } else {
             this.router.navigate([page, pin]);
         }
@@ -124,6 +129,25 @@ export class GameService implements CanActivate {
         if (timedSteps.indexOf(id) >= 0) {
             this.fallbackTick(pin, id);
         }
+    }
+
+    /**
+     * The scoreboard step. The staged reveal shows the scores itself, and the server gives this step no
+     * time: the reveal page stays up until the next question. A phone that opens the game right in this
+     * step is not on the reveal page, and gets the scoreboard as before.
+     * A phone that has left this step while that was read (BACK HOME, another game, the next step) stays
+     * where it went: the scoreboard page would make it follow the old game again. What the phone follows
+     * is read a moment later, since a first step can arrive while the phone is still starting to follow the game.
+     */
+    private scoreBoard(pin: string, key: string) {
+        const followed = Promise.resolve().then(() => this.game);
+        Promise.all([this.apiService.isStagedReveal(pin), followed]).then(([staged, game]) => {
+            const onReveal = this.router.url.indexOf('/reveal-the-truth/') === 0;
+            const stillHere = !!game && this.game === game && this.phase === key;
+            if (stillHere && !(staged && onReveal)) {
+                this.router.navigate(['score-board', pin]);
+            }
+        });
     }
 
     /**

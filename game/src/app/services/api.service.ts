@@ -85,6 +85,7 @@ export class ApiService {
     gamesRef: firebase.database.Reference;
     crewsRef: firebase.database.Reference;
     timeDiff: Promise<number>;
+    private stagedReveal: { [pin: string]: Promise<boolean> } = {};
     private gameLocales: { [pin: string]: string } = {};
 
     constructor(
@@ -125,6 +126,8 @@ export class ApiService {
             locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
             // This client starts through startGame, so the server may refuse START ticks for this game.
             serverStart: true,
+            // This client can show the staged reveal, so the server may draw this game into its 50/50 test.
+            stagedReveal: true,
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -344,6 +347,33 @@ export class ApiService {
         return this.gameLocales[String(pin || '').toUpperCase()] || 'en';
     }
 
+    /**
+     * Whether this game plays the staged reveal (a 50/50 test set when the game is made). The server
+     * says so on the game's state (state.staged === true), on every state from the lobby on. Asked once
+     * per game. False when it cannot be read (a network error): the phone then shows today's reveal,
+     * which every game can play.
+     */
+    isStagedReveal(pin: string): Promise<boolean> {
+        pin = pin.toUpperCase();
+        if (!this.stagedReveal[pin]) {
+            this.stagedReveal[pin] = this.get<boolean>(this.gamesRef.child(pin).child('state').child('staged'))
+                .then(v => v === true, () => {
+                    delete this.stagedReveal[pin];
+                    return false;
+                });
+        }
+        return this.stagedReveal[pin];
+    }
+
+    /**
+     * Whether this phone plays the game's sounds: a staged-reveal game with no big screen. With a
+     * big screen in the room, the big screen plays them, as it always has, and phones stay quiet.
+     */
+    phoneSound(pin: string): Promise<boolean> {
+        return Promise.all([this.isStagedReveal(pin), this.gameHasPresenter(pin).catch(() => false)])
+            .then(([staged, hasPresenter]) => staged && !hasPresenter);
+    }
+
     /** What the writing screen needs to decide on the round-1 lie helper. */
     async getLieHelperInfo(pin: string) {
         pin = pin.toUpperCase();
@@ -516,7 +546,9 @@ export class ApiService {
         const pid = user && user.pid ? user.pid : null;
         // A new host key for the new game: with it, only this phone may start it.
         const hostKey = pid ? newHostKey() : null;
-        const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(`fork`, { pin, uid, pid, hostKey });
+        // stagedReveal: this client can show the staged reveal (each Replay is a new draw of that test).
+        const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true });
         // Another phone pressed Replay first: the server hands this phone that game's key (it may start it
         // too), or says it is a guest there (host: false) and keeps no key.
         if (hostKey && resp && resp.pin && resp.host !== false) {
@@ -558,7 +590,8 @@ export class ApiService {
     async crewRematch(crew: string) {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
-        const resp = await this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid, hostKey, serverStart: true });
+        const resp = await this.post<{ pin: string; created: boolean }>(
+            `crewRematch`, { crew, uid, hostKey, serverStart: true, stagedReveal: true });
         if (resp && resp.created) {
             rememberHostKey(resp.pin, hostKey);
         }

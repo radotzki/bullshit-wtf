@@ -116,23 +116,599 @@
         text-align: center;
     }
 
-    // Big screen: larger text, for a room to read together.
+    // Big screen: larger text, for a room to read together. Sizes follow the screen's height, so a
+    // 1280x720 and a 1920x1080 screen show the same picture, and nobody scrolls a big screen: the row
+    // that just arrived is large, earlier rows fold down to one line, and the page follows the newest
+    // row (the truth comes last, and must never be below the edge).
     &.is-presenter {
+        $green: hsl(141, 71%, 48%);
+
+        .game-main {
+            flex: 1 1 0;
+            min-height: 0;
+            overflow: hidden;
+            padding: 1.6vh 2vw;
+        }
+
+        .reveal {
+            max-width: 92vw;
+        }
+
         .question {
-            font-size: 1.6rem;
+            font-size: 4vh;
+            line-height: 1.2;
+            margin-bottom: 1.5vh;
+        }
+
+        .row,
+        .srow {
+            padding: 1.5vh 2vh;
+            margin-bottom: 1vh;
         }
 
         .text {
-            font-size: 2rem;
+            font-size: 4.6vh;
+            line-height: 1.15;
+            margin-bottom: 0.8vh;
         }
 
         .who {
-            font-size: 1.3rem;
+            font-size: 3vh;
+        }
+
+        .points,
+        .tag-truth,
+        .tag-house {
+            font-size: 3.4vh;
         }
 
         .player img {
-            height: 2.5rem;
-            width: 2.5rem;
+            height: 4.4vh;
+            width: 4.4vh;
+        }
+
+        .unpicked {
+            font-size: 2.6vh;
+            margin-bottom: 0;
+        }
+
+        // An earlier row, folded to one line: the answer, then who picked it and who wrote it.
+        .row.past,
+        .srow.past {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5vh 2vh;
+            margin-bottom: 0.6vh;
+            animation: none;
+
+            .text {
+                flex: 1 1 auto;
+                min-width: 0;
+                font-size: 2.9vh;
+                margin-bottom: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .who {
+                flex: 0 0 auto;
+                flex-wrap: nowrap;
+                font-size: 2.4vh;
+                margin: 0 0 0 2vh;
+            }
+
+            .pickers {
+                margin: 0 2vh;
+            }
+
+            .pickers .name {
+                display: none;
+            }
+
+            .label {
+                font-size: 2vh;
+                margin-bottom: 0;
+            }
+
+            .writer.shown {
+                animation: none;
+            }
+
+            .points,
+            .tag-truth,
+            .tag-house {
+                font-size: 2.6vh;
+            }
+
+            .player img {
+                height: 3.2vh;
+                width: 3.2vh;
+            }
+        }
+
+        // Six rows or more (up to nine: eight players' lies and the truth): fold them smaller still.
+        &.many-rows .row.past,
+        &.many-rows .srow.past {
+            padding: 0.3vh 2vh;
+            margin-bottom: 0.5vh;
+
+            .text {
+                font-size: 2.5vh;
+            }
+
+            .who {
+                font-size: 2.1vh;
+            }
+
+            .player img {
+                height: 2.8vh;
+                width: 2.8vh;
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // The staged reveal (games with bigReveal: true).
+    &.is-staged {
+        $green: hsl(141, 71%, 48%);
+        $red: hsl(348, 100%, 61%);
+
+        .game-main {
+            flex: 1 1 0;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .question {
+            font-size: 1.15rem;
+            line-height: 1.25;
+        }
+
+        .srow {
+            margin-bottom: 10px;
+            padding: 14px 14px 12px;
+            border: 3px solid transparent;
+            animation: stage-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+        }
+
+        .srow .text {
+            font-size: 1.9rem;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+
+        .srow .who {
+            display: block;
+            font-size: 1.15rem;
+            // Room for both beats from the start, so the row does not jump as they arrive.
+            min-height: 5.2rem;
+        }
+
+        .srow .pickers,
+        .srow .writer {
+            visibility: hidden;
+            min-height: 2.4rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .srow .pickers.shown {
+            visibility: visible;
+            animation: pop 0.3s ease-out;
+        }
+
+        .srow .writer.shown {
+            visibility: visible;
+            animation: slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+        }
+
+        .srow .label {
+            margin: 0 6px 0 0;
+        }
+
+        .srow .player {
+            margin: 0 8px 0 0;
+        }
+
+        .srow .player img {
+            height: 2.2rem;
+            width: 2.2rem;
+            margin: 0 4px 0 0;
+        }
+
+        .srow .points {
+            font-size: 1.5rem;
+            margin: 0 4px;
+        }
+
+        .srow .tag-house {
+            font-size: 1.2rem;
+        }
+
+        .srow.house {
+            border-color: $red;
+        }
+
+        // The truth: larger, and green from the moment it lands.
+        .srow.truth {
+            border-color: $green;
+            background: hsl(141, 60%, 95%);
+            animation: truth-in 0.5s cubic-bezier(0.2, 1.5, 0.4, 1);
+        }
+
+        .srow.truth .text {
+            font-size: 2.3rem;
+        }
+
+        .srow.truth .who {
+            min-height: 0;
+        }
+
+        .truth-label {
+            color: $green;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .truth-intro {
+            text-align: center;
+            font-size: 2.2rem;
+            line-height: 1.15;
+            padding: 1.6rem 0.5rem;
+            animation: drum 0.6s ease-in-out infinite alternate;
+        }
+
+        // An earlier row, folded to one line: the answer, then who wrote it and the points.
+        .srow.past {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 12px;
+            margin-bottom: 6px;
+            animation: none;
+
+            .text {
+                flex: 1 1 auto;
+                min-width: 0;
+                font-size: 1.05rem;
+                margin-bottom: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .who {
+                display: flex;
+                flex: 0 0 auto;
+                flex-wrap: nowrap;
+                min-height: 0;
+                font-size: 0.9rem;
+                margin: 0 0 0 8px;
+            }
+
+            .pickers {
+                display: none;
+            }
+
+            .writer,
+            .writer.shown {
+                min-height: 0;
+                margin-bottom: 0;
+                animation: none;
+            }
+
+            .label {
+                display: none;
+            }
+
+            .player {
+                margin: 0;
+            }
+
+            .player img {
+                height: 1.5rem;
+                width: 1.5rem;
+            }
+
+            .points,
+            .tag-house {
+                font-size: 1rem;
+            }
+        }
+
+        .after {
+            animation: stage-in 0.35s ease-out;
+        }
+
+        .my-result {
+            font-size: 1.3rem;
+            line-height: 1.25;
+            text-align: center;
+            margin: 6px 0 12px;
+        }
+
+        // The scores: each row sits at its place by a transform, so a change of order is a slide.
+        .scores {
+            position: relative;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
+        }
+
+        .score-row {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2.4em;
+            display: flex;
+            align-items: center;
+            padding: 0 0.7em;
+            border-radius: 6px;
+            background: white;
+            box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1);
+            transition: transform 0.7s cubic-bezier(0.3, 1.3, 0.5, 1);
+        }
+
+        .score-row.me {
+            box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 2px #db7151;
+        }
+
+        .score-row.climbed {
+            z-index: 1;
+        }
+
+        .score-row .place {
+            width: 1.3em;
+            opacity: 0.6;
+        }
+
+        .score-row .picture {
+            height: 1.8em;
+            width: 1.8em;
+            margin: 0 0.5em 0 0;
+        }
+
+        .score-row .name {
+            flex: 1 1 auto;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .score-row .change {
+            color: $green;
+            margin: 0 0.7em;
+            animation: slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+        }
+
+        .score-row .change.negative {
+            color: $red;
+        }
+
+        .score-row .total {
+            min-width: 3em;
+            text-align: right;
+        }
+
+        // Hebrew: the stage reads right to left; flex rows follow, the few fixed margins are mirrored.
+        .stage.rtl {
+            .srow .label,
+            .srow .player {
+                margin: 0 0 0 8px;
+            }
+
+            .srow .player img,
+            .score-row .picture {
+                margin: 0 0 0 0.4em;
+            }
+
+            .srow.past .who {
+                margin: 0 8px 0 0;
+            }
+
+            .score-row .total {
+                text-align: left;
+            }
+        }
+
+        .flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            color: white;
+            background: rgba(219, 113, 81, 0.96);
+            pointer-events: none;
+            animation: flash-in 0.3s cubic-bezier(0.2, 1.5, 0.4, 1);
+        }
+
+        .flash-text {
+            font-size: 3rem;
+            line-height: 1.1;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .flash-points {
+            font-size: 4rem;
+            margin-top: 12px;
+        }
+    }
+
+    // On a phone NEXT (and "Waiting for …" after it) stays at the bottom edge of the scrolled area: on a
+    // short phone with many players the scores run below the edge, and the table must not have to
+    // scroll to move on. The scores pass under it.
+    &.is-staged:not(.is-presenter) {
+        .after .next,
+        .after .waiting {
+            position: -webkit-sticky;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            box-shadow: 0 0 0 6px white, 0 -12px 10px 4px rgba(255, 255, 255, 0.9);
+        }
+
+        .after .waiting {
+            background: white;
+            padding: 6px 0;
+        }
+    }
+
+    // Phones and screens that ask for less motion: no full-screen flash (the same words are in the
+    // player's own result at the end), and nothing in the staged reveal pops, slams or slides.
+    @media (prefers-reduced-motion: reduce) {
+        &.is-staged {
+            .flash {
+                display: none;
+            }
+
+            .srow,
+            .srow.truth,
+            .srow .pickers.shown,
+            .srow .writer.shown,
+            .truth-intro,
+            .after,
+            .score-row .change {
+                animation: none;
+            }
+
+            .score-row {
+                transition: none;
+            }
+        }
+    }
+
+    // The staged reveal on a big screen: the rows as above (sizes by the screen's height), and at the
+    // end the rows on one side and the scores on the other, so that all of it fits without scrolling.
+    &.is-staged.is-presenter {
+        .game-main {
+            overflow: hidden;
+        }
+
+        .srow .text {
+            font-size: 5vh;
+            margin-bottom: 1vh;
+        }
+
+        .srow.truth .text {
+            font-size: 5.6vh;
+        }
+
+        .srow .who {
+            display: flex;
+            font-size: 3vh;
+            min-height: 5vh;
+        }
+
+        .srow .pickers,
+        .srow .writer {
+            min-height: 5vh;
+            margin-bottom: 0;
+        }
+
+        .srow .player img {
+            height: 4.4vh;
+            width: 4.4vh;
+        }
+
+        .srow .points {
+            font-size: 3.6vh;
+        }
+
+        .srow .tag-house {
+            font-size: 3vh;
+        }
+
+        .truth-label {
+            font-size: 2.4vh;
+            margin-bottom: 0.4vh;
+        }
+
+        .truth-intro {
+            font-size: 7vh;
+            padding: 4vh 0;
+        }
+
+        .srow.past {
+            padding: 0.5vh 2vh;
+            margin-bottom: 0.6vh;
+
+            .text {
+                font-size: 2.9vh;
+            }
+
+            .who {
+                display: flex;
+                font-size: 2.4vh;
+                min-height: 0;
+            }
+
+            .writer,
+            .writer.shown {
+                min-height: 0;
+            }
+
+            .player img {
+                height: 3.2vh;
+                width: 3.2vh;
+            }
+
+            .points,
+            .tag-house {
+                font-size: 2.6vh;
+            }
+        }
+
+        &.many-rows .srow.past {
+            padding: 0.3vh 2vh;
+            margin-bottom: 0.5vh;
+
+            .text {
+                font-size: 2.5vh;
+            }
+
+            .player img {
+                height: 2.8vh;
+                width: 2.8vh;
+            }
+        }
+
+        .stage.done .stage-body {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .stage.done .rows {
+            flex: 1 1 55%;
+            min-width: 0;
+        }
+
+        .stage.done .after {
+            flex: 1 1 45%;
+            min-width: 0;
+            margin: 0 0 0 2vw;
+        }
+
+        .stage.rtl.done .after {
+            margin: 0 2vw 0 0;
+        }
+
+        .scores {
+            font-size: 2.5vh;
+            margin-bottom: 1vh;
         }
     }
 }
@@ -153,6 +729,64 @@
     from {
         opacity: 0;
         transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes stage-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes truth-in {
+    from {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes slam {
+    from {
+        opacity: 0;
+        transform: scale(1.6);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes drum {
+    from {
+        transform: scale(0.96);
+    }
+
+    to {
+        transform: scale(1.04);
+    }
+}
+
+@keyframes flash-in {
+    from {
+        opacity: 0;
+        transform: scale(0.6);
     }
 
     to {

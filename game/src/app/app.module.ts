@@ -37,6 +37,7 @@ import { WaitingRowComponent } from './components/waiting-row/waiting-row.compon
 import { ShareService } from './services/share.service';
 import { ResultsCardService } from './services/results-card.service';
 import { CrewService } from './services/crew.service';
+import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
 import { StepComponent } from './pages/step/step.component';
 
@@ -85,6 +86,7 @@ import { StepComponent } from './pages/step/step.component';
         ShareService,
         ResultsCardService,
         CrewService,
+        SoundService,
     ],
     bootstrap: [AppComponent]
 })

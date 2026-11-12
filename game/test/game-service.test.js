@@ -65,10 +65,15 @@ function phone() {
             return Promise.resolve({ state: state && { id: state.id, timestamp: 1, deadline: 1 }, now: 100000 });
         },
         tickFrom(pin) { ticks.push(pin.toUpperCase()); },
+        // Whether a game plays the staged reveal, asked on the scoreboard step (game-service-scoreboard.test.js).
+        isStagedReveal: () => Promise.resolve(false),
     };
     const router = {
+        // The scoreboard step reads the address the phone is on (game-service-scoreboard.test.js).
+        url: '/',
         navigate: (parts, extras) => {
             pages.push(parts.join('/') + (extras && extras.skipLocationChange ? ' (unseen)' : ''));
+            router.url = '/' + parts.join('/');
             return Promise.resolve(true);
         },
     };
@@ -225,6 +230,8 @@ test('a phone that follows the game step by step is sent to each page once, neve
         p.step('AAAA', GameState.ShowAnswers);
         p.step('AAAA', GameState.RevealTheTruth);
         p.step('AAAA', GameState.ScoreBoard);
+        // The scoreboard page waits on whether the game plays the staged reveal.
+        await settle();
     }
     p.step('AAAA', GameState.ScoreBoardFinal);
     await settle();

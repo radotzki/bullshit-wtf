@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameState } from '../../game-model';
+import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
@@ -31,6 +32,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     past: number;
     timer;
     sound: Howl;
+    private phoneTickStopped = false;
     panic: boolean;
 
     constructor(
@@ -38,6 +40,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         private gameService: GameService,
         private sessionService: SessionService,
         private apiService: ApiService,
+        private soundService: SoundService,
     ) { }
 
     ngOnInit() {
@@ -61,6 +64,8 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.stopMusic();
+        this.phoneTickStopped = true;
+        this.soundService.stop('time-warning');
         if (this.timer) {
             clearInterval(this.timer);
         }
@@ -103,6 +108,15 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     playTimeWarning() {
         this.playMusic(['/assets/sounds/time-warning.mp3']);
+
+        // Phones tick too in a staged-reveal game with no big screen (unless muted).
+        if (!this.presenter) {
+            this.apiService.phoneSound(this.pin).then(sound => {
+                if (sound && !this.phoneTickStopped) {
+                    this.soundService.play('time-warning');
+                }
+            });
+        }
     }
 
     playMusic(src: string[]) {

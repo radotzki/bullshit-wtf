@@ -658,6 +658,45 @@ best lie.
   hosting. Without the new functions or rules the screen still works, just without the lies.
 - No BigQuery change.
 
+## Staged reveal (a 50/50 test)
+
+Half of new games get a staged reveal; the other half keep the reveal as it was. Which half a game is
+in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it is
+independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`revealSchedule`,
+`stagedRevealTiming`), the page in `game/src/app/pages/reveal-the-truth`, its words in
+`game/src/app/pages/game-strings.ts`.
+
+- What a staged game shows: each row in three beats (the answer, who picked it, who wrote it, 2.4 s a
+  row on phones), earlier rows folded to one line, "And the truth is…", a "You fooled …" flash on
+  the writer's phone, then each player's result and the scores with every player's change. In the
+  game's language, like every game screen. There is no separate scoreboard: its phase lasts 0 ms and
+  the server leaves it in the same run.
+- Sound on phones, staged games only, and only when the game has no big screen: the stings and
+  the clock tick that a big screen plays. A mute button in the header, remembered on the phone
+  (`BS_MUTED`). An iPhone in silent mode stays silent and iPhone browsers do not vibrate.
+- Only a game made by a client that asks for it (`stagedReveal: true` on `newGame`, `fork`,
+  `crewRematch`) is in the test. So the usual order, functions first and the site after, is safe: until
+  the site is live no phone asks, no game is flagged, and every game plays as before. A game already
+  in play at the release has no flag and keeps its timing. A phone still on the old site inside a
+  staged game shows today's faster rows, waits for the longer phase to end, and passes through the
+  scoreboard page in a blink; its game is never held up.
+- How phones learn it: the server keeps `games/$pin/bigReveal` (`true` staged, `false` the other half,
+  absent for a game outside the test), which phones cannot read, and writes `staged: true` on every
+  `games/$pin/state` of a staged game, from the lobby on. Phones already read the state.
+- Deploy: functions, then hosting. **No rules change and no BigQuery change.**
+- Reading the test: no column. The half is worked out from the PIN in any table that has it:
+  `MOD(TO_CODE_POINTS(SHA256(CONCAT('big-reveal:', UPPER(id))))[OFFSET(0)], 2) = 1` is the staged
+  half. `functions/bigquery/2026-11-big-reveal.sql` holds the read queries: players still picking on
+  the last question, and rematches per game, by half. Read from the time the site went live. The PIN
+  cannot say whether a game was in the test: a game made from a tab left open since before the
+  release plays the reveal as it was whatever its PIN.
+- Mute taps are counted in the `shares` table as `content_type = 'sound'`, `method` `mute` or
+  `unmute`. They are not shares: leave them out of share counts.
+- Big screen, both halves: sizes on the reveal follow the screen's height, earlier rows fold to one
+  line and the page follows the newest row, so the truth is on screen at 1280x720 and 1920x1080.
+- To end the test: make `drawBigReveal` return `true` (everyone staged) or `undefined` (nobody), and
+  deploy the functions. No client change is needed either way.
+
 ## Test games (play-tests that do not count as players)
 
 Every play-test on the live site must start from a test link, so that its rows mark themselves and

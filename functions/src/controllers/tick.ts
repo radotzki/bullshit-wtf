@@ -1,7 +1,7 @@
 import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
 import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, highlightsStart } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
-import { tickAllowed, stateKey, withDeadline } from './phase';
+import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
 import { pickHouseLies } from './answer-options';
 import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
@@ -10,6 +10,11 @@ import { playedUpdate } from './seats';
 import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTaste } from './taste';
 import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
+
+// How long a run waits before its second try at leaving a phase of no length.
+const leaveRetryDelay = 1000;
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
 export async function tick(pin) {
@@ -28,25 +33,46 @@ export async function tick(pin) {
  * Move the game on from the phase `from`, exactly once.
  * Safe to call from the server timer, a client tick and the "everyone answered" checks at the same time:
  * whoever claims the lock for this phase first does the work, everyone else is a no-op.
+ * A phase that was moved stays taken for the rest of the game (see takePhase), so a caller that is
+ * late for it finds nothing to do.
  */
-export async function advance(pin: string, from: GameStateInfo) {
+export async function advance(pin: string, from: GameStateInfo, retryAfter = leaveRetryDelay) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    let game = await get<GameScheme>(gamesRef.child(pin));
 
-    if (!game || !game.state || stateKey(game.state) !== stateKey(from)) {
+    if (!onPhase(game, from)) {
         console.log(`[PIN: ${pin}] State already moved on from ${stateKey(from)}`);
+        return;
+    }
+
+    const phase = phaseKey(game);
+
+    if (!(await takePhase(pin, phase))) {
+        console.log(`[PIN: ${pin}] The move on from ${stateKey(from)} is taken`);
         return;
     }
 
     if (!(await claim(pin, stateKey(from)))) {
         console.log(`[PIN: ${pin}] Another caller is advancing from ${stateKey(from)}`);
+        await freePhase(pin, phase).catch(err => console.error(`[PIN: ${pin}] Failed to free ${phase}`, err));
+        return;
+    }
+
+    // The step works on the game as it is now that the phase is this run's, not as it was read before:
+    // if the game has left the phase meanwhile, there is nothing to do, and the phase stays taken.
+    game = await get<GameScheme>(gamesRef.child(pin));
+
+    if (!onPhase(game, from)) {
+        console.log(`[PIN: ${pin}] State moved on from ${stateKey(from)} before this run took it`);
         return;
     }
 
     console.log(`[PIN: ${pin}] Advancing from state ${game.state.id}`);
 
+    let update: Partial<GameScheme> | undefined;
+
     try {
-        const update = await nextUpdate(pin, game);
+        update = await nextUpdate(pin, game);
 
         if (!update) {
             return;
@@ -56,14 +82,76 @@ export async function advance(pin: string, from: GameStateInfo) {
             update.state = withDeadline(update.state, Object.assign({}, game, update));
         }
 
-        return await updateGame(pin, update);
+        await updateGame(pin, update);
     } catch (e) {
         // The phase was claimed but the game did not move. Give the phase back, so the next caller
         // (the timer's second try, a phone's own timer, the last answer) can move it on.
         console.error(`[PIN: ${pin}] Failed to advance from ${stateKey(from)}`, e);
         await release(pin, stateKey(from)).catch(err => console.error(`[PIN: ${pin}] Failed to release ${stateKey(from)}`, err));
+        // The lock first, then the phase: the next caller takes them in the other order.
+        await freePhase(pin, phase).catch(err => console.error(`[PIN: ${pin}] Failed to free ${phase}`, err));
         throw e;
     }
+
+    // A phase of no length (the scoreboard of a staged-reveal game) is left in this same run, so the
+    // next question does not wait for the phase timer's own function to start. That timer fires too,
+    // and finds the phase already claimed.
+    // Outside the try above: this game did move on from `from`, whatever happens to the next step.
+    if (endsAtOnce(update.state)) {
+        return leaveAtOnce(pin, update.state, retryAfter);
+    }
+}
+
+/**
+ * Leave a phase of no length. The phase timer that fires for it may already have found the phase
+ * claimed by this run and gone, so if moving on fails here, this run tries once more itself. A second
+ * failure is logged and not passed on (the caller's own step succeeded); a phone's timer then moves
+ * the game on, as it would for any phase.
+ */
+async function leaveAtOnce(pin: string, state: GameStateInfo, retryAfter: number) {
+    try {
+        return await advance(pin, state, retryAfter);
+    } catch (e) {
+        console.error(`[PIN: ${pin}] Failed to leave ${stateKey(state)} at once, trying once more`, e);
+    }
+
+    await sleep(retryAfter);
+
+    try {
+        return await advance(pin, state, retryAfter);
+    } catch (e) {
+        console.error(`[PIN: ${pin}] Failed again to leave ${stateKey(state)}; left to the phones' timers`, e);
+    }
+}
+
+function onPhase(game: GameScheme | null | undefined, phase: GameStateInfo): boolean {
+    return !!game && !!game.state && stateKey(game.state) === stateKey(phase);
+}
+
+/** Names one occurrence of a phase for the whole game: the phase's key and the question it belongs to. */
+function phaseKey(game: GameScheme): string {
+    return `${stateKey(game.state)}:q${game.questionIndex || 0}`;
+}
+
+/**
+ * games/{pin}/advanceTaken holds one entry for each phase whose move is taken or done. The lock below
+ * remembers only the phase claimed last; an entry here is that phase's own and stays, so taking one
+ * phase never undoes another's. Only the run that took a phase and could not move it frees it.
+ */
+function takePhase(pin: string, phase: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('advanceTaken').child(phase).transaction(
+            // The database client first runs this on what it holds locally, which is nothing (null) here.
+            // If the server holds an entry, this runs again on that, and stops.
+            current => current === null ? true : undefined,
+            (error, committed) => error ? reject(error) : resolve(committed),
+            false,
+        );
+    });
+}
+
+function freePhase(pin: string, phase: string): Promise<void> {
+    return gamesRef.child(pin).child('advanceTaken').child(phase).set(null);
 }
 
 function claim(pin: string, key: string): Promise<boolean> {
@@ -180,7 +268,7 @@ function updateState(stateId: number): GameStateInfo {
 }
 
 function updateGame(pin: string, update: Partial<GameScheme>) {
-    // Return the write so the function waits for it before finishing.
+    // Returned so the caller waits for the write before finishing.
     return gamesRef.child(pin).update(update);
 }
 
