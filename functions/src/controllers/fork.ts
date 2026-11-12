@@ -3,6 +3,7 @@ import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
+import { replayLength } from './taste';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = 10 * 1000;
@@ -24,6 +25,11 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     const game = await get<GameScheme>(gamesRef.child(pin));
     const gameCounter = await incGameCounter();
     const forkedGamePin = generateGameName(gameCounter);
+
+    // A Replay of a taste (a game played alone, see taste.ts) is a whole game, of the length its host chose.
+    if (game) {
+        game.totalQ = replayLength(game);
+    }
 
     const claimed = await claimFork(pin, forkedGamePin);
     if (claimed && claimed !== forkedGamePin) {

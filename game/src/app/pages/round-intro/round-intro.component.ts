@@ -6,6 +6,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Howl } from 'howler';
 import { gameStrings, GameStrings } from './../game-strings';
 import { isFinalQuestion, standing, gapLine, Standing } from './final-question';
+import { tasteStrings, TasteStrings } from './../taste-strings';
+import { TASTE_QUESTIONS } from './../../game-model';
 
 const roundPoints = [
     { truth: 1000, bullshit: 500 },
@@ -23,6 +25,12 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
     presenter: boolean;
     points: { truth?: number, bullshit?: number } = {};
     t: GameStrings = gameStrings('en');
+    /** A taste (a game started alone): nobody writes a lie, so the card says so and drops that line. */
+    taste = false;
+    /** The taste's first card: what the five questions are. */
+    tasteIntro = false;
+    tasteWords: TasteStrings = tasteStrings('en');
+    tasteQuestions = TASTE_QUESTIONS;
     /** Everything this card shows has been read: until then its middle stays empty. */
     ready = false;
     /** The question that follows is the game's last. */
@@ -41,8 +49,8 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
-        this.t = gameStrings(this.apiService.knownGameLocale(this.pin));
-        this.apiService.getGameLocale(this.pin).then(locale => this.t = gameStrings(locale), () => null);
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
 
         // A number that cannot be read is null: the card then shows less, never a wrong or missing number.
         const orNull = <T>(reading: Promise<T>): Promise<T> => Promise.resolve(reading).then(v => v, () => null);
@@ -53,8 +61,11 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
             orNull(this.apiService.getRoundIndex(this.pin)),
             orNull(this.apiService.getQuestionIndex(this.pin)),
             orNull(this.apiService.getTotalQuestions(this.pin)),
-        ]).then(([roundIndex, questionIndex, totalQ]) => {
+            orNull(this.apiService.getTaste(this.pin)),
+        ]).then(([roundIndex, questionIndex, totalQ, taste]) => {
             this.points = roundPoints[roundIndex] || {};
+            this.taste = !!taste;
+            this.tasteIntro = !!taste && questionIndex === 0;
 
             if (!isFinalQuestion(questionIndex, totalQ)) {
                 this.ready = true;
@@ -75,6 +86,11 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
         if (this.sound) {
             this.sound.stop();
         }
+    }
+
+    private useLocale(locale: string) {
+        this.t = gameStrings(locale);
+        this.tasteWords = tasteStrings(locale);
     }
 
     /** The two points lines show only once the round's points are read, never with a missing number. */

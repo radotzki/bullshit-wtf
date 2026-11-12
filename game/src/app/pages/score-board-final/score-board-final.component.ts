@@ -7,7 +7,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
-import { Highlight, Highlights, finalPlaces } from './../../game-model';
+import { Highlight, Highlights, finalPlaces, Taste, TASTE_QUESTIONS } from './../../game-model';
+import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
 import { GameState } from './../../game-model';
@@ -39,6 +40,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     locale = 'en';
     t: FinalStrings = finalStrings.en;
     wholeGame: boolean;
+    /** The game was a taste (five pick-only questions for a host who started alone), or null. */
+    taste: Taste = null;
+    tasteWords: TasteStrings = tasteStrings('en');
     confetti = Array.from({ length: 28 }, (_, i) => i);
     sound: Howl;
     presenter: boolean;
@@ -84,10 +88,13 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.apiService.getHighlights(this.pin).catch(() => null),
             this.apiService.getHighlightsFrom(this.pin).catch(() => null),
             this.apiService.getGameLocale(this.pin).catch(() => 'en'),
-        ]).then(([resp, highlights, from, locale]) => {
+            this.apiService.getTaste(this.pin),
+        ]).then(([resp, highlights, from, locale, taste]: any[]) => {
             // The words are in the game's language from the first paint.
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];
+            this.tasteWords = tasteStrings(this.locale);
+            this.taste = taste || null;
             // "Nobody fell for their lies" only when every round was counted.
             this.wholeGame = from === 0;
             resp = resp || {};
@@ -249,7 +256,18 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         return this.locale === 'he';
     }
 
+    /**
+     * A player who played the taste alone: the screen counts the truths they found and asks them to
+     * bring friends, in place of a winner, REMATCH and a list of one.
+     */
+    get soloTaste(): boolean {
+        return !!this.taste && !this.presenter && !!this.displayPlayers && this.displayPlayers.length === 1;
+    }
+
     get headline() {
+        if (this.soloTaste) {
+            return this.tasteWords.found(this.taste.found, TASTE_QUESTIONS);
+        }
         if (this.winners.length === 1) {
             return this.t.wins(this.winners[0].nickname);
         }

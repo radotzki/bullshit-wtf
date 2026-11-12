@@ -63,8 +63,8 @@ export interface LobbyHostView {
     hostName: string | null;
     /**
      * This phone is the known host, with no big screen, and is the only player in the lobby.
-     * The lobby then puts the invite first and holds START back behind "Start alone anyway":
-     * a solo game has nobody to fool, and lone hosts who start alone rarely come back.
+     * The lobby then puts the invite first and holds START back behind a small link: a game alone
+     * has nobody to fool. The link starts the taste, five pick-only questions (see TASTE_QUESTIONS).
      */
     alone: boolean;
     /** The host joined but has not been seen for HOST_GONE_MS, so anyone may start: their name. */
@@ -145,7 +145,8 @@ const strings = {
         friendIn: (name: string) => `${name} is in! Press START when everyone is in`,
         alone: () => 'Bullshit needs friends: you score by fooling them',
         aloneSub: () => 'Send them the link. It takes them 10 seconds to join.',
-        startAlone: () => 'Start alone anyway',
+        // Starts the taste: the number is TASTE_QUESTIONS in game-model.
+        startAlone: () => 'Try 5 quick questions alone',
         count: (n: number) => n === 1 ? '1 player in' : `${n} players in`,
     },
     he: {
@@ -158,7 +159,7 @@ const strings = {
         friendIn: (name: string) => `${name} בפנים! לחצו על "מתחילים" כשכולם בפנים`,
         alone: () => 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו',
         aloneSub: () => 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.',
-        startAlone: () => 'להתחיל לבד בכל זאת',
+        startAlone: () => 'לנסות לבד 5 שאלות מהירות',
         count: (n: number) => n === 1 ? 'שחקן אחד במשחק' : `${n} שחקנים במשחק`,
     },
 };
@@ -169,9 +170,9 @@ export interface LobbyText {
     sub: string | null;
     count: string;
     rtl: boolean;
-    /** Invite-first lobby: the invite is inline, START waits behind the "start alone" link. */
+    /** Invite-first lobby: the invite is inline, START waits behind the link that starts the taste. */
     alone: boolean;
-    /** The small "start alone anyway" link's words. */
+    /** The words of the small link that starts the taste ("Try 5 quick questions alone"). */
     startAlone: string;
 }
 

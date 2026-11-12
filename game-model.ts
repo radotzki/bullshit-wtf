@@ -414,3 +414,38 @@ export function highlightsStart(previous: number | null | undefined, questionInd
 export function finalPlaces(scores: number[]): number[] {
     return scores.map(s => 1 + scores.filter(o => (o || 0) > (s || 0)).length);
 }
+
+/**
+ * The taste: what a host who starts alone gets in place of a whole game. Nobody would read a lie
+ * they wrote, so there is no writing: TASTE_QUESTIONS questions, each with the truth among
+ * TASTE_OPTIONS - 1 house lies, a score, and then an invitation to play with friends.
+ *
+ * A game is a taste when it leaves the lobby with one player and no big screen (see taste.ts in the
+ * functions). Phones learn it from the game's state, which every phone may read and only the server
+ * may write: every state of a taste carries `taste`, from the first round card to the final screen.
+ * A game of two or more players never carries it and plays exactly as before.
+ */
+export const TASTE_QUESTIONS = 5;
+export const TASTE_OPTIONS = 4;
+
+export interface Taste {
+    // Questions on which the truth was picked, so far.
+    found: number;
+    // The length the host chose for the game. A Replay of a taste is a whole game of this length.
+    length: number;
+}
+
+/** The game's state as a taste carries it. */
+export interface TasteState extends GameStateInfo {
+    taste?: Taste;
+}
+
+/** The taste a state carries, or null: for any game that is not one, and for anything unreadable. */
+export function tasteOf(state: any): Taste | null {
+    const taste = state && typeof state === 'object' ? state.taste : null;
+    if (!taste || typeof taste !== 'object') {
+        return null;
+    }
+    const count = (n: any) => typeof n === 'number' && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+    return { found: count(taste.found), length: count(taste.length) };
+}

@@ -7,6 +7,8 @@ import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
 import { playedUpdate } from './seats';
+import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTaste } from './taste';
+import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
 
 /** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
@@ -88,15 +90,45 @@ function release(pin: string, key: string): Promise<boolean> {
     });
 }
 
+/**
+ * The game's next step. A taste (a game that left the lobby with one player and no big screen, see
+ * taste.ts) carries its mark on every state from here on; no other game's step is touched.
+ */
 async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameScheme> | undefined> {
+    const taste = game.state.id === GameState.GameStaging
+        ? (startsAsTaste(game) ? newTaste(game) : null)
+        : gameTaste(game);
+    const update = await stepUpdate(pin, game, !!taste);
+
+    if (taste && update && update.state) {
+        update.state = withTaste(update.state, nextTaste(taste, update));
+    }
+
+    return update;
+}
+
+async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promise<Partial<GameScheme> | undefined> {
     switch (game.state.id) {
         case GameState.GameStaging:
+            if (taste) {
+                // A host who starts alone: five questions, whatever length was chosen for the table.
+                return {
+                    state: updateState(GameState.RoundIntro),
+                    totalQ: TASTE_QUESTIONS,
+                    qids: await pickQuestionsForRoom(Object.assign({}, game, { totalQ: TASTE_QUESTIONS })),
+                };
+            }
+
             return {
                 state: updateState(GameState.RoundIntro),
                 qids: await pickQuestionsForRoom(game),
             };
 
         case GameState.RoundIntro:
+            if (taste) {
+                return tasteQuestion(pin, game, game.questionIndex);
+            }
+
             return {
                 state: updateState(GameState.ShowQuestion),
                 currentQ: await populateQuestion(game, game.questionIndex),
@@ -224,6 +256,30 @@ async function populateFakeAnswers(pin: string, game: GameScheme) {
     return res;
 }
 
+/**
+ * A taste's question: nothing is written, so the game goes straight to the answers, the truth among
+ * the house lies. Nobody reads the old picks here: the picks node is emptied with the same write.
+ */
+async function tasteQuestion(pin: string, game: GameScheme, qidx: number): Promise<Partial<GameScheme>> {
+    const question = await getQuestion(game.qids[qidx]);
+    const answers: Answers = {
+        truth: { text: question.realAnswer, houseLie: false, realAnswer: true },
+    };
+
+    tasteHouseLies(cleanHouseLies(question.id, question.fakeAnswers), question.realAnswer).forEach(text => {
+        answers[gamesRef.child(pin).child('answers').push().key] = { text, houseLie: true, realAnswer: false };
+    });
+
+    return {
+        state: updateState(GameState.ShowAnswers),
+        currentQ: await populateQuestion(game, qidx),
+        ideas: null,
+        answers,
+        answerSelections: {},
+        revealAnswers: null,
+    };
+}
+
 async function getRealAnswer(game: GameScheme) {
     const question = await getQuestion(game.qids[game.questionIndex]);
     const text = question.realAnswer;
@@ -285,6 +341,8 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             revealAnswers: null,
             ideas: null,
         };
+    } else if (gameTaste(game)) {
+        res = Object.assign({ questionIndex: game.questionIndex + 1 }, await tasteQuestion(pin, game, game.questionIndex + 1));
     } else {
         res = {
             state: updateState(GameState.ShowQuestion),
