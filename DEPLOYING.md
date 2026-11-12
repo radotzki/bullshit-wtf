@@ -709,3 +709,57 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Server errors in Sentry
+
+The functions report their unexpected errors to the same Sentry project as the site (`bullshit`;
+the dev Google project reports to `bullshit-dev`). The code is `functions/src/report.ts`: a small
+sender of our own, not the Sentry library, so nothing is added to a function's start.
+
+**How to find them.** In Sentry, search `side:server`. Every report carries these tags:
+
+- `side`: always `server` (the site's reports have no such tag).
+- `function`: the function's name, e.g. `tick`, `join`, `phaseTimer`.
+- `test`: `yes` for a test game (see "Test games"), `no`, or `unknown` when there is no game to
+  ask or its mark could not be read in 0.3 s. Leave tests out with `side:server !test:yes`.
+- `pin`: the game's PIN, when the function works on one.
+- `code`: the error's own code, when it has one (a database refusal, for instance).
+
+The release is the commit the functions were built from (`functions/dist/release.json`, written
+by `npm run build`), so `side:server release:<commit>` shows what a release broke. After a release,
+look for `side:server firstSeen:-1h`.
+
+**What is reported.**
+
+- An error that reaches a function's edge: the `catch` of an HTTP function, or a trigger that fails.
+- An error a step logs with `console.error` and swallows, so the game plays on (a score that could
+  not be counted, a usage row BigQuery refused). With an Error in the line, that error; without one,
+  the line's first words alone. So a new `console.error` in the functions is a report in Sentry:
+  use `console.log` or `console.warn` for anything that is no fault.
+- Not reported: an answer a function gives on purpose. The controllers reject with a plain
+  `{ message, code }` for those ("Sorry, game is full"); keep to that form for a new one.
+
+**What is never in a report.** No request body or headers, no nickname, no answer text, no player,
+browser or host id, no address. A report holds the tags above, the error's type, its message and
+the stack's file names and line numbers (of the compiled files in `dist`). The message is cleaned
+first: everything the request carried is cut out of it, and so are quoted text that is not a plain
+name or path, letters outside ASCII, and email and network addresses.
+
+**It cannot fail or hold a game.** A report is sent once and given up after 1 second; a failed send
+is dropped. A function waits for a report that is on its way before it ends, so the report is not
+lost; with no fault there is nothing to wait for. After two failed sends in a row, or when Sentry
+says to slow down, sending rests (10 minutes, or as long as Sentry says, an hour at most).
+
+**The cap.** Each running copy of a function sends one fault at most twice an hour, 10 reports an
+hour in all and 50 in its life; the next report says how many were held back. The cap is per copy:
+there is no count across copies, since that would need a shared counter in the database. Sentry's
+own quota is the last stop: past it, Sentry drops events and does not bill, unless a pay-as-you-go
+budget has been set in Sentry.
+
+**Locally and in tests.** An emulator sends nothing: it writes each report to the functions log as
+one line starting `server error report (local, not sent)`. `npm test` sends nothing either
+(`functions/test/report.test.js`; `PRINT_REPORTS=1 node --test test/report.test.js` prints them).
+Only the two Google projects named in `report.ts` send at all.
+
+**Known gaps.** A crash outside any request (while a function loads) is not reported. A report that
+was logged first says `handled: true` even if the error then failed the function.
