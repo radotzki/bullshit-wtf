@@ -139,6 +139,16 @@ async function write(pin, pid, value) {
     await onAnswerSelection(pin);
 }
 
+/**
+ * The players, to compare between two games: without the waiting row's mark (players/<pid>/sent, see
+ * sent.ts). The mark holds the phase's start time, which no two games share, and nothing reads it.
+ */
+function seats(pin) {
+    const players = clone(game(pin).players);
+    Object.keys(players).forEach(pid => delete players[pid].sent);
+    return players;
+}
+
 const strays = {
     ghost: q => ({ text: `truth${q}` }),
     constructor: q => ({ text: `p1 lie ${q}` }),
@@ -167,13 +177,13 @@ async function wholeGame(bigReveal, stray, eachReveal, afterReveal) {
         await write(pin, 'p3', { text: house });
         assert.strictEqual(state(pin), S.RevealTheTruth, 'the last real pick ends it');
 
-        const before = clone(game(pin).players);
+        const before = seats(pin);
         reveals.push({ rows: clone(game(pin).revealAnswers), before, shape: shape(game(pin).revealAnswers) });
         if (eachReveal) eachReveal(pin, q, before);
         // A stray pick written during the reveal counts for nothing either.
         if (stray) await write(pin, 'ghost', { text: `truth${q}`, score: 5000 });
         await (afterReveal ? afterReveal(pin, q) : next(pin));
-        reveals[q].after = clone(game(pin).players);
+        reveals[q].after = seats(pin);
     }
     await until(pin, S.ScoreBoardFinal);
     const scores = {};
