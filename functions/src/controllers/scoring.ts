@@ -12,6 +12,7 @@
  */
 import { GameScheme, Answers, AnswerSelections, GamePlayers, RevealAnswer } from '../game-model';
 import { houseLiePoints } from './house-lie';
+import { isSamePick } from './same-pick';
 
 export const pointsForCorrectAnswer = [1000, 1500, 2000];
 export const pointsForBullshitting = [500, 750, 1000];
@@ -54,7 +55,7 @@ export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
 
         const lie = ownLie(game, pid);
 
-        if (lie && lie.text === pick.text) {
+        if (lie && isSamePick(lie.text, pick.text)) {
             return;
         }
 
@@ -84,7 +85,7 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
     const picksArray = Object.keys(answerSelections).map(k => ({ pid: k, text: answerSelections[k].text }));
 
     picksArray.forEach(pick => {
-        const relatedAnswers = answersArray.filter(answer => answer.text === pick.text);
+        const relatedAnswers = answersArray.filter(answer => isSamePick(answer.text, pick.text));
 
         if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
             answerSelections[pick.pid].score = pointsForCorrectAnswer[game.roundIndex];
@@ -101,7 +102,7 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
 
     // A house lie only takes back points the player has: it never pushes a score below zero.
     picksArray.forEach(pick => {
-        const relatedAnswers = answersArray.filter(answer => answer.text === pick.text);
+        const relatedAnswers = answersArray.filter(answer => isSamePick(answer.text, pick.text));
 
         if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
             const lie = ownLie({ answers }, pick.pid);
@@ -122,7 +123,7 @@ function revealRows(answers: Answers, answerSelections: AnswerSelections): Revea
     const revealAnswers: RevealAnswer[] = [];
 
     answersArray.forEach(answer => {
-        const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
+        const answerSelection = answerSelectionsArray.filter(a => isSamePick(answer.text, a.text));
         const selectors = answerSelection.map(a => a.pid);
         const text = answer.text;
         const realAnswer = answer.realAnswer;
