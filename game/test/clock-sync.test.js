@@ -85,3 +85,64 @@ test('a measured offset of 0 is kept as 0 for every caller', async () => {
     assert.strictEqual(await offset(null), 0);
     assert.strictEqual(await offset(), 0);
 });
+
+// A request that never settles: no answer and no error, ever.
+const never = () => new Promise(() => {});
+function later(ms, value) {
+    return new Promise(resolve => setTimeout(() => resolve(value), ms));
+}
+
+test('a call that never settles counts as failed after the timeout, and the next call asks again', async () => {
+    let calls = 0;
+    const errors = [];
+    const answers = [never, () => Promise.resolve(-800)];
+    const offset = clockSync(() => answers[calls++](), err => errors.push(err.message), 20);
+
+    // The countdown gets the phone's own clock, the lobby gets "unknown": neither waits for good.
+    assert.deepStrictEqual(await Promise.all([offset(), offset(null)]), [0, null]);
+    assert.strictEqual(errors.length, 1);
+    assert.match(errors[0], /timed out/);
+
+    assert.strictEqual(await offset(null), -800);
+    assert.strictEqual(await offset(), -800);
+    assert.strictEqual(calls, 2);
+});
+
+test('an answer that arrives after the timeout never replaces a newer one', async () => {
+    let calls = 0;
+    const answers = [() => later(60, 111111), () => Promise.resolve(222)];
+    const offset = clockSync(() => answers[calls++](), undefined, 20);
+
+    assert.strictEqual(await offset(null), null);
+    assert.strictEqual(await offset(null), 222);
+    await later(80);
+    assert.strictEqual(await offset(null), 222);
+    assert.strictEqual(calls, 2);
+});
+
+test('the default timeout is a few seconds', async () => {
+    const { CLOCK_TIMEOUT_MS } = load();
+    assert.ok(CLOCK_TIMEOUT_MS >= 3000 && CLOCK_TIMEOUT_MS <= 15000, String(CLOCK_TIMEOUT_MS));
+});
+
+test('no timer outlives a call, answered or failed', async () => {
+    const realSet = global.setTimeout;
+    const realClear = global.clearTimeout;
+    const live = new Set();
+    global.setTimeout = (fn, ms) => {
+        const t = realSet(() => { live.delete(t); fn(); }, ms);
+        live.add(t);
+        return t;
+    };
+    global.clearTimeout = t => { live.delete(t); realClear(t); };
+    try {
+        const good = clockSync(() => Promise.resolve(5));
+        assert.strictEqual(await good(), 5);
+        const bad = clockSync(() => Promise.reject(new Error('offline')));
+        assert.strictEqual(await bad(), 0);
+        assert.strictEqual(live.size, 0);
+    } finally {
+        global.setTimeout = realSet;
+        global.clearTimeout = realClear;
+    }
+});

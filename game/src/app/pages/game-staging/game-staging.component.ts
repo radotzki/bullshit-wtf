@@ -48,6 +48,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private hostSeen: number = null;
     private clockAhead: number = null;
     private askingClock = false;
+    /** The lobby was left: a clock answer that arrives later changes nothing. */
+    private left = false;
     private clockAskedAt: number = null;
     private hostSeenSubscriber: Subscription;
     private pingTimer: any;
@@ -114,8 +116,12 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         }
         this.askingClock = true;
         this.clockAskedAt = Date.now();
+        // clockAhead() always settles: a hung request counts as failed after CLOCK_TIMEOUT_MS (clock-sync.ts).
         this.apiService.clockAhead().then(ahead => {
             this.askingClock = false;
+            if (this.left) {
+                return;
+            }
             this.clockAhead = typeof ahead === 'number' ? ahead : null;
             this.updateLobby();
         }).catch(() => {
@@ -204,6 +210,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.left = true;
         this.playersSubscriber.unsubscribe();
         clearTimeout(this.graceTimer);
         clearTimeout(this.toastTimer);
