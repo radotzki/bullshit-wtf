@@ -755,3 +755,109 @@ players were still played on the last question, and 28 of them had a rematch.
 Not readable yet: the share of games where first place changes on the last question. No table
 holds the scores before the last question, so that needs two numbers written by the server with
 the last question's row (who led before it, who won); it is not part of this change.
+
+## Server errors in Sentry
+
+The functions report their unexpected errors to the same Sentry project as the site (`bullshit`;
+the dev Google project reports to `bullshit-dev`). The code is `functions/src/report.ts`: a small
+sender of our own, not the Sentry library, so nothing is added to a function's start.
+
+**How to find them.** In Sentry, search `side:server`. Every report carries these tags:
+
+- `side`: always `server` (the site's reports have no such tag).
+- `function`: the function's name, e.g. `tick`, `join`, `phaseTimer`.
+- `test`: `yes` for a test game (see "Test games"), `no`, or `unknown` when there is no game to
+  ask or its mark could not be read in 0.3 s. Leave tests out with `side:server !test:yes`.
+- `pin`: the game's PIN, when the function works on one.
+- `code`: the error's own code, when it has one (a database refusal, for instance).
+
+After a release, look for `side:server firstSeen:-1h`.
+
+**The release name.** A report's release is the name of the functions' build, like
+`functions-5a3dea69b5bb`: `functions/write-release.js` writes it to `functions/dist/release.json`
+at the end of `npm run build`, and the build prints it. It is a fingerprint of the server's code
+(every built file in `dist`, `package.json` and `package-lock.json`), not the commit. So:
+
+- It changes when the server's code changes, and only then. Two releases with different server
+  code have different names; `side:server release:<name>` shows what one build broke.
+- A merge that changes only the site, a test or this guide builds the same name and the same
+  `release.json`. This is on purpose, and must stay so: the Firebase tool sends a function only
+  when the `functions` folder differs from what is live. A name that held the commit would
+  differ at every commit, and every release would replace all the functions under the games that
+  are running. Never write the commit, a date or anything else that changes from build to build
+  into the `functions` folder.
+- To find the commit behind a name: the "Install and build the functions" step of each deploy
+  run prints `write-release: this build of the functions is <name>`. The first run that prints
+  the name is the merge that brought that server code. Or build a commit yourself
+  (`npm ci && npm run build` in `functions`) and read the name.
+- The name follows the built files. A file under `functions` that is not built (a test, an SQL
+  file) does not change it, although the Firebase tool does send the functions again for it.
+
+**What is reported.**
+
+- An error that reaches a function's edge: the `catch` of an HTTP function, or a trigger that
+  fails. A trigger that fails is one report.
+- An error a step logs with `console.error` and swallows, so the game plays on (a score that could
+  not be counted, a usage row BigQuery refused). With an Error in the line, that error; without one,
+  the line's first words alone. So a new `console.error` in the functions is a report in Sentry:
+  use `console.log` or `console.warn` for anything that is no fault.
+- Only the functions' own lines count: a `console.error` written from a file of the build
+  (`functions/dist`). A line that Node writes (a deprecation warning), that the functions
+  framework writes (it prints a failed trigger's crash, and a request body it could not read) or
+  that a library under `node_modules` writes is no report.
+- Not reported: an answer a function gives on purpose. The controllers reject with a plain
+  `{ message, code }` for those ("Sorry, game is full"); keep to that form for a new one.
+- Not reported: the answer to a request the site never sends. That is anything but a POST; a
+  call to a function that works on a game without a PIN, or with a PIN that is not 2 to 12
+  letters and digits (a number, a PIN with a dot); a call to `crewRematch` without a crew id; a
+  `newGame` without a language; and a call about a PIN that no game has (a Replay of an unknown PIN, say). Such a request gets
+  exactly the answer it got before. For the last kind the reporter reads the game's `timestamp`
+  once, on the error path only; when that read fails or takes over 0.3 s, the fault is reported.
+  A trigger never asks this. `http()` in `report.ts` is told what each function works on
+  (`'game'`, `'crew'`, `'new'`): say so for a new function in `index.ts`.
+
+**What a report holds, and what it can hold.** A report holds the tags above, the release name,
+the error's type, its message and the stack's function names, file names and line numbers (of
+the compiled files in `dist`). The reporter never puts in the request's body or headers, a
+nickname, an answer's text, a browser or host id, or an address.
+
+The message is an error's own text, and it is cleaned before it is sent: what the request
+carried is cut out of it as it was typed, in lower and in upper case; so are two or more words in
+quotes, every letter outside ASCII (Hebrew), and email and IPv4 addresses. This is a filter, not
+a guarantee. What can pass it:
+
+- A player's database id (a push key like `-Nx1...`), inside a database path in an error's text.
+  An HTTP function cuts the id when the request carried it; a trigger's request carries nothing,
+  so there it stays. The id is a random key of one game, not a name.
+- One plain English word in an error's text, bare or in quotes.
+- A value the server holds in another form than it was typed (a nickname with its spaces
+  collapsed or cut short), or one nested inside the request's body.
+- A short IPv6 address; the server's own file paths in a logged stack.
+
+Today none of this carries a player's words, because the functions never build an error's text
+from one: the texts come from Node and Firebase, which name fields, keys and paths. Keep it so:
+**never put a nickname, an answer or anything else a player typed into an error's message**
+(no `new Error('... ' + nickname)`), and never into the first argument of a `console.error`.
+Put such things in a later argument of the log line, which is never sent.
+
+**It cannot fail or hold a game.** A report is sent once and given up after 1 second; a failed send
+is dropped. A function waits for a report that is on its way before it ends, so the report is not
+lost; with no fault there is nothing to wait for. After two failed sends in a row, or when Sentry
+says to slow down, sending rests (10 minutes, or as long as Sentry says, an hour at most).
+
+**The cap.** Each running copy of a function sends one fault at most twice an hour, 10 reports an
+hour in all and 50 in its life; the next report says how many were held back. A request the site
+never sends does not count towards the cap. The cap is per copy:
+there is no count across copies, since that would need a shared counter in the database. Sentry's
+own quota is the last stop: past it, Sentry drops events and does not bill, unless a pay-as-you-go
+budget has been set in Sentry.
+
+**Locally and in tests.** An emulator sends nothing: it writes each report to the functions log as
+one line starting `server error report (local, not sent)`. `npm test` sends nothing either
+(`functions/test/report.test.js`; `PRINT_REPORTS=1 node --test test/report.test.js` prints them).
+Only the two Google projects named in `report.ts` send at all.
+
+**Known gaps.** A crash outside any request (while a function loads) is not reported. A report that
+was logged first says `handled: true` even if the error then failed the function. An error line
+is told to be the functions' own by the file that wrote it, read from the call stack: a line
+written through a helper outside `dist` would not be a report.

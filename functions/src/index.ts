@@ -15,6 +15,7 @@ import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
 import { cleanVisit } from './controllers/visit';
+import { caught, http, watched } from './report';
 
 // Error bodies always carry a readable message and a code, so the client
 // (and Sentry) never sees an empty object.
@@ -51,13 +52,13 @@ function cleanPid(pid: any): string | undefined {
     return typeof pid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(pid) ? pid : undefined;
 }
 
-exports.time = functions.https.onRequest((req, res) => {
+exports.time = functions.https.onRequest(http('time', (req, res) => {
     cors(req, res, () => {
         res.send({ now: Date.now() });
     });
-});
+}));
 
-exports.newGame = functions.https.onRequest((req, res) => {
+exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
     cors(req, res, async () => {
         const locale = req.body.locale;
         const count = req.body.count;
@@ -73,12 +74,13 @@ exports.newGame = functions.https.onRequest((req, res) => {
             return res.send({ pin });
         } catch (e) {
             console.error('newGame failed', e);
+            caught(e);
             return res.status(500).send(errorBody(e));
         }
     });
-});
+}, 'new'));
 
-exports.fork = functions.https.onRequest((req, res) => {
+exports.fork = functions.https.onRequest(http('fork', (req, res) => {
     cors(req, res, async () => {
         const pin = req.body.pin;
         const uid = cleanUid(req.body.uid);
@@ -87,60 +89,65 @@ exports.fork = functions.https.onRequest((req, res) => {
             const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey));
             return res.status(200).send(forked);
         } catch (e) {
+            caught(e);
             return res.status(400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
 // Save the players of a finished game as a crew.
-exports.createCrew = functions.https.onRequest((req, res) => {
+exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => {
     cors(req, res, async () => {
         try {
             const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid));
             return res.status(200).send(crew);
         } catch (e) {
+            caught(e);
             return res.status(400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
 // One tap on a crew page: a new game for the crew (or the rematch lobby already waiting).
-exports.crewRematch = functions.https.onRequest((req, res) => {
+exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) => {
     cors(req, res, async () => {
         try {
             const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
                 req.body.serverStart === true);
             return res.status(200).send(result);
         } catch (e) {
+            caught(e);
             return res.status(400).send(errorBody(e));
         }
     });
-});
+}, 'crew'));
 
 // START in the lobby. In a game with a host key only the host's phone may start it, unless the host
 // never joined within 90 s or has been gone 5 minutes: see startVerdict in controllers/start.ts.
-exports.startGame = functions.https.onRequest((req, res) => {
+exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
     cors(req, res, async () => {
         try {
             return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey)));
         } catch (e) {
+            caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
 // The host's lobby page reports in, so the group can start without a host whose phone died.
-exports.hostHere = functions.https.onRequest((req, res) => {
+exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
     cors(req, res, async () => {
         try {
             return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
         } catch (e) {
+            caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
-exports.answer = functions.https.onRequest((req, res) => {
+exports.answer = functions.https.onRequest(http('answer', (req, res) => {
     cors(req, res, async () => {
         const pin = req.body.pin;
         const pid = req.body.pid;
@@ -150,12 +157,13 @@ exports.answer = functions.https.onRequest((req, res) => {
             await answer(pin, pid, playerAnswer);
             return res.status(200).send({});
         } catch (e) {
+            caught(e);
             return res.status(400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
-exports.join = functions.https.onRequest((req, res) => {
+exports.join = functions.https.onRequest(http('join', (req, res) => {
     cors(req, res, async () => {
         const pin = req.body.pin;
         const nickname = req.body.nickname;
@@ -165,24 +173,26 @@ exports.join = functions.https.onRequest((req, res) => {
             // { pid, nickname, swapped? }: the phone keeps the nickname the server stored.
             return res.status(200).send(await join(pin, nickname, uid, cleanHostKey(req.body.hostKey)));
         } catch (e) {
+            caught(e);
             return res.status(400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
-exports.validateGameName = functions.https.onRequest((req, res) => {
+exports.validateGameName = functions.https.onRequest(http('validateGameName', (req, res) => {
     cors(req, res, async () => {
         const pin = req.body.pin;
 
         try {
             return res.status(200).send(await validateGameName(pin));
         } catch (e) {
+            caught(e);
             return res.status(400).send(errorBody(e));
         }
     });
-});
+}, 'game'));
 
-exports.onJoinGame = functions.https.onRequest((req, res) => {
+exports.onJoinGame = functions.https.onRequest(http('onJoinGame', (req, res) => {
     cors(req, res, async () => {
         const uid = req.body.uid;
         const pin = req.body.pin;
@@ -195,15 +205,16 @@ exports.onJoinGame = functions.https.onRequest((req, res) => {
             await analytics.onJoinGame(uid, ip, useragent, pin, nickname, via);
         } catch (e) {
             console.error('onJoinGame analytics failed', e);
+            caught(e);
         }
         return res.status(200).send({});
     });
-});
+}, 'game'));
 
 // One page view from the visit beacon (game/src/index.html), sent to /_v on the game's own site
 // (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,
 // so no CORS preflight. Logged as one line starting "visit "; always answers 204.
-exports.visit = functions.https.onRequest((req, res) => {
+exports.visit = functions.https.onRequest(http('visit', (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'POST') {
         const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
@@ -212,11 +223,11 @@ exports.visit = functions.https.onRequest((req, res) => {
         }
     }
     res.status(204).send('');
-});
+}));
 
 // One game night send from a crew page (or another counted share): a row in BigQuery `shares`.
 // Always answers 200, so the page never waits on or fails with analytics.
-exports.onShare = functions.https.onRequest((req, res) => {
+exports.onShare = functions.https.onRequest(http('onShare', (req, res) => {
     cors(req, res, async () => {
         const row = analytics.cleanShare(req.body);
         if (row) {
@@ -224,43 +235,44 @@ exports.onShare = functions.https.onRequest((req, res) => {
                 await analytics.onShare(row);
             } catch (e) {
                 console.error('onShare analytics failed', e);
+                caught(e);
             }
         }
         return res.status(200).send({ counted: !!row });
     });
-});
+}));
 
-exports.tick = functions.database.ref('games/{pin}/tick').onWrite((change, event) => {
+exports.tick = functions.database.ref('games/{pin}/tick').onWrite(watched('tick', (change, event) => {
     const pin = event.params.pin;
     return tick(pin);
-});
+}));
 
 // Ends each timed phase on the server at its deadline, so a game keeps going when every phone sleeps.
 // The longest phase (a big-screen reveal with 8 players) is under 50 seconds, hence the longer timeout.
 exports.phaseTimer = functions
     .runWith({ timeoutSeconds: 120, memory: '128MB' })
-    .database.ref('games/{pin}/state').onWrite((change, context) => {
+    .database.ref('games/{pin}/state').onWrite(watched('phaseTimer', (change, context) => {
         const pin = context.params.pin;
         return onPhaseStart(pin, change.after.val());
-    });
+    }));
 
-exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite((change, event) => {
+exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite(watched('onAnswerSelection', (change, event) => {
     const pin = event.params.pin;
     return onAnswerSelection(pin);
-});
+}));
 
 // Every player tapped NEXT on the reveal: move on without waiting for its deadline.
-exports.onRevealDone = functions.database.ref('games/{pin}/revealDone').onWrite((change, event) => {
+exports.onRevealDone = functions.database.ref('games/{pin}/revealDone').onWrite(watched('onRevealDone', (change, event) => {
     const pin = event.params.pin;
     return onRevealDone(pin);
-});
+}));
 
-exports.gameState = functions.database.ref('games/{pin}/state').onWrite((change, event) => {
+exports.gameState = functions.database.ref('games/{pin}/state').onWrite(watched('gameState', (change, event) => {
     const pin = event.params.pin;
     return analytics.onStateChange(pin);
-});
+}));
 
-exports.onFork = functions.database.ref('games/{pin}/fork').onWrite((change, event) => {
+exports.onFork = functions.database.ref('games/{pin}/fork').onWrite(watched('onFork', (change, event) => {
     const pin = event.params.pin;
     return analytics.onFork(pin);
-});
+}));
