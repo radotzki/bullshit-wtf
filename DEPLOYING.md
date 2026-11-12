@@ -12,7 +12,11 @@ tests, merge it to `master`.
 
 - Functions: `npm ci`, then `npm test` (builds, then runs every function test).
 - Game client: `npm ci`, `npm run build` (lint, production build, Hebrew shell, search pages), `npm test`,
-  and a check that the main files landed in `game/dist`.
+  a check that the main files landed in `game/dist`, and a browser smoke test
+  (`.github/smoke/smoke.js`): every public page of the built game is loaded in headless Chromium,
+  with every request to the outside refused, and any page error, console error or blank page fails
+  the run. Run it locally after a build: `cd .github/smoke && npm ci && npx playwright install
+  chromium && node smoke.js`.
 
 **Deploy to production** (`deploy.yml`) runs on every push to `master`, so on every merged pull
 request, and by hand (Actions tab, "Deploy to production", "Run workflow", branch `master`). A push

@@ -71,3 +71,25 @@ jobs:
           for f in index.html he.html sitemap.xml robots.txt how-to-play.html; do
             test -s "dist/$f" || { echo "::error::game/dist/$f is missing or empty"; exit 1; }
           done
+      # Loads every public page of the built game in headless Chromium and fails on a page error,
+      # an uncaught exception, a console error or a blank page: the crashes the build, the tests
+      # and the check above can't see. It serves game/dist from 127.0.0.1 and refuses every
+      # request to any other host, so it never reaches Firebase, Sentry or analytics, and writes
+      # nothing. Playwright lives in .github/smoke, apart from game/'s 2017 dependencies.
+      - name: Install the smoke test
+        working-directory: .github/smoke
+        run: npm ci --no-audit --no-fund
+      - name: Cache the smoke test's browser
+        id: browser-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('.github/smoke/package-lock.json') }}
+      - name: Download the smoke test's browser
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        working-directory: .github/smoke
+        run: npx playwright install --only-shell chromium
+      - name: Smoke test the built pages in a browser
+        working-directory: .github/smoke
+        timeout-minutes: 5
+        run: node smoke.js ../../game/dist
