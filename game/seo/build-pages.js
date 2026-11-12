@@ -14,7 +14,25 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const byPath = {};
 pages.forEach(p => byPath[p.path] = p);
 
+// A page's campaign tag rides on its Start button as ?via=, so a game opened from the page says which
+// page it came from. Same shape as cleanCampaign in game-model: small letters, digits, hyphens, 40 at most.
+const TAG = /^[a-z0-9][a-z0-9-]{0,39}$/;
+function startOf(p) {
+    const start = p.start || p.site.start;
+    if (!p.tag) {
+        return start;
+    }
+    return { href: start.href + (start.href.indexOf('?') < 0 ? '?' : '&') + 'via=' + p.tag, label: start.label };
+}
+const startButton = (p) => `<a class="btn primary" href="${esc(startOf(p).href)}">${esc(startOf(p).label)}</a>`;
+
+// A page in one language only (no `twin`) names just itself, and its language link goes to the other home page.
+const otherHome = (p) => p.site.lang === 'he' ? '/' : '/he';
+
 function hreflang(p) {
+    if (!p.twin) {
+        return `<link rel="alternate" hreflang="${p.site.lang}" href="${SITE}${p.path}">`;
+    }
     const en = p.site.lang === 'en' ? p : byPath[p.twin];
     const he = p.site.lang === 'he' ? p : byPath[p.twin];
     return [
@@ -92,6 +110,12 @@ function render(p) {
     .btn { display: inline-block; padding: 14px 22px; border-radius: 8px; text-decoration: none; font-size: 19px; font-weight: 600; }
     .btn.primary { background: var(--brand); color: #fff; }
     .btn.secondary { border: 2px solid var(--brand); color: var(--brand); }
+    .cta.top { margin: 16px 0 4px; }
+    .example { background: #fff; border: 1px solid #e6d9cc; border-inline-start: 6px solid var(--brand); border-radius: 8px; padding: 2px 16px; margin: 12px 0; }
+    .example .q { font-size: 19px; font-weight: 600; }
+    figure.shot { margin: 22px auto; max-width: 300px; text-align: center; }
+    figure.shot img { display: block; width: 100%; height: auto; border: 1px solid #e6d9cc; border-radius: 14px; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); }
+    figure.shot figcaption { margin-top: 8px; font-size: 14px; color: #6b5f59; }
     nav.more { border-top: 1px solid #e6d9cc; margin-top: 32px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 15px; }
     nav.more a[aria-current] { color: var(--ink); text-decoration: none; font-weight: 600; }
     footer { max-width: 760px; margin: 0 auto; padding: 0 16px 32px; font-size: 14px; color: #6b5f59; }
@@ -101,14 +125,14 @@ function render(p) {
   <header>
     <div class="bar">
       <a class="logo" href="/">${s.lang === 'he' ? 'בולשיט' : 'Bullshit'}</a>
-      <a class="lang" href="${p.twin}" hreflang="${s.lang === 'he' ? 'en' : 'he'}" lang="${s.lang === 'he' ? 'en' : 'he'}">${esc(s.other)}</a>
+      <a class="lang" href="${p.twin || otherHome(p)}" hreflang="${s.lang === 'he' ? 'en' : 'he'}" lang="${s.lang === 'he' ? 'en' : 'he'}">${esc(s.other)}</a>
     </div>
   </header>
   <main>
     <h1>${esc(p.h1)}</h1>
-${p.body.trim().split('\n').map(l => '    ' + l).join('\n')}
+${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}</div>`).split('\n').map(l => '    ' + l).join('\n')}
     <div class="cta">
-      <a class="btn primary" href="${esc((p.start || s.start).href)}">${esc((p.start || s.start).label)}</a>
+      ${startButton(p)}
       <a class="btn secondary" href="${s.join.href}">${esc(s.join.label)}</a>
     </div>
     <nav class="more">
@@ -118,12 +142,13 @@ ${p.body.trim().split('\n').map(l => '    ' + l).join('\n')}
   <footer>${esc(s.footer)}</footer>
   <script>
     // Keep a post's ?via= tag on the way into the game, so the game records which post it came from.
+    // A post's tag takes the place of the page's own tag on the Start button: one tag reaches the game.
     (function () {
       var m = /[?&]via=([a-z0-9-]{1,40})/i.exec(location.search);
       if (!m) return;
       var links = document.querySelectorAll('a.btn');
       for (var i = 0; i < links.length; i++) {
-        var h = links[i].getAttribute('href');
+        var h = links[i].getAttribute('href').replace(/([?&])via=[^&#]*&?/, '$1').replace(/[?&]$/, '');
         links[i].setAttribute('href', h + (h.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1]);
       }
     })();
@@ -143,6 +168,13 @@ function sitemap() {
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}/he"/>
   </url>`);
     const urls = pages.map(p => {
+        if (!p.twin) {
+            return `  <url>
+    <loc>${SITE}${p.path}</loc>
+    <lastmod>${today}</lastmod>
+    <xhtml:link rel="alternate" hreflang="${p.site.lang}" href="${SITE}${p.path}"/>
+  </url>`;
+        }
         const en = p.site.lang === 'en' ? p : byPath[p.twin];
         const he = p.site.lang === 'he' ? p : byPath[p.twin];
         return `  <url>
@@ -173,13 +205,19 @@ Disallow: /score-board-final/
 Sitemap: ${SITE}/sitemap.xml
 `;
 
-// Every page needs its twin, and twins must point at each other.
+// A page with a twin needs it to exist, and twins must point at each other. A tag must be one the game keeps.
 pages.forEach(p => {
     const t = byPath[p.twin];
-    if (!t || t.twin !== p.path || t.site.lang === p.site.lang) {
+    if (p.twin && (!t || t.twin !== p.path || t.site.lang === p.site.lang)) {
         throw new Error(`Page ${p.path} has no matching twin`);
     }
+    if (p.tag && !TAG.test(p.tag)) {
+        throw new Error(`Page ${p.path} has a tag the game would drop: ${p.tag}`);
+    }
 });
+if (Object.keys(byPath).length !== pages.length) {
+    throw new Error('Two pages share one path');
+}
 
 if (!fs.existsSync(out)) {
     throw new Error(`No build output at ${out}; run the Angular build first`);
