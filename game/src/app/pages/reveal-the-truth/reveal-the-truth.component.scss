@@ -101,10 +101,157 @@
         animation: row-in 0.25s ease-out;
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Laughs on lies: a button at the end of each lie's first line, with its count.
+    .text-line {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        .text {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+    }
+
+    .laugh {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 2.4rem;
+        min-width: 2.9rem;
+        margin: -0.2rem 0 0 10px;
+        padding: 0 0.55rem;
+        border: 2px solid hsl(0, 0%, 86%);
+        border-radius: 999px;
+        background: white;
+        color: hsl(0, 0%, 29%);
+        font: inherit;
+        font-size: 1.05rem;
+        line-height: 1;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+
+        &:focus {
+            outline: none;
+        }
+
+        &.laughed {
+            background: hsl(48, 100%, 67%);
+            border-color: hsl(44, 100%, 52%);
+            color: hsl(0, 0%, 14%);
+            animation: laugh-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+        }
+
+        &.only-count {
+            border-color: transparent;
+            background: transparent;
+            cursor: default;
+            min-width: 0;
+            padding: 0;
+        }
+    }
+
+    [dir=rtl] & .laugh,
+    &[dir=rtl] .laugh {
+        margin: -0.2rem 10px 0 0;
+    }
+
+    .laugh-face {
+        width: 1.5rem;
+        height: 1.5rem;
+
+        .face {
+            fill: hsl(48, 100%, 60%);
+            stroke: hsl(38, 90%, 45%);
+            stroke-width: 1;
+        }
+
+        .eyes {
+            fill: none;
+            stroke: hsl(30, 60%, 22%);
+            stroke-width: 1.7;
+            stroke-linecap: round;
+        }
+
+        .mouth {
+            fill: hsl(30, 60%, 22%);
+        }
+    }
+
+    .laugh-count {
+        margin: 0 0 0 4px;
+        font-weight: bold;
+    }
+
+    // Players' lies nobody picked, each in a row of its own after the result line.
     .unpicked {
+        margin-bottom: 10px;
+    }
+
+    .unpicked-title {
         font-size: 0.9rem;
         opacity: 0.8;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
+    }
+
+    .urow {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+        padding: 6px 10px;
+        border: 2px dashed hsl(0, 0%, 86%);
+        box-shadow: none;
+        animation: row-in 0.25s ease-out;
+
+        .text {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-size: 1.1rem;
+            line-height: 1.2;
+            margin: 0;
+            word-wrap: break-word;
+        }
+
+        .by {
+            flex: 0 1 auto;
+            min-width: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 0.85rem;
+            margin: 0 0 0 8px;
+        }
+
+        .player {
+            margin: 0 0 0 6px;
+        }
+
+        .player img {
+            height: 1.4rem;
+            width: 1.4rem;
+        }
+
+        .laugh {
+            margin-top: 0;
+        }
+    }
+
+    [dir=rtl] & .urow .by,
+    &[dir=rtl] .urow .by {
+        margin: 0 8px 0 0;
+    }
+
+    [dir=rtl] & .urow .player,
+    &[dir=rtl] .urow .player {
+        margin: 0 6px 0 0;
+    }
+
+    [dir=rtl] & .urow .player img,
+    &[dir=rtl] .urow .player img {
+        margin: 0 0 0 3px;
     }
 
     .my-result {
@@ -167,14 +314,83 @@
             width: 4.4vh;
         }
 
+        // Laughs: the counts only (nobody taps a big screen), as large as the room needs.
+        .laugh {
+            height: 5.4vh;
+            min-width: 0;
+            margin-top: 0;
+            padding: 0 1.2vh;
+            font-size: 3.4vh;
+        }
+
+        .laugh-face {
+            width: 4.6vh;
+            height: 4.6vh;
+        }
+
+        // Lies nobody picked: one line of chips, so the truth stays in view.
         .unpicked {
-            font-size: 2.6vh;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
             margin-bottom: 0;
+        }
+
+        .unpicked-title {
+            flex: 0 0 100%;
+            font-size: 2.6vh;
+            margin-bottom: 0.6vh;
+        }
+
+        .urow {
+            display: inline-flex;
+            padding: 0.5vh 1.6vh;
+            margin: 0 1.2vh 1vh 0;
+
+            .text {
+                flex: 0 1 auto;
+                font-size: 3vh;
+            }
+
+            .by {
+                font-size: 2.4vh;
+            }
+
+            .player img {
+                height: 3.4vh;
+                width: 3.4vh;
+            }
+
+            .laugh {
+                height: 4vh;
+                font-size: 2.6vh;
+            }
+
+            .laugh-face {
+                width: 3.4vh;
+                height: 3.4vh;
+            }
         }
 
         // An earlier row, folded to one line: the answer, then who picked it and who wrote it.
         .row.past,
         .srow.past {
+            .text-line {
+                flex: 1 1 auto;
+                min-width: 0;
+                align-items: center;
+            }
+
+            .laugh {
+                height: 4vh;
+                font-size: 2.6vh;
+            }
+
+            .laugh-face {
+                width: 3.4vh;
+                height: 3.4vh;
+            }
+
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -370,6 +586,24 @@
             padding: 6px 12px;
             margin-bottom: 6px;
             animation: none;
+
+            .text-line {
+                flex: 1 1 auto;
+                min-width: 0;
+                align-items: center;
+            }
+
+            .laugh {
+                height: 2rem;
+                min-width: 2.5rem;
+                margin-top: 0;
+                font-size: 0.95rem;
+            }
+
+            .laugh-face {
+                width: 1.25rem;
+                height: 1.25rem;
+            }
 
             .text {
                 flex: 1 1 auto;
@@ -816,4 +1050,10 @@
         margin-left: 0;
         margin-right: 4px;
     }
+}
+
+@keyframes laugh-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.25) rotate(-6deg); }
+    100% { transform: scale(1) rotate(0); }
 }

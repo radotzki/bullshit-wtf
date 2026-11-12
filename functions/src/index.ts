@@ -15,6 +15,7 @@ import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
 import { cleanVisit } from './controllers/visit';
+import { laugh } from './controllers/laugh';
 import { caught, http, watched } from './report';
 
 // Error bodies always carry a readable message and a code, so the client
@@ -161,6 +162,19 @@ exports.answer = functions.https.onRequest(http('answer', (req, res) => {
         try {
             await answer(pin, pid, playerAnswer);
             return res.status(200).send({});
+        } catch (e) {
+            caught(e);
+            return res.status(400).send(errorBody(e));
+        }
+    });
+}, 'game'));
+
+// A laugh at a lie on the reveal: written by the server on the reveal row, since phones may not write
+// there (see controllers/laugh.ts). Laughs give no points.
+exports.laugh = functions.https.onRequest(http('laugh', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await laugh(req.body.pin, cleanPid(req.body.pid), req.body.text));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));

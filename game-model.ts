@@ -95,7 +95,8 @@ export type GameOrigin = 'create' | 'replay' | 'crew';
  * The reveal screen shows, one row at a time, each answer somebody picked, then the truth last.
  * Each row first shows who picked it and, halfway through its step, who wrote it.
  * After the last row everyone sees their own result for `hold` ms (or until all players tap NEXT).
- * Answers nobody picked get no row: they are listed together at the end, at no extra time.
+ * Players' lies nobody picked are not timed rows: they appear together after the truth, once all is
+ * shown, each in a row of its own so it can be laughed at (see LAUGH_HOLD_MS).
  * Used by both the server (phase deadline) and the client (what to show when).
  */
 export const revealTiming = {
@@ -103,6 +104,13 @@ export const revealTiming = {
     // A big screen plays a sound per row and the room reads it together: give each row more time.
     presenter: { step: 4500, hold: 3000 },
 };
+
+/**
+ * Lies nobody picked appear only once every row is shown, so their only time to be laughed at is the
+ * hold. When there are any, the hold lasts this much longer (both reveals, phones and big screen).
+ * NEXT from every player still ends the reveal early.
+ */
+export const LAUGH_HOLD_MS = 1000;
 
 /**
  * The staged reveal (games with bigReveal: true). Each row is three beats: the answer alone, then who
@@ -147,13 +155,15 @@ export interface RevealSchedule {
  */
 export function revealSchedule(revealAnswers: RevealAnswer[] | undefined | null, presenter: boolean, staged = false): RevealSchedule {
     const rows = revealRows(revealAnswers);
+    // Time to laugh at the lies nobody picked, which appear only at the end (see LAUGH_HOLD_MS).
+    const laughHold = hasUnpickedLies(revealAnswers) ? LAUGH_HOLD_MS : 0;
 
     if (staged) {
         const t = presenter ? stagedRevealTiming.presenter : stagedRevealTiming.phones;
         const allShown = (rows - 1) * t.step + t.truthIntro + t.writerAt;
         return {
             rows, step: t.step, pickersAt: t.pickersAt, writerAt: t.writerAt, truthIntro: t.truthIntro,
-            allShown, duration: allShown + t.hold, staged: true,
+            allShown, duration: allShown + t.hold + laughHold, staged: true,
         };
     }
 
@@ -161,7 +171,7 @@ export function revealSchedule(revealAnswers: RevealAnswer[] | undefined | null,
     const allShown = rows * timing.step - timing.step / 2;
     return {
         rows, step: timing.step, pickersAt: 0, writerAt: timing.step / 2, truthIntro: 0,
-        allShown, duration: allShown + timing.hold, staged: false,
+        allShown, duration: allShown + timing.hold + laughHold, staged: false,
     };
 }
 
@@ -414,6 +424,38 @@ export interface RevealAnswer {
     points: number;
     // House lies only: what each picker actually lost (a house lie never takes a score below zero).
     pointsBy?: { [pid: string]: number };
+    // Players' lies only: the players who laughed at it during the reveal (see laugh.ts in the functions).
+    // Written by the server, one key per player, while the reveal is on. Laughs give no points.
+    laughs?: { [pid: string]: boolean };
+}
+
+/**
+ * Laughs on lies. During the reveal every player's lie, picked or not, has a laugh button: a player may
+ * laugh at as many lies as they like, once each, but never at their own. A phone cannot write a laugh
+ * itself (the database rules let it write only its pick and its NEXT): it calls the `laugh` function,
+ * which writes revealAnswers/<row>/laughs/<pid>. The counts show beside each lie; at the end of each
+ * question the server keeps each writer's most laughed-at lie in the highlights (addLaughs), and the
+ * final screen names the funniest lie. Laughs give no points.
+ */
+export function laughCount(row: RevealAnswer | null | undefined): number {
+    const laughs = row && row.laughs;
+    return laughs && typeof laughs === 'object' ? Object.keys(laughs).filter(pid => laughs[pid] === true).length : 0;
+}
+
+/** A row that takes laughs: a player's lie (not the truth, not a house lie). */
+export function isPlayerLie(row: RevealAnswer | null | undefined): boolean {
+    return !!row && !row.realAnswer && !row.houseLie && typeof row.text === 'string' && !!row.text &&
+        (row.creators || []).some(pid => !!pid);
+}
+
+/** May `pid` laugh at this row? Only at a player's lie, and never at a lie they wrote themselves. */
+export function canLaugh(row: RevealAnswer | null | undefined, pid: string | null | undefined): boolean {
+    return !!pid && isPlayerLie(row) && (row.creators || []).indexOf(pid) === -1;
+}
+
+/** Players' lies nobody picked: on the reveal they get rows of their own, after the truth. */
+export function hasUnpickedLies(revealAnswers: RevealAnswer[] | undefined | null): boolean {
+    return (revealAnswers || []).some(row => isPlayerLie(row) && !(row.selectors && row.selectors.length));
 }
 
 export interface Question {
@@ -630,6 +672,16 @@ export interface Highlight {
     points: number;     // points that lie scored
     q?: string;         // the question it answered
     total: number;      // players fooled by all of this player's lies, all game
+    // The player's most laughed-at lie (see addLaughs). A player whose lies fooled nobody but got a
+    // laugh has a highlight with an empty text and this.
+    funny?: FunnyLie;
+}
+
+export interface FunnyLie {
+    text: string;
+    laughs: number;     // players who laughed at it
+    q?: string;         // the question it answered
+    n?: number;         // that question's index in the game
 }
 
 export interface Highlights {
@@ -663,11 +715,72 @@ export function addHighlights(previous: Highlights | null | undefined, revealAns
             if (typeof q === 'string' && q) {
                 best.q = q;
             }
+            if (had && had.funny) {
+                best.funny = had.funny;
+            }
             next[pid] = best;
         });
     });
 
     return next;
+}
+
+/**
+ * Adds one question's laughs to the game's highlights: each writer keeps their most laughed-at lie
+ * (ties: the earlier one; between writers, funniestLies prefers the later). Called by the server as the
+ * question ends, once its laughs are in. Players who wrote the same lie share it. Returns `previous`
+ * itself when no lie got a laugh, else a new object.
+ */
+export function addLaughs(previous: Highlights | null | undefined, revealAnswers: RevealAnswer[] | null | undefined,
+    question?: string, questionIndex?: number): Highlights | null | undefined {
+    const rows = (revealAnswers || []).filter(row => isPlayerLie(row) && laughCount(row) > 0);
+    if (!rows.length) {
+        return previous;
+    }
+
+    const next: Highlights = {};
+    Object.keys(previous || {}).forEach(pid => next[pid] = Object.assign({}, previous[pid]));
+
+    rows.forEach(row => {
+        const laughs = laughCount(row);
+        (row.creators || []).filter(pid => !!pid).forEach(pid => {
+            const had = next[pid] || { text: '', fooled: 0, points: 0, total: 0 };
+            if (had.funny && (had.funny.laughs || 0) >= laughs) {
+                next[pid] = had;
+                return;
+            }
+            const funny: FunnyLie = { text: row.text, laughs };
+            if (typeof question === 'string' && question) {
+                funny.q = question;
+            }
+            if (typeof questionIndex === 'number') {
+                funny.n = questionIndex;
+            }
+            next[pid] = Object.assign({}, had, { funny });
+        });
+    });
+
+    return next;
+}
+
+/**
+ * The funniest lie of the game, for the final screen: the most laughed-at lie and the players who wrote
+ * it (two, when they wrote the same lie), or none when no lie got a laugh. One lie wins: between lies
+ * with as many laughs, the later one, which the room remembers best.
+ */
+export function funniestLies(highlights: Highlights | null | undefined): { text: string; laughs: number; pids: string[] }[] {
+    const pids = Object.keys(highlights || {}).filter(pid => highlights[pid] && highlights[pid].funny &&
+        typeof highlights[pid].funny.text === 'string' && (highlights[pid].funny.laughs || 0) > 0);
+    const order = (pid: string) => typeof highlights[pid].funny.n === 'number' ? highlights[pid].funny.n : -1;
+    const top = pids.slice()
+        .sort((a, b) => highlights[b].funny.laughs - highlights[a].funny.laughs || order(b) - order(a))[0];
+    if (!top) {
+        return [];
+    }
+    const best = highlights[top].funny;
+    const writers = pids.filter(pid => highlights[pid].funny.text === best.text && order(pid) === order(top) &&
+        highlights[pid].funny.laughs === best.laughs);
+    return [{ text: best.text, laughs: best.laughs, pids: writers }];
 }
 
 /** Where a game's highlights count from: kept once set, else the question being revealed now. */

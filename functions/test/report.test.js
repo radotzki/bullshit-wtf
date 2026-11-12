@@ -24,6 +24,7 @@ const stand = {
     'start': controller(['startGame', 'hostHere']),
     'validate-game-name': controller(['validateGameName']),
     'crew': controller(['createCrew', 'crewRematch']),
+    'laugh': controller(['laugh']),
     'analytics': Object.assign(controller(['onJoinGame', 'onShare', 'onStateChange', 'onFork']),
         { cleanVia: () => null, cleanShare: (b) => b && b.content_type ? b : null }),
 };
@@ -131,7 +132,7 @@ test('every HTTP function with a catch reports its fault under its own name', as
     const bodies = { newGame: { locale: 'en', count: 5 }, crewRematch: { crew: 'c1' } };
     for (const [name, step] of [['newGame', 'newGame'], ['fork', 'fork'], ['createCrew', 'createCrew'], ['crewRematch', 'crewRematch'],
         ['startGame', 'startGame'], ['hostHere', 'hostHere'], ['answer', 'answer'], ['join', 'join'], ['validateGameName', 'validateGameName'],
-        ['onJoinGame', 'onJoinGame'], ['onShare', 'onShare']]) {
+        ['onJoinGame', 'onJoinGame'], ['onShare', 'onShare'], ['laugh', 'laugh']]) {
         fresh();
         steps[step] = async () => { throw boom(); };
         const res = await call(name, bodies[name] || { pin: 'abcd', content_type: 'x' });
@@ -268,7 +269,7 @@ test('a request the site never sends is answered as before and is no report', as
     const lookups = [];
     fresh({ gameLookup: async (pin) => { lookups.push(pin); return false; } });
     const fault = () => { throw boom("Cannot read properties of undefined (reading 'toUpperCase')"); };
-    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'validateGameName', 'createCrew']) {
+    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'validateGameName', 'createCrew', 'laugh']) {
         const step = name === 'validateGameName' ? 'validateGameName' : name;
         steps[step] = async () => fault();
         for (const body of [{}, { nickname: 'Dana' }, { pin: 1234 }, { pin: 'AB.CD' }, { pin: 'ABCD/../x' }, { pin: '' }, { pin: null }, { pin: ['ABCD'] }]) {

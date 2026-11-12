@@ -58,11 +58,19 @@
                         <span class="name" dir="auto">{{ player.nickname }}<small *ngIf="player.me" class="you"> ({{ t.you }})</small></span>
                         <span class="score">{{ player.score }}</span>
                     </div>
-                    <div *ngIf="player.biggest" class="badge">{{ t.biggest }}</div>
+                    <div class="badges" *ngIf="player.biggest || player.funniest">
+                        <span *ngIf="player.biggest" class="badge">{{ t.biggest }}</span>
+                        <span *ngIf="player.funniest" class="badge funny">{{ t.funniest }}</span>
+                    </div>
                     <div class="lie" *ngIf="player.best">
                         <span class="lie-label">{{ t.bestLie }}:</span>
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
+                    </div>
+                    <div class="lie funny" *ngIf="player.funniest">
+                        <span class="lie-label">{{ t.funniestLie }}:</span>
+                        <span class="lie-text" dir="auto">"{{ player.funniest.text }}"</span>
+                        <span class="lie-laughs">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>
                     <div class="lie none" *ngIf="!player.best && wholeGame && !taste">{{ t.fooledNobody }}</div>
                 </li>

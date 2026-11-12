@@ -519,6 +519,25 @@ export class ApiService {
         return this.get<RevealAnswer[]>(this.gamesRef.child(pin).child('revealAnswers'));
     }
 
+    /**
+     * This player laughs at a lie on the reveal (see laughCount in game-model). Through the `laugh`
+     * function, since a phone may not write the reveal rows itself. Resolves to { taken, laughs }.
+     */
+    laugh(pin: string, text: string) {
+        pin = pin.toUpperCase();
+        const pid = this.myPid();
+        if (!pid) {
+            return Promise.reject(new Error('Only a player can laugh'));
+        }
+        return this.post<{ taken: boolean; laughs?: number }>('laugh', { pin, pid, text });
+    }
+
+    /** The reveal's rows as they change: the laughs arrive on them while the reveal is on. */
+    revealAnswersLive(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<RevealAnswer[]>(this.gamesRef.child(pin).child('revealAnswers'));
+    }
+
     /** This player has seen the reveal and wants to move on. When every player has, the server ends the reveal. */
     revealDone(pin: string) {
         pin = pin.toUpperCase();

@@ -1,5 +1,5 @@
 import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
-import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, highlightsStart } from '../game-model';
+import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
 import { pickHouseLies } from './answer-options';
@@ -444,6 +444,14 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             answerSelections: {},
             revealAnswers: null,
         };
+    }
+
+    // The question is over and its laughs are in: each writer keeps their most laughed-at lie, for the
+    // final screen (see addLaughs). Written only when some lie got a laugh.
+    const laughed = addLaughs(game.highlights, game.revealAnswers, typeof game.currentQ === 'string' ? game.currentQ : undefined,
+        game.questionIndex);
+    if (laughed !== game.highlights) {
+        res.highlights = laughed;
     }
 
     return res;

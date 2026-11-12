@@ -15,7 +15,10 @@
                 <ng-container *ngFor="let row of rows; let i = index">
                     <div *ngIf="i < visibleRows" class="row box" [class.past]="presenter && i < visibleRows - 1" [class.truth]="row.realAnswer && i < writersShown"
                         [class.house]="row.houseLie && i < writersShown">
-                        <p class="text" [class.rtl]="rtl"> {{ row.text | uppercase }} </p>
+                        <div class="text-line">
+                            <p class="text" [class.rtl]="rtl"> {{ row.text | uppercase }} </p>
+                            <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row }"></ng-container>
+                        </div>
 
                         <div class="who">
                             <div class="pickers">
@@ -49,17 +52,11 @@
             </div>
 
             <div *ngIf="allShown" class="after">
-                <p class="unpicked" *ngIf="unpicked.length">
-                    {{t.nobodyFellFor}}
-                    <span *ngFor="let u of unpicked; let last = last">
-                        <span [class.rtl]="rtl">{{ u.text | uppercase }}</span>
-                        <span *ngIf="u.creators.length">({{ u.creators[0].nickname }})</span><span *ngIf="!last">, </span>
-                    </span>
-                </p>
-
                 <div class="my-result" *ngIf="myResult.length">
                     <p *ngFor="let line of myResult"> {{ line }} </p>
                 </div>
+
+                <ng-container [ngTemplateOutlet]="unpickedRows"></ng-container>
 
                 <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">{{t.next}}</button>
                 <p *ngIf="!presenter && tapped && waitingFor" class="waiting">
@@ -82,7 +79,10 @@
                         <div *ngIf="i < visibleRows" class="srow box" [class.past]="i < visibleRows - 1 || truthIntro"
                             [class.truth]="row.realAnswer" [class.house]="row.houseLie && i < writersShown">
                             <p class="truth-label" *ngIf="row.realAnswer"> {{ t.theTruth }} </p>
-                            <p class="text"> {{ row.text | uppercase }} </p>
+                            <div class="text-line">
+                                <p class="text"> {{ row.text | uppercase }} </p>
+                                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row }"></ng-container>
+                            </div>
 
                             <div class="who">
                                 <div class="pickers" [class.shown]="i < pickersShown">
@@ -117,17 +117,11 @@
                 </div>
 
                 <div *ngIf="allShown" class="after">
-                    <p class="unpicked" *ngIf="unpicked.length">
-                        {{ t.nobodyFellFor }}
-                        <span *ngFor="let u of unpicked; let last = last">
-                            <span>{{ u.text | uppercase }}</span>
-                            <span *ngIf="u.creators.length">({{ u.creators[0].nickname }})</span><span *ngIf="!last">, </span>
-                        </span>
-                    </p>
-
                     <div class="my-result" *ngIf="myResult.length">
                         <p *ngFor="let line of myResult"> {{ line }} </p>
                     </div>
+
+                    <ng-container [ngTemplateOutlet]="unpickedRows"></ng-container>
 
                     <!-- The scoreboard, folded in: old order first, then each player moves to their new place. -->
                     <div class="scores" *ngIf="standings.length" [style.height.em]="standings.length * 2.7">
@@ -148,6 +142,46 @@
             </div>
         </div>
     </div>
+
+    <!--
+        Laughs on lies. On a player's phone, every lie they did not write has a laugh button with its count;
+        on the writer's phone and the big screen the count alone shows, once somebody laughed.
+    -->
+    <ng-template #laughButton let-row="row">
+        <button *ngIf="row.laughable" type="button" class="laugh" [class.laughed]="row.laughed" (click)="laugh(row)"
+            [attr.aria-label]="t.laughAt(row.text)" [attr.aria-pressed]="row.laughed">
+            <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
+            <span class="laugh-count" *ngIf="row.laughs" dir="ltr">{{ row.laughs }}</span>
+        </button>
+        <span *ngIf="!row.laughable && row.playerLie && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
+            <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
+            <span class="laugh-count" dir="ltr">{{ row.laughs }}</span>
+        </span>
+    </ng-template>
+
+    <ng-template #laughFace>
+        <svg class="laugh-face" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="10.5" class="face"/>
+            <path d="M6.2 9.6c.8-1.3 2.4-1.3 3.2 0M14.6 9.6c.8-1.3 2.4-1.3 3.2 0" class="eyes"/>
+            <path d="M6.5 13h11c0 3.3-2.5 5.6-5.5 5.6S6.5 16.3 6.5 13z" class="mouth"/>
+        </svg>
+    </ng-template>
+
+    <!-- Players' lies nobody picked: each in a row of its own (the lie, who wrote it, its laughs), so it can be laughed at. -->
+    <ng-template #unpickedRows>
+        <div class="unpicked" *ngIf="unpicked.length">
+            <p class="unpicked-title">{{ t.nobodyFellFor }}</p>
+            <div class="urow box" *ngFor="let u of unpicked; trackBy: trackRow">
+                <p class="text"> {{ u.text | uppercase }} </p>
+                <span class="by" [attr.aria-label]="t.bullshitBy + ' ' + u.creatorNames.join(', ')">
+                    <span class="player" *ngFor="let c of u.creators">
+                        <img [src]="'/assets/' + c.picture" alt=""> <span class="name">{{ c.nickname }}</span>
+                    </span>
+                </span>
+                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: u }"></ng-container>
+            </div>
+        </div>
+    </ng-template>
 
     <!-- Across the whole phone of the player whose lie just fooled somebody. Taps pass through it. -->
     <div *ngIf="staged && flashOn && flash" class="flash" [class.rtl]="rtl">
