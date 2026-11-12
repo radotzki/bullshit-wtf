@@ -701,10 +701,12 @@ independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`reveal
 
 During the reveal, in both the staged reveal and the plain one, every lie, house lies included, has a
 laugh button on the phones of the players who did not write it: tap as many lies as you like, each once.
-House lies take laughs so that no button or count tells the room that the house wrote a lie before its
+House lies take laughs so that no button tells the room that the house wrote a lie before its
 writer beat; their laughs show on the reveal and are credited to nobody, so the funniest lie is always a
-player's. The counts
-show beside each lie, on every phone and the big screen. Players' lies nobody picked are no longer a
+player's. Counts show beside each lie only from its row's writer beat, on every phone and the big
+screen: a house lie can take a laugh from every player and a player's lie from all but its writer, so a
+count alone could tell (in a 3-player game, 2 laughs on a lie you did not laugh at). A tap before the
+beat still counts; the button looks pressed, with no number. Players' lies nobody picked are no longer a
 grey footnote: once every row is shown they get rows of their own (the lie, who wrote it, its laughs).
 The final screen marks the writer of the most laughed-at lie FUNNIEST LIE and shows the lie with its
 count. Laughs give no points. Code: `laughCount`, `canLaugh`, `addLaughs`, `funniestLies` and

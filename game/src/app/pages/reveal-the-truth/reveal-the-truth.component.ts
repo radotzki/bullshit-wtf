@@ -28,8 +28,9 @@ const SCORES_MOVE_AFTER_MS = 900;
  *
  * Laughs on lies: every lie, picked or not, a house lie too, has a laugh button on the phones of the
  * players who did not write it, so no row shows that the house wrote it before its writer beat. Tap as
- * many lies as you like, each once. The counts show beside each lie, on the big screen too, and arrive
- * live. Laughs give no points (see laughCount in the game model).
+ * many lies as you like, each once. The counts show beside each lie from its row's writer beat (a count
+ * alone could tell a house lie, which every player may laugh at), on the big screen too, and arrive live.
+ * Laughs give no points (see laughCount in the game model).
  *
  * Every phone works out what to show from the server's phase start time, so all screens stay in step
  * even if one loads late.

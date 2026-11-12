@@ -22,7 +22,7 @@ test('the laugh button and count do not look at whose lie it is', () => {
     assert.doesNotMatch(laugh, /houseLie|playerLie|creators/);
     // The button follows canLaugh (any lie this phone did not write), the count any lie with a laugh.
     assert.match(laugh, /\*ngIf="row\.laughable"/);
-    assert.match(laugh, /\*ngIf="!row\.laughable && row\.lie && row\.laughs"/);
+    assert.match(laugh, /\*ngIf="!row\.laughable && row\.lie && counted && row\.laughs"/);
     assert.match(code, /laughable = !!me && canLaugh\(a, me\)/);
     assert.match(code, /row\.laughs = row\.lie \? view\.count : 0/);
 });
@@ -43,4 +43,25 @@ test('the order of picked rows does not depend on whose lie it is', () => {
     assert.ok(sort, 'picked rows');
     assert.doesNotMatch(sort[0], /houseLie|creators|playerLie/);
     assert.match(sort[0], /a\.pickers\.length - b\.pickers\.length/);
+});
+
+test('a count shows only from its row\'s writer beat, on phones and the big screen, in both reveals', () => {
+    // A house lie can take a laugh from every player, a player's lie from all but its writer. So a count
+    // alone can tell the house wrote a lie (3 players: 2 laughs on a lie you did not laugh at; any screen:
+    // as many laughs as players). The QA tester's second look at pull request 80 saw it on screen.
+    const laugh = template('laughButton');
+    assert.match(laugh, /let-counted="counted"/);
+    // The count in the button, and the count alone (the writer's phone, the big screen): both wait for it.
+    const numbers = (laugh.match(/\{\{ row\.laughs \}\}/g) || []).length;
+    const gated = laugh.match(/\*ngIf="[^"]*counted[^"]*row\.laughs"/g) || [];
+    assert.strictEqual(numbers, 2);
+    assert.strictEqual(gated.length, 2, 'both counts wait for counted');
+    // Every timed row hands counted as its writer beat; the rows of lies nobody picked show their writers
+    // from the start, so their counts show at once.
+    const uses = html.match(/\[ngTemplateOutlet\]="laughButton" \[ngTemplateOutletContext\]="\{[^"]*\}"/g);
+    assert.strictEqual(uses.length, 3);
+    assert.strictEqual(uses.filter(u => /row: row, counted: i < writersShown/.test(u)).length, 2);
+    assert.strictEqual(uses.filter(u => /row: u, counted: true/.test(u)).length, 1);
+    // The button itself is there from the row's first beat, so a tap before the writer beat still counts.
+    assert.match(laugh, /<button \*ngIf="row\.laughable"/);
 });

@@ -17,7 +17,7 @@
                         [class.house]="row.houseLie && i < writersShown">
                         <div class="text-line">
                             <p class="text" [class.rtl]="rtl"> {{ row.text | uppercase }} </p>
-                            <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row }"></ng-container>
+                            <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row, counted: i < writersShown }"></ng-container>
                         </div>
 
                         <div class="who">
@@ -81,7 +81,7 @@
                             <p class="truth-label" *ngIf="row.realAnswer"> {{ t.theTruth }} </p>
                             <div class="text-line">
                                 <p class="text"> {{ row.text | uppercase }} </p>
-                                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row }"></ng-container>
+                                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row, counted: i < writersShown }"></ng-container>
                             </div>
 
                             <div class="who">
@@ -146,15 +146,18 @@
     <!--
         Laughs on lies. On a player's phone, every lie they did not write, a house lie too, has a laugh button
         with its count; on the writer's phone and the big screen the count alone shows, once somebody laughed.
-        A house lie looks like any other lie here, so the button and count never tell before the writer beat.
+        A house lie looks like any other lie here, so the button never tells before the writer beat. The count
+        shows only from the row's writer beat (`counted`): a house lie can take a laugh from every player and a
+        player's lie from all but its writer, so a count alone could tell (in a 3-player game, 2 laughs on a lie
+        you didn't laugh at). Before the beat a tap still counts and the button looks pressed, with no number.
     -->
-    <ng-template #laughButton let-row="row">
+    <ng-template #laughButton let-row="row" let-counted="counted">
         <button *ngIf="row.laughable" type="button" class="laugh" [class.laughed]="row.laughed" (click)="laugh(row)"
             [attr.aria-label]="t.laughAt(row.text)" [attr.aria-pressed]="row.laughed">
             <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
-            <span class="laugh-count" *ngIf="row.laughs" dir="ltr">{{ row.laughs }}</span>
+            <span class="laugh-count" *ngIf="counted && row.laughs" dir="ltr">{{ row.laughs }}</span>
         </button>
-        <span *ngIf="!row.laughable && row.lie && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
+        <span *ngIf="!row.laughable && row.lie && counted && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
             <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
             <span class="laugh-count" dir="ltr">{{ row.laughs }}</span>
         </span>
@@ -179,7 +182,7 @@
                         <img [src]="'/assets/' + c.picture" alt=""> <span class="name">{{ c.nickname }}</span>
                     </span>
                 </span>
-                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: u }"></ng-container>
+                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: u, counted: true }"></ng-container>
             </div>
         </div>
     </ng-template>
