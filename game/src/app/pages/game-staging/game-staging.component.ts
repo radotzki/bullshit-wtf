@@ -1,20 +1,23 @@
+import { map } from 'rxjs/operators';
 import { reportError } from './../../sentry/sentry.module';
 import { GamePlayers } from './../../game-model';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Howl } from 'howler';
 import { fadeOutAndUnload } from './../fade-out';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { swapToast } from './../../name-flag';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
     hostAwayMs, shouldAskClock } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-game-staging',
     templateUrl: './game-staging.component.html',
     styleUrls: ['./game-staging.component.scss']
@@ -76,7 +79,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.playMusic();
         this.playersSubscriber = this.apiService.getPlayersObservable(this.pin)
-            .map(players => Object.keys(players || {}).map(k => Object.assign({}, players[k], { pid: k })))
+            .pipe(map(players => Object.keys(players || {}).map(k => Object.assign({}, players[k], { pid: k }))))
             .subscribe(players => {
                 this.players = players;
                 this.updateLobby();

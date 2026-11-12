@@ -1,18 +1,20 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
 import { fadeOutAndUnload } from './../fade-out';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { GameState } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-show-question',
     templateUrl: './show-question.component.html',
     styleUrls: ['./show-question.component.scss']

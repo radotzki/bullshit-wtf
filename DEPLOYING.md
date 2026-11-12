@@ -328,10 +328,15 @@ the BigQuery check in the growth notes before shipping. Crew names on the list a
 Release: run `functions/bigquery/2026-11-name-flag.sql` (adds `users.name_flag`), then all
 functions, then the game. Until the SQL runs, joins still log, without `name_flag`.
 
-The client is still Angular 4 with Angular CLI 1.7. To build it on a current Node:
-`node-sass` is replaced by Dart Sass through an npm `overrides` entry, the build runs
-with `--openssl-legacy-provider` (webpack 3 uses MD4), TypeScript is pinned to 2.3
-(the newest Angular 4 accepts), and `game/.npmrc` sets `legacy-peer-deps`.
+The client is Angular 22 on the Angular CLI's esbuild builder (`game/angular.json`), with
+Firebase JS SDK 13 through its compat API, RxJS 7 and TypeScript 6; it builds on Node 22 with
+no workarounds. It stays on its NgModule: every component, pipe and directive says
+`standalone: false`, and every component says `changeDetection: ChangeDetectionStrategy.Eager`
+(Angular 22 makes components OnPush by default, and the game's screens change from Firebase
+callbacks). `game/src/main.ts` asks for zone.js change detection, which Angular 21+ no longer
+gives an NgModule app by default. Lint is out of the build until angular-eslint replaces tslint.
+To play a whole game of the built client on the Firebase emulators, see
+`.github/smoke/emulator-game.js`.
 
 ## Deploy by hand (production)
 

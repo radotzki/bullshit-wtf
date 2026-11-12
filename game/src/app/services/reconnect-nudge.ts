@@ -1,7 +1,7 @@
 /**
  * Bring a phone back to the database within a few seconds of its network coming back.
  *
- * The database client (Firebase 3.9) waits a random time after each failed connection attempt,
+ * The database client (Firebase 13; 3.9 behaved the same) waits a random time after each failed connection attempt,
  * up to a delay that starts at 1 s and grows 1.3 times per failure, up to 5 minutes. After about
  * 40 s away that delay is 10 to 20 s, so a phone whose network is back can sit out a whole
  * question. The client skips the wait only when the browser fires "online" or the page becomes

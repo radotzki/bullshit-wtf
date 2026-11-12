@@ -1,11 +1,11 @@
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { SessionService } from './../../services/session.service';
 import { Howl } from 'howler';
 import { fadeOutAndUnload } from './../fade-out';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
 import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
@@ -29,6 +29,8 @@ export interface FinalPlayer {
 }
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-score-board-final',
     templateUrl: './score-board-final.component.html',
     styleUrls: ['./score-board-final.component.scss']

@@ -6,7 +6,7 @@ import { SessionService } from './services/session.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { provideHttpClient } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing/app-routing.module';
 import { AppComponent } from './app.component';
@@ -74,11 +74,11 @@ import { StepComponent } from './pages/step/step.component';
     imports: [
         BrowserModule,
         FormsModule,
-        HttpModule,
         AppRoutingModule,
         SentryModule,
     ],
     providers: [
+        provideHttpClient(),
         SessionService,
         StorageService,
         ApiService,

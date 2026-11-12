@@ -1,4 +1,4 @@
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { GameScheme, GameState, GameStateInfo } from './../game-model';
 import { ApiService } from './api.service';
 import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';

@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Component, Input, OnChanges, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { WaitingRow } from './../../game-model';
@@ -12,6 +12,8 @@ import { rowView, RowView, RowSeatView } from './waiting-row';
  * It shows who has sent, never what: see sent.ts in the functions.
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-waiting-row',
     templateUrl: './waiting-row.component.html',
     styleUrls: ['./waiting-row.component.scss']

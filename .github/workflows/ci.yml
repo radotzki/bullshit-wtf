@@ -60,9 +60,8 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: game/package-lock.json
-      # The workarounds for the 2017 toolchain live in the repository itself: game/.npmrc
-      # (legacy-peer-deps), the node-sass override in package.json, and the OpenSSL legacy
-      # flag inside the build script. Nothing extra is set here.
+      # Angular 22 on the CLI's esbuild builder: plain npm ci and npm run build. Lint is out of the
+      # build until angular-eslint replaces tslint (the job keeps its name so required checks still match).
       - run: npm ci
       - run: npm run build
       - run: npm test

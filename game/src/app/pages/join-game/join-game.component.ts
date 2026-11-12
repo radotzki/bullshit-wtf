@@ -3,13 +3,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeJoinSource, preferredLocale } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale } from './join-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-join-game',
     templateUrl: './join-game.component.html',
     styleUrls: ['./join-game.component.scss']

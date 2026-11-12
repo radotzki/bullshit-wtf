@@ -1,11 +1,13 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ApiService } from './../../services/api.service';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { SessionService } from './../../services/session.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-game-footer',
     templateUrl: './game-footer.component.html',
     styleUrls: ['./game-footer.component.scss']

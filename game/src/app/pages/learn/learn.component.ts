@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { preferredLocale, setPreferredLocale } from '../../services/join-source';
 import { LearnStrings, learnStrings } from './learn-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-learn',
     templateUrl: './learn.component.html',
     styleUrls: ['./learn.component.scss']

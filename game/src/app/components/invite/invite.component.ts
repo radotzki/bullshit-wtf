@@ -1,6 +1,6 @@
 import { ApiService } from './../../services/api.service';
 import { ShareService } from './../../services/share.service';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
 
 /**
@@ -11,6 +11,8 @@ import { gameStrings, GameStrings } from './../../pages/game-strings';
  * Each send is counted in BigQuery's shares table as content_type "invite".
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-invite',
     templateUrl: './invite.component.html',
     styleUrls: ['./invite.component.scss'],

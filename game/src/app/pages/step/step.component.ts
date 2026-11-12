@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GameService } from './../../services/game.service';
 
@@ -8,6 +8,8 @@ import { GameService } from './../../services/game.service';
  * which sends the phone to the page of the step the game is on.
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-step',
     template: '',
 })

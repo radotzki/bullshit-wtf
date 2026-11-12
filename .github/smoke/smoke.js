@@ -247,7 +247,12 @@ async function main() {
     process.exit(failed ? 1 : 0);
 }
 
-main().catch((e) => {
-    console.error(e);
-    process.exit(1);
-});
+// emulator-game.js reuses the server, with the same rewrites as firebase.json.
+module.exports = { serve, fileIn, HOST };
+
+if (require.main === module) {
+    main().catch((e) => {
+        console.error(e);
+        process.exit(1);
+    });
+}

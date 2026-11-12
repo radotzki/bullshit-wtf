@@ -1,12 +1,14 @@
 import { reportError } from './../../sentry/sentry.module';
 import { ApiService } from './../../services/api.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
 import { questionPacks, isPack, seasonalPack } from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-create-game',
     templateUrl: './create-game.component.html',
     styleUrls: ['./create-game.component.scss']

@@ -1,5 +1,5 @@
 import { environment } from './../../environments/environment';
-import * as Raven from 'raven-js';
+import Raven from 'raven-js';
 import { NgModule, ErrorHandler } from '@angular/core';
 import { isAutomatedBrowser } from './automated';
 

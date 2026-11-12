@@ -1,7 +1,7 @@
 import { reportError } from './../../sentry/sentry.module';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ApiService } from './../../services/api.service';
 import { CrewService } from './../../services/crew.service';
 import { ShareService } from './../../services/share.service';
@@ -19,6 +19,8 @@ import { Crew, CrewMember, GameState, crewStandings, crewLeaderLine } from './..
  * The link is what the group keeps in its chat; anyone with it can start the next game.
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-crew',
     templateUrl: './crew.component.html',
     styleUrls: ['./crew.component.scss'],

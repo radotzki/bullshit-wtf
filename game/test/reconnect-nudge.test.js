@@ -1,6 +1,6 @@
 // Tests for the reconnect nudge (src/app/services/reconnect-nudge.ts): while the database client is
 // disconnected and the page is visible, the game asks it every few seconds to try again at once.
-// The last two tests run the database client the game ships (Firebase 3.9, its browser build) on a
+// The last two tests run the database client the game ships (Firebase 13, its browser build) on a
 // fake socket, to check what goOnline() does in it: it starts a new attempt at once when the client
 // is only waiting, and leaves an attempt that is still under way alone.
 // Run: npm test (from game/). Needs Node 20+.
@@ -121,15 +121,30 @@ test('in the shipped client, goOnline() starts an attempt at once when the clien
     const realSocket = global.WebSocket;
     const realRandom = Math.random;
     global.WebSocket = FakeSocket;
-    const modules = path.join(__dirname, '..', 'node_modules', 'firebase');
-    const firebase = require(path.join(modules, 'app.js'));
-    require(path.join(modules, 'database.js'));
+    // Under Node, firebase/compat/database loads the database client's Node build, which opens its
+    // sockets with the faye-websocket package and never calls global.WebSocket. The game ships the
+    // browser build (the bundler picks it), which uses the page's WebSocket. Load that one in its place,
+    // so the code under test is the very client the phones run.
+    const compatDir = path.dirname(require.resolve('@firebase/database-compat/package.json'));
+    const nodeBuild = require.resolve('@firebase/database', { paths: [compatDir] });
+    const browserBuild = path.join(path.dirname(nodeBuild), 'index.cjs.js');
+    const realCached = require.cache[nodeBuild];
+    require.cache[nodeBuild] = Object.assign(new module.constructor(nodeBuild), {
+        filename: nodeBuild, loaded: true, exports: require(browserBuild),
+    });
+    const firebase = require('firebase/compat/app').default;
+    require('firebase/compat/database');
     const app = firebase.initializeApp({ databaseURL: 'https://demo-nudge.firebaseio.com' }, 'nudge-test');
     const db = app.database();
+    // The client connects when first used: the game follows .info/connected from the start (api.service.ts).
+    const connected = db.ref('.info/connected');
+    connected.on('value', () => { });
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     t.after(async () => {
         global.WebSocket = realSocket;
+        if (realCached) require.cache[nodeBuild] = realCached; else delete require.cache[nodeBuild];
         Math.random = realRandom;
+        connected.off();
         await app.delete();
     });
 
