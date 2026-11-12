@@ -59,7 +59,8 @@ export interface GameScheme {
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
     pack?: string;
-    // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay.
+    // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
+    // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
     // The round-1 lie helper is on for this game (a 50/50 test, set when the game is made).
     coach?: boolean;
@@ -175,6 +176,8 @@ export interface Crew {
     lastPlayed?: number;
     // The latest crew rematch lobby, so everyone who taps Rematch lands in the same game.
     rematch?: { pin: string; time: number };
+    // The test tag of the test game this crew was saved from: its rematches are test games too.
+    test?: string;
 }
 
 export interface CrewMember {
@@ -335,6 +338,18 @@ export function cleanCampaign(tag: any): string | undefined {
     }
     const t = tag.toLowerCase().trim();
     return /^[a-z0-9][a-z0-9-]{0,39}$/.test(t) ? t : undefined;
+}
+
+/**
+ * The mark of a test game: the campaign tag `test`, or any tag that starts with `test-`
+ * (`?via=test`, `?via=test-qa-lobby`). These tags are reserved: a real post must not use them.
+ * A test game's rows are left out of every usage number (see DEPLOYING.md, "Test games").
+ */
+export const TEST_CAMPAIGN = 'test';
+
+export function isTestCampaign(tag: any): boolean {
+    const t = cleanCampaign(tag);
+    return !!t && (t === TEST_CAMPAIGN || t.indexOf(TEST_CAMPAIGN + '-') === 0);
 }
 
 /** A player's best lie of the game, and how many players their lies fooled in all. */
