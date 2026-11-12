@@ -118,6 +118,41 @@ Things to know:
   may *write* to hosting: the tool's hosting dry run creates a new empty version on the live site,
   so it is not used. The permission check above asks that instead
   (`firebasehosting.sites.update`).
+- **A release while the database API is off.** The rules step, and the database read above,
+  first ask the Firebase Realtime Database Management API for the database's details. While that
+  API is off in the Google project, Google refuses the question, and only the project's owner
+  can switch the API on. A rules deploy of rules that are already live changes nothing, though.
+  So when the database read fails, the access check asks one more thing, with four `GET`s and
+  nothing else (`.github/scripts/live-rules.js`):
+  1. the Firebase project, which names the default database instance;
+  2. that instance at the database API, which must be refused again with `403`, reason
+     `SERVICE_DISABLED`, service `firebasedatabase.googleapis.com`. Any other answer means the
+     database read failed for another reason, and the run stops;
+  3. the project's configuration (`adminSdkConfig`), which holds the database's address. It must
+     be the default instance's own address;
+  4. the rules that are live, at `<the database's address>/.settings/rules.json`. This is the
+     address the rules deploy writes to; here it is only read.
+
+  If the live rules are the same as the commit's rules file, value for value, and the site was
+  reached, the check passes and the run releases the functions and the site and **skips "2.
+  Deploy the database rules"**. Production then holds what a whole release would have left: this
+  commit's functions, rules and site. The run's summary page says so under "What this run
+  released": which parts were released, and that the rules were left alone and why.
+  In every other case the run stops before it releases anything, as before: the live rules
+  differ, they could not be read, they or the commit's file are not plain JSON (rules with
+  comments cannot be compared, and not knowing counts as different), the address is not the
+  default database's, or the site was not reached. A commit that changes the rules cannot be
+  released while the API is off.
+  The four requests cannot write: the script sends nothing but a `GET` without a body to
+  `firebase.googleapis.com`, `firebasedatabase.googleapis.com` or a database's
+  `/.settings/rules.json`, and refuses any other request itself before it is sent. It prints
+  neither the rules nor the database's address. Once the owner switches the API on, the database
+  read passes, none of this runs, and the rules step runs as always.
+  What it does not prove: that Google lets the deploy account read the live rules (if not, the
+  run stops and says so), and that nobody changes the live rules by hand between this check and
+  the end of the run. Until its first run on `master` it has only been tried with made-up
+  answers (`live-rules.test.js`) and, for the shape of the rules answer, a local database
+  emulator.
 - The workflow never passes `--force`. So if a change **removes or renames a function**, the
   functions step stops and lists the functions that are live but gone from the code; nothing is
   deleted by a machine. A person deletes them with the `firebase functions:delete` commands the log
@@ -185,6 +220,17 @@ below, for the site the status and the error fields of Google's answer. When the
 off it says so by name; the owner switches it on in the Google Cloud console, the step never
 does. Fix everything it names before the next run. It then removes the debug file, so "Show why
 the step failed" has none to read here either.
+
+When the database was not reached, the same step also says what it found about the live rules
+(see "A release while the database API is off" above), in one line: the API is off and the live
+rules are the same as the commit's (the run then goes on without the rules step, with a warning
+and not an error), the live rules differ, they could not be read or compared, or the database
+read failed for another reason than the API being off. Under it are the requests it sent and
+Google's answers.
+
+Every run's summary page has "What this run released": one line for the functions, the database
+rules and the site each, "Released", "Left alone", "Not released" or "NOT released whole", and
+above them whether the release was whole.
 
 For the other steps: the Firebase tool's own error is one general line, such as "Failed to get instance details", and
 it does not name a missing permission. Google's answer is in the tool's debug file, which the run
