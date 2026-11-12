@@ -116,6 +116,74 @@ export interface GamePlayer {
     uid: string;
     // The game's host (the phone that created it, or pressed Replay), marked by the server.
     host?: boolean;
+    // The phase in which this seat last sent a lie or a pick (see sentMark), written by the server.
+    // It says that the seat has sent, never what: the waiting screens show who the room waits for.
+    sent?: string;
+}
+
+/**
+ * The mark a seat gets when its lie or its pick is in: the name of the phase it was sent in,
+ * "<state id>:<state timestamp>". A seat is done with the phase the game is on when its mark names
+ * that phase, so nothing has to be cleared between phases, and a mark that arrives late marks nothing.
+ */
+export function sentMark(state: GameStateInfo): string {
+    return `${state.id}:${state.timestamp}`;
+}
+
+/** When the phase a mark names started (ms), or 0 for anything that is no mark. */
+export function sentMarkTime(mark: any): number {
+    const m = typeof mark === 'string' ? /^\d+:(\d+)$/.exec(mark) : null;
+    return m ? Number(m[1]) : 0;
+}
+
+export interface WaitingSeat {
+    pid: string;
+    nickname: string;
+    /** The seat's place among the players: its picture is avatar<index>.png, as on every screen. */
+    index: number;
+    /** Its lie (while lies are written) or its pick (while answers are picked) is in. */
+    done: boolean;
+    /** Nobody plays this seat, so the game does not wait for it (the empty seats rule, seats.ts). */
+    away: boolean;
+}
+
+export interface WaitingRow {
+    /** False until the server is seen to mark seats in this game: an older server never does. */
+    known: boolean;
+    seats: WaitingSeat[];
+    /** The seats the room is waiting for: not done, and not away. */
+    waiting: WaitingSeat[];
+}
+
+/**
+ * Who is done and who the room waits for, from what every phone may read: the players with their
+ * marks, the phase the game is on, the question's index and the time the game was made.
+ *
+ * It follows the server's own rule (seatsToWaitFor in the functions' seats.ts): on the first
+ * question every seat is waited for; from the second on, a seat that has sent no lie and no pick
+ * in this game is away until it sends one. A mark older than the game (carried over by a Replay
+ * from an older server) does not count.
+ */
+export function waitingRow(players: GamePlayers | null | undefined, state: GameStateInfo | null | undefined,
+    questionIndex: number | null | undefined, gameTimestamp: number | null | undefined): WaitingRow {
+    const pids = Object.keys(players || {}).filter(pid => !!players[pid] && typeof players[pid] === 'object');
+    const mark = state && typeof state.timestamp === 'number' ? sentMark(state) : '';
+    const since = typeof gameTimestamp === 'number' ? gameTimestamp : 0;
+    const later = (questionIndex || 0) > 0;
+
+    const seats = pids.map((pid, index) => {
+        const sent = players[pid].sent;
+        const done = !!mark && sent === mark;
+        const played = sentMarkTime(sent) > 0 && sentMarkTime(sent) >= since;
+        return { pid, nickname: String(players[pid].nickname || ''), index, done, away: later && !done && !played, played };
+    });
+
+    return {
+        known: seats.some(s => s.played),
+        seats: seats.map(s => ({ pid: s.pid, nickname: s.nickname, index: s.index, done: s.done, away: s.away })),
+        waiting: seats.filter(s => !s.done && !s.away)
+            .map(s => ({ pid: s.pid, nickname: s.nickname, index: s.index, done: s.done, away: s.away })),
+    };
 }
 
 export interface Answers {
