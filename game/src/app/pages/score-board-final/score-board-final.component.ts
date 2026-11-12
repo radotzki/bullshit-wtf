@@ -1,6 +1,7 @@
 import { Subscription } from 'rxjs/Subscription';
 import { SessionService } from './../../services/session.service';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute } from '@angular/router';
@@ -205,8 +206,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         }
 
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 

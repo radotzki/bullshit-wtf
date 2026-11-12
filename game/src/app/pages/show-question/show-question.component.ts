@@ -1,5 +1,6 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { Subscription } from 'rxjs/Subscription';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -143,7 +144,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                     this.panic = true;
                 }
             }, 1000);
-        });
+        }).catch(err => reportError(err, 'startTimer', { pin: this.pin }));
     }
 
     playBackground() {
@@ -172,8 +173,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     stopMusic() {
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 

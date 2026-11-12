@@ -2,6 +2,7 @@ import { reportError } from './../../sentry/sentry.module';
 import { GamePlayers } from './../../game-model';
 import { Subscription } from 'rxjs/Subscription';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { Observable } from 'rxjs/Observable';
@@ -196,8 +197,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         }
 
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 
