@@ -230,6 +230,9 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
             return {
                 state: updateState(GameState.ShowAnswers),
                 answers: await populateQuestionAnswers(pin, game),
+                // Picks open empty: a pick that landed while the lies were written was made in an
+                // earlier question, by a phone that was offline then (see pickIsFor).
+                answerSelections: {},
             };
 
         case GameState.ShowAnswers:

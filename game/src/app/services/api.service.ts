@@ -2,7 +2,7 @@ import { reportError } from './../sentry/sentry.module';
 import {
     GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
     Taste, tasteOf,
-    WaitingRow, waitingRow,
+    WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
@@ -433,14 +433,27 @@ export class ApiService {
         if (!pid) {
             return false;
         }
-        const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answerSelections').child(pid));
-        return !!userAnswer;
+        const [userAnswer, state] = await Promise.all([
+            this.get<{}>(this.gamesRef.child(pin).child('answerSelections').child(pid)),
+            this.get<GameStateInfo>(this.gamesRef.child(pin).child('state')),
+        ]);
+        // A pick this phone made in an earlier question, sent late after it was offline, is not this
+        // question's pick: the phone can still pick here.
+        return !!userAnswer && pickIsFor(userAnswer, state);
     }
 
-    chooseAnswer(pin: string, answer: string) {
+    /**
+     * `step` is the picks step the phone shows (see phaseKey in game.service): the server counts the
+     * pick only in that step, so one kept while the phone was offline and sent later counts nowhere.
+     */
+    chooseAnswer(pin: string, answer: string, step?: string) {
         pin = pin.toUpperCase();
         const pid = this.sessionService.user.pid;
-        return this.gamesRef.child(pin).child('answerSelections').child(pid).set({ text: answer.toLowerCase() });
+        const pick: AnswerSelection = { text: answer.toLowerCase() };
+        if (step) {
+            pick.step = step;
+        }
+        return this.gamesRef.child(pin).child('answerSelections').child(pid).set(pick);
     }
 
     tick(pin: string, gameState: GameState) {

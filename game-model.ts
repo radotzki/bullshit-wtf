@@ -308,6 +308,21 @@ export function sentMark(state: GameStateInfo): string {
     return `${state.id}:${state.timestamp}`;
 }
 
+/**
+ * Is `pick` one made in the picks step `state`? A pick names the step it was made in, so one that a
+ * phone kept while offline and sent in a later question is no pick there: it does not count, and
+ * that phone can still pick. A pick with no step (from an older site) is taken as before.
+ */
+export function pickIsFor(pick: any, state: GameStateInfo): boolean {
+    if (!pick || typeof pick !== 'object') {
+        return false;
+    }
+    if (typeof pick.step !== 'string') {
+        return true;
+    }
+    return !!state && state.id === GameState.ShowAnswers && typeof state.timestamp === 'number' && pick.step === sentMark(state);
+}
+
 /** When the phase a mark names started (ms), or 0 for anything that is no mark. */
 export function sentMarkTime(mark: any): number {
     const m = typeof mark === 'string' ? /^\d+:(\d+)$/.exec(mark) : null;
@@ -384,6 +399,10 @@ export interface AnswerSelections {
 export interface AnswerSelection {
     text: string;
     score?: number;
+    // The picks step the phone picked in (sentMark of that state). A phone that was offline sends its
+    // pick when it is back, maybe in a later question: there it is no pick (see pickIsFor).
+    // Picks from sites older than this field have none.
+    step?: string;
 }
 
 export interface RevealAnswer {

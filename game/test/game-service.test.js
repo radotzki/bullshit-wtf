@@ -274,3 +274,28 @@ test('a phone that comes back to a new step keeps its backup timer for it', asyn
     assert.deepStrictEqual(p.ticks, ['AAAA']);
     p.service.unregister();
 });
+
+// A pick names the step it was made in, so one sent late, after the phone was offline, counts nowhere.
+test('a pick names the picks step the phone shows, as the server marks that step', () => {
+    const p = phone();
+    assert.strictEqual(p.service.currentStep(), undefined, 'no step before the first');
+    p.service.register('PICK');
+    p.step('PICK', GameState.ShowAnswers);
+    const q1 = p.service.currentStep();
+    p.step('PICK', GameState.ShowAnswers, true);
+    assert.strictEqual(p.service.currentStep(), q1, 'a deadline added is the same step');
+    p.step('PICK', GameState.RevealTheTruth);
+    p.step('PICK', GameState.ShowQuestion);
+    p.step('PICK', GameState.ShowAnswers);
+    const q2 = p.service.currentStep();
+    assert.notStrictEqual(q2, q1);
+    const [id, timestamp] = q2.split(':').map(Number);
+    const state = { id, timestamp };
+    assert.strictEqual(model.sentMark(state), q2);
+    assert.strictEqual(model.pickIsFor({ text: 'a', step: q2 }, state), true, 'a pick of this step');
+    assert.strictEqual(model.pickIsFor({ text: 'a', step: q1 }, state), false, 'one made in the question before');
+    assert.strictEqual(model.pickIsFor({ text: 'a' }, state), true, 'one from an older site, with no step');
+    assert.strictEqual(model.pickIsFor({ text: 'a', step: q2 }, { id: GameState.ShowQuestion, timestamp }), false, 'none while lies are written');
+    assert.strictEqual(model.pickIsFor(null, state), false);
+    p.service.unregister();
+});
