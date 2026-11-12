@@ -1,5 +1,5 @@
 import {
-    GameScheme, GameState, GameStateInfo, revealSchedule, revealTiming, stagedRevealTiming, scoreBoardDuration,
+    GameScheme, GameState, GameStateInfo, revealSchedule, revealTiming, stagedRevealTiming, scoreBoardDuration, LAUGH_HOLD_MS,
 } from '../game-model';
 
 // How long each timed phase lasts. Must match game/src/app/services/game.service.ts.
@@ -19,7 +19,7 @@ export const maxPhaseDuration = Math.max(
     9 * revealTiming.presenter.step + revealTiming.presenter.hold,
     8 * stagedRevealTiming.presenter.step + stagedRevealTiming.presenter.truthIntro
         + stagedRevealTiming.presenter.writerAt + stagedRevealTiming.presenter.hold,
-) + 5000;
+) + LAUGH_HOLD_MS + 5000;
 
 /** The game plays the staged reveal (see bigReveal in game-model). Only `true` counts. */
 export function isStaged(game: Partial<GameScheme> | null | undefined): boolean {

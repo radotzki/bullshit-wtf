@@ -8,11 +8,12 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import {
     GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing,
-    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings,
+    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isLie, isPlayerLie,
 } from '../../game-model';
 import { gameStrings, GameStrings } from './../game-strings';
 import { resultLines, stingFor } from './reveal-strings';
 import { followScrollTop } from './reveal-follow';
+import { laughView } from './reveal-laughs';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
 // stand in their old order before they move to the new one (staged reveal only).
@@ -21,9 +22,15 @@ const SCORES_MOVE_AFTER_MS = 900;
 
 /**
  * The reveal: the question stays on top, and the answers somebody picked appear one row at a time,
- * the truth last. Each row shows who picked it, then who wrote it. Answers nobody picked get no row of
- * their own; they are listed together at the end. Then each player sees their own result and can tap NEXT;
- * once everyone has, the server moves on without waiting for the deadline.
+ * the truth last. Each row shows who picked it, then who wrote it. Players' lies nobody picked are no
+ * timed rows: once all is shown they appear together, each in a row of its own. Then each player sees
+ * their own result and can tap NEXT; once everyone has, the server moves on without waiting for the deadline.
+ *
+ * Laughs on lies: every lie, picked or not, a house lie too, has a laugh button on the phones of the
+ * players who did not write it, so no row shows that the house wrote it before its writer beat. Tap as
+ * many lies as you like, each once. The counts show beside each lie from its row's writer beat (a count
+ * alone could tell a house lie, which every player may laugh at), on the big screen too, and arrive live.
+ * Laughs give no points (see laughCount in the game model).
  *
  * Every phone works out what to show from the server's phase start time, so all screens stay in step
  * even if one loads late.
@@ -82,6 +89,10 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     private shownKey = '';
     private destroyed = false;
     private doneSub: Subscription;
+    private laughSub: Subscription;
+    // Laughs on lies: the server's laughs on each lie, and the lies this phone tapped (by the lie's text).
+    private serverLaughs: { [text: string]: { [pid: string]: boolean } } = {};
+    private myLaughs: { [text: string]: boolean } = {};
     private sound: Howl;
 
     constructor(
@@ -116,6 +127,33 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         if (this.doneSub) {
             this.doneSub.unsubscribe();
         }
+        if (this.laughSub) {
+            this.laughSub.unsubscribe();
+        }
+    }
+
+    /** A laugh at a lie: counted here at once; if the server does not take it, it is taken back. */
+    laugh(row: Row) {
+        if (!row || !row.laughable || row.laughed) {
+            return;
+        }
+        const text = row.text;
+        this.myLaughs[text] = true;
+        this.showLaughs();
+
+        const undo = () => {
+            delete this.myLaughs[text];
+            this.showLaughs();
+        };
+        this.apiService.laugh(this.pin, text).then((r: { taken?: boolean }) => {
+            if (!r || r.taken === false) {
+                undo();
+            }
+        }, undo);
+    }
+
+    trackRow(index: number, row: Row) {
+        return row.text;
     }
 
     next() {
@@ -160,11 +198,22 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             .sort((a, b) => a.pickers.length - b.pickers.length || (a.text > b.text ? 1 : -1));
         const truth = all.filter(r => r.realAnswer);
         this.rows = picked.concat(truth);
-        this.unpicked = all.filter(r => !r.pickers.length && !r.realAnswer && !r.houseLie);
+        this.unpicked = all.filter(r => !r.pickers.length && r.playerLie);
         this.playersCount = playersArray.length;
 
         const me = !this.presenter && this.sessionService.user ? this.sessionService.user.pid : null;
         this.me = me;
+
+        // Laughs: this phone's player may laugh at every lie but their own, house lies included.
+        (revealAnswers || []).forEach((a, i) => all[i].laughable = !!me && canLaugh(a, me));
+        this.serverLaughs = {};
+        (revealAnswers || []).forEach(a => {
+            if (a && a.laughs) {
+                this.serverLaughs[a.text] = a.laughs;
+            }
+        });
+        this.showLaughs();
+        this.laughSub = this.apiService.revealAnswersLive(this.pin).subscribe(live => this.onLaughs(live, revealAnswers));
 
         if (me) {
             this.myResult = resultLines(me, all, this.t);
@@ -284,6 +333,34 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * New laughs from the server. Only while the reveal this page shows is still there: when the game
+     * moves on, the server clears the rows (or writes the next question's), and the counts stay as they were.
+     */
+    private onLaughs(live: RevealAnswer[], shown: RevealAnswer[]) {
+        const list = Array.isArray(live) ? live : [];
+        const same = list.length === (shown || []).length && list.every((a, i) => !!a && !!shown[i] && a.text === shown[i].text);
+        if (!same) {
+            return;
+        }
+        this.serverLaughs = {};
+        list.forEach(a => {
+            if (a.laughs) {
+                this.serverLaughs[a.text] = a.laughs;
+            }
+        });
+        this.showLaughs();
+    }
+
+    private showLaughs() {
+        const me = this.me;
+        (this.rows || []).concat(this.unpicked || []).forEach(row => {
+            const view = laughView(this.serverLaughs[row.text], me, !!this.myLaughs[row.text]);
+            row.laughs = row.lie ? view.count : 0;
+            row.laughed = view.mine;
+        });
+    }
+
     private toRow(answer: RevealAnswer, playersArray: (GamePlayer & { pid: string })[]): Row {
         const pickers = (answer.selectors || []).map(pid => this.playerObject(playersArray, pid)).filter(p => p);
         const creators = (answer.creators || []).filter(c => c).map(pid => this.playerObject(playersArray, pid)).filter(p => p);
@@ -299,6 +376,11 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             creators,
             pickerNames: pickers.map(p => p.nickname),
             creatorNames: creators.map(p => p.nickname),
+            playerLie: isPlayerLie(answer),
+            lie: isLie(answer),
+            laughable: false,
+            laughs: 0,
+            laughed: false,
         };
     }
 
@@ -351,4 +433,11 @@ interface Row {
     creators: Player[];
     pickerNames: string[];
     creatorNames: string[];
+    // Laughs on lies.
+    playerLie: boolean;
+    // Any lie, a house lie too: it shows a button or a count just like a player's lie.
+    lie: boolean;
+    laughable: boolean;
+    laughs: number;
+    laughed: boolean;
 }

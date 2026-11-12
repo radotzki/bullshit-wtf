@@ -340,7 +340,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 19 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 20 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit + laugh), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -728,6 +728,46 @@ independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`reveal
   line and the page follows the newest row, so the truth is on screen at 1280x720 and 1920x1080.
 - To end the test: make `drawBigReveal` return `true` (everyone staged) or `undefined` (nobody), and
   deploy the functions. No client change is needed either way.
+
+## Laughs on lies
+
+During the reveal, in both the staged reveal and the plain one, every lie, house lies included, has a
+laugh button on the phones of the players who did not write it: tap as many lies as you like, each once.
+House lies take laughs so that no button tells the room that the house wrote a lie before its
+writer beat; their laughs show on the reveal and are credited to nobody, so the funniest lie is always a
+player's. Counts show beside each lie only from its row's writer beat, on every phone and the big
+screen: a house lie can take a laugh from every player and a player's lie from all but its writer, so a
+count alone could tell (in a 3-player game, 2 laughs on a lie you did not laugh at). A tap before the
+beat still counts; the button looks pressed, with no number. Players' lies nobody picked are no longer a
+grey footnote: once every row is shown they get rows of their own (the lie, who wrote it, its laughs).
+The final screen marks the writer of the most laughed-at lie FUNNIEST LIE and shows the lie with its
+count. Laughs give no points. Code: `laughCount`, `canLaugh`, `addLaughs`, `funniestLies` and
+`LAUGH_HOLD_MS` in `game-model.ts`, `functions/src/controllers/laugh.ts`, the reveal page and the final
+screen; the words in `game-strings.ts` and `final-strings.ts`.
+
+- How a laugh is written, with no rules change: phones may not write the reveal rows, so a laugh goes
+  through the new HTTP function `laugh` ({ pin, pid, text }), like a lie goes through `answer`. The
+  server takes it only from a player of the game, only while the reveal (or its scoreboard) is on, only
+  on a lie (a player's or a house lie, never the truth) and never the player's own, and writes `games/$pin/revealAnswers/<row>/laughs/<pid>`
+  in a transaction on that row. Phones already read `revealAnswers`, so the counts reach them live.
+- Who wrote a lie is never shown earlier than before: a count says how many laughed, not who wrote it,
+  and the rows of lies nobody picked appear when the old footnote did (once every row is shown).
+- The hold: when a player's lie went unpicked, the reveal lasts `LAUGH_HOLD_MS` (1 s) longer, both
+  reveals, phones and big screen, since those rows appear only at the end. NEXT from everyone still ends
+  it early. A game with every lie picked keeps its timing.
+- The funniest lie: as each question ends (leaving its scoreboard), the server keeps each writer's most
+  laughed-at lie in `games/$pin/highlights/<pid>/funny` ({ text, laughs, q, n }). The final screen
+  shows one lie: the most laughs, then the later question; co-writers share it.
+- Old pages: a phone on an older site shows the reveal as before (its footnote, no buttons, no counts)
+  and the longer phase passes unnoticed. A new page against older functions gets 404 from `laugh`; the
+  tap is taken back on the phone and nothing else changes.
+- Deploy: functions, then hosting. **No rules change and no BigQuery change.**
+- Measuring, for later: each question's rows with their laughs are already kept in the database's
+  question history (`qHistory`, field `a`, written as the question ends). For BigQuery, the owner would
+  add two columns to `question_results`, `laughs` (laughs on the question) and `laughers` (players who
+  laughed at least once); then "share of reveals with at least one laugh" is
+  `COUNTIF(laughs > 0) / COUNT(*)` and "laughs per player per game" is `SUM(laughs) / SUM(players)` per
+  game, read alongside rematches and shares per finished game.
 
 ## Test games (play-tests that do not count as players)
 

@@ -91,6 +91,9 @@ export interface GameStrings {
     houseLie: string;
     bullshitBy: string;
     nobodyFellFor: string;
+    /** Laughs on lies: what the laugh button says to a screen reader, and the count beside a lie. */
+    laughAt: (lie: string) => string;
+    laughs: (n: number) => string;
     next: string;
     waitingFor: (n: number) => string;
     foundTheTruth: (points: string) => string;
@@ -178,6 +181,8 @@ const en: GameStrings = {
     houseLie: 'Home Grown Bullshit',
     bullshitBy: 'bullshit by',
     nobodyFellFor: 'Nobody fell for:',
+    laughAt: (lie: string) => `Laugh at “${lie}”`,
+    laughs: (n: number) => n === 1 ? '1 laugh' : `${n} laughs`,
     next: 'NEXT',
     waitingFor: n => `Waiting for ${n} ${n === 1 ? 'friend' : 'friends'}`,
     foundTheTruth: points => `You found the truth! ${points}`,
@@ -260,6 +265,8 @@ const he: GameStrings = {
     houseLie: 'בולשיט של הבית',
     bullshitBy: 'הבולשיט של',
     nobodyFellFor: 'שקרים שאף אחד לא נפל בהם:',
+    laughAt: (lie: string) => `לצחוק על ${lie}`,
+    laughs: (n: number) => n === 1 ? 'צחוק אחד' : `${n} צחוקים`,
     next: 'המשך',
     waitingFor: n => n === 1 ? 'מחכים לחבר אחד' : `מחכים ל־${n} חברים`,
     foundTheTruth: points => `מצאת את האמת! ${points}`,

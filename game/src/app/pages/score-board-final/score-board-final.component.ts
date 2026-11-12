@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
-import { Highlight, Highlights, finalPlaces, Taste, TASTE_QUESTIONS } from './../../game-model';
+import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
 import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
@@ -24,6 +24,8 @@ export interface FinalPlayer {
     me: boolean;
     best?: Highlight;
     biggest?: boolean;
+    // Laughs on lies: this player wrote the game's funniest lie (the most laughed-at), with its count.
+    funniest?: { text: string; laughs: number };
 }
 
 @Component({
@@ -265,6 +267,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         const places = finalPlaces(players.map(p => p.score));
         const mostFooled = Math.max(0, ...players.map(p => p.best ? p.best.total || 0 : 0));
         const biggest = players.filter(p => p.best && (p.best.total || 0) === mostFooled);
+        // The funniest lie: its writers (two, when they wrote the same lie; more, when lies tie on laughs).
+        const funny: { [pid: string]: { text: string; laughs: number } } = {};
+        funniestLies(highlights).forEach(lie => lie.pids.forEach(pid => funny[pid] = { text: lie.text, laughs: lie.laughs }));
 
         this.displayPlayers = players.map((p, i) => ({
             nickname: p.nickname,
@@ -275,6 +280,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             best: p.best,
             // One clear "biggest bullshitter": nobody gets it on a tie.
             biggest: mostFooled > 0 && biggest.length === 1 && biggest[0].pid === p.pid,
+            funniest: funny[p.pid],
         }));
         this.winners = this.displayPlayers.filter(p => p.place === 1);
         this.mine = this.displayPlayers.find(p => p.me);

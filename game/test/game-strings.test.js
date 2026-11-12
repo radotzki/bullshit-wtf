@@ -26,7 +26,7 @@ function words(t) {
         leadsBy: ['Dan', 500], tiedForFirst: ['Dan and Ben'], manyTiedForFirst: [4], youLeadBy: [500],
         youAreTiedWith: ['Ben'], youAreTiedWithMany: [3], behind: [500, 'Dan'], behindFirstPlace: [1500],
         foundTheTruth: ['+1000'], fellForOurs: ['-500'], fellFor: ['Dan'], fooled: ['Dan and Ben', '+500'],
-        youFooled: ['Dan and Ben'],
+        youFooled: ['Dan and Ben'], laughAt: ['Gal'],
         waitingForName: ['Dan'], seatIn: ['Dan'], seatNotYet: ['Dan'],
     };
     const out = {};
@@ -34,7 +34,7 @@ function words(t) {
         const v = t[key];
         if (typeof v !== 'function') {
             out[key] = v;
-        } else if (key === 'waitingFor') {
+        } else if (key === 'waitingFor' || key === 'laughs') {
             out[key] = [v(1), v(3)];
         } else if (key === 'names') {
             out[key] = [v([]), v(['Dan']), v(['Dan', 'Ben']), v(['Dan', 'Ben', 'Gal'])];
@@ -108,6 +108,8 @@ test('every game that is not Hebrew keeps the English words, letter for letter',
         houseLie: 'Home Grown Bullshit',
         bullshitBy: 'bullshit by',
         nobodyFellFor: 'Nobody fell for:',
+        laughAt: 'Laugh at “Gal”',
+        laughs: ['1 laugh', '3 laughs'],
         next: 'NEXT',
         waitingFor: ['Waiting for 1 friend', 'Waiting for 3 friends'],
         foundTheTruth: 'You found the truth! +1000',
