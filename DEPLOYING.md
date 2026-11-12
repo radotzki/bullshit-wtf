@@ -583,8 +583,8 @@ credentials needed; `PRINT_ROWS=1` prints every row the run would send to BigQue
   REMIND ME. The host (the phone with the host key, the marked host row, or the creator of an older
   game), a big screen and a solo player do not see it. START MY OWN GAME opens Create in the game's
   language; the game it makes carries the campaign tag `after-game`. REMIND ME downloads a calendar
-  entry for the coming game night (Thursday 21:00 for Hebrew, Friday 21:00 for English, the crew
-  page's default), with a link to Create tagged `after-game-remind`, and then offers Google
+  entry for the coming game night (Friday 21:00, the crew page's default; it was Thursday for
+  Hebrew until the Friday crews change), with a link to Create tagged `after-game-remind`, and then offers Google
   Calendar. The join page of a game that is over shows the same ask, shorter (tags
   `after-game-late` and `after-game-late-remind`). Create now reads `?via=` on its own address.
 - **Counting.** `onShare` accepts three more content types in BigQuery `shares`: `results`
@@ -631,6 +631,34 @@ How to read it (compare the two weeks before the release with the two after, tes
 - The share of new lobbies that reach 2 players, and "start alone" presses in `shares`.
 - Games by `campaign` in `opened_games`, once posts go out.
 - Once the visits table exists: created games per first home page view.
+
+## Friday crews: Friday by default, every Friday in the calendar, and the save-crew offer
+
+Friday has 2.4 times the games of any other day, in Hebrew too, and a group that plays every week
+is the cheapest active player there is.
+
+- **Friday by default.** The crew page's NEXT GAME NIGHT is the coming Friday at 21:00 in every
+  language (Hebrew crews got Thursday before). The guest's REMIND ME on the final screen uses the
+  same default, so it is Friday too.
+- **Every Friday in the calendar.** Under the one-night invite, the crew page offers EVERY FRIDAY IN
+  MY CALENDAR (the weekday follows the picked night): a calendar file that repeats weekly
+  (`RRULE:FREQ=WEEKLY`), at local time, with the crew link in its text and URL, and one UID per
+  crew so adding it again updates it. Shared into the chat on phones that share files, downloaded
+  elsewhere, and offered as a weekly Google Calendar link in the phone's time zone.
+- **Save this crew, before SHARE.** On the final screen of a group's second game (a REMATCH, or the
+  same friends another night), SAVE THIS CREW moves above SHARE RESULTS with one line on why. Other
+  games keep it at the bottom. How "second game" is known: the server marks a rematch
+  (`games/<pin>/parent`), but the rules hide it from the client and changing them is the owner's
+  step, so each phone keeps its last 12 finished games (PIN, time, players' names) in local storage
+  and compares: at least half of this game's players, and two at least, were in a game it saw end in
+  the last 60 days. A phone that only joined this game, or lost its storage, does not know; another
+  phone at the table usually does.
+- **Counting.** `onShare` takes `crew-night` methods `weekly-share`, `weekly-download`,
+  `weekly-google`, and a new content type `crew-save` (`repeat-offer`, `bottom`). No schema change.
+  Queries: `functions/bigquery/2026-11-friday-crews.sql` (crews on two or more days, players back on
+  a second day, the presses).
+- Deploy order: functions, then hosting. No rules change. With the new site on old functions the
+  game works; the new presses are just not counted until the functions are live.
 
 ## Known leftovers
 

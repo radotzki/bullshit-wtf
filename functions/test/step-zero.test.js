@@ -282,6 +282,26 @@ test('presses on the after-game ask land in shares, from the final screen and fr
     }
 });
 
+test('the weekly crew entry and the final screen\'s crew saves land in shares, with the crew', async () => {
+    rows.length = 0;
+    const sent = [
+        ['crew-night', 'weekly-share'], ['crew-night', 'weekly-download'], ['crew-night', 'weekly-google'],
+        ['crew-save', 'repeat-offer'], ['crew-save', 'bottom'],
+    ];
+    for (const [contentType, method] of sent) {
+        const r = await call('onShare', { content_type: contentType, method, crew: 'Abc123', locale: 'he', uid: 'u1' });
+        assert.deepStrictEqual(r, { code: 200, body: { counted: true } });
+    }
+    const shares = take('shares');
+    assert.deepStrictEqual(shares.map(s => `${s.content_type}:${s.method}`), sent.map(s => s.join(':')));
+    for (const s of shares) {
+        assert.strictEqual(s.crew_id, 'abc123');
+        assert.strictEqual(s.locale, 'he');
+    }
+    const r = await call('onShare', { content_type: 'crew-save', method: 'weekly-share' });
+    assert.deepStrictEqual(r, { code: 200, body: { counted: false } });
+});
+
 test('shares we do not count are dropped, and bad fields are cleared, without an error', async () => {
     rows.length = 0;
     for (const body of [

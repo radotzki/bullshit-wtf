@@ -91,6 +91,12 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     calendar-share     CALENDAR INVITE, sent through the phone's share sheet
 //     calendar-download  CALENDAR INVITE, downloaded as a .ics file
 //     google-calendar    tapped "or add it to Google Calendar"
+//     weekly-share       EVERY FRIDAY IN MY CALENDAR (a weekly entry), sent through the share sheet
+//     weekly-download    the weekly entry, downloaded as a .ics file
+//     weekly-google      tapped "or every week in Google Calendar"
+//   crew-save   a crew saved on the final screen (a save, not a send; the crew id comes with it):
+//     repeat-offer       from the offer above SHARE RESULTS, shown when the same group plays again
+//     bottom             from SAVE THIS CREW at the bottom of the screen
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
@@ -111,7 +117,9 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     mute               tapped it to silence the game
 //     unmute             tapped it again
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
-    'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar'],
+    'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
+        'weekly-share', 'weekly-download', 'weekly-google'],
+    'crew-save': ['repeat-offer', 'bottom'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],

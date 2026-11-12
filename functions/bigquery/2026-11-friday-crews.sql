@@ -1,0 +1,50 @@
+-- Friday crews: the weekly calendar entry, the Friday default and the save-crew offer.
+-- NO SCHEMA CHANGE: there is nothing to run in this file. It holds read-only queries (in comments,
+-- like the other files here). Tests are left out with the mark (see 2026-11-test-mark.sql).
+-- Days are Israel days. See DEPLOYING.md, "Friday crews".
+
+-- ---------------------------------------------------------------------------
+-- 1. Crews that played on two or more days: the number this change is for.
+-- Before the release (1 October to 12 November 2026): 3 crews had a finished game of 2+ players,
+-- 0 of them on two days.
+-- WITH g AS (
+--   SELECT crew_id, DATE(time, 'Asia/Jerusalem') AS day, id
+--   FROM `bullshit-wtf-prod.analytics.closed_games`
+--   WHERE time >= TIMESTAMP('<from>') AND crew_id IS NOT NULL AND players >= 2
+--     AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- )
+-- SELECT COUNT(DISTINCT crew_id) AS crews_with_games, COUNTIF(days >= 2) AS crews_on_2plus_days,
+--   COUNTIF(fridays >= 2) AS crews_on_2plus_fridays, SUM(games) AS games
+-- FROM (SELECT crew_id, COUNT(DISTINCT day) AS days,
+--         COUNT(DISTINCT IF(EXTRACT(DAYOFWEEK FROM day) = 6, day, NULL)) AS fridays,
+--         COUNT(DISTINCT id) AS games
+--       FROM g GROUP BY crew_id);
+
+-- ---------------------------------------------------------------------------
+-- 2. Players who come back on a second day within 28 days of their first, by the month they were
+-- first seen. Before the release: 13.9% (August 2026), 13.7% (September), 13.5% (October).
+-- iPhones lose their browser id within a month, so read Android alone too (add
+-- AND REGEXP_CONTAINS(useragent, 'Android') in j) and compare cohorts of the same age.
+-- WITH j AS (
+--   SELECT uid, DATE(time, 'Asia/Jerusalem') AS day
+--   FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('<from>') AND uid IS NOT NULL AND IFNULL(via, '') != 'test'
+-- ), first AS (SELECT uid, MIN(day) AS first_day FROM j GROUP BY uid)
+-- SELECT FORMAT_DATE('%Y-%m', f.first_day) AS cohort, COUNT(DISTINCT f.uid) AS players,
+--   COUNT(DISTINCT IF(j.day > f.first_day AND j.day <= DATE_ADD(f.first_day, INTERVAL 28 DAY), f.uid, NULL)) AS back,
+--   ROUND(SAFE_DIVIDE(COUNT(DISTINCT IF(j.day > f.first_day AND j.day <= DATE_ADD(f.first_day, INTERVAL 28 DAY), f.uid, NULL)),
+--     COUNT(DISTINCT f.uid)) * 100, 1) AS pct
+-- FROM first f JOIN j USING (uid)
+-- GROUP BY cohort ORDER BY cohort;
+
+-- ---------------------------------------------------------------------------
+-- 3. The presses, per day: crews saved from the offer (repeat-offer) or the bottom button (bottom),
+-- and weekly calendar entries (weekly-share, weekly-download, weekly-google). All zero today.
+-- SELECT DATE(time, 'Asia/Jerusalem') AS day, content_type, method, COUNT(*) AS presses,
+--   COUNT(DISTINCT crew_id) AS crews
+-- FROM `bullshit-wtf-prod.analytics.shares`
+-- WHERE time >= TIMESTAMP('<from>')
+--   AND (content_type = 'crew-save' OR (content_type = 'crew-night' AND STARTS_WITH(method, 'weekly-')))
+--   AND IFNULL(uid, '') NOT IN (SELECT uid FROM `bullshit-wtf-prod.analytics.users`
+--                               WHERE time >= TIMESTAMP('<from>') AND via = 'test' AND uid IS NOT NULL)
+-- GROUP BY day, content_type, method ORDER BY day, content_type, method;
