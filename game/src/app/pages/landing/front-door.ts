@@ -113,7 +113,7 @@ const picture: { en: PictureStrings; he: PictureStrings } = {
         otherLie: 'פרה היילנדית',
         truth: 'חד קרן',
         send: 'שליחה',
-        fooled: 'בן בחר בזה',
+        fooled: 'בן נפל בזה',
         yourLie: 'השקר שלכם',
         theTruth: 'האמת',
     },
