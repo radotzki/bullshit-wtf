@@ -81,13 +81,14 @@ export function tickAllowed(game: GameScheme, tick: number | string, now: number
 /**
  * Whether the players' NEXT taps end the reveal now: every player has tapped, and the last row has been shown
  * (give or take clock skew). Returns how long to wait first (0 = now), or undefined if not.
+ * `seats` are the players to wait for, when not all of them (see revealEndWait in seats.ts).
  */
-export function revealDoneWait(game: GameScheme, now: number): number | undefined {
+export function revealDoneWait(game: GameScheme, now: number, seats?: string[]): number | undefined {
     if (!game || !game.state || game.state.id !== GameState.RevealTheTruth) {
         return undefined;
     }
 
-    const players = Object.keys(game.players || {});
+    const players = seats || Object.keys(game.players || {});
     const done = game.revealDone || {};
 
     if (!players.length || !players.every(pid => done[pid] === true)) {

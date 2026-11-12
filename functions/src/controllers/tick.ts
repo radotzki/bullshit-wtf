@@ -6,6 +6,7 @@ import { pickHouseLies } from './answer-options';
 import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
+import { playedUpdate } from './seats';
 import * as scoring from './scoring';
 
 /** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
@@ -116,6 +117,8 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
 
             return {
                 state: updateState(GameState.RevealTheTruth),
+                // Which seats have sent a lie or a pick so far: the others are not waited for (seats.ts).
+                ...playedUpdate(game),
                 answers,
                 // Only the picks that count are kept: see scoring.ts.
                 answerSelections,
