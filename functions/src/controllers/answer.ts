@@ -6,8 +6,6 @@ import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
 import { isSameAnswer } from './same-answer';
-import { sentUpdate } from './sent';
-import { writeMarks } from './mark-sent';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
@@ -47,17 +45,11 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
         // The game as it is with this lie in it.
         game.answers = Object.assign({}, game.answers, { [pid]: stored });
 
-        // The seat is marked as done for the waiting screens (see sent.ts): that it sent, not what.
-        // Alongside the step below, so the phase ends no later for it.
-        const marked = writeMarks(pin, sentUpdate(game, [pid]));
-
         // Everyone has answered: end the question phase now instead of waiting for the deadline.
         // A seat that has sent nothing in this game is not waited for (see seats.ts); while one is
         // left out the phase timer ends the phase, once its first seconds are over.
-        const ended = everyoneSent(game, game.answers) && leftOutGuardWait(game, Date.now()) === 0 ?
+        return everyoneSent(game, game.answers) && leftOutGuardWait(game, Date.now()) === 0 ?
             advance(pin, game.state) :
             Promise.resolve();
-
-        return Promise.all([ended, marked]).then(([result]) => result);
     }
 }

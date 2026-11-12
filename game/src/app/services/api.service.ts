@@ -2,7 +2,6 @@ import { reportError } from './../sentry/sentry.module';
 import {
     GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
     Taste, tasteOf,
-    WaitingRow, waitingRow,
 } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
@@ -13,7 +12,6 @@ import { Injectable, NgZone } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { initializeApp } from 'firebase';
 import { Subscriber } from 'rxjs/Subscriber';
-import { Subscription } from 'rxjs/Subscription';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/toPromise';
 import 'rxjs/add/operator/publish';
@@ -184,38 +182,6 @@ export class ApiService {
     getPlayersObservable(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<GamePlayers>(this.gamesRef.child(pin).child('players'));
-    }
-
-    /**
-     * Who has sent a lie or a pick in the phase the game is on, and who the room waits for, live
-     * (see waitingRow in game-model). Read from the players and the game's state, which every phone
-     * may read; the lies and the picks themselves are not read for it.
-     */
-    waitingRow(pin: string) {
-        pin = pin.toUpperCase();
-        const game = this.gamesRef.child(pin);
-
-        return new Observable<WaitingRow>((observer: Subscriber<WaitingRow>) => {
-            let players: GamePlayers;
-            let state: GameStateInfo;
-            let facts: number[];
-            const subs: Subscription[] = [];
-            const next = () => {
-                if (players && state && facts) {
-                    observer.next(waitingRow(players, state, facts[0], facts[1]));
-                }
-            };
-
-            // The question's index and the time the game was made do not change within a phase.
-            Promise.all([this.get<number>(game.child('questionIndex')), this.get<number>(game.child('timestamp'))])
-                .then(read => { facts = read; next(); }, err => observer.error(err));
-            subs.push(this.observe<GameStateInfo>(game.child('state'))
-                .subscribe(s => { state = s; next(); }, err => observer.error(err)));
-            subs.push(this.getPlayersObservable(pin)
-                .subscribe(p => { players = p; next(); }, err => observer.error(err)));
-
-            return () => subs.forEach(s => s.unsubscribe());
-        });
     }
 
     gameState(pin: string) {

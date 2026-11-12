@@ -26,7 +26,6 @@ function words(t) {
         leadsBy: ['Dan', 500], tiedForFirst: ['Dan and Ben'], manyTiedForFirst: [4], youLeadBy: [500],
         youAreTiedWith: ['Ben'], youAreTiedWithMany: [3], behind: [500, 'Dan'], behindFirstPlace: [1500],
         foundTheTruth: ['+1000'], fellForOurs: ['-500'], fellFor: ['Dan'], fooled: ['Dan and Ben', '+500'],
-        waitingForName: ['Dan'], seatIn: ['Dan'], seatNotYet: ['Dan'],
     };
     const out = {};
     for (const key of Object.keys(t)) {
@@ -93,9 +92,6 @@ test('every game that is not Hebrew keeps the English words, letter for letter',
         answerSubmitted: 'Your answer has been submitted',
         whatWasTheQuestion: 'WHAT WAS THE QUESTION AGAIN?',
         waitForFriends: 'Let\'s wait for your friends',
-        waitingForName: 'Waiting for Dan',
-        seatIn: 'Dan is in',
-        seatNotYet: 'Dan, not yet',
         pickedBy: 'picked by',
         nobodyFoundIt: 'nobody found it',
         theTruth: 'THE TRUTH',
