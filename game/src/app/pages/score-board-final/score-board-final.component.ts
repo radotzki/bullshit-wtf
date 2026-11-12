@@ -13,6 +13,8 @@ import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
 import { GameState } from './../../game-model';
+import { StorageService } from './../../services/storage.service';
+import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
 
 export interface FinalPlayer {
     nickname: string;
@@ -55,6 +57,11 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     savingCrew: boolean;
     crewError: string;
     crewSubscription: Subscription;
+    /**
+     * This phone saw the same group finish an earlier game (see repeat-group.ts): "Save this crew"
+     * moves up, above SHARE RESULTS, with a line that says why.
+     */
+    repeatGroup: boolean;
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
@@ -76,6 +83,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         private apiService: ApiService,
         private sessionService: SessionService,
         private crewService: CrewService,
+        private storageService: StorageService,
     ) { }
 
     ngOnInit() {
@@ -108,6 +116,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }
             this.setPlayers(resp, highlights || {}, user ? user.pid : undefined);
             this.setHostAsk(resp, user);
+            this.setRepeatGroup(resp);
         });
 
         this.crewSubscription = this.apiService.getGameCrewObservable(this.pin).subscribe(id => this.onCrew(id));
@@ -224,6 +233,25 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Compares this game with the ones this phone saw end, then adds it to them. */
+    private setRepeatGroup(resp) {
+        const names = Object.keys(resp || {}).map(pid => resp[pid] && resp[pid].nickname).filter(n => !!n);
+        if (names.length < 2 || this.taste) {
+            return;
+        }
+        try {
+            const now = Date.now();
+            const games = parseGames(this.storageService.getItem(GAMES_KEY));
+            this.repeatGroup = !this.presenter && isRepeatGroup(games, this.pin, names, now);
+            this.storageService.setItem(GAMES_KEY, JSON.stringify(addGame(games, this.pin, names, now)));
+        } catch (e) { }
+    }
+
+    /** The save-crew offer sits above SHARE RESULTS on a group's second game, at the bottom otherwise. */
+    get crewFirst() {
+        return !!this.repeatGroup && !this.presenter && !this.soloTaste;
+    }
+
     private setPlayers(resp, highlights: Highlights, myPid: string) {
         const players = Object.keys(resp)
             .map((pid, i) => ({
@@ -332,6 +360,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.crewError = '';
         try {
             const crew = await this.apiService.createCrew(this.pin, name);
+            this.apiService.logShare('crew-save', this.crewFirst ? 'repeat-offer' : 'bottom', { crew: crew.id, locale: this.locale });
             // The game's crew field updates too; this just makes it show at once.
             await this.onCrew(crew.id);
         } catch (err) {

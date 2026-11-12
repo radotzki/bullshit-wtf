@@ -32,6 +32,8 @@ test('English crews keep the English page', () => {
     assert.strictEqual(en.lobby(1, '4321'), '1 player in the lobby, PIN 4321');
     assert.strictEqual(en.lobby(3, '4321'), '3 players in the lobby, PIN 4321');
     assert.strictEqual(en.rematchFailed, null);
+    assert.strictEqual(en.weekly('Friday'), 'EVERY FRIDAY IN MY CALENDAR');
+    assert.strictEqual(en.weeklySent('Friday'), 'In your calendar: every Friday.');
 });
 
 test('Hebrew crews get every string in Hebrew, right to left', () => {
@@ -50,6 +52,8 @@ test('Hebrew crews get every string in Hebrew, right to left', () => {
     assert.strictEqual(he.played(1), 'משחק אחד עד עכשיו');
     assert.strictEqual(he.lobby(1, '4321'), 'שחקן אחד כבר בפנים, קוד 4321');
     assert.strictEqual(he.lobby(3, '4321'), '3 שחקנים כבר בפנים, קוד 4321');
+    assert.strictEqual(he.weekly('יום שישי'), 'כל יום שישי ביומן שלי');
+    assert.strictEqual(he.weeklySent('יום שישי'), 'ביומן: כל יום שישי.');
 });
 
 test('the template uses only strings, no English left in it', () => {

@@ -6,7 +6,6 @@
 
 export const NIGHT_MINUTES = 90;
 const DEFAULT_HOUR = 21;
-const THURSDAY = 4;
 const FRIDAY = 5;
 
 export interface NightInfo {
@@ -18,12 +17,15 @@ export interface NightInfo {
 
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 
-/** The night a crew's week points to: in Israel the weekend starts Thursday night (Friday evening is family dinner). */
-export function defaultNightDay(locale: string) {
-    return locale === 'he' ? THURSDAY : FRIDAY;
+/**
+ * The night a crew's week points to: Friday, in every language. Friday has 2.4 times the games of
+ * any other day, in Hebrew games too (the after-dinner game), so the default follows the players.
+ */
+export function defaultNightDay(locale?: string) {
+    return FRIDAY;
 }
 
-/** The next Friday (Thursday for Hebrew crews) at 21:00 local time that is at least two hours away. */
+/** The next Friday at 21:00 local time that is at least two hours away. */
 export function defaultNight(now: Date, locale?: string): Date {
     const day = defaultNightDay(locale);
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), DEFAULT_HOUR, 0, 0, 0);
@@ -120,6 +122,15 @@ function fold(line: string) {
     return out.join('\r\n ');
 }
 
+/** "Friday" / "יום שישי": the weekday a weekly entry repeats on. */
+export function weekdayName(d: Date, locale: string) {
+    try {
+        return d.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-GB', { weekday: 'long' });
+    } catch (e) {
+        return '';
+    }
+}
+
 /** One calendar entry, whatever it is for: a crew's game night, or a guest's reminder to host. */
 export interface CalendarEvent {
     title: string;
@@ -158,6 +169,51 @@ export function buildEventIcs(start: Date, event: CalendarEvent, now: Date) {
     return lines.map(fold).join('\r\n') + '\r\n';
 }
 
+const ICS_DAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+
+/** RRULE:FREQ=WEEKLY;BYDAY=FR, on the weekday of `start`. */
+export function weeklyRule(start: Date) {
+    return `RRULE:FREQ=WEEKLY;BYDAY=${ICS_DAYS[start.getDay()]}`;
+}
+
+/** 20261113T210000: local "floating" time, so a weekly entry stays at 21:00 across clock changes. */
+function localStamp(d: Date) {
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}` +
+        `T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+/**
+ * A calendar file for a game night that repeats every week, on the weekday and at the time of `start`.
+ * Its times are local ("floating"): in winter and summer alike it is 21:00 where the phone is.
+ */
+export function buildWeeklyIcs(start: Date, event: CalendarEvent, now: Date) {
+    const end = new Date(start.getTime() + NIGHT_MINUTES * 60 * 1000);
+    const lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//bullshit.wtf//Crew game night//EN',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${event.uid}@bullshit.wtf`,
+        `DTSTAMP:${utcStamp(now)}`,
+        `DTSTART:${localStamp(start)}`,
+        `DTEND:${localStamp(end)}`,
+        weeklyRule(start),
+        `SUMMARY:${icsText(event.title)}`,
+        `DESCRIPTION:${icsText(`${event.text}\n${event.url}`)}`,
+        `URL:${event.url}`,
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        `DESCRIPTION:${icsText(event.title)}`,
+        'TRIGGER:-PT1H',
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR',
+    ];
+    return lines.map(fold).join('\r\n') + '\r\n';
+}
+
 /** Google Calendar's "add event" link for one entry, for phones that do nothing with a downloaded .ics. */
 export function googleEventUrl(start: Date, event: CalendarEvent) {
     const end = new Date(start.getTime() + NIGHT_MINUTES * 60 * 1000);
@@ -169,6 +225,44 @@ export function googleEventUrl(start: Date, event: CalendarEvent) {
 
 function nightEvent(start: Date, info: NightInfo, crewId: string): CalendarEvent {
     return { title: nightTitle(info), text: nightText(start, info), url: info.url, uid: `${crewId}-${utcStamp(start)}` };
+}
+
+/** "Every Friday: Bullshit night for The Liars. Scores and rematch here:" */
+export function weeklyText(d: Date, info: NightInfo) {
+    const day = weekdayName(d, info.locale);
+    const leader = leaderSentence(info.leader);
+    return info.locale === 'he'
+        ? `ערב בולשיט של ${info.crewName}, כל ${day} ב-${timeValue(d)}.${leader} הטבלה והמשחק החוזר כאן:`
+        : `Bullshit night for ${info.crewName}, every ${day} at ${timeValue(d)}.${leader} Scores and rematch here:`;
+}
+
+/** The crew's weekly entry: one UID per crew, so adding it again updates it instead of doubling it. */
+function weeklyEvent(start: Date, info: NightInfo, crewId: string): CalendarEvent {
+    return { title: nightTitle(info), text: weeklyText(start, info), url: info.url, uid: `${crewId}-weekly` };
+}
+
+/** Every week, on the night's weekday and time, as a calendar file. */
+export function buildWeeklyCrewIcs(start: Date, info: NightInfo, crewId: string, now: Date) {
+    return buildWeeklyIcs(start, weeklyEvent(start, info, crewId), now);
+}
+
+/**
+ * The weekly entry as a Google Calendar link. Google reads the times in `zone` (the phone's own),
+ * so the entry stays at 21:00 there through clock changes.
+ */
+export function googleWeeklyUrl(start: Date, info: NightInfo, zone?: string) {
+    const end = new Date(start.getTime() + NIGHT_MINUTES * 60 * 1000);
+    const event = weeklyEvent(start, info, '');
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        `&text=${encodeURIComponent(event.title)}` +
+        `&dates=${localStamp(start)}/${localStamp(end)}` +
+        (zone ? `&ctz=${encodeURIComponent(zone)}` : '') +
+        `&recur=${encodeURIComponent(weeklyRule(start))}` +
+        `&details=${encodeURIComponent(`${event.text}\n${event.url}`)}`;
+}
+
+export function weeklyFileName(crewName: string) {
+    return icsFileName(crewName).replace(/\.ics$/, '-weekly.ics');
 }
 
 /** A crew's game night as a calendar file. */

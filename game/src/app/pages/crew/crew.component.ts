@@ -7,8 +7,8 @@ import { CrewService } from './../../services/crew.service';
 import { ShareService } from './../../services/share.service';
 import { StorageService } from './../../services/storage.service';
 import {
-    NightInfo, buildIcs, dateValue, defaultNight, googleCalendarUrl, icsFileName, nightLabel, nightText,
-    nightTitle, parseNight, timeValue,
+    NightInfo, buildIcs, buildWeeklyCrewIcs, dateValue, defaultNight, googleCalendarUrl, googleWeeklyUrl, icsFileName,
+    nightLabel, nightText, nightTitle, parseNight, timeValue, weekdayName, weeklyFileName, weeklyText,
 } from './next-night';
 import { CrewStrings, crewStrings, localeFromPath } from './crew-strings';
 import { markHosted } from '../../services/join-source';
@@ -37,6 +37,8 @@ export class CrewComponent implements OnInit, OnDestroy {
     nightDate: string;
     nightTime: string;
     nightSent: boolean;
+    /** The weekday the weekly entry went into the calendar for, once it did. */
+    weeklySentDay: string;
     private nightLocale: string;
     private pathLocale = 'en';
     private crewSub: Subscription;
@@ -282,6 +284,67 @@ export class CrewComponent implements OnInit, OnDestroy {
 
         this.downloadIcs(ics, name);
         this.nightPicked('calendar-download');
+    }
+
+    // Every week: the same night as a repeating calendar entry, with the crew's link in it.
+
+    /** "Friday" / "יום שישי": the weekday of the picked night. */
+    get weeklyDay() {
+        const d = this.night;
+        return d ? weekdayName(d, this.locale) : '';
+    }
+
+    get weeklyGoogleUrl() {
+        if (!this.nightReady) {
+            return '';
+        }
+        let zone: string;
+        try {
+            zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch (e) { }
+        return googleWeeklyUrl(this.night, this.nightInfo, zone);
+    }
+
+    private weeklyPicked(how: string) {
+        this.weeklySentDay = this.weeklyDay;
+        this.shareService.track(how, 'crew-weekly');
+        this.apiService.logShare('crew-night', how, { crew: this.id, locale: this.locale });
+    }
+
+    weeklyGoogle() {
+        this.weeklyPicked('weekly-google');
+    }
+
+    /** Like the one-night invite: a share sheet sends the file to the group, elsewhere it downloads. */
+    async weeklyCalendar() {
+        if (!this.nightReady) {
+            return;
+        }
+        const info = this.nightInfo;
+        const ics = buildWeeklyCrewIcs(this.night, info, this.id, new Date());
+        const name = weeklyFileName(info.crewName);
+        let file: File;
+        try {
+            file = new File([ics], name, { type: 'text/calendar' });
+        } catch (e) { }
+
+        if (file && this.shareService.canShareFiles([file])) {
+            const result = await this.shareService.share({
+                title: nightTitle(info),
+                text: `${weeklyText(this.night, info)}\n${this.crewUrl}`,
+                files: [file],
+            }, null);
+            if (result === 'shared') {
+                this.weeklyPicked('weekly-share');
+                return;
+            }
+            if (result === 'cancelled') {
+                return;
+            }
+        }
+
+        this.downloadIcs(ics, name);
+        this.weeklyPicked('weekly-download');
     }
 
     private downloadIcs(ics: string, name: string) {

@@ -84,6 +84,18 @@
                         <a [href]="nightGoogleUrl" target="_blank" rel="noopener" (click)="nightGoogle()">{{ t.google }}</a>
                     </p>
                     <p class="copied" *ngIf="nightSent"><i class="fa fa-check"></i> {{ t.nightSent }} <span dir="auto">{{ nightWhen }}</span></p>
+
+                    <div class="weekly">
+                        <button class="button is-primary is-fullwidth night-weekly" [disabled]="!nightReady" (click)="weeklyCalendar()">
+                            <span class="icon"><i class="fa fa-repeat"></i></span>
+                            <span> {{ t.weekly(weeklyDay) }} </span>
+                        </button>
+                        <p class="hint weekly-hint">{{ t.weeklyHint }}</p>
+                        <p class="night-google" *ngIf="nightReady">
+                            <a class="weekly-google" [href]="weeklyGoogleUrl" target="_blank" rel="noopener" (click)="weeklyGoogle()">{{ t.weeklyGoogle }}</a>
+                        </p>
+                        <p class="copied" *ngIf="weeklySentDay"><i class="fa fa-check"></i> {{ t.weeklySent(weeklySentDay) }}</p>
+                    </div>
                 </div>
             </div>
         </div>
