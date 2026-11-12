@@ -105,12 +105,16 @@ export class GameService implements CanActivate {
         // was away while the game went round once comes back to the same page. Angular keeps a page
         // whose address has not changed, with what it knew of the step before (that its lie was sent,
         // its pick made, the old question), so that page is built again, as a phone that never left gets it.
-        const again = !!key && !!this.phase && id === this.stepId && rebuiltSteps.indexOf(id) >= 0;
+        // What counts is the page the phone shows, not only the step it last heard: in a staged game the
+        // reveal page stays up through the scoreboard step, so a phone that dropped there and comes back in
+        // the next reveal last heard the scoreboard, yet still shows the old question's reveal.
+        const page = pages[id];
+        const onPage = !!page && this.onPage(page, pin);
+        const again = !!key && !!this.phase && (id === this.stepId || onPage) && rebuiltSteps.indexOf(id) >= 0;
         this.phase = key;
         this.stepId = id;
         this.clearTimer();
 
-        const page = pages[id];
         if (!page) {
             return;
         }
@@ -148,6 +152,12 @@ export class GameService implements CanActivate {
                 this.router.navigate(['score-board', pin]);
             }
         });
+    }
+
+    /** Whether the phone shows this page of this game now (any case of PIN, with or without a query). */
+    private onPage(page: string, pin: string): boolean {
+        const url = String(this.router.url || '').split(/[?#]/)[0].toUpperCase();
+        return url === `/${page}/${String(pin || '')}`.toUpperCase();
     }
 
     /**
