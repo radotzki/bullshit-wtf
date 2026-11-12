@@ -3,6 +3,7 @@ import {
     GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
 } from './../game-model';
 import { SessionService } from './session.service';
+import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
@@ -279,9 +280,18 @@ export class ApiService {
         return Array.isArray(ideas) ? ideas.filter(i => typeof i === 'string' && i) : [];
     }
 
+    /** This phone's player id, or undefined on the big screen and on a phone that has not joined. */
+    private myPid(): string {
+        const user = this.sessionService.user;
+        return user && user.pid ? user.pid : undefined;
+    }
+
     async didAnswerSubmitted(pin: string) {
         pin = pin.toUpperCase();
-        const pid = this.sessionService.user.pid;
+        const pid = this.myPid();
+        if (!pid) {
+            return false;
+        }
         const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answers').child(pid));
         return !!userAnswer;
     }
@@ -295,26 +305,16 @@ export class ApiService {
     async getAnswers(pin: string) {
         pin = pin.toUpperCase();
         const allAnswers = await this.get<Answers>(this.gamesRef.child(pin).child('answers'));
-        let answersArray = Object.keys(allAnswers || {})
-            .map(k => allAnswers[k].text)
-            .filter((v, i, a) => a.indexOf(v) === i)
-            .sort((a, b) => a > b ? 1 : -1);
-
-        if (!this.sessionService.presenter) {
-            const pid = this.sessionService.user.pid;
-            const playerAnswer = allAnswers[pid];
-
-            if (playerAnswer) {
-                answersArray = answersArray.filter(a => a !== playerAnswer.text);
-            }
-        }
-
-        return answersArray;
+        return answersList(allAnswers, this.sessionService.presenter ? undefined : this.myPid());
     }
 
     async didAnswerSelected(pin: string) {
         pin = pin.toUpperCase();
-        const pid = this.sessionService.user.pid;
+        // The big screen has no player: it used to throw here on every answers screen (Sentry BULLSHIT-WV).
+        const pid = this.myPid();
+        if (!pid) {
+            return false;
+        }
         const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answerSelections').child(pid));
         return !!userAnswer;
     }

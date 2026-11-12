@@ -41,6 +41,7 @@ functions/node_modules
 /libpeerconnection.log
 npm-debug.log
 firebase-debug.log
+firebase-debug.kept.log
 testem.log
 /typings
 

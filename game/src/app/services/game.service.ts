@@ -18,6 +18,8 @@ const clientFallbackDelay = 2500;
 @Injectable()
 export class GameService implements CanActivate {
     private game: Subscription;
+    /** The game this phone follows, in capitals. */
+    private pin: string;
     private timeout;
 
     constructor(
@@ -25,17 +27,33 @@ export class GameService implements CanActivate {
         private apiService: ApiService,
     ) { }
 
+    /**
+     * Follow this game: the phone goes to whatever step the game is on, and moves with it.
+     * A phone follows one game at a time. Asking for another game (a crew rematch, a second PIN,
+     * the back button) drops the one before, however the phone got here; asking for the same
+     * game again changes nothing.
+     */
     register(pin: string) {
-        if (!this.game) {
-            this.game = this.apiService.gameState(pin).subscribe(state => this.handleGameState(pin, state));
+        const next = String(pin || '').toUpperCase();
+        if (this.game && this.pin === next) {
+            return;
         }
+        this.unregister();
+        this.pin = next;
+        this.game = this.apiService.gameState(pin).subscribe(state => {
+            // A step of a game this phone has left since must not move it.
+            if (this.pin === next) {
+                this.handleGameState(pin, state);
+            }
+        });
     }
 
     unregister() {
+        this.pin = undefined;
+        this.clearTimer();
         if (this.game) {
             this.game.unsubscribe();
             this.game = undefined;
-            this.clearTimer();
         }
     }
 
@@ -84,8 +102,10 @@ export class GameService implements CanActivate {
      * A phone that was asleep ticks as soon as it wakes, since its overdue timer fires then.
      */
     private fallbackTick(pin: string, stateId: GameState) {
+        const following = this.pin;
         this.apiService.getGameStateInfo(pin).then(({ state, now }) => {
-            if (!state || state.id !== stateId) {
+            // The phone may have moved to another game, or left, while this was read.
+            if (!state || state.id !== stateId || this.pin !== following) {
                 return;
             }
 

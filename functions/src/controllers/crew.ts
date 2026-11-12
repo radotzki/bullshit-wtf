@@ -1,4 +1,4 @@
-import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack } from '../game-model';
+import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
 import { newGame } from './new-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
@@ -99,6 +99,10 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
     if (uid) {
         crew.creator = uid;
     }
+    // A crew saved from a test game is a test crew: its rematches carry the test mark.
+    if (isTestCampaign(game.campaign)) {
+        crew.test = game.campaign;
+    }
     applyCrewGame(crew, pin, players, now);
 
     await crewsRef.child(id).set(crew);
@@ -151,7 +155,10 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
     const uids: string[] = [];
     Object.keys(crew.members || {}).forEach(k => Object.keys(crew.members[k].uids || {}).forEach(u => uids.push(u)));
 
-    const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, { crew: id, uids, pack: seasonalPack(), hostKey, serverStart });
+    const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
+        crew: id, uids, pack: seasonalPack(), hostKey, serverStart,
+        campaign: isTestCampaign(crew.test) ? crew.test : undefined,
+    });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });
     return { pin, created: true };
 }
