@@ -809,8 +809,8 @@ at the end of `npm run build`, and the build prints it. It is a fingerprint of t
   `{ message, code }` for those ("Sorry, game is full"); keep to that form for a new one.
 - Not reported: the answer to a request the site never sends. That is anything but a POST; a
   call to a function that works on a game without a PIN, or with a PIN that is not 2 to 12
-  letters and digits (a number, a PIN with a dot); a call to `crewRematch` without a crew id; and
-  a call about a PIN that no game has (a Replay of an unknown PIN, say). Such a request gets
+  letters and digits (a number, a PIN with a dot); a call to `crewRematch` without a crew id; a
+  `newGame` without a language; and a call about a PIN that no game has (a Replay of an unknown PIN, say). Such a request gets
   exactly the answer it got before. For the last kind the reporter reads the game's `timestamp`
   once, on the error path only; when that read fails or takes over 0.3 s, the fault is reported.
   A trigger never asks this. `http()` in `report.ts` is told what each function works on

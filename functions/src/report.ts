@@ -541,7 +541,7 @@ export function watched<T extends (...args: any[]) => any>(fn: string, handler: 
  * `works` says what the function works on, as the site calls it: 'game' (the request names a
  * game by its PIN), 'crew' (it names a crew), 'new' (it makes a game, whose test mark is in the
  * request and not yet in the database) or nothing. A request the site never sends (not a POST,
- * or without the PIN or crew the function works on) is answered exactly as before, and whatever
+ * without the PIN or crew the function works on, a new game with no language) is answered exactly as before, and whatever
  * it runs into is not reported.
  */
 export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, works: 'game' | 'crew' | 'new' | '' = ''): T {
@@ -553,7 +553,8 @@ export function http<T extends (req: any, res: any) => any>(fn: string, handler:
         const method = req && req.method;
         ctx.unasked = (typeof method === 'string' && method.toUpperCase() !== 'POST')
             || (works === 'game' && !cleanPin(ctx.pin))
-            || (works === 'crew' && !cleanCrew(ctx.crew));
+            || (works === 'crew' && !cleanCrew(ctx.crew))
+            || (newGame && !(typeof field('locale') === 'string' && /^[A-Za-z-]{2,10}$/.test(field('locale'))));
         ctx.needsGame = works === 'game';
         quiet(() => {
             const from = String((req.headers && req.headers['x-forwarded-for']) || '');

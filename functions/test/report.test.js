@@ -280,6 +280,11 @@ test('a request the site never sends is answered as before and is no report', as
     for (const body of [{}, { crew: 7 }, { crew: 'a b' }, { crew: 'x'.repeat(41) }]) {
         assert.strictEqual((await call('crewRematch', body)).code, 400);
     }
+    // A new game with no language, which the site always sends.
+    steps.newGame = async () => { console.error('newGame failed'); return fault(); };
+    for (const body of [{}, { locale: 7 }, { locale: '' }, { count: 5, campaign: 'x' }]) {
+        assert.strictEqual((await call('newGame', body)).code, 500);
+    }
     // A step that logs its fault and plays on, inside such a request: no report either.
     steps.onJoinGame = async () => { console.error('Bigquery Insert failed', 'rows'); throw boom(); };
     assert.strictEqual((await call('onJoinGame', { pin: 'AB.CD' })).code, 200);
