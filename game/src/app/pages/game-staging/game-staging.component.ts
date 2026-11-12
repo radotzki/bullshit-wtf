@@ -10,7 +10,8 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { swapToast } from './../../name-flag';
-import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend } from './lobby-host';
+import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
+    hostAwayMs, shouldAskClock } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
@@ -46,6 +47,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     /** Server time the host's lobby page last reported in, and how far this clock is ahead of the server's. */
     private hostSeen: number = null;
     private clockAhead: number = null;
+    private askingClock = false;
+    private clockAskedAt: number = null;
     private hostSeenSubscriber: Subscription;
     private pingTimer: any;
     private lobbyTimer: any;
@@ -92,16 +95,32 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             document.addEventListener('visibilitychange', this.onVisible);
             return;
         }
-        this.apiService.clockAhead().then(ahead => {
-            this.clockAhead = ahead;
-            this.updateLobby();
-        }).catch(() => null);
+        this.askClock();
         // Unreadable until the database rules that expose `hostSeen` are deployed: then nobody is gone.
         this.hostSeenSubscriber = this.apiService.getHostSeenObservable(this.pin).subscribe(seen => {
             this.hostSeen = typeof seen === 'number' ? seen : null;
             this.updateLobby();
         }, () => null);
-        this.lobbyTimer = setInterval(() => this.updateLobby(), 5000);
+        this.lobbyTimer = setInterval(() => {
+            this.askClock();
+            this.updateLobby();
+        }, 5000);
+    }
+
+    /** Learn how far this phone's clock is from the server's. Unknown (null) after a failed call: asked again later. */
+    private askClock() {
+        if (!shouldAskClock(this.clockAhead, this.askingClock, this.clockAskedAt, Date.now())) {
+            return;
+        }
+        this.askingClock = true;
+        this.clockAskedAt = Date.now();
+        this.apiService.clockAhead().then(ahead => {
+            this.askingClock = false;
+            this.clockAhead = typeof ahead === 'number' ? ahead : null;
+            this.updateLobby();
+        }).catch(() => {
+            this.askingClock = false;
+        });
     }
 
     private reportIn() {
@@ -173,8 +192,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             myPid: this.myPid,
             players: this.players || [],
             waitedMs: Date.now() - this.arrivedAt,
-            hostAwayMs: this.hostSeen !== null && this.clockAhead !== null
-                ? Date.now() - this.clockAhead - this.hostSeen : null,
+            hostAwayMs: hostAwayMs(Date.now(), this.clockAhead, this.hostSeen),
         });
 
         if (view.alone) {

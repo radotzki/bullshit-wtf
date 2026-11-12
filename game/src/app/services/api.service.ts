@@ -496,9 +496,12 @@ export class ApiService {
         return this.observe<number>(this.gamesRef.child(pin).child('hostSeen'));
     }
 
-    /** How far this phone's clock is ahead of the server's, in ms. */
-    clockAhead(): Promise<number> {
-        return this.serverNow().then(now => Date.now() - now);
+    /**
+     * How far this phone's clock is ahead of the server's, in ms, or null when the server could not
+     * be asked this time (the next call asks again). Never a guessed 0: see clock-sync.ts.
+     */
+    clockAhead(): Promise<number | null> {
+        return this.timeDiff(null);
     }
 
     /** This browser holds the host key for this game (it created or replayed it). */

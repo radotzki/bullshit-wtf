@@ -32,6 +32,29 @@ export const HOST_GRACE_MS = 90 * 1000;
 export const HOST_GONE_MS = 5 * 60 * 1000;
 /** How often the host's lobby page reports in. */
 export const HOST_PING_MS = 20 * 1000;
+/** While this phone's clock offset is unknown (the server could not be asked), how often the lobby asks again. */
+export const CLOCK_RETRY_MS = 60 * 1000;
+
+/**
+ * How long ago, in server time, the host last reported in, or null when that can't be told.
+ * `clockAhead` is how far this phone's clock is ahead of the server's; null means it is unknown
+ * (the clock sync failed), and then the host is never judged gone: a phone whose clock runs
+ * minutes fast would otherwise see a host who is still there as gone.
+ */
+export function hostAwayMs(now: number, clockAhead: number | null, hostSeen: number | null): number | null {
+    if (typeof clockAhead !== 'number' || typeof hostSeen !== 'number') {
+        return null;
+    }
+    return now - clockAhead - hostSeen;
+}
+
+/** Ask the server for the clock offset now: it is unknown, no ask is in flight, and the last ask is CLOCK_RETRY_MS old. */
+export function shouldAskClock(clockAhead: number | null, asking: boolean, lastAskedAt: number | null, now: number): boolean {
+    if (clockAhead !== null || asking) {
+        return false;
+    }
+    return lastAskedAt === null || now - lastAskedAt >= CLOCK_RETRY_MS;
+}
 
 /** A lobby player, with its player id when known. */
 export interface LobbyPlayer extends GamePlayer {
