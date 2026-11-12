@@ -42,7 +42,7 @@ export interface GameStrings {
     scanToJoin: string;
     scanLabel: (pin: string) => string;
 
-    // Before a round: two lines each.
+    // Before a round: two lines each. Empty while the round's points are not read yet.
     points: (n: number) => string;
     forEveryoneYouBullshit: string;
     forFindingTheTruth: string;
@@ -81,6 +81,11 @@ export interface GameStrings {
     oops: string;
 }
 
+/** A number that has been read: a line built from a missing one prints nothing, never "undefined". */
+function known(n: number): boolean {
+    return typeof n === 'number' && !isNaN(n);
+}
+
 const en: GameStrings = {
     lang: 'en',
     dir: 'ltr',
@@ -109,7 +114,7 @@ const en: GameStrings = {
     scanToJoin: 'SCAN TO JOIN',
     scanLabel: pin => `Scan to join game ${pin}`,
 
-    points: n => `${n} points`,
+    points: n => known(n) ? `${n} points` : '',
     forEveryoneYouBullshit: 'for everyone you bullshit',
     forFindingTheTruth: 'for finding the truth',
 
@@ -172,7 +177,7 @@ const he: GameStrings = {
     scanToJoin: 'סרקו והצטרפו',
     scanLabel: pin => `סרקו כדי להצטרף למשחק ${pin}`,
 
-    points: n => `${n} נקודות`,
+    points: n => known(n) ? `${n} נקודות` : '',
     forEveryoneYouBullshit: 'על כל מי שנופל בשקר שלכם',
     forFindingTheTruth: 'על מציאת האמת',
 

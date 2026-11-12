@@ -36,8 +36,13 @@ export class RoundIntroComponent implements OnInit {
         this.t = gameStrings(this.apiService.knownGameLocale(this.pin));
         this.apiService.getGameLocale(this.pin).then(locale => this.t = gameStrings(locale), () => null);
         this.apiService.getRoundIndex(this.pin).then(roundIndex => {
-            this.points = roundPoints[roundIndex];
+            this.points = roundPoints[roundIndex] || {};
         });
+    }
+
+    /** The two points lines show only once the round's points are read, never with a missing number. */
+    get pointsKnown(): boolean {
+        return this.points.truth > 0 && this.points.bullshit > 0;
     }
 
 }

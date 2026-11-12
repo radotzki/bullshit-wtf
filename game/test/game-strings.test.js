@@ -141,6 +141,16 @@ test('Hebrew lines keep the players\' names, the PIN and the numbers', () => {
     assert.ok(he.fooled('דנה ו־בן', '+500').indexOf('דנה ו־בן') !== -1);
 });
 
+test('a points line never prints a number that is not read yet', () => {
+    for (const t of [gameStrings('en'), gameStrings('he')]) {
+        for (const missing of [undefined, null, NaN]) {
+            assert.strictEqual(t.points(missing), '');
+        }
+        assert.ok(t.points(0).indexOf('0') === 0);
+        assert.ok(!/undefined|null|NaN/.test(t.points(1000)));
+    }
+});
+
 test('points in a Hebrew line keep their sign in front of the number', () => {
     const he = gameStrings('he');
     // Held left to right (U+2066 ... U+2069), or a right-to-left line would show "500+".

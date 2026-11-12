@@ -3,12 +3,12 @@
 
     <div class="game-main">
         <div class="screen-center">
-            <p class="bullshit">
+            <p class="bullshit" *ngIf="pointsKnown">
                 {{t.points(points.bullshit)}}
                 <br>
                 {{t.forEveryoneYouBullshit}}
             </p>
-            <p class="truth">
+            <p class="truth" *ngIf="pointsKnown">
                 {{t.points(points.truth)}}
                 <br>
                 {{t.forFindingTheTruth}}
