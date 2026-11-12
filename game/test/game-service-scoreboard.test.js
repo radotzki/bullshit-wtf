@@ -178,3 +178,78 @@ test('both paths, a control game: the scoreboard each time, built again for a ph
     await p.settle();
     assert.deepStrictEqual(p.pages, ['score-board/AAAA', 'step/AAAA (unseen)', 'score-board/AAAA']);
 });
+
+// The staged scoreboard step lasts a few milliseconds, and the reveal page stays up through it. A phone
+// that drops right then last heard the scoreboard step, but still shows the reveal. What it shows decides
+// whether a returning phone gets its page built again.
+
+test('a staged game: a phone that dropped in the scoreboard step and comes back in the next reveal gets the new reveal', async () => {
+    const p = phone('/show-answers/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.RevealTheTruth);
+    p.step('AAAA', GameState.ScoreBoard);
+    p.reads[0](true);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['reveal-the-truth/AAAA']);
+    // Away through the next question and its picks; back in that question's reveal.
+    p.step('AAAA', GameState.RevealTheTruth);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['reveal-the-truth/AAAA', 'step/AAAA (unseen)', 'reveal-the-truth/AAAA']);
+});
+
+test('a control game, the same drop: the scoreboard, then the new reveal, never through the empty page', async () => {
+    const p = phone('/show-answers/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.RevealTheTruth);
+    p.step('AAAA', GameState.ScoreBoard);
+    p.reads[0](false);
+    await p.settle();
+    p.step('AAAA', GameState.RevealTheTruth);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['reveal-the-truth/AAAA', 'score-board/AAAA', 'reveal-the-truth/AAAA']);
+});
+
+test('a staged game, the same drop, back in the next question: its page as usual', async () => {
+    const p = phone('/show-answers/AAAA');
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.RevealTheTruth);
+    p.step('AAAA', GameState.ScoreBoard);
+    p.reads[0](true);
+    await p.settle();
+    p.step('AAAA', GameState.ShowQuestion);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['reveal-the-truth/AAAA', 'show-question/AAAA']);
+});
+
+test('a staged game followed step by step: each page once, never through the empty page', async () => {
+    const p = phone('/game-staging/AAAA');
+    p.service.register('AAAA');
+    for (let q = 0; q < 2; q++) {
+        p.step('AAAA', GameState.ShowQuestion);
+        p.step('AAAA', GameState.ShowAnswers);
+        p.step('AAAA', GameState.RevealTheTruth);
+        p.step('AAAA', GameState.ScoreBoard);
+        p.reads[q](true);
+        await p.settle();
+    }
+    p.step('AAAA', GameState.ScoreBoardFinal);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, [
+        'show-question/AAAA', 'show-answers/AAAA', 'reveal-the-truth/AAAA',
+        'show-question/AAAA', 'show-answers/AAAA', 'reveal-the-truth/AAAA',
+        'score-board-final/AAAA',
+    ]);
+});
+
+test('the PIN in another case, and a query on the address, still count as the page the phone shows', async () => {
+    const p = phone('/show-answers/AAAA');
+    p.service.register('aaaa');
+    p.step('aaaa', GameState.RevealTheTruth);
+    p.router.url = '/reveal-the-truth/aaaa?lang=he';
+    p.step('aaaa', GameState.ScoreBoard);
+    p.reads[0](true);
+    await p.settle();
+    p.step('aaaa', GameState.RevealTheTruth);
+    await p.settle();
+    assert.deepStrictEqual(p.pages, ['reveal-the-truth/aaaa', 'step/aaaa (unseen)', 'reveal-the-truth/aaaa']);
+});
