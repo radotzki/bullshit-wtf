@@ -23,6 +23,8 @@
                     <button class="button is-medium is-fullwidth try-again" type="button"
                         [class.is-primary]="!gameOver.rematch" (click)="tryAnotherPin()">TRY ANOTHER PIN</button>
                 </div>
+                <!-- A late joiner has no game: ask them to start one. -->
+                <app-host-ask [locale]="askLocale" place="game-over"></app-host-ask>
             </div>
         </div>
 

@@ -1,0 +1,89 @@
+-- The after-game ask ("start your own game") and results-card shares. NO SCHEMA CHANGE: nothing to
+-- run before a deploy. The rows land in the existing `shares` table (see 2026-11-shares.sql) with
+-- three new content types, written by the onShare function:
+--   results     a share of the results card: whatsapp, native, copy, download
+--   after-game  a press on the ask a guest sees on the final screen: create, remind, remind-google
+--   game-over   a press on the same ask on the join page of a finished game: create, remind, remind-google
+-- A game created from the ask carries a campaign tag in opened_games.campaign:
+--   after-game, after-game-remind (from the calendar entry), after-game-late, after-game-late-remind.
+--
+-- The goal (Analyst, 2026-11-11, reports "The plans' open questions"): 8.1% of new guests are later seen
+-- opening a lobby of their own (351 of 4,334, first seen Nov 2025 to Sep 2026). iPhones lose their
+-- browser id within a month, so Android is the clean series: 11.8% there, and about 12% for everyone
+-- once lost ids are allowed for. Target: 12% as measured, read on Android alone; and the games the
+-- ask brings are counted directly by their campaign tag (query 3).
+
+-- ---------------------------------------------------------------------------
+-- Read-only queries. Each has a date range; move it as time passes.
+
+-- 1. Guest-to-host rate by device, by the month a browser was first seen. A new guest is a browser
+--    whose first join in a year was not as a host; it "hosts" when it later makes a game of its own
+--    (create or crew rematch, not a Replay) that leaves the lobby. Read the android row. A cohort
+--    keeps growing for months (on Android), so compare cohorts of the same age.
+--    `via` and the host on the game exist since 2026-11-05, so cohorts start there; the Analyst's
+--    baseline query (first join in a lobby, lobbies opened) reaches further back and counts lobbies
+--    that never started, so its rate is somewhat higher than this one's.
+-- WITH joins AS (
+--   SELECT uid, time, IFNULL(via, '') AS via,
+--     CASE WHEN REGEXP_CONTAINS(useragent, r'iPhone|iPad') THEN 'ios'
+--          WHEN REGEXP_CONTAINS(useragent, r'Android') THEN 'android' ELSE 'desktop' END AS device
+--   FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('2025-11-01') AND time < TIMESTAMP('2027-03-01') AND uid IS NOT NULL AND uid NOT IN ('', '0')
+-- ),
+-- firsts AS (
+--   SELECT uid, MIN(time) AS first_time,
+--     ARRAY_AGG(STRUCT(via, device) ORDER BY time LIMIT 1)[OFFSET(0)] AS f
+--   FROM joins GROUP BY uid
+-- ),
+-- hosted AS (
+--   SELECT f.uid, MIN(g.time) AS host_time
+--   FROM firsts f
+--   JOIN `bullshit-wtf-prod.analytics.opened_games` g ON g.creator_uid = f.uid AND g.time > f.first_time
+--   WHERE g.time >= TIMESTAMP('2026-11-05') AND g.time < TIMESTAMP('2027-03-01') AND g.origin IN ('create', 'crew')
+--   GROUP BY f.uid
+-- )
+-- SELECT DATE_TRUNC(DATE(f.first_time), MONTH) AS cohort_month, f.f.device AS device,
+--   COUNT(*) AS new_guests,
+--   COUNTIF(h.uid IS NOT NULL) AS became_hosts,
+--   COUNTIF(TIMESTAMP_DIFF(h.host_time, f.first_time, DAY) < 30) AS within_30_days,
+--   ROUND(SAFE_DIVIDE(COUNTIF(h.uid IS NOT NULL), COUNT(*)), 3) AS guest_to_host
+-- FROM firsts f LEFT JOIN hosted h USING (uid)
+-- WHERE f.first_time >= TIMESTAMP('2026-11-05') AND f.f.via != 'host'
+-- GROUP BY cohort_month, device ORDER BY cohort_month, device;
+
+-- 2. Presses on the ask and results-card shares per finished game (2 or more players), per day (UTC).
+-- WITH finished AS (
+--   SELECT DATE(time) AS day, COUNT(*) AS finished_games, SUM(players) AS seats
+--   FROM `bullshit-wtf-prod.analytics.closed_games`
+--   WHERE time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2027-03-01') AND players >= 2
+--   GROUP BY day
+-- ),
+-- presses AS (
+--   SELECT DATE(time) AS day,
+--     COUNTIF(content_type = 'after-game' AND method = 'create') AS ask_create,
+--     COUNTIF(content_type = 'after-game' AND method = 'remind') AS ask_remind,
+--     COUNTIF(content_type = 'game-over' AND method IN ('create', 'remind')) AS late_presses,
+--     COUNTIF(content_type = 'results') AS results_shares
+--   FROM `bullshit-wtf-prod.analytics.shares`
+--   WHERE time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2027-03-01')
+--   GROUP BY day
+-- )
+-- SELECT f.day, f.finished_games, f.seats,
+--   IFNULL(p.ask_create, 0) AS ask_create, IFNULL(p.ask_remind, 0) AS ask_remind,
+--   IFNULL(p.late_presses, 0) AS late_presses, IFNULL(p.results_shares, 0) AS results_shares,
+--   ROUND(SAFE_DIVIDE(IFNULL(p.ask_create, 0) + IFNULL(p.ask_remind, 0), f.finished_games), 3) AS ask_presses_per_finished_game,
+--   ROUND(SAFE_DIVIDE(IFNULL(p.results_shares, 0), f.finished_games), 3) AS results_shares_per_finished_game
+-- FROM finished f LEFT JOIN presses p USING (day)
+-- ORDER BY f.day;
+
+-- 3. Games the ask brought: started games by campaign tag, and how many browsers hosted them.
+-- SELECT campaign, COUNT(*) AS games, COUNT(DISTINCT creator_uid) AS hosts, MIN(DATE(time)) AS first_day
+-- FROM `bullshit-wtf-prod.analytics.opened_games`
+-- WHERE time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2027-03-01') AND campaign LIKE 'after-game%'
+-- GROUP BY campaign ORDER BY games DESC;
+
+-- 4. Results-card shares per method per day.
+-- SELECT DATE(time) AS day, method, COUNT(*) AS shares, COUNT(DISTINCT uid) AS sharers
+-- FROM `bullshit-wtf-prod.analytics.shares`
+-- WHERE time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2027-03-01') AND content_type = 'results'
+-- GROUP BY day, method ORDER BY day DESC, shares DESC;
