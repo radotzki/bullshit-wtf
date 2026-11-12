@@ -1,4 +1,4 @@
-<section class="game-container revael-the-truth" [class.is-presenter]="presenter">
+<section class="game-container revael-the-truth" [class.is-presenter]="presenter" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
 
     <div class="game-main">
@@ -17,8 +17,8 @@
 
                         <div class="who">
                             <div class="pickers">
-                                <span class="label" *ngIf="row.pickers.length">picked by</span>
-                                <span class="label" *ngIf="!row.pickers.length">nobody found it</span>
+                                <span class="label" *ngIf="row.pickers.length">{{t.pickedBy}}</span>
+                                <span class="label" *ngIf="!row.pickers.length">{{t.nobodyFoundIt}}</span>
                                 <span class="player" *ngFor="let p of row.pickers">
                                     <img [src]="'/assets/' + p.picture"> {{ p.nickname }}
                                 </span>
@@ -26,19 +26,19 @@
 
                             <div class="writer" [class.shown]="i < writersShown">
                                 <ng-container *ngIf="row.realAnswer">
-                                    <span class="tag-truth">THE TRUTH</span>
-                                    <span class="points" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                    <span class="tag-truth">{{t.theTruth}}</span>
+                                    <span class="points" dir="ltr" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                                 <ng-container *ngIf="row.houseLie">
-                                    <span class="tag-house">Home Grown Bullshit</span>
-                                    <span class="points negative" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                    <span class="tag-house">{{t.houseLie}}</span>
+                                    <span class="points negative" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                                 <ng-container *ngIf="!row.realAnswer && !row.houseLie">
-                                    <span class="label">bullshit by</span>
+                                    <span class="label">{{t.bullshitBy}}</span>
                                     <span class="player" *ngFor="let c of row.creators">
                                         <img [src]="'/assets/' + c.picture"> {{ c.nickname }}
                                     </span>
-                                    <span class="points" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                    <span class="points" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                             </div>
                         </div>
@@ -48,7 +48,7 @@
 
             <div *ngIf="allShown" class="after">
                 <p class="unpicked" *ngIf="unpicked.length">
-                    Nobody fell for:
+                    {{t.nobodyFellFor}}
                     <span *ngFor="let u of unpicked; let last = last">
                         <span [class.rtl]="rtl">{{ u.text | uppercase }}</span>
                         <span *ngIf="u.creators.length">({{ u.creators[0].nickname }})</span><span *ngIf="!last">, </span>
@@ -59,9 +59,9 @@
                     <p *ngFor="let line of myResult"> {{ line }} </p>
                 </div>
 
-                <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">NEXT</button>
+                <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">{{t.next}}</button>
                 <p *ngIf="!presenter && tapped && waitingFor" class="waiting">
-                    Waiting for {{ waitingFor }} {{ waitingFor === 1 ? 'friend' : 'friends' }}
+                    {{ t.waitingFor(waitingFor) }}
                 </p>
             </div>
         </div>

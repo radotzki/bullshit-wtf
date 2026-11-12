@@ -1,17 +1,17 @@
-<section class="game-container round-intro">
+<section class="game-container round-intro" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
 
     <div class="game-main">
         <div class="screen-center">
-            <p class="bullshit">
-                {{points.bullshit}} points
+            <p class="bullshit" *ngIf="pointsKnown">
+                {{t.points(points.bullshit)}}
                 <br>
-                for everyone you bullshit
+                {{t.forEveryoneYouBullshit}}
             </p>
-            <p class="truth">
-                {{points.truth}} points
+            <p class="truth" *ngIf="pointsKnown">
+                {{t.points(points.truth)}}
                 <br>
-                for finding the truth
+                {{t.forFindingTheTruth}}
             </p>
         </div>
     </div>

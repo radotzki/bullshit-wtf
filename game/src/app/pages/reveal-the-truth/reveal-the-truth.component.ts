@@ -6,6 +6,7 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GamePlayer, RevealAnswer, revealSchedule } from '../../game-model';
+import { gameStrings, GameStrings } from './../game-strings';
 
 /**
  * The reveal: the question stays on top, and the answers somebody picked appear one row at a time,
@@ -25,6 +26,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     pin: string;
     presenter: boolean;
     rtl: boolean;
+    t: GameStrings = gameStrings('en');
     question: string;
 
     rows: Row[];
@@ -59,9 +61,15 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
-        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
-        this.load();
+        // This player's result lines are written once, so the game's language is read first.
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null).then(() => this.load());
+    }
+
+    private useLocale(locale: string) {
+        this.rtl = locale === 'he';
+        this.t = gameStrings(locale);
     }
 
     ngOnDestroy() {
@@ -153,38 +161,32 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     /** One or two short lines on how this player did this question. */
     private resultFor(pid: string, rows: Row[]): string[] {
         const lines: string[] = [];
+        const t = this.t;
         const pickedRow = rows.find(r => r.pickerIds.indexOf(pid) !== -1);
         const myLie = rows.find(r => r.creatorIds.indexOf(pid) !== -1);
 
         if (pickedRow && pickedRow.realAnswer) {
-            lines.push(`You found the truth! ${this.signed(pickedRow.points)}`);
+            lines.push(t.foundTheTruth(t.signed(pickedRow.points)));
         } else if (pickedRow && pickedRow.houseLie) {
             const lost = pickedRow.pointsBy && pid in pickedRow.pointsBy ? pickedRow.pointsBy[pid] : pickedRow.points;
-            lines.push(lost < 0
-                ? `You fell for our bullshit. ${this.signed(lost)}`
-                : `You fell for our bullshit. No points to lose yet!`);
+            lines.push(lost < 0 ? t.fellForOurs(t.signed(lost)) : t.fellForOursNoPoints);
         } else if (pickedRow) {
-            lines.push(`You fell for ${this.names(pickedRow.creators)}'s bullshit.`);
+            lines.push(t.fellFor(this.names(pickedRow.creators)));
         } else {
-            lines.push(`You didn't pick an answer.`);
+            lines.push(t.didNotPick);
         }
 
         if (myLie && myLie.pickers.length) {
-            lines.push(`You fooled ${this.names(myLie.pickers)}! ${this.signed(myLie.points)}`);
+            lines.push(t.fooled(this.names(myLie.pickers), t.signed(myLie.points)));
         } else if (myLie) {
-            lines.push(`Nobody fell for your answer.`);
+            lines.push(t.nobodyFellForYours);
         }
 
         return lines;
     }
 
     private names(players: Player[]) {
-        const n = players.map(p => p.nickname);
-        return n.length <= 1 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;
-    }
-
-    private signed(points: number) {
-        return points > 0 ? `+${points}` : `${points}`;
+        return this.t.names(players.map(p => p.nickname));
     }
 
     private playerObject(playersArray: (GamePlayer & { pid: string })[], pid: string): Player {

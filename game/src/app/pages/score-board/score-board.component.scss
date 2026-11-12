@@ -19,3 +19,8 @@
         margin-right: 10px;
     }
 }
+
+.score-board[dir="rtl"] .picture {
+    margin-right: 0;
+    margin-left: 10px;
+}

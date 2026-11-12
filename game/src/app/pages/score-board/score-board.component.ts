@@ -16,6 +16,8 @@ export class ScoreBoardComponent implements OnInit {
     pin: string;
     displayPlayers: (GamePlayer & { picture: string })[];
     presenter: boolean;
+    /** A Hebrew game: names on the right, scores on the left. */
+    rtl = false;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -28,6 +30,8 @@ export class ScoreBoardComponent implements OnInit {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
         this.gameService.register(this.pin);
+        this.rtl = this.apiService.knownGameLocale(this.pin) === 'he';
+        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he', () => null);
         this.apiService.getPlayers(this.pin).then(resp => {
             const players = Object.keys(resp).map(k => resp[k]);
             this.displayPlayers = players

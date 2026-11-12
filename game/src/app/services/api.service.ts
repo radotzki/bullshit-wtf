@@ -60,6 +60,7 @@ export class ApiService {
     gamesRef: firebase.database.Reference;
     crewsRef: firebase.database.Reference;
     timeDiff: Promise<number>;
+    private gameLocales: { [pin: string]: string } = {};
 
     constructor(
         private http: Http,
@@ -253,7 +254,18 @@ export class ApiService {
 
     getGameLocale(pin: string) {
         pin = pin.toUpperCase();
-        return this.get<string>(this.gamesRef.child(pin).child('locale'));
+        return this.get<string>(this.gamesRef.child(pin).child('locale')).then(locale => {
+            this.gameLocales[pin] = locale;
+            return locale;
+        });
+    }
+
+    /**
+     * The game's language as last read on this phone, without waiting: 'en' until it was read once.
+     * The game screens start from it, so a Hebrew game's next screen is in Hebrew from its first paint.
+     */
+    knownGameLocale(pin: string): string {
+        return this.gameLocales[String(pin || '').toUpperCase()] || 'en';
     }
 
     /** What the writing screen needs to decide on the round-1 lie helper. */
