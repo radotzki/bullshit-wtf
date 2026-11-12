@@ -1,5 +1,6 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
@@ -128,8 +129,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     stopMusic() {
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 

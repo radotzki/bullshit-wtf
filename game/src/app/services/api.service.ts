@@ -8,6 +8,7 @@ import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { startReconnectNudge, pageVisible } from './reconnect-nudge';
+import { clockSync } from './clock-sync';
 import { Observable } from 'rxjs/Observable';
 import { Http } from '@angular/http';
 import { Injectable, NgZone } from '@angular/core';
@@ -84,7 +85,11 @@ function apiError(url: string, resp: any) {
 export class ApiService {
     gamesRef: firebase.database.Reference;
     crewsRef: firebase.database.Reference;
-    timeDiff: Promise<number>;
+    /** How far this phone's clock is ahead of the server's (see clock-sync.ts). */
+    private timeDiff = clockSync(
+        () => this.post<{ now: number }>('time').then(({ now }) => Date.now() - now),
+        err => reportError(err, 'time'),
+    );
     private stagedReveal: { [pin: string]: Promise<boolean> } = {};
     private gameLocales: { [pin: string]: string } = {};
 
@@ -283,11 +288,7 @@ export class ApiService {
     }
 
     private serverNow() {
-        if (!this.timeDiff) {
-            this.timeDiff = this.post<{ now: number }>('time').then(({ now }) => Date.now() - now);
-        }
-
-        return this.timeDiff.then(diff => Date.now() - diff);
+        return this.timeDiff().then(diff => Date.now() - diff);
     }
 
     getGameStateInfo(pin: string) {
