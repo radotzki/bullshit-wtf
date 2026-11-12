@@ -2,7 +2,9 @@
     <app-game-header></app-game-header>
 
     <div class="game-main">
-        <div class="screen-center">
+        <div class="screen-center" [class.final-question]="final" *ngIf="ready">
+            <h1 class="final-title" *ngIf="final">{{t.finalQuestion}}</h1>
+            <p class="final-gap" *ngIf="final && gap">{{gap}}</p>
             <p class="bullshit" *ngIf="pointsKnown">
                 {{t.points(points.bullshit)}}
                 <br>
