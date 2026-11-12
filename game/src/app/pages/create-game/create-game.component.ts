@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
 import { questionPacks, isPack, seasonalPack } from '../../game-model';
+import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
     selector: 'app-create-game',
@@ -11,7 +12,10 @@ import { questionPacks, isPack, seasonalPack } from '../../game-model';
     styleUrls: ['./create-game.component.scss']
 })
 export class CreateGameComponent implements OnInit {
+    // The game's language, picked on the form.
     locale = 'en';
+    // The page's own words: the visitor's language as they arrived. The form's pick does not change it.
+    t: CreateStrings = createStrings('en');
     length = 7;
     loading: boolean;
     errorMsg: string;
@@ -32,6 +36,7 @@ export class CreateGameComponent implements OnInit {
         this.apiService.warmUpSignIn();
         const params = this.route.snapshot.queryParams || {};
         this.locale = params.lang === 'he' || params.lang === 'en' ? params.lang : preferredLocale();
+        this.t = createStrings(this.locale);
 
         this.campaign = typeof params.via === 'string' ? readCampaign(`?via=${encodeURIComponent(params.via)}`) : null;
 
@@ -41,7 +46,9 @@ export class CreateGameComponent implements OnInit {
     }
 
     get packLabel(): string {
-        return this.pack ? questionPacks[this.pack].label[this.locale === 'he' ? 'he' : 'en'] : '';
+        // A Hebrew page names the pack in Hebrew; the English page names it in the game's language, as before.
+        const lang = this.t.lang === 'he' || this.locale === 'he' ? 'he' : 'en';
+        return this.pack ? questionPacks[this.pack].label[lang] : '';
     }
 
     submit() {
@@ -58,7 +65,7 @@ export class CreateGameComponent implements OnInit {
             .catch(err => {
                 this.loading = false;
                 reportError(err, 'createGame', { locale: this.locale, count: this.length, pack });
-                this.errorMsg = 'oops, something went wrong. Please try again';
+                this.errorMsg = this.t.error;
             });
     }
 
