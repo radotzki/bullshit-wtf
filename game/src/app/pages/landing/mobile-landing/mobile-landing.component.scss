@@ -34,15 +34,28 @@
     }
 }
 
+// The menu fills the screen under the title bar, as it always did; the front door above the
+// buttons takes what it needs and the four buttons share the rest.
 .home {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 61px);
+
     .menu-button {
-        height: calc((100vh - 61px) / 4);
+        flex: 1 0 auto;
+        min-height: 76px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 0 15px;
         color: #f4fcca;
         box-shadow: 0 3px 15px 0 rgba(0,0,0,0.65);
+    }
+
+    // The button that leads is a little taller than the three after it.
+    .menu-button.is-first {
+        flex-grow: 1.35;
+        min-height: 88px;
     }
 
     .menu-button.join-game {
@@ -116,5 +129,239 @@
     .crew-action {
         font-size: .8em;
         color: #f3d467;
+    }
+}
+
+
+// What the game is: one line, and under it a picture of one round for someone who never played.
+.front-door {
+    flex: none;
+    padding: 12px 15px;
+    background-color: #2f1b2c;
+    color: #f4fcca;
+    text-align: center;
+
+    .pitch {
+        margin: 0;
+        font-size: 1.15rem;
+        line-height: 1.35;
+        text-wrap: balance;
+    }
+
+    &.has-picture {
+        padding-bottom: 10px;
+    }
+
+    // One of the game's own white screens, small: the question on top, and under it the three
+    // moments of a round, one after the other.
+    .picture {
+        margin: 10px auto 0;
+        max-width: 330px;
+    }
+
+    .screen {
+        position: relative;
+        height: 160px;
+        padding: 8px 12px 0;
+        border-radius: 10px;
+        background-color: #fff;
+        color: #4a4a4a;
+        text-align: start;
+        overflow: hidden;
+    }
+
+    .question {
+        margin: 0;
+        font-size: .95rem;
+        line-height: 1.25;
+    }
+
+    .blank {
+        display: inline-block;
+        width: 2.6em;
+        border-bottom: 2px solid currentColor;
+    }
+
+    .frame {
+        position: absolute;
+        top: 45px;
+        left: 12px;
+        right: 12px;
+        opacity: 0;
+        animation: front-door-frame 10.5s infinite;
+
+        p {
+            margin: 0;
+        }
+    }
+
+    .frame-pick {
+        animation-delay: 3.5s;
+    }
+
+    .frame-reveal {
+        animation-delay: 7s;
+    }
+
+    .step {
+        margin-bottom: 5px !important;
+        font-size: .8rem;
+        letter-spacing: .04em;
+        color: #db7151;
+    }
+
+    .typed {
+        height: 32px;
+        padding: 0 9px;
+        border: 2px solid #db7151;
+        border-radius: 4px;
+        line-height: 28px;
+        font-size: .95rem;
+
+        // The caret of someone still typing.
+        &::after {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            margin: 0 2px;
+            vertical-align: -2px;
+            background-color: #4a4a4a;
+        }
+    }
+
+    .send,
+    .answer {
+        border-radius: 4px;
+        background-color: #db7151;
+        color: #fff;
+        text-align: center;
+    }
+
+    .send {
+        margin-top: 7px !important;
+        height: 30px;
+        line-height: 30px;
+        font-size: .9rem;
+    }
+
+    .answer {
+        margin-bottom: 5px !important;
+        height: 26px;
+        line-height: 26px;
+        font-size: .85rem;
+        text-transform: uppercase;
+    }
+
+    .row {
+        margin-bottom: 5px;
+        padding: 3px 9px 4px;
+        border: 2px solid #ededed;
+        border-radius: 5px;
+
+        &.truth {
+            border-color: hsl(141, 71%, 48%);
+        }
+
+        .text {
+            font-size: .9rem;
+            line-height: 1.3;
+            text-transform: uppercase;
+        }
+
+        .who {
+            display: flex;
+            justify-content: space-between;
+            font-size: .75rem;
+            line-height: 1.3;
+            opacity: .9;
+        }
+
+        .points {
+            color: hsl(141, 62%, 36%);
+        }
+    }
+
+    .dots {
+        margin-top: 7px;
+        line-height: 0;
+
+        i {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin: 0 3px;
+            border-radius: 50%;
+            background-color: #f4fcca;
+            opacity: .3;
+            animation: front-door-dot 10.5s infinite;
+        }
+
+        i:nth-child(2) {
+            animation-delay: 3.5s;
+        }
+
+        i:nth-child(3) {
+            animation-delay: 7s;
+        }
+    }
+}
+
+// A short phone: a smaller picture, so Create and Join both stay on the first screen.
+@media (max-height: 600px) {
+    .front-door {
+        padding-top: 9px;
+
+        .pitch {
+            font-size: 1.05rem;
+        }
+
+        .picture {
+            margin-top: 7px;
+        }
+
+        .dots {
+            display: none;
+        }
+    }
+
+    .home .menu-button-text-second {
+        font-size: .9rem;
+    }
+}
+
+// Each frame is on for a third of the loop, with a short fade at each end.
+@keyframes front-door-frame {
+    0% { opacity: 0; }
+    3% { opacity: 1; }
+    33.3% { opacity: 1; }
+    36.3% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+@keyframes front-door-dot {
+    0% { opacity: .3; }
+    3% { opacity: 1; }
+    33.3% { opacity: 1; }
+    36.3% { opacity: .3; }
+    100% { opacity: .3; }
+}
+
+// A phone that asks for less motion gets one still frame: the reveal, which shows the question,
+// a lie that fooled someone and the truth.
+@media (prefers-reduced-motion: reduce) {
+    .front-door {
+        .frame,
+        .dots i {
+            animation: none;
+        }
+
+        .frame-reveal {
+            opacity: 1;
+        }
+
+        .dots {
+            display: none;
+        }
     }
 }
