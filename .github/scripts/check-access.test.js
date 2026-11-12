@@ -10,7 +10,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const SCRIPT = path.join(__dirname, 'check-access.js');
-const { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, command, readDatabase, readSite, report, main } = require('./check-access.js');
+const { DATABASE_READ, SITE_ORIGIN, READ_TIMEOUT, RULES_VERDICT, command, readDatabase, readSite, report, main } = require('./check-access.js');
 const { googleRequest, ASK_TIMEOUT } = require('./check-deploy-permissions.js');
 const { LOG, KEPT } = require('./firebase-refusal.js');
 
@@ -378,4 +378,136 @@ test('through Google\'s library: the site read sends one GET and follows no redi
     for (const r of [yes, off, moved]) {
         assert.ok(!report(PROJECT, [r]).includes('MadeUpAccessToken'));
     }
+});
+
+// The one way on without the database read: the database API is off, the site was reached, and
+// the rules that are live are the same as this commit's. live-rules.test.js has every answer of
+// the four GETs; here it is what the step does with their verdict.
+const RULES = { rules: { '.read': false, games: { $pin: { '.read': true, '.write': 'auth.uid == \'made-up-worker\'' } } } };
+const API_OFF = {
+    status: 403,
+    data: { error: { code: 403, status: 'PERMISSION_DENIED', message: `Firebase Realtime Database Management API has not been used in project 1054623883511 before or it is disabled. Token ${TOKEN}`, details: [{ reason: 'SERVICE_DISABLED', metadata: { service: 'firebasedatabase.googleapis.com' } }] } },
+};
+// A made-up Google with every address the step may ask. `change` alters the answers.
+const wholeGoogle = (change = () => {}, seen = []) => {
+    const answers = {
+        'https://firebasehosting.googleapis.com/v1beta1/projects/made-up-project/sites?pageSize=10': { status: 200, data: SITES },
+        'https://firebase.googleapis.com/v1beta1/projects/made-up-project': { status: 200, data: { projectId: PROJECT, resources: { realtimeDatabaseInstance: PROJECT } } },
+        'https://firebasedatabase.googleapis.com/v1beta/projects/made-up-project/locations/-/instances/made-up-project': API_OFF,
+        'https://firebase.googleapis.com/v1beta1/projects/made-up-project/adminSdkConfig': { status: 200, data: { projectId: PROJECT, databaseURL: 'https://made-up-project.firebaseio.com' } },
+        'https://made-up-project.firebaseio.com/.settings/rules.json': { status: 200, data: JSON.parse(JSON.stringify(RULES)) },
+    };
+    change(answers);
+    return async options => {
+        seen.push(options);
+        return answers[options.url] || { status: 404, data: { error: { code: 404, status: 'NOT_FOUND', message: 'made-up: nothing here' } } };
+    };
+};
+const RULES_URL = 'https://made-up-project.firebaseio.com/.settings/rules.json';
+const SITES_URL = 'https://firebasehosting.googleapis.com/v1beta1/projects/made-up-project/sites?pageSize=10';
+// A made-up checkout with the rules file, and files for the step's summary and outputs.
+const checkout = t => {
+    const dir = tmp(t);
+    fs.writeFileSync(path.join(dir, 'firebase.json'), JSON.stringify({ database: { rules: 'database-rules.json' } }));
+    fs.writeFileSync(path.join(dir, 'database-rules.json'), JSON.stringify(RULES, null, 4));
+    const pages = fs.mkdtempSync(path.join(os.tmpdir(), 'check-access-pages-'));
+    t.after(() => fs.rmSync(pages, { recursive: true, force: true }));
+    process.env.GITHUB_STEP_SUMMARY = path.join(pages, 'summary.md');
+    process.env.GITHUB_OUTPUT = path.join(pages, 'output.txt');
+    fs.writeFileSync(process.env.GITHUB_OUTPUT, '');
+    t.after(() => {
+        delete process.env.GITHUB_STEP_SUMMARY;
+        delete process.env.GITHUB_OUTPUT;
+    });
+    return { dir, output: () => fs.readFileSync(path.join(pages, 'output.txt'), 'utf8'), page: () => fs.readFileSync(path.join(pages, 'summary.md'), 'utf8') };
+};
+
+test('the database API off, the site reached, the live rules unchanged: the step passes and says rules=unchanged', async t => {
+    const out = quiet(t);
+    const { dir, output, page } = checkout(t);
+    const seen = [];
+    assert.strictEqual(await main(PROJECT, dir, tool(1, DATABASE_OFF), wholeGoogle(undefined, seen)), 0);
+    assert.strictEqual(output(), 'rules=unchanged\n');
+    // Five requests, every one a GET without a body.
+    assert.strictEqual(seen.length, 5);
+    assert.ok(seen.every(o => o.method === 'GET' && !('data' in o) && !('body' in o)));
+    const text = out.join('\n');
+    assert.match(text, /The run goes on WITHOUT the database rules step/);
+    assert.match(text, /the database \(firebase deploy --only database --dry-run\): NOT reached, exit code 1/);
+    assert.match(text, /the site \(GET [^)]+\): reached, 1 site/);
+    assert.match(text, /the Firebase Realtime Database Management API is off, and the live rules are the same as this commit's/);
+    assert.match(text, /releases the functions and the site, and leaves the rules\nalone/);
+    assert.match(text, /^::warning title=The database rules are left alone::/m);
+    assert.doesNotMatch(text, /::error|Deploy stopped/);
+    assert.strictEqual(page().includes('The run goes on WITHOUT the database rules step'), true);
+    for (const shown of [text, page()]) {
+        assert.doesNotMatch(shown, /MadeUpAccessToken|made-up-worker|firebaseio\.com/);
+    }
+    // The debug file of the failed read is gone: no later step prints it.
+    assert.ok(!fs.existsSync(path.join(dir, LOG)));
+    assert.ok(!fs.existsSync(path.join(dir, KEPT)));
+});
+
+test('both reads pass: the step says rules=deploy and asks nothing about the live rules', async t => {
+    quiet(t);
+    const { dir, output } = checkout(t);
+    const seen = [];
+    assert.strictEqual(await main(PROJECT, dir, tool(0), wholeGoogle(undefined, seen)), 0);
+    assert.strictEqual(output(), 'rules=deploy\n');
+    assert.deepStrictEqual(seen.map(o => o.url), [SITES_URL]);
+});
+
+test('the live rules differ, or cannot be read: the step fails as before, and writes no output', async t => {
+    const cases = {
+        'the live rules differ': [a => { a[RULES_URL].data.rules['.read'] = true; }, /the live rules differ from this commit's/],
+        'the live rules are refused': [a => { a[RULES_URL] = { status: 401, data: { error: 'Unauthorized request.' } }; }, /the live rules could not be read or compared/],
+        'the live rules are not JSON': [a => { a[RULES_URL] = { status: 200, data: '// a comment\n{}' }; }, /the live rules could not be read or compared/],
+        'the address is not known': [a => { delete a['https://firebase.googleapis.com/v1beta1/projects/made-up-project/adminSdkConfig']; }, /the live rules could not be read or compared/],
+        'the database read failed for another reason': [a => { a['https://firebasedatabase.googleapis.com/v1beta/projects/made-up-project/locations/-/instances/made-up-project'] = { status: 200, data: {} }; }, /did not fail because the Firebase Realtime Database Management API is off/],
+    };
+    for (const [name, [change, said]] of Object.entries(cases)) {
+        const out = quiet(t);
+        const { dir, output } = checkout(t);
+        assert.strictEqual(await main(PROJECT, dir, tool(1, DATABASE_OFF), wholeGoogle(change)), 1, name);
+        assert.strictEqual(output(), '', name);
+        const text = out.join('\n');
+        assert.match(text, said, name);
+        assert.match(text, /Deploy stopped, nothing released\. Both reads were tried/, name);
+        assert.match(text, /^::error title=Deploy stopped, nothing released: no access to the database::/m, name);
+        assert.doesNotMatch(text, /goes on WITHOUT|::warning/, name);
+        t.mock.restoreAll();
+    }
+});
+
+test('the site not reached: unchanged rules do not let the run go on', async t => {
+    const out = quiet(t);
+    const { dir, output } = checkout(t);
+    assert.strictEqual(await main(PROJECT, dir, tool(1, DATABASE_OFF), wholeGoogle(a => { a[SITES_URL] = HOSTING_OFF; })), 1);
+    assert.strictEqual(output(), '');
+    const text = out.join('\n');
+    assert.match(text, /Deploy stopped, nothing released/);
+    assert.match(text, /The rules alone would not have stopped this run; the site did\./);
+    assert.match(text, /no access to the database and the site::/);
+    assert.doesNotMatch(text, /goes on WITHOUT|::warning/);
+});
+
+test('a database read that passed never takes the other way, whatever the live rules are', async t => {
+    quiet(t);
+    const { dir, output } = checkout(t);
+    const seen = [];
+    assert.strictEqual(await main(PROJECT, dir, tool(0), wholeGoogle(a => { a[RULES_URL].data.rules['.read'] = true; }, seen)), 0);
+    assert.strictEqual(output(), 'rules=deploy\n');
+    assert.ok(!seen.some(o => o.url === RULES_URL));
+});
+
+test('the report reads an unknown verdict as a stop', () => {
+    const database = { what: 'the database', shown: 'x', ok: false, note: 'exit code 1', why: 'why' };
+    const site = { what: 'the site', shown: 'y', ok: true, note: '1 site', why: null };
+    for (const verdict of ['changed', 'unknown', 'other', 'UNCHANGED', '', undefined]) {
+        assert.match(report(PROJECT, [database, site], { verdict, lines: ['l'] }), /^Deploy stopped, nothing released/);
+    }
+    assert.match(report(PROJECT, [database, site], null), /^Deploy stopped, nothing released/);
+    assert.match(report(PROJECT, [database, site], { verdict: 'unchanged', lines: ['l'] }), /^The run goes on WITHOUT the database rules step/);
+    assert.match(report(PROJECT, [database, Object.assign({}, site, { ok: false, why: 'w' })], { verdict: 'unchanged', lines: ['l'] }), /^Deploy stopped, nothing released/);
+    assert.deepStrictEqual(Object.keys(RULES_VERDICT), ['unchanged', 'changed', 'unknown', 'other']);
 });
