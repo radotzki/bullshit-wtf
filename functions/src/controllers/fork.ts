@@ -1,9 +1,9 @@
+import { replayLength } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
-import { replayLength } from './taste';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = 10 * 1000;
