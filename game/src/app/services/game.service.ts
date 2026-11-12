@@ -76,6 +76,11 @@ export class GameService implements CanActivate {
         });
     }
 
+    /** The step this phone shows, as "<state id>:<state timestamp>", or undefined before the first. */
+    currentStep(): string {
+        return this.phase;
+    }
+
     unregister() {
         this.pin = undefined;
         this.phase = undefined;
