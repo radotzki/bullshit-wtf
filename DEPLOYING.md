@@ -709,3 +709,49 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Final question card
+
+The card before a game's last question is its own: FINAL QUESTION, one line on how far first place is
+ahead, then the round's points as before. Everything else about the round intro is unchanged.
+
+- Site only (`game/src/app/pages/round-intro`, words in `game-strings.ts`). No function, rule,
+  points or phase length changes: the card shows inside the 3 seconds the round intro already has.
+  A merge releases the site alone.
+- What it reads: `questionIndex`, `totalQ` and `players` of the game, which every phone could
+  already read. The last question is the one at `totalQ - 1`; in a game of 5, 7 or 9 questions that
+  is always the single question of round 3.
+- The line. On a phone it is about that player: "You lead by 500 points", "500 points behind Dana",
+  "You are tied for first with Ben". On a big screen it is about the room: "Dana leads by 500
+  points", "Dana and Ben are tied for first". More than two names are counted, not listed. One
+  player alone gets no line. The words follow the game's language.
+- Nothing is drawn before it is read: the card's middle stays empty until the round, the question's
+  number and, before the last question, the scores have arrived, then shows whole. A number that
+  cannot be read leaves its line out.
+- Big screen: the sound of the truth plays once with the card. Phones stay silent.
+- No BigQuery change.
+
+How to read it (read-only; replace `<release time>`, and put `test_pins` from
+`functions/bigquery/2026-11-test-mark.sql` first):
+
+```sql
+-- Rematches per game that was still played on its last question (half or more of the players
+-- picked an answer there). Compare the weeks before and after the release.
+SELECT COUNT(*) AS played_last_question, COUNTIF(f.replays > 0) AS with_a_rematch,
+  COUNTIF(f.replays > 0) / COUNT(*) AS rematch_rate
+FROM `bullshit-wtf-prod.analytics.opened_games` o
+JOIN (SELECT id FROM `bullshit-wtf-prod.analytics.question_results`
+  WHERE time >= TIMESTAMP('<release time>') AND q_index = total_q - 1 AND picks * 2 >= players
+  GROUP BY id) q USING (id)
+LEFT JOIN (SELECT origin, COUNT(*) AS replays FROM `bullshit-wtf-prod.analytics.forks`
+  WHERE time >= TIMESTAMP('<release time>') GROUP BY origin) f ON f.origin = o.id
+WHERE o.time >= TIMESTAMP('<release time>') AND o.players >= 2
+  AND o.id NOT IN (SELECT pin FROM test_pins);
+```
+
+Before the release (5 November to 12 November 2026, 08:00 UTC, tests out): 38 games with two or more
+players were still played on the last question, and 28 of them had a rematch.
+
+Not readable yet: the share of games where first place changes on the last question. No table
+holds the scores before the last question, so that needs two numbers written by the server with
+the last question's row (who led before it, who won); it is not part of this change.
