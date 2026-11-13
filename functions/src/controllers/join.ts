@@ -52,13 +52,58 @@ export function seatOf(players: GameScheme['players'], uid: any, pid?: any): str
     return Object.keys(players).filter(k => players[k] && players[k].uid === myUid).sort().pop();
 }
 
+/** The longest browser string kept per seat: the same cut as the users table's (visit.ts). */
+export const AGENT_MAX = 400;
+
+/** A browser string as a seat keeps it: text, cut to AGENT_MAX; undefined when there is none. */
+export function cleanAgent(agent: any): string | undefined {
+    const text = typeof agent === 'string' ? agent.trim().slice(0, AGENT_MAX) : '';
+    return text || undefined;
+}
+
+/** A nickname as seatByName compares it: spacing and case do not matter. */
+function nameKey(name: any): string {
+    return String(name == null ? '' : name).replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
+ * The seat of a guest whose invite link opened in an empty browser again, by name. A chat app's own
+ * browser (WhatsApp, Instagram, Facebook) often starts with no saved data, so a second tap on the same
+ * link brings no uid and no player id that seatOf could match, and the guest got a second seat: their
+ * score split, and the room waited on a ghost (game JVVP, 11 Nov). The seat comes back only when all hold:
+ *   - the join brings no player id at all (a browser that has played before is someone's own browser);
+ *   - exactly one seat has the typed name (spacing and case aside);
+ *   - that seat joined with this very browser string;
+ *   - that seat's page has gone away: the database marked it disconnected (`seen` is a time, not true).
+ * Two people who share a name stay apart: a namesake whose page is still connected is never a match,
+ * two quiet seats with the name are too many to choose from, and a seat with no browser string or no
+ * `seen` (one that joined from an older page) is never given away.
+ */
+export function seatByName(game: GameScheme, typed: any, agent: any, pid?: any): string | undefined {
+    const players = game && game.players || {};
+    const name = nameKey(Array.from(nameKey(typed)).slice(0, NICKNAME_MAX).join('').trim());
+    const ua = cleanAgent(agent);
+    if ((typeof pid === 'string' && pid) || !name || !ua) {
+        return undefined;
+    }
+    const named = Object.keys(players).filter(k => players[k] && nameKey(players[k].nickname) === name);
+    if (named.length !== 1) {
+        return undefined;
+    }
+    const k = named[0];
+    const agents = game.agents || {};
+    const seen = game.seen || {};
+    return agents[k] === ua && typeof seen[k] === 'number' ? k : undefined;
+}
+
 /**
  * Add a player to a game. A join that carries the game's host key (the phone that created it)
  * is marked as the host, so the lobby knows the host even when that phone has no sign-in uid.
  * A phone that already has a seat here gets that seat back under the name it typed now (see seatOf),
  * with its score: one phone is one seat.
  */
-export async function join(pin: string, typed: string, uid: string, hostKey?: string, myPid?: string): Promise<JoinResult> {
+export async function join(pin: string, typed: string, uid: string, hostKey?: string, myPid?: string, agent?: string)
+    : Promise<JoinResult> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
@@ -69,7 +114,13 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     // A phone that already has a seat here gets it back, even at a full table (not in a finished game).
     const mine = seatOf(game.players, uid, myPid);
     if (mine && !(await gameOverError(game, Date.now()))) {
-        return rejoin(pin, game, mine, typed, uid, hostKey);
+        return rejoin(pin, game, mine, typed, uid, hostKey, agent);
+    }
+
+    // A guest back from an empty browser (a chat app's), same name, same browser, old page gone.
+    const named = !mine && seatByName(game, typed, agent, myPid);
+    if (named && !(await gameOverError(game, Date.now()))) {
+        return rejoin(pin, game, named, typed, uid, hostKey, agent, true);
     }
 
     // A finished game takes no new players (a typed PIN, or an old invite link).
@@ -87,6 +138,10 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     const { nickname, swapped } = cleanNickname(typed, uid, pid, game.locale, game.players);
     const player: GamePlayer = { nickname, uid, score: 0 };
     const result: JoinResult = swapped ? { pid, nickname, swapped } : { pid, nickname };
+    const ua = cleanAgent(agent);
+    if (ua) {
+        await gamesRef.child(pin).child('agents').child(pid).set(ua);
+    }
 
     if (!game.hostKey || !hostKey || hostKey !== game.hostKey) {
         await playersRef.child(pid).set(player);
@@ -118,23 +173,34 @@ async function hostIsHere(pin: string, game: GameScheme) {
     }
 }
 
-/** The phone's own seat, back under the name it typed now; its score and marks stay. */
-async function rejoin(pin: string, game: GameScheme, pid: string, typed: string, uid: string, hostKey?: string)
-    : Promise<JoinResult> {
+/**
+ * The phone's own seat, back under the name it typed now; its score and marks stay. A seat given back
+ * by name (byName) moves to the new browser: it takes that browser's uid, so the next join from it
+ * (a reload) finds the seat by its player id (seatOf) as any phone's does.
+ */
+async function rejoin(pin: string, game: GameScheme, pid: string, typed: string, uid: string, hostKey?: string,
+    agent?: string, byName?: boolean): Promise<JoinResult> {
     const { nickname, swapped } = cleanNickname(typed, uid, pid, game.locale, game.players);
     const update: { [path: string]: any } = { [`${pid}/nickname`]: nickname };
-    if (typeof uid === 'string' && uid && !game.players[pid].uid) {
-        update[`${pid}/uid`] = uid;
+    const myUid = typeof uid === 'string' && uid ? uid : undefined;
+    if (myUid && (byName || !game.players[pid].uid)) {
+        update[`${pid}/uid`] = myUid;
     }
     const host = !!(game.hostKey && hostKey && hostKey === game.hostKey);
     if (host) {
         update[`${pid}/host`] = true;
         clearOtherHosts(game, pid, update);
     }
+    const ua = cleanAgent(agent);
+    if (ua && (!game.agents || game.agents[pid] !== ua)) {
+        await gamesRef.child(pin).child('agents').child(pid).set(ua);
+    }
     await gamesRef.child(pin).child('players').update(update);
     if (host) {
         await hostIsHere(pin, game);
     }
-    console.log(`[PIN: ${pin}] a phone joined again and got its seat back`);
+    console.log(byName
+        ? `[PIN: ${pin}] a guest back from an empty browser got their seat back by name`
+        : `[PIN: ${pin}] a phone joined again and got its seat back`);
     return swapped ? { pid, nickname, swapped } : { pid, nickname };
 }

@@ -41,6 +41,7 @@ function phone() {
     const pages = [];
     const ticks = [];
     const states = {};
+    const seats = [];
     let clock = 1000;
     // The step's id alone (gameState) and the whole step (gamePhase), as the database gives them.
     const watch = (pin, pick) => ({
@@ -67,6 +68,11 @@ function phone() {
         tickFrom(pin) { ticks.push(pin.toUpperCase()); },
         // Whether a game plays the staged reveal, asked on the scoreboard step (game-service-scoreboard.test.js).
         isStagedReveal: () => Promise.resolve(false),
+        // The phone marks its seat as here in the game it follows, until it stops (ApiService.followSeat).
+        followSeat(pin) {
+            seats.push('here ' + pin);
+            return () => seats.push('gone ' + pin);
+        },
     };
     const router = {
         // The scoreboard step reads the address the phone is on (game-service-scoreboard.test.js).
@@ -87,7 +93,7 @@ function phone() {
     /** The database hands a listening phone the step it has again (as after a lost connection, with nothing new). */
     const again = pin => (watchers[pin] || []).slice().forEach(fn => fn(states[pin]));
     const watched = () => Object.keys(watchers).filter(pin => watchers[pin].length);
-    return { service, step, again, pages, ticks, watched };
+    return { service, step, again, pages, ticks, watched, seats };
 }
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
@@ -298,4 +304,18 @@ test('a pick names the picks step the phone shows, as the server marks that step
     assert.strictEqual(model.pickIsFor({ text: 'a', step: q2 }, { id: GameState.ShowQuestion, timestamp }), false, 'none while lies are written');
     assert.strictEqual(model.pickIsFor(null, state), false);
     p.service.unregister();
+});
+
+test('the phone marks its seat as here in the game it follows, and as gone when it leaves it', () => {
+    const p = phone();
+    p.service.register('AAAA');
+    // The next page of the same game asks again: nothing changes.
+    p.service.register('aaaa');
+    assert.deepStrictEqual(p.seats, ['here AAAA']);
+    // Replay: the new game.
+    p.service.register('BBBB');
+    assert.deepStrictEqual(p.seats, ['here AAAA', 'gone AAAA', 'here BBBB']);
+    p.service.unregister();
+    p.service.unregister();
+    assert.deepStrictEqual(p.seats, ['here AAAA', 'gone AAAA', 'here BBBB', 'gone BBBB']);
 });

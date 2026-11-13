@@ -190,7 +190,10 @@ exports.join = functions.https.onRequest(http('join', (req, res) => {
 
         try {
             // { pid, nickname, swapped? }: the phone keeps the nickname the server stored.
-            return res.status(200).send(await join(pin, nickname, uid, cleanHostKey(req.body.hostKey), cleanPid(req.body.pid)));
+            // The browser string, kept per seat (as the users table keeps it per join), so a guest whose
+            // invite link opened in an empty browser can get their seat back by name (join.ts seatByName).
+            return res.status(200).send(await join(pin, nickname, uid, cleanHostKey(req.body.hostKey), cleanPid(req.body.pid),
+                req.headers['user-agent'] as string));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));

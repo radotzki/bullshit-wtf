@@ -102,6 +102,11 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         origin: 'replay',
         parent,
     };
+    // The seats carried over keep the browser string they joined with (see join.ts seatByName).
+    const agents = agentsOf(game, forked.players);
+    if (agents) {
+        forked.agents = agents;
+    }
 
     // The browser that pressed Replay hosts the new game; fall back to the old host.
     const host = creator || game.creator;
@@ -157,6 +162,17 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
     }
 
     return forked;
+}
+
+/** The browser strings of the given seats, from the old game; undefined when it has none of them. */
+function agentsOf(game: GameScheme, players: GamePlayers): { [pid: string]: string } | undefined {
+    const out: { [pid: string]: string } = {};
+    Object.keys(players || {}).forEach(k => {
+        if (game.agents && typeof game.agents[k] === 'string') {
+            out[k] = game.agents[k];
+        }
+    });
+    return Object.keys(out).length ? out : undefined;
 }
 
 function resetPlayersScore(players: GamePlayers) {

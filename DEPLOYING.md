@@ -1094,3 +1094,85 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## Seat back by name (a guest whose invite link opened in an empty browser again)
+
+Invite links often open in a chat app's own browser (WhatsApp, Instagram, Facebook), which can start
+with no saved data. A guest who taps the same game's link again then brings no uid and no player id,
+so the seat-back by player id or uid (`seatOf`, one phone one seat) cannot find them, and they got a
+second seat: their score split, and the room waited on a ghost (game JVVP, 11 November).
+
+**What it does.** `join` (functions/src/controllers/join.ts `seatByName`) gives the old seat back
+when all of these hold, and otherwise adds a seat as before:
+
+- the join brings no player id at all (a browser that has played before is someone's own browser);
+- exactly one seat in the game has the typed name (spacing and case aside, cut to 9 as names are);
+- that seat joined with the same browser string (user agent);
+- that seat's page has gone away: `games/$pin/seen/$pid` is a time, not `true`.
+
+The seat keeps its score and marks, takes the name typed now, and moves to the new browser (its `uid`
+becomes the new browser's), so a reload there finds it by its player id. A finished game takes nobody
+back, and a seat given back is given back at a full table, as with `seatOf`.
+
+**Two people who share a name stay apart.** A namesake whose page is still connected is never a match;
+two quiet seats with the name are too many to choose from; a seat with no browser string or no `seen`
+mark (it joined from a page older than this release) is never given away.
+
+**"Gone quiet" is the database's own connection watch, with no extra wait.** Each player's page marks
+its seat `true` while connected and asks the database to write the server time when the connection
+drops (`onDisconnect`), as `ApiService.followSeat` does from `GameService.register`. Closing a chat
+app's browser closes its connection, so the mark flips within a second; a phone that dies without a
+word flips when the database's keepalive gives up on it. No clock threshold is added on top: a wait
+would only make the real case (a tap a few seconds after closing) fail, and would not help with the
+one risk left (below).
+
+**What is stored.** Two server-side nodes per game, both under `games/$pin`, which phones cannot read:
+`agents/$pid`, the browser string the seat joined with, cut to 400 characters (the same text the
+`users` table already keeps for every join, so no new personal data); and `seen/$pid`, `true` or a time.
+Replay carries the browser strings of the seats it keeps (`fork.ts`). No BigQuery change.
+
+**Rules change.** `games/$pin/seen/$pid` may be read and written only by the sign-in that holds the
+seat (`auth.uid` equals the seat's `uid`), and only as `true` or a time no later than now. A signed-out
+write, or another sign-in's, is refused, so nobody can mark a connected player gone to take her seat.
+A seat with no uid (its sign-in failed) never gets a mark, so it is never given back by name. While
+connected, the page watches its own mark and sets it back to `true` if it changes from elsewhere.
+
+The rules change means this cannot be released while the Realtime Database Management API is off in
+production: the release's access check stops any run whose rules differ from the live ones. It goes
+out after the owner switches the API on (the same wait as pull request 61).
+
+**Deploy.** After the Management API step above, the normal pipeline: all functions, then the
+database rules, then the site. Old pages
+write no `seen` mark, so their seats are never given back by name; the change takes effect for seats
+joined from the new site. Nothing for the owner to run.
+
+**Limits.**
+
+- If the chat app keeps its old browser connected in the background when the link is tapped again
+  (some Android apps do), the old seat is still "here" and the guest gets a second seat, as before.
+- Two players with the same name on the same model of phone (same browser string), where the first
+  one's phone is asleep with its page disconnected and the second joins from an empty browser: the
+  second takes the first one's seat. Both conditions together are rare; the first player's page
+  then still shows the seat it had.
+- This does not change the weekly count of ids: the new browser still signs in with a new anonymous
+  uid and writes its own `users` row. It removes the second seat, not the second id. Count weekly
+  players de-duplicated by nickname, browser string and game group per day for that.
+- A name swapped by the nickname filter is stored as the swap name, so a guest who typed a flagged
+  name gets a new seat.
+- When a namesake does take a seat this way, the first player's page is not told: both phones then
+  play one seat until the first one rejoins. Sending that page back to the join page when its seat's
+  uid changes is left for a later change.
+- The browser strings stay with the game node, like nicknames: nothing deletes old games today. If
+  games are ever cleaned up, they go with them.
+
+**How to read it.** Cloud Logging, functions `join`:
+`textPayload:"got their seat back by name"` (one line per seat given back), against
+`textPayload:"got its seat back"` (by player id or uid).
+
+Checks: `functions/test/seat-by-name.test.js` (in `npm test`), `game/test/game-service.test.js`
+(the seat is marked while the phone follows the game), and on the emulators
+`node .github/smoke/emulator-rejoin.js` (a signed-out write and another sign-in's write of a seat's
+mark are refused, and a sign-in may mark its own seat; a mark changed from elsewhere is set back by the
+page; a guest closes her browser and taps the link again in a new
+empty one with the same browser string: same seat; another player with the same name, while the
+first is here: a seat of her own).

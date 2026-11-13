@@ -199,6 +199,69 @@ export class ApiService {
             .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
     }
 
+    /**
+     * Keep this phone's seat in the game marked as here (games/$pin/seen/$pid): true while the page is
+     * connected, and the server's time when it goes away, which the database writes by itself when the
+     * connection drops (onDisconnect). The server gives a seat back by name to a guest whose invite link
+     * opened in an empty browser only once its old page has gone (join.ts seatByName), so two players
+     * with one name, both here, stay two seats. Only the sign-in that holds the seat may read or write
+     * its mark (database rules), so this waits for both the connection and the sign-in. While connected,
+     * a mark that is not true (it was changed from elsewhere) is set back to true.
+     * Returns a function that stops it and marks the seat gone. Does nothing on the big screen or for a
+     * phone with no seat; a write or read the rules refuse (the seat is not this sign-in's) is dropped.
+     */
+    followSeat(pin: string): () => void {
+        const user = this.sessionService.user;
+        const pid = user && user.pid;
+        if (!pin || !pid || this.sessionService.presenter) {
+            return () => { };
+        }
+        const seen = this.gamesRef.child(pin.toUpperCase()).child('seen').child(pid);
+        const gone = firebaseCompat.database.ServerValue.TIMESTAMP;
+        const connectedRef = firebase.database().ref('.info/connected');
+        let stopped = false;
+        let connected = false;
+        let signedIn = false;
+        let watching = false;
+        const markHere = () => {
+            if (stopped || !connected || !signedIn) {
+                return;
+            }
+            seen.onDisconnect().set(gone)
+                .then(() => stopped ? undefined : seen.set(true))
+                .catch(() => undefined);
+            if (!watching) {
+                watching = true;
+                // Set back to true a mark that changed while this page is here.
+                seen.on('value', onMark, () => { watching = false; });
+            }
+        };
+        const onMark = snap => {
+            if (!stopped && connected && signedIn && snap.val() !== true) {
+                seen.set(true).catch(() => undefined);
+            }
+        };
+        const onConnected = connectedRef.on('value', snap => {
+            connected = snap.val() === true;
+            markHere();
+        });
+        const stopAuth = firebase.auth().onAuthStateChanged(signed => {
+            signedIn = !!signed;
+            markHere();
+        });
+        return () => {
+            stopped = true;
+            connectedRef.off('value', onConnected);
+            stopAuth();
+            if (watching) {
+                seen.off('value', onMark);
+                watching = false;
+            }
+            seen.onDisconnect().cancel().catch(() => undefined);
+            seen.set(gone).catch(() => undefined);
+        };
+    }
+
     validateGameName(pin: string) {
         pin = pin.toUpperCase();
         return this.post(`validateGameName`, { pin });

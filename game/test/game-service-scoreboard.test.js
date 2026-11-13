@@ -46,6 +46,7 @@ function phone(url) {
         getGameStateInfo: () => new Promise(() => undefined),
         tickFrom() { },
         isStagedReveal: () => new Promise(resolve => reads.push(resolve)),
+        followSeat: () => () => undefined,
     };
     const router = {
         url: url || '/show-answers/AAAA',

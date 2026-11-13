@@ -67,6 +67,14 @@ export interface GameScheme {
     // Set when the game ends: the seats that sent a lie, a pick or a NEXT on its last question, the
     // players still at the table. A Replay starts with these seats (fork.ts seatsForReplay). Server only.
     lastSent?: { [pid: string]: boolean };
+    // The browser string (user agent) each seat joined with, cut to 400 characters: the same text the
+    // users table already keeps for every join. Server only; never readable by phones. With `seen`, it
+    // lets a guest whose invite link opened in an empty browser get their seat back (join.ts seatByName).
+    agents?: { [pid: string]: string };
+    // Each seat's page, as the database sees it: true while it is connected, else the server time
+    // (ms) it went away. Written by the seat's own page (rules: only for a seat of this game), never read
+    // by phones. A seat without one (an older page) is never given away by name.
+    seen?: { [pid: string]: true | number };
     // The saved crew this game counts for (set by a crew rematch, carried by Replay).
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
