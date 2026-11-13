@@ -18,11 +18,13 @@ jobs:
       run:
         working-directory: functions
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
+          # Stays on 22 to match the functions' Cloud runtime (nodejs22, 1st gen) until they move
+          # to 2nd gen; Node 24 is 2nd gen only.
           node-version: 22
           cache: npm
           cache-dependency-path: functions/package-lock.json
@@ -35,12 +37,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
       # The scripts deploy.yml runs before a release. Plain Node and git, nothing to install.
       - run: node --test .github/scripts/*.test.js
 
@@ -52,12 +54,12 @@ jobs:
       run:
         working-directory: game
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: game/package-lock.json
       # Angular 22 on the CLI's esbuild builder: plain npm ci and npm run build. Lint (angular-eslint
@@ -81,7 +83,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Cache the smoke test's browser
         id: browser-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('.github/smoke/package-lock.json') }}
