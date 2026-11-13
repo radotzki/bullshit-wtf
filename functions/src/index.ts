@@ -190,7 +190,7 @@ exports.join = functions.https.onRequest(http('join', (req, res) => {
 
         try {
             // { pid, nickname, swapped? }: the phone keeps the nickname the server stored.
-            return res.status(200).send(await join(pin, nickname, uid, cleanHostKey(req.body.hostKey)));
+            return res.status(200).send(await join(pin, nickname, uid, cleanHostKey(req.body.hostKey), cleanPid(req.body.pid)));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));
