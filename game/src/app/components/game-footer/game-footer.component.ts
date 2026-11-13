@@ -1,11 +1,12 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { ApiService } from './../../services/api.service';
-import { Subscription } from 'rxjs/Subscription';
 import { SessionService } from './../../services/session.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-game-footer',
     templateUrl: './game-footer.component.html',
     styleUrls: ['./game-footer.component.scss']
@@ -13,6 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 export class GameFooterComponent implements OnInit {
     name: string;
     score: Observable<number>;
+    /** A Hebrew game: the name sits on the right, like the rest of the screen. */
+    rtl = false;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -22,6 +25,8 @@ export class GameFooterComponent implements OnInit {
 
     ngOnInit() {
         const pin = this.activatedRoute.snapshot.params['pin'];
+        this.rtl = this.apiService.knownGameLocale(pin) === 'he';
+        this.apiService.getGameLocale(pin).then(locale => this.rtl = locale === 'he', () => null);
 
         if (!this.sessionService.presenter) {
             this.name = this.sessionService.user.nickname;

@@ -6,7 +6,7 @@ import { SessionService } from './services/session.service';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
+import { provideHttpClient } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing/app-routing.module';
 import { AppComponent } from './app.component';
@@ -33,10 +33,13 @@ import { QrCodeComponent } from './components/qr-code/qr-code.component';
 import { InviteComponent } from './components/invite/invite.component';
 import { ShareResultsComponent } from './components/share-results/share-results.component';
 import { HostAskComponent } from './components/host-ask/host-ask.component';
+import { WaitingRowComponent } from './components/waiting-row/waiting-row.component';
 import { ShareService } from './services/share.service';
 import { ResultsCardService } from './services/results-card.service';
 import { CrewService } from './services/crew.service';
+import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
+import { StepComponent } from './pages/step/step.component';
 
 @NgModule({
     declarations: [
@@ -64,16 +67,18 @@ import { CrewComponent } from './pages/crew/crew.component';
         InviteComponent,
         ShareResultsComponent,
         HostAskComponent,
+        WaitingRowComponent,
         CrewComponent,
+        StepComponent,
     ],
     imports: [
         BrowserModule,
         FormsModule,
-        HttpModule,
         AppRoutingModule,
         SentryModule,
     ],
     providers: [
+        provideHttpClient(),
         SessionService,
         StorageService,
         ApiService,
@@ -81,6 +86,7 @@ import { CrewComponent } from './pages/crew/crew.component';
         ShareService,
         ResultsCardService,
         CrewService,
+        SoundService,
     ],
     bootstrap: [AppComponent]
 })

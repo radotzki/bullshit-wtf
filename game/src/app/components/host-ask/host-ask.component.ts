@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
@@ -14,6 +14,8 @@ import {
  * Every press is counted in BigQuery's shares table (content_type after-game or game-over).
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-host-ask',
     templateUrl: './host-ask.component.html',
     styleUrls: ['./host-ask.component.scss'],

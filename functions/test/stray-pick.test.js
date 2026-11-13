@@ -103,7 +103,6 @@ function newGame(playerIds = ['p1', 'p2', 'p3']) {
 }
 
 const game = pin => db.games[pin];
-const stateKeyOf = s => `${s.id}:${s.timestamp}`;
 const state = pin => game(pin).state.id;
 
 /** The phase timer firing: move on from the current phase. */
@@ -375,15 +374,20 @@ test('a phase given back is free on the server, though the database client start
 test('a whole game in which one step fails in every phase still reaches the final scoreboard', async () => {
     const pin = newGame();
     const realChild = fakeFirebase.gamesRef.child;
-    const failed = {};
+    // Phases are told apart by counting them as the game enters them, not by the clock: a whole game
+    // takes a few milliseconds here, so two phases can carry the same id and the same timestamp.
+    let entered = 0;
+    let refusedIn = -1;
+    let refusals = 0;
     // The first write that would move the game out of each phase is refused, once.
     fakeFirebase.gamesRef.child = p => {
         const r = realChild(p);
         const update = r.update;
         r.update = async v => {
-            const from = game(pin) && stateKeyOf(game(pin).state);
-            if (String(p) === pin && v && v.state && !failed[from]) { failed[from] = true; throw new Error('write refused'); }
-            return update(v);
+            const moves = String(p) === pin && v && v.state;
+            if (moves && refusedIn !== entered) { refusedIn = entered; refusals++; throw new Error('write refused'); }
+            await update(v);
+            if (moves) entered++;
         };
         return r;
     };
@@ -399,6 +403,7 @@ test('a whole game in which one step fails in every phase still reaches the fina
             await next(pin).catch(() => { refused++; });
         }
         assert.ok(refused >= 3 * TOTAL_Q, `steps did fail on the way (${refused})`);
+        assert.strictEqual(refusals, entered, 'every phase the game left had its first step refused');
     } finally {
         fakeFirebase.gamesRef.child = realChild;
     }
@@ -414,4 +419,88 @@ test('the phase timer tries once more when moving on fails', async () => {
     setTimeout(() => { db.questions = questions; }, 50);
     await onPhaseStart(pin, Object.assign({}, game(pin).state, { deadline: Date.now() }), Date.now(), 200);
     assert.strictEqual(state(pin), S.ShowQuestion);
+});
+
+// A phone that loses its network keeps a tapped pick and sends it when it is back. If that is after
+// the question's picks closed, the pick lands in a later question: it must not count there, so the
+// phone can still pick and the room still waits for it.
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const stepOf = pin => `${game(pin).state.id}:${game(pin).state.timestamp}`;
+
+/** From an answers screen through reveal and scoreboard to the next question's lies. */
+async function toNextLies(pin) {
+    await sleep(2); // phases of a game played this fast can otherwise share their millisecond
+    let s = await toNextQuestion(pin);
+    if (s === S.RoundIntro) s = await next(pin);
+    assert.strictEqual(s, S.ShowQuestion);
+}
+
+test('a pick made in one question and delivered in the next question\'s picks does not count there', async () => {
+    const pin = newGame();
+    await toAnswers(pin);
+    const step0 = stepOf(pin);
+    // p2 taps "p1 lie 0" while offline; the others pick.
+    await write(pin, 'p1', { text: 'truth0', step: step0 });
+    await write(pin, 'p3', { text: 'p2 lie 0', step: step0 });
+    await next(pin);
+    await toNextLies(pin);
+    for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie 1`);
+    assert.strictEqual(state(pin), S.ShowAnswers);
+    const step1 = stepOf(pin);
+    assert.notStrictEqual(step1, step0);
+
+    // p2 is back: its old pick arrives now.
+    await write(pin, 'p2', { text: 'p1 lie 0', step: step0 });
+    await write(pin, 'p1', { text: 'truth1', step: step1 });
+    await write(pin, 'p3', { text: 'p1 lie 1', step: step1 });
+    assert.strictEqual(state(pin), S.ShowAnswers, 'the room still waits for p2');
+    assert.ok(!game(pin).players.p2.sent || game(pin).players.p2.sent !== step1, 'p2 is not shown as done');
+
+    // p2 picks in this question: that pick counts.
+    await write(pin, 'p2', { text: 'p3 lie 1', step: step1 });
+    assert.strictEqual(state(pin), S.RevealTheTruth, 'everyone has picked now');
+    assert.deepStrictEqual(game(pin).answerSelections.p2.text, 'p3 lie 1');
+    const row = game(pin).revealAnswers.find(r => r.text === 'p3 lie 1');
+    assert.deepStrictEqual(row.selectors, ['p2']);
+});
+
+test('the late pick alone: picks close at their deadline and it scores nothing', async () => {
+    const pin = newGame();
+    await toAnswers(pin);
+    const step0 = stepOf(pin);
+    await next(pin);
+    await toNextLies(pin);
+    for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie 1`);
+    // p2's old pick names a lie of this question by chance: it still is no pick of this question.
+    await write(pin, 'p2', { text: 'p1 lie 1', step: step0 });
+    await next(pin);
+    assert.ok(!game(pin).answerSelections || !game(pin).answerSelections.p2, 'not kept');
+    const row = game(pin).revealAnswers.find(r => r.text === 'p1 lie 1');
+    assert.ok(!row.selectors || !row.selectors.length, 'and fooled nobody');
+});
+
+test('a pick that lands while the next question\'s lies are written is gone when its picks open', async () => {
+    const pin = newGame();
+    await toAnswers(pin);
+    const step0 = stepOf(pin);
+    await write(pin, 'p1', { text: 'truth0', step: step0 });
+    await write(pin, 'p3', { text: 'p2 lie 0', step: step0 });
+    await next(pin);
+    await toNextLies(pin);
+    // From an older site, with no step on it, and from this one.
+    await write(pin, 'p2', { text: 'p1 lie 0' });
+    await write(pin, 'p3', { text: 'p1 lie 0', step: step0 });
+    for (const pid of ['p1', 'p2', 'p3']) await answer(pin, pid, `${pid} lie 1`);
+    assert.strictEqual(state(pin), S.ShowAnswers);
+    assert.ok(!game(pin).answerSelections || !Object.keys(game(pin).answerSelections).length, 'no pick is there');
+    await write(pin, 'p1', { text: 'truth1', step: stepOf(pin) });
+    await write(pin, 'p3', { text: 'truth1' });
+    assert.strictEqual(state(pin), S.ShowAnswers, 'the room waits for p2');
+    await write(pin, 'p2', { text: 'truth1', step: stepOf(pin) });
+    assert.strictEqual(state(pin), S.RevealTheTruth);
+});
+
+test('a pick from an older site, with no step, still counts in its own question', async () => {
+    const { scores } = await wholeGame();
+    assert.deepStrictEqual(scores, CLEAN);
 });

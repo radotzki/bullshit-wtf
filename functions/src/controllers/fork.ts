@@ -1,8 +1,11 @@
+import { replayLength } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
+import { drawBigReveal } from './big-reveal';
+import { withStaged } from './phase';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = 10 * 1000;
@@ -11,7 +14,7 @@ export const FORK_WAIT_MS = 10 * 1000;
  * Replay: a new game with the same players. `creator` is the uid of the phone that pressed Replay,
  * `hostPid` its player id in the finished game; that player hosts the new game. `hostKey` is that
  * phone's new one-game secret for the new game (see hostKey in game-model): with it, only that phone
- * may start the new game. Resolves to the new game's pin, and whether this phone hosts it.
+ * may start the new game. `stagedReveal`: that phone can show the staged reveal (see big-reveal.ts). Resolves to the new game's pin, and whether this phone hosts it.
  *
  * One Replay per game: when two phones press Replay at once, the first claims the new game and the
  * second gets that same game back, with its host key, so both phones that pressed Replay may start it
@@ -19,11 +22,17 @@ export const FORK_WAIT_MS = 10 * 1000;
  * each press made its own game, the phones followed whichever arrived first, and the phone that pressed
  * Replay could end up in the other phone's lobby without START (Friday 6 Nov: JVQP made JVRQ and JVRR).
  */
-export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string): Promise<{ pin: string; host: boolean; hostKey?: string }> {
+export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string,
+    stagedReveal = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
     const gameCounter = await incGameCounter();
     const forkedGamePin = generateGameName(gameCounter);
+
+    // A Replay of a taste (a game played alone, see taste.ts) is a whole game, of the length its host chose.
+    if (game) {
+        game.totalQ = replayLength(game);
+    }
 
     const claimed = await claimFork(pin, forkedGamePin);
     if (claimed && claimed !== forkedGamePin) {
@@ -41,7 +50,7 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     }
 
     const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey);
+    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin);
 
     await gamesRef.child(forkedGamePin).set(forkedGame);
     await gamesRef.child(pin).child('forking').set(forkedGamePin);
@@ -74,8 +83,8 @@ async function forkReady(pin: string, claimed: string): Promise<boolean> {
     }
 }
 
-function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
-    hostKey?: string): GameScheme {
+export function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
+    hostKey?: string, stagedReveal = false, forkedPin = ''): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -89,7 +98,7 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
         qids,
         tick: 0,
         presenter: game.presenter,
-        players: resetPlayersScore(game.players),
+        players: resetPlayersScore(seatsForReplay(game, hostPid)),
         origin: 'replay',
         parent,
     };
@@ -129,6 +138,14 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
         forked.coach = true;
     }
 
+    // The staged reveal: each Replay is a new game with a half of its own (the one its PIN falls in),
+    // when the phone that pressed it can show it.
+    const bigReveal = drawBigReveal(stagedReveal === true && !!forkedPin, forkedPin);
+    if (bigReveal !== undefined) {
+        forked.bigReveal = bigReveal;
+        forked.state = withStaged(forked.state, forked);
+    }
+
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).
     if (game.pack) {
         forked.pack = game.pack;
@@ -143,8 +160,75 @@ function createFork(parent: string, game: GameScheme, qids: string[], creator?: 
 }
 
 function resetPlayersScore(players: GamePlayers) {
-    Object.keys(players || {}).forEach(k => players[k].score = 0);
+    Object.keys(players || {}).forEach(k => {
+        players[k].score = 0;
+        // Nobody has sent anything in the new game yet (see sent.ts).
+        delete players[k].sent;
+    });
     return players;
+}
+
+/**
+ * The finished game's seats, less a second seat of one phone that never sent a lie or a pick: before
+ * one phone was one seat (see seatOf in join.ts), a phone that joined twice left an empty seat, and
+ * Replay carried it into the next game, where the table waited on it again (12 Nov: JVXG to JVXH).
+ * A seat that played, or the only seat of its phone, always comes along.
+ */
+export function withoutSecondSeats(game: GameScheme, hostPid?: string): GamePlayers {
+    const players = game.players || {};
+    // A game from before the flags were kept (no playedFrom) cannot tell who played: keep every seat.
+    if (typeof game.playedFrom !== 'number') {
+        return players;
+    }
+    const played = game.played || {};
+    const keep = (k: string) => !!played[k] || !!players[k].host || k === hostPid;
+    const out: GamePlayers = {};
+    const byUid: { [uid: string]: string[] } = {};
+    Object.keys(players).filter(k => players[k]).forEach(k => {
+        const uid = players[k].uid;
+        if (typeof uid === 'string' && uid) {
+            (byUid[uid] = byUid[uid] || []).push(k);
+        } else {
+            out[k] = players[k];
+        }
+    });
+    Object.keys(byUid).forEach(uid => {
+        const seats = byUid[uid].sort();
+        const kept = seats.filter(keep);
+        // Nobody played any seat of this phone: keep its newest seat, the one the phone holds.
+        (kept.length ? kept : seats.slice(-1)).forEach(k => out[k] = players[k]);
+    });
+    return out;
+}
+
+/**
+ * The seats a Replay starts with: the players who are still at the table. A seat that sent nothing
+ * on the finished game's last question (no lie, no pick and no NEXT on its reveal, see lastSent) is a
+ * player who went home, or a seat nobody played: it is left out. Before, every seat came along, and
+ * the Replay's first question ran its clocks out for players who were gone (the empty seats rule in
+ * seats.ts only helps from question 2). Since 5 Nov, 5 Replays had more seats than phones, one 8 seats
+ * for 4 phones. The seat of the phone that pressed Replay always comes along.
+ *
+ * A player who is still there but sent nothing on the last question loses only their seat: when their
+ * phone follows the Replay and finds no seat of its own, it joins the new game (score-board-final),
+ * as a late phone does.
+ *
+ * A game that ended before lastSent was kept, or where nobody sent anything on its last question,
+ * has nothing to go by: it keeps the seats as withoutSecondSeats does.
+ */
+export function seatsForReplay(game: GameScheme, hostPid?: string): GamePlayers {
+    const players = withoutSecondSeats(game, hostPid);
+    const here = (game && game.lastSent) || {};
+    const seats = Object.keys(players).filter(k => players[k]);
+    if (!seats.some(k => here[k] === true)) {
+        return players;
+    }
+    // The phone that pressed Replay is here. An old client sends no player id: then the old host stays.
+    const presser = hostPid && players[hostPid] ? hostPid : undefined;
+    const keep = (k: string) => here[k] === true || k === presser || (!presser && !!players[k].host);
+    const out: GamePlayers = {};
+    seats.filter(keep).forEach(k => out[k] = players[k]);
+    return out;
 }
 
 function playerUids(game: GameScheme): string[] {

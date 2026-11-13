@@ -126,6 +126,30 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
             margin: 6px 0 8px;
         }
 
+        // After a taste played alone: the invitation to bring friends, around the button.
+        .taste-ask {
+            margin-bottom: 4px;
+            padding: 12px 12px 4px;
+            border: 2px solid $gold;
+            border-radius: 12px;
+            background: #fffbea;
+            text-align: center;
+
+            .taste-ask-title {
+                color: $dark;
+                font-size: 1.5rem;
+                line-height: 1.15;
+            }
+
+            .taste-ask-text {
+                margin: 6px 0 10px;
+                color: #4a4a4a;
+                font-family: $body-font;
+                font-size: 1rem;
+                line-height: 1.35;
+            }
+        }
+
         // Someone else started a rematch: the line under JOIN THE REMATCH says who.
         .rematch-line {
             color: $primary;
@@ -238,6 +262,31 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         text-transform: uppercase;
     }
 
+    .badges .badge + .badge {
+        margin: 4px 0 0 6px;
+    }
+
+    .badge.funny {
+        background: $primary;
+        color: white;
+    }
+
+    .is-rtl .badges .badge + .badge {
+        margin: 4px 6px 0 0;
+    }
+
+    .lie-laughs {
+        white-space: nowrap;
+        color: hsl(38, 90%, 38%);
+        font-weight: 700;
+
+        &::before {
+            content: " · ";
+            color: #b5b5b5;
+            font-weight: 400;
+        }
+    }
+
     .lie-fooled {
         white-space: nowrap;
         color: $primary;
@@ -250,6 +299,18 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
 
     .crew-panel {
         margin-top: 10px;
+    }
+
+    // A group's second game: the offer sits between REMATCH and SHARE RESULTS.
+    .crew-first {
+        margin: 4px 0 10px;
+    }
+
+    .crew-offer {
+        font-family: $body-font;
+        font-size: .95em;
+        text-align: center;
+        margin-bottom: 6px;
     }
 
     .crew-link {
@@ -273,7 +334,7 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
     .is-rtl {
         font-family: 'Suez One', $body-font;
 
-        .lie, .hint, .crew-form-hint {
+        .lie, .hint, .crew-form-hint, .crew-offer {
             font-family: $body-font;
         }
     }

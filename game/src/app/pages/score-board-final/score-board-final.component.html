@@ -1,3 +1,27 @@
+<ng-template #crewControls>
+    <a *ngIf="crewId" class="button is-info is-fullwidth crew-link" [routerLink]="['/c', crewId]">
+        <span class="crew-link-text" dir="auto">{{ t.crewLink(crewName) }}</span>
+    </a>
+
+    <button *ngIf="!crewId && !naming && displayPlayers.length > 1" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
+        {{ t.saveCrew }}
+    </button>
+
+    <form *ngIf="!crewId && naming" class="crew-form" (submit)="saveCrew()" novalidate>
+        <p class="crew-form-hint">{{ t.crewHint }}</p>
+        <div class="field has-addons">
+            <p class="control is-expanded">
+                <input class="input" type="text" name="crewName" [placeholder]="t.crewPlaceholder" maxlength="24"
+                    [(ngModel)]="newCrewName" appAutofocus dir="auto">
+            </p>
+            <p class="control">
+                <button class="button is-primary" type="submit" [disabled]="!newCrewName.trim()" [class.is-loading]="savingCrew">{{ t.save }}</button>
+            </p>
+        </div>
+        <div class="notification is-danger" *ngIf="crewError">{{ crewError }}</div>
+    </form>
+</ng-template>
+
 <section class="game-container score-board-final" [class.presenter]="presenter">
     <app-game-header></app-game-header>
 
@@ -23,23 +47,39 @@
             </div>
 
             <div class="actions" *ngIf="!presenter">
-                <button *ngIf="!rematchPin" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
+                <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
+                     and its lobby opens on the invite. -->
+                <div *ngIf="soloTaste && !rematchPin" class="taste-ask">
+                    <h2 class="taste-ask-title">{{ tasteWords.askTitle }}</h2>
+                    <p class="taste-ask-text">{{ tasteWords.askText }}</p>
+                    <button class="button is-primary is-medium is-fullwidth rematch taste-invite" (click)="replay()"
+                        [class.is-loading]="loading">
+                        {{ tasteWords.invite }}
+                    </button>
+                    <p class="hint">{{ tasteWords.inviteHint }}</p>
+                </div>
+                <button *ngIf="!rematchPin && !soloTaste" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
                     [class.is-loading]="loading">
                     {{ t.rematch }}
                 </button>
-                <p *ngIf="!rematchPin" class="hint">{{ t.rematchHint }}</p>
+                <p *ngIf="!rematchPin && !soloTaste" class="hint">{{ t.rematchHint }}</p>
                 <!-- Someone else pressed REMATCH: this player joins when ready, not when they pressed. -->
                 <button *ngIf="rematchPin" class="button is-primary is-medium is-fullwidth rematch join-rematch"
                     (click)="joinRematch()" [class.is-loading]="loading">
                     {{ rematchJoin }}
                 </button>
                 <p *ngIf="rematchPin" class="hint rematch-line" dir="auto">{{ rematchLine }}</p>
+                <!-- The same group's second game (or later): saving the crew comes before sharing. -->
+                <div *ngIf="crewFirst" class="crew-panel crew-first">
+                    <p *ngIf="!crewId && !naming" class="crew-offer" dir="auto">{{ t.crewOffer }}</p>
+                    <ng-container *ngTemplateOutlet="crewControls"></ng-container>
+                </div>
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
             </div>
 
             <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
 
-            <ol class="players" [class.many]="displayPlayers.length > 4">
+            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
                     <div class="row">
                         <span class="place">{{ player.place }}</span>
@@ -47,38 +87,26 @@
                         <span class="name" dir="auto">{{ player.nickname }}<small *ngIf="player.me" class="you"> ({{ t.you }})</small></span>
                         <span class="score">{{ player.score }}</span>
                     </div>
-                    <div *ngIf="player.biggest" class="badge">{{ t.biggest }}</div>
+                    <div class="badges" *ngIf="player.biggest || player.funniest">
+                        <span *ngIf="player.biggest" class="badge">{{ t.biggest }}</span>
+                        <span *ngIf="player.funniest" class="badge funny">{{ t.funniest }}</span>
+                    </div>
                     <div class="lie" *ngIf="player.best">
                         <span class="lie-label">{{ t.bestLie }}:</span>
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
                     </div>
-                    <div class="lie none" *ngIf="!player.best && wholeGame">{{ t.fooledNobody }}</div>
+                    <div class="lie funny" *ngIf="player.funniest">
+                        <span class="lie-label">{{ t.funniestLie }}:</span>
+                        <span class="lie-text" dir="auto">"{{ player.funniest.text }}"</span>
+                        <span class="lie-laughs">{{ t.laughs(player.funniest.laughs) }}</span>
+                    </div>
+                    <div class="lie none" *ngIf="!player.best && wholeGame && !taste">{{ t.fooledNobody }}</div>
                 </li>
             </ol>
 
-            <div class="crew-panel">
-                <a *ngIf="crewId" class="button is-info is-fullwidth crew-link" [routerLink]="['/c', crewId]">
-                    <span class="crew-link-text" dir="auto">{{ t.crewLink(crewName) }}</span>
-                </a>
-
-                <button *ngIf="!crewId && !naming && displayPlayers.length > 1" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
-                    {{ t.saveCrew }}
-                </button>
-
-                <form *ngIf="!crewId && naming" class="crew-form" (submit)="saveCrew()" novalidate>
-                    <p class="crew-form-hint">{{ t.crewHint }}</p>
-                    <div class="field has-addons">
-                        <p class="control is-expanded">
-                            <input class="input" type="text" name="crewName" [placeholder]="t.crewPlaceholder" maxlength="24"
-                                [(ngModel)]="newCrewName" appAutofocus dir="auto">
-                        </p>
-                        <p class="control">
-                            <button class="button is-primary" type="submit" [disabled]="!newCrewName.trim()" [class.is-loading]="savingCrew">{{ t.save }}</button>
-                        </p>
-                    </div>
-                    <div class="notification is-danger" *ngIf="crewError">{{ crewError }}</div>
-                </form>
+            <div *ngIf="!crewFirst" class="crew-panel">
+                <ng-container *ngTemplateOutlet="crewControls"></ng-container>
             </div>
         </div>
     </div>

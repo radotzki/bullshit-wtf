@@ -44,12 +44,14 @@ jobs:
     # whatever that branch's copy of this file says. The `if` above is only the second lock.
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      # Node 24 runs the Firebase CLI and both builds here. The functions still run on nodejs22 in
+      # Google Cloud (firebase.json): the CLI uploads their source and Google builds it there.
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: |
             package-lock.json

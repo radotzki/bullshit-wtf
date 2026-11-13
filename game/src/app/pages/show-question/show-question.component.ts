@@ -1,15 +1,19 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
-import { Subscription } from 'rxjs/Subscription';
+import { fadeOutAndUnload } from './../fade-out';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { GameState } from '../../game-model';
+import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
+import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-show-question',
     templateUrl: './show-question.component.html',
     styleUrls: ['./show-question.component.scss']
@@ -24,10 +28,12 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     questionSubmitted: boolean;
     enteredCorrectAnswer: boolean;
     rtl: boolean;
+    t: GameStrings = gameStrings('en');
     duration: number;
     past: number;
     timer;
     sound: Howl;
+    private phoneTickStopped = false;
     panic: boolean;
     // The round-1 lie helper (games with coach: true only).
     helper: LieHelperView = { hint: null, placeholder: null, button: null };
@@ -40,12 +46,14 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         private gameService: GameService,
         private sessionService: SessionService,
         private apiService: ApiService,
+        private soundService: SoundService,
     ) { }
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
-        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
         this.startTimer();
@@ -55,6 +63,11 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
             this.loadHelper();
         }
+    }
+
+    private useLocale(locale: string) {
+        this.rtl = locale === 'he';
+        this.t = gameStrings(locale);
     }
 
     /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */
@@ -92,6 +105,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.stopMusic();
+        this.phoneTickStopped = true;
+        this.soundService.stop('time-warning');
         if (this.timer) {
             clearInterval(this.timer);
         }
@@ -113,7 +128,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                     this.enteredCorrectAnswer = true;
                 } else {
                     reportError(err, 'answer', { pin: this.pin });
-                    this.errorMsg = 'oops, something went wrong. Please try again';
+                    this.errorMsg = this.t.oops;
                 }
             });
     }
@@ -130,7 +145,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
                     this.panic = true;
                 }
             }, 1000);
-        });
+        }).catch(err => reportError(err, 'startTimer', { pin: this.pin }));
     }
 
     playBackground() {
@@ -139,6 +154,15 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     playTimeWarning() {
         this.playMusic(['/assets/sounds/time-warning.mp3']);
+
+        // Phones tick too in a staged-reveal game with no big screen (unless muted).
+        if (!this.presenter) {
+            this.apiService.phoneSound(this.pin).then(sound => {
+                if (sound && !this.phoneTickStopped) {
+                    this.soundService.play('time-warning');
+                }
+            });
+        }
     }
 
     playMusic(src: string[]) {
@@ -150,8 +174,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     stopMusic() {
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 

@@ -1,4 +1,4 @@
 /* SystemJS module definition */
-declare var module: {
+declare const module: {
   id: string;
 };

@@ -91,9 +91,9 @@ test('the Create link is in the game\'s language and carries the tag', () => {
     assert.strictEqual(h.askCreateUrl('after-game', 'fr'), 'https://bullshit.wtf/create-game?via=after-game&lang=en');
 });
 
-test('the reminder is for the coming game night: Thursday 21:00 in Hebrew, Friday 21:00 in English', () => {
+test('the reminder is for the coming game night: Friday 21:00, in Hebrew and in English', () => {
     const wed = new Date(2026, 10, 11, 20, 0); // Wednesday 11 Nov 2026
-    assert.strictEqual(n.dateValue(h.reminderNight(wed, 'he')), '2026-11-12');
+    assert.strictEqual(n.dateValue(h.reminderNight(wed, 'he')), '2026-11-13');
     assert.strictEqual(n.dateValue(h.reminderNight(wed, 'en')), '2026-11-13');
     assert.strictEqual(n.timeValue(h.reminderNight(wed, 'he')), '21:00');
     // A game that ends on game night itself, late: the reminder is for next week, never the past.
@@ -127,7 +127,7 @@ test('the Hebrew entry is in Hebrew, and the late joiner\'s entry has its own ta
     const google = n.googleEventUrl(start, event);
     assert.ok(google.startsWith('https://calendar.google.com/calendar/render?action=TEMPLATE&text='));
     assert.ok(decodeURIComponent(google).includes('via=after-game-late-remind'));
-    assert.ok(google.includes('&dates=20261112T190000Z/20261112T203000Z'));
+    assert.ok(google.includes('&dates=20261113T190000Z/20261113T203000Z'));
 });
 
 test('a crew\'s game night entry is unchanged by the shared builder', () => {

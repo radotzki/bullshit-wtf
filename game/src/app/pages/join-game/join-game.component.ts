@@ -1,19 +1,25 @@
 import { reportError } from './../../sentry/sentry.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
-import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeJoinSource, preferredLocale } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
+import { JoinStrings, joinStrings, joinLocale } from './join-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-join-game',
     templateUrl: './join-game.component.html',
     styleUrls: ['./join-game.component.scss']
 })
 export class JoinGameComponent implements OnInit {
+    // The page's own words: the visitor's language, decided as the Create page decides it.
+    t: JoinStrings = joinStrings('en');
+    // `lang` on this page's address (the Create page sends it when its language is not the browser's).
+    private lang: string;
     pin: string;
     nickname: string;
     loading: boolean;
@@ -38,6 +44,9 @@ export class JoinGameComponent implements OnInit {
     ngOnInit() {
         // Sign in now, so a tap on Join does not wait for it.
         this.apiService.warmUpSignIn();
+        const lang = (this.activatedRoute.snapshot.queryParams || {})['lang'];
+        this.lang = lang === 'he' || lang === 'en' ? lang : undefined;
+        this.t = joinStrings(joinLocale(this.router.url, this.lang, preferredLocale()));
         this.pin = this.activatedRoute.snapshot.params['pin'];
 
         if (this.pin) {
@@ -62,11 +71,6 @@ export class JoinGameComponent implements OnInit {
         return err && (err.code === 'GAME_NOT_EXIST' || err.code === 'GAME_IS_FULL' || err.code === 'GAME_OVER');
     }
 
-    /** The language of the "start your own game" ask: the Hebrew entry point, else this browser's. */
-    get askLocale() {
-        return /^\/he(\/|$)/.test(this.router.url) ? 'he' : preferredLocale();
-    }
-
     private showGameOver(err) {
         this.loading = false;
         this.errorMsg = '';
@@ -78,6 +82,11 @@ export class JoinGameComponent implements OnInit {
         return /^\/he\//.test(this.router.url) ? '/he/join-game' : '/join-game';
     }
 
+    /** Keeps the page's language across a move to another PIN. */
+    private keepLang() {
+        return this.lang ? { lang: this.lang } : {};
+    }
+
     /** Back to an empty PIN box. */
     tryAnotherPin() {
         this.gameOver = null;
@@ -87,7 +96,7 @@ export class JoinGameComponent implements OnInit {
         this.nicknameState = false;
         this.crewId = this.crewName = undefined;
         this.crewNicknames = [];
-        this.router.navigate([this.joinPath()], { replaceUrl: true });
+        this.router.navigate([this.joinPath()], { replaceUrl: true, queryParams: this.keepLang() });
     }
 
     /** Join the rematch of the game that is over: its PIN, then a nickname. */
@@ -102,7 +111,7 @@ export class JoinGameComponent implements OnInit {
         this.nicknameState = true;
         this.crewId = this.crewName = undefined;
         this.crewNicknames = [];
-        this.router.navigate([this.joinPath(), rematch], { replaceUrl: true });
+        this.router.navigate([this.joinPath(), rematch], { replaceUrl: true, queryParams: this.keepLang() });
         this.loadCrew();
     }
 
@@ -160,7 +169,7 @@ export class JoinGameComponent implements OnInit {
                     return this.showGameOver(err);
                 }
                 this.loading = false;
-                this.errorMsg = err.message;
+                this.errorMsg = this.t.error(err && err.code, err && err.message);
                 if (!this.isExpected(err)) {
                     reportError(err, 'validateGameName', { pin: this.pin });
                 }
@@ -168,14 +177,17 @@ export class JoinGameComponent implements OnInit {
     }
 
     async join() {
+        // A second tap while the first join is still on its way would ask for a second seat.
+        if (this.loading) {
+            return;
+        }
         this.loading = true;
         this.errorMsg = '';
-        let uid;
 
         // signInAnonymously waits at most about 1.5 s and resolves to undefined if sign-in is slower or fails.
         const via = takeJoinSource(this.pin, this.activatedRoute.snapshot.queryParams['via'], this.pinInUrl);
         const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
-        uid = user ? user.uid : 0;
+        const uid: any = user ? user.uid : 0;
 
         this.apiService.join(this.pin, this.nickname, uid)
             .then(({ pid, nickname, swapped }) => {
@@ -193,7 +205,7 @@ export class JoinGameComponent implements OnInit {
                     return this.showGameOver(err);
                 }
                 this.loading = false;
-                this.errorMsg = err.message;
+                this.errorMsg = this.t.error(err && err.code, err && err.message);
                 // Wrong PIN, full game and finished game are expected; report anything else.
                 if (!this.isExpected(err)) {
                     reportError(err, 'join', { pin: this.pin });

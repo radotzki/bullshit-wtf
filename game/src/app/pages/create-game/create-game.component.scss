@@ -33,6 +33,11 @@
         margin-bottom: 20px;
     }
 
+    // The Hebrew page: Hebrew letters read better unspaced.
+    &.is-rtl .controls {
+        letter-spacing: 0;
+    }
+
     .create-game-controls-wrapper {
         max-width: 25rem;
         margin: auto;

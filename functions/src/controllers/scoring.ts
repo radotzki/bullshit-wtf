@@ -10,8 +10,9 @@
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
-import { GameScheme, Answers, AnswerSelections, GamePlayers, RevealAnswer } from '../game-model';
+import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor } from '../game-model';
 import { houseLiePoints } from './house-lie';
+import { isSamePick } from './same-pick';
 
 export const pointsForCorrectAnswer = [1000, 1500, 2000];
 export const pointsForBullshitting = [500, 750, 1000];
@@ -35,6 +36,8 @@ function ownLie(game: Partial<GameScheme>, pid: string) {
 /**
  * The picks that count, as `{ text }` and nothing else: one per player, made by a player of this
  * game, with a text, and not the player's own lie (the game never offers a player their own lie).
+ * While picks are open, a pick that names another step (made in an earlier question by a phone that
+ * was offline, see pickIsFor) does not count either.
  * Everything else under answerSelections is ignored.
  */
 export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
@@ -52,9 +55,13 @@ export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
             return;
         }
 
+        if (game.state && game.state.id === GameState.ShowAnswers && !pickIsFor(pick, game.state)) {
+            return;
+        }
+
         const lie = ownLie(game, pid);
 
-        if (lie && lie.text === pick.text) {
+        if (lie && isSamePick(lie.text, pick.text)) {
             return;
         }
 
@@ -84,7 +91,7 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
     const picksArray = Object.keys(answerSelections).map(k => ({ pid: k, text: answerSelections[k].text }));
 
     picksArray.forEach(pick => {
-        const relatedAnswers = answersArray.filter(answer => answer.text === pick.text);
+        const relatedAnswers = answersArray.filter(answer => isSamePick(answer.text, pick.text));
 
         if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
             answerSelections[pick.pid].score = pointsForCorrectAnswer[game.roundIndex];
@@ -101,7 +108,7 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
 
     // A house lie only takes back points the player has: it never pushes a score below zero.
     picksArray.forEach(pick => {
-        const relatedAnswers = answersArray.filter(answer => answer.text === pick.text);
+        const relatedAnswers = answersArray.filter(answer => isSamePick(answer.text, pick.text));
 
         if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
             const lie = ownLie({ answers }, pick.pid);
@@ -122,7 +129,7 @@ function revealRows(answers: Answers, answerSelections: AnswerSelections): Revea
     const revealAnswers: RevealAnswer[] = [];
 
     answersArray.forEach(answer => {
-        const answerSelection = answerSelectionsArray.filter(a => a.text === answer.text);
+        const answerSelection = answerSelectionsArray.filter(a => isSamePick(answer.text, a.text));
         const selectors = answerSelection.map(a => a.pid);
         const text = answer.text;
         const realAnswer = answer.realAnswer;

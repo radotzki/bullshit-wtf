@@ -11,6 +11,7 @@ functions/src/name-lists.ts
 # compiled output
 game/dist
 functions/dist
+game/.angular
 /tmp
 
 # dependencies

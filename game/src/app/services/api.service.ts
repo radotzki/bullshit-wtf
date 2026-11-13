@@ -1,27 +1,51 @@
 import { reportError } from './../sentry/sentry.module';
 import {
-    GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
+    GamePlayers, Answers, GameState, GameStateInfo, RevealAnswer, Crew, Highlights,
+    Taste, tasteOf,
+    WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
-import { Observable } from 'rxjs/Observable';
-import { Http } from '@angular/http';
+import { startReconnectNudge, pageVisible } from './reconnect-nudge';
+import { clockSync } from './clock-sync';
+import { Observable, Subscriber, Subscription, firstValueFrom } from 'rxjs';
+import { map, share } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { initializeApp } from 'firebase';
-import { Subscriber } from 'rxjs/Subscriber';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/toPromise';
-import 'rxjs/add/operator/publish';
+import firebaseCompat from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/database';
 
-const firebase = initializeApp(environment.firebaseConfig);
+const firebase = firebaseCompat.initializeApp(environment.firebaseConfig);
+
+/** The page's one reconnect nudge (see reconnect-nudge.ts), started with the first ApiService. */
+let nudging = false;
+function keepReconnecting() {
+    if (nudging) {
+        return;
+    }
+    nudging = true;
+    const db = firebase.database();
+    const connected = db.ref('.info/connected');
+    startReconnectNudge({
+        onConnected: listener => {
+            const cb = connected.on('value', snap => listener(snap.val() === true));
+            return () => connected.off('value', cb);
+        },
+        goOnline: () => db.goOnline(),
+        isVisible: pageVisible,
+        setInterval: (fn, ms) => setInterval(fn, ms),
+        clearInterval: handle => clearInterval(handle),
+    });
+}
 
 /** The longest a tap on Create, Join, Replay or Rematch waits for sign-in. */
 export const SIGN_IN_WAIT_MS = 1500;
 
 /** The one anonymous sign-in of this page load, shared by every caller. */
-let signingIn: Promise<firebase.User> = null;
+let signingIn: Promise<firebaseCompat.User> = null;
 /** Sign-in took longer than a full wait on this page load. */
 let signInSlow = false;
 
@@ -30,10 +54,10 @@ let signInSlow = false;
  * server's message and code when it sent JSON, and the HTTP status always.
  */
 function apiError(url: string, resp: any) {
-    let body: any = null;
+    let body: any;
 
     try {
-        body = resp.json();
+        body = resp && resp.error && typeof resp.error === 'object' ? resp.error : null;
     } catch (e) {
         body = null;
     }
@@ -57,17 +81,24 @@ function apiError(url: string, resp: any) {
 
 @Injectable()
 export class ApiService {
-    gamesRef: firebase.database.Reference;
-    crewsRef: firebase.database.Reference;
-    timeDiff: Promise<number>;
+    gamesRef: firebaseCompat.database.Reference;
+    crewsRef: firebaseCompat.database.Reference;
+    /** How far this phone's clock is ahead of the server's (see clock-sync.ts). */
+    private timeDiff = clockSync(
+        () => this.post<{ now: number }>('time').then(({ now }) => Date.now() - now),
+        err => reportError(err, 'time'),
+    );
+    private stagedReveal: { [pin: string]: Promise<boolean> } = {};
+    private gameLocales: { [pin: string]: string } = {};
 
     constructor(
-        private http: Http,
+        private http: HttpClient,
         private sessionService: SessionService,
         private zone: NgZone,
     ) {
         this.gamesRef = firebase.database().ref('games');
         this.crewsRef = firebase.database().ref('crews');
+        this.zone.runOutsideAngular(() => keepReconnecting());
     }
 
     gameHasPresenter(pin: string) {
@@ -98,6 +129,8 @@ export class ApiService {
             locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
             // This client starts through startGame, so the server may refuse START ticks for this game.
             serverStart: true,
+            // This client can show the staged reveal, so the server may draw this game into its 50/50 test.
+            stagedReveal: true,
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -108,12 +141,12 @@ export class ApiService {
      * so sign-in is usually done by the time a player taps. Where Google's sign-in
      * script fails to load, this takes 20 to 30 seconds and resolves to undefined.
      */
-    warmUpSignIn(): Promise<firebase.User> {
+    warmUpSignIn(): Promise<firebaseCompat.User> {
         if (!signingIn) {
             signingIn = (async () => {
                 try {
                     const auth = firebase.auth();
-                    const user = auth.currentUser || await auth.signInAnonymously();
+                    const user = auth.currentUser || (await auth.signInAnonymously()).user;
                     signInSlow = false;
                     return user;
                 } catch (error) {
@@ -127,14 +160,14 @@ export class ApiService {
     }
 
     /** The signed-in user if sign-in finishes within maxWaitMs, and how long we waited. */
-    async userWithin(maxWaitMs: number): Promise<{ user: firebase.User; waitedMs: number }> {
+    async userWithin(maxWaitMs: number): Promise<{ user: firebaseCompat.User; waitedMs: number }> {
         const started = Date.now();
         // Once sign-in has outlasted one full wait, the host's next tap (Join after Create) does not wait again.
         const wait = signInSlow ? 0 : maxWaitMs;
         let timedOut = false;
         const user = await Promise.race([
             this.warmUpSignIn(),
-            new Promise<firebase.User>(resolve => setTimeout(() => { timedOut = true; resolve(undefined); }, wait)),
+            new Promise<firebaseCompat.User>(resolve => setTimeout(() => { timedOut = true; resolve(undefined); }, wait)),
         ]);
         if (timedOut) {
             signInSlow = true;
@@ -158,7 +191,11 @@ export class ApiService {
         const hostKey = hostKeyFor(pin) || null;
         // nickname: the name the server stored (cut to 9, or a sweet name if the typed one was a slur
         // or a sex word, with swapped set). Older functions send only pid.
-        return this.post<{ pid: string; nickname?: string; swapped?: boolean }>(`join`, { pin, nickname, uid, hostKey })
+        // pid: this phone's last player id. If that seat is in this game (the phone came Back to the join
+        // page, or reloaded it), the server gives the seat back instead of adding a second one.
+        const user = this.sessionService.user;
+        const pid = user && user.pid ? user.pid : null;
+        return this.post<{ pid: string; nickname?: string; swapped?: boolean }>(`join`, { pin, nickname, uid, hostKey, pid })
             .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
     }
 
@@ -182,9 +219,50 @@ export class ApiService {
         return this.observe<GamePlayers>(this.gamesRef.child(pin).child('players'));
     }
 
+    /**
+     * Who has sent a lie or a pick in the phase the game is on, and who the room waits for, live
+     * (see waitingRow in game-model). Read from the players and the game's state, which every phone
+     * may read; the lies and the picks themselves are not read for it.
+     */
+    waitingRow(pin: string) {
+        pin = pin.toUpperCase();
+        const game = this.gamesRef.child(pin);
+
+        return new Observable<WaitingRow>((observer: Subscriber<WaitingRow>) => {
+            let players: GamePlayers;
+            let state: GameStateInfo;
+            let facts: number[];
+            const subs: Subscription[] = [];
+            const next = () => {
+                if (players && state && facts) {
+                    observer.next(waitingRow(players, state, facts[0], facts[1]));
+                }
+            };
+
+            // The question's index and the time the game was made do not change within a phase.
+            Promise.all([this.get<number>(game.child('questionIndex')), this.get<number>(game.child('timestamp'))])
+                .then(read => { facts = read; next(); }, err => observer.error(err));
+            subs.push(this.observe<GameStateInfo>(game.child('state'))
+                .subscribe(s => { state = s; next(); }, err => observer.error(err)));
+            subs.push(this.getPlayersObservable(pin)
+                .subscribe(p => { players = p; next(); }, err => observer.error(err)));
+
+            return () => subs.forEach(s => s.unsubscribe());
+        });
+    }
+
     gameState(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<number>(this.gamesRef.child(pin).child('state').child('id'));
+    }
+
+    /**
+     * The game's step with the time it began, live. Unlike gameState, a new question (or new picks)
+     * after a phone was away is news even when the step's id is the same as the one the phone last saw.
+     */
+    gamePhase(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<GameStateInfo>(this.gamesRef.child(pin).child('state'));
     }
 
     getRoundIndex(pin: string) {
@@ -212,11 +290,7 @@ export class ApiService {
     }
 
     private serverNow() {
-        if (!this.timeDiff) {
-            this.timeDiff = this.post<{ now: number }>('time').then(({ now }) => Date.now() - now);
-        }
-
-        return this.timeDiff.then(diff => Date.now() - diff);
+        return this.timeDiff().then(diff => Date.now() - diff);
     }
 
     getGameStateInfo(pin: string) {
@@ -251,9 +325,56 @@ export class ApiService {
         return this.get<number>(this.gamesRef.child(pin).child('highlightsFrom'));
     }
 
+    /**
+     * The taste this game is (five pick-only questions for a host who started alone), or null for any
+     * other game. The server says so on the game's state; a state that cannot be read is no taste.
+     */
+    getTaste(pin: string): Promise<Taste> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => tasteOf(state), () => null);
+    }
+
     getGameLocale(pin: string) {
         pin = pin.toUpperCase();
-        return this.get<string>(this.gamesRef.child(pin).child('locale'));
+        return this.get<string>(this.gamesRef.child(pin).child('locale')).then(locale => {
+            this.gameLocales[pin] = locale;
+            return locale;
+        });
+    }
+
+    /**
+     * The game's language as last read on this phone, without waiting: 'en' until it was read once.
+     * The game screens start from it, so a Hebrew game's next screen is in Hebrew from its first paint.
+     */
+    knownGameLocale(pin: string): string {
+        return this.gameLocales[String(pin || '').toUpperCase()] || 'en';
+    }
+
+    /**
+     * Whether this game plays the staged reveal (a 50/50 test set when the game is made). The server
+     * says so on the game's state (state.staged === true), on every state from the lobby on. Asked once
+     * per game. False when it cannot be read (a network error): the phone then shows today's reveal,
+     * which every game can play.
+     */
+    isStagedReveal(pin: string): Promise<boolean> {
+        pin = pin.toUpperCase();
+        if (!this.stagedReveal[pin]) {
+            this.stagedReveal[pin] = this.get<boolean>(this.gamesRef.child(pin).child('state').child('staged'))
+                .then(v => v === true, () => {
+                    delete this.stagedReveal[pin];
+                    return false;
+                });
+        }
+        return this.stagedReveal[pin];
+    }
+
+    /**
+     * Whether this phone plays the game's sounds: a staged-reveal game with no big screen. With a
+     * big screen in the room, the big screen plays them, as it always has, and phones stay quiet.
+     */
+    phoneSound(pin: string): Promise<boolean> {
+        return Promise.all([this.isStagedReveal(pin), this.gameHasPresenter(pin).catch(() => false)])
+            .then(([staged, hasPresenter]) => staged && !hasPresenter);
     }
 
     /** What the writing screen needs to decide on the round-1 lie helper. */
@@ -292,7 +413,7 @@ export class ApiService {
         if (!pid) {
             return false;
         }
-        const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answers').child(pid));
+        const userAnswer = await this.get<unknown>(this.gamesRef.child(pin).child('answers').child(pid));
         return !!userAnswer;
     }
 
@@ -315,14 +436,27 @@ export class ApiService {
         if (!pid) {
             return false;
         }
-        const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answerSelections').child(pid));
-        return !!userAnswer;
+        const [userAnswer, state] = await Promise.all([
+            this.get<unknown>(this.gamesRef.child(pin).child('answerSelections').child(pid)),
+            this.get<GameStateInfo>(this.gamesRef.child(pin).child('state')),
+        ]);
+        // A pick this phone made in an earlier question, sent late after it was offline, is not this
+        // question's pick: the phone can still pick here.
+        return !!userAnswer && pickIsFor(userAnswer, state);
     }
 
-    chooseAnswer(pin: string, answer: string) {
+    /**
+     * `step` is the picks step the phone shows (see phaseKey in game.service): the server counts the
+     * pick only in that step, so one kept while the phone was offline and sent later counts nowhere.
+     */
+    chooseAnswer(pin: string, answer: string, step?: string) {
         pin = pin.toUpperCase();
         const pid = this.sessionService.user.pid;
-        return this.gamesRef.child(pin).child('answerSelections').child(pid).set({ text: answer.toLowerCase() });
+        const pick: AnswerSelection = { text: answer.toLowerCase() };
+        if (step) {
+            pick.step = step;
+        }
+        return this.gamesRef.child(pin).child('answerSelections').child(pid).set(pick);
     }
 
     tick(pin: string, gameState: GameState) {
@@ -364,9 +498,12 @@ export class ApiService {
         return this.observe<number>(this.gamesRef.child(pin).child('hostSeen'));
     }
 
-    /** How far this phone's clock is ahead of the server's, in ms. */
-    clockAhead(): Promise<number> {
-        return this.serverNow().then(now => Date.now() - now);
+    /**
+     * How far this phone's clock is ahead of the server's, in ms, or null when the server could not
+     * be asked this time (the next call asks again). Never a guessed 0: see clock-sync.ts.
+     */
+    clockAhead(): Promise<number | null> {
+        return this.timeDiff(null);
     }
 
     /** This browser holds the host key for this game (it created or replayed it). */
@@ -388,6 +525,25 @@ export class ApiService {
         return this.get<RevealAnswer[]>(this.gamesRef.child(pin).child('revealAnswers'));
     }
 
+    /**
+     * This player laughs at a lie on the reveal (see laughCount in game-model). Through the `laugh`
+     * function, since a phone may not write the reveal rows itself. Resolves to { taken, laughs }.
+     */
+    laugh(pin: string, text: string) {
+        pin = pin.toUpperCase();
+        const pid = this.myPid();
+        if (!pid) {
+            return Promise.reject(new Error('Only a player can laugh'));
+        }
+        return this.post<{ taken: boolean; laughs?: number }>('laugh', { pin, pid, text });
+    }
+
+    /** The reveal's rows as they change: the laughs arrive on them while the reveal is on. */
+    revealAnswersLive(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<RevealAnswer[]>(this.gamesRef.child(pin).child('revealAnswers'));
+    }
+
     /** This player has seen the reveal and wants to move on. When every player has, the server ends the reveal. */
     revealDone(pin: string) {
         pin = pin.toUpperCase();
@@ -399,7 +555,7 @@ export class ApiService {
     revealDoneCount(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<{ [pid: string]: boolean }>(this.gamesRef.child(pin).child('revealDone'))
-            .map(done => Object.keys(done || {}).length);
+            .pipe(map(done => Object.keys(done || {}).length));
     }
 
     playerScore(pin: string, pid: string) {
@@ -415,7 +571,9 @@ export class ApiService {
         const pid = user && user.pid ? user.pid : null;
         // A new host key for the new game: with it, only this phone may start it.
         const hostKey = pid ? newHostKey() : null;
-        const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(`fork`, { pin, uid, pid, hostKey });
+        // stagedReveal: this client can show the staged reveal (each Replay is a new draw of that test).
+        const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true });
         // Another phone pressed Replay first: the server hands this phone that game's key (it may start it
         // too), or says it is a guest there (host: false) and keeps no key.
         if (hostKey && resp && resp.pin && resp.host !== false) {
@@ -457,7 +615,8 @@ export class ApiService {
     async crewRematch(crew: string) {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
-        const resp = await this.post<{ pin: string; created: boolean }>(`crewRematch`, { crew, uid, hostKey, serverStart: true });
+        const resp = await this.post<{ pin: string; created: boolean }>(
+            `crewRematch`, { crew, uid, hostKey, serverStart: true, stagedReveal: true });
         if (resp && resp.created) {
             rememberHostKey(resp.pin, hostKey);
         }
@@ -492,13 +651,12 @@ export class ApiService {
         return user;
     }
 
-    private post<T>(url: string, body: Object = {}): Promise<T> {
-        return this.http.post(environment.cloudfunctions + url, body)
-            .toPromise()
-            .then(resp => resp.json(), resp => Promise.reject(apiError(url, resp)));
+    private post<T>(url: string, body: object = {}): Promise<T> {
+        return firstValueFrom(this.http.post<T>(environment.cloudfunctions + url, body))
+            .catch(resp => Promise.reject(apiError(url, resp)));
     }
 
-    private observe<T>(query: firebase.database.Query, eventType = 'value') {
+    private observe<T>(query: firebaseCompat.database.Query, eventType: firebaseCompat.database.EventType = 'value') {
         return new Observable<T>((observer: Subscriber<T>) => {
             const listener = query.on(eventType, snap => {
                 this.zone.run(() => {
@@ -507,7 +665,7 @@ export class ApiService {
             }, err => observer.error(err));
 
             return () => query.off(eventType, listener);
-        }).publish().refCount();
+        }).pipe(share());
     }
 
     private get<T>(ref): Promise<T> {

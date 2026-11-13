@@ -2,6 +2,10 @@
 // Each English page has a Hebrew twin (`twin`), linked with hreflang.
 // Facts here must match the game: free, in the browser, up to 8 players,
 // 5, 7 or 9 questions, three rounds where points grow, English and Hebrew questions.
+// A page may stand in one language only: leave `twin` out. A page with a `tag` sends it on its
+// Start button as ?via=<tag>, so a game opened from the page is counted for it.
+const occasions = require('./pages-he-occasions');
+const kit = require('./pages-kit');
 
 const en = {
     lang: 'en',
@@ -13,6 +17,8 @@ const en = {
         { href: '/party-games-on-your-phone', label: 'Party games on your phone' },
         { href: '/hanukkah-party-game', label: 'Hanukkah party game' },
         { href: '/purim-party-game', label: 'Purim party game' },
+        { href: '/classroom-game', label: 'A game for the classroom' },
+        { href: '/team-building-game', label: 'A team-building game' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -28,6 +34,13 @@ const he = {
         { href: '/he/party-game-phone', label: 'משחק חברה בטלפון' },
         { href: '/he/hanukkah', label: 'משחק לחנוכה' },
         { href: '/he/purim', label: 'משחק לפורים' },
+        { href: '/he/friday-dinner', label: 'משחק לארוחת שישי' },
+        { href: '/he/family-evening', label: 'משחק לערב משפחתי' },
+        { href: '/he/friends-evening', label: 'משחק לערב חברים' },
+        { href: '/he/seder', label: 'משחק לליל הסדר' },
+        { href: '/he/made-up-answers', label: 'משחק שממציאים בו תשובות' },
+        { href: '/he/classroom', label: 'משחק לכיתה' },
+        { href: '/he/team-building', label: 'משחק לגיבוש צוות' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -41,7 +54,7 @@ const howEn = `
   <li><strong>Everyone writes a lie</strong> that sounds true enough to fool the others. If you type the real answer by accident, the game tells you to try another.</li>
   <li><strong>All the answers appear together</strong>: every player's lie, a few lies from the house, and the truth.</li>
   <li><strong>Everyone picks the answer they believe.</strong> Find the truth and you score. Every friend who picks your lie scores for you too. Fall for one of the house lies and you lose points.</li>
-  <li><strong>The truth is revealed</strong>, with its source, and you see who fooled whom.</li>
+  <li><strong>The truth is revealed</strong>, and you see who fooled whom.</li>
 </ol>
 <h2>Rounds and points</h2>
 <p>A game has 5, 7 or 9 questions over three rounds, and points grow each round, so nobody is out of it until the end.</p>
@@ -72,7 +85,7 @@ const howHe = `
   <li><strong>כל אחד ממציא תשובה</strong> שנשמעת אמיתית מספיק כדי לעבוד על האחרים. מי שכותב בטעות את התשובה הנכונה מתבקש לנסות משהו אחר.</li>
   <li><strong>כל התשובות מופיעות יחד</strong>: השקרים של כל השחקנים, כמה שקרים של הבית, והאמת.</li>
   <li><strong>כל אחד בוחר את התשובה שהוא מאמין לה.</strong> מצאתם את האמת? קיבלתם נקודות. כל חבר שבחר בשקר שלכם מביא לכם נקודות. נפלתם בשקר של הבית? מפסידים נקודות.</li>
-  <li><strong>האמת נחשפת</strong>, עם המקור, ורואים מי עבד על מי.</li>
+  <li><strong>האמת נחשפת</strong>, ורואים מי עבד על מי.</li>
 </ol>
 <h2>סבבים ונקודות</h2>
 <p>במשחק יש 5, 7 או 9 שאלות בשלושה סבבים, והנקודות גדלות בכל סבב, כך שאף אחד לא בחוץ עד הסוף.</p>
@@ -151,7 +164,7 @@ module.exports = [
   <li><strong>שאלות בעברית ובאנגלית.</strong></li>
 </ul>
 <h2>מתאים ל</h2>
-<p>ערבי משפחה וארוחות חג, ערב חברים, מסיבות וימי גיבוש בעבודה, תנועות נוער ושיעורי אנגלית.</p>
+<p><a href="/he/family-evening">ערבי משפחה</a>, <a href="/he/friday-dinner">ארוחות שישי</a> וארוחות חג, <a href="/he/friends-evening">ערב חברים</a>, מסיבות וימי גיבוש בעבודה, תנועות נוער ושיעורי אנגלית.</p>
 <p>פעם ראשונה? קראו <a href="/he/how-to-play">איך משחקים</a>, או פשוט תתחילו: החוקים מובנים אחרי שאלה אחת.</p>`,
     },
     {
@@ -215,21 +228,12 @@ module.exports = [
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {
-        path: '/he/purim', twin: '/purim-party-game', site: he,
+        path: '/he/purim', twin: '/purim-party-game', site: he, tag: 'seo-he-purim',
+        start: { href: '/create-game?lang=he', label: 'פותחים משחק לפורים' },
         image: '/assets/og-purim-he.png',
         title: 'משחק לפורים: בלוף וטריוויה בטלפון, בחינם',
         description: 'בחג התחפושות, השקרן הכי טוב מנצח. בולשיט הוא משחק חברה חינמי בטלפון שבו עובדים על החברים עם תשובות מומצאות. בלי הורדה.',
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
-        body: `
-<p>פורים הוא היום היחיד בשנה שבו להסתתר מאחורי תחפושת זה כל העניין. בולשיט הוא משחק בדיוק על זה: כל אחד ממציא שקר, מלביש אותו כאמת, ומנסה לעבוד על כולם.</p>
-<h2>איך זה עובד</h2>
-<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד כותב תשובה מומצאת ומשכנעת, ואז כולם בוחרים מה לדעתם האמת. עבדתם על חבר? קיבלתם נקודות. מצאתם את האמת? קיבלתם יותר. נפלתם בשקר של הבית? מפסידים נקודות.</p>
-<h2>מתאים למסיבות פורים</h2>
-<ul>
-  <li><strong>חינם ובדפדפן.</strong> בלי אפליקציה, כך שכל המסיבה מצטרפת עם קוד אחד.</li>
-  <li><strong>עד 8 שחקנים</strong> בכל משחק, ואפשר מסך גדול שכל השאר יצפו בו ויצעקו.</li>
-  <li><strong>תנועות נוער וכיתות</strong>: משחקים קצרים של 5, 7 או 9 שאלות, בעברית או באנגלית.</li>
-</ul>
-<p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
+        body: occasions.purim,
     },
-];
+].concat(occasions.pages(he), kit.pages(en, he));

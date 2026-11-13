@@ -1,16 +1,21 @@
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { SessionService } from './../../services/session.service';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
-import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
-import { Highlight, Highlights, finalPlaces } from './../../game-model';
+import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
+import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
 import { GameState } from './../../game-model';
+import { StorageService } from './../../services/storage.service';
+import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
+import { biggestBullshitters } from './biggest';
 
 export interface FinalPlayer {
     nickname: string;
@@ -20,9 +25,13 @@ export interface FinalPlayer {
     me: boolean;
     best?: Highlight;
     biggest?: boolean;
+    // Laughs on lies: this player wrote the game's funniest lie (the most laughed-at), with its count.
+    funniest?: { text: string; laughs: number };
 }
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-score-board-final',
     templateUrl: './score-board-final.component.html',
     styleUrls: ['./score-board-final.component.scss']
@@ -39,6 +48,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     locale = 'en';
     t: FinalStrings = finalStrings.en;
     wholeGame: boolean;
+    /** The game was a taste (five pick-only questions for a host who started alone), or null. */
+    taste: Taste = null;
+    tasteWords: TasteStrings = tasteStrings('en');
     confetti = Array.from({ length: 28 }, (_, i) => i);
     sound: Howl;
     presenter: boolean;
@@ -50,6 +62,19 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     savingCrew: boolean;
     crewError: string;
     crewSubscription: Subscription;
+    /**
+     * This phone saw the same group finish an earlier game (see repeat-group.ts): "Save this crew"
+     * moves up, above SHARE RESULTS, with a line that says why.
+     */
+    repeatGroup: boolean;
+    /**
+     * The game's crew as it stood when this screen first heard of it: true for a crew that was
+     * saved before (a game started from the crew page), false for none yet, undefined until known.
+     * Only a group with no crew yet gets its save offer moved up: an existing crew's link stays at
+     * the bottom, under SHARE RESULTS, as it was before. Someone saving the crew from the moved-up
+     * offer leaves `hadCrew` false, so the panel does not jump away from the phones looking at it.
+     */
+    hadCrew: boolean;
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
@@ -71,6 +96,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         private apiService: ApiService,
         private sessionService: SessionService,
         private crewService: CrewService,
+        private storageService: StorageService,
+        private router: Router,
     ) { }
 
     ngOnInit() {
@@ -84,10 +111,13 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.apiService.getHighlights(this.pin).catch(() => null),
             this.apiService.getHighlightsFrom(this.pin).catch(() => null),
             this.apiService.getGameLocale(this.pin).catch(() => 'en'),
-        ]).then(([resp, highlights, from, locale]) => {
+            this.apiService.getTaste(this.pin),
+        ]).then(([resp, highlights, from, locale, taste]: any[]) => {
             // The words are in the game's language from the first paint.
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];
+            this.tasteWords = tasteStrings(this.locale);
+            this.taste = taste || null;
             // "Nobody fell for their lies" only when every round was counted.
             this.wholeGame = from === 0;
             resp = resp || {};
@@ -100,6 +130,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }
             this.setPlayers(resp, highlights || {}, user ? user.pid : undefined);
             this.setHostAsk(resp, user);
+            this.setRepeatGroup(resp);
         });
 
         this.crewSubscription = this.apiService.getGameCrewObservable(this.pin).subscribe(id => this.onCrew(id));
@@ -160,10 +191,43 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.leaving = true;
         this.loading = true;
         if (!this.presenter) {
-            await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
+            const user = await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
+            if (!(await this.takeSeat(fork, user))) {
+                return;
+            }
         }
         this.gameService.unregister();
         this.gameService.register(fork);
+    }
+
+    /**
+     * A Replay starts with the players still at the table: a seat that sent nothing on the last
+     * question is left out (fork.ts seatsForReplay). A phone whose seat was left out joins the new
+     * game here, under its name, as a late phone does. Resolves to whether this phone has a seat
+     * there; when it could not join (the Replay is full or over), it goes to the join page instead.
+     */
+    private async takeSeat(fork: string, user: { uid: string } | undefined): Promise<boolean> {
+        const me = this.sessionService.user;
+        const players = await this.apiService.getPlayers(fork).catch(() => undefined);
+        // Its seat is there, or the players could not be read: go as before.
+        if (!players || !me || (me.pid && players[me.pid])) {
+            return true;
+        }
+        const uid: any = user ? user.uid : 0;
+        try {
+            const joined = await this.apiService.join(fork, this.myNickname || me.nickname, uid);
+            this.sessionService.user = { nickname: joined.nickname.toLowerCase(), pid: joined.pid, uid };
+            this.sessionService.nameSwap = joined.swapped ? { pin: fork.toUpperCase(), nickname: joined.nickname } : null;
+            return true;
+        } catch (err) {
+            if (!(err && (err.code === 'GAME_IS_FULL' || err.code === 'GAME_OVER'))) {
+                reportError(err, 'replayJoin', { pin: fork });
+            }
+            this.leaving = false;
+            this.loading = false;
+            this.router.navigate([this.locale === 'he' ? '/he/join-game' : '/join-game', fork]);
+            return false;
+        }
     }
 
     /** JOIN THE REMATCH: this player is done here. */
@@ -198,8 +262,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         }
 
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 
@@ -217,6 +280,28 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Compares this game with the ones this phone saw end, then adds it to them. */
+    private setRepeatGroup(resp) {
+        const names = Object.keys(resp || {}).map(pid => resp[pid] && resp[pid].nickname).filter(n => !!n);
+        if (names.length < 2 || this.taste) {
+            return;
+        }
+        try {
+            const now = Date.now();
+            const games = parseGames(this.storageService.getItem(GAMES_KEY));
+            this.repeatGroup = !this.presenter && isRepeatGroup(games, this.pin, names, now);
+            this.storageService.setItem(GAMES_KEY, JSON.stringify(addGame(games, this.pin, names, now)));
+        } catch (e) { }
+    }
+
+    /**
+     * The save-crew offer sits above SHARE RESULTS on a group's second game when the group has no
+     * crew yet, at the bottom otherwise (an existing crew's link included).
+     */
+    get crewFirst() {
+        return !!this.repeatGroup && this.hadCrew === false && !this.presenter && !this.soloTaste;
+    }
+
     private setPlayers(resp, highlights: Highlights, myPid: string) {
         const players = Object.keys(resp)
             .map((pid, i) => ({
@@ -228,8 +313,10 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }))
             .sort((a, b) => b.score - a.score);
         const places = finalPlaces(players.map(p => p.score));
-        const mostFooled = Math.max(0, ...players.map(p => p.best ? p.best.total || 0 : 0));
-        const biggest = players.filter(p => p.best && (p.best.total || 0) === mostFooled);
+        const biggest = biggestBullshitters(players);
+        // The funniest lie: its writers (two, when they wrote the same lie; more, when lies tie on laughs).
+        const funny: { [pid: string]: { text: string; laughs: number } } = {};
+        funniestLies(highlights).forEach(lie => lie.pids.forEach(pid => funny[pid] = { text: lie.text, laughs: lie.laughs }));
 
         this.displayPlayers = players.map((p, i) => ({
             nickname: p.nickname,
@@ -238,8 +325,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             place: places[i],
             me: !!myPid && p.pid === myPid,
             best: p.best,
-            // One clear "biggest bullshitter": nobody gets it on a tie.
-            biggest: mostFooled > 0 && biggest.length === 1 && biggest[0].pid === p.pid,
+            // Every player tied for most fooled is a biggest bullshitter; nobody when no lie fooled anyone.
+            biggest: biggest.indexOf(p.pid) >= 0,
+            funniest: funny[p.pid],
         }));
         this.winners = this.displayPlayers.filter(p => p.place === 1);
         this.mine = this.displayPlayers.find(p => p.me);
@@ -249,7 +337,18 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         return this.locale === 'he';
     }
 
+    /**
+     * A player who played the taste alone: the screen counts the truths they found and asks them to
+     * bring friends, in place of a winner, REMATCH and a list of one.
+     */
+    get soloTaste(): boolean {
+        return !!this.taste && !this.presenter && !!this.displayPlayers && this.displayPlayers.length === 1;
+    }
+
     get headline() {
+        if (this.soloTaste) {
+            return this.tasteWords.found(this.taste.found, TASTE_QUESTIONS);
+        }
         if (this.winners.length === 1) {
             return this.t.wins(this.winners[0].nickname);
         }
@@ -290,6 +389,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     }
 
     private async onCrew(id: string) {
+        if (this.hadCrew === undefined) {
+            this.hadCrew = !!id;
+        }
         this.crewId = id || undefined;
         if (!id) {
             return;
@@ -314,6 +416,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.crewError = '';
         try {
             const crew = await this.apiService.createCrew(this.pin, name);
+            this.apiService.logShare('crew-save', this.crewFirst ? 'repeat-offer' : 'bottom', { crew: crew.id, locale: this.locale });
             // The game's crew field updates too; this just makes it show at once.
             await this.onCrew(crew.id);
         } catch (err) {

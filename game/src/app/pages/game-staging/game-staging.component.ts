@@ -1,17 +1,21 @@
+import { map } from 'rxjs/operators';
 import { reportError } from './../../sentry/sentry.module';
-import { GamePlayers } from './../../game-model';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Observable } from 'rxjs/Observable';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { swapToast } from './../../name-flag';
-import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend } from './lobby-host';
+import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
+    hostAwayMs, shouldAskClock } from './lobby-host';
+import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-game-staging',
     templateUrl: './game-staging.component.html',
     styleUrls: ['./game-staging.component.scss']
@@ -33,6 +37,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private myUid: string = null;
     private myPid: string = null;
     locale = 'en';
+    t: GameStrings = gameStrings('en');
     packBanner: string = null;
     /** Only on the phone whose nickname the server swapped, once: why it has a sweet name now. */
     nameToast: string = null;
@@ -43,6 +48,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     /** Server time the host's lobby page last reported in, and how far this clock is ahead of the server's. */
     private hostSeen: number = null;
     private clockAhead: number = null;
+    private askingClock = false;
+    /** The lobby was left: a clock answer that arrives later changes nothing. */
+    private left = false;
+    private clockAskedAt: number = null;
     private hostSeenSubscriber: Subscription;
     private pingTimer: any;
     private lobbyTimer: any;
@@ -52,7 +61,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         if (!document.hidden) {
             this.reportIn();
         }
-    }
+    };
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -64,10 +73,11 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
+        this.t = gameStrings(this.apiService.knownGameLocale(this.pin));
         this.gameService.register(this.pin);
         this.playMusic();
         this.playersSubscriber = this.apiService.getPlayersObservable(this.pin)
-            .map(players => Object.keys(players || {}).map(k => Object.assign({}, players[k], { pid: k })))
+            .pipe(map(players => Object.keys(players || {}).map(k => Object.assign({}, players[k], { pid: k }))))
             .subscribe(players => {
                 this.players = players;
                 this.updateLobby();
@@ -88,16 +98,36 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             document.addEventListener('visibilitychange', this.onVisible);
             return;
         }
-        this.apiService.clockAhead().then(ahead => {
-            this.clockAhead = ahead;
-            this.updateLobby();
-        }).catch(() => null);
+        this.askClock();
         // Unreadable until the database rules that expose `hostSeen` are deployed: then nobody is gone.
         this.hostSeenSubscriber = this.apiService.getHostSeenObservable(this.pin).subscribe(seen => {
             this.hostSeen = typeof seen === 'number' ? seen : null;
             this.updateLobby();
         }, () => null);
-        this.lobbyTimer = setInterval(() => this.updateLobby(), 5000);
+        this.lobbyTimer = setInterval(() => {
+            this.askClock();
+            this.updateLobby();
+        }, 5000);
+    }
+
+    /** Learn how far this phone's clock is from the server's. Unknown (null) after a failed call: asked again later. */
+    private askClock() {
+        if (!shouldAskClock(this.clockAhead, this.askingClock, this.clockAskedAt, Date.now())) {
+            return;
+        }
+        this.askingClock = true;
+        this.clockAskedAt = Date.now();
+        // clockAhead() always settles: a hung request counts as failed after CLOCK_TIMEOUT_MS (clock-sync.ts).
+        this.apiService.clockAhead().then(ahead => {
+            this.askingClock = false;
+            if (this.left) {
+                return;
+            }
+            this.clockAhead = typeof ahead === 'number' ? ahead : null;
+            this.updateLobby();
+        }).catch(() => {
+            this.askingClock = false;
+        });
     }
 
     private reportIn() {
@@ -125,6 +155,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.hasHost = hasHost === true;
             this.myPid = !this.presenter && user && user.pid ? user.pid : null;
             this.locale = locale === 'he' ? 'he' : 'en';
+            this.t = gameStrings(this.locale);
             this.packBanner = packBanner(pack, this.locale);
             this.showNameToast();
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
@@ -168,8 +199,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             myPid: this.myPid,
             players: this.players || [],
             waitedMs: Date.now() - this.arrivedAt,
-            hostAwayMs: this.hostSeen !== null && this.clockAhead !== null
-                ? Date.now() - this.clockAhead - this.hostSeen : null,
+            hostAwayMs: hostAwayMs(Date.now(), this.clockAhead, this.hostSeen),
         });
 
         if (view.alone) {
@@ -181,6 +211,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.left = true;
         this.playersSubscriber.unsubscribe();
         clearTimeout(this.graceTimer);
         clearTimeout(this.toastTimer);
@@ -192,12 +223,14 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         }
 
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 
-    /** "Start alone anyway": counted, so we can see how many lone hosts insist, then a normal start. */
+    /**
+     * "Try 5 quick questions alone": counted as before (invite, solo-start), then a normal start.
+     * The server makes a game that starts with one player a taste (see TASTE_QUESTIONS in game-model).
+     */
     startAlone() {
         if (this.loading) {
             return;
@@ -215,11 +248,11 @@ export class GameStagingComponent implements OnInit, OnDestroy {
                 this.loading = false;
                 if (err && err.code === 'NOT_HOST') {
                     // Only the host's phone may start this game; the server said this is not it.
-                    this.errorMsg = this.locale === 'he' ? 'רק המארח יכול להתחיל את המשחק' : 'Only the host can start this game';
+                    this.errorMsg = this.t.onlyHostStarts;
                     return;
                 }
                 reportError(err, 'startGame', { pin: this.pin });
-                this.errorMsg = 'oops, something went wrong. Please try again';
+                this.errorMsg = this.t.oops;
             });
     }
 

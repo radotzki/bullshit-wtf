@@ -34,17 +34,73 @@ test('late on Friday it moves to next week', () => {
     assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 7, 12, 0))), '2026-11-13');
 });
 
-test('Hebrew crews default to Thursday at 21:00, English crews keep Friday', () => {
+test('Hebrew crews default to Friday at 21:00 too, like English crews', () => {
     const wed = new Date(2026, 10, 4, 12, 0); // Wednesday 4 Nov 2026
-    assert.strictEqual(n.dateValue(n.defaultNight(wed, 'he')), '2026-11-05');
+    assert.strictEqual(n.dateValue(n.defaultNight(wed, 'he')), '2026-11-06');
     assert.strictEqual(n.timeValue(n.defaultNight(wed, 'he')), '21:00');
-    assert.strictEqual(n.defaultNight(wed, 'he').getDay(), 4);
+    assert.strictEqual(n.defaultNight(wed, 'he').getDay(), 5);
     assert.strictEqual(n.dateValue(n.defaultNight(wed, 'en')), '2026-11-06');
     assert.strictEqual(n.dateValue(n.defaultNight(wed)), '2026-11-06');
-    // Late on Thursday it moves to next Thursday; on Friday it is six days away.
-    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 5, 20, 0), 'he')), '2026-11-12');
-    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 5, 18, 0), 'he')), '2026-11-05');
-    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 6, 12, 0), 'he')), '2026-11-12');
+    // Thursday evening points to the next day; late on Friday it moves to next Friday.
+    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 5, 20, 0), 'he')), '2026-11-06');
+    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 6, 12, 0), 'he')), '2026-11-06');
+    assert.strictEqual(n.dateValue(n.defaultNight(new Date(2026, 10, 6, 20, 0), 'he')), '2026-11-13');
+});
+
+test('the weekly entry repeats on the night\'s weekday at local time, with the crew link, in English', () => {
+    const d = n.parseNight('2026-11-13', '21:00');
+    const ics = n.buildWeeklyCrewIcs(d, info, 'g4d48z', new Date(Date.UTC(2026, 10, 12, 18, 0)));
+    const unfolded = ics.replace(/\r\n /g, '');
+    assert.ok(unfolded.includes('RRULE:FREQ=WEEKLY;BYDAY=FR\r\n'));
+    // Floating times: 21:00 wherever the phone is, in winter and in summer.
+    assert.ok(unfolded.includes('DTSTART:20261113T210000\r\n'));
+    assert.ok(unfolded.includes('DTEND:20261113T223000\r\n'));
+    assert.ok(unfolded.includes('UID:g4d48z-weekly@bullshit.wtf\r\n'));
+    assert.ok(unfolded.includes('URL:https://bullshit.wtf/c/g4d48z?via=crew\r\n'));
+    assert.ok(unfolded.includes('DESCRIPTION:Bullshit night for Office Friday\\, every Friday at 21:00. Scores and rematch here:\\nhttps://bullshit.wtf/c/g4d48z?via=crew\r\n'));
+    assert.ok(unfolded.includes('BEGIN:VALARM'));
+    ics.split('\r\n').forEach(line => assert.ok(Buffer.byteLength(line, 'utf8') <= 75, line));
+    assert.strictEqual(n.weeklyFileName('Office Friday'), 'bullshit-office-friday-weekly.ics');
+    assert.strictEqual(n.weekdayName(d, 'en'), 'Friday');
+});
+
+test('the weekly entry in Hebrew, and on another weekday when the crew picks one', () => {
+    const d = n.parseNight('2026-11-13', '21:00');
+    assert.strictEqual(n.weeklyText(d, he), 'ערב בולשיט של המשפחה, כל יום שישי ב-21:00. הטבלה והמשחק החוזר כאן:');
+    assert.strictEqual(n.weeklyShareText(d, he), 'ערב בולשיט של המשפחה, כל יום שישי ב-21:00. דנה מוביל/ה 4–3. הטבלה והמשחק החוזר כאן:');
+    const ics = n.buildWeeklyCrewIcs(d, he, 'abc123', new Date());
+    const unfolded = ics.replace(/\r\n /g, '');
+    assert.ok(unfolded.includes('SUMMARY:ערב בולשיט: המשפחה\r\n'));
+    assert.ok(unfolded.includes('https://bullshit.wtf/he/c/abc123?via=crew'));
+    ics.split('\r\n').forEach(line => assert.ok(Buffer.byteLength(line, 'utf8') <= 75, line));
+    const sat = n.parseNight('2026-11-14', '20:30');
+    assert.strictEqual(n.weeklyRule(sat), 'RRULE:FREQ=WEEKLY;BYDAY=SA');
+    assert.ok(n.weeklyText(sat, info).includes('every Saturday at 20:30'));
+});
+
+test('the weekly entry holds no dated score, in the file, the Google link or either language', () => {
+    const d = n.parseNight('2026-11-13', '21:00');
+    [info, he].forEach(i => {
+        const unfolded = n.buildWeeklyCrewIcs(d, i, 'g4d48z', new Date()).replace(/\r\n /g, '');
+        assert.ok(!unfolded.includes(i.leader), unfolded);
+        assert.ok(!decodeURIComponent(n.googleWeeklyUrl(d, i, 'Asia/Jerusalem')).includes(i.leader));
+        assert.ok(!n.weeklyText(d, i).includes(i.leader));
+        assert.ok(n.weeklyShareText(d, i).includes(i.leader));
+    });
+    assert.strictEqual(n.weeklyShareText(d, info),
+        'Bullshit night for Office Friday, every Friday at 21:00. Alice leads 4 to 3. Scores and rematch here:');
+    assert.strictEqual(n.weeklyShareText(d, { ...info, leader: '' }), n.weeklyText(d, info));
+});
+
+test('the weekly Google Calendar link repeats every week in the phone\'s time zone', () => {
+    const d = n.parseNight('2026-11-13', '21:00');
+    const url = n.googleWeeklyUrl(d, info, 'Asia/Jerusalem');
+    assert.ok(url.startsWith('https://calendar.google.com/calendar/render?action=TEMPLATE'));
+    assert.ok(url.includes('&dates=20261113T210000/20261113T223000'));
+    assert.ok(url.includes('&ctz=Asia%2FJerusalem'));
+    assert.ok(url.includes('&recur=' + encodeURIComponent('RRULE:FREQ=WEEKLY;BYDAY=FR')));
+    assert.ok(decodeURIComponent(url).includes('https://bullshit.wtf/c/g4d48z?via=crew'));
+    assert.ok(!n.googleWeeklyUrl(d, info).includes('ctz='));
 });
 
 test('inputs round-trip and bad input is refused', () => {

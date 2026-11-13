@@ -12,17 +12,17 @@ $link: $primary;
 
 $family-primary: "Luckiest Guy", "Suez One", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 
-@import "~bulma/sass/utilities/_all";
-@import "~bulma/sass/base/_all";
-@import "~bulma/sass/grid/_all";
-@import "~bulma/sass/form/_all";
-@import "~bulma/sass/elements/button.sass";
-@import "~bulma/sass/elements/progress.sass";
-@import "~bulma/sass/elements/notification.sass";
-@import "~bulma/sass/elements/icon.sass";
-@import "~bulma/sass/elements/box.sass";
-@import "~bulma/sass/elements/other.sass";
-@import "~bulma/sass/components/modal.sass";
+@import "bulma/sass/utilities/_all";
+@import "bulma/sass/base/_all";
+@import "bulma/sass/grid/_all";
+@import "bulma/sass/form/_all";
+@import "bulma/sass/elements/button.sass";
+@import "bulma/sass/elements/progress.sass";
+@import "bulma/sass/elements/notification.sass";
+@import "bulma/sass/elements/icon.sass";
+@import "bulma/sass/elements/box.sass";
+@import "bulma/sass/elements/other.sass";
+@import "bulma/sass/components/modal.sass";
 
 @import "styles/bulma-override";
 @import "styles/rtl";

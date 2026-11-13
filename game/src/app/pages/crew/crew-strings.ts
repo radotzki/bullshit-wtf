@@ -31,6 +31,11 @@ export interface CrewStrings {
     calendar: string;
     google: string;
     nightSent: string;
+    /** The weekly entry's button: "EVERY FRIDAY IN MY CALENDAR". */
+    weekly: (day: string) => string;
+    weeklyHint: string;
+    weeklyGoogle: string;
+    weeklySent: (day: string) => string;
 }
 
 const en: CrewStrings = {
@@ -59,6 +64,10 @@ const en: CrewStrings = {
     calendar: 'CALENDAR INVITE',
     google: 'or add it to Google Calendar',
     nightSent: 'Game night:',
+    weekly: day => `EVERY ${day.toUpperCase()} IN MY CALENDAR`,
+    weeklyHint: 'Same night every week, with the crew link in it. Skip a week whenever you like.',
+    weeklyGoogle: 'or every week in Google Calendar',
+    weeklySent: day => `In your calendar: every ${day}.`,
 };
 
 const he: CrewStrings = {
@@ -87,6 +96,10 @@ const he: CrewStrings = {
     calendar: 'הזמנה ליומן',
     google: 'או הוסיפו ליומן Google',
     nightSent: 'ערב המשחק:',
+    weekly: day => `כל ${day} ביומן שלי`,
+    weeklyHint: 'אותו ערב בכל שבוע, עם הקישור לחבורה. אפשר לדלג על שבוע מתי שרוצים.',
+    weeklyGoogle: 'או כל שבוע ביומן Google',
+    weeklySent: day => `ביומן: כל ${day}.`,
 };
 
 export function crewStrings(locale: string): CrewStrings {

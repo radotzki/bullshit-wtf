@@ -1,4 +1,5 @@
-<section class="game-container revael-the-truth" [class.is-presenter]="presenter">
+<section class="game-container revael-the-truth" [class.is-presenter]="presenter" [class.is-staged]="staged"
+    [class.many-rows]="manyRows" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
 
     <div class="game-main">
@@ -6,39 +7,43 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="rows" class="reveal">
+        <!-- Today's reveal. On a big screen earlier rows fold down to one line, so the truth stays in view. -->
+        <div *ngIf="rows && !staged" class="reveal">
             <p class="question" [class.rtl]="rtl" *ngIf="question"> {{question | bsQuestion}} </p>
 
             <div class="rows">
                 <ng-container *ngFor="let row of rows; let i = index">
-                    <div *ngIf="i < visibleRows" class="row box" [class.truth]="row.realAnswer && i < writersShown"
+                    <div *ngIf="i < visibleRows" class="row box" [class.past]="presenter && i < visibleRows - 1" [class.truth]="row.realAnswer && i < writersShown"
                         [class.house]="row.houseLie && i < writersShown">
-                        <p class="text" [class.rtl]="rtl"> {{ row.text | uppercase }} </p>
+                        <div class="text-line">
+                            <p class="text" [class.rtl]="rtl"> {{ row.text | uppercase }} </p>
+                            <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row, counted: i < writersShown }"></ng-container>
+                        </div>
 
                         <div class="who">
                             <div class="pickers">
-                                <span class="label" *ngIf="row.pickers.length">picked by</span>
-                                <span class="label" *ngIf="!row.pickers.length">nobody found it</span>
+                                <span class="label" *ngIf="row.pickers.length">{{t.pickedBy}}</span>
+                                <span class="label" *ngIf="!row.pickers.length">{{t.nobodyFoundIt}}</span>
                                 <span class="player" *ngFor="let p of row.pickers">
-                                    <img [src]="'/assets/' + p.picture"> {{ p.nickname }}
+                                    <img [src]="'/assets/' + p.picture"> <span class="name">{{ p.nickname }}</span>
                                 </span>
                             </div>
 
                             <div class="writer" [class.shown]="i < writersShown">
                                 <ng-container *ngIf="row.realAnswer">
-                                    <span class="tag-truth">THE TRUTH</span>
-                                    <span class="points" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                    <span class="tag-truth">{{t.theTruth}}</span>
+                                    <span class="points" dir="ltr" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                                 <ng-container *ngIf="row.houseLie">
-                                    <span class="tag-house">Home Grown Bullshit</span>
-                                    <span class="points negative" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                    <span class="tag-house">{{t.houseLie}}</span>
+                                    <span class="points negative" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                                 <ng-container *ngIf="!row.realAnswer && !row.houseLie">
-                                    <span class="label">bullshit by</span>
+                                    <span class="label">{{t.bullshitBy}}</span>
                                     <span class="player" *ngFor="let c of row.creators">
                                         <img [src]="'/assets/' + c.picture"> {{ c.nickname }}
                                     </span>
-                                    <span class="points" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                    <span class="points" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                             </div>
                         </div>
@@ -47,24 +52,145 @@
             </div>
 
             <div *ngIf="allShown" class="after">
-                <p class="unpicked" *ngIf="unpicked.length">
-                    Nobody fell for:
-                    <span *ngFor="let u of unpicked; let last = last">
-                        <span [class.rtl]="rtl">{{ u.text | uppercase }}</span>
-                        <span *ngIf="u.creators.length">({{ u.creators[0].nickname }})</span><span *ngIf="!last">, </span>
-                    </span>
-                </p>
-
                 <div class="my-result" *ngIf="myResult.length">
                     <p *ngFor="let line of myResult"> {{ line }} </p>
                 </div>
 
-                <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">NEXT</button>
+                <ng-container [ngTemplateOutlet]="unpickedRows"></ng-container>
+
+                <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">{{t.next}}</button>
                 <p *ngIf="!presenter && tapped && waitingFor" class="waiting">
-                    Waiting for {{ waitingFor }} {{ waitingFor === 1 ? 'friend' : 'friends' }}
+                    {{ t.waitingFor(waitingFor) }}
                 </p>
             </div>
         </div>
+
+        <!--
+            The staged reveal (games with bigReveal: true). Each row arrives in three beats: the answer,
+            who picked it, who wrote it. Earlier rows fold down to one line. The truth comes last, after
+            "And the truth is…". Then: your own result, and the scores with each player's change.
+        -->
+        <div *ngIf="rows && staged" class="reveal stage" [class.rtl]="rtl" [class.done]="allShown">
+            <p class="question" *ngIf="question"> {{question | bsQuestion}} </p>
+
+            <div class="stage-body">
+                <div class="rows">
+                    <ng-container *ngFor="let row of rows; let i = index">
+                        <div *ngIf="i < visibleRows" class="srow box" [class.past]="i < visibleRows - 1 || truthIntro"
+                            [class.truth]="row.realAnswer" [class.house]="row.houseLie && i < writersShown">
+                            <p class="truth-label" *ngIf="row.realAnswer"> {{ t.theTruth }} </p>
+                            <div class="text-line">
+                                <p class="text"> {{ row.text | uppercase }} </p>
+                                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row, counted: i < writersShown }"></ng-container>
+                            </div>
+
+                            <div class="who">
+                                <div class="pickers" [class.shown]="i < pickersShown">
+                                    <span class="label" *ngIf="row.pickers.length">{{ row.realAnswer ? t.foundBy : t.pickedBy }}</span>
+                                    <span class="label" *ngIf="!row.pickers.length">{{ t.nobodyFoundIt }}</span>
+                                    <span class="player" *ngFor="let p of row.pickers">
+                                        <img [src]="'/assets/' + p.picture"> <span class="name">{{ p.nickname }}</span>
+                                    </span>
+                                </div>
+
+                                <div class="writer" [class.shown]="i < writersShown">
+                                    <ng-container *ngIf="row.realAnswer">
+                                        <span class="points" dir="ltr" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                    </ng-container>
+                                    <ng-container *ngIf="row.houseLie">
+                                        <span class="tag-house">{{ t.houseLie }}</span>
+                                        <span class="points negative" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                    </ng-container>
+                                    <ng-container *ngIf="!row.realAnswer && !row.houseLie">
+                                        <span class="label">{{ t.bullshitBy }}</span>
+                                        <span class="player" *ngFor="let c of row.creators">
+                                            <img [src]="'/assets/' + c.picture"> <span class="name">{{ c.nickname }}</span>
+                                        </span>
+                                        <span class="points" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
+                                    </ng-container>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <p *ngIf="truthIntro" class="truth-intro"> {{ t.truthIs }} </p>
+                </div>
+
+                <div *ngIf="allShown" class="after">
+                    <div class="my-result" *ngIf="myResult.length">
+                        <p *ngFor="let line of myResult"> {{ line }} </p>
+                    </div>
+
+                    <ng-container [ngTemplateOutlet]="unpickedRows"></ng-container>
+
+                    <!-- The scoreboard, folded in: old order first, then each player moves to their new place. -->
+                    <div class="scores" *ngIf="standings.length" [style.height.em]="standings.length * 2.7">
+                        <div class="score-row" *ngFor="let p of standings; trackBy: trackStanding" [class.me]="p.pid === me"
+                            [class.climbed]="scoresMoved && p.rowAfter < p.rowBefore"
+                            [style.transform]="'translateY(' + ((scoresMoved ? p.rowAfter : p.rowBefore) * 2.7) + 'em)'">
+                            <span class="place">{{ scoresMoved ? p.placeAfter : p.placeBefore }}</span>
+                            <img class="picture" [src]="'/assets/avatar' + p.seat + '.png'">
+                            <span class="name">{{ p.nickname }}</span>
+                            <span class="change" *ngIf="p.change" [class.negative]="p.change < 0" dir="ltr">{{ p.change | bsPoints }}</span>
+                            <span class="total" dir="ltr">{{ scoresMoved ? p.after : p.before }}</span>
+                        </div>
+                    </div>
+
+                    <button *ngIf="!presenter && !tapped" class="button is-primary is-fullwidth next" (click)="next()">{{ t.next }}</button>
+                    <p *ngIf="!presenter && tapped && waitingFor" class="waiting"> {{ t.waitingFor(waitingFor) }} </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--
+        Laughs on lies. On a player's phone, every lie they did not write, a house lie too, has a laugh button
+        with its count; on the writer's phone and the big screen the count alone shows, once somebody laughed.
+        A house lie looks like any other lie here, so the button never tells before the writer beat. The count
+        shows only from the row's writer beat (`counted`): a house lie can take a laugh from every player and a
+        player's lie from all but its writer, so a count alone could tell (in a 3-player game, 2 laughs on a lie
+        you didn't laugh at). Before the beat a tap still counts and the button looks pressed, with no number.
+    -->
+    <ng-template #laughButton let-row="row" let-counted="counted">
+        <button *ngIf="row.laughable" type="button" class="laugh" [class.laughed]="row.laughed" (click)="laugh(row)"
+            [attr.aria-label]="t.laughAt(row.text)" [attr.aria-pressed]="row.laughed">
+            <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
+            <span class="laugh-count" *ngIf="counted && row.laughs" dir="ltr">{{ row.laughs }}</span>
+        </button>
+        <span *ngIf="!row.laughable && row.lie && counted && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
+            <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
+            <span class="laugh-count" dir="ltr">{{ row.laughs }}</span>
+        </span>
+    </ng-template>
+
+    <ng-template #laughFace>
+        <svg class="laugh-face" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="10.5" class="face"/>
+            <path d="M6.2 9.6c.8-1.3 2.4-1.3 3.2 0M14.6 9.6c.8-1.3 2.4-1.3 3.2 0" class="eyes"/>
+            <path d="M6.5 13h11c0 3.3-2.5 5.6-5.5 5.6S6.5 16.3 6.5 13z" class="mouth"/>
+        </svg>
+    </ng-template>
+
+    <!-- Players' lies nobody picked: each in a row of its own (the lie, who wrote it, its laughs), so it can be laughed at. -->
+    <ng-template #unpickedRows>
+        <div class="unpicked" *ngIf="unpicked.length">
+            <p class="unpicked-title">{{ t.nobodyFellFor }}</p>
+            <div class="urow box" *ngFor="let u of unpicked; trackBy: trackRow">
+                <p class="text"> {{ u.text | uppercase }} </p>
+                <span class="by" [attr.aria-label]="t.bullshitBy + ' ' + u.creatorNames.join(', ')">
+                    <span class="player" *ngFor="let c of u.creators">
+                        <img [src]="'/assets/' + c.picture" alt=""> <span class="name">{{ c.nickname }}</span>
+                    </span>
+                </span>
+                <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: u, counted: true }"></ng-container>
+            </div>
+        </div>
+    </ng-template>
+
+    <!-- Across the whole phone of the player whose lie just fooled somebody. Taps pass through it. -->
+    <div *ngIf="staged && flashOn && flash" class="flash" [class.rtl]="rtl">
+        <p class="flash-text"> {{ flash }} </p>
+        <p class="flash-points" *ngIf="flashPoints" dir="ltr"> {{ flashPoints | bsPoints }} </p>
     </div>
 
     <app-game-footer *ngIf="!presenter"></app-game-footer>
