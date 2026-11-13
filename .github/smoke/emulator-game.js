@@ -425,4 +425,4 @@ if (require.main === module) {
 }
 
 // For the other emulator runs (emulator-rejoin.js).
-module.exports = { startEmulators, stopEmulators, db, seed, newPhone, visible, log, sleep, HOST, PROJECT, DB, ROOT, DIST };
+module.exports = { startEmulators, stopEmulators, db, seed, newPhone, dropConnection, restoreConnection, visible, log, sleep, HOST, PROJECT, DB, ROOT, DIST };

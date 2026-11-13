@@ -1159,9 +1159,8 @@ joined from the new site. Nothing for the owner to run.
   players de-duplicated by nickname, browser string and game group per day for that.
 - A name swapped by the nickname filter is stored as the swap name, so a guest who typed a flagged
   name gets a new seat.
-- When a namesake does take a seat this way, the first player's page is not told: both phones then
-  play one seat until the first one rejoins. Sending that page back to the join page when its seat's
-  uid changes is left for a later change.
+- When a namesake does take a seat this way, the first player's page leaves the game for the join
+  page once its signal returns: see "Seat taken by a namesake" below.
 - The browser strings stay with the game node, like nicknames: nothing deletes old games today. If
   games are ever cleaned up, they go with them.
 
@@ -1176,3 +1175,56 @@ mark are refused, and a sign-in may mark its own seat; a mark changed from elsew
 page; a guest closes her browser and taps the link again in a new
 empty one with the same browser string: same seat; another player with the same name, while the
 first is here: a seat of her own).
+
+## Seat taken by a namesake (the page notices and offers a fresh join)
+
+**Why.** The seat back by name (above) has one bad case: two different people with the same name on the
+same model of phone. If the first one's signal drops and the second joins from an empty browser in that
+moment, the second gets the first one's seat and score. Before this change, when the first one's signal
+returned, her page still held the same player id: both phones played one seat, each overwriting the
+other's lie and pick, and neither knew. In real games since 10 Aug about 1% had namesakes; this case
+needs a namesake, a shared browser string and the first one offline at that moment, so it is rarer still.
+
+**What it does.** While a phone follows a game, its page also watches its seat's `uid`
+(`games/$pin/players/$pid/uid`, which every phone could already read) next to this browser's own
+sign-in (`ApiService.followSeat`). When both are known and differ (`game/src/app/services/seat-owner.ts`
+`seatTaken`), the page stops following the game and stops marking the seat, and goes to the join page of
+the same game with `?taken=1` (`GameService.seatTaken`), replacing the game page in the history. The join
+page says "Someone else took this seat. Another phone joined under the same name. Pick a new name to
+join again." (in Hebrew on Hebrew pages), with the nickname box. Her new join brings her old player id,
+which the server no longer matches (the seat's uid is not hers) and which also rules out a seat back by
+name, so she gets a seat of her own; her old score stays with the seat.
+
+It never fires in the normal cases, since the seat's uid stays this browser's: the same browser
+reconnecting or reloading, Replay (the seats keep their uids), a crew rematch (a new seat with this
+browser's uid), a player who rejoined in her own browser, and the host's page. The big screen (Present
+Game) has no seat and follows none. A seat with no uid (its sign-in failed), or a page not signed in yet,
+is never counted as taken.
+
+**What changes.** The site only. No function, rules or BigQuery change; nothing new is stored.
+
+**Deploy.** Merges after the seat back by name (pull request 109), which it is built on. The normal
+pipeline; only the site changes. Nothing for the owner to run.
+
+**Limits.**
+
+- Until her signal returns, the first player's phone shows the game it had, frozen; the change acts the
+  moment her page hears from the database again.
+- Her score and lies so far stay with the seat, now the second player's. Splitting them back is not
+  possible from what is stored.
+- A phone whose sign-in itself changed (its stored sign-in was cleared while the page kept its player
+  id) would also be sent to the join page; such a page could not mark its seat or be matched by the
+  server anyway, so a fresh join is what it needs.
+
+**How to read it.** No new event. The new join from this page is recorded with `via` = `link` (the PIN is
+in the address), as an invite link's is. The seat-back count above (Cloud Logging,
+`got their seat back by name`) is an upper bound on how often this can happen.
+
+Checks: `game/test/seat-owner.test.js` and `game/test/game-service.test.js` (in `npm test`: when a seat
+counts as taken; the phone leaves the game for its join page; a seat taken in a game the phone has left
+does not move it), and on the emulators `node .github/smoke/emulator-rejoin.js`, step 5: the first Dana's
+phone loses its signal, the second Dana on the same browser string gets her seat, and when the first
+one's signal returns her page goes to `/join-game/<pin>?taken=1` with the notice; she joins again as
+"Dana B", a seat of her own (5 seats); the host, both Noas and the second Dana stay in the lobby, and the
+seat stays the second Dana's, marked as here. Without the change in `game.service.ts`, the same run
+leaves the first Dana in the lobby on the shared seat and fails.
