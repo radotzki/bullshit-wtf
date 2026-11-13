@@ -159,11 +159,11 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
 }
 
 function sitemap() {
-    const today = new Date().toISOString().slice(0, 10);
+    // No <lastmod>: the build day on every page tells search engines nothing, and a wrong date makes
+    // them trust the field less. Leave it out until pages carry the day they really changed.
     // The two home pages: / and /he (dist/he.html, written by scripts/build-he.js).
     const homes = ['/', '/he'].map(loc => `  <url>
     <loc>${SITE}${loc}</loc>
-    <lastmod>${today}</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}/"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}/he"/>
   </url>`);
@@ -171,7 +171,6 @@ function sitemap() {
         if (!p.twin) {
             return `  <url>
     <loc>${SITE}${p.path}</loc>
-    <lastmod>${today}</lastmod>
     <xhtml:link rel="alternate" hreflang="${p.site.lang}" href="${SITE}${p.path}"/>
   </url>`;
         }
@@ -179,7 +178,6 @@ function sitemap() {
         const he = p.site.lang === 'he' ? p : byPath[p.twin];
         return `  <url>
     <loc>${SITE}${p.path}</loc>
-    <lastmod>${today}</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}${en.path}"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}${he.path}"/>
   </url>`;
