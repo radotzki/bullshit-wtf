@@ -1128,6 +1128,12 @@ words of the screens in `game/src/app/pages/about-strings.ts`, how phones read i
   `about: { pid, prompt }`. The truth's reveal row carries `about` and `aboutPoints`. The named
   player is marked as done on the answers' waiting row and is not waited for there; their pick, if an
   older site sends one, is ignored.
+- Sends at the same moment: when the last sends of an About question (the truth and a lie, or two
+  lies) reach the server together, each `answer` call reads `answers` and `aboutTruth` again after
+  writing its own send, and decides "has everyone sent?" on that. Without it no call saw every send
+  and the room sat out the 25 seconds. It is the same re-read as "Lies sent at the same moment end the
+  question at once" (pull request 108) for a normal question; the two are in different functions of
+  `answer.ts` and merge cleanly. Tests: `about.test.js`, "About question: ... sent at the same moment".
 - Deploy: **run `functions/bigquery/2026-11-about-us.sql` (three ALTERs) first**, then functions,
   then hosting. **No rules change.** Until the site is live no phone asks, so no game is in the test.
   A phone still on the old site inside an About game sees the question about the named player and a

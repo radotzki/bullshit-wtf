@@ -318,6 +318,31 @@ test('nothing anybody typed for an About question goes to BigQuery or to the que
     assert.ok(/"about":"/.test(history));
 });
 
+// The last sends of an About question that arrive at the same moment: each call read the game before the
+// others had written, so none saw every send, and the room sat out the whole timer. The call whose send
+// lands last now reads the lies and the truth again, and the answers are shown at once.
+for (const together of ['the truth and a lie', 'two lies']) {
+    test(`About question: ${together} sent at the same moment show the answers at once`, async () => {
+        const pin = newGame(3);
+        await next(pin);
+        await toQuestion(pin, 1);
+        const named = model.aboutOf(game(pin).state).pid;
+        const [first, second] = pids(pin).filter(p => p !== named);
+        const send = pid => answer(pin, pid, pid === named ? 'My Dog Rex' : `${pid} lie about them`);
+        const early = together === 'two lies' ? [named] : [first];
+        const last = together === 'two lies' ? [first, second] : [named, second];
+        for (const pid of early) await send(pid);
+        assert.strictEqual(state(pin), S.ShowQuestion, 'still waiting for the others');
+        await Promise.all(last.map(send));
+        assert.strictEqual(state(pin), S.ShowAnswers, 'everyone sent: the answers are on the table, with no wait for the clock');
+        const g = game(pin);
+        assert.strictEqual(g.aboutQs.q1.result, 'played', 'the About question is played, not the fallback');
+        assert.deepStrictEqual(g.answers.truth, { text: 'my dog rex', houseLie: false, realAnswer: true });
+        const texts = Object.values(g.answers).map(a => a.text);
+        [first, second].forEach(pid => assert.ok(texts.includes(`${pid} lie about them`), `${pid}'s lie is on the table`));
+    });
+}
+
 test('the named player sends nothing: the bank question is played in its place, from a fresh start', async () => {
     const pin = newGame(3);
     await next(pin);
