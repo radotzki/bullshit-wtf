@@ -26,7 +26,7 @@
     "realAnswer": "surface of the sun",
     "fakeAnswers": [
       "inside of a volcano",
-      "core of the earth",
+      "a pizza oven",
       "a candle flame"
     ],
     "citation": "https://en.wikipedia.org/wiki/Alpheidae",
@@ -159,7 +159,7 @@
     "fakeAnswers": [
       "cooking",
       "dancing",
-      "poetry slams"
+      "cake decorating"
     ],
     "citation": "https://en.wikipedia.org/wiki/Art_competitions_at_the_Summer_Olympics",
     "lang": "en"
@@ -300,7 +300,7 @@
     "questionText": "The popsicle was invented by an $blank$ who left a drink outside overnight",
     "realAnswer": "11-year-old",
     "fakeAnswers": [
-      "eskimo",
+      "arctic explorer",
       "ice salesman",
       "angry chef"
     ],
@@ -433,7 +433,7 @@
     "realAnswer": "chewing gum",
     "fakeAnswers": [
       "red umbrellas",
-      "fireworks",
+      "garden gnomes",
       "durian juice"
     ],
     "citation": "https://en.wikipedia.org/wiki/Chewing_gum_sales_ban_in_Singapore",
@@ -543,7 +543,7 @@
     "realAnswer": "train",
     "fakeAnswers": [
       "tram",
-      "a shortcut by boat",
+      "ferry",
       "pony"
     ],
     "citation": "https://en.wikipedia.org/wiki/1904_Tour_de_France",
@@ -597,7 +597,7 @@
     "questionText": "Nokia started out in 1865 as a $blank$",
     "realAnswer": "pulp mill",
     "fakeAnswers": [
-      "rubber boot shop",
+      "sauna maker",
       "fishing company",
       "telegraph office"
     ],
@@ -951,7 +951,7 @@
     "fakeAnswers": [
       "ג'נבה",
       "ג'קרטה",
-      "ג'נאין"
+      "ג'מייקה"
     ],
     "citation": "https://en.wikipedia.org/wiki/Jeans",
     "lang": "he"
@@ -1158,8 +1158,8 @@
     "questionText": "הטישו הומצא במקור כ$blank$",
     "realAnswer": "פילטר למסכת גז",
     "fakeAnswers": [
-      "תחבושת",
-      "מגבון לאיפור",
+      "נייר עטיפה למתנות",
+      "מפית לשולחן",
       "נייר אפייה"
     ],
     "citation": "https://en.wikipedia.org/wiki/Kleenex",
