@@ -1,4 +1,4 @@
-// Shared by the local runs that need the Realtime Database emulator (stray-pick-game.js).
+// Shared by the local runs that need the Realtime Database emulator (pick-rules.js, stray-pick-game.js).
 // Start it first, on 127.0.0.1:9000 (see test/sleeping-phones.js for how).
 
 const fs = require('fs');
