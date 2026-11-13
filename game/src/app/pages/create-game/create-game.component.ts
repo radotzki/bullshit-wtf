@@ -1,23 +1,31 @@
 import { reportError } from './../../sentry/sentry.module';
 import { ApiService } from './../../services/api.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { markHosted, arrivalCampaign, preferredLocale } from '../../services/join-source';
+import { markHosted, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
 import { questionPacks, isPack, seasonalPack } from '../../game-model';
+import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-create-game',
     templateUrl: './create-game.component.html',
     styleUrls: ['./create-game.component.scss']
 })
 export class CreateGameComponent implements OnInit {
+    // The game's language, picked on the form.
     locale = 'en';
+    // The page's own words: the visitor's language as they arrived. The form's pick does not change it.
+    t: CreateStrings = createStrings('en');
     length = 7;
     loading: boolean;
     errorMsg: string;
     // The seasonal pack on offer (in season, or asked for with ?pack=), and whether it is switched on.
     pack: string = null;
     usePack = false;
+    // A tag on this page's own address (the after-game ask links here with ?via=after-game).
+    private campaign: string = null;
 
     constructor(
         private apiService: ApiService,
@@ -30,6 +38,9 @@ export class CreateGameComponent implements OnInit {
         this.apiService.warmUpSignIn();
         const params = this.route.snapshot.queryParams || {};
         this.locale = params.lang === 'he' || params.lang === 'en' ? params.lang : preferredLocale();
+        this.t = createStrings(this.locale);
+
+        this.campaign = typeof params.via === 'string' ? readCampaign(`?via=${encodeURIComponent(params.via)}`) : null;
 
         const asked = isPack(params.pack) ? params.pack : null;
         this.pack = asked || seasonalPack() || null;
@@ -37,7 +48,9 @@ export class CreateGameComponent implements OnInit {
     }
 
     get packLabel(): string {
-        return this.pack ? questionPacks[this.pack].label[this.locale === 'he' ? 'he' : 'en'] : '';
+        // A Hebrew page names the pack in Hebrew; the English page names it in the game's language, as before.
+        const lang = this.t.lang === 'he' || this.locale === 'he' ? 'he' : 'en';
+        return this.pack ? questionPacks[this.pack].label[lang] : '';
     }
 
     submit() {
@@ -45,16 +58,19 @@ export class CreateGameComponent implements OnInit {
         this.errorMsg = '';
         const pack = this.usePack && this.pack ? this.pack : undefined;
 
-        this.apiService.createGame(this.locale, this.length, pack, arrivalCampaign())
+        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign())
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);
-                this.router.navigate(['/join-game', resp.pin]);
+                // The nickname page follows this page's language. It decides by the same rule, so the
+                // language is sent along only when it came from this page's own address.
+                const lang = this.t.lang !== preferredLocale() ? { lang: this.t.lang } : {};
+                this.router.navigate(['/join-game', resp.pin], { queryParams: lang });
             })
             .catch(err => {
                 this.loading = false;
                 reportError(err, 'createGame', { locale: this.locale, count: this.length, pack });
-                this.errorMsg = 'oops, something went wrong. Please try again';
+                this.errorMsg = this.t.error;
             });
     }
 

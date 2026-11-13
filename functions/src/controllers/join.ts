@@ -31,15 +31,46 @@ export function cleanNickname(typed: any, uid: string, pid: string, locale: stri
 }
 
 /**
+ * The seat this phone already holds in the game, if any: the player id it sends back (its last join),
+ * when that seat is in this game and was not taken by another browser, else the newest seat with the
+ * phone's sign-in uid. A phone that joins again (Back to the join page, a reload, a second tap on
+ * JOIN, a new name after a typo) gets its own seat back instead of a second one that nobody plays.
+ * On 12 Nov one phone joined a Hebrew table five times under four names and left two silent seats of 8.
+ */
+export function seatOf(players: GameScheme['players'], uid: any, pid?: any): string | undefined {
+    players = players || {};
+    const myUid = typeof uid === 'string' && uid ? uid : undefined;
+    if (typeof pid === 'string' && pid && players[pid]) {
+        const seatUid = players[pid].uid;
+        if (!seatUid || seatUid === myUid) {
+            return pid;
+        }
+    }
+    if (!myUid) {
+        return undefined;
+    }
+    // Player ids are made in time order, so the last in sort order is the newest seat.
+    return Object.keys(players).filter(k => players[k] && players[k].uid === myUid).sort().pop();
+}
+
+/**
  * Add a player to a game. A join that carries the game's host key (the phone that created it)
  * is marked as the host, so the lobby knows the host even when that phone has no sign-in uid.
+ * A phone that already has a seat here gets that seat back under the name it typed now (see seatOf),
+ * with its score: one phone is one seat.
  */
-export async function join(pin: string, typed: string, uid: string, hostKey?: string): Promise<JoinResult> {
+export async function join(pin: string, typed: string, uid: string, hostKey?: string, myPid?: string): Promise<JoinResult> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
+    }
+
+    // A phone that already has a seat here gets it back, even at a full table (not in a finished game).
+    const mine = seatOf(game.players, uid, myPid);
+    if (mine && !(await gameOverError(game, Date.now()))) {
+        return rejoin(pin, game, mine, typed, uid, hostKey);
     }
 
     // A finished game takes no new players (a typed PIN, or an old invite link).
@@ -69,15 +100,45 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     // The host joined again (a refresh, a second tab): only the newest row is the host.
     player.host = true;
     const update: { [path: string]: any } = { [pid]: player };
+    clearOtherHosts(game, pid, update);
+    await playersRef.update(update);
+    await hostIsHere(pin, game);
+    return result;
+}
+
+/** Marks every other seat as no longer the host, in `update` (paths under players). */
+function clearOtherHosts(game: GameScheme, pid: string, update: { [path: string]: any }) {
     Object.keys(game.players || {}).forEach(k => {
-        if (game.players[k] && game.players[k].host) {
+        if (k !== pid && game.players[k] && game.players[k].host) {
             update[`${k}/host`] = null;
         }
     });
-    await playersRef.update(update);
+}
+
+async function hostIsHere(pin: string, game: GameScheme) {
     if (game.serverStart) {
         // The host is in the lobby now; their lobby page keeps reporting in (see hostHere).
         await gamesRef.child(pin).child('hostSeen').set(Date.now());
     }
-    return result;
+}
+
+/** The phone's own seat, back under the name it typed now; its score and marks stay. */
+async function rejoin(pin: string, game: GameScheme, pid: string, typed: string, uid: string, hostKey?: string)
+    : Promise<JoinResult> {
+    const { nickname, swapped } = cleanNickname(typed, uid, pid, game.locale, game.players);
+    const update: { [path: string]: any } = { [`${pid}/nickname`]: nickname };
+    if (typeof uid === 'string' && uid && !game.players[pid].uid) {
+        update[`${pid}/uid`] = uid;
+    }
+    const host = !!(game.hostKey && hostKey && hostKey === game.hostKey);
+    if (host) {
+        update[`${pid}/host`] = true;
+        clearOtherHosts(game, pid, update);
+    }
+    await gamesRef.child(pin).child('players').update(update);
+    if (host) {
+        await hostIsHere(pin, game);
+    }
+    console.log(`[PIN: ${pin}] a phone joined again and got its seat back`);
+    return swapped ? { pid, nickname, swapped } : { pid, nickname };
 }

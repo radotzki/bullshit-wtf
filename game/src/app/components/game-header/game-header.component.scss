@@ -35,4 +35,45 @@
     .pin {
         margin-left: 10px;
     }
+
+    // The mute button of a staged-reveal game (phones only). Drawn inline: it needs no icon font.
+    .sound {
+        margin-left: auto;
+        margin-right: 10px;
+        padding-left: 0.75em;
+        padding-right: 0.75em;
+    }
+
+    .sound.is-muted {
+        opacity: 0.6;
+    }
+
+    .sound + .text,
+    .sound + .button {
+        margin-left: 0;
+    }
+}
+
+// A Hebrew game: the bar reads right to left, so the spacing is mirrored.
+.game-header[dir="rtl"] {
+    .pin {
+        margin-left: 0;
+        margin-right: 10px;
+    }
+
+    .sound {
+        margin-left: 10px;
+        margin-right: auto;
+    }
+
+    .sound + .text,
+    .sound + .button {
+        margin-left: 10px;
+        margin-right: 0;
+    }
+}
+
+.leave-modal[dir="rtl"] .modal-card-foot .button:not(:last-child) {
+    margin-right: 0;
+    margin-left: .5em;
 }

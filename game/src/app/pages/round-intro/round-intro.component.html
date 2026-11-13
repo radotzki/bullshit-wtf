@@ -1,17 +1,22 @@
-<section class="game-container round-intro">
+<section class="game-container round-intro" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
 
     <div class="game-main">
-        <div class="screen-center">
-            <p class="bullshit">
-                {{points.bullshit}} points
+        <div class="screen-center" [class.final-question]="final" [class.taste-intro]="tasteIntro" *ngIf="ready">
+            <h1 class="final-title" *ngIf="final">{{t.finalQuestion}}</h1>
+            <p class="final-gap" *ngIf="final && gap">{{gap}}</p>
+            <!-- A taste (a game started alone): what the five questions are, and no line about lies. -->
+            <h1 class="taste-title" *ngIf="tasteIntro">{{tasteWords.introTitle(tasteQuestions)}}</h1>
+            <p class="taste-how" *ngIf="tasteIntro">{{tasteWords.introHow}}</p>
+            <p class="bullshit" *ngIf="pointsKnown && !taste">
+                {{t.points(points.bullshit)}}
                 <br>
-                for everyone you bullshit
+                {{t.forEveryoneYouBullshit}}
             </p>
-            <p class="truth">
-                {{points.truth}} points
+            <p class="truth" *ngIf="pointsKnown">
+                {{t.points(points.truth)}}
                 <br>
-                for finding the truth
+                {{t.forFindingTheTruth}}
             </p>
         </div>
     </div>

@@ -21,7 +21,8 @@ const raw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').trim();
 if (!raw) {
     fail('The secret FIREBASE_SERVICE_ACCOUNT of the production environment is not set. Nothing was deployed. ' +
         'Add it under Settings > Environments > production > Environment secrets (see DEPLOYING.md), ' +
-        'then re-run this workflow.');
+        'then start a new run by hand: Actions > Deploy to production > Run workflow > branch master. ' +
+        'Do not re-run an old failed run: a re-run releases that run\'s commit, not today\'s master.');
 }
 let key;
 try {

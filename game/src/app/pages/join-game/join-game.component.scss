@@ -22,3 +22,10 @@
         margin-bottom: 1rem;
     }
 }
+
+// The Hebrew pages: Hebrew letters read better unspaced.
+.join-game.is-rtl {
+    .button, .input, .sub-title {
+        letter-spacing: 0;
+    }
+}

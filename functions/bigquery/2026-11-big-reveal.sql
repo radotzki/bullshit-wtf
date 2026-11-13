@@ -1,0 +1,62 @@
+-- The staged reveal ("big reveal"), a 50/50 test (functions/src/controllers/big-reveal.ts).
+-- NO SCHEMA CHANGE: there is nothing to run in this file. It holds only read-only queries (in
+-- comments, like the other files here).
+--
+-- A game's half follows from its PIN, and every usage row carries the PIN (opened_games.id,
+-- closed_games.id, question_results.id, users.pin, forks.origin and forks.forked):
+--
+--   MOD(TO_CODE_POINTS(SHA256(CONCAT('big-reveal:', UPPER(id))))[OFFSET(0)], 2) = 1
+--     TRUE   the staged half: the game had the staged reveal
+--     FALSE  the other half: the game kept the reveal as it was
+--
+-- A PIN is given once, so a PIN is one game. The halves are even: of the 1,556 games opened from
+-- 1 August to 12 November 2026, 784 fall in the staged half and 772 in the other.
+--
+-- What the PIN cannot say: whether the game was in the test at all. A game is in the test only when
+-- the phone that made it runs a site that can show the staged reveal. Read from the time the SITE of
+-- this change went live (later than the functions) and replace <site release time> with it: before
+-- it no game was staged, whatever its PIN. After it, a game made from a tab that was opened before
+-- the release and never reloaded plays the reveal as it was even when its PIN falls in the staged
+-- half; such games cannot be told apart here. They can only pull the two halves towards each other.
+--
+-- Test games are left out by their mark (see 2026-11-test-mark.sql).
+-- Since 5 Nov every game is logged as closed, so "finished" is not read from closed_games here.
+
+-- Main measure 1: players still picking on the last question.
+-- Of the players a game started with, the share who picked an answer on its last question.
+-- SELECT MOD(TO_CODE_POINTS(SHA256(CONCAT('big-reveal:', UPPER(o.id))))[OFFSET(0)], 2) = 1 AS staged_half,
+--   COUNT(*) AS games, SUM(o.players) AS players_at_start,
+--   SAFE_DIVIDE(SUM(IFNULL(q.picks, 0)), SUM(o.players)) AS still_picking_on_last_question
+-- FROM `bullshit-wtf-prod.analytics.opened_games` o
+-- LEFT JOIN `bullshit-wtf-prod.analytics.question_results` q
+--   ON q.id = o.id AND q.q_index = o.questions - 1 AND q.time >= TIMESTAMP('<site release time>')
+-- WHERE o.players >= 2 AND o.time >= TIMESTAMP('<site release time>')
+--   AND NOT REGEXP_CONTAINS(IFNULL(o.campaign, ''), r'^test(-|$)')
+-- GROUP BY staged_half;
+
+-- Main measure 2: rematches per game. A rematch is a started game whose parent is this game
+-- (Replay). It has a PIN and so a half of its own; it is counted for the half of the game it came from.
+-- SELECT MOD(TO_CODE_POINTS(SHA256(CONCAT('big-reveal:', UPPER(o.id))))[OFFSET(0)], 2) = 1 AS staged_half,
+--   COUNT(*) AS games, COUNT(r.id) AS rematches,
+--   SAFE_DIVIDE(COUNT(r.id), COUNT(*)) AS rematches_per_game
+-- FROM `bullshit-wtf-prod.analytics.opened_games` o
+-- LEFT JOIN `bullshit-wtf-prod.analytics.opened_games` r
+--   ON r.parent_pin = o.id AND r.time >= TIMESTAMP('<site release time>')
+-- WHERE o.players >= 2 AND o.time >= TIMESTAMP('<site release time>')
+--   AND NOT REGEXP_CONTAINS(IFNULL(o.campaign, ''), r'^test(-|$)')
+-- GROUP BY staged_half;
+
+-- Check that the two tests are independent: about a quarter of the games in each cell.
+-- SELECT o.coach, MOD(TO_CODE_POINTS(SHA256(CONCAT('big-reveal:', UPPER(o.id))))[OFFSET(0)], 2) = 1 AS staged_half,
+--   COUNT(*) AS games
+-- FROM `bullshit-wtf-prod.analytics.opened_games` o
+-- WHERE o.time >= TIMESTAMP('<site release time>')
+-- GROUP BY o.coach, staged_half ORDER BY o.coach, staged_half;
+
+-- Mute taps (shares table, content_type 'sound'; not a share: leave these rows out of share counts).
+-- Only a phone in a staged game with no big screen has the button, so any row here also shows that
+-- staged games are being played.
+-- SELECT method, COUNT(*) AS taps, COUNT(DISTINCT uid) AS browsers
+-- FROM `bullshit-wtf-prod.analytics.shares`
+-- WHERE content_type = 'sound' AND time >= TIMESTAMP('<site release time>')
+-- GROUP BY method;

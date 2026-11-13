@@ -11,6 +11,7 @@ functions/src/name-lists.ts
 # compiled output
 game/dist
 functions/dist
+game/.angular
 /tmp
 
 # dependencies
@@ -41,6 +42,7 @@ functions/node_modules
 /libpeerconnection.log
 npm-debug.log
 firebase-debug.log
+firebase-debug.kept.log
 testem.log
 /typings
 

@@ -16,7 +16,8 @@ function load() {
     return mod.exports;
 }
 
-const { lobbyHost, lobbyText, firstFriend, HOST_GRACE_MS, HOST_GONE_MS, HOST_PING_MS } = load();
+const { lobbyHost, lobbyText, firstFriend, HOST_GRACE_MS, HOST_GONE_MS, HOST_PING_MS,
+    hostAwayMs, shouldAskClock, CLOCK_RETRY_MS } = load();
 
 const alice = { nickname: 'Alice', score: 0, uid: 'uid-alice' };
 const ben = { nickname: 'Ben', score: 0, uid: 'uid-ben' };
@@ -112,7 +113,7 @@ test('a player whose sign-in failed (no uid) still waits for the host', () => {
     assert.strictEqual(view({ myUid: null }).canStart, false);
 });
 
-// Lone host: invite first, START held back behind "Start alone anyway".
+// Lone host: invite first, START held back behind the link that starts the taste.
 
 test('a host alone in the lobby gets the invite-first lobby', () => {
     const v = view({ myUid: 'uid-alice', players: [alice] });
@@ -122,7 +123,7 @@ test('a host alone in the lobby gets the invite-first lobby', () => {
     assert.strictEqual(t.alone, true);
     assert.strictEqual(t.message, 'Bullshit needs friends: you score by fooling them');
     assert.strictEqual(t.sub, 'Send them the link. It takes them 10 seconds to join.');
-    assert.strictEqual(t.startAlone, 'Start alone anyway');
+    assert.strictEqual(t.startAlone, 'Try 5 quick questions alone');
     assert.strictEqual(t.count, '1 player in');
 });
 
@@ -130,7 +131,7 @@ test('a lone host in a Hebrew game reads it in Hebrew, right to left', () => {
     const t = lobbyText(view({ myUid: 'uid-alice', players: [alice] }), 1, 'he');
     assert.strictEqual(t.message, 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו');
     assert.strictEqual(t.sub, 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.');
-    assert.strictEqual(t.startAlone, 'להתחיל לבד בכל זאת');
+    assert.strictEqual(t.startAlone, 'לנסות לבד 5 שאלות מהירות');
     assert.strictEqual(t.rtl, true);
 });
 
@@ -151,7 +152,7 @@ test('the first friend in is greeted by name, then the usual line once a third j
     const friend = firstFriend(two, [alice, ben], 'uid-alice', true);
     assert.strictEqual(friend, 'Ben');
     assert.strictEqual(lobbyText(two, 2, 'en', friend).message, 'Ben is in! Press START when everyone is in');
-    assert.strictEqual(lobbyText(two, 2, 'he', friend).message, 'Ben בפנים! לחצו START כשכולם בפנים');
+    assert.strictEqual(lobbyText(two, 2, 'he', friend).message, 'Ben בפנים! לחצו על "מתחילים" כשכולם בפנים');
     assert.strictEqual(firstFriend(view({ myUid: 'uid-alice' }), three, 'uid-alice', true), null);
     assert.strictEqual(lobbyText(view({ myUid: 'uid-alice' }), 3, 'en', null).message, 'Press START when everyone is in');
 });
@@ -259,7 +260,7 @@ test('once the joined host has been gone HOST_GONE_MS (5 minutes), anyone may st
     assert.strictEqual(v.hostGone, 'Alice');
     assert.strictEqual(lobbyText(v, 3, 'en').message, 'Alice seems to be gone. Anyone can press START');
     const he = lobbyText(v, 3, 'he');
-    assert.ok(he.message.indexOf('Alice') >= 0 && he.message.indexOf('START') >= 0);
+    assert.ok(he.message.indexOf('Alice') >= 0 && he.message.indexOf('"מתחילים"') >= 0);
     assert.strictEqual(he.rtl, true);
     // The big screen too.
     const big = view({ creator: null, hasHost: true, hasPresenter: true, isPresenter: true, players: marked, hostAwayMs: HOST_GONE_MS * 3 });
@@ -296,4 +297,31 @@ test('two phones pressed Replay at once: the second holds the key too and gets S
     assert.deepStrictEqual([first.canStart, second.canStart, third.canStart], [true, true, false]);
     assert.strictEqual(third.hostName, 'Alice');
     assert.strictEqual(second.alone, false);
+});
+
+test('host away time: unknown clock offset or unknown host time gives null', () => {
+    assert.strictEqual(hostAwayMs(1000000, null, 900000), null);
+    assert.strictEqual(hostAwayMs(1000000, 0, null), null);
+    assert.strictEqual(hostAwayMs(1000000, 2000, 900000), 98000);
+});
+
+test('a phone 6 minutes fast whose clock sync failed never sees a present host as gone', () => {
+    const serverNow = 10000000;
+    const hostSeen = serverNow - HOST_PING_MS;
+    const phoneNow = serverNow + 6 * 60 * 1000;
+    // Before: the failed sync was stored as an offset of 0, so the host looked 6+ minutes away.
+    assert.ok(phoneNow - 0 - hostSeen >= HOST_GONE_MS);
+    const v = view({ myUid: 'uid-ben', hasHost: true, players: [Object.assign({ host: true }, alice), ben],
+        hostAwayMs: hostAwayMs(phoneNow, null, hostSeen) });
+    assert.strictEqual(v.canStart, false);
+    // Once the offset is measured, the host is judged by server time and is still here.
+    assert.ok(hostAwayMs(phoneNow, 6 * 60 * 1000, hostSeen) < HOST_GONE_MS);
+});
+
+test('the lobby asks for the clock again only while it is unknown, and at most once a CLOCK_RETRY_MS', () => {
+    assert.strictEqual(shouldAskClock(null, false, null, 0), true);
+    assert.strictEqual(shouldAskClock(null, true, null, 0), false);
+    assert.strictEqual(shouldAskClock(1500, false, 0, CLOCK_RETRY_MS * 5), false);
+    assert.strictEqual(shouldAskClock(null, false, 1000, 1000 + CLOCK_RETRY_MS - 1), false);
+    assert.strictEqual(shouldAskClock(null, false, 1000, 1000 + CLOCK_RETRY_MS), true);
 });

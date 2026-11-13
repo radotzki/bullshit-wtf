@@ -19,6 +19,7 @@ ALTER TABLE `bullshit-wtf-prod.analytics.users`
 
 -- ---------------------------------------------------------------------------
 -- Read-only queries this makes possible (run after a few weeks of data).
+-- Test games are left out by their own mark (2026-11-test-mark.sql).
 
 -- Host return rate: of browsers that first created a game in a week, the share
 -- that created another game on a later day within 30 days.
@@ -26,6 +27,7 @@ ALTER TABLE `bullshit-wtf-prod.analytics.users`
 --   SELECT creator_uid, MIN(DATE(time)) AS first_day
 --   FROM `bullshit-wtf-prod.analytics.opened_games`
 --   WHERE creator_uid IS NOT NULL AND origin = 'create'
+--     AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
 --   GROUP BY creator_uid
 -- )
 -- SELECT DATE_TRUNC(f.first_day, WEEK) AS cohort_week,
@@ -33,6 +35,7 @@ ALTER TABLE `bullshit-wtf-prod.analytics.users`
 --        COUNTIF(EXISTS (
 --          SELECT 1 FROM `bullshit-wtf-prod.analytics.opened_games` g
 --          WHERE g.creator_uid = f.creator_uid
+--            AND NOT REGEXP_CONTAINS(IFNULL(g.campaign, ''), r'^test(-|$)')
 --            AND DATE(g.time) > f.first_day
 --            AND DATE(g.time) <= DATE_ADD(f.first_day, INTERVAL 30 DAY))) / COUNT(*) AS return_rate
 -- FROM firsts f GROUP BY cohort_week ORDER BY cohort_week;
@@ -40,10 +43,11 @@ ALTER TABLE `bullshit-wtf-prod.analytics.users`
 -- Joins by source, per day.
 -- SELECT DATE(time) AS day, IFNULL(via, 'unknown') AS via, COUNT(*) AS joins
 -- FROM `bullshit-wtf-prod.analytics.users`
--- WHERE time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)
+-- WHERE time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY) AND IFNULL(via, '') != 'test'
 -- GROUP BY day, via ORDER BY day, joins DESC;
 
 -- Started games by how they started.
 -- SELECT DATE(time) AS day, origin, COUNT(*) AS games
 -- FROM `bullshit-wtf-prod.analytics.opened_games`
--- WHERE origin IS NOT NULL GROUP BY day, origin ORDER BY day;
+-- WHERE origin IS NOT NULL AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- GROUP BY day, origin ORDER BY day;

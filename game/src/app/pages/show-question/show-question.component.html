@@ -1,4 +1,4 @@
-<section class="game-container show-question">
+<section class="game-container show-question" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
     <progress *ngIf="question && past && duration" class="progress" [class.is-primary]="!panic"
         [class.is-danger]="panic" [value]="past" [max]="duration"></progress>
@@ -8,8 +8,9 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="question && presenter" class="screen-center">
+        <div *ngIf="question && presenter" class="screen-center on-big-screen">
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <app-waiting-row [pin]="pin" [t]="t" [presenter]="true"></app-waiting-row>
         </div>
 
         <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()">
@@ -22,15 +23,14 @@
                     <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text"
                         name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off"
                         [attr.placeholder]="helper.placeholder">
-                    <span *ngIf="enteredCorrectAnswer" class="help is-danger">You entered the correct answer! Try
-                        something else</span>
+                    <span *ngIf="enteredCorrectAnswer" class="help is-danger">{{t.tooCloseToTruth}}</span>
                 </p>
             </div>
 
             <div class="field">
                 <p class="control">
                     <button type="submit" class="button is-primary is-fullwidth" [class.is-loading]="loading"
-                        [disabled]="!answer">SEND</button>
+                        [disabled]="!answer">{{t.send}}</button>
                 </p>
             </div>
 
@@ -43,7 +43,7 @@
         </form>
 
         <div *ngIf="questionSubmitted" class="screen-center">
-            Your answer has been submitted
+            <app-waiting-row [pin]="pin" [t]="t" [line]="t.answerSubmitted"></app-waiting-row>
         </div>
 
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

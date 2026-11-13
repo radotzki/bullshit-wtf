@@ -32,6 +32,29 @@ export const HOST_GRACE_MS = 90 * 1000;
 export const HOST_GONE_MS = 5 * 60 * 1000;
 /** How often the host's lobby page reports in. */
 export const HOST_PING_MS = 20 * 1000;
+/** While this phone's clock offset is unknown (the server could not be asked), how often the lobby asks again. */
+export const CLOCK_RETRY_MS = 60 * 1000;
+
+/**
+ * How long ago, in server time, the host last reported in, or null when that can't be told.
+ * `clockAhead` is how far this phone's clock is ahead of the server's; null means it is unknown
+ * (the clock sync failed), and then the host is never judged gone: a phone whose clock runs
+ * minutes fast would otherwise see a host who is still there as gone.
+ */
+export function hostAwayMs(now: number, clockAhead: number | null, hostSeen: number | null): number | null {
+    if (typeof clockAhead !== 'number' || typeof hostSeen !== 'number') {
+        return null;
+    }
+    return now - clockAhead - hostSeen;
+}
+
+/** Ask the server for the clock offset now: it is unknown, no ask is in flight, and the last ask is CLOCK_RETRY_MS old. */
+export function shouldAskClock(clockAhead: number | null, asking: boolean, lastAskedAt: number | null, now: number): boolean {
+    if (clockAhead !== null || asking) {
+        return false;
+    }
+    return lastAskedAt === null || now - lastAskedAt >= CLOCK_RETRY_MS;
+}
 
 /** A lobby player, with its player id when known. */
 export interface LobbyPlayer extends GamePlayer {
@@ -63,8 +86,8 @@ export interface LobbyHostView {
     hostName: string | null;
     /**
      * This phone is the known host, with no big screen, and is the only player in the lobby.
-     * The lobby then puts the invite first and holds START back behind "Start alone anyway":
-     * a solo game has nobody to fool, and lone hosts who start alone rarely come back.
+     * The lobby then puts the invite first and holds START back behind a small link: a game alone
+     * has nobody to fool. The link starts the taste, five pick-only questions (see TASTE_QUESTIONS).
      */
     alone: boolean;
     /** The host joined but has not been seen for HOST_GONE_MS, so anyone may start: their name. */
@@ -145,19 +168,21 @@ const strings = {
         friendIn: (name: string) => `${name} is in! Press START when everyone is in`,
         alone: () => 'Bullshit needs friends: you score by fooling them',
         aloneSub: () => 'Send them the link. It takes them 10 seconds to join.',
-        startAlone: () => 'Start alone anyway',
+        // Starts the taste: the number is TASTE_QUESTIONS in game-model.
+        startAlone: () => 'Try 5 quick questions alone',
         count: (n: number) => n === 1 ? '1 player in' : `${n} players in`,
     },
     he: {
         host: (name: string) => `מחכים ל־${name} להתחיל את המשחק`,
         hostToJoin: () => 'מחכים שמי שפתח את המשחק יצטרף',
         bigScreen: () => 'המשחק מתחיל מהמסך הגדול',
-        startHint: () => 'לחצו START כשכולם בפנים',
-        hostGone: (name: string) => `נראה ש־${name} יצא. כל אחד יכול ללחוץ START`,
-        friendIn: (name: string) => `${name} בפנים! לחצו START כשכולם בפנים`,
+        // "מתחילים" is the START button's word in a Hebrew game: gameStrings('he').start.
+        startHint: () => 'לחצו על "מתחילים" כשכולם בפנים',
+        hostGone: (name: string) => `נראה ש־${name} יצא. כל אחד יכול ללחוץ על "מתחילים"`,
+        friendIn: (name: string) => `${name} בפנים! לחצו על "מתחילים" כשכולם בפנים`,
         alone: () => 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו',
         aloneSub: () => 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.',
-        startAlone: () => 'להתחיל לבד בכל זאת',
+        startAlone: () => 'לנסות לבד 5 שאלות מהירות',
         count: (n: number) => n === 1 ? 'שחקן אחד במשחק' : `${n} שחקנים במשחק`,
     },
 };
@@ -168,9 +193,9 @@ export interface LobbyText {
     sub: string | null;
     count: string;
     rtl: boolean;
-    /** Invite-first lobby: the invite is inline, START waits behind the "start alone" link. */
+    /** Invite-first lobby: the invite is inline, START waits behind the link that starts the taste. */
     alone: boolean;
-    /** The small "start alone anyway" link's words. */
+    /** The words of the small link that starts the taste ("Try 5 quick questions alone"). */
     startAlone: string;
 }
 

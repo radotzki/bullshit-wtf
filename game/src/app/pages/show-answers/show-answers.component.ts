@@ -1,14 +1,18 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
+import { fadeOutAndUnload } from './../fade-out';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { GameState } from '../../game-model';
+import { SoundService } from './../../services/sound.service';
+import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-show-answers',
     templateUrl: './show-answers.component.html',
     styleUrls: ['./show-answers.component.scss']
@@ -20,13 +24,17 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     errorMsg: string;
     question: string;
     rtl: boolean;
+    t: GameStrings = gameStrings('en');
     answerSelected: boolean;
     answers: string[];
     showQuestion: boolean;
+    /** A taste (a game started alone) has no writing screen: its question is first read here, above the answers. */
+    taste = false;
     duration: number;
     past: number;
     timer;
     sound: Howl;
+    private phoneTickStopped = false;
     panic: boolean;
 
     constructor(
@@ -34,6 +42,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         private gameService: GameService,
         private sessionService: SessionService,
         private apiService: ApiService,
+        private soundService: SoundService,
     ) { }
 
     ngOnInit() {
@@ -41,15 +50,24 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
-        this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he');
+        this.useLocale(this.apiService.knownGameLocale(this.pin));
+        this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         this.apiService.getAnswers(this.pin).then(a => this.answers = a);
+        this.apiService.getTaste(this.pin).then(taste => this.taste = !!taste);
         this.startTimer();
         this.playBackground();
     }
 
+    private useLocale(locale: string) {
+        this.rtl = locale === 'he';
+        this.t = gameStrings(locale);
+    }
+
     ngOnDestroy() {
         this.stopMusic();
+        this.phoneTickStopped = true;
+        this.soundService.stop('time-warning');
         if (this.timer) {
             clearInterval(this.timer);
         }
@@ -59,7 +77,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.chooseAnswer(this.pin, answer)
+        this.apiService.chooseAnswer(this.pin, answer, this.gameService.currentStep())
             .then(() => {
                 this.answerSelected = true;
                 this.loading = false;
@@ -67,7 +85,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             .catch(err => {
                 this.loading = false;
                 reportError(err, 'chooseAnswer', { pin: this.pin });
-                this.errorMsg = 'oops, something went wrong. Please try again';
+                this.errorMsg = this.t.oops;
             });
     }
 
@@ -92,6 +110,15 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     playTimeWarning() {
         this.playMusic(['/assets/sounds/time-warning.mp3']);
+
+        // Phones tick too in a staged-reveal game with no big screen (unless muted).
+        if (!this.presenter) {
+            this.apiService.phoneSound(this.pin).then(sound => {
+                if (sound && !this.phoneTickStopped) {
+                    this.soundService.play('time-warning');
+                }
+            });
+        }
     }
 
     playMusic(src: string[]) {
@@ -103,8 +130,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
 
     stopMusic() {
         if (this.sound) {
-            this.sound.fade(1, 0, 1000);
-            setTimeout(this.sound.stop, 1000);
+            fadeOutAndUnload(this.sound);
         }
     }
 
