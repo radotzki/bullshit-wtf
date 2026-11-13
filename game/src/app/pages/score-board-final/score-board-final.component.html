@@ -77,7 +77,7 @@
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
             </div>
 
-            <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
+            <app-host-ask *ngIf="hostAsk" [locale]="locale" [pack]="pack" place="after-game"></app-host-ask>
 
             <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">

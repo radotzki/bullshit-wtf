@@ -48,6 +48,10 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
             height: auto;
             min-height: 2.5em;
             white-space: normal;
+            // A label that wraps (the Hanukkah REMIND ME on a small phone) keeps its two lines together.
+            line-height: 1.25;
+            padding-top: .5em;
+            padding-bottom: .5em;
         }
 
         .ask-create {

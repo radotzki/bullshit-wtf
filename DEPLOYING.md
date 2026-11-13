@@ -543,6 +543,18 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   (`tick`) keeps the pack, so deploy all functions.
 - The pack's questions live in `questions/hanukkah-*` in the database. Load them only **after** the
   new functions are live: old functions would mix them into every game.
+- The repository's set is `functions/data/hanukkah-questions.json`: 18 English and 16 Hebrew questions,
+  ids `hanukkah-26-en-01..18` and `hanukkah-26-he-01..16`, with the ones the two Hanukkah pages name (the
+  astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). Load it before
+  1 December (the pack turns on by itself then):
+  `npx firebase database:update /questions functions/data/hanukkah-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+  It adds questions and changes none. If the console already shows other `hanukkah-*` questions on the
+  same facts, retire the doubles (`retired-questions.ts`), or a room can meet one fact twice.
+  Without any pack question in the database, a Hanukkah game is a normal game under a Hanukkah banner.
+- After a Hanukkah game, from the eve of the first candle to the eighth (`HANUKKAH_CANDLES` in
+  `host-ask.ts`), a guest's ask reads "Lighting with the other side of the family? Start a game there."
+  and REMIND ME reads "Another candle tomorrow: play again", saving tomorrow evening, with a link that
+  opens a Hanukkah game.
 - The create page offers the pack from `?pack=hanukkah`, and switched on by default during the season
   in `questionPacks` (game-model.ts). The lobby shows a Hanukkah line and the results card says so.
 - `?lang=he` or arriving on a `/he` address makes Hebrew the default on the create page.

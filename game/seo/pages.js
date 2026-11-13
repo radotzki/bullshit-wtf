@@ -177,7 +177,7 @@ module.exports = [
         body: `
 <p>Hanukkah has eight nights and most of them end with the family around a table. Bullshit gives that table a game: everyone on their own phone, the grandparents included, and nothing to set up or clean away.</p>
 <h2>How it works</h2>
-<p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 5 questions takes about ten minutes.</p>
+<p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 5 questions takes five to ten minutes.</p>
 <h2>Why it fits Hanukkah</h2>
 <ul>
   <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, not know facts.</li>
@@ -198,7 +198,7 @@ module.exports = [
         body: `
 <p>בחנוכה יש שמונה לילות, ורובם נגמרים עם המשפחה סביב השולחן. בולשיט נותן לשולחן הזה משחק: כל אחד מהטלפון שלו, גם סבא וסבתא, ובלי שום דבר לסדר או לאסוף אחר כך.</p>
 <h2>איך זה עובד</h2>
-<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 5 שאלות לוקח בערך עשר דקות.</p>
+<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 5 שאלות לוקח בין חמש לעשר דקות.</p>
 <h2>למה זה מתאים לחנוכה</h2>
 <ul>
   <li><strong>מגיל 10 בערך</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות.</li>

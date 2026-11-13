@@ -78,6 +78,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
+    /** The game's seasonal pack (the ask speaks of Hanukkah after a Hanukkah game). */
+    pack: string = null;
     /**
      * Someone else pressed REMATCH: the new game's pin. This phone stays on the final screen and its
      * REMATCH button becomes JOIN THE REMATCH (see rematchMove).
@@ -268,6 +270,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     /** The ask is for a player of this game who did not host it. */
     private async setHostAsk(resp, user) {
+        this.pack = await this.apiService.getGamePack(this.pin).catch(() => null);
         const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
         this.hostAsk = showHostAsk({
             presenter: this.presenter,
