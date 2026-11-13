@@ -4,7 +4,7 @@ import { Howl } from 'howler';
 import { fadeOutAndUnload } from './../fade-out';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
@@ -15,6 +15,7 @@ import { rematchMove, rematchStrings, showHostAsk } from './../../components/hos
 import { GameState, seatPicture } from './../../game-model';
 import { StorageService } from './../../services/storage.service';
 import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
+import { biggestBullshitters } from './biggest';
 
 export interface FinalPlayer {
     nickname: string;
@@ -66,6 +67,14 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
      * moves up, above SHARE RESULTS, with a line that says why.
      */
     repeatGroup: boolean;
+    /**
+     * The game's crew as it stood when this screen first heard of it: true for a crew that was
+     * saved before (a game started from the crew page), false for none yet, undefined until known.
+     * Only a group with no crew yet gets its save offer moved up: an existing crew's link stays at
+     * the bottom, under SHARE RESULTS, as it was before. Someone saving the crew from the moved-up
+     * offer leaves `hadCrew` false, so the panel does not jump away from the phones looking at it.
+     */
+    hadCrew: boolean;
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
@@ -88,6 +97,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         private sessionService: SessionService,
         private crewService: CrewService,
         private storageService: StorageService,
+        private router: Router,
     ) { }
 
     ngOnInit() {
@@ -181,10 +191,43 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.leaving = true;
         this.loading = true;
         if (!this.presenter) {
-            await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
+            const user = await this.apiService.signInAnonymously(fork, this.sessionService.user.nickname, 'replay');
+            if (!(await this.takeSeat(fork, user))) {
+                return;
+            }
         }
         this.gameService.unregister();
         this.gameService.register(fork);
+    }
+
+    /**
+     * A Replay starts with the players still at the table: a seat that sent nothing on the last
+     * question is left out (fork.ts seatsForReplay). A phone whose seat was left out joins the new
+     * game here, under its name, as a late phone does. Resolves to whether this phone has a seat
+     * there; when it could not join (the Replay is full or over), it goes to the join page instead.
+     */
+    private async takeSeat(fork: string, user: { uid: string } | undefined): Promise<boolean> {
+        const me = this.sessionService.user;
+        const players = await this.apiService.getPlayers(fork).catch(() => undefined);
+        // Its seat is there, or the players could not be read: go as before.
+        if (!players || !me || (me.pid && players[me.pid])) {
+            return true;
+        }
+        const uid: any = user ? user.uid : 0;
+        try {
+            const joined = await this.apiService.join(fork, this.myNickname || me.nickname, uid);
+            this.sessionService.user = { nickname: joined.nickname.toLowerCase(), pid: joined.pid, uid };
+            this.sessionService.nameSwap = joined.swapped ? { pin: fork.toUpperCase(), nickname: joined.nickname } : null;
+            return true;
+        } catch (err) {
+            if (!(err && (err.code === 'GAME_IS_FULL' || err.code === 'GAME_OVER'))) {
+                reportError(err, 'replayJoin', { pin: fork });
+            }
+            this.leaving = false;
+            this.loading = false;
+            this.router.navigate([this.locale === 'he' ? '/he/join-game' : '/join-game', fork]);
+            return false;
+        }
     }
 
     /** JOIN THE REMATCH: this player is done here. */
@@ -251,9 +294,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         } catch (e) { }
     }
 
-    /** The save-crew offer sits above SHARE RESULTS on a group's second game, at the bottom otherwise. */
+    /**
+     * The save-crew offer sits above SHARE RESULTS on a group's second game when the group has no
+     * crew yet, at the bottom otherwise (an existing crew's link included).
+     */
     get crewFirst() {
-        return !!this.repeatGroup && !this.presenter && !this.soloTaste;
+        return !!this.repeatGroup && this.hadCrew === false && !this.presenter && !this.soloTaste;
     }
 
     private setPlayers(resp, highlights: Highlights, myPid: string) {
@@ -267,8 +313,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }))
             .sort((a, b) => b.score - a.score);
         const places = finalPlaces(players.map(p => p.score));
-        const mostFooled = Math.max(0, ...players.map(p => p.best ? p.best.total || 0 : 0));
-        const biggest = players.filter(p => p.best && (p.best.total || 0) === mostFooled);
+        const biggest = biggestBullshitters(players);
         // The funniest lie: its writers (two, when they wrote the same lie; more, when lies tie on laughs).
         const funny: { [pid: string]: { text: string; laughs: number } } = {};
         funniestLies(highlights).forEach(lie => lie.pids.forEach(pid => funny[pid] = { text: lie.text, laughs: lie.laughs }));
@@ -280,8 +325,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             place: places[i],
             me: !!myPid && p.pid === myPid,
             best: p.best,
-            // One clear "biggest bullshitter": nobody gets it on a tie.
-            biggest: mostFooled > 0 && biggest.length === 1 && biggest[0].pid === p.pid,
+            // Every player tied for most fooled is a biggest bullshitter; nobody when no lie fooled anyone.
+            biggest: biggest.indexOf(p.pid) >= 0,
             funniest: funny[p.pid],
         }));
         this.winners = this.displayPlayers.filter(p => p.place === 1);
@@ -344,6 +389,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     }
 
     private async onCrew(id: string) {
+        if (this.hadCrew === undefined) {
+            this.hadCrew = !!id;
+        }
         this.crewId = id || undefined;
         if (!id) {
             return;

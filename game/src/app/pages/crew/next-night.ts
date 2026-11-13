@@ -227,8 +227,23 @@ function nightEvent(start: Date, info: NightInfo, crewId: string): CalendarEvent
     return { title: nightTitle(info), text: nightText(start, info), url: info.url, uid: `${crewId}-${utcStamp(start)}` };
 }
 
-/** "Every Friday: Bullshit night for The Liars. Scores and rematch here:" */
+/**
+ * "Bullshit night for The Liars, every Friday at 21:00. Scores and rematch here:"
+ * The weekly entry repeats for months, so its text holds no dated line like who leads today:
+ * only the crew, the weekday and time, and its link, which shows the current scores.
+ */
 export function weeklyText(d: Date, info: NightInfo) {
+    const day = weekdayName(d, info.locale);
+    return info.locale === 'he'
+        ? `ערב בולשיט של ${info.crewName}, כל ${day} ב-${timeValue(d)}. הטבלה והמשחק החוזר כאן:`
+        : `Bullshit night for ${info.crewName}, every ${day} at ${timeValue(d)}. Scores and rematch here:`;
+}
+
+/**
+ * The message that goes into the group chat with the weekly file: sent once, on the day, so it may
+ * say who leads now. "Bullshit night for The Liars, every Friday at 21:00. Alice leads 4 to 3. Scores and rematch here:"
+ */
+export function weeklyShareText(d: Date, info: NightInfo) {
     const day = weekdayName(d, info.locale);
     const leader = leaderSentence(info.leader);
     return info.locale === 'he'

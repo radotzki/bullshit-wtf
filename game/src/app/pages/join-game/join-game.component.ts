@@ -177,6 +177,10 @@ export class JoinGameComponent implements OnInit {
     }
 
     async join() {
+        // A second tap while the first join is still on its way would ask for a second seat.
+        if (this.loading) {
+            return;
+        }
         this.loading = true;
         this.errorMsg = '';
 

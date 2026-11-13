@@ -8,7 +8,7 @@ import { ShareService } from './../../services/share.service';
 import { StorageService } from './../../services/storage.service';
 import {
     NightInfo, buildIcs, buildWeeklyCrewIcs, dateValue, defaultNight, googleCalendarUrl, googleWeeklyUrl, icsFileName,
-    nightLabel, nightText, nightTitle, parseNight, timeValue, weekdayName, weeklyFileName, weeklyText,
+    nightLabel, nightText, nightTitle, parseNight, timeValue, weekdayName, weeklyFileName, weeklyShareText,
 } from './next-night';
 import { CrewStrings, crewStrings, localeFromPath } from './crew-strings';
 import { markHosted } from '../../services/join-source';
@@ -333,7 +333,7 @@ export class CrewComponent implements OnInit, OnDestroy {
         if (file && this.shareService.canShareFiles([file])) {
             const result = await this.shareService.share({
                 title: nightTitle(info),
-                text: `${weeklyText(this.night, info)}\n${this.crewUrl}`,
+                text: `${weeklyShareText(this.night, info)}\n${this.crewUrl}`,
                 files: [file],
             }, null);
             if (result === 'shared') {

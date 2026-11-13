@@ -85,6 +85,9 @@ export interface GameScheme {
     // The question index `played` was first kept from: only ever 0. A game without it (one that was
     // already running when this was released) waits for every seat, as before.
     playedFrom?: number;
+    // Set when the game ends: the seats that sent a lie, a pick or a NEXT on its last question, the
+    // players still at the table. A Replay starts with these seats (fork.ts seatsForReplay). Server only.
+    lastSent?: { [pid: string]: boolean };
     // The saved crew this game counts for (set by a crew rematch, carried by Replay).
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.

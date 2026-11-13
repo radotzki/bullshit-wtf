@@ -57,7 +57,7 @@ test('the weekly entry repeats on the night\'s weekday at local time, with the c
     assert.ok(unfolded.includes('DTEND:20261113T223000\r\n'));
     assert.ok(unfolded.includes('UID:g4d48z-weekly@bullshit.wtf\r\n'));
     assert.ok(unfolded.includes('URL:https://bullshit.wtf/c/g4d48z?via=crew\r\n'));
-    assert.ok(unfolded.includes('DESCRIPTION:Bullshit night for Office Friday\\, every Friday at 21:00. Alice leads 4 to 3. Scores and rematch here:\\nhttps://bullshit.wtf/c/g4d48z?via=crew\r\n'));
+    assert.ok(unfolded.includes('DESCRIPTION:Bullshit night for Office Friday\\, every Friday at 21:00. Scores and rematch here:\\nhttps://bullshit.wtf/c/g4d48z?via=crew\r\n'));
     assert.ok(unfolded.includes('BEGIN:VALARM'));
     ics.split('\r\n').forEach(line => assert.ok(Buffer.byteLength(line, 'utf8') <= 75, line));
     assert.strictEqual(n.weeklyFileName('Office Friday'), 'bullshit-office-friday-weekly.ics');
@@ -66,7 +66,8 @@ test('the weekly entry repeats on the night\'s weekday at local time, with the c
 
 test('the weekly entry in Hebrew, and on another weekday when the crew picks one', () => {
     const d = n.parseNight('2026-11-13', '21:00');
-    assert.strictEqual(n.weeklyText(d, he), 'ערב בולשיט של המשפחה, כל יום שישי ב-21:00. דנה מוביל/ה 4–3. הטבלה והמשחק החוזר כאן:');
+    assert.strictEqual(n.weeklyText(d, he), 'ערב בולשיט של המשפחה, כל יום שישי ב-21:00. הטבלה והמשחק החוזר כאן:');
+    assert.strictEqual(n.weeklyShareText(d, he), 'ערב בולשיט של המשפחה, כל יום שישי ב-21:00. דנה מוביל/ה 4–3. הטבלה והמשחק החוזר כאן:');
     const ics = n.buildWeeklyCrewIcs(d, he, 'abc123', new Date());
     const unfolded = ics.replace(/\r\n /g, '');
     assert.ok(unfolded.includes('SUMMARY:ערב בולשיט: המשפחה\r\n'));
@@ -75,6 +76,20 @@ test('the weekly entry in Hebrew, and on another weekday when the crew picks one
     const sat = n.parseNight('2026-11-14', '20:30');
     assert.strictEqual(n.weeklyRule(sat), 'RRULE:FREQ=WEEKLY;BYDAY=SA');
     assert.ok(n.weeklyText(sat, info).includes('every Saturday at 20:30'));
+});
+
+test('the weekly entry holds no dated score, in the file, the Google link or either language', () => {
+    const d = n.parseNight('2026-11-13', '21:00');
+    [info, he].forEach(i => {
+        const unfolded = n.buildWeeklyCrewIcs(d, i, 'g4d48z', new Date()).replace(/\r\n /g, '');
+        assert.ok(!unfolded.includes(i.leader), unfolded);
+        assert.ok(!decodeURIComponent(n.googleWeeklyUrl(d, i, 'Asia/Jerusalem')).includes(i.leader));
+        assert.ok(!n.weeklyText(d, i).includes(i.leader));
+        assert.ok(n.weeklyShareText(d, i).includes(i.leader));
+    });
+    assert.strictEqual(n.weeklyShareText(d, info),
+        'Bullshit night for Office Friday, every Friday at 21:00. Alice leads 4 to 3. Scores and rematch here:');
+    assert.strictEqual(n.weeklyShareText(d, { ...info, leader: '' }), n.weeklyText(d, info));
 });
 
 test('the weekly Google Calendar link repeats every week in the phone\'s time zone', () => {
