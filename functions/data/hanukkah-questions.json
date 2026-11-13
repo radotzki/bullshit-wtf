@@ -15,9 +15,9 @@
     "questionText": "In 2013 the first day of Hanukkah fell on Thanksgiving, and Americans named the mash-up $blank$",
     "realAnswer": "thanksgivukkah",
     "fakeAnswers": [
-      "turkey latke day",
-      "the festival of gravy",
-      "menorah thursday"
+      "latkesgiving",
+      "pilgrimukkah",
+      "gobblekkah"
     ],
     "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
     "lang": "en",
@@ -27,9 +27,9 @@
     "questionText": "Before potatoes reached Europe, the first latkes were often made of $blank$",
     "realAnswer": "cheese",
     "fakeAnswers": [
-      "rice",
       "seaweed",
-      "chickpeas"
+      "bananas",
+      "sunflower seeds"
     ],
     "citation": "https://en.wikipedia.org/wiki/Latke",
     "lang": "en",
@@ -120,12 +120,12 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-11": {
-    "questionText": "On dreidels made in Israel, the last letter stands for \"here\" instead of \"$blank$\"",
-    "realAnswer": "there",
+    "questionText": "Israeli dreidels swap shin for pe, so they say \"a great miracle happened $blank$\"",
+    "realAnswer": "here",
     "fakeAnswers": [
-      "far away",
-      "in egypt",
-      "once upon a time"
+      "last tuesday",
+      "to grandma",
+      "by accident"
     ],
     "citation": "https://en.wikipedia.org/wiki/Dreidel",
     "lang": "en",
@@ -215,6 +215,714 @@
     "lang": "en",
     "pack": "hanukkah"
   },
+  "hanukkah-26-en-19": {
+    "questionText": "Some eat cheese on Hanukkah to honor Judith, who fed an enemy general salty cheese and wine, then $blank$",
+    "realAnswer": "cut off his head",
+    "fakeAnswers": [
+      "married him",
+      "stole his horse",
+      "sold him a goat"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Book_of_Judith",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-20": {
+    "questionText": "In 1979 the first national menorah was lit across from the White House, with president $blank$ taking part",
+    "realAnswer": "jimmy carter",
+    "fakeAnswers": [
+      "ronald reagan",
+      "gerald ford",
+      "richard nixon"
+    ],
+    "citation": "https://www.whitehousehistory.org/lighting-the-menorah-celebrating-hanukkah-at-the-white-house",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-21": {
+    "questionText": "The Hebrew word Hanukkah means $blank$",
+    "realAnswer": "dedication",
+    "fakeAnswers": [
+      "eight lights",
+      "the hammer",
+      "little oil"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-22": {
+    "questionText": "The Maccabee revolt began in the village of $blank$",
+    "realAnswer": "modiin",
+    "fakeAnswers": [
+      "jericho",
+      "bethlehem",
+      "nazareth"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Modi%27in_(ancient_city)",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-23": {
+    "questionText": "Judah's brother Eleazar died in battle, crushed by the $blank$ he stabbed from below, thinking the king rode it",
+    "realAnswer": "war elephant",
+    "fakeAnswers": [
+      "camel",
+      "siege tower",
+      "giant"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eleazar_Avaran",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-24": {
+    "questionText": "The menorah of the ancient Temple had $blank$ lamps",
+    "realAnswer": "seven",
+    "fakeAnswers": [
+      "eight",
+      "nine",
+      "twelve"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Temple_menorah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-25": {
+    "questionText": "Adam Sandler's 2002 animated Hanukkah movie is called $blank$",
+    "realAnswer": "eight crazy nights",
+    "fakeAnswers": [
+      "the latke kid",
+      "dreidel in the hood",
+      "oil be home for hanukkah"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eight_Crazy_Nights",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-26": {
+    "questionText": "On the dreidel, gimel means you take $blank$",
+    "realAnswer": "the whole pot",
+    "fakeAnswers": [
+      "half the pot",
+      "one coin",
+      "nothing"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-27": {
+    "questionText": "On Saturday Night Live, Jon Lovitz played $blank$, who filled in when Santa got sick",
+    "realAnswer": "hanukkah harry",
+    "fakeAnswers": [
+      "uncle menorah",
+      "the latke king",
+      "dreidel dave"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_Harry",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-28": {
+    "questionText": "The Jewish answer to Elf on the Shelf, pitched on Shark Tank, is called $blank$",
+    "realAnswer": "mensch on a bench",
+    "fakeAnswers": [
+      "rabbi on the radiator",
+      "mitzvah on a mantel",
+      "the latke elf"
+    ],
+    "citation": "https://www.entrepreneur.com/article/240838",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-29": {
+    "questionText": "Jewish law says Hanukkah candles must burn for at least $blank$ after nightfall",
+    "realAnswer": "half an hour",
+    "fakeAnswers": [
+      "three hours",
+      "until midnight",
+      "eight minutes"
+    ],
+    "citation": "https://www.chabad.org/holidays/chanukah/article_cdo/aid/603798/jewish/Chanukah-Guide.htm",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-30": {
+    "questionText": "The Maccabees rededicated the Temple in about $blank$",
+    "realAnswer": "164 bce",
+    "fakeAnswers": [
+      "70 ce",
+      "586 bce",
+      "1 bce"
+    ],
+    "citation": "https://www.britannica.com/topic/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-31": {
+    "questionText": "In the Talmud, the school of Shammai said the first night should have $blank$ candles, one fewer each night",
+    "realAnswer": "eight",
+    "fakeAnswers": [
+      "one",
+      "three",
+      "forty-four"
+    ],
+    "citation": "https://www.britannica.com/topic/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-32": {
+    "questionText": "On the new moon in the middle of Hanukkah, North African Jews held a festival of $blank$",
+    "realAnswer": "daughters",
+    "fakeAnswers": [
+      "grandfathers",
+      "goats",
+      "bakers"
+    ],
+    "citation": "https://www.jtsa.edu/chag-habanot-north-african-hanukkah-festival/",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-33": {
+    "questionText": "A Christmas tree in a Jewish home is jokingly called a $blank$",
+    "realAnswer": "hanukkah bush",
+    "fakeAnswers": [
+      "maccabee pine",
+      "kosher fir",
+      "oy tannenbaum"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_bush",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-34": {
+    "questionText": "New York has a competitive dreidel league called $blank$",
+    "realAnswer": "major league dreidel",
+    "fakeAnswers": [
+      "the spin cycle",
+      "the national dreidel association",
+      "dreidel world tour"
+    ],
+    "citation": "https://www.villagevoice.com/oy-vey-2/",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-35": {
+    "questionText": "Judah Maccabee's father Mattathias was a $blank$",
+    "realAnswer": "priest",
+    "fakeAnswers": [
+      "blacksmith",
+      "shepherd",
+      "tax collector"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mattathias",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-36": {
+    "questionText": "The Books of Maccabees are left out of the Jewish Bible but are in the $blank$",
+    "realAnswer": "catholic bible",
+    "fakeAnswers": [
+      "quran",
+      "book of mormon",
+      "iliad"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/1_Maccabees",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-37": {
+    "questionText": "A menorah lit at the doorway goes on the side opposite the $blank$",
+    "realAnswer": "mezuzah",
+    "fakeAnswers": [
+      "doorbell",
+      "shoe rack",
+      "welcome mat"
+    ],
+    "citation": "https://www.chabad.org/holidays/chanukah/article_cdo/aid/603798/jewish/Chanukah-Guide.htm",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-38": {
+    "questionText": "The Talmud asks who pays when a Hanukkah lamp sets fire to $blank$",
+    "realAnswer": "a camel carrying flax",
+    "fakeAnswers": [
+      "the rabbi's beard",
+      "a wedding canopy",
+      "a goat eating oil"
+    ],
+    "citation": "https://www.sefaria.org/Bava_Kamma.62b",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-39": {
+    "questionText": "The dreidel is a Jewish version of an old European gambling top called a $blank$",
+    "realAnswer": "teetotum",
+    "fakeAnswers": [
+      "whirlpenny",
+      "toppenny",
+      "spindletock"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Teetotum",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-40": {
+    "questionText": "Since 1946, University of Chicago professors have held a mock debate: latkes against $blank$",
+    "realAnswer": "hamantaschen",
+    "fakeAnswers": [
+      "bagels",
+      "matzah balls",
+      "gefilte fish"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke%E2%80%93Hamantash_Debate",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-41": {
+    "questionText": "A tune from Handel's oratorio about Judah Maccabee became a famous Christian hymn for $blank$",
+    "realAnswer": "easter",
+    "fakeAnswers": [
+      "halloween",
+      "the pope's birthday",
+      "new year's eve"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thine_Be_the_Glory",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-42": {
+    "questionText": "Hanukkah starts on the 25th of the Hebrew month $blank$",
+    "realAnswer": "kislev",
+    "fakeAnswers": [
+      "adar",
+      "nisan",
+      "tishrei"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kislev",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-43": {
+    "questionText": "The ancient historian Josephus called Hanukkah simply $blank$",
+    "realAnswer": "lights",
+    "fakeAnswers": [
+      "the oil",
+      "the hammer",
+      "the eight"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-44": {
+    "questionText": "For Thanksgivukkah 2013, a New York schoolboy invented the $blank$, a turkey-shaped menorah",
+    "realAnswer": "menurkey",
+    "fakeAnswers": [
+      "turkorah",
+      "gobbleorah",
+      "pilgrimorah"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-45": {
+    "questionText": "King Antiochus IV dedicated the Temple in Jerusalem to the Greek god $blank$",
+    "realAnswer": "zeus",
+    "fakeAnswers": [
+      "poseidon",
+      "hermes",
+      "ares"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-46": {
+    "questionText": "Before battle, the Seleucid army roused its elephants by showing them $blank$",
+    "realAnswer": "grape and mulberry juice",
+    "fakeAnswers": [
+      "red cloth",
+      "a mouse",
+      "burning torches"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Battle_of_Beth_Zechariah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-47": {
+    "questionText": "Woody Guthrie wrote Hanukkah songs, inspired by his mother-in-law, a $blank$",
+    "realAnswer": "yiddish poet",
+    "fakeAnswers": [
+      "kosher butcher",
+      "rabbi",
+      "latke champion"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Aliza_Greenblatt",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-48": {
+    "questionText": "In 1993, after a brick smashed a window showing a menorah in Billings, Montana, thousands of neighbors $blank$",
+    "realAnswer": "hung paper menorahs",
+    "fakeAnswers": [
+      "spun dreidels in the street",
+      "fried latkes at city hall",
+      "lit the mayor's house"
+    ],
+    "citation": "https://www.niot.org/nios-video/not-our-town",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-49": {
+    "questionText": "The first official White House Hanukkah party was held in 2001 by president $blank$",
+    "realAnswer": "george w. bush",
+    "fakeAnswers": [
+      "ronald reagan",
+      "jimmy carter",
+      "harry truman"
+    ],
+    "citation": "https://www.whitehousehistory.org/lighting-the-menorah-celebrating-hanukkah-at-the-white-house",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-50": {
+    "questionText": "In the English dreidel song, the dreidel is made out of $blank$",
+    "realAnswer": "clay",
+    "fakeAnswers": [
+      "plastic",
+      "wood",
+      "chocolate"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/I_Have_a_Little_Dreidel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-51": {
+    "questionText": "The Talmud says a Hanukkah lamp is not valid if placed higher than $blank$, because nobody looks up that high",
+    "realAnswer": "20 cubits",
+    "fakeAnswers": [
+      "10 cubits",
+      "the roof",
+      "a camel's head"
+    ],
+    "citation": "https://www.myjewishlearning.com/article/shabbat-22/",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-52": {
+    "questionText": "Hanukkah is the only Jewish holiday that runs across two $blank$",
+    "realAnswer": "hebrew months",
+    "fakeAnswers": [
+      "full moons",
+      "fast days",
+      "harvests"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-53": {
+    "questionText": "Medieval knights counted Judah Maccabee among the Nine $blank$",
+    "realAnswer": "worthies",
+    "fakeAnswers": [
+      "lions of god",
+      "swords",
+      "kings of cups"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nine_Worthies",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-54": {
+    "questionText": "The Second Book of Maccabees says King Antiochus died when his body was eaten by $blank$",
+    "realAnswer": "worms",
+    "fakeAnswers": [
+      "lions",
+      "crows",
+      "sharks"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-55": {
+    "questionText": "The Second Book of Maccabees says the first Hanukkah lasted eight days because it copied $blank$",
+    "realAnswer": "sukkot",
+    "fakeAnswers": [
+      "passover",
+      "the king's birthday",
+      "a greek wedding"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/2_Maccabees",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-56": {
+    "questionText": "The Hebrew word for jelly doughnut, sufganiyah, comes from the word for $blank$",
+    "realAnswer": "sponge",
+    "fakeAnswers": [
+      "sugar",
+      "pillow",
+      "sunset"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sufganiyah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-57": {
+    "questionText": "Israel's 10-agorot coin shows a menorah copied from a coin of the last king of the $blank$",
+    "realAnswer": "hasmoneans",
+    "fakeAnswers": [
+      "romans",
+      "babylonians",
+      "crusaders"
+    ],
+    "citation": "https://www.boi.org.il/en/bank-of-israel/education-and-visitors-center/the-currency-exhibit-development-of-money/part3",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-58": {
+    "questionText": "Hanukkah is in the New Testament too: $blank$ walked in the Temple during it",
+    "realAnswer": "jesus",
+    "fakeAnswers": [
+      "john the baptist",
+      "pontius pilate",
+      "mary magdalene"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/John_10",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-59": {
+    "questionText": "The Talmud says the one jar of pure oil the Maccabees found was sealed by the $blank$",
+    "realAnswer": "high priest",
+    "fakeAnswers": [
+      "king",
+      "army",
+      "temple cat"
+    ],
+    "citation": "https://www.sefaria.org/Shabbat.21b",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-60": {
+    "questionText": "Tom Lehrer's comic song puts Hanukkah in $blank$",
+    "realAnswer": "santa monica",
+    "fakeAnswers": [
+      "las vegas",
+      "tijuana",
+      "kalamazoo"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tom_Lehrer",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-61": {
+    "questionText": "The Maccabeats' 2010 viral Hanukkah song \"Candlelight\" was a parody of $blank$",
+    "realAnswer": "taio cruz's dynamite",
+    "fakeAnswers": [
+      "justin bieber's baby",
+      "lady gaga's poker face",
+      "train's hey soul sister"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Maccabeats",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-62": {
+    "questionText": "The words of the 2009 song \"Eight Days of Hanukkah\" were written by $blank$",
+    "realAnswer": "senator orrin hatch",
+    "fakeAnswers": [
+      "mitt romney",
+      "joe biden",
+      "john mccain"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Orrin_Hatch",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-63": {
+    "questionText": "Judah Maccabee signed a friendship treaty with $blank$",
+    "realAnswer": "rome",
+    "fakeAnswers": [
+      "egypt",
+      "carthage",
+      "babylon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Roman%E2%80%93Jewish_treaty",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-64": {
+    "questionText": "In Antiochus IV's day, his Greek kingdom was ruled from a city that is now in $blank$",
+    "realAnswer": "turkey",
+    "fakeAnswers": [
+      "greece",
+      "egypt",
+      "lebanon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antioch",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-65": {
+    "questionText": "The eighth day of Hanukkah has its own name: $blank$",
+    "realAnswer": "zot hanukkah",
+    "fakeAnswers": [
+      "the last oil",
+      "shamash day",
+      "big candle day"
+    ],
+    "citation": "https://www.chabad.org/library/article_cdo/aid/1053786/jewish/Zot-Chanukah.htm",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-66": {
+    "questionText": "The Hebrew word hanukkiah, for a Hanukkah menorah, is credited to the wife of $blank$",
+    "realAnswer": "eliezer ben-yehuda",
+    "fakeAnswers": [
+      "theodor herzl",
+      "david ben-gurion",
+      "the first chief rabbi"
+    ],
+    "citation": "https://www.hamichlol.org.il/%D7%97%D7%A0%D7%95%D7%9B%D7%99%D7%99%D7%94",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-67": {
+    "questionText": "Sephardic Jews fry Hanukkah fritters called $blank$",
+    "realAnswer": "bimuelos",
+    "fakeAnswers": [
+      "tostones",
+      "arepas",
+      "palomitas"
+    ],
+    "citation": "https://toriavey.com/hanukkah-bunuelos/",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-68": {
+    "questionText": "The Hanukkah hymn Ma'oz Tzur is usually sung in English as $blank$",
+    "realAnswer": "rock of ages",
+    "fakeAnswers": [
+      "eye of the tiger",
+      "candle in the wind",
+      "we will rock you"
+    ],
+    "citation": "https://www.myjewishlearning.com/article/maoz-tzur-rock-of-ages/",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-69": {
+    "questionText": "Judah was nicknamed Maccabee; his brother Jonathan was nicknamed $blank$",
+    "realAnswer": "apphus",
+    "fakeAnswers": [
+      "the lion",
+      "the eagle",
+      "the fox"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jonathan_Apphus",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-70": {
+    "questionText": "In 1951 Israel's prime minister David Ben-Gurion gave US president $blank$ a menorah",
+    "realAnswer": "harry truman",
+    "fakeAnswers": [
+      "dwight eisenhower",
+      "franklin roosevelt",
+      "john f. kennedy"
+    ],
+    "citation": "https://obamawhitehouse.archives.gov/photos-and-video/photo/2013/12/menorah-presented-harry-s-truman-prime-minister-david-ben-gurion-isra",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-71": {
+    "questionText": "Chocolate Hanukkah gelt was first made in the 1920s by the American candy company $blank$",
+    "realAnswer": "loft's",
+    "fakeAnswers": [
+      "hershey's",
+      "mars",
+      "tootsie roll"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_gelt",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-72": {
+    "questionText": "The first Chabad public menorah lighting, a campaign of the Lubavitcher Rebbe, was held in $blank$",
+    "realAnswer": "1974",
+    "fakeAnswers": [
+      "1948",
+      "1999",
+      "1967"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Public_menorah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-73": {
+    "questionText": "When King Antiochus IV tried to conquer Egypt, a Roman envoy stopped him by $blank$",
+    "realAnswer": "drawing a circle around him",
+    "fakeAnswers": [
+      "challenging him to a duel",
+      "giving him a map of rome",
+      "stealing his elephants"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gaius_Popillius_Laenas",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-74": {
+    "questionText": "Judah Maccabee's men hung the defeated general Nicanor's head and $blank$ outside Jerusalem",
+    "realAnswer": "right hand",
+    "fakeAnswers": [
+      "sword",
+      "sandals",
+      "helmet"
+    ],
+    "citation": "https://biblehub.com/catholic/1_maccabees/7-47.htm",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-75": {
+    "questionText": "In the 2003 comedy The Hebrew Hammer, the hero saves Hanukkah from $blank$",
+    "realAnswer": "santa's evil son",
+    "fakeAnswers": [
+      "the grinch",
+      "a giant latke",
+      "the ghost of antiochus"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Hebrew_Hammer_(film)",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-76": {
+    "questionText": "Judah's brother Simon, first ruler of the independent Hasmonean state, was killed at a banquet by $blank$",
+    "realAnswer": "his son-in-law",
+    "fakeAnswers": [
+      "his cook",
+      "an elephant",
+      "his brother"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ptolemy_son_of_Abubus",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-77": {
+    "questionText": "In old French playing cards, the jack of clubs was $blank$",
+    "realAnswer": "judah maccabee",
+    "fakeAnswers": [
+      "napoleon",
+      "robin hood",
+      "king antiochus"
+    ],
+    "citation": "https://i-p-c-s.org/faq/tmfaq.php",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
   "hanukkah-26-he-01": {
     "questionText": "ב-1993 האסטרונאוט ג'פרי הופמן סובב סביבון בחלל, במשימה לתקן את $blank$",
     "realAnswer": "טלסקופ האבל",
@@ -228,7 +936,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-02": {
-    "questionText": "בשנות ה-20 מי שדחפה את הסופגנייה להיות מאכל החנוכה בארץ הייתה $blank$",
+    "questionText": "בשנות ה-20 מי שהפכה את הסופגנייה למאכל החנוכה בארץ הייתה $blank$",
     "realAnswer": "ההסתדרות",
     "fakeAnswers": [
       "הסוכנות היהודית",
@@ -255,16 +963,16 @@
     "questionText": "לפני שתפוחי האדמה הגיעו לאירופה, הלביבות הראשונות הוכנו לרוב מ$blank$",
     "realAnswer": "גבינה",
     "fakeAnswers": [
-      "אורז",
       "אצות ים",
-      "חומוס"
+      "בננות",
+      "גרעיני חמנייה"
     ],
     "citation": "https://en.wikipedia.org/wiki/Latke",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-05": {
-    "questionText": "האותיות על הסביבון היו במקור מילים של הימורים ביידיש: נ' הייתה $blank$",
+    "questionText": "האותיות על הסביבון היו במקור מילים של הימורים ביידיש: נ' סימנה $blank$",
     "realAnswer": "כלום",
     "fakeAnswers": [
       "עכשיו",
@@ -336,7 +1044,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-11": {
-    "questionText": "ב-2013 היום הראשון של חנוכה יצא בדיוק ביום של $blank$ האמריקאי, והאמריקאים המציאו לצירוף שם",
+    "questionText": "ב-2013 היום הראשון של חנוכה יצא באותו יום עם $blank$ האמריקאי, ובארה\"ב חגגו את שניהם על שולחן אחד",
     "realAnswer": "חג ההודיה",
     "fakeAnswers": [
       "יום העצמאות",
@@ -404,6 +1112,678 @@
       "מכבי"
     ],
     "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-17": {
+    "questionText": "יש שאוכלים גבינה בחנוכה לזכר יהודית, שהאכילה מצביא אויב גבינה מלוחה ויין, ואז $blank$",
+    "realAnswer": "כרתה את ראשו",
+    "fakeAnswers": [
+      "התחתנה איתו",
+      "גנבה את הסוס שלו",
+      "מכרה לו עז"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Book_of_Judith",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-18": {
+    "questionText": "ב-1979 הודלקה לראשונה חנוכייה לאומית מול הבית הלבן, בהשתתפות הנשיא $blank$",
+    "realAnswer": "ג'ימי קרטר",
+    "fakeAnswers": [
+      "רונלד רייגן",
+      "ג'רלד פורד",
+      "ריצ'רד ניקסון"
+    ],
+    "citation": "https://www.whitehousehistory.org/lighting-the-menorah-celebrating-hanukkah-at-the-white-house",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-19": {
+    "questionText": "אלעזר, אחיו של יהודה המכבי, נהרג בקרב כשנמחץ תחת $blank$ שדקר מלמטה, כי חשב שהמלך רוכב עליו",
+    "realAnswer": "פיל מלחמה",
+    "fakeAnswers": [
+      "גמל",
+      "מגדל מצור",
+      "ענק"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eleazar_Avaran",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-20": {
+    "questionText": "במנורה של בית המקדש היו $blank$ נרות",
+    "realAnswer": "שבעה",
+    "fakeAnswers": [
+      "שמונה",
+      "תשעה",
+      "שנים עשר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Temple_menorah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-21": {
+    "questionText": "הסרט המצויר של אדם סנדלר על חנוכה, מ-2002, נקרא $blank$",
+    "realAnswer": "שמונה לילות מטורפים",
+    "fakeAnswers": [
+      "ילד הלביבות",
+      "סביבון בשכונה",
+      "הנס של סנדלר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eight_Crazy_Nights",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-22": {
+    "questionText": "בסביבון, ג' אומרת שלוקחים $blank$",
+    "realAnswer": "את כל הקופה",
+    "fakeAnswers": [
+      "חצי קופה",
+      "מטבע אחד",
+      "כלום"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-23": {
+    "questionText": "ב'סאטרדיי נייט לייב' ג'ון לוביץ גילם את $blank$, שהחליף את סנטה כשחלה",
+    "realAnswer": "הארי של חנוכה",
+    "fakeAnswers": [
+      "הדוד מנורה",
+      "מלך הלביבות",
+      "דייב סביבון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_Harry",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-24": {
+    "questionText": "התשובה היהודית לבובת 'אלף על המדף' האמריקאית, שהוצגה ב'שארק טנק', נקראת $blank$",
+    "realAnswer": "מנטש על ספסל",
+    "fakeAnswers": [
+      "רב על הרדיאטור",
+      "מצווה על המדף",
+      "שדון הלביבות"
+    ],
+    "citation": "https://www.entrepreneur.com/article/240838",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-25": {
+    "questionText": "לפי ההלכה, נרות חנוכה צריכים לדלוק לפחות $blank$ אחרי צאת הכוכבים",
+    "realAnswer": "חצי שעה",
+    "fakeAnswers": [
+      "שלוש שעות",
+      "עד חצות",
+      "שמונה דקות"
+    ],
+    "citation": "https://www.chabad.org/holidays/chanukah/article_cdo/aid/603798/jewish/Chanukah-Guide.htm",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-26": {
+    "questionText": "בית שמאי אמרו שבלילה הראשון מדליקים $blank$ נרות, ובכל לילה פוחתים אחד",
+    "realAnswer": "שמונה",
+    "fakeAnswers": [
+      "אחד",
+      "שלושה",
+      "ארבעים וארבעה"
+    ],
+    "citation": "https://www.sefaria.org/Shabbat.21b",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-27": {
+    "questionText": "בראש חודש טבת, באמצע חנוכה, חגגו יהודי צפון אפריקה את חג $blank$",
+    "realAnswer": "הבנות",
+    "fakeAnswers": [
+      "הסבים",
+      "העזים",
+      "האופים"
+    ],
+    "citation": "https://www.jtsa.edu/chag-habanot-north-african-hanukkah-festival/",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-28": {
+    "questionText": "עץ אשוח בבית יהודי בארה\"ב נקרא בצחוק $blank$",
+    "realAnswer": "שיח חנוכה",
+    "fakeAnswers": [
+      "אורן המכבים",
+      "אשוח כשר",
+      "עץ הנס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_bush",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-29": {
+    "questionText": "בניו יורק יש ליגה תחרותית של סביבונים בשם $blank$",
+    "realAnswer": "מייג'ור ליג דריידל",
+    "fakeAnswers": [
+      "גביע הסביבון",
+      "איגוד הסביבונאים",
+      "הסבב העולמי"
+    ],
+    "citation": "https://www.villagevoice.com/oy-vey-2/",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-30": {
+    "questionText": "מתתיהו, אביו של יהודה המכבי, היה $blank$",
+    "realAnswer": "כוהן",
+    "fakeAnswers": [
+      "נפח",
+      "רועה צאן",
+      "גובה מסים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mattathias",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-31": {
+    "questionText": "ספרי המקבים לא נכנסו לתנ\"ך, אבל הם כן נמצאים ב$blank$",
+    "realAnswer": "תנ\"ך הקתולי",
+    "fakeAnswers": [
+      "קוראן",
+      "ספר המורמונים",
+      "איליאדה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/1_Maccabees",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-32": {
+    "questionText": "חנוכייה שמדליקים בפתח הבית מניחים בצד שמול $blank$",
+    "realAnswer": "המזוזה",
+    "fakeAnswers": [
+      "הפעמון",
+      "ארון הנעליים",
+      "השטיח"
+    ],
+    "citation": "https://www.sefaria.org/Shabbat.22a",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-33": {
+    "questionText": "התלמוד דן במי משלם כשנר חנוכה מצית $blank$",
+    "realAnswer": "גמל טעון פשתן",
+    "fakeAnswers": [
+      "זקן של רב",
+      "חופת חתונה",
+      "עז שלקקה שמן"
+    ],
+    "citation": "https://www.sefaria.org/Bava_Kamma.62b",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-34": {
+    "questionText": "מאז 1946 פרופסורים באוניברסיטת שיקגו עורכים ויכוח היתולי: לביבות נגד $blank$",
+    "realAnswer": "אוזני המן",
+    "fakeAnswers": [
+      "בייגל",
+      "קניידלך",
+      "גפילטע פיש"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke%E2%80%93Hamantash_Debate",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-35": {
+    "questionText": "לחן מהאורטוריה של הנדל על יהודה המכבי הפך למזמור נוצרי מפורסם של חג $blank$",
+    "realAnswer": "הפסחא",
+    "fakeAnswers": [
+      "ליל כל הקדושים",
+      "יום ההולדת של האפיפיור",
+      "ראש השנה האזרחית"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thine_Be_the_Glory",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-36": {
+    "questionText": "ההיסטוריון יוסף בן מתתיהו קרא לחנוכה פשוט $blank$",
+    "realAnswer": "אורות",
+    "fakeAnswers": [
+      "השמן",
+      "הפטיש",
+      "השמונה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-37": {
+    "questionText": "לחנוכה של 2013, שיצא על חג ההודיה, ילד מניו יורק המציא $blank$: חנוכייה בצורת תרנגול הודו",
+    "realAnswer": "מנורקי",
+    "fakeAnswers": [
+      "הודוכייה",
+      "תרנגוכייה",
+      "פילגרימנורה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-38": {
+    "questionText": "אנטיוכוס הרביעי הקדיש את בית המקדש בירושלים לאל היווני $blank$",
+    "realAnswer": "זאוס",
+    "fakeAnswers": [
+      "פוסידון",
+      "הרמס",
+      "ארס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-39": {
+    "questionText": "לפני הקרב, הצבא הסלווקי הרגיז את הפילים שלו כשהראה להם $blank$",
+    "realAnswer": "מיץ ענבים ותותים",
+    "fakeAnswers": [
+      "בד אדום",
+      "עכבר",
+      "לפידים בוערים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Battle_of_Beth_Zechariah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-40": {
+    "questionText": "וודי גאתרי כתב שירי חנוכה בהשראת חמותו, שהייתה $blank$",
+    "realAnswer": "משוררת ביידיש",
+    "fakeAnswers": [
+      "קצבית כשרה",
+      "רבנית",
+      "אלופת לביבות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Aliza_Greenblatt",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-41": {
+    "questionText": "ב-1993, אחרי שלבנה ניפצה חלון עם חנוכייה בעיר בילינגס שבמונטנה, אלפי שכנים $blank$",
+    "realAnswer": "תלו חנוכיות מנייר",
+    "fakeAnswers": [
+      "סובבו סביבונים ברחוב",
+      "טיגנו לביבות בעירייה",
+      "הדליקו את בית ראש העיר"
+    ],
+    "citation": "https://www.niot.org/nios-video/not-our-town",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-42": {
+    "questionText": "מסיבת החנוכה הרשמית הראשונה בבית הלבן נערכה ב-2001, אצל הנשיא $blank$",
+    "realAnswer": "ג'ורג' וו. בוש",
+    "fakeAnswers": [
+      "רונלד רייגן",
+      "ג'ימי קרטר",
+      "הארי טרומן"
+    ],
+    "citation": "https://www.whitehousehistory.org/lighting-the-menorah-celebrating-hanukkah-at-the-white-house",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-43": {
+    "questionText": "לפי התלמוד, חנוכייה שמונחת גבוה מ$blank$ פסולה, כי אף אחד לא מרים את העיניים כל כך גבוה",
+    "realAnswer": "עשרים אמה",
+    "fakeAnswers": [
+      "עשר אמות",
+      "הגג",
+      "ראש של גמל"
+    ],
+    "citation": "https://www.sefaria.org/Shabbat.22a",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-44": {
+    "questionText": "חנוכה הוא החג היחיד שנמשך על פני שני $blank$",
+    "realAnswer": "חודשים עבריים",
+    "fakeAnswers": [
+      "ירחים מלאים",
+      "צומות",
+      "קצירים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-45": {
+    "questionText": "אבירי ימי הביניים מנו את יהודה המכבי בין תשעת $blank$",
+    "realAnswer": "הנכבדים",
+    "fakeAnswers": [
+      "אריות האל",
+      "החרבות",
+      "מלכי הגביעים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nine_Worthies",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-46": {
+    "questionText": "לפי ספר מקבים ב', אנטיוכוס מת כשגופו נאכל על ידי $blank$",
+    "realAnswer": "תולעים",
+    "fakeAnswers": [
+      "אריות",
+      "עורבים",
+      "כרישים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-47": {
+    "questionText": "לפי ספר מקבים ב', חנוכה הראשון נמשך שמונה ימים כי חגגו אותו כמו את $blank$",
+    "realAnswer": "סוכות",
+    "fakeAnswers": [
+      "פסח",
+      "יום ההולדת של המלך",
+      "חתונה יוונית"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/2_Maccabees",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-48": {
+    "questionText": "המנורה שעל מטבע 10 האגורות הועתקה ממטבע של המלך האחרון של בית $blank$",
+    "realAnswer": "חשמונאי",
+    "fakeAnswers": [
+      "הורדוס",
+      "דוד",
+      "רומא"
+    ],
+    "citation": "https://www.boi.org.il/en/bank-of-israel/education-and-visitors-center/the-currency-exhibit-development-of-money/part3",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-49": {
+    "questionText": "חנוכה מופיע גם בברית החדשה: $blank$ הסתובב בבית המקדש בחג",
+    "realAnswer": "ישו",
+    "fakeAnswers": [
+      "יוחנן המטביל",
+      "פונטיוס פילטוס",
+      "מרים המגדלית"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/John_10",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-50": {
+    "questionText": "לפי התלמוד, פך השמן היחיד שנמצא היה חתום בחותמו של $blank$",
+    "realAnswer": "הכוהן הגדול",
+    "fakeAnswers": [
+      "המלך",
+      "הצבא",
+      "חתול המקדש"
+    ],
+    "citation": "https://www.sefaria.org/Shabbat.21b",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-51": {
+    "questionText": "השיר ההיתולי של טום לירר מעביר את חנוכה ל$blank$",
+    "realAnswer": "סנטה מוניקה",
+    "fakeAnswers": [
+      "לאס וגאס",
+      "טיחואנה",
+      "קלמזו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tom_Lehrer",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-52": {
+    "questionText": "ב-2010 להקת המכבייטס כבשה את הרשת עם שיר חנוכה שהיה פרודיה על $blank$",
+    "realAnswer": "דינמיט של טאיו קרוז",
+    "fakeAnswers": [
+      "בייבי של ג'סטין ביבר",
+      "פוקר פייס של ליידי גאגא",
+      "היי סול סיסטר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Maccabeats",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-53": {
+    "questionText": "את המילים לשיר 'שמונה ימי חנוכה' מ-2009 כתב $blank$",
+    "realAnswer": "הסנטור אורין האץ'",
+    "fakeAnswers": [
+      "מיט רומני",
+      "ג'ו ביידן",
+      "ג'ון מקיין"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Orrin_Hatch",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-54": {
+    "questionText": "יהודה המכבי חתם על ברית ידידות עם $blank$",
+    "realAnswer": "רומא",
+    "fakeAnswers": [
+      "מצרים",
+      "קרתגו",
+      "בבל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Roman%E2%80%93Jewish_treaty",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-55": {
+    "questionText": "בימי אנטיוכוס הרביעי, הממלכה היוונית נשלטה מעיר שנמצאת היום ב$blank$",
+    "realAnswer": "טורקיה",
+    "fakeAnswers": [
+      "יוון",
+      "מצרים",
+      "לבנון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antioch",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-56": {
+    "questionText": "ליום השמיני של חנוכה יש שם משלו: $blank$",
+    "realAnswer": "זאת חנוכה",
+    "fakeAnswers": [
+      "השמן האחרון",
+      "יום השמש",
+      "הנר הגדול"
+    ],
+    "citation": "https://www.chabad.org/library/article_cdo/aid/1053786/jewish/Zot-Chanukah.htm",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-57": {
+    "questionText": "את המילה 'חנוכייה' מייחסים ל$blank$",
+    "realAnswer": "חמדה בן יהודה",
+    "fakeAnswers": [
+      "גולדה מאיר",
+      "רחל המשוררת",
+      "לאה גולדברג"
+    ],
+    "citation": "https://www.hamichlol.org.il/%D7%97%D7%A0%D7%95%D7%9B%D7%99%D7%99%D7%94",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-58": {
+    "questionText": "את 'סביבון סוב סוב סוב' כתב $blank$",
+    "realAnswer": "לוין קיפניס",
+    "fakeAnswers": [
+      "נעמי שמר",
+      "חיים נחמן ביאליק",
+      "אהוד מנור"
+    ],
+    "citation": "https://meyda.education.gov.il/files/PreSchool/sevivon1.pdf",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-59": {
+    "questionText": "במשך עשרות שנים, רצים העבירו בחנוכה לפיד שהודלק ב$blank$ עד ירושלים",
+    "realAnswer": "מודיעין",
+    "fakeAnswers": [
+      "מצדה",
+      "אילת",
+      "הכנרת"
+    ],
+    "citation": "https://www.jta.org/archive/maccabee-runners-mark-chanukah-by-carrying-torch-from-modiin-to-jerusalem",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-60": {
+    "questionText": "יהודים ספרדים מטגנים בחנוכה לביבות מתוקות שנקראות $blank$",
+    "realAnswer": "בימואלוס",
+    "fakeAnswers": [
+      "טוסטונס",
+      "ארפאס",
+      "פלומיטס"
+    ],
+    "citation": "https://toriavey.com/hanukkah-bunuelos/",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-61": {
+    "questionText": "הסביבון הוא גרסה יהודית לסביבון הימורים אירופי עתיק שנקרא $blank$",
+    "realAnswer": "טיטוטום",
+    "fakeAnswers": [
+      "וירלפני",
+      "טופני",
+      "ספינדלטוק"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Teetotum",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-62": {
+    "questionText": "את 'מעוז צור' שרים באנגלית בדרך כלל כ$blank$",
+    "realAnswer": "רוק אוף אייג'ס",
+    "fakeAnswers": [
+      "איי אוף דה טייגר",
+      "קנדל אין דה ווינד",
+      "וי וויל רוק יו"
+    ],
+    "citation": "https://www.myjewishlearning.com/article/maoz-tzur-rock-of-ages/",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-63": {
+    "questionText": "ב-1951 ראש הממשלה דוד בן גוריון העניק חנוכייה לנשיא ארה\"ב $blank$",
+    "realAnswer": "הארי טרומן",
+    "fakeAnswers": [
+      "דווייט אייזנהאואר",
+      "פרנקלין רוזוולט",
+      "ג'ון קנדי"
+    ],
+    "citation": "https://obamawhitehouse.archives.gov/photos-and-video/photo/2013/12/menorah-presented-harry-s-truman-prime-minister-david-ben-gurion-isra",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-64": {
+    "questionText": "כשאנטיוכוס הרביעי ניסה לכבוש את מצרים, שליח רומאי עצר אותו כש$blank$",
+    "realAnswer": "שרטט עיגול סביבו בחול",
+    "fakeAnswers": [
+      "הזמין אותו לדו-קרב",
+      "נתן לו מפה של רומא",
+      "גנב לו את הפילים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gaius_Popillius_Laenas",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-65": {
+    "questionText": "אנשי יהודה המכבי תלו מחוץ לירושלים את ראשו ואת $blank$ של המצביא המובס ניקנור",
+    "realAnswer": "ידו הימנית",
+    "fakeAnswers": [
+      "חרבו",
+      "סנדליו",
+      "קסדתו"
+    ],
+    "citation": "https://biblehub.com/catholic/1_maccabees/7-47.htm",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-66": {
+    "questionText": "בסרט הקומדיה 'הפטיש העברי' מ-2003 הגיבור מציל את חנוכה מ$blank$",
+    "realAnswer": "הבן המרושע של סנטה",
+    "fakeAnswers": [
+      "הגרינץ'",
+      "לביבה ענקית",
+      "רוח הרפאים של אנטיוכוס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Hebrew_Hammer_(film)",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-67": {
+    "questionText": "שמעון, אחי יהודה והשליט הראשון של המדינה החשמונאית העצמאית, נרצח במשתה בידי $blank$",
+    "realAnswer": "חתנו",
+    "fakeAnswers": [
+      "הטבח שלו",
+      "פיל",
+      "אחיו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ptolemy_son_of_Abubus",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-68": {
+    "questionText": "את דמי החנוכה מהשוקולד ייצרה לראשונה בשנות ה-20 חברת הממתקים האמריקאית $blank$",
+    "realAnswer": "לופטס",
+    "fakeAnswers": [
+      "הרשי'ס",
+      "מארס",
+      "טוטסי רול"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_gelt",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-69": {
+    "questionText": "יהודה כונה 'המכבי', ואחיו יונתן כונה $blank$",
+    "realAnswer": "אפפוס",
+    "fakeAnswers": [
+      "האריה",
+      "הנשר",
+      "השועל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jonathan_Apphus",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-70": {
+    "questionText": "הדלקת החנוכייה הציבורית הראשונה של חב\"ד, ביוזמת הרבי מלובביץ', נערכה בשנת $blank$",
+    "realAnswer": "1974",
+    "fakeAnswers": [
+      "1948",
+      "1999",
+      "1967"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Public_menorah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-71": {
+    "questionText": "בחפיסת הקלפים הצרפתית הישנה, הנסיך של תלתן היה $blank$",
+    "realAnswer": "יהודה המכבי",
+    "fakeAnswers": [
+      "נפוליאון",
+      "רובין הוד",
+      "אנטיוכוס"
+    ],
+    "citation": "https://i-p-c-s.org/faq/tmfaq.php",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-72": {
+    "questionText": "המכבים טיהרו וחנכו מחדש את בית המקדש בערך בשנת $blank$",
+    "realAnswer": "164 לפנה\"ס",
+    "fakeAnswers": [
+      "70 לספירה",
+      "586 לפנה\"ס",
+      "1 לפנה\"ס"
+    ],
+    "citation": "https://www.britannica.com/topic/Hanukkah",
     "lang": "he",
     "pack": "hanukkah"
   }
