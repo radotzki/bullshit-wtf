@@ -1,0 +1,168 @@
+$gold: #f3d467;
+$dark: #363636;
+$body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+.link-button {
+    padding: 4px 6px;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: #3273dc;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &[disabled] {
+        color: #b5b5b5;
+        cursor: default;
+    }
+}
+
+.tick {
+    color: #23a55a;
+    font-weight: 700;
+}
+
+// The same card as today's ask (host-ask), so the two halves of the test differ in words, not in weight.
+.invite-ask {
+    margin: 0 0 14px;
+    padding: 10px 12px 8px;
+    border-radius: 12px;
+    background: #fff8dc;
+    box-shadow: 0 0 0 2px $gold, 0 3px 0 rgba(0, 0, 0, .12);
+    color: $dark;
+    text-align: center;
+
+    &.is-rtl {
+        font-family: 'Suez One', $body-font;
+    }
+
+    .ask-title {
+        font-size: 1.15rem;
+        line-height: 1.2;
+    }
+
+    .ask-text,
+    .ask-now,
+    .ask-set {
+        font-family: $body-font;
+        font-size: .9rem;
+        line-height: 1.3;
+        color: #4a4a4a;
+    }
+
+    .ask-text {
+        margin: 2px 0 8px;
+    }
+
+    .invite-open {
+        height: auto;
+        min-height: 46px;
+        white-space: normal;
+        line-height: 1.25;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, .2);
+    }
+
+    .ask-set {
+        margin-top: 8px;
+    }
+
+    .ask-now {
+        margin-top: 4px;
+    }
+}
+
+.invite-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 8px 8px 0 0;
+    color: $dark;
+    text-align: center;
+    font-family: $body-font;
+
+    .sheet-title {
+        font-size: 1.3rem;
+        line-height: 1.2;
+        margin-bottom: 6px;
+    }
+
+    &.is-rtl .sheet-title {
+        font-family: 'Suez One', $body-font;
+    }
+
+    .sheet-when {
+        margin-bottom: 10px;
+        font-size: 1.05rem;
+
+        .when {
+            font-weight: 600;
+        }
+    }
+
+    .night-inputs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+
+        .input {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+    }
+
+    .sheet-error {
+        margin-bottom: 8px;
+        color: #cc0f35;
+        font-size: .9rem;
+    }
+
+    .button {
+        height: auto;
+        min-height: 46px;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .button + .button {
+        margin-top: 8px;
+    }
+
+    .whatsapp {
+        background-color: #25d366;
+        border-color: transparent;
+        color: #fff;
+
+        &.is-disabled {
+            opacity: .5;
+            pointer-events: none;
+        }
+    }
+
+    .sheet-google,
+    .sheet-other,
+    .sheet-note {
+        margin-top: 8px;
+        font-size: .9rem;
+    }
+
+    .sheet-google a {
+        text-decoration: underline;
+    }
+
+    .sheet-note {
+        color: #4a4a4a;
+    }
+
+    .notification {
+        margin: 10px 0 0;
+        padding: .75rem 1rem;
+
+        .link-button {
+            color: inherit;
+        }
+    }
+}
+
+.modal-card-foot {
+    justify-content: center;
+}

@@ -597,6 +597,122 @@ hours after) needs the date itself, which is in the Realtime Database (`crews/<i
 not in BigQuery: `opened_games.crew_id` gives the crew's games, and an `open-lobby` row on the day
 is the nearest sign in BigQuery alone.
 
+## Invite another group (a 50/50 test for guests)
+
+Every game seats about 4.4 people and makes one host; since 5 November 4 of 134 guests have hosted a
+game of their own. "START MY OWN GAME" asks a guest to open a lobby now, when the friends they could
+host are somewhere else. Half of guests now get another ask on the final screen, in its place:
+
+- **The ask:** "Know another group that would fall for this? Pick a night and send them the link.
+  You host: it's free and takes 10 seconds." with INVITE ANOTHER GROUP, and under it "or start a
+  game right now" (today's START MY OWN GAME as a text link). REMIND ME is not on it: the sheet's
+  calendar button does that job.
+- **The sheet** (YOUR GAME NIGHT): the coming Friday at 21:00, CHANGE for another day or time, SEND
+  ON WHATSAPP, ADD TO MY CALENDAR and "Share another way". The message leads with the guest's best
+  lie of the night when it fooled someone ("Tonight I fooled 3 people in Bullshit with this lie:
+  ..."), and the guest reads all of it in WhatsApp before sending.
+- **The link is a crew page**, "Noa's table": a crew with one member (the guest), no game, and the
+  night already stored, so it opens on "Who's in?" (above). Friends say "I'm in"; on the night the
+  guest presses OPEN THE LOBBY and hosts. The table's first game of two or more counts everyone
+  who sits down (a saved crew still needs half of its members there), and from then on it is a crew
+  like any other.
+- **The join page of a finished game** keeps today's ask, for everyone.
+- **Hanukkah wins on its evenings.** After a game of the Hanukkah pack, from the eve of the first
+  candle to the eighth (3 to 11 December 2026, an evening running to 05:00), every guest keeps
+  today's ask, which speaks of Hanukkah then (pull requests 100 and 104), and none of them is in
+  this test: no `seen-` row. The dates are `CANDLE_EVENINGS` in
+  `game/src/app/components/invite-group/invite-group.ts`, the same evenings as `hanukkahEvening`
+  in `host-ask.ts`; change both for another year.
+
+**Which half.** By browser: one bit of a hash of the browser's anonymous id (`inviteHalf` in
+`invite-group.ts`), so a browser keeps its half from game to game. A browser with no id (sign-in
+failed) keeps today's ask and is not in the test. Each guest's phone says which ask it showed, so the
+split is measured, not assumed. To see a half on purpose (a play-test): in the browser's console,
+`localStorage.BS_HOST_INVITE = 'new'` (or `'classic'`), then finish a game as a guest.
+
+- **Functions and site. No rule change, no BigQuery change, nothing to run before the merge.** One
+  new HTTP function, `createTable`; none removed or renamed. It merges after "Who's in?" (it needs
+  that page and `crewNight`).
+- **`createTable`** (`functions/src/controllers/crew.ts`) takes `{ pin, pid, time, uid }`: the
+  finished game the guest played in, the guest's seat, and the night. Only a player of a finished
+  game gets a table, under the nickname that game stored. It writes `crews/<id>` (as `createCrew`
+  does; phones still cannot write there) with `campaign: 'table'`, then the night through
+  `setCrewNight`. A time that is not ahead is refused and no crew is left behind.
+- **New on a crew:** `campaign` (`Crew` in `game-model.ts`), the campaign tag of every game the
+  crew's lobby opens. Only tables have one. A table made from a test game is a test crew, and its
+  games carry the test tag in its place.
+- **Old and new together.** An old site on the new functions never calls `createTable`. The new site
+  on old functions: the sheet opens, the table cannot be made, the sheet says "That did not go
+  through" with "Try again", and "or start a game right now" still works. Functions go first, as
+  always.
+
+**What it counts** (`shares`, `content_type = 'host-invite'`; no new column): `seen-new` and
+`seen-classic` (one per guest per final screen), `open` (the sheet), `whatsapp`, `native`, `copy`
+(the invitation went out, by which way), `calendar` and `google-calendar` (the night was saved),
+`create-now` ("or start a game right now"). From `open` on every row carries the table's id in
+`crew_id`. Today's ask keeps its `after-game` rows, in the other half and on Hanukkah evenings.
+
+**What it brings** (existing columns):
+
+- `opened_games.campaign = 'table'` with the table's `crew_id`: every game a table's lobby opened.
+- `opened_games.campaign = 'after-game-invite'`: a game made from "or start a game right now".
+  `campaign LIKE 'after-game%'` still counts every game the two asks made on the spot.
+- The table's link carries `?via=table`, so a friend who creates a game of their own in the tab it
+  opened also gets `campaign = 'table'` (without a `crew_id`).
+- Friends' "I'm in" on a table are `crew-night` rows (`in-new`) with the table's `crew_id`.
+
+How to read it (read-only; replace `<release time>`; leave out testers' browsers as in "Test games"):
+
+```sql
+-- The split, and the press rate: of guests who saw each ask, how many acted on it.
+WITH seen AS (
+  SELECT uid, IF(method = 'seen-new', 'new', 'classic') AS half, MIN(time) AS first_seen
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'host-invite' AND method IN ('seen-new', 'seen-classic')
+    AND time >= TIMESTAMP('<release time>') AND uid IS NOT NULL
+  GROUP BY uid, half
+), acted AS (
+  SELECT uid,
+    COUNTIF(content_type = 'host-invite' AND method = 'open') AS opens,
+    COUNTIF(content_type = 'host-invite' AND method IN ('whatsapp', 'native', 'copy')) AS sends,
+    COUNTIF(content_type = 'host-invite' AND method IN ('calendar', 'google-calendar')) AS saves,
+    COUNTIF((content_type = 'host-invite' AND method = 'create-now')
+      OR (content_type = 'after-game' AND method = 'create')) AS creates_now,
+    COUNTIF(content_type = 'after-game' AND method IN ('remind', 'remind-google')) AS reminders
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE time >= TIMESTAMP('<release time>')
+  GROUP BY uid
+)
+SELECT half, COUNT(*) AS guests,
+  COUNTIF(opens > 0) AS opened_the_sheet,
+  COUNTIF(sends > 0) AS sent_an_invitation,
+  COUNTIF(saves > 0) AS saved_the_night,
+  COUNTIF(creates_now > 0) AS started_a_game_now,
+  COUNTIF(reminders > 0) AS asked_for_a_reminder
+FROM seen LEFT JOIN acted USING (uid)
+GROUP BY half;
+
+-- Tables that played: each row is a group that would not have existed.
+SELECT crew_id, id AS pin, players, locale, time
+FROM `bullshit-wtf-prod.analytics.opened_games`
+WHERE campaign = 'table' AND time >= TIMESTAMP('<release time>')
+ORDER BY time;
+```
+
+The real read is guests who host within 28 days, by half (`reports/queries/06` with `seen.half`
+joined on the guest's uid). It is slow: about 50 guests a half each week.
+
+**Check on a phone.** Finish a game of two or more as a guest with the switch above set to `new`:
+the gold card under SHARE RESULTS reads "Know another group that would fall for this?". INVITE
+ANOTHER GROUP opens the sheet; SEND ON WHATSAPP opens WhatsApp with the message and a
+`bullshit.wtf/c/<id>?via=table` link. Open that link in a private window: GAME NIGHT, the date,
+your name under WHO'S IN?, and a name field for the friend.
+
+A whole run on the Firebase emulators, in English or Hebrew (a test game from a `?via=test` link, a
+guest in each half, the invitation, two friends, the night, the table's first game, and the Hanukkah
+evening): `node .github/smoke/emulator-invite-group.js [--locale he]`, after building `functions/`
+and `game/`. It takes about five minutes.
+
 ## Opening questions
 
 - Questions can carry `opener: true`. In a normal game, question 1 is an opener nobody in the room has

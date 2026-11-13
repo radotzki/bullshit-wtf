@@ -1,7 +1,10 @@
-import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign } from '../game-model';
+import {
+    Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign, crewMemberKey, TABLE_CAMPAIGN,
+} from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
 import { newGame } from './new-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
+import { setCrewNight } from './crew-night';
 
 // Ids look like "k7m2qx": no 0/o, 1/l/i, so they survive being read aloud or retyped.
 const ID_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
@@ -123,6 +126,72 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
     return { id, name: crewName };
 }
 
+/** "Noa's table" / "השולחן של נועה": the name of the crew a guest makes to invite another group. */
+export function tableName(nickname: string, locale: string): string {
+    const name = cleanCrewName(locale === 'he' ? `השולחן של ${nickname}` : `${nickname}'s table`);
+    // A nickname in a game has passed the filter already; this is for the two words together.
+    return nameFlag(name) ? (locale === 'he' ? 'ערב משחק' : 'Game night') : name;
+}
+
+/**
+ * INVITE ANOTHER GROUP: a guest of a finished game makes a crew of their own to send to other
+ * friends. It has one member (the guest, with no game yet), no game, and a night already set, so its
+ * link opens as the door to that night (see crew-night.ts). Whoever opens its lobby on the night
+ * hosts, and its games carry the campaign `table`. Its first game counts everyone who shows up
+ * (see applyCrewGame).
+ *
+ * Only a player of a finished game can make one: the nickname is the one that game stored.
+ */
+export async function createTable(pin: any, pid: any, time: any, uid?: string)
+    : Promise<{ id: string; name: string; time: number }> {
+    pin = String(pin || '').toUpperCase();
+    const game = await get<GameScheme>(gamesRef.child(pin));
+
+    if (!game) {
+        return fail('Game does not exist', 'GAME_NOT_EXIST');
+    }
+    if (!game.state || game.state.id !== GameState.ScoreBoardFinal) {
+        return fail('Finish the game first', 'GAME_NOT_FINISHED');
+    }
+    const player = typeof pid === 'string' && game.players ? game.players[pid] : null;
+    const nickname = player ? String(player.nickname || '').trim() : '';
+    if (!nickname) {
+        return fail('Only a player of this game can invite a group', 'NOT_A_PLAYER');
+    }
+
+    const locale = game.locale === 'he' ? 'he' : 'en';
+    const id = await unusedId();
+    const crew: Crew = {
+        id,
+        name: tableName(nickname, locale),
+        locale,
+        totalQ: game.totalQ || 7,
+        createdAt: Date.now(),
+        members: { [crewMemberKey(nickname)]: { nickname, games: 0, wins: 0, points: 0, best: 0 } },
+        gameCount: 0,
+        campaign: TABLE_CAMPAIGN,
+    };
+    if (uid) {
+        crew.creator = uid;
+        // The guest's browser: the table's first game skips the questions it has seen.
+        crew.members[crewMemberKey(nickname)].uids = { [uid]: true };
+    }
+    // A table made from a test game is a test crew: its games carry the test mark, not `table`.
+    if (isTestCampaign(game.campaign)) {
+        crew.test = game.campaign;
+    }
+
+    await crewsRef.child(id).set(crew);
+    try {
+        const { night } = await setCrewNight(id, time, nickname);
+        return { id, name: crew.name, time: night.time };
+    } catch (e) {
+        // A table without a night is a link to an empty page: none is made.
+        await crewsRef.child(id).set(null);
+        throw e;
+    }
+}
+
 function claimGame(pin: string, id: string): Promise<string> {
     return new Promise((resolve, reject) => {
         gamesRef.child(pin).child('crew').transaction(
@@ -157,7 +226,8 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
 
     const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
         crew: id, uids, pack: seasonalPack(), hostKey, serverStart, stagedReveal,
-        campaign: isTestCampaign(crew.test) ? crew.test : undefined,
+        // A test crew's games are test games; a guest's table marks its games `table`.
+        campaign: isTestCampaign(crew.test) ? crew.test : crew.campaign,
     });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });
     return { pin, created: true };
