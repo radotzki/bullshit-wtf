@@ -430,3 +430,81 @@ test('the reveal\'s score changes and the server\'s totals agree on an About que
     assert.strictEqual(changes.b, 2 * scoring.pointsForBullshitting[1]);
     assert.strictEqual(changes.a, scoring.pointsForCorrectAnswer[1] + scoring.pointsForBullshitting[1]);
 });
+
+// ---------------------------------------------------------------------------- with a seasonal pack
+
+const { pickWithPack } = require(path.join(dist, 'controllers', 'question-picker'));
+
+/** A pack game's questions as the server picks them: bank b0.., pack h0..h2 spread by pickWithPack. */
+function packQids(totalQ) {
+    const bank = Array.from({ length: totalQ }, (_, i) => `b${i}`);
+    return pickWithPack(bank, ['h0', 'h1', 'h2'], [], totalQ, model.questionPacks.hanukkah.perGame);
+}
+
+test('a pack game keeps its three pack questions clear of the About places, at 5, 7 and 9 questions', () => {
+    const isPackQ = id => id[0] === 'h';
+    const expected = { 5: 'PAPAP', 7: 'PRAPAPR', 9: 'PRAPARAPR' };
+    [5, 7, 9].forEach(totalQ => {
+        const qids = packQids(totalQ);
+        const places = about.aboutSlots(totalQ);
+        // Without the fix one pack question sits on an About place (and the About question would win).
+        assert.ok(places.some(p => isPackQ(qids[p])), `${totalQ}: the spreads share a place`);
+        const fixed = about.clearAboutPlaces(qids, places, isPackQ);
+        assert.deepStrictEqual(fixed.slice().sort(), qids.slice().sort(), `${totalQ}: same questions`);
+        assert.strictEqual(fixed.filter(isPackQ).length, 3);
+        assert.ok(isPackQ(fixed[0]), `${totalQ}: a pack question still opens the game`);
+        const shape = fixed.map((id, i) => places.indexOf(i) >= 0 ? 'A' : isPackQ(id) ? 'P' : 'R').join('');
+        assert.strictEqual(shape, expected[totalQ], `${totalQ}`);
+    });
+    // No pack question on an About place: nothing moves.
+    assert.deepStrictEqual(about.clearAboutPlaces(['h0', 'b1', 'h2', 'b3', 'h4'], [1, 3], isPackQ), ['h0', 'b1', 'h2', 'b3', 'h4']);
+});
+
+async function playPackGame(totalQ, opts = {}) {
+    const pin = newGame(opts.seats || 4, { totalQ, locale: opts.locale });
+    const g = game(pin);
+    const lang = opts.locale || 'en';
+    g.pack = 'hanukkah';
+    g.qids = packQids(totalQ);
+    g.qids.forEach(id => {
+        db.questions[id] = id[0] === 'h'
+            ? { lang, pack: 'hanukkah', questionText: `Pack question ${id} is $blank$`, realAnswer: `truth ${id}`, fakeAnswers: ['pack a', 'pack b', 'pack c'], citation: '' }
+            : { lang, questionText: `Bank question ${id} is $blank$`, realAnswer: `truth ${id}`, fakeAnswers: ['house a', 'house b', 'house c', 'house d', 'house e'], citation: '' };
+    });
+    const played = [];
+    for (let i = 0; i < 120 && state(pin) !== S.ScoreBoardFinal; i++) {
+        const cur = game(pin);
+        if (state(pin) === S.ShowQuestion) {
+            const a = model.aboutOf(cur.state);
+            played[cur.questionIndex] = a ? 'A' : /Pack question/.test(cur.currentQ) ? 'P' : 'R';
+            for (const pid of pids(pin)) {
+                if (a && pid === a.pid && opts.silentNamed) continue;
+                await answer(pin, pid, a && pid === a.pid ? 'My Dog Rex' : `${pid} lie ${cur.questionIndex}`);
+            }
+            if (state(pin) === S.ShowQuestion) {
+                // The named player's clock runs out (see 'the named player sends nothing').
+                await new Promise(r => setTimeout(r, 5));
+                await next(pin);
+            }
+        } else if (state(pin) === S.ShowAnswers) {
+            const texts = Object.keys(cur.answers).map(k => cur.answers[k].text);
+            for (const pid of pids(pin)) await pick(pin, pid, texts[pid.length % texts.length]);
+            if (state(pin) === S.ShowAnswers) await next(pin);
+        } else {
+            await next(pin);
+        }
+    }
+    assert.strictEqual(state(pin), S.ScoreBoardFinal);
+    return played.join('');
+}
+
+test('a Hanukkah game in the About half plays three pack questions and its About questions, at 5, 7 and 9', async () => {
+    assert.strictEqual(await playPackGame(5), 'PAPAP');
+    assert.strictEqual(await playPackGame(7), 'PRAPAPR');
+    assert.strictEqual(await playPackGame(9, { locale: 'he' }), 'PRAPARAPR');
+});
+
+test('a Hanukkah game whose named player stays silent still plays three pack questions', async () => {
+    // Each About question falls back to the question of its place, a bank one now.
+    assert.strictEqual(await playPackGame(5, { silentNamed: true }), 'PRPRP');
+});

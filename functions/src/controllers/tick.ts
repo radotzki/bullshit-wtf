@@ -1,6 +1,6 @@
 import { getQuestion, randomQuestions, markQuestionSeen, seenRecordsFor } from './questions';
 import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart, aboutOf, sentMark } from '../game-model';
-import { get, gamesRef, qHistoryRef } from '../firebase';
+import { get, gamesRef, qHistoryRef, questionsRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
 import { pickHouseLies } from './answer-options';
 import { cleanHouseLies } from './house-lie-cleanup';
@@ -11,8 +11,8 @@ import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTast
 import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
 import {
-    ABOUT_SEEN_PREFIX, aboutAnswers, aboutColumns, aboutQuestionText, carryAbout, nameFor, planAbout, plannedSlot, playsAboutUs,
-    slotKey, truthOf, withAbout,
+    ABOUT_SEEN_PREFIX, aboutAnswers, aboutColumns, aboutQuestionText, carryAbout, clearAboutPlaces, nameFor, planAbout, plannedSlot,
+    playsAboutUs, slotKey, truthOf, withAbout,
 } from './about';
 
 // How long a run waits before its second try at leaving a phase of no length.
@@ -216,10 +216,12 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
                 };
             }
 
+            const qids = await pickQuestionsForRoom(game);
+            const aboutPlan = await aboutPlanFor(game, taste);
             return Object.assign({
                 state: updateState(GameState.RoundIntro),
-                qids: await pickQuestionsForRoom(game),
-            }, await aboutPlanFor(game, taste));
+                qids: await packClearOfAbout(game, qids, aboutPlan.aboutQs),
+            }, aboutPlan);
 
         case GameState.RoundIntro:
             if (taste) {
@@ -544,6 +546,29 @@ async function aboutAnswersStep(pin: string, game: GameScheme): Promise<Partial<
         [`aboutQs/${key}/result`]: 'played',
         [`players/${truth.pid}/sent`]: sentMark(state),
     } as Partial<GameScheme>;
+}
+
+/**
+ * At START, in a pack game that plays About questions: the questions reordered so that every pack question
+ * is played (see clearAboutPlaces). On any failure the order is kept, as before.
+ */
+async function packClearOfAbout(game: GameScheme, qids: any, aboutQs: GameScheme['aboutQs']): Promise<any> {
+    if (!game.pack || !aboutQs || !qids || typeof qids !== 'object') {
+        return qids;
+    }
+    try {
+        const list: string[] = Array.isArray(qids) ? qids : Object.keys(qids).sort((a, b) => +a - +b).map(k => qids[k]);
+        const places = Object.keys(aboutQs).map(k => Number(k.slice(1))).filter(n => Number.isInteger(n));
+        const questions = await Promise.all(list.map(qid => qid ? get<any>(questionsRef.child(qid)) : Promise.resolve(null)));
+        const pack = new Set(list.filter((qid, i) => !!questions[i] && questions[i].pack === game.pack));
+        if (!places.some(place => pack.has(list[place]))) {
+            return qids;
+        }
+        return clearAboutPlaces(list, places, qid => pack.has(qid));
+    } catch (e) {
+        console.error('Failed to keep the pack questions clear of the About questions', e);
+        return qids;
+    }
 }
 
 /** At START: the About questions of a game that plays them (see about.ts), or nothing to write. */
