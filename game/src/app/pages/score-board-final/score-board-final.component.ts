@@ -15,6 +15,7 @@ import { rematchMove, rematchStrings, showHostAsk } from './../../components/hos
 import { GameState } from './../../game-model';
 import { StorageService } from './../../services/storage.service';
 import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
+import { biggestBullshitters } from './biggest';
 
 export interface FinalPlayer {
     nickname: string;
@@ -312,8 +313,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }))
             .sort((a, b) => b.score - a.score);
         const places = finalPlaces(players.map(p => p.score));
-        const mostFooled = Math.max(0, ...players.map(p => p.best ? p.best.total || 0 : 0));
-        const biggest = players.filter(p => p.best && (p.best.total || 0) === mostFooled);
+        const biggest = biggestBullshitters(players);
         // The funniest lie: its writers (two, when they wrote the same lie; more, when lies tie on laughs).
         const funny: { [pid: string]: { text: string; laughs: number } } = {};
         funniestLies(highlights).forEach(lie => lie.pids.forEach(pid => funny[pid] = { text: lie.text, laughs: lie.laughs }));
@@ -325,8 +325,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             place: places[i],
             me: !!myPid && p.pid === myPid,
             best: p.best,
-            // One clear "biggest bullshitter": nobody gets it on a tie.
-            biggest: mostFooled > 0 && biggest.length === 1 && biggest[0].pid === p.pid,
+            // Every player tied for most fooled is a biggest bullshitter; nobody when no lie fooled anyone.
+            biggest: biggest.indexOf(p.pid) >= 0,
             funniest: funny[p.pid],
         }));
         this.winners = this.displayPlayers.filter(p => p.place === 1);
