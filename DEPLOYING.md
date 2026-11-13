@@ -305,7 +305,8 @@ prints less, never more.
 
 ## Build
 
-Needs Node 20 or newer (tested on Node 22; the workflows use 22).
+Needs Node 22 or newer. The workflows build the site and run the deploy on Node 24, and test the
+functions on Node 22, the functions' Cloud runtime.
 
 ```sh
 npm install                       # Firebase CLI 15
