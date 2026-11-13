@@ -1,0 +1,1322 @@
+{
+  "fact-26-en-01": {
+    "questionText": "A group of ferrets is called a $blank$",
+    "realAnswer": "business",
+    "fakeAnswers": [
+      "mischief",
+      "scurry",
+      "tangle"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ferret",
+    "lang": "en"
+  },
+  "fact-26-en-02": {
+    "questionText": "Butterflies taste their food with their $blank$",
+    "realAnswer": "feet",
+    "fakeAnswers": [
+      "wings",
+      "antennae tips",
+      "eyes"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Butterfly",
+    "lang": "en"
+  },
+  "fact-26-en-03": {
+    "questionText": "When a pistol shrimp snaps its claw, the bubble it makes gets almost as hot as the $blank$",
+    "realAnswer": "surface of the sun",
+    "fakeAnswers": [
+      "inside of a volcano",
+      "core of the earth",
+      "a candle flame"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Alpheidae",
+    "lang": "en"
+  },
+  "fact-26-en-04": {
+    "questionText": "Cats cannot taste $blank$",
+    "realAnswer": "sweetness",
+    "fakeAnswers": [
+      "salt",
+      "sour milk",
+      "bitterness"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cat",
+    "lang": "en"
+  },
+  "fact-26-en-05": {
+    "questionText": "Greenland sharks can live for centuries, and only become adults at about $blank$",
+    "realAnswer": "150 years old",
+    "fakeAnswers": [
+      "40 years old",
+      "12 years old",
+      "300 years old"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Greenland_shark",
+    "lang": "en"
+  },
+  "fact-26-en-06": {
+    "questionText": "Sea cucumbers breathe through their $blank$",
+    "realAnswer": "butt",
+    "fakeAnswers": [
+      "ears",
+      "toes",
+      "eyelids"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sea_cucumber",
+    "lang": "en"
+  },
+  "fact-26-en-07": {
+    "questionText": "Lab rats make laughing sounds when they are $blank$",
+    "realAnswer": "tickled",
+    "fakeAnswers": [
+      "fed cheese",
+      "watching cats",
+      "drunk"
+    ],
+    "citation": "https://www.scientificamerican.com/article/rats-laugh-but-not-like-human/",
+    "lang": "en"
+  },
+  "fact-26-en-08": {
+    "questionText": "Seattle crows mobbed researchers for years after they wore a $blank$ mask",
+    "realAnswer": "caveman",
+    "fakeAnswers": [
+      "clown",
+      "dracula",
+      "richard nixon"
+    ],
+    "citation": "https://www.livescience.com/14819-crows-learn-dangerous-faces.html",
+    "lang": "en"
+  },
+  "fact-26-en-09": {
+    "questionText": "When threatened, some horned lizards squirt $blank$ from their eyes",
+    "realAnswer": "blood",
+    "fakeAnswers": [
+      "tears",
+      "venom",
+      "glitter"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Horned_lizard",
+    "lang": "en"
+  },
+  "fact-26-en-10": {
+    "questionText": "In 1518, dozens of people in Strasbourg could not stop $blank$",
+    "realAnswer": "dancing",
+    "fakeAnswers": [
+      "laughing",
+      "sneezing",
+      "singing"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dancing_plague_of_1518",
+    "lang": "en"
+  },
+  "fact-26-en-11": {
+    "questionText": "The 1896 war between Britain and Zanzibar lasted about $blank$",
+    "realAnswer": "38 minutes",
+    "fakeAnswers": [
+      "3 days",
+      "a weekend",
+      "one afternoon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Anglo-Zanzibar_War",
+    "lang": "en"
+  },
+  "fact-26-en-12": {
+    "questionText": "Ancient Egyptians used $blank$ as a contraceptive",
+    "realAnswer": "crocodile dung",
+    "fakeAnswers": [
+      "onion juice",
+      "camel hair",
+      "beetle wings"
+    ],
+    "citation": "https://www.worldhistory.org/article/2054/family-planning-in-the-ancient-near-east/",
+    "lang": "en"
+  },
+  "fact-26-en-13": {
+    "questionText": "Oxford University is older than the $blank$ empire",
+    "realAnswer": "aztec",
+    "fakeAnswers": [
+      "roman",
+      "byzantine",
+      "persian"
+    ],
+    "citation": "https://www.ox.ac.uk/about/organisation/history",
+    "lang": "en"
+  },
+  "fact-26-en-14": {
+    "questionText": "Tug of war was an Olympic sport until $blank$",
+    "realAnswer": "1920",
+    "fakeAnswers": [
+      "1896",
+      "1968",
+      "1984"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tug_of_war_at_the_Summer_Olympics",
+    "lang": "en"
+  },
+  "fact-26-en-15": {
+    "questionText": "From 1912 to 1948, the Olympics also handed out medals for $blank$",
+    "realAnswer": "art",
+    "fakeAnswers": [
+      "cooking",
+      "dancing",
+      "poetry slams"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Art_competitions_at_the_Summer_Olympics",
+    "lang": "en"
+  },
+  "fact-26-en-16": {
+    "questionText": "In 1923, jockey Frank Hayes won a horse race even though he was $blank$",
+    "realAnswer": "dead",
+    "fakeAnswers": [
+      "blindfolded",
+      "riding backwards",
+      "asleep"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Frank_Hayes_(jockey)",
+    "lang": "en"
+  },
+  "fact-26-en-17": {
+    "questionText": "In 1386, in Falaise, France, a $blank$ was put on trial and hanged for murder",
+    "realAnswer": "pig",
+    "fakeAnswers": [
+      "parrot",
+      "goat",
+      "dog"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Animal_trial",
+    "lang": "en"
+  },
+  "fact-26-en-18": {
+    "questionText": "The Eiffel Tower was supposed to stand for only $blank$",
+    "realAnswer": "20 years",
+    "fakeAnswers": [
+      "one summer",
+      "5 years",
+      "100 days"
+    ],
+    "citation": "https://www.toureiffel.paris/en/news/130-years/how-did-radio-save-tower",
+    "lang": "en"
+  },
+  "fact-26-en-19": {
+    "questionText": "In 1958, the US Air Force planned to $blank$ to show off its power",
+    "realAnswer": "nuke the moon",
+    "fakeAnswers": [
+      "paint the moon",
+      "build a fake sun",
+      "nuke antarctica"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Project_A119",
+    "lang": "en"
+  },
+  "fact-26-en-20": {
+    "questionText": "Shakespeare's will left his wife his $blank$",
+    "realAnswer": "second-best bed",
+    "fakeAnswers": [
+      "oldest horse",
+      "broken quill",
+      "unpaid debts"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Anne_Hathaway_(wife_of_Shakespeare)",
+    "lang": "en"
+  },
+  "fact-26-en-21": {
+    "questionText": "Dogs were banned at Lord Byron's Cambridge college, so he kept a $blank$",
+    "realAnswer": "bear",
+    "fakeAnswers": [
+      "wolf",
+      "goat",
+      "pet eagle"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Lord_Byron",
+    "lang": "en"
+  },
+  "fact-26-en-22": {
+    "questionText": "Mozart had a pet $blank$ that could sing part of his piano concerto",
+    "realAnswer": "starling",
+    "fakeAnswers": [
+      "parrot",
+      "canary",
+      "mouse"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mozart%27s_starling",
+    "lang": "en"
+  },
+  "fact-26-en-23": {
+    "questionText": "As a student, Charles Darwin was in a club that dined weekly on rare delicacies, called the $blank$ club",
+    "realAnswer": "glutton",
+    "fakeAnswers": [
+      "beagle",
+      "fork",
+      "brave tongue"
+    ],
+    "citation": "https://www.christs.cam.ac.uk/darwins-friends-cambridge-most-popular-and-most-welcome",
+    "lang": "en"
+  },
+  "fact-26-en-24": {
+    "questionText": "US president Calvin Coolidge had a pet $blank$ named Rebecca",
+    "realAnswer": "raccoon",
+    "fakeAnswers": [
+      "skunk",
+      "goose",
+      "llama"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rebecca_(raccoon)",
+    "lang": "en"
+  },
+  "fact-26-en-25": {
+    "questionText": "Heinz picked the slogan '57 varieties' while it sold more than $blank$ products",
+    "realAnswer": "60",
+    "fakeAnswers": [
+      "5",
+      "200",
+      "570"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Heinz_57",
+    "lang": "en"
+  },
+  "fact-26-en-26": {
+    "questionText": "German chocolate cake is named after an American man called Samuel $blank$",
+    "realAnswer": "german",
+    "fakeAnswers": [
+      "schwartz",
+      "chocolate",
+      "kuchen"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/German_chocolate_cake",
+    "lang": "en"
+  },
+  "fact-26-en-27": {
+    "questionText": "Farmers sort good cranberries from bad ones by checking if they $blank$",
+    "realAnswer": "bounce",
+    "fakeAnswers": [
+      "squeak",
+      "glow",
+      "float upside down"
+    ],
+    "citation": "https://www.ift.org/food-technology-magazine/harvesting-cranberries-potential",
+    "lang": "en"
+  },
+  "fact-26-en-28": {
+    "questionText": "The popsicle was invented by an $blank$ who left a drink outside overnight",
+    "realAnswer": "11-year-old",
+    "fakeAnswers": [
+      "eskimo",
+      "ice salesman",
+      "angry chef"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Popsicle_(brand)",
+    "lang": "en"
+  },
+  "fact-26-en-29": {
+    "questionText": "Almost every banana sold in shops is a $blank$",
+    "realAnswer": "clone",
+    "fakeAnswers": [
+      "hybrid with plantain",
+      "grown in ecuador",
+      "picked by robots"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cavendish_banana",
+    "lang": "en"
+  },
+  "fact-26-en-30": {
+    "questionText": "Most wasabi served with sushi outside Japan is actually $blank$",
+    "realAnswer": "horseradish",
+    "fakeAnswers": [
+      "avocado",
+      "matcha paste",
+      "seaweed paste"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wasabi",
+    "lang": "en"
+  },
+  "fact-26-en-31": {
+    "questionText": "The croissant's ancestor, the kipferl, comes from $blank$",
+    "realAnswer": "austria",
+    "fakeAnswers": [
+      "morocco",
+      "belgium",
+      "turkey"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Croissant",
+    "lang": "en"
+  },
+  "fact-26-en-32": {
+    "questionText": "In large doses, the spice $blank$ can make you hallucinate",
+    "realAnswer": "nutmeg",
+    "fakeAnswers": [
+      "cinnamon",
+      "paprika",
+      "black pepper"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nutmeg",
+    "lang": "en"
+  },
+  "fact-26-en-33": {
+    "questionText": "Listerine was once sold as a floor cleaner and a cure for $blank$",
+    "realAnswer": "gonorrhea",
+    "fakeAnswers": [
+      "baldness",
+      "heartbreak",
+      "hiccups"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Listerine",
+    "lang": "en"
+  },
+  "fact-26-en-34": {
+    "questionText": "After a year on the space station, astronaut Scott Kelly came back $blank$ taller",
+    "realAnswer": "2 inches",
+    "fakeAnswers": [
+      "half an inch",
+      "a foot",
+      "4 inches"
+    ],
+    "citation": "https://www.nbcnews.com/health/health-news/nasa-s-scott-kelly-grew-2-inches-body-after-year-n530456",
+    "lang": "en"
+  },
+  "fact-26-en-35": {
+    "questionText": "Astronauts say space smells like $blank$",
+    "realAnswer": "seared steak",
+    "fakeAnswers": [
+      "wet socks",
+      "burnt popcorn",
+      "nothing at all"
+    ],
+    "citation": "https://www.smithsonianmag.com/smart-news/what-does-space-smell-like-3457620/",
+    "lang": "en"
+  },
+  "fact-26-en-36": {
+    "questionText": "On Mars, sunsets are $blank$",
+    "realAnswer": "blue",
+    "fakeAnswers": [
+      "green",
+      "purple",
+      "pitch black"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sunset",
+    "lang": "en"
+  },
+  "fact-26-en-37": {
+    "questionText": "In a big enough bathtub, the planet $blank$ would float",
+    "realAnswer": "saturn",
+    "fakeAnswers": [
+      "jupiter",
+      "neptune",
+      "mercury"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Saturn",
+    "lang": "en"
+  },
+  "fact-26-en-38": {
+    "questionText": "Pluto's surface area is slightly bigger than that of $blank$",
+    "realAnswer": "russia",
+    "fakeAnswers": [
+      "africa",
+      "the moon",
+      "north america"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pluto",
+    "lang": "en"
+  },
+  "fact-26-en-39": {
+    "questionText": "It is illegal to $blank$ in St Mark's Square, Venice",
+    "realAnswer": "feed the pigeons",
+    "fakeAnswers": [
+      "sing",
+      "wear flip-flops",
+      "kiss"
+    ],
+    "citation": "https://www.nbcnews.com/id/wbna24390018",
+    "lang": "en"
+  },
+  "fact-26-en-40": {
+    "questionText": "Singapore bans the sale of $blank$",
+    "realAnswer": "chewing gum",
+    "fakeAnswers": [
+      "red umbrellas",
+      "fireworks",
+      "durian juice"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chewing_gum_sales_ban_in_Singapore",
+    "lang": "en"
+  },
+  "fact-26-en-41": {
+    "questionText": "In France, with the president's permission, you can marry a $blank$",
+    "realAnswer": "dead person",
+    "fakeAnswers": [
+      "tree",
+      "robot",
+      "goldfish"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Posthumous_marriage_in_France",
+    "lang": "en"
+  },
+  "fact-26-en-42": {
+    "questionText": "Japan's 'metabo law' sets a maximum $blank$ for adults over 40",
+    "realAnswer": "waist size",
+    "fakeAnswers": [
+      "shoe size",
+      "sugar intake",
+      "nap length"
+    ],
+    "citation": "https://theworld.org/stories/2017/03/10/fat-japan-youre-breaking-law",
+    "lang": "en"
+  },
+  "fact-26-en-43": {
+    "questionText": "A New Zealand judge made a girl a ward of court so she could change her name, 'Talula Does The $blank$ From Hawaii'",
+    "realAnswer": "hula",
+    "fakeAnswers": [
+      "limbo",
+      "dishes",
+      "macarena"
+    ],
+    "citation": "https://abajournal.com/news/article/new_zealand_judge_renames_girl_says_talula_does_the_hula_was_poor_choice",
+    "lang": "en"
+  },
+  "fact-26-en-44": {
+    "questionText": "In the 1904 Olympic marathon, the first man to finish had ridden part of the way in a $blank$",
+    "realAnswer": "car",
+    "fakeAnswers": [
+      "horse cart",
+      "wheelbarrow",
+      "hot air balloon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Athletics_at_the_1904_Summer_Olympics_%E2%80%93_Men%27s_marathon",
+    "lang": "en"
+  },
+  "fact-26-en-45": {
+    "questionText": "In 1971, astronaut Alan Shepard played $blank$ on the moon",
+    "realAnswer": "golf",
+    "fakeAnswers": [
+      "frisbee",
+      "baseball",
+      "the trumpet"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Alan_Shepard",
+    "lang": "en"
+  },
+  "fact-26-en-46": {
+    "questionText": "Volleyball was first called $blank$",
+    "realAnswer": "mintonette",
+    "fakeAnswers": [
+      "hand tennis",
+      "skyball",
+      "netpush"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Volleyball",
+    "lang": "en"
+  },
+  "fact-26-en-47": {
+    "questionText": "The first basketball hoops were $blank$",
+    "realAnswer": "peach baskets",
+    "fakeAnswers": [
+      "fishing nets",
+      "bike wheels",
+      "flower pots"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Basketball",
+    "lang": "en"
+  },
+  "fact-26-en-48": {
+    "questionText": "Wimbledon keeps a $blank$ to scare away pigeons",
+    "realAnswer": "hawk",
+    "fakeAnswers": [
+      "robot owl",
+      "cat named rufus",
+      "ball boy with a horn"
+    ],
+    "citation": "https://www.aljazeera.com/sports/2015/7/2/rufus-the-hawk-ruling-wimbledon-skies",
+    "lang": "en"
+  },
+  "fact-26-en-49": {
+    "questionText": "The 1900 Paris Olympics had a shooting event with live $blank$",
+    "realAnswer": "pigeons",
+    "fakeAnswers": [
+      "rabbits",
+      "clowns",
+      "ducks"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Live_pigeon_shooting",
+    "lang": "en"
+  },
+  "fact-26-en-50": {
+    "questionText": "In the 1904 Tour de France, some riders were caught taking the $blank$",
+    "realAnswer": "train",
+    "fakeAnswers": [
+      "tram",
+      "a shortcut by boat",
+      "pony"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/1904_Tour_de_France",
+    "lang": "en"
+  },
+  "fact-26-en-51": {
+    "questionText": "There is a sport that switches between rounds of boxing and rounds of $blank$",
+    "realAnswer": "chess",
+    "fakeAnswers": [
+      "sudoku",
+      "ballet",
+      "karaoke"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chess_boxing",
+    "lang": "en"
+  },
+  "fact-26-en-52": {
+    "questionText": "Every year in Gloucestershire, England, people chase a rolling $blank$ down a steep hill",
+    "realAnswer": "wheel of cheese",
+    "fakeAnswers": [
+      "bowling ball",
+      "barrel of beer",
+      "pumpkin"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cooper%27s_Hill_Cheese-Rolling_and_Wake",
+    "lang": "en"
+  },
+  "fact-26-en-53": {
+    "questionText": "The word 'nerd' was first printed in a book by $blank$",
+    "realAnswer": "dr. seuss",
+    "fakeAnswers": [
+      "bill gates",
+      "isaac asimov",
+      "charles dickens"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nerd",
+    "lang": "en"
+  },
+  "fact-26-en-54": {
+    "questionText": "Bluetooth is named after a 10th-century $blank$",
+    "realAnswer": "danish king",
+    "fakeAnswers": [
+      "dentist",
+      "pirate",
+      "blue whale"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bluetooth",
+    "lang": "en"
+  },
+  "fact-26-en-55": {
+    "questionText": "Nokia started out in 1865 as a $blank$",
+    "realAnswer": "pulp mill",
+    "fakeAnswers": [
+      "rubber boot shop",
+      "fishing company",
+      "telegraph office"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nokia",
+    "lang": "en"
+  },
+  "fact-26-en-56": {
+    "questionText": "Mr. Potato Head was the first toy ever advertised on $blank$",
+    "realAnswer": "television",
+    "fakeAnswers": [
+      "radio",
+      "cereal boxes",
+      "billboards"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mr._Potato_Head",
+    "lang": "en"
+  },
+  "fact-26-en-57": {
+    "questionText": "Velcro was inspired by burrs stuck to a $blank$",
+    "realAnswer": "dog",
+    "fakeAnswers": [
+      "horse",
+      "sheep",
+      "beard"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hook-and-loop_fastener",
+    "lang": "en"
+  },
+  "fact-26-en-58": {
+    "questionText": "There is a village in Norway called $blank$",
+    "realAnswer": "hell",
+    "fakeAnswers": [
+      "heaven",
+      "boring",
+      "nowhere"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hell,_Norway",
+    "lang": "en"
+  },
+  "fact-26-en-59": {
+    "questionText": "On Aoshima, a Japanese island, $blank$ outnumber people",
+    "realAnswer": "cats",
+    "fakeAnswers": [
+      "rabbits",
+      "deer",
+      "monkeys"
+    ],
+    "citation": "https://www.livescience.com/planet-earth/aoshima-japans-tiny-cat-island-where-felines-hugely-outnumber-humans",
+    "lang": "en"
+  },
+  "fact-26-en-60": {
+    "questionText": "Some 19th-century families posed for portraits with their $blank$",
+    "realAnswer": "dead relatives",
+    "fakeAnswers": [
+      "pet bears",
+      "servants' ghosts",
+      "favorite chairs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Post-mortem_photography",
+    "lang": "en"
+  },
+  "fact-26-he-01": {
+    "questionText": "לאלברט איינשטיין הציעו להיות $blank$",
+    "realAnswer": "נשיא מדינת ישראל",
+    "fakeAnswers": [
+      "ראש עיריית תל אביב",
+      "שגריר ישראל באו\"ם",
+      "נגיד בנק ישראל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Albert_Einstein",
+    "lang": "he"
+  },
+  "fact-26-he-02": {
+    "questionText": "המנגינה של 'התקווה' דומה לשיר $blank$ מהמאה ה-16",
+    "realAnswer": "איטלקי",
+    "fakeAnswers": [
+      "תימני",
+      "סקוטי",
+      "פולני"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hatikvah",
+    "lang": "he"
+  },
+  "fact-26-he-03": {
+    "questionText": "השם 'עגבנייה' בא מהמילה $blank$, כי באירופה קראו לה 'תפוח אהבה'",
+    "realAnswer": "עגבים",
+    "fakeAnswers": [
+      "ענבים",
+      "גבעה",
+      "עיגול"
+    ],
+    "citation": "https://finance.walla.co.il/item/3691552",
+    "lang": "he"
+  },
+  "fact-26-he-04": {
+    "questionText": "אחרי ארבע ישיבות ראשונות בירושלים, עברה הכנסת הראשונה לתל אביב וישבה באולם של $blank$",
+    "realAnswer": "בית קולנוע",
+    "fakeAnswers": [
+      "בית כנסת",
+      "תחנת אוטובוס מרכזית",
+      "מלון על הים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Knesset_building",
+    "lang": "he"
+  },
+  "fact-26-he-05": {
+    "questionText": "בחוק הישראלי אסור להציג בפרסומת דוגמנית שה-BMI שלה נמוך מ-$blank$",
+    "realAnswer": "18.5",
+    "fakeAnswers": [
+      "15",
+      "21",
+      "16.2"
+    ],
+    "citation": "https://www.csmonitor.com/World/Middle-East/2013/0104/Israel-tells-underweight-models-to-gain-weight-or-get-off-the-runway",
+    "lang": "he"
+  },
+  "fact-26-he-06": {
+    "questionText": "השטח שהוצע לציונים ב'תוכנית אוגנדה' נמצא היום ב$blank$",
+    "realAnswer": "קניה",
+    "fakeAnswers": [
+      "אוגנדה",
+      "מדגסקר",
+      "סודן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/British_Uganda_Programme",
+    "lang": "he"
+  },
+  "fact-26-he-07": {
+    "questionText": "ב-1957 צולם בן-גוריון עושה $blank$ על חוף הים בהרצליה",
+    "realAnswer": "עמידת ראש",
+    "fakeAnswers": [
+      "סקי מים",
+      "שחייה בחורף",
+      "יוגה צחוק"
+    ],
+    "citation": "https://blog.nli.org.il/en/feldenkrais_ben-gurion",
+    "lang": "he"
+  },
+  "fact-26-he-08": {
+    "questionText": "כשישראל ניצחה באירוויזיון 1978, הטלוויזיה הירדנית הפסיקה את השידור והראתה $blank$",
+    "realAnswer": "תמונה של פרחים",
+    "fakeAnswers": [
+      "משחק כדורגל",
+      "את מלך ירדן",
+      "מסך שחור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eurovision_Song_Contest_1978",
+    "lang": "he"
+  },
+  "fact-26-he-09": {
+    "questionText": "השם 'קרמבו' הוא צירוף של המילים $blank$",
+    "realAnswer": "קרם בו",
+    "fakeAnswers": [
+      "קרם במבוק",
+      "קרמל בועות",
+      "קרם בוטנים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Krembo",
+    "lang": "he"
+  },
+  "fact-26-he-10": {
+    "questionText": "השם 'פתי בר' בא מצרפתית, ופירושו $blank$",
+    "realAnswer": "חמאה קטנה",
+    "fakeAnswers": [
+      "עוגייה של עניים",
+      "לחם מתוק",
+      "ילד קטן"
+    ],
+    "citation": "https://www.ynet.co.il/article/SkoG7hLv00",
+    "lang": "he"
+  },
+  "fact-26-he-11": {
+    "questionText": "נבחרת ישראל השתתפה במונדיאל פעם אחת בלבד, ב-$blank$",
+    "realAnswer": "1970",
+    "fakeAnswers": [
+      "1966",
+      "1982",
+      "1990"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Israel_national_football_team",
+    "lang": "he"
+  },
+  "fact-26-he-12": {
+    "questionText": "מדליית הזהב האולימפית הראשונה של ישראל הייתה ב$blank$",
+    "realAnswer": "גלישת רוח",
+    "fakeAnswers": [
+      "ג'ודו",
+      "קיאק",
+      "התעמלות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gal_Fridman",
+    "lang": "he"
+  },
+  "fact-26-he-13": {
+    "questionText": "הציפור הלאומית של ישראל, שנבחרה בהצבעה ב-2008, היא $blank$",
+    "realAnswer": "הדוכיפת",
+    "fakeAnswers": [
+      "הבולבול",
+      "הנשר",
+      "הדרור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eurasian_hoopoe",
+    "lang": "he"
+  },
+  "fact-26-he-14": {
+    "questionText": "ב-2010 הכינו ב$blank$ צלחת חומוס של יותר מ-4 טונות, שיא עולם שלבנון שברה כעבור כמה חודשים",
+    "realAnswer": "אבו גוש",
+    "fakeAnswers": [
+      "עכו",
+      "יפו",
+      "נצרת"
+    ],
+    "citation": "https://www.mprnews.org/story/2016/07/18/npr-hummus-unites-divides-the-mideast",
+    "lang": "he"
+  },
+  "fact-26-he-15": {
+    "questionText": "'ירושלים של זהב' בוצע לראשונה כשלושה שבועות לפני $blank$",
+    "realAnswer": "מלחמת ששת הימים",
+    "fakeAnswers": [
+      "מבצע אנטבה",
+      "מלחמת יום הכיפורים",
+      "ביקור סאדאת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jerusalem_of_Gold",
+    "lang": "he"
+  },
+  "fact-26-he-16": {
+    "questionText": "בחוק הישראלי, אסור לגדל $blank$ ברוב שטח המדינה",
+    "realAnswer": "חזירים",
+    "fakeAnswers": [
+      "גמלים",
+      "קופים",
+      "יענים"
+    ],
+    "citation": "https://leap.unep.org/en/countries/il/national-legislation/pig-production-prohibition-law-1962",
+    "lang": "he"
+  },
+  "fact-26-he-17": {
+    "questionText": "הדם של התמנון בצבע $blank$",
+    "realAnswer": "כחול",
+    "fakeAnswers": [
+      "ירוק",
+      "צהוב",
+      "שחור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Octopus",
+    "lang": "he"
+  },
+  "fact-26-he-18": {
+    "questionText": "פילים מפחדים מ$blank$",
+    "realAnswer": "דבורים",
+    "fakeAnswers": [
+      "עכברים",
+      "בלונים",
+      "מראות"
+    ],
+    "citation": "https://www.sciencedaily.com/releases/2018/01/180122150157.htm",
+    "lang": "he"
+  },
+  "fact-26-he-19": {
+    "questionText": "לחילזון יש אלפי $blank$",
+    "realAnswer": "שיניים",
+    "fakeAnswers": [
+      "עיניים",
+      "לבבות",
+      "רגליים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Radula",
+    "lang": "he"
+  },
+  "fact-26-he-20": {
+    "questionText": "אבותיהם הקדומים של הכרישים הופיעו על כדור הארץ עוד לפני $blank$",
+    "realAnswer": "עצים",
+    "fakeAnswers": [
+      "הירח",
+      "החיידקים",
+      "האוקיינוסים"
+    ],
+    "citation": "https://www.livescience.com/animals/sharks/are-sharks-really-older-than-trees",
+    "lang": "he"
+  },
+  "fact-26-he-21": {
+    "questionText": "עטלפי ערפד חולקים $blank$ עם חברים שלא מצאו אוכל",
+    "realAnswer": "דם",
+    "fakeAnswers": [
+      "פירות",
+      "מערה",
+      "שמיכה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Common_vampire_bat",
+    "lang": "he"
+  },
+  "fact-26-he-22": {
+    "questionText": "לג'ירפה יש לשון בצבע $blank$",
+    "realAnswer": "שחור",
+    "fakeAnswers": [
+      "ורוד בהיר",
+      "צהוב",
+      "מנוקד"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Giraffe",
+    "lang": "he"
+  },
+  "fact-26-he-23": {
+    "questionText": "אצל נמלי הדבש, חלק מהפועלות משמשות את המושבה כ$blank$",
+    "realAnswer": "מזווה חי",
+    "fakeAnswers": [
+      "מיטה חמה",
+      "שומר סף",
+      "מנורת לילה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Honeypot_ant",
+    "lang": "he"
+  },
+  "fact-26-he-24": {
+    "questionText": "לוטרת הים שומרת אבן לפיצוח צדפות בכיס עור שנמצא $blank$",
+    "realAnswer": "מתחת לבית השחי",
+    "fakeAnswers": [
+      "בתוך הלחי",
+      "מתחת לזנב",
+      "מאחורי האוזן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sea_otter",
+    "lang": "he"
+  },
+  "fact-26-he-25": {
+    "questionText": "דבורי דבש רוקדות כדי $blank$",
+    "realAnswer": "להראות לחברות איפה יש פרחים",
+    "fakeAnswers": [
+      "למשוך זכר",
+      "להתחמם",
+      "לגרש צרעות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Waggle_dance",
+    "lang": "he"
+  },
+  "fact-26-he-26": {
+    "questionText": "צב ענק בשם ג'ונתן, שחי באי סנט הלנה, נולד בערך ב-$blank$",
+    "realAnswer": "1832",
+    "fakeAnswers": [
+      "1920",
+      "1955",
+      "1880"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jonathan_(tortoise)",
+    "lang": "he"
+  },
+  "fact-26-he-27": {
+    "questionText": "המילה 'ג'ינס' באה מהעיר $blank$",
+    "realAnswer": "גנואה",
+    "fakeAnswers": [
+      "ג'נבה",
+      "ג'קרטה",
+      "ג'נאין"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jeans",
+    "lang": "he"
+  },
+  "fact-26-he-28": {
+    "questionText": "באולימפיאדות של יוון העתיקה, הספורטאים התחרו $blank$",
+    "realAnswer": "עירומים",
+    "fakeAnswers": [
+      "עם מסכות",
+      "יחפים על גחלים",
+      "עם זקן מזויף"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ancient_Olympic_Games",
+    "lang": "he"
+  },
+  "fact-26-he-29": {
+    "questionText": "לפי ההיסטוריונים הרומאים, הקיסר קליגולה תכנן למנות את ה$blank$ שלו לקונסול",
+    "realAnswer": "סוס",
+    "fakeAnswers": [
+      "כלב",
+      "טבח",
+      "חתול"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Incitatus",
+    "lang": "he"
+  },
+  "fact-26-he-30": {
+    "questionText": "הצאר הרוסי פיוטר הגדול הטיל מס על $blank$",
+    "realAnswer": "זקנים",
+    "fakeAnswers": [
+      "חתולים",
+      "שמיכות",
+      "פרחים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Beard_tax",
+    "lang": "he"
+  },
+  "fact-26-he-31": {
+    "questionText": "השיניים התותבות של ג'ורג' וושינגטון היו עשויות, בין השאר, מ$blank$",
+    "realAnswer": "שנהב של היפופוטם",
+    "fakeAnswers": [
+      "עץ אלון",
+      "קרן של איל",
+      "חרסינה סינית"
+    ],
+    "citation": "https://www.mountvernon.org/library/digitalhistory/digital-encyclopedia/article/false-teeth",
+    "lang": "he"
+  },
+  "fact-26-he-32": {
+    "questionText": "האדם הראשון שצנח במפלי הניאגרה בחבית ושרד היה $blank$",
+    "realAnswer": "מורה בת 63",
+    "fakeAnswers": [
+      "נער בן 15",
+      "ליצן קרקס",
+      "כומר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Annie_Edson_Taylor",
+    "lang": "he"
+  },
+  "fact-26-he-33": {
+    "questionText": "האסטרונאוטים של אפולו 11 לא הצליחו לקנות ביטוח חיים, אז במקום זה הם חתמו על $blank$",
+    "realAnswer": "מעטפות",
+    "fakeAnswers": [
+      "צוואות",
+      "כדורי בייסבול",
+      "מכתבי פרידה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Apollo_insurance_covers",
+    "lang": "he"
+  },
+  "fact-26-he-34": {
+    "questionText": "אורך המרתון, 42.195 ק\"מ, נקבע לפי המסלול של אולימפיאדת לונדון 1908, שהזינוק שלו היה ב$blank$",
+    "realAnswer": "טירת וינדזור",
+    "fakeAnswers": [
+      "גשר לונדון",
+      "מגדל השעון",
+      "ארמון בקינגהאם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Marathon",
+    "lang": "he"
+  },
+  "fact-26-he-35": {
+    "questionText": "לפי האגדה, פיצה מרגריטה נקראת על שם $blank$",
+    "realAnswer": "מלכת איטליה",
+    "fakeAnswers": [
+      "אשתו של האופה",
+      "זמרת אופרה",
+      "שחקנית תיאטרון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pizza_Margherita",
+    "lang": "he"
+  },
+  "fact-26-he-36": {
+    "questionText": "לפי האגדה, את הקפה גילו בזכות $blank$ שהתחילו לקפץ אחרי שאכלו פירות של שיח",
+    "realAnswer": "עיזים",
+    "fakeAnswers": [
+      "קופים",
+      "תרנגולות",
+      "גמלים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/History_of_coffee",
+    "lang": "he"
+  },
+  "fact-26-he-37": {
+    "questionText": "המילה האצטקית שממנה בא השם 'אבוקדו' שימשה גם ככינוי ל$blank$",
+    "realAnswer": "אשך",
+    "fakeAnswers": [
+      "ירוק",
+      "חמאה",
+      "אגס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Avocado",
+    "lang": "he"
+  },
+  "fact-26-he-38": {
+    "questionText": "ענב חתוך לשניים במיקרוגל יוצר $blank$",
+    "realAnswer": "פלזמה",
+    "fakeAnswers": [
+      "צימוק",
+      "יין",
+      "אבקה"
+    ],
+    "citation": "https://physicsworld.com/a/grape-plasma-phenomenon-explained-at-long-last/",
+    "lang": "he"
+  },
+  "fact-26-he-39": {
+    "questionText": "פנטה הומצאה ב$blank$",
+    "realAnswer": "גרמניה הנאצית",
+    "fakeAnswers": [
+      "ברזיל",
+      "איטליה של מוסוליני",
+      "מקסיקו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Fanta",
+    "lang": "he"
+  },
+  "fact-26-he-40": {
+    "questionText": "לתינוק שזה עתה נולד יש כ-$blank$ עצמות",
+    "realAnswer": "270",
+    "fakeAnswers": [
+      "150",
+      "206",
+      "500"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_skeleton",
+    "lang": "he"
+  },
+  "fact-26-he-41": {
+    "questionText": "האמריקאי צ'ארלס אוסבורן שיהק ברציפות במשך יותר מ-$blank$",
+    "realAnswer": "68 שנה",
+    "fakeAnswers": [
+      "3 חודשים",
+      "שבוע",
+      "11 שנה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Charles_Osborne_(hiccups)",
+    "lang": "he"
+  },
+  "fact-26-he-42": {
+    "questionText": "בכביש המהיר בגרמניה אפשר לקבל קנס אם $blank$",
+    "realAnswer": "נגמר לך הדלק",
+    "fakeAnswers": [
+      "אתה שותה קפה בנסיעה",
+      "אתה שר בקול רם",
+      "אתה לא מנופף"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Autobahn",
+    "lang": "he"
+  },
+  "fact-26-he-43": {
+    "questionText": "בעיר טורינו קבעו ב-2005 שבעל כלב חייב $blank$ ביום",
+    "realAnswer": "להוציא אותו לטייל 3 פעמים",
+    "fakeAnswers": [
+      "לסרק אותו פעמיים",
+      "לדבר אליו שעה",
+      "לשיר לו פעם"
+    ],
+    "citation": "https://enn.com/articles/11880",
+    "lang": "he"
+  },
+  "fact-26-he-44": {
+    "questionText": "במוסקבה אפשר היה לקבל קנס על נהיגה ברכב $blank$",
+    "realAnswer": "מלוכלך",
+    "fakeAnswers": [
+      "אדום",
+      "ריק",
+      "שקט מדי"
+    ],
+    "citation": "https://www.irishtimes.com/life-and-style/motors/muscovites-told-to-clean-up-1.998016",
+    "lang": "he"
+  },
+  "fact-26-he-45": {
+    "questionText": "בפינלנד נערכת אליפות העולם בהטלת $blank$",
+    "realAnswer": "טלפון נייד",
+    "fakeAnswers": [
+      "כריות",
+      "צפרדעים",
+      "עוגות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mobile_phone_throwing",
+    "lang": "he"
+  },
+  "fact-26-he-46": {
+    "questionText": "הטישו הומצא במקור כ$blank$",
+    "realAnswer": "פילטר למסכת גז",
+    "fakeAnswers": [
+      "תחבושת",
+      "מגבון לאיפור",
+      "נייר אפייה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kleenex",
+    "lang": "he"
+  },
+  "fact-26-he-47": {
+    "questionText": "דבק מגע (סופר-גלו) התגלה בטעות כשניסו לפתח $blank$",
+    "realAnswer": "כוונות לרובים",
+    "fakeAnswers": [
+      "משחת שיניים",
+      "מסטיק",
+      "צבע לסירות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cyanoacrylate",
+    "lang": "he"
+  },
+  "fact-26-he-48": {
+    "questionText": "מסור השרשרת פותח במקור כדי לעזור ב$blank$",
+    "realAnswer": "לידות",
+    "fakeAnswers": [
+      "שחיטת פרות",
+      "גילוף קרח",
+      "ניתוחי מוח"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chainsaw",
+    "lang": "he"
+  },
+  "fact-26-he-49": {
+    "questionText": "אלכסנדר גרהם בל רצה שיענו לטלפון במילה $blank$",
+    "realAnswer": "אהוי",
+    "fakeAnswers": [
+      "כן",
+      "שלום",
+      "מי מדבר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ahoy_(greeting)",
+    "lang": "he"
+  },
+  "fact-26-he-50": {
+    "questionText": "הסלינקי הומצא אחרי שמהנדס בחיל הים האמריקאי ראה $blank$ נופל ממדף ו'צועד'",
+    "realAnswer": "קפיץ",
+    "fakeAnswers": [
+      "מצפן",
+      "שרשרת עוגן",
+      "בורג"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Slinky",
+    "lang": "he"
+  },
+  "fact-26-he-51": {
+    "questionText": "המילה 'כתום' באה מהמילה המקראית 'כֶּתֶם', שפירושה $blank$",
+    "realAnswer": "זהב",
+    "fakeAnswers": [
+      "חלודה",
+      "דם",
+      "שקיעה"
+    ],
+    "citation": "https://www.balashon.com/2006/08/katom.html?m=0",
+    "lang": "he"
+  },
+  "fact-26-he-52": {
+    "questionText": "ב-1814 הוצפו רחובות בלונדון בגל ענק של $blank$",
+    "realAnswer": "בירה",
+    "fakeAnswers": [
+      "חלב",
+      "דבש",
+      "ביוב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/London_Beer_Flood",
+    "lang": "he"
+  },
+  "fact-26-he-53": {
+    "questionText": "לפי הדיווחים, הצרפתי מישל לוטיטו, 'מסייה אוכל-הכל', אכל במשך שנתיים $blank$ שלם",
+    "realAnswer": "מטוס",
+    "fakeAnswers": [
+      "אוטובוס",
+      "פסנתר",
+      "טנק"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Michel_Lotito",
+    "lang": "he"
+  },
+  "fact-26-he-54": {
+    "questionText": "השם המלא של ברבי הוא ברברה מיליסנט $blank$",
+    "realAnswer": "רוברטס",
+    "fakeAnswers": [
+      "ג'ונסון",
+      "קן",
+      "סמית'"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Barbie",
+    "lang": "he"
+  },
+  "fact-26-he-55": {
+    "questionText": "וולט דיסני רצה לקרוא למיקי מאוס $blank$",
+    "realAnswer": "מורטימר",
+    "fakeAnswers": [
+      "מקסי",
+      "וולטר",
+      "מיילו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mickey_Mouse",
+    "lang": "he"
+  },
+  "fact-26-he-56": {
+    "questionText": "הלוגו הראשון של אפל הציג את $blank$",
+    "realAnswer": "אייזק ניוטון",
+    "fakeAnswers": [
+      "סטיב ג'ובס",
+      "שלגיה",
+      "אדם וחווה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Apple_Inc.",
+    "lang": "he"
+  },
+  "fact-26-he-57": {
+    "questionText": "המדינה עם הכי הרבה פירמידות בעולם היא $blank$",
+    "realAnswer": "סודן",
+    "fakeAnswers": [
+      "מצרים",
+      "עיראק",
+      "הודו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nubian_pyramids",
+    "lang": "he"
+  },
+  "fact-26-he-58": {
+    "questionText": "במשך כ-20 שנה, ראש העיר של כבוד בעיירה טלקיטנה שבאלסקה היה $blank$",
+    "realAnswer": "חתול",
+    "fakeAnswers": [
+      "דוב",
+      "כלב מזחלות",
+      "תוכי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stubbs_(cat)",
+    "lang": "he"
+  },
+  "fact-26-he-59": {
+    "questionText": "'ביג בן' הוא במקור הכינוי של $blank$",
+    "realAnswer": "הפעמון",
+    "fakeAnswers": [
+      "הגשר הסמוך",
+      "הספינה המלכותית",
+      "סוס המרוץ של המלכה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Big_Ben",
+    "lang": "he"
+  },
+  "fact-26-he-60": {
+    "questionText": "פסל החירות היה פעם בצבע $blank$",
+    "realAnswer": "חום-נחושת",
+    "fakeAnswers": [
+      "זהב",
+      "לבן",
+      "אדום"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Statue_of_Liberty",
+    "lang": "he"
+  }
+}

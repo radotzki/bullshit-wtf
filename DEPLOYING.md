@@ -535,6 +535,27 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   `npx firebase database:update /questions functions/data/opening-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
 - To retire one, add its id to `retired-questions.ts` as with any question.
 
+## Strange facts: 120 more questions
+
+- 60 English and 60 Hebrew questions for the normal bank (no pack, no opener flag), ids
+  `fact-26-en-01..60` and `fact-26-he-01..60`, in `functions/data/strange-facts-2026-11.json`.
+  Each is a strange-but-true fact with one blank, the truth, three house lies and a `citation`, a
+  page that states the fact. The Hebrew set is written in Hebrew, not translated, and leans on Israel.
+- Nothing in the code changes, so the release deploys nothing new for them and they are not in the
+  game until they are in the database. Load them by hand, any time after the merge (the functions
+  already live pick any question without a pack):
+  `npx firebase database:update /questions functions/data/strange-facts-2026-11.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+  An update writes only these 120 ids and leaves every other question as it is. Never a set or an
+  import on `questions/`, which would replace the whole bank. Running it again changes nothing.
+- `functions/test/strange-facts-questions.test.js` checks the shape: one blank, lower-case answers of
+  40 characters or less, three house lies none of which the game would read as the truth, no blocked
+  house lie, 60 per language with ids from 01, a citation, and no repeat of the openers or the Hebrew fixes.
+- Repeats: the live bank cannot be read from the repository. The set was checked by hand against the
+  last copy of the bank kept in git (`functions/raw-data.json`, removed in 2017, 414 questions), the
+  openers, the Hebrew fixes and the Hanukkah pack's open pull requests. A fact added to the live bank
+  after that may repeat: retire the double in `retired-questions.ts`.
+- To retire one, add its id to `retired-questions.ts` as with any question.
+
 ## Hanukkah pack and campaign tags
 
 - Questions can carry `pack: "hanukkah"`. Pack questions never appear in normal games. A pack game
