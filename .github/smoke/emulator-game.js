@@ -416,7 +416,13 @@ async function main() {
     }
 }
 
-main().catch((e) => {
-    console.error('FAIL', e.stack || e);
-    process.exit(1);
-});
+// Run as a script it plays the game; required, it lends its emulators and phones to the other
+// local runs (emulator-crew-night.js).
+if (require.main === module) {
+    main().catch((e) => {
+        console.error('FAIL', e.stack || e);
+        process.exit(1);
+    });
+}
+
+module.exports = { ROOT, DIST, LOCALE, HOST, DB, PROJECT, log, sleep, flag, up, startEmulators, stopEmulators, db, seed, newPhone, visible };

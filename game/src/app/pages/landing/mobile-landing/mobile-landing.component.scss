@@ -130,6 +130,17 @@
         font-size: .8em;
         color: #f3d467;
     }
+
+    // A crew whose game night is today leads the menu.
+    .crew.tonight {
+        background-color: #db7151;
+        color: #fff;
+        font-weight: 700;
+
+        i {
+            color: #fff;
+        }
+    }
 }
 
 

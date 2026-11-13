@@ -94,6 +94,11 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     weekly-share       EVERY FRIDAY IN MY CALENDAR (a weekly entry), sent through the share sheet
 //     weekly-download    the weekly entry, downloaded as a .ics file
 //     weekly-google      tapped "or every week in Google Calendar"
+//     in                 pressed I'M IN on the crew page's GAME NIGHT block (a press, like the next four)
+//     in-new             the same, by a name the crew did not have: a friend who comes along
+//     out                pressed "Can't make it"
+//     nudge              pressed ASK WHO ELSE IS IN (opens WhatsApp)
+//     open-lobby         pressed OPEN THE LOBBY on the night
 //   crew-save   a crew saved on the final screen (a save, not a send; the crew id comes with it):
 //     repeat-offer       from the offer above SHARE RESULTS, shown when the same group plays again
 //     bottom             from SAVE THIS CREW at the bottom of the screen
@@ -118,7 +123,7 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     unmute             tapped it again
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
-        'weekly-share', 'weekly-download', 'weekly-google'],
+        'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby'],
     'crew-save': ['repeat-offer', 'bottom'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'results': ['whatsapp', 'native', 'copy', 'download'],

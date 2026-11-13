@@ -39,8 +39,10 @@ test('Hebrew visitors get every word in Hebrew, right to left', () => {
     const he = homeStrings('he');
     assert.strictEqual(he.dir, 'rtl');
     assert.strictEqual(he.switchTo, 'en');
-    for (const [key, value] of Object.entries(he)) {
+    for (const [key, word] of Object.entries(he)) {
         if (['lang', 'dir', 'switchTo', 'switchLabel'].indexOf(key) >= 0) continue;
+        // tonight is a function of the night's time and the crew's name.
+        const value = typeof word === 'function' ? word('21:00', 'החבורה של דנה') : word;
         assert.ok(/[֐-׿]/.test(value), `${key} is not Hebrew: ${value}`);
         assert.ok(!/[A-Za-z]/.test(value), `${key} has Latin letters: ${value}`);
     }

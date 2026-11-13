@@ -624,6 +624,15 @@ export class ApiService {
     }
 
     /**
+     * A crew's game night, through the `crewNight` function (a phone may not write a crew):
+     * `{ time, by }` sets the date, `{ nickname, in }` says "I'm in" or takes the name off.
+     */
+    crewNight(crew: string, body: { time: number; by?: string } | { nickname: string; in: boolean }) {
+        return this.post<{ in?: boolean; nickname?: string; isNew?: boolean; count?: number }>(
+            `crewNight`, { crew: crew.toLowerCase(), ...body });
+    }
+
+    /**
      * Counts one share in BigQuery (game night sends from a crew page, lobby invites, results-card shares,
      * presses on the after-game ask). Fire and forget:
      * never throws, and the page does not wait on it.
