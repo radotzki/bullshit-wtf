@@ -27,8 +27,8 @@
     "questionText": "Before potatoes reached Europe, the first latkes were often made of $blank$",
     "realAnswer": "cheese",
     "fakeAnswers": [
-      "turnips",
-      "breadcrumbs",
+      "rice",
+      "seaweed",
       "chickpeas"
     ],
     "citation": "https://en.wikipedia.org/wiki/Latke",
@@ -255,8 +255,8 @@
     "questionText": "לפני שתפוחי האדמה הגיעו לאירופה, הלביבות הראשונות הוכנו לרוב מ$blank$",
     "realAnswer": "גבינה",
     "fakeAnswers": [
-      "לפת",
-      "פירורי לחם",
+      "אורז",
+      "אצות ים",
       "חומוס"
     ],
     "citation": "https://en.wikipedia.org/wiki/Latke",
