@@ -163,6 +163,17 @@ jobs:
         run: |
           node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+      # Adds the Hanukkah pack's questions (functions/data/hanukkah-questions.json) to the live
+      # question bank: one update (PATCH) of questions/ naming exactly the file's hanukkah-26-* ids,
+      # never a set or import, which would replace the whole bank. Nothing else under questions/
+      # is sent, so nothing else is changed or deleted, and sending the same values again on every
+      # release changes nothing. After the functions on purpose: older functions would mix pack
+      # questions into every game. Last, so a refusal here leaves the release before it whole.
+      # It writes at the database's own address, which does not need the Management API that is
+      # off. See the script's header and DEPLOYING.md.
+      - name: 4. Add the Hanukkah questions to the database
+        id: questions
+        run: node .github/scripts/load-pack-questions.js "$FIREBASE_PROJECT"
 
       # A failed Firebase command prints one line; Google's answer (the status and the reason) is
       # only in firebase-debug.log. That file is never printed or uploaded whole: after the
@@ -193,7 +204,7 @@ jobs:
             echo "Order: all functions, database rules, site. A failed step stops the ones after it."
             echo "To retry, start a new run by hand: Actions > Deploy to production > Run workflow > branch master"
             echo "(every step is safe to repeat). A re-run of an old run stops by itself once master holds newer code."
-            echo "Not done here: BigQuery schema SQL, loading questions, Search Console. See DEPLOYING.md."
+            echo "Not done here: BigQuery schema SQL, loading questions other than the Hanukkah pack's, Search Console. See DEPLOYING.md."
           } >> "$GITHUB_STEP_SUMMARY"
       # Last, whether the job passed or failed: the key, and both names of the Firebase debug file
       # (the tool deletes its own only on some exit codes, and never the kept copy).

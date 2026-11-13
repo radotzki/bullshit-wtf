@@ -39,6 +39,10 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
    keep old clients working, so that state is safe, and a new run finishes the release.
+7. Adds the **Hanukkah pack's questions** to the live question bank (see "Hanukkah pack" below):
+   one update of `questions/` naming exactly the ids in `functions/data/hanukkah-questions.json`,
+   and nothing else. It runs last, after the functions that know pack questions are live; if it is
+   refused, the release before it stands, and the run fails and says why.
 
 Things to know:
 
@@ -297,7 +301,8 @@ prints less, never more.
   column or table must say so in its description, and the SQL must be run **before** the merge.
   If it is skipped, rows still land, but the new fields are dropped silently.
 - **Loading questions** into the database (`firebase database:update /questions ...`), which goes
-  **after** the functions that understand them are live, so after the deploy run is green.
+  **after** the functions that understand them are live, so after the deploy run is green. The one
+  exception is the Hanukkah pack's file, which every release adds itself (below).
 - **Deleting a function**, as above.
 - **Google Search Console** (submitting the sitemap) and anything in the Firebase or Google Cloud
   consoles.
@@ -545,8 +550,27 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   new functions are live: old functions would mix them into every game.
 - The repository's set is `functions/data/hanukkah-questions.json`: 18 English and 16 Hebrew questions,
   ids `hanukkah-26-en-01..18` and `hanukkah-26-he-01..16`, with the ones the two Hanukkah pages name (the
-  astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). Load it before
-  1 December (the pack turns on by itself then):
+  astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). The pack turns on
+  by itself on 1 December.
+- **Every release adds this file to the live question bank by itself**, in the last step, "4. Add
+  the Hanukkah questions to the database" (`.github/scripts/load-pack-questions.js`). It sends one
+  update (`PATCH`) to `questions.json` at the database's own address, whose body is exactly the
+  file: every key must be a `hanukkah-26-en-NN` or `hanukkah-26-he-NN` id, and every value a whole
+  question with `pack: "hanukkah"` in its id's language, or nothing is sent. An update writes the
+  children it names and leaves every other child of `questions/` as it is; it is what
+  `firebase database:update /questions <file>` sends. Never a set or an import on `questions/`,
+  which would replace the whole bank. Sending the same file again changes nothing, so the step
+  runs on every release. A question edited in the file is changed live by the next release; one
+  removed from the file stays live (retire it in `retired-questions.ts`).
+  Why not the tool's command: `database:update` first asks the Firebase Realtime Database
+  Management API for the database's details, and that API is off in the Google project. The
+  database's own address does not need it; the access check already reads the live rules there with
+  the deploy account and the same two sign-in scopes (`userinfo.email`, `firebase.database`).
+  Whether Google lets the deploy account *write* there is decided on the first run from `master`:
+  if not, the step fails with Google's status, the release before it stands, and the command below
+  is the way to load the file by hand.
+  `node .github/scripts/load-pack-questions.js --dry-run` prints what would be sent, without
+  sending anything. By hand, as before:
   `npx firebase database:update /questions functions/data/hanukkah-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
   It adds questions and changes none. If the console already shows other `hanukkah-*` questions on the
   same facts, retire the doubles (`retired-questions.ts`), or a room can meet one fact twice.
