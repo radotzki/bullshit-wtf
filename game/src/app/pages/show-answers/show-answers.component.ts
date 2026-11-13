@@ -9,6 +9,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/
 import { GameState } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../game-strings';
+import { aboutStrings, AboutStrings } from './../about-strings';
 
 @Component({
     standalone: false,
@@ -30,6 +31,9 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     showQuestion: boolean;
     /** A taste (a game started alone) has no writing screen: its question is first read here, above the answers. */
     taste = false;
+    /** An About question about this phone's player: they know the truth, so they watch and do not pick. */
+    aboutMe = false;
+    aboutWords: AboutStrings = aboutStrings('en');
     duration: number;
     past: number;
     timer;
@@ -55,6 +59,10 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         this.apiService.getAnswers(this.pin).then(a => this.answers = a);
         this.apiService.getTaste(this.pin).then(taste => this.taste = !!taste);
+        this.apiService.getAbout(this.pin).then(about => {
+            const user = this.sessionService.user;
+            this.aboutMe = !!about && !this.presenter && !!user && user.pid === about.pid;
+        });
         this.startTimer();
         this.playBackground();
     }
@@ -62,6 +70,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     private useLocale(locale: string) {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
+        this.aboutWords = aboutStrings(locale);
     }
 
     ngOnDestroy() {
@@ -74,6 +83,9 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     }
 
     submit(answer: string) {
+        if (this.aboutMe) {
+            return;
+        }
         this.loading = true;
         this.errorMsg = '';
 

@@ -14,6 +14,7 @@ import { gameStrings, GameStrings } from './../game-strings';
 import { resultLines, stingFor } from './reveal-strings';
 import { followScrollTop } from './reveal-follow';
 import { laughView } from './reveal-laughs';
+import { aboutStrings, AboutStrings, aboutResultLine } from './../about-strings';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
 // stand in their old order before they move to the new one (staged reveal only).
@@ -55,6 +56,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     presenter: boolean;
     rtl: boolean;
     t: GameStrings = gameStrings('en');
+    aboutWords: AboutStrings = aboutStrings('en');
     question: string;
     staged = false;
     me: string = null;
@@ -119,6 +121,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     private useLocale(locale: string) {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
+        this.aboutWords = aboutStrings(locale);
     }
 
     ngOnDestroy() {
@@ -217,7 +220,12 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.showLaughs();
         this.laughSub = this.apiService.revealAnswersLive(this.pin).subscribe(live => this.onLaughs(live, revealAnswers));
 
-        if (me) {
+        // An About question: the truth's row says whose it is (see aboutOf in game-model).
+        const aboutRow = truth.filter(r => !!r.aboutId)[0];
+        if (me && aboutRow && aboutRow.aboutId === me) {
+            // The player it is about picked nothing and wrote no lie: their line is who found them.
+            this.myResult = [aboutResultLine(this.aboutWords, aboutRow.pickerNames, this.t.signed(aboutRow.aboutPoints), this.t.names)];
+        } else if (me) {
             this.myResult = resultLines(me, all, this.t);
         }
 
@@ -236,6 +244,11 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             if (this.myRow !== -1) {
                 this.flash = this.t.youFooled(this.t.names(this.rows[this.myRow].pickerNames));
                 this.flashPoints = this.rows[this.myRow].points;
+            } else if (me && aboutRow && aboutRow.aboutId === me && aboutRow.pickers.length) {
+                // An About question: friends found this player's truth.
+                this.myRow = this.rows.indexOf(aboutRow);
+                this.flash = this.aboutWords.knowYou(this.t.names(aboutRow.pickerNames));
+                this.flashPoints = aboutRow.aboutPoints;
             }
 
             // A row whose sound moment has passed before this page loaded stays silent.
@@ -366,7 +379,12 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     private toRow(answer: RevealAnswer, playersArray: (GamePlayer & { pid: string })[]): Row {
         const pickers = (answer.selectors || []).map(pid => this.playerObject(playersArray, pid)).filter(p => p);
         const creators = (answer.creators || []).filter(c => c).map(pid => this.playerObject(playersArray, pid)).filter(p => p);
+        const aboutPlayer = answer.realAnswer && answer.about ? this.playerObject(playersArray, answer.about) : undefined;
         return {
+            aboutId: aboutPlayer ? answer.about : null,
+            aboutPlayer: aboutPlayer || null,
+            aboutName: aboutPlayer ? aboutPlayer.nickname : null,
+            aboutPoints: aboutPlayer ? answer.aboutPoints || 0 : 0,
             text: answer.text,
             realAnswer: !!answer.realAnswer,
             houseLie: !!answer.houseLie,
@@ -424,6 +442,11 @@ interface Player {
 }
 
 interface Row {
+    // An About question's truth: the player it is about, and their points (see aboutOf in game-model).
+    aboutId: string;
+    aboutPlayer: Player;
+    aboutName: string;
+    aboutPoints: number;
     text: string;
     realAnswer: boolean;
     houseLie: boolean;

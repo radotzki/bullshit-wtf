@@ -87,6 +87,17 @@ export interface GameScheme {
     // The question index highlights were first kept from. 0 means the whole game counts, so a player
     // with no highlight really fooled nobody (games already running at a deploy start later).
     highlightsFrom?: number;
+    // The "About us" questions, a 50/50 test set when the game is made, and only for a game made by a
+    // client that can show them (see about.ts in the functions). true: two or three questions of the game
+    // are about one of its players, when it starts with three or more. false: in the test, plays as
+    // before. Absent: not in the test. Phones cannot read it: an About question shows on state.about.
+    aboutUs?: boolean;
+    // Which questions of the game are About questions, written at START (keys "q<index>"): the prompt,
+    // the player it named and how it went. Server only: phones never read it.
+    aboutQs?: { [key: string]: AboutSlot };
+    // The named player's answer to the About question being played: the truth. Server only: no phone can
+    // read it, so nobody learns it before the answers are on the table, where it is the truth row.
+    aboutTruth?: { pid: string; text: string };
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';
@@ -239,6 +250,10 @@ export function revealScoreChanges(revealAnswers: RevealAnswer[] | undefined | n
         const selectors = row.selectors || [];
         if (row.realAnswer) {
             selectors.forEach(pid => add(pid, row.points));
+            // An About question's truth: the player it is about scores for each friend who found it.
+            if (row.about) {
+                add(row.about, row.aboutPoints);
+            }
         } else if (row.houseLie) {
             selectors.forEach(pid => add(pid, row.pointsBy && pid in row.pointsBy ? row.pointsBy[pid] : row.points));
         } else {
@@ -427,6 +442,10 @@ export interface RevealAnswer {
     // Lies only (players' and house lies): the players who laughed at it during the reveal (see laugh.ts in
     // the functions). Written by the server, one key per player, while the reveal is on. Laughs give no points.
     laughs?: { [pid: string]: boolean };
+    // The truth of an About question only: the player it is about, and the points they score (one
+    // friend's worth of a fooled lie for each friend who found it). Written by the server.
+    about?: string;
+    aboutPoints?: number;
 }
 
 /**
@@ -834,4 +853,42 @@ export function tasteOf(state: any): Taste | null {
     }
     const count = (n: any) => typeof n === 'number' && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
     return { found: count(taste.found), length: count(taste.length) };
+}
+
+/**
+ * "About us" questions (fun plan, move 6): a question about one of the players. "The thing Ben would
+ * save from a fire is ___". Ben writes the truth, privately, while everyone else writes a lie about
+ * Ben; then all but Ben pick. Finding Ben's truth scores as finding any truth, Ben scores for each friend
+ * who finds it, and lies score as lies. If Ben sends nothing in time, the table gets an ordinary
+ * question in its place.
+ *
+ * Phones learn that the question is one, and whom it is about, from the game's state, which every phone
+ * may read and only the server may write: each state of an About question (the writing, the answers, the
+ * reveal and its scoreboard) carries `about`. The truth itself is never readable before the answers.
+ */
+export interface AboutSlot {
+    prompt: string;
+    // The player the question was about, once it was asked.
+    pid?: string;
+    // asked: on the table now; played: the truth came in; fallback: it did not, and an ordinary question
+    // was played instead; skipped: too few players were playing to ask it.
+    result?: 'asked' | 'played' | 'fallback' | 'skipped';
+}
+
+export interface About {
+    pid: string;
+    prompt: string;
+}
+
+export interface AboutState extends GameStateInfo {
+    about?: About;
+}
+
+/** The About question a state is on, or null: for every other question, and for anything unreadable. */
+export function aboutOf(state: any): About | null {
+    const about = state && typeof state === 'object' ? state.about : null;
+    if (!about || typeof about !== 'object' || typeof about.pid !== 'string' || !about.pid) {
+        return null;
+    }
+    return { pid: about.pid, prompt: typeof about.prompt === 'string' ? about.prompt : '' };
 }

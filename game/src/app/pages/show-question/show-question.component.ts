@@ -10,6 +10,7 @@ import { GameState } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
+import { aboutStrings, AboutStrings } from './../about-strings';
 
 @Component({
     standalone: false,
@@ -40,6 +41,10 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     private ideas: string[] = [];
     private ideasUsed = 0;
     private helperInfo: { coach: boolean; roundIndex: number; questionIndex: number; locale: string };
+    // An About question (see aboutOf in game-model): whom it is about, and whether that is this phone's player.
+    aboutName: string = null;
+    aboutMe = false;
+    aboutWords: AboutStrings = aboutStrings('en');
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -58,6 +63,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.startTimer();
         this.playBackground();
+        this.loadAbout();
 
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
@@ -68,6 +74,23 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     private useLocale(locale: string) {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
+        this.aboutWords = aboutStrings(locale);
+    }
+
+    /** An About question: the player it is about writes the truth, everyone else a lie about them. */
+    private async loadAbout() {
+        try {
+            const about = await this.apiService.getAbout(this.pin);
+            if (!about) {
+                return;
+            }
+            const players = await this.apiService.getPlayers(this.pin);
+            const user = this.sessionService.user;
+            this.aboutMe = !this.presenter && !!user && user.pid === about.pid;
+            this.aboutName = players && players[about.pid] ? players[about.pid].nickname : '';
+        } catch (e) {
+            // The screen works as an ordinary question.
+        }
     }
 
     /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */

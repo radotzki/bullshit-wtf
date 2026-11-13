@@ -8,6 +8,8 @@ import { isIdea } from './lie-helper';
 import { isSameAnswer } from './same-answer';
 import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
+import { aboutOf } from '../game-model';
+import { writingSent } from './about';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
@@ -23,6 +25,14 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
     if (!game.state || game.state.id !== GameState.ShowQuestion) {
         console.log(`[PIN: ${pin}] Lie not taken: the question is closed (state ${game.state && game.state.id})`);
         return;
+    }
+
+    // An About question (see about.ts): the player it is about writes the truth, kept where no phone
+    // can read it; everyone else writes a lie as usual. No lie is refused as "too close to the truth":
+    // the truth may not be in yet, and refusing one would tell its writer that they had guessed it.
+    const about = aboutOf(game.state);
+    if (about) {
+        return aboutAnswer(pin, game, pid, playerAnswer, about.pid === pid);
     }
 
     const qid = game.qids[game.questionIndex];
@@ -60,4 +70,28 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
 
         return Promise.all([ended, marked]).then(([result]) => result);
     }
+}
+
+/** A lie, or the named player's truth, on an About question. */
+async function aboutAnswer(pin: string, game: GameScheme, pid: string, text: string, isTruth: boolean) {
+    const clean = String(text || '').trim();
+    if (!clean) {
+        return;
+    }
+
+    if (isTruth) {
+        game.aboutTruth = { pid, text: clean.toLowerCase() };
+        await gamesRef.child(pin).child('aboutTruth').set(game.aboutTruth);
+    } else {
+        const stored: Answer = { text: clean.toLowerCase(), houseLie: false, realAnswer: false };
+        await gamesRef.child(pin).child('answers').child(pid).set(stored);
+        game.answers = Object.assign({}, game.answers, { [pid]: stored });
+    }
+
+    const marked = writeMarks(pin, sentUpdate(game, [pid]));
+    const ended = everyoneSent(game, writingSent(game)) && leftOutGuardWait(game, Date.now()) === 0 ?
+        advance(pin, game.state) :
+        Promise.resolve();
+
+    return Promise.all([ended, marked]).then(([result]) => result);
 }

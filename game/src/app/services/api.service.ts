@@ -4,6 +4,7 @@ import {
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
+import { About, aboutOf, sentMark } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
@@ -131,6 +132,8 @@ export class ApiService {
             serverStart: true,
             // This client can show the staged reveal, so the server may draw this game into its 50/50 test.
             stagedReveal: true,
+            // This client can show the About questions, so the server may draw this game into their test.
+            aboutUs: true,
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -409,8 +412,29 @@ export class ApiService {
         if (!pid) {
             return false;
         }
-        const userAnswer = await this.get<unknown>(this.gamesRef.child(pin).child('answers').child(pid));
-        return !!userAnswer;
+        const [userAnswer, state] = await Promise.all([
+            this.get<unknown>(this.gamesRef.child(pin).child('answers').child(pid)),
+            this.get<GameStateInfo>(this.gamesRef.child(pin).child('state')),
+        ]);
+        if (userAnswer) {
+            return true;
+        }
+        // An About question's truth is kept where no phone can read it: the seat's mark says it is in.
+        const about = aboutOf(state);
+        if (about && about.pid === pid) {
+            const sent = await this.get<string>(this.gamesRef.child(pin).child('players').child(pid).child('sent')).catch(() => null);
+            return !!state && sent === sentMark(state);
+        }
+        return false;
+    }
+
+    /**
+     * The About question the game is on (see aboutOf in game-model): whom it is about, or null for a bank
+     * question. The server says so on the game's state; a state that cannot be read is no About question.
+     */
+    getAbout(pin: string): Promise<About> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => aboutOf(state), () => null);
     }
 
     answer(pin: string, answer: string) {
@@ -569,7 +593,7 @@ export class ApiService {
         const hostKey = pid ? newHostKey() : null;
         // stagedReveal: this client can show the staged reveal (each Replay is a new draw of that test).
         const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
-            `fork`, { pin, uid, pid, hostKey, stagedReveal: true });
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true });
         // Another phone pressed Replay first: the server hands this phone that game's key (it may start it
         // too), or says it is a guest there (host: false) and keeps no key.
         if (hostKey && resp && resp.pin && resp.host !== false) {
@@ -612,7 +636,7 @@ export class ApiService {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
         const resp = await this.post<{ pin: string; created: boolean }>(
-            `crewRematch`, { crew, uid, hostKey, serverStart: true, stagedReveal: true });
+            `crewRematch`, { crew, uid, hostKey, serverStart: true, stagedReveal: true, aboutUs: true });
         if (resp && resp.created) {
             rememberHostKey(resp.pin, hostKey);
         }

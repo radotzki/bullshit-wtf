@@ -137,7 +137,7 @@ function claimGame(pin: string, id: string): Promise<string> {
  * none of its members' browsers has seen. If a rematch lobby is already waiting, everyone goes there.
  */
 export async function crewRematch(crewId: string, uid?: string, hostKey?: string,
-    serverStart = false, stagedReveal = false): Promise<{ pin: string; created: boolean }> {
+    serverStart = false, stagedReveal = false, aboutUs = false): Promise<{ pin: string; created: boolean }> {
     const id = cleanCrewId(crewId);
     const crew = id ? await get<Crew>(crewsRef.child(id)) : null;
 
@@ -156,7 +156,7 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
     Object.keys(crew.members || {}).forEach(k => Object.keys(crew.members[k].uids || {}).forEach(u => uids.push(u)));
 
     const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
-        crew: id, uids, pack: seasonalPack(), hostKey, serverStart, stagedReveal,
+        crew: id, uids, pack: seasonalPack(), hostKey, serverStart, stagedReveal, aboutUs,
         campaign: isTestCampaign(crew.test) ? crew.test : undefined,
     });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });

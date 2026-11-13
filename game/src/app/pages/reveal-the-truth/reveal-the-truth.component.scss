@@ -97,6 +97,19 @@
         font-size: 1.1rem;
     }
 
+    // An About question's truth: whose it is, and their points, after the finders' points.
+    .about-score {
+        display: inline-flex;
+        align-items: center;
+        margin-inline-start: 10px;
+
+        img {
+            width: 22px;
+            height: 22px;
+            vertical-align: middle;
+        }
+    }
+
     .after {
         animation: row-in 0.25s ease-out;
     }
