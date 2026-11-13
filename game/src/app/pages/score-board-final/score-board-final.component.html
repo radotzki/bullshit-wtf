@@ -30,7 +30,7 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="displayPlayers" class="final">
+        <div *ngIf="displayPlayers" class="final" [class.lots]="!soloTaste && displayPlayers.length > 8">
             <div class="confetti" aria-hidden="true">
                 <i *ngFor="let c of confetti" [class]="'c' + (c % 7)" [style.left.%]="(c * 37) % 100"
                     [style.animation-delay.ms]="(c * 173) % 1400"></i>

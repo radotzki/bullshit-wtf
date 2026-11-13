@@ -345,6 +345,11 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
     &.presenter {
         .final { max-width: 1200px; }
         .hero { padding: 6px 12px 10px; margin-bottom: 14px; }
+        // Nine to twelve players: wider columns on a TV, and a shorter hero, so the second line
+        // under each player still leaves the whole final on a 1080 screen.
+        .final.lots { max-width: 1500px; }
+        .final.lots .hero { padding: 2px 12px 4px; margin-bottom: 8px; }
+        .final.lots .trophy { display: none; }
         .headline { font-size: 2.2rem; }
         .trophy { width: 56px; height: 56px; }
         .tied, .winner-score { font-size: 1.1rem; }
@@ -358,6 +363,25 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         // Nine to twelve players: three columns, so twelve rows are four lines and still fit 1080 px.
         .players.many.lots {
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+            // A third of the screen has no room for a label, a lie and its count on one line, and the
+            // count was cut to "fo…". So the lie gets a line of its own (only it gives way with "…"),
+            // and the count or the laughs the line under it, always whole. No label: the quotes say it.
+            .lie {
+                font-size: .75rem;
+                line-height: 1.2;
+            }
+            .lie:not(.none) {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                text-overflow: clip;
+            }
+            .lie-label { display: none; }
+            .lie-text {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .lie-fooled::before, .lie-laughs::before { content: none; }
         }
         .player { padding: 4px 10px; min-width: 0; }
         .name, .score { font-size: 1.2rem; }
