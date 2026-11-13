@@ -60,9 +60,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: game/package-lock.json
-      # Angular 22 on the CLI's esbuild builder: plain npm ci and npm run build. Lint is out of the
-      # build until angular-eslint replaces tslint (the job keeps its name so required checks still match).
+      # Angular 22 on the CLI's esbuild builder: plain npm ci and npm run build. Lint (angular-eslint
+      # and typescript-eslint, see game/eslint.config.js) runs first, so sloppy code fails fast.
       - run: npm ci
+      - run: npm run lint
       - run: npm run build
       - run: npm test
       - name: Check the build output

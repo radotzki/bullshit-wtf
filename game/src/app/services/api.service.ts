@@ -1,6 +1,6 @@
 import { reportError } from './../sentry/sentry.module';
 import {
-    GameScheme, GamePlayers, Answers, GameState, GameStateInfo, AnswerSelections, RevealAnswer, Crew, Highlights,
+    GamePlayers, Answers, GameState, GameStateInfo, RevealAnswer, Crew, Highlights,
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
@@ -54,7 +54,7 @@ let signInSlow = false;
  * server's message and code when it sent JSON, and the HTTP status always.
  */
 function apiError(url: string, resp: any) {
-    let body: any = null;
+    let body: any;
 
     try {
         body = resp && resp.error && typeof resp.error === 'object' ? resp.error : null;
@@ -409,7 +409,7 @@ export class ApiService {
         if (!pid) {
             return false;
         }
-        const userAnswer = await this.get<{}>(this.gamesRef.child(pin).child('answers').child(pid));
+        const userAnswer = await this.get<unknown>(this.gamesRef.child(pin).child('answers').child(pid));
         return !!userAnswer;
     }
 
@@ -433,7 +433,7 @@ export class ApiService {
             return false;
         }
         const [userAnswer, state] = await Promise.all([
-            this.get<{}>(this.gamesRef.child(pin).child('answerSelections').child(pid)),
+            this.get<unknown>(this.gamesRef.child(pin).child('answerSelections').child(pid)),
             this.get<GameStateInfo>(this.gamesRef.child(pin).child('state')),
         ]);
         // A pick this phone made in an earlier question, sent late after it was offline, is not this
@@ -647,7 +647,7 @@ export class ApiService {
         return user;
     }
 
-    private post<T>(url: string, body: Object = {}): Promise<T> {
+    private post<T>(url: string, body: object = {}): Promise<T> {
         return firstValueFrom(this.http.post<T>(environment.cloudfunctions + url, body))
             .catch(resp => Promise.reject(apiError(url, resp)));
     }

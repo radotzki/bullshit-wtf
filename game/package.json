@@ -7,6 +7,7 @@
     "copy-model": "node ../copy-shared.js src/app",
     "start": "npm run copy-model && ng serve",
     "build": "npm run copy-model && ng build && node scripts/build-he.js && node seo/build-pages.js",
+    "lint": "ng lint",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
@@ -29,8 +30,13 @@
     "@angular/build": "^22.2.7",
     "@angular/cli": "^22.2.7",
     "@angular/compiler-cli": "^22.2.6",
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "angular-eslint": "^22.6.0",
+    "eslint": "^10.14.0",
     "sass": "^1.80.0",
-    "typescript": "~6.0.0"
+    "typescript": "~6.0.0",
+    "typescript-eslint": "^8.72.2"
   },
   "private": true,
   "engines": {
@@ -38,6 +44,7 @@
   },
   "overrides": {
     "jsonwebtoken": "^9.0.2",
-    "@grpc/grpc-js": "^1.14.0"
+    "@grpc/grpc-js": "^1.14.0",
+    "minimatch": "^11.0.8"
   }
 }

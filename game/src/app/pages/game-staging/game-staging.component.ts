@@ -1,12 +1,10 @@
 import { map } from 'rxjs/operators';
 import { reportError } from './../../sentry/sentry.module';
-import { GamePlayers } from './../../game-model';
 import { Subscription } from 'rxjs';
 import { Howl } from 'howler';
 import { fadeOutAndUnload } from './../fade-out';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Observable } from 'rxjs';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
@@ -63,7 +61,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         if (!document.hidden) {
             this.reportIn();
         }
-    }
+    };
 
     constructor(
         private activatedRoute: ActivatedRoute,

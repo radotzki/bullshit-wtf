@@ -1,5 +1,5 @@
 import { Subscription } from 'rxjs';
-import { GameScheme, GameState, GameStateInfo } from './../game-model';
+import { GameState, GameStateInfo } from './../game-model';
 import { ApiService } from './api.service';
 import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';

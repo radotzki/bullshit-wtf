@@ -24,7 +24,7 @@ export interface FinishedGame {
 
 /** The same key as crewMemberKey in game-model.ts, so "Dana " and "dana" are one player. */
 export function nameKey(nickname: string): string {
-    const key = String(nickname || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.#$\[\]\/]/g, '_');
+    const key = String(nickname || '').trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.#$[\]/]/g, '_');
     return key || '_';
 }
 
