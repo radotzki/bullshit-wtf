@@ -98,7 +98,7 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         qids,
         tick: 0,
         presenter: game.presenter,
-        players: resetPlayersScore(game.players),
+        players: resetPlayersScore(withoutSecondSeats(game, hostPid)),
         origin: 'replay',
         parent,
     };
@@ -166,6 +166,39 @@ function resetPlayersScore(players: GamePlayers) {
         delete players[k].sent;
     });
     return players;
+}
+
+/**
+ * The finished game's seats, less a second seat of one phone that never sent a lie or a pick: before
+ * one phone was one seat (see seatOf in join.ts), a phone that joined twice left an empty seat, and
+ * Replay carried it into the next game, where the table waited on it again (12 Nov: JVXG to JVXH).
+ * A seat that played, or the only seat of its phone, always comes along.
+ */
+export function withoutSecondSeats(game: GameScheme, hostPid?: string): GamePlayers {
+    const players = game.players || {};
+    // A game from before the flags were kept (no playedFrom) cannot tell who played: keep every seat.
+    if (typeof game.playedFrom !== 'number') {
+        return players;
+    }
+    const played = game.played || {};
+    const keep = (k: string) => !!played[k] || !!players[k].host || k === hostPid;
+    const out: GamePlayers = {};
+    const byUid: { [uid: string]: string[] } = {};
+    Object.keys(players).filter(k => players[k]).forEach(k => {
+        const uid = players[k].uid;
+        if (typeof uid === 'string' && uid) {
+            (byUid[uid] = byUid[uid] || []).push(k);
+        } else {
+            out[k] = players[k];
+        }
+    });
+    Object.keys(byUid).forEach(uid => {
+        const seats = byUid[uid].sort();
+        const kept = seats.filter(keep);
+        // Nobody played any seat of this phone: keep its newest seat, the one the phone holds.
+        (kept.length ? kept : seats.slice(-1)).forEach(k => out[k] = players[k]);
+    });
+    return out;
 }
 
 function playerUids(game: GameScheme): string[] {
