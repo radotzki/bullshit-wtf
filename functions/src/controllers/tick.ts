@@ -6,7 +6,7 @@ import { pickHouseLies } from './answer-options';
 import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
-import { playedUpdate } from './seats';
+import { playedUpdate, lastSentSeats } from './seats';
 import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTaste } from './taste';
 import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
@@ -433,6 +433,8 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
     } else if (gameOver) {
         res = {
             state: updateState(GameState.ScoreBoardFinal),
+            // Who is still at the table, for a Replay (fork.ts seatsForReplay).
+            lastSent: lastSentSeats(game),
             currentQ: {},
             answers: {},
             answerSelections: {},

@@ -57,7 +57,7 @@
                         [class.is-loading]="loading">{{ t.next }}</button>
                 </div>
                 <div class="field" *ngIf="nicknameState">
-                    <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname"
+                    <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname || loading"
                         [class.is-loading]="loading">{{ t.join }}</button>
                 </div>
             </div>

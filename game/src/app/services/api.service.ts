@@ -194,7 +194,11 @@ export class ApiService {
         const hostKey = hostKeyFor(pin) || null;
         // nickname: the name the server stored (cut to 9, or a sweet name if the typed one was a slur
         // or a sex word, with swapped set). Older functions send only pid.
-        return this.post<{ pid: string; nickname?: string; swapped?: boolean }>(`join`, { pin, nickname, uid, hostKey })
+        // pid: this phone's last player id. If that seat is in this game (the phone came Back to the join
+        // page, or reloaded it), the server gives the seat back instead of adding a second one.
+        const user = this.sessionService.user;
+        const pid = user && user.pid ? user.pid : null;
+        return this.post<{ pid: string; nickname?: string; swapped?: boolean }>(`join`, { pin, nickname, uid, hostKey, pid })
             .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
     }
 
