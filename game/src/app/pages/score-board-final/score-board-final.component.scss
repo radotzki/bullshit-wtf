@@ -391,7 +391,8 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
                 margin-inline-start: auto;
                 line-height: 1;
             }
-            .badge { font-size: .55rem; margin-top: 0; }
+            // Line height 1 would cut the tops of the badge font's capitals: keep them inside the badge.
+            .badge { font-size: .55rem; margin-top: 0; line-height: 1.3; padding-top: 1px; }
             .lie.funny, .lie.none {
                 order: 3;
                 flex: 0 0 100%;
