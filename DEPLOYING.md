@@ -334,7 +334,8 @@ no workarounds. It stays on its NgModule: every component, pipe and directive sa
 `standalone: false`, and every component says `changeDetection: ChangeDetectionStrategy.Eager`
 (Angular 22 makes components OnPush by default, and the game's screens change from Firebase
 callbacks). `game/src/main.ts` asks for zone.js change detection, which Angular 21+ no longer
-gives an NgModule app by default. Lint is out of the build until angular-eslint replaces tslint.
+gives an NgModule app by default. Lint is angular-eslint with typescript-eslint (`game/eslint.config.js`):
+`npm run lint` in game/, and CI runs it before the build.
 To play a whole game of the built client on the Firebase emulators, see
 `.github/smoke/emulator-game.js`.
 

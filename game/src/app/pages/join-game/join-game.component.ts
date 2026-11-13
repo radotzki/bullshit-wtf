@@ -1,7 +1,6 @@
 import { reportError } from './../../sentry/sentry.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
-import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { takeJoinSource, preferredLocale } from '../../services/join-source';
@@ -180,12 +179,11 @@ export class JoinGameComponent implements OnInit {
     async join() {
         this.loading = true;
         this.errorMsg = '';
-        let uid;
 
         // signInAnonymously waits at most about 1.5 s and resolves to undefined if sign-in is slower or fails.
         const via = takeJoinSource(this.pin, this.activatedRoute.snapshot.queryParams['via'], this.pinInUrl);
         const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
-        uid = user ? user.uid : 0;
+        const uid: any = user ? user.uid : 0;
 
         this.apiService.join(this.pin, this.nickname, uid)
             .then(({ pid, nickname, swapped }) => {

@@ -1,7 +1,6 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
 import { fadeOutAndUnload } from './../fade-out';
-import { Subscription } from 'rxjs';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';

@@ -1,6 +1,5 @@
 import { Observable } from 'rxjs';
 import { ApiService } from './../../services/api.service';
-import { Subscription } from 'rxjs';
 import { SessionService } from './../../services/session.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
