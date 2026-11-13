@@ -199,6 +199,41 @@ export class ApiService {
             .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
     }
 
+    /**
+     * Keep this phone's seat in the game marked as here (games/$pin/seen/$pid): true while the page is
+     * connected, and the server's time when it goes away, which the database writes by itself when the
+     * connection drops (onDisconnect). The server gives a seat back by name to a guest whose invite link
+     * opened in an empty browser only once its old page has gone (join.ts seatByName), so two players
+     * with one name, both here, stay two seats. Returns a function that stops it and marks the seat gone.
+     * Does nothing on the big screen or for a phone with no seat; a write the rules refuse (the phone's
+     * player id is from another game) is dropped.
+     */
+    followSeat(pin: string): () => void {
+        const user = this.sessionService.user;
+        const pid = user && user.pid;
+        if (!pin || !pid || this.sessionService.presenter) {
+            return () => { };
+        }
+        const seen = this.gamesRef.child(pin.toUpperCase()).child('seen').child(pid);
+        const gone = firebaseCompat.database.ServerValue.TIMESTAMP;
+        const connected = firebase.database().ref('.info/connected');
+        let stopped = false;
+        const cb = connected.on('value', snap => {
+            if (snap.val() !== true || stopped) {
+                return;
+            }
+            seen.onDisconnect().set(gone)
+                .then(() => stopped ? undefined : seen.set(true))
+                .catch(() => undefined);
+        });
+        return () => {
+            stopped = true;
+            connected.off('value', cb);
+            seen.onDisconnect().cancel().catch(() => undefined);
+            seen.set(gone).catch(() => undefined);
+        };
+    }
+
     validateGameName(pin: string) {
         pin = pin.toUpperCase();
         return this.post(`validateGameName`, { pin });

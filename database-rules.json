@@ -81,6 +81,11 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "seen": {
+                    "$pid": {
+                        ".write": "root.child('games').child($pin).child('players').child($pid).exists() && (newData.val() === true || (newData.isNumber() && newData.val() <= now))"
+                    }
+                },
                 "revealDone": {
                     ".read": "true",
                     "$pid": {
