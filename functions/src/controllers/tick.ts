@@ -10,6 +10,7 @@ import { playedUpdate, lastSentSeats } from './seats';
 import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTaste } from './taste';
 import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
+import { withNextWeek } from './next-week';
 
 // How long a run waits before its second try at leaving a phase of no length.
 const leaveRetryDelay = 1000;
@@ -425,7 +426,8 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
         };
     } else if (gameOver) {
         res = {
-            state: updateState(GameState.ScoreBoardFinal),
+            // In the "Same time next week?" test, the final state says which half (next-week.ts).
+            state: withNextWeek(updateState(GameState.ScoreBoardFinal), pin, game),
             // Who is still at the table, for a Replay (fork.ts seatsForReplay).
             lastSent: lastSentSeats(game),
             currentQ: {},

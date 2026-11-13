@@ -13,6 +13,7 @@ import { fork } from './controllers/fork';
 import { startGame, hostHere } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
+import { crewNight } from './controllers/crew-night';
 import * as analytics from './controllers/analytics';
 import { cleanVisit } from './controllers/visit';
 import { laugh } from './controllers/laugh';
@@ -105,7 +106,7 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
 exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => {
     cors(req, res, async () => {
         try {
-            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid));
+            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid), req.body.auto === true);
             return res.status(200).send(crew);
         } catch (e) {
             caught(e);
@@ -121,6 +122,18 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
             const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
                 req.body.serverStart === true, req.body.stagedReveal === true);
             return res.status(200).send(result);
+        } catch (e) {
+            caught(e);
+            return res.status(400).send(errorBody(e));
+        }
+    });
+}, 'crew'));
+
+// A crew's next game night: set the date, or say "I'm in" (see controllers/crew-night.ts).
+exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await crewNight(req.body));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));

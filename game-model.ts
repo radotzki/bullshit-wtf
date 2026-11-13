@@ -18,6 +18,11 @@ export interface GameStateInfo {
     // The game plays the staged reveal (its bigReveal is true). On every state of such a game, and
     // only there: this is where phones read it, since they cannot read bigReveal itself.
     staged?: boolean;
+    // "Same time next week?", a 50/50 test, on the final state only, of a game that is a group's
+    // second or later game of a sitting (a Replay, or a crew's game). true: the final screen offers the
+    // button that sets next week's date. false: in the test, and the screen stays as it was. Absent: not
+    // in the test. The half follows the sitting (see functions/src/controllers/next-week.ts).
+    nextWeek?: boolean;
 }
 
 export interface GameScheme {
@@ -56,6 +61,9 @@ export interface GameScheme {
     hostSeen?: number;
     origin?: GameOrigin;
     parent?: string;         // PIN of the finished game this one was replayed from
+    // PIN of the first game of this sitting: copied from Replay to Replay. Absent on a sitting's first
+    // game, which is its own root. A Replay of a taste starts a sitting (the taste was played alone).
+    root?: string;
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.
     revealDone?: { [pid: string]: boolean };
     // Seats that have sent a lie or a pick in this game, stored as each question's picks close.
@@ -502,6 +510,21 @@ export interface Crew {
     rematch?: { pin: string; time: number };
     // The test tag of the test game this crew was saved from: its rematches are test games too.
     test?: string;
+    // Made by "Same time next week?" with a name nobody typed ("Dana's crew"): the browser that made
+    // it (creator) may still rename it from that sheet.
+    auto?: boolean;
+    // The crew's next game night, set by one player's tap (see functions/src/controllers/crew-night.ts).
+    night?: CrewNight;
+}
+
+/**
+ * A crew's next game night: when, who proposed it, and who said "I'm in" (keyed by crewMemberKey of
+ * the nickname; the value is the nickname as typed, or true in older data).
+ */
+export interface CrewNight {
+    time: number;
+    by: string;
+    in?: { [memberKey: string]: string | true };
 }
 
 export interface CrewMember {

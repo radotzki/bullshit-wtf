@@ -1,4 +1,4 @@
-import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign } from '../game-model';
+import { Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign, tasteOf } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
 import { newGame } from './new-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
@@ -51,11 +51,42 @@ function gamePlayers(game: GameScheme): CrewGamePlayer[] {
     }));
 }
 
+/** How far up a sitting a new crew looks for the games played before it was saved. */
+export const SITTING_GAMES_MAX = 10;
+
 /**
- * Saves the players of a finished game as a crew, with this game as its first result.
- * Saving the same game twice (two phones tapping at once) returns the same crew.
+ * The finished games this game was replayed from, oldest first: tonight's earlier games. The chain
+ * stops at a game that is gone, never finished, was a taste (played alone) or had under two players.
  */
-export async function createCrew(pin: string, name: string, uid?: string): Promise<{ id: string; name: string }> {
+export async function earlierGames(game: GameScheme): Promise<{ pin: string; game: GameScheme }[]> {
+    const out: { pin: string; game: GameScheme }[] = [];
+    const seen: { [pin: string]: boolean } = {};
+    let parent = game && game.parent;
+    while (typeof parent === 'string' && /^[A-Za-z]{1,12}$/.test(parent) && !seen[parent] && out.length < SITTING_GAMES_MAX) {
+        seen[parent] = true;
+        const earlier = await get<GameScheme>(gamesRef.child(parent.toUpperCase()));
+        if (!earlier || !earlier.state || earlier.state.id !== GameState.ScoreBoardFinal || tasteOf(earlier.state)
+            || Object.keys(earlier.players || {}).length < 2) {
+            break;
+        }
+        out.unshift({ pin: parent.toUpperCase(), game: earlier });
+        parent = earlier.parent;
+    }
+    return out;
+}
+
+/**
+ * Saves the players of a finished game as a crew, with this game as a result. A game that is a
+ * Replay brings the sitting's earlier games with it (see earlierGames), so the crew's first line
+ * says "Dana leads 2 to 1", not "1 to 0".
+ * Saving the same game twice (two phones tapping at once) returns the same crew.
+ *
+ * `auto`: made by "Same time next week?" with a name nobody typed. The browser that made such a crew
+ * may rename it by saving the game again under another name; nobody else's save renames a crew.
+ * `created` says whether this call made the crew.
+ */
+export async function createCrew(pin: string, name: string, uid?: string, auto = false)
+    : Promise<{ id: string; name: string; created: boolean }> {
     pin = String(pin || '').toUpperCase();
     const crewName = cleanCrewName(name);
 
@@ -76,8 +107,12 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
         return fail('Finish the game first', 'GAME_NOT_FINISHED');
     }
     if (game.crew) {
-        const existing = await get<string>(crewsRef.child(game.crew).child('name'));
-        return { id: game.crew, name: existing || crewName };
+        const existing = await get<Crew>(crewsRef.child(game.crew));
+        if (existing && existing.auto === true && !!uid && existing.creator === uid && existing.name !== crewName) {
+            await crewsRef.child(game.crew).child('name').set(crewName);
+            return { id: game.crew, name: crewName, created: false };
+        }
+        return { id: game.crew, name: (existing && existing.name) || crewName, created: false };
     }
 
     const players = gamePlayers(game);
@@ -103,6 +138,12 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
     if (isTestCampaign(game.campaign)) {
         crew.test = game.campaign;
     }
+    if (auto) {
+        crew.auto = true;
+    }
+    // Tonight's earlier games first, each at the time it ended, then this one.
+    (await earlierGames(game)).forEach(earlier =>
+        applyCrewGame(crew, earlier.pin, gamePlayers(earlier.game), Number(earlier.game.state.timestamp) || now));
     applyCrewGame(crew, pin, players, now);
 
     await crewsRef.child(id).set(crew);
@@ -112,7 +153,7 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
     if (winner !== id) {
         await crewsRef.child(id).set(null);
         const existing = await get<string>(crewsRef.child(winner).child('name'));
-        return { id: winner, name: existing || crewName };
+        return { id: winner, name: existing || crewName, created: false };
     }
 
     // Replay was already pressed: the next game counts for the crew too.
@@ -120,7 +161,7 @@ export async function createCrew(pin: string, name: string, uid?: string): Promi
         await claimGame(game.fork, id);
     }
 
-    return { id, name: crewName };
+    return { id, name: crewName, created: true };
 }
 
 function claimGame(pin: string, id: string): Promise<string> {

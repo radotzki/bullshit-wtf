@@ -347,7 +347,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 20 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit + laugh), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 21 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -1094,3 +1094,57 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## "Same time next week?" on the final screen (a 50/50 test)
+
+126 of 132 groups that played a second game never sat down together again. Leaving with a date took
+seven steps and a crew name (SAVE THIS CREW, then the crew page's NEXT GAME NIGHT), and had one real
+press. Now the final screen of a group's second or later game of a sitting offers one button under
+REMATCH: REVENGE NEXT WEEK (DEFEND MY TITLE NEXT WEEK for the winner). Its sheet shows tonight plus
+seven days and a crew name nobody has to type, and SEND TO THE GROUP ON WHATSAPP puts the date and
+the crew link in the group's chat in one tap. Once one player has sent or saved the date, the other
+phones on the final screen show it as a banner with I'M IN. The big screen gets one line.
+The spec is "Change 1" of the game night loop spec (the project's reports); the code is
+`game/src/app/components/next-week` and `functions/src/controllers/next-week.ts`.
+
+- Functions and site. One new function, `crewNight` (HTTP). No rule change, no BigQuery change: the
+  new rows use the `shares` columns that are there. A merge sends all functions and the site.
+- Which games. A Replay, or a crew's game, with two players or more. Not a taste, and not the Replay
+  of a taste (that is the group's first game). A group that opens a fresh game by hand keeps the
+  phone-memory rule of `repeat-group.ts`, as before.
+- Which half. It follows the sitting, not the game: one bit of SHA-256 of `'next-week:' + root`,
+  where root is the PIN of the sitting's first game. Replay copies `root` from game to game
+  (`games/<pin>/root`, server only); a crew game that is no Replay is its own root. The server
+  writes the result on the game's final state, `state.nextWeek` (true: the new screen; false: in the
+  test, today's screen; absent: not in the test), where phones already read `state.staged`.
+- What is new on a crew: `auto` (made by the sheet under a default name: the browser that made it
+  may rename it from the sheet, nobody else) and `night: { time, by, in: { <member key>: <nickname> } }`,
+  written only by `crewNight`: `{ crew, time, by }` sets the date (a new time clears the list and
+  puts the sender in), `{ crew, nickname, in }` adds a name or takes it off. A crew made on a second
+  game now counts the sitting's earlier games too (`earlierGames` in `crew.ts`), so its first message
+  says "Dana leads 2 to 1"; this holds for SAVE THIS CREW in the other half as well.
+- Old and new together. Functions first: an old site ignores `state.nextWeek` and shows today's
+  screen, and counts no `seen-` row. A game replayed before the release has no `root` and is not in
+  the test; its next Replay is. The new site on old functions reads no `state.nextWeek` and shows
+  today's screen.
+- What it records, in `shares` (`SHARE_METHODS` in `analytics.ts`): `next-week` with `seen-card`
+  (a phone showed the new button or its banner, once per phone per game), `seen-control` (a phone of
+  the other half showed today's screen), `open`, `whatsapp`, `native`, `copy`, `calendar`, `in`; and
+  `crew-save` with `next-week` for a crew the sheet made. Rows carry the crew id (once there is one),
+  the language and the browser id. Test games (`?via=test`) make test crews, as before; their
+  `shares` rows carry no mark of their own, so leave them out by browser id, as for other shares.
+
+How to read it (read-only). The half of a sitting, from the PIN of its first game:
+
+```sql
+-- root: the top of the parent_pin chain in opened_games, stopping below a taste (players = 1).
+SELECT MOD(TO_CODE_POINTS(SHA256(CONCAT('next-week:', UPPER(root))))[OFFSET(0)], 2) = 1 AS new_half
+```
+
+First read, one week after the release: of the sittings in each half that reached a second final
+screen, the share that set a date (`next-week` with `whatsapp`, `native`, `copy` or `calendar`),
+against the share of the other half that saved a crew or sent a night the old way (about 2% before).
+Then, by half: groups back together within 7 days, and the share of second games followed by a third
+(the `forks` table), which must not fall: the button sits beside REMATCH.
+
+To play it on the emulators, both halves and both languages: `node .github/smoke/next-week-game.js`.

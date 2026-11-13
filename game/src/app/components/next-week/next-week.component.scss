@@ -1,0 +1,201 @@
+$gold: #f3d467;
+$dark: #363636;
+$body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+:host {
+    display: block;
+}
+
+.next-week {
+    &.is-rtl {
+        font-family: 'Suez One', $body-font;
+    }
+
+    // The same size as REMATCH above it; its words are longer, so they may wrap.
+    .next-week-button {
+        height: auto;
+        min-height: 3.2rem;
+        font-size: 1.25rem;
+        line-height: 1.15;
+        white-space: normal;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, .25);
+    }
+
+    .hint {
+        text-align: center;
+        color: #7a7a7a;
+        font-family: $body-font;
+        font-size: .85rem;
+        margin: 6px 0 8px;
+    }
+
+    .next-week-banner {
+        margin: 0 0 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #fff8dc;
+        box-shadow: 0 0 0 2px $gold, 0 3px 0 rgba(0, 0, 0, .12);
+        color: $dark;
+        text-align: center;
+
+        .banner-when {
+            font-size: 1.1rem;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
+        .banner-by {
+            font-family: $body-font;
+            font-size: .9rem;
+            color: #4a4a4a;
+            margin-top: 2px;
+        }
+
+        .banner-in {
+            margin-top: 8px;
+            box-shadow: 0 3px 0 rgba(0, 0, 0, .2);
+        }
+
+        .banner-done {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 6px 10px;
+            margin-top: 8px;
+        }
+
+        .banner-calendar {
+            height: auto;
+            white-space: normal;
+        }
+    }
+
+    .saved {
+        margin-top: 6px;
+        font-family: $body-font;
+        font-size: .9rem;
+        line-height: 1.3;
+        color: #4a4a4a;
+        text-align: center;
+
+        .google {
+            display: block;
+            text-decoration: underline;
+        }
+    }
+
+    .next-week-sheet {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        color: $dark;
+
+        .sheet-title {
+            font-size: 1.4rem;
+            line-height: 1.15;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .sheet-when {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 1.1rem;
+
+            .when {
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+        }
+
+        .sheet-change {
+            flex: 0 0 auto;
+            font-family: $body-font;
+        }
+
+        .night-inputs {
+            display: flex;
+            margin-top: 6px;
+
+            .input {
+                min-width: 0;
+            }
+
+            .input + .input {
+                margin-inline-start: 8px;
+                flex: 0 0 38%;
+            }
+        }
+
+        .sheet-crew {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0 12px;
+            font-family: $body-font;
+
+            .crew-label {
+                flex: 0 0 auto;
+                color: #7a7a7a;
+            }
+
+            .crew-name {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            .crew-name-fixed {
+                min-width: 0;
+                font-weight: 700;
+                overflow-wrap: anywhere;
+            }
+        }
+
+        .sheet-error {
+            font-family: $body-font;
+            font-size: .9rem;
+            color: #cc0f35;
+            margin: 4px 0;
+        }
+
+        .button {
+            height: auto;
+            min-height: 2.5em;
+            white-space: normal;
+        }
+
+        .button + .button {
+            margin-top: 8px;
+        }
+
+        .whatsapp {
+            background-color: #25d366;
+            border-color: transparent;
+            color: #fff;
+            font-size: 1.1rem;
+            min-height: 3rem;
+
+            &.is-disabled {
+                opacity: .5;
+                pointer-events: none;
+            }
+        }
+
+        .sheet-other {
+            font-family: $body-font;
+        }
+
+        .sheet-set {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 1rem;
+        }
+    }
+
+    .modal-card-foot {
+        justify-content: center;
+    }
+}
