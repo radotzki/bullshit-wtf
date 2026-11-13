@@ -83,6 +83,22 @@ export function playedUpdate(game: GameScheme): { played?: { [pid: string]: bool
     return first ? { played, playedFrom: 0 } : { played };
 }
 
+/**
+ * The seats that sent something on the question being closed: a lie, a pick that counts, or a NEXT
+ * on its reveal. Stored when the game ends (lastSent): those are the players still at the table,
+ * and a Replay starts with their seats (fork.ts seatsForReplay).
+ */
+export function lastSentSeats(game: GameScheme): { [pid: string]: boolean } {
+    const answers = (game && game.answers) || {};
+    const picks = game ? playerPicks(game) : {};
+    const done = (game && game.revealDone) || {};
+    const out: { [pid: string]: boolean } = {};
+    Object.keys((game && game.players) || {})
+        .filter(pid => !!game.players[pid] && !!(answers[pid] || picks[pid] || done[pid] === true))
+        .forEach(pid => out[pid] = true);
+    return out;
+}
+
 /** The phases the phase timer looks at once more when the guard is over: the lies and the picks. */
 export function guardedPhase(stateId: number): boolean {
     return guardedPhases.indexOf(stateId) >= 0;
