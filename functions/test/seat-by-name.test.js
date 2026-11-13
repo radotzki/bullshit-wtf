@@ -225,3 +225,17 @@ test('Replay carries each seat\'s browser string', () => {
     const forked = createFork('OLD1', game, ['q1'], 'u1', 'p1', undefined, false, 'NEW1');
     assert.deepStrictEqual(forked.agents, { p1: IPHONE, p2: ANDROID });
 });
+
+test('only the sign-in that holds a seat may read or write its mark (database rules)', () => {
+    // A signed-out write could mark a connected player gone, and let a namesake take her seat.
+    // emulator-rejoin.js checks the same against the real rules engine.
+    const fs = require('fs');
+    const rules = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'database-rules.json'), 'utf8'));
+    const seen = rules.rules.games.$pin.seen.$pid;
+    const owner = "auth != null && root.child('games').child($pin).child('players').child($pid).child('uid').val() === auth.uid";
+    assert.strictEqual(seen['.read'], owner);
+    assert.ok(seen['.write'].startsWith(owner + ' && '), seen['.write']);
+    assert.ok(/newData\.val\(\) === true \|\| \(newData\.isNumber\(\) && newData\.val\(\) <= now\)/.test(seen['.write']));
+    assert.deepStrictEqual(Object.keys(rules.rules.games.$pin.seen), ['$pid'], 'no rule on the whole list');
+    assert.strictEqual('agents' in rules.rules.games.$pin, false, 'browser strings stay server-only');
+});

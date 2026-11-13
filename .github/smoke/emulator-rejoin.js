@@ -4,7 +4,9 @@
 // empty profile, as a chat app's browser is.
 //
 //  1. The host creates a game and joins. Noa opens the invite link in an empty browser and joins: her
-//     seat is marked as here (games/$pin/seen/$pid is true) under the database rules as they are.
+//     seat is marked as here (games/$pin/seen/$pid is true) under the database rules as they are. A
+//     signed-out write and another sign-in's write of her mark are refused, and a mark changed from
+//     elsewhere while her page is here is set back to true by her page.
 //  2. That browser closes. The database marks her seat gone by itself (seen becomes a time).
 //  3. She taps the same link again: a new empty browser, the same phone (browser string), the same name.
 //     She gets her old seat back: still two seats, and her new browser holds the old player id.
@@ -41,6 +43,27 @@ async function joinByLink(phone, base, pin) {
     await input.fill(phone.name);
     await phone.page.locator('form button[type="submit"]').first().click();
     await phone.page.waitForURL(/\/game-staging\//, { timeout: 30000 });
+}
+
+/** A new anonymous sign-in on the Auth emulator: its ID token. */
+async function anonymousToken() {
+    const res = await fetch(`http://${HOST}:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }),
+    });
+    const body = await res.json();
+    if (!body.idToken) throw new Error(`no anonymous sign-in: ${JSON.stringify(body)}`);
+    return body.idToken;
+}
+
+/** The uid inside an ID token. */
+const tokenUid = (token) => JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8')).user_id;
+
+/** Writes a seat's mark under the rules, as a phone would: signed out (token null) or with an ID token. */
+async function markAs(pin, pid, value, token) {
+    const res = await fetch(`http://${DB}/games/${pin}/seen/${pid}.json?ns=${PROJECT}${token ? `&auth=${token}` : ''}`, {
+        method: 'PUT', body: JSON.stringify(value),
+    });
+    return res.status;
 }
 
 /** The player id this browser keeps (session.service.ts, BS_PLAYER). */
@@ -84,6 +107,28 @@ async function main() {
         const agent = await db('GET', `games/${pin}/agents/${pid}`);
         check(agent === IPHONE, `the seat keeps the browser string: got ${JSON.stringify(agent)}`);
         log(`Noa joined as ${pid}; seat marked here`);
+
+        // 1b. Only the sign-in that holds the seat may write or read its mark: a signed-out write and
+        // another sign-in's write are refused, and her mark stays true.
+        const signedOut = await markAs(pin, pid, 1, null);
+        check(signedOut === 401 || signedOut === 403, `a signed-out write of her mark was not refused (${signedOut})`);
+        const stranger = await anonymousToken();
+        const otherWrite = await markAs(pin, pid, 1, stranger);
+        check(otherWrite === 401 || otherWrite === 403, `another sign-in's write of her mark was not refused (${otherWrite})`);
+        // The same sign-in may mark a seat it holds (so the refusal above is the rule, not a bad token).
+        const own = await db('POST', `games/${pin}/players`, { nickname: 'probe', score: 0, uid: tokenUid(stranger) });
+        const ownWrite = await markAs(pin, own.name, true, stranger);
+        check(ownWrite === 200, `a sign-in could not mark its own seat (${ownWrite})`);
+        await db('DELETE', `games/${pin}/players/${own.name}`);
+        await db('DELETE', `games/${pin}/seen/${own.name}`);
+        const otherRead = await fetch(`http://${DB}/games/${pin}/seen/${pid}.json?ns=${PROJECT}&auth=${stranger}`);
+        check(otherRead.status === 401 || otherRead.status === 403, `another sign-in could read her mark (${otherRead.status})`);
+        check((await db('GET', `games/${pin}/seen/${pid}`)) === true, 'her mark changed after the refused writes');
+        // A mark changed from elsewhere while her page is here (here by the owner, past every rule) is set back.
+        await db('PUT', `games/${pin}/seen/${pid}`, 1);
+        await until('her page to set her mark back to true', async () => (await db('GET', `games/${pin}/seen/${pid}`)) === true, 15000)
+            .catch(() => problems.push('her page did not set her mark back to true'));
+        log(`signed-out write: ${signedOut}, another sign-in's write: ${otherWrite}, its own seat: ${ownWrite}, read: ${otherRead.status}; her page set the mark back`);
 
         // 2. The chat app's browser closes.
         await first.context.close();
