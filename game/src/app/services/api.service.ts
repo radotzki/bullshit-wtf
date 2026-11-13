@@ -612,6 +612,18 @@ export class ApiService {
         return this.post<{ id: string; name: string }>(`createCrew`, { pin, name, uid });
     }
 
+    /**
+     * INVITE ANOTHER GROUP: makes this guest's table, a crew of one with its night set, from the
+     * finished game the guest played in. The server takes the nickname from that game.
+     */
+    async createTable(pin: string, time: number) {
+        pin = pin.toUpperCase();
+        const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
+        const user = this.sessionService.user;
+        const pid = user && user.pid ? user.pid : null;
+        return this.post<{ id: string; name: string; time: number }>(`createTable`, { pin, pid, time, uid });
+    }
+
     async crewRematch(crew: string) {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();

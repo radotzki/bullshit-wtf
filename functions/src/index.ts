@@ -12,7 +12,7 @@ import { join } from './controllers/join';
 import { fork } from './controllers/fork';
 import { startGame, hostHere } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
-import { createCrew, crewRematch } from './controllers/crew';
+import { createCrew, createTable, crewRematch } from './controllers/crew';
 import { crewNight } from './controllers/crew-night';
 import * as analytics from './controllers/analytics';
 import { cleanVisit } from './controllers/visit';
@@ -108,6 +108,19 @@ exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => 
         try {
             const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid));
             return res.status(200).send(crew);
+        } catch (e) {
+            caught(e);
+            return res.status(400).send(errorBody(e));
+        }
+    });
+}, 'game'));
+
+// INVITE ANOTHER GROUP: a guest of a finished game makes a crew of one, with a night, to send to other friends.
+exports.createTable = functions.https.onRequest(http('createTable', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            const table = await createTable(req.body.pin, cleanPid(req.body.pid), req.body.time, cleanUid(req.body.uid));
+            return res.status(200).send(table);
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));

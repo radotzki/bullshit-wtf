@@ -116,6 +116,17 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     create             tapped START MY OWN GAME (the game it makes carries campaign after-game)
 //     remind             tapped REMIND ME (saves a calendar entry; its link carries after-game-remind)
 //     remind-google      then tapped "Add it to Google Calendar"
+//   host-invite INVITE ANOTHER GROUP, the ask half of guests see in place of that one (a 50/50 test by
+//               browser; the crew id comes with every row from `open` on):
+//     seen-new           a guest's phone showed the new ask
+//     seen-classic       a guest's phone in the other half showed today's ask
+//     open               pressed INVITE ANOTHER GROUP (the sheet opened)
+//     whatsapp           sent the invitation: tapped SEND ON WHATSAPP
+//     native             sent it through the phone's share sheet (Share another way)
+//     copy               the same on a phone with no share sheet: the text and link were copied
+//     calendar           pressed ADD TO MY CALENDAR (saves the night as a calendar file)
+//     google-calendar    then tapped "or add it to Google Calendar"
+//     create-now         pressed "or start a game right now" (the game it makes carries campaign after-game-invite)
 //   game-over   the same ask on the join page of a game that is over (campaigns after-game-late and
 //               after-game-late-remind): create, remind, remind-google
 //   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
@@ -129,6 +140,7 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],
+    'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],
     'sound': ['mute', 'unmute'],
 };
 

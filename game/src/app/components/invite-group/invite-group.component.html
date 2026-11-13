@@ -1,0 +1,53 @@
+<div class="invite-ask" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+    <p class="ask-title">{{ t.title }}</p>
+    <p class="ask-text">{{ t.text }}</p>
+    <button class="button is-primary is-fullwidth invite-open" type="button" (click)="openSheet()">{{ t.button }}</button>
+    <p class="ask-set" *ngIf="sentWhen">
+        <span class="tick">✓</span> {{ t.set }} <span dir="auto">{{ sentWhen }}</span>
+        <button type="button" class="link-button see-table" (click)="seeTable()">{{ t.see }}</button>
+    </p>
+    <p class="ask-now"><button type="button" class="link-button create-now" (click)="createNow()">{{ t.now }}</button></p>
+</div>
+
+<div class="modal invite-modal" [class.is-active]="open">
+    <div class="modal-background" (click)="close()"></div>
+    <div class="modal-content">
+        <section class="modal-card-body invite-sheet" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+            <h4 class="sheet-title">{{ t.sheetTitle }}</h4>
+            <p class="sheet-when">
+                <span class="when" dir="auto">{{ when }}</span>
+                <button type="button" class="link-button change" (click)="changing = !changing">{{ t.change }}</button>
+            </p>
+            <div class="night-inputs" *ngIf="changing">
+                <input class="input" type="date" name="inviteDate" [(ngModel)]="nightDate" [attr.aria-label]="t.day">
+                <input class="input" type="time" name="inviteTime" [(ngModel)]="nightTime" [attr.aria-label]="t.time" step="900">
+            </div>
+            <p class="sheet-error" *ngIf="nightInPast">{{ t.past }}</p>
+
+            <a class="button is-fullwidth whatsapp invite-whatsapp" [class.is-loading]="making" [class.is-disabled]="!ready"
+                [attr.href]="whatsappUrl || null" target="_blank" rel="noopener" (click)="whatsapp($event)">
+                <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                <span> {{ t.whatsapp }} </span>
+            </a>
+            <button class="button is-fullwidth invite-calendar" type="button" [disabled]="!ready" (click)="calendar()">
+                <span class="icon"><i class="fa fa-calendar"></i></span>
+                <span> {{ t.calendar }} </span>
+            </button>
+            <p class="sheet-google" *ngIf="calendarSaved && ready">
+                <a [href]="googleUrl" target="_blank" rel="noopener" (click)="google()">{{ t.google }}</a>
+            </p>
+            <p class="sheet-other">
+                <button type="button" class="link-button share-other" [disabled]="!ready" (click)="other()">{{ t.other }}</button>
+            </p>
+            <p class="sheet-note" *ngIf="copied">{{ t.copied }}</p>
+            <p class="sheet-note sheet-set" *ngIf="sentWhen"><span class="tick">✓</span> {{ t.set }} <span dir="auto">{{ sentWhen }}</span></p>
+            <div class="notification is-danger" *ngIf="failed">
+                {{ t.failed }}
+                <button type="button" class="link-button retry" (click)="makeTable()">{{ t.retry }}</button>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" type="button" (click)="close()"> {{ t.done }} </button>
+        </footer>
+    </div>
+</div>

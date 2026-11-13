@@ -76,6 +76,9 @@
                 </div>
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
             </div>
+            <!-- Half of guests: INVITE ANOTHER GROUP in place of the ask below (a 50/50 test, see invite-group.ts). -->
+            <app-invite-group *ngIf="inviteAsk" [pin]="pin" [locale]="locale" [nickname]="myNickname" [best]="mine ? mine.best : null"
+                (sheet)="onSheet($event)"></app-invite-group>
 
             <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
 

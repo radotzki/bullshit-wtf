@@ -504,7 +504,13 @@ export interface Crew {
     test?: string;
     // The crew's next game night and who said "I'm in" (see CrewNight). Written by the crewNight function.
     night?: CrewNight;
+    // The campaign tag every game of this crew carries (opened_games.campaign). 'table' for a crew a
+    // guest made to invite another group (createTable in controllers/crew.ts); a test tag wins over it.
+    campaign?: string;
 }
+
+/** The campaign tag of a guest's table (see Crew.campaign), and of the games its lobby button opens. */
+export const TABLE_CAMPAIGN = 'table';
 
 /**
  * A crew's next game night: when it is, who called it, and who said "I'm in".
@@ -566,7 +572,14 @@ export function applyCrewGame(crew: Crew, pin: string, players: CrewGamePlayer[]
 
     const memberCount = Object.keys(crew.members).length;
     const matched = players.filter(p => !!crew.members[crewMemberKey(p.nickname)]).length;
-    const counted = players.length >= 2 && matched >= Math.ceil(memberCount / 2);
+    // A guest's table (one member, nothing played yet: see createTable) counts its first game whoever
+    // sits down: that game is the other group showing up. A saved crew always has two members or more.
+    const firstOfTable = memberCount === 1 && !crew.gameCount;
+    const counted = players.length >= 2 && (firstOfTable || matched >= Math.ceil(memberCount / 2));
+    if (counted && firstOfTable && !matched) {
+        // The guest played under another name: the name the table was made with has no game, so it goes.
+        crew.members = {};
+    }
     const record: CrewGameRecord = { time, players: players.length, counted };
 
     if (counted) {
