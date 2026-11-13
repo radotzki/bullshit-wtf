@@ -109,7 +109,7 @@ async function startEmulators() {
     const until = Date.now() + 120000;
     while (Date.now() < until) {
         const logText = fs.readFileSync(path.join(dir, 'emulators.log'), 'utf8');
-        if (/All emulators ready/.test(logText)) return Object.assign(child, { logFile: path.join(dir, 'emulators.log') });
+        if (/All emulators ready/.test(logText)) return child;
         if (child.exitCode !== null) throw new Error(`the emulators stopped:\n${logText.slice(-2000)}`);
         await sleep(1000);
     }
@@ -416,13 +416,13 @@ async function main() {
     }
 }
 
-// Run as a script, it plays the game above. Required from another run (next-week-game.js), it lends
-// its emulators, phones and moves.
+// Run as a script it plays the game; required, it lends its emulators and phones to the other
+// local runs (emulator-crew-night.js).
 if (require.main === module) {
     main().catch((e) => {
         console.error('FAIL', e.stack || e);
         process.exit(1);
     });
-} else {
-    module.exports = { ROOT, DIST, PROJECT, startEmulators, stopEmulators, up, db, seed, newPhone, act, visible, sleep, log };
 }
+
+module.exports = { ROOT, DIST, LOCALE, HOST, DB, PROJECT, log, sleep, flag, up, startEmulators, stopEmulators, db, seed, newPhone, visible };

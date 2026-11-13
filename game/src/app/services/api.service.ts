@@ -1,6 +1,6 @@
 import { reportError } from './../sentry/sentry.module';
 import {
-    GamePlayers, Answers, GameState, GameStateInfo, RevealAnswer, Crew, CrewNight, Highlights,
+    GamePlayers, Answers, GameState, GameStateInfo, RevealAnswer, Crew, Highlights,
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
@@ -619,14 +619,6 @@ export class ApiService {
     }
 
     /**
-     * A crew's next game night (functions: controllers/crew-night.ts). { crew, time, by } sets the
-     * date; { crew, nickname, in } adds a name to the night's list, or takes it off.
-     */
-    crewNight(body: { crew: string; time?: number; by?: string; nickname?: string; in?: boolean }) {
-        return this.post<{ night: CrewNight }>(`crewNight`, body);
-    }
-
-    /**
      * "Same time next week?", a 50/50 test: true when this finished game's final screen offers it,
      * false when the game is in the other half, null when it is not in the test (or cannot be read).
      * The server says so on the game's final state (see functions: controllers/next-week.ts).
@@ -646,6 +638,15 @@ export class ApiService {
             rememberHostKey(resp.pin, hostKey);
         }
         return resp;
+    }
+
+    /**
+     * A crew's game night, through the `crewNight` function (a phone may not write a crew):
+     * `{ time, by }` sets the date, `{ nickname, in }` says "I'm in" or takes the name off.
+     */
+    crewNight(crew: string, body: { time: number; by?: string } | { nickname: string; in: boolean }) {
+        return this.post<{ in?: boolean; nickname?: string; isNew?: boolean; count?: number }>(
+            `crewNight`, { crew: crew.toLowerCase(), ...body });
     }
 
     /**

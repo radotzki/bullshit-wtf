@@ -129,7 +129,8 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
     });
 }, 'crew'));
 
-// A crew's next game night: set the date, or say "I'm in" (see controllers/crew-night.ts).
+// A crew's game night: set its date, or say "I'm in" (or "Can't make it") by nickname.
+// Written here because phones may not write a crew (see controllers/crew-night.ts).
 exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
     cors(req, res, async () => {
         try {

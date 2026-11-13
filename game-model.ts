@@ -501,6 +501,9 @@ export interface Crew {
     totalQ: number;
     createdAt: number;
     creator?: string;
+    // Made by "Same time next week?" under a name nobody typed ("Dana's crew"): the browser that made
+    // it (creator) may still rename it from that sheet.
+    auto?: boolean;
     members: { [key: string]: CrewMember };
     // Every finished game that was offered to the crew, counted or not (keeps updates idempotent).
     games?: { [pin: string]: CrewGameRecord };
@@ -510,22 +513,23 @@ export interface Crew {
     rematch?: { pin: string; time: number };
     // The test tag of the test game this crew was saved from: its rematches are test games too.
     test?: string;
-    // Made by "Same time next week?" with a name nobody typed ("Dana's crew"): the browser that made
-    // it (creator) may still rename it from that sheet.
-    auto?: boolean;
-    // The crew's next game night, set by one player's tap (see functions/src/controllers/crew-night.ts).
+    // The crew's next game night and who said "I'm in" (see CrewNight). Written by the crewNight function.
     night?: CrewNight;
 }
 
 /**
- * A crew's next game night: when, who proposed it, and who said "I'm in" (keyed by crewMemberKey of
- * the nickname; the value is the nickname as typed, or true in older data).
+ * A crew's next game night: when it is, who called it, and who said "I'm in".
+ * `in` is keyed by crewMemberKey(nickname) and holds the nickname as it was typed, since a friend who
+ * never played with the crew has no member entry to read a name from (`true` reads as the member's name).
  */
 export interface CrewNight {
     time: number;
-    by: string;
-    in?: { [memberKey: string]: string | true };
+    by?: string;
+    in?: { [key: string]: string | boolean };
 }
+
+/** The most names one night's list holds. */
+export const NIGHT_IN_MAX = 30;
 
 export interface CrewMember {
     nickname: string;
@@ -614,6 +618,19 @@ export function crewStandings(crew: Crew): CrewMember[] {
         .filter(m => m && !nameFlag(m.nickname)) : [];
     return members.sort((a, b) =>
         (b.wins || 0) - (a.wins || 0) || (b.points || 0) - (a.points || 0) || (a.games || 0) - (b.games || 0));
+}
+
+/**
+ * The names that said "I'm in" for the crew's night, in the list's own (alphabetical) order.
+ * A name that is a slur or a sex word is left out, as in the standings.
+ */
+export function crewNightNames(crew: Crew): string[] {
+    const list = crew && crew.night && crew.night.in ? crew.night.in : {};
+    const members = (crew && crew.members) || {};
+    return Object.keys(list).sort()
+        .filter(k => !!list[k])
+        .map(k => typeof list[k] === 'string' ? String(list[k]) : (members[k] ? members[k].nickname : k))
+        .filter(n => !!n && !nameFlag(n));
 }
 
 /** One line for the top of the crew page, like "Dana leads 4 to 3". */

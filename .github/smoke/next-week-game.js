@@ -20,13 +20,14 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
 const { chromium } = require('playwright');
 const { serve, fileIn, HOST } = require('./smoke');
 const emu = require('./emulator-game');
 
-const { ROOT, DIST, startEmulators, stopEmulators, up, db, seed, newPhone, act, visible, sleep, log } = emu;
+const { ROOT, DIST, startEmulators, stopEmulators, up, db, seed, newPhone, visible, sleep, log } = emu;
 const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const SHOTS = process.env.SHOTS || '';
 const PLAYERS = Math.max(3, Number(process.env.PLAYERS || 3));
@@ -75,6 +76,10 @@ async function playToFinal(phones, game, problems) {
         await Promise.all(phones.filter((p) => !there(p)).map((p) => {
             // A phone still on the last game's final screen waits there: it follows when the rematch starts.
             if (screenOf(p.page)[1] === 'score-board-final') return null;
+            // A join that failed (a full table of phones joining at once can outrun the emulated functions) is tried again.
+            if (screenOf(p.page)[1] === 'join-game' && p.joining) {
+                return visible(p.page.locator('.notification.is-danger')).then((failed) => { if (failed) p.joining = false; });
+            }
             return act(p, game).catch((e) => {
                 if (!/Target closed|Execution context was destroyed|navigation/.test(e.message)) log(`${p.name}: ${e.message.split('\n')[0]}`);
             });
@@ -374,6 +379,61 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
     }
 }
 
+/** One phone's next move in a game: the same moves as emulator-game.js, which does not lend them. */
+async function act(phone, game) {
+    const page = phone.page;
+    const screen = new URL(page.url()).pathname.replace(/^\/he(?=\/|$)/, '').split('/')[1] || 'home';
+    if (phone.role === 'screen') {
+        if (screen === 'score-board-final') phone.done = true;
+        return;
+    }
+    if (screen === 'join-game') {
+        const input = page.locator('input[name="nickname"]');
+        if (await visible(input) && !phone.joining) {
+            phone.joining = true;
+            await input.fill(phone.name);
+            await page.locator('form button[type="submit"]').first().click();
+        }
+    } else if (screen === 'game-staging') {
+        phone.joined = true;
+        if (phone.role === 'host' && game.everyoneIn && !game.started) {
+            const start = page.locator('.game-header > button');
+            if (await visible(start) && !(await start.first().evaluate((b) => b.classList.contains('is-loading')))) {
+                game.started = Date.now();
+                await start.first().click();
+                log(`${phone.name} pressed START`);
+            }
+        }
+    } else if (screen === 'show-question') {
+        const input = page.locator('form input.input');
+        if (await visible(input)) {
+            const question = await db('GET', `games/${game.pin}/questionIndex`);
+            if (phone.lies[phone.lies.length - 1] !== question) {
+                await input.fill(`${phone.name} lie ${question}`);
+                await page.locator('form button[type="submit"]').first().click();
+                phone.lies.push(question);
+                log(`${phone.name} sent a lie on question ${question + 1}`);
+            }
+        }
+    } else if (screen === 'show-answers') {
+        const buttons = page.locator('button.answer:not([disabled])');
+        const n = await buttons.count();
+        if (n > 0) {
+            const question = await db('GET', `games/${game.pin}/questionIndex`);
+            if (phone.picks[phone.picks.length - 1] !== question) {
+                await buttons.nth(Math.floor(Math.random() * n)).click().catch(() => { });
+                phone.picks.push(question);
+                log(`${phone.name} picked on question ${question + 1}`);
+            }
+        }
+    } else if (screen === 'reveal-the-truth') {
+        const next = page.locator('button.next');
+        if (await visible(next)) await next.first().click().catch(() => { });
+    } else if (screen === 'score-board-final') {
+        phone.done = true;
+    }
+}
+
 /** Runs one step at a time across the sittings, which otherwise play side by side. */
 let queue = Promise.resolve();
 function oneAtATime(step) {
@@ -382,10 +442,18 @@ function oneAtATime(step) {
     return run;
 }
 
+/** The log of the emulators this run started: the newest one in the temp folder. */
+function emulatorsLog() {
+    const files = fs.readdirSync(os.tmpdir()).filter((d) => d.startsWith('bs-emulators-'))
+        .map((d) => path.join(os.tmpdir(), d, 'emulators.log')).filter((f) => fs.existsSync(f));
+    return files.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] || '';
+}
+
 /** The rows the functions sent to `shares` for these browsers, read from the emulators' log. */
 function sharesOf(emulators, uids) {
-    if (!emulators || !emulators.logFile) return [];
-    const fresh = fs.readFileSync(emulators.logFile, 'utf8');
+    const logFile = emulatorsLog();
+    if (!emulators || !logFile) return [];
+    const fresh = fs.readFileSync(logFile, 'utf8');
     const rows = [];
     const re = /Insert to BigQuery, table: 'shares', data: (\{.*?\})\s*$/gm;
     let m;

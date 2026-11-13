@@ -159,7 +159,7 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
             return;
         }
         this.saidIn = true;
-        this.apiService.crewNight({ crew: this.id, nickname: this.myNickname, in: true }).catch(err => {
+        this.apiService.crewNight(this.id, { nickname: this.myNickname, in: true }).catch(err => {
             this.saidIn = false;
             reportError(err, 'crewNight', { crew: this.id });
         });
@@ -283,7 +283,7 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
         this.sent = true;
         this.count(method);
         // Fire and forget, like the count: the send itself never waits on it.
-        this.apiService.crewNight({ crew: this.id, time: night.getTime(), by: this.myNickname || '' })
+        this.apiService.crewNight(this.id, { time: night.getTime(), by: this.myNickname || '' })
             .catch(err => reportError(err, 'crewNight', { crew: this.id }));
         try {
             // The crew page offers the same night to this phone.

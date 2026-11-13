@@ -119,7 +119,6 @@ async function playGame(players, pin) {
 
 
 const nextWeek = require(path.join(dist, 'next-week'));
-const night = require(path.join(dist, 'crew-night'));
 const crypto = require('crypto');
 
 test('the half follows from the root PIN alone, as BigQuery can recompute it', () => {
@@ -246,67 +245,7 @@ test('only the browser that made a default-named crew may rename it', async () =
     assert.strictEqual(db.crews[named.body.id].auto, undefined);
 });
 
-test('crewNight sets the date: the sender is in, a new time clears the list', async () => {
-    seedQuestions();
-    const pin = await playGame([['Dana', 'u1', 3000], ['Avi', 'u2', 1500]]);
-    const { body } = await call('createCrew', { pin, name: 'Night crew' });
-    const when = Date.now() + 7 * 24 * 3600 * 1000;
-
-    const set = await call('crewNight', { crew: body.id, time: when, by: ' Avi ' });
-    assert.strictEqual(set.code, 200);
-    assert.deepStrictEqual(set.body.night, { time: when, by: 'Avi', in: { avi: 'Avi' } });
-    assert.deepStrictEqual(db.crews[body.id].night, { time: when, by: 'Avi', in: { avi: 'Avi' } });
-
-    const dana = await call('crewNight', { crew: body.id, nickname: 'Dana', in: true });
-    assert.deepStrictEqual(dana.body.night.in, { avi: 'Avi', dana: 'Dana' });
-    // Twice is one name.
-    await call('crewNight', { crew: body.id, nickname: 'dana ', in: true });
-    assert.deepStrictEqual(Object.keys(db.crews[body.id].night.in).sort(), ['avi', 'dana']);
-
-    // The same time again (another phone's tap) keeps the list and whose call it was.
-    const again = await call('crewNight', { crew: body.id.toUpperCase(), time: when, by: 'Dana' });
-    assert.deepStrictEqual(again.body.night, { time: when, by: 'Avi', in: { avi: 'Avi', dana: 'Dana' } });
-
-    // A new time is a new proposal.
-    const moved = await call('crewNight', { crew: body.id, time: when + 3600000, by: 'Dana' });
-    assert.deepStrictEqual(moved.body.night, { time: when + 3600000, by: 'Dana', in: { dana: 'Dana' } });
-
-    const out = await call('crewNight', { crew: body.id, nickname: 'Dana', in: false });
-    assert.deepStrictEqual(out.body.night, { time: when + 3600000, by: 'Dana' });
-    // The standings are untouched.
-    assert.strictEqual(db.crews[body.id].gameCount, 1);
-    assert.strictEqual(db.crews[body.id].name, 'Night crew');
-});
-
-test('crewNight refuses a bad crew, time or name', async () => {
-    seedQuestions();
-    const pin = await playGame([['Dana', 'u1', 3000], ['Avi', 'u2', 1500]]);
-    const { body } = await call('createCrew', { pin, name: 'Strict crew' });
-    const now = Date.now();
-    assert.strictEqual((await call('crewNight', { crew: 'nope99', time: now + 1000, by: 'Avi' })).body.code, 'CREW_NOT_EXIST');
-    assert.strictEqual((await call('crewNight', { crew: '../x', time: now + 1000, by: 'Avi' })).body.code, 'CREW_NOT_EXIST');
-    assert.strictEqual((await call('crewNight', { crew: body.id, nickname: 'Avi', in: true })).body.code, 'NO_NIGHT');
-    for (const time of ['soon', now - 2 * 3600 * 1000, now + night.NIGHT_MAX_AHEAD_MS + 60000, NaN]) {
-        const r = await call('crewNight', { crew: body.id, time, by: 'Avi' });
-        assert.strictEqual(r.code, 400);
-        assert.strictEqual(r.body.code, 'BAD_TIME');
-    }
-    assert.strictEqual(db.crews[body.id].night, undefined);
-    // A refused name sets the date all the same, with nobody's name on it.
-    const rude = await call('crewNight', { crew: body.id, time: now + 86400000, by: 'cock' });
-    assert.deepStrictEqual(rude.body.night, { time: now + 86400000, by: '' });
-    assert.strictEqual((await call('crewNight', { crew: body.id, nickname: 'cock', in: true })).body.code, 'BAD_NAME');
-    assert.strictEqual((await call('crewNight', { crew: body.id, nickname: '   ', in: true })).body.code, 'BAD_NAME');
-    // A long name is cut like a player's nickname.
-    const long = await call('crewNight', { crew: body.id, nickname: 'Bartholomew the Third', in: true });
-    assert.deepStrictEqual(long.body.night.in, { bartholom: 'Bartholom' });
-});
-
-test('the night\'s list is capped', () => {
-    let n = { time: 5, by: 'A' };
-    for (let i = 0; i < night.NIGHT_IN_MAX + 5; i++) n = night.nightWithName(n, 'P' + i, true);
-    assert.strictEqual(Object.keys(n.in).length, night.NIGHT_IN_MAX);
-});
+// The night on the crew (crewNight) is tested in crew-night.test.js.
 
 test('the new rows land in shares, and nothing else does', () => {
     const row = (content_type, method, extra = {}) => analytics.cleanShare(Object.assign({ content_type, method }, extra));
