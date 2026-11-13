@@ -3,7 +3,7 @@
 // button (kit-<lang>-<audience>), so a game opened from it is counted for that audience.
 //
 // Say only what the game really does (read in the code, November 2026):
-// - up to 8 players a game, and the phone that opens it is one of them; a ninth is told it is full;
+// - up to 12 players a game, and the phone that opens it is one of them; a thirteenth is told it is full;
 // - only the phone that opened the game can press Start;
 // - 25 seconds to write a lie, 20 to pick, a phase ends early when every phone has answered;
 // - a big screen (Present / מסך on a computer, the game's PIN typed in) shows the lobby with the
@@ -11,11 +11,11 @@
 // - nicknames with slurs or sex words are swapped for a harmless name; lies are shown as typed;
 // - an empty lobby offers the host five quick questions alone, picking only, no writing;
 // - a game of five questions takes five to ten minutes of play.
-// Nothing about sources, grades, accounts for classes, or more than 8 seats: the game has none.
+// Nothing about sources, grades, accounts for classes, or more than 12 seats: the game has none.
 
 const classroomEn = `
 <p><strong>The game in one line:</strong> a strange true fact appears with a blank, everyone writes a lie to fill it, and then everyone tries to find the truth among all the lies.</p>
-<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 8 phones, and a projector can show it to the whole room. This page is for teachers and youth leaders: how to put it on the projector, how to split a class, and which settings fit a 15-minute slot.</p>
+<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and a projector can show it to the whole room. This page is for teachers and youth leaders: how to put it on the projector, how to split a class, and which settings fit a 15-minute slot.</p>
 <!--start-->
 <h2>Before the lesson</h2>
 <ul>
@@ -32,11 +32,11 @@ const classroomEn = `
   <li>When everyone is in, tap "Start" on your phone. Only the phone that opened the game can start it.</li>
 </ol>
 <p>From then on the projector shows the question, all the answers, who picked what, and the scores. Phones are only for writing and picking, so heads stay up. The big screen also plays sounds: music in the lobby, a ticking clock, a sound for each answer revealed. Set the speakers to suit the room.</p>
-<h2>A room of 8 to 30: split it into teams</h2>
-<p>A game takes 8 phones at most, and the phone that opens it is one of the 8. A ninth phone is told the game is full. Two ways to fit a bigger room:</p>
+<h2>A room of 12 to 40: split it into teams</h2>
+<p>A game takes 12 phones at most, and the phone that opens it is one of the 12. A thirteenth phone is told the game is full. Two ways to fit a bigger room:</p>
 <ul>
-  <li><strong>One game, a phone per team.</strong> Split the class into up to 8 teams of three or four, one phone each. If you play from your phone too, you are one of the 8; or let one team open the game on its phone and start it when you say. Each team whispers over its lie and argues over the truth, and the whole room watches one screen. This is the way to go with one projector.</li>
-  <li><strong>Several games, one per table of up to 8.</strong> Each table opens its own game on one phone and gets its own PIN, and everyone plays on their own phone. Only one game can be on the projector, so the other tables play on their phones alone. At the end, each table's winner can join one last game on the projector: a final.</li>
+  <li><strong>One game, a phone per team.</strong> Split the class into up to 12 teams of three or four, one phone each. If you play from your phone too, you are one of the 12; or let one team open the game on its phone and start it when you say. Each team whispers over its lie and argues over the truth, and the whole room watches one screen. This is the way to go with one projector.</li>
+  <li><strong>Several games, one per table of up to 12.</strong> Each table opens its own game on one phone and gets its own PIN, and everyone plays on their own phone. Only one game can be on the projector, so the other tables play on their phones alone. At the end, each table's winner can join one last game on the projector: a final.</li>
 </ul>
 <h2>Which settings fit 15 minutes</h2>
 <table>
@@ -56,7 +56,7 @@ const classroomEn = `
 
 const classroomHe = `
 <p><strong>המשחק בשורה אחת:</strong> מופיעה עובדה אמיתית ומוזרה עם חלק חסר, כל אחד ממציא תשובה שקרית שתשלים אותה, ואז כולם מנסים למצוא את האמת בין כל השקרים.</p>
-<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 8 טלפונים, והמקרן מציג אותו לכל הכיתה. העמוד הזה נכתב למורים ולמדריכים: איך מציגים את המשחק על המקרן, איך מחלקים כיתה, ואילו הגדרות מתאימות לרבע שעה.</p>
+<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 12 טלפונים, והמקרן מציג אותו לכל הכיתה. העמוד הזה נכתב למורים ולמדריכים: איך מציגים את המשחק על המקרן, איך מחלקים כיתה, ואילו הגדרות מתאימות לרבע שעה.</p>
 <!--start-->
 <h2>לפני השיעור</h2>
 <ul>
@@ -72,11 +72,11 @@ const classroomHe = `
   <li>כשכולם בפנים, לוחצים בטלפון שלכם על "מתחילים". רק הטלפון שפתח את המשחק יכול להתחיל אותו.</li>
 </ol>
 <p>מכאן המקרן מציג את השאלה, את כל התשובות, מי בחר במה ואת הניקוד. הטלפונים משמשים רק לכתיבה ולבחירה, כך שכולם מסתכלים קדימה. המסך הגדול גם משמיע צלילים: מוזיקה בלובי, שעון מתקתק וצליל לכל תשובה שנחשפת. כדאי לכוון את עוצמת הרמקולים מראש.</p>
-<h2>כיתה של 8 עד 30: מחלקים לצוותים</h2>
-<p>במשחק אחד יש מקום ל-8 טלפונים לכל היותר, והטלפון שפותח את המשחק הוא אחד מהם. טלפון תשיעי מקבל הודעה שהמשחק מלא. יש שתי דרכים להכניס קבוצה גדולה יותר:</p>
+<h2>כיתה של 12 עד 40: מחלקים לצוותים</h2>
+<p>במשחק אחד יש מקום ל-12 טלפונים לכל היותר, והטלפון שפותח את המשחק הוא אחד מהם. הטלפון ה-13 מקבל הודעה שהמשחק מלא. יש שתי דרכים להכניס קבוצה גדולה יותר:</p>
 <ul>
-  <li><strong>משחק אחד, טלפון לכל צוות.</strong> מחלקים את הכיתה לעד 8 צוותים של שלושה או ארבעה, טלפון אחד לכל צוות. אם גם אתם משחקים מהטלפון שלכם, אתם אחד מה-8. אפשר גם לתת לאחד הצוותים לפתוח את המשחק בטלפון שלו ולהתחיל כשתגידו. כל צוות מתלחש על השקר שלו ומתווכח על האמת, וכל הכיתה מסתכלת על מסך אחד. כשיש מקרן אחד, זו הדרך הכי טובה.</li>
-  <li><strong>כמה משחקים, אחד לכל שולחן של עד 8.</strong> כל שולחן פותח משחק משלו בטלפון אחד ומקבל קוד משלו, וכל אחד משחק מהטלפון שלו. על המקרן אפשר להציג רק משחק אחד, אז שאר השולחנות משחקים בטלפונים בלבד. בסוף, המנצחים של כל שולחן יכולים להצטרף למשחק אחרון על המקרן: גמר.</li>
+  <li><strong>משחק אחד, טלפון לכל צוות.</strong> מחלקים את הכיתה לעד 12 צוותים של שלושה או ארבעה, טלפון אחד לכל צוות. אם גם אתם משחקים מהטלפון שלכם, אתם אחד מה-12. אפשר גם לתת לאחד הצוותים לפתוח את המשחק בטלפון שלו ולהתחיל כשתגידו. כל צוות מתלחש על השקר שלו ומתווכח על האמת, וכל הכיתה מסתכלת על מסך אחד. כשיש מקרן אחד, זו הדרך הכי טובה.</li>
+  <li><strong>כמה משחקים, אחד לכל שולחן של עד 12.</strong> כל שולחן פותח משחק משלו בטלפון אחד ומקבל קוד משלו, וכל אחד משחק מהטלפון שלו. על המקרן אפשר להציג רק משחק אחד, אז שאר השולחנות משחקים בטלפונים בלבד. בסוף, המנצחים של כל שולחן יכולים להצטרף למשחק אחרון על המקרן: גמר.</li>
 </ul>
 <h2>אילו הגדרות מתאימות לרבע שעה</h2>
 <table>
@@ -97,7 +97,7 @@ const classroomHe = `
 
 const teamEn = `
 <p><strong>The game in one line:</strong> a strange true fact appears with a blank, everyone writes a lie to fill it, and then everyone tries to find the truth among all the lies.</p>
-<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 8 phones, and the screen in the meeting room can show it to everyone. This page is for team leads who want 15 minutes of something that is not a status update: how to run it on a big screen, how to split a large team, and which settings fit the slot.</p>
+<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and the screen in the meeting room can show it to everyone. This page is for team leads who want 15 minutes of something that is not a status update: how to run it on a big screen, how to split a large team, and which settings fit the slot.</p>
 <!--start-->
 <h2>Before the meeting</h2>
 <ul>
@@ -114,11 +114,11 @@ const teamEn = `
 </ol>
 <p>The big screen shows the question, all the answers, who picked what, and the scores, and plays sounds: music in the lobby, a ticking clock, a sound for each answer revealed. Phones are only for writing and picking.</p>
 <p><strong>On a video call?</strong> Everyone can join with the PIN from wherever they are. The person who shares their screen opens the big screen view as above, so the whole call sees the same questions and scores.</p>
-<h2>More than 8 people</h2>
-<p>A game takes 8 phones at most, and the phone that opens it is one of the 8. A ninth phone is told the game is full.</p>
+<h2>More than 12 people</h2>
+<p>A game takes 12 phones at most, and the phone that opens it is one of the 12. A thirteenth phone is told the game is full.</p>
 <ul>
-  <li><strong>Up to about 30: pairs or small teams on one phone.</strong> Up to 8 teams of two to four, one phone each, all in one game on one screen. Mixing people who rarely work together is the point.</li>
-  <li><strong>Several tables, one game each.</strong> Each table of up to 8 opens its own game and gets its own PIN; only one of them can be on the big screen. Each table's winner then plays a final on the big screen.</li>
+  <li><strong>Up to about 40: pairs or small teams on one phone.</strong> Up to 12 teams of two to four, one phone each, all in one game on one screen. Mixing people who rarely work together is the point.</li>
+  <li><strong>Several tables, one game each.</strong> Each table of up to 12 opens its own game and gets its own PIN; only one of them can be on the big screen. Each table's winner then plays a final on the big screen.</li>
 </ul>
 <h2>Which settings fit 15 minutes</h2>
 <table>
@@ -137,7 +137,7 @@ const teamEn = `
 
 const teamHe = `
 <p><strong>המשחק בשורה אחת:</strong> מופיעה עובדה אמיתית ומוזרה עם חלק חסר, כל אחד ממציא תשובה שקרית שתשלים אותה, ואז כולם מנסים למצוא את האמת בין כל השקרים.</p>
-<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 8 טלפונים, והמסך בחדר הישיבות מציג אותו לכולם. העמוד הזה נכתב לראשי צוותים שרוצים רבע שעה של משהו שהוא לא עוד עדכון סטטוס: איך מציגים את המשחק על מסך גדול, איך מחלקים צוות גדול, ואילו הגדרות מתאימות לזמן שיש.</p>
+<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 12 טלפונים, והמסך בחדר הישיבות מציג אותו לכולם. העמוד הזה נכתב לראשי צוותים שרוצים רבע שעה של משהו שהוא לא עוד עדכון סטטוס: איך מציגים את המשחק על מסך גדול, איך מחלקים צוות גדול, ואילו הגדרות מתאימות לזמן שיש.</p>
 <!--start-->
 <h2>לפני הישיבה</h2>
 <ul>
@@ -153,11 +153,11 @@ const teamHe = `
 </ol>
 <p>המסך הגדול מציג את השאלה, את כל התשובות, מי בחר במה ואת הניקוד, ומשמיע צלילים: מוזיקה בלובי, שעון מתקתק וצליל לכל תשובה שנחשפת. הטלפונים משמשים רק לכתיבה ולבחירה.</p>
 <p><strong>בשיחת וידאו?</strong> כל אחד יכול להצטרף עם הקוד מאיפה שהוא נמצא. מי שמשתף מסך פותח את תצוגת המסך הגדול כמו למעלה, וכך כל המשתתפים בשיחה רואים את אותן שאלות ואותו ניקוד.</p>
-<h2>יותר מ-8 אנשים</h2>
-<p>במשחק אחד יש מקום ל-8 טלפונים לכל היותר, והטלפון שפותח את המשחק הוא אחד מהם. טלפון תשיעי מקבל הודעה שהמשחק מלא.</p>
+<h2>יותר מ-12 אנשים</h2>
+<p>במשחק אחד יש מקום ל-12 טלפונים לכל היותר, והטלפון שפותח את המשחק הוא אחד מהם. הטלפון ה-13 מקבל הודעה שהמשחק מלא.</p>
 <ul>
-  <li><strong>עד כ-30: זוגות או צוותים קטנים על טלפון אחד.</strong> עד 8 צוותים של שניים עד ארבעה, טלפון אחד לכל צוות, כולם במשחק אחד על מסך אחד. זו גם הזדמנות לערבב אנשים שלא עובדים יחד בדרך כלל.</li>
-  <li><strong>כמה שולחנות, משחק לכל שולחן.</strong> כל שולחן של עד 8 פותח משחק משלו ומקבל קוד משלו, ורק אחד מהם יכול להיות על המסך הגדול. בסוף, המנצחים של כל שולחן משחקים גמר על המסך הגדול.</li>
+  <li><strong>עד כ-40: זוגות או צוותים קטנים על טלפון אחד.</strong> עד 12 צוותים של שניים עד ארבעה, טלפון אחד לכל צוות, כולם במשחק אחד על מסך אחד. זו גם הזדמנות לערבב אנשים שלא עובדים יחד בדרך כלל.</li>
+  <li><strong>כמה שולחנות, משחק לכל שולחן.</strong> כל שולחן של עד 12 פותח משחק משלו ומקבל קוד משלו, ורק אחד מהם יכול להיות על המסך הגדול. בסוף, המנצחים של כל שולחן משחקים גמר על המסך הגדול.</li>
 </ul>
 <h2>אילו הגדרות מתאימות לרבע שעה</h2>
 <table>
