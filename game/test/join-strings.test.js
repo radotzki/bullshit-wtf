@@ -51,6 +51,8 @@ test('English visitors keep the English pages word for word', () => {
         justEnded: 'If they play again, ask for the new PIN.',
         joinRematch: 'JOIN @@',
         tryAnother: 'TRY ANOTHER PIN',
+        seatTakenTitle: 'Someone else took this seat',
+        seatTakenText: 'Another phone joined under the same name. Pick a new name to join again.',
         // The server's own message, untouched.
         error: ['Wrong game PIN', 'Sorry, game is full', 'boom'],
     });

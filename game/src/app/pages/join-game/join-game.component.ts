@@ -32,6 +32,8 @@ export class JoinGameComponent implements OnInit {
     crewNicknames: string[] = [];
     // The PIN belongs to a game that is over: say so, and offer another PIN (or its rematch).
     gameOver: { pin: string; rematch?: string; justEnded?: boolean };
+    // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
+    seatTaken: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -48,6 +50,7 @@ export class JoinGameComponent implements OnInit {
         this.lang = lang === 'he' || lang === 'en' ? lang : undefined;
         this.t = joinStrings(joinLocale(this.router.url, this.lang, preferredLocale()));
         this.pin = this.activatedRoute.snapshot.params['pin'];
+        this.seatTaken = !!this.pin && (this.activatedRoute.snapshot.queryParams || {})['taken'] === '1';
 
         if (this.pin) {
             this.pinInUrl = true;
@@ -89,6 +92,7 @@ export class JoinGameComponent implements OnInit {
 
     /** Back to an empty PIN box. */
     tryAnotherPin() {
+        this.seatTaken = false;
         this.gameOver = null;
         this.errorMsg = '';
         this.pin = '';
@@ -105,6 +109,7 @@ export class JoinGameComponent implements OnInit {
         if (!rematch) {
             return;
         }
+        this.seatTaken = false;
         this.gameOver = null;
         this.errorMsg = '';
         this.pin = rematch;

@@ -38,6 +38,11 @@
                     </p>
                 </div>
 
+                <div class="notification is-warning seat-taken" *ngIf="seatTaken && nicknameState">
+                    <p><strong>{{ t.seatTakenTitle }}</strong></p>
+                    <p>{{ t.seatTakenText }}</p>
+                </div>
+
                 <div class="field" *ngIf="nicknameState">
                     <p class="control">
                         <input class="input is-large pin-input" type="text" [placeholder]="t.nicknamePlaceholder"

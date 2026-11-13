@@ -70,13 +70,27 @@ export class GameService implements CanActivate {
         }
         this.unregister();
         this.pin = next;
-        this.stopSeat = this.apiService.followSeat(next);
+        this.stopSeat = this.apiService.followSeat(next, () => this.seatTaken(next));
         this.game = this.apiService.gamePhase(pin).subscribe(state => {
             // A step of a game this phone has left since must not move it.
             if (this.pin === next) {
                 this.handleGameState(pin, state);
             }
         });
+    }
+
+    /**
+     * This phone's seat now belongs to another sign-in (ApiService.followSeat, seatTaken): a namesake on the
+     * same model of phone got it back by name while this phone was offline. Playing on would put two phones
+     * in one seat, each overwriting the other's lie and pick, so the phone stops following the game and goes
+     * to the join page of the same game, which says so and offers a seat under a new name.
+     */
+    private seatTaken(pin: string) {
+        if (this.pin !== pin) {
+            return;
+        }
+        this.unregister();
+        this.router.navigate(['/join-game', pin], { queryParams: { taken: 1 }, replaceUrl: true });
     }
 
     /** The step this phone shows, as "<state id>:<state timestamp>", or undefined before the first. */

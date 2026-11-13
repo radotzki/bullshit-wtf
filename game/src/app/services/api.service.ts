@@ -9,6 +9,7 @@ import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { startReconnectNudge, pageVisible } from './reconnect-nudge';
 import { clockSync } from './clock-sync';
+import { seatTaken } from './seat-owner';
 import { Observable, Subscriber, Subscription, firstValueFrom } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -209,22 +210,37 @@ export class ApiService {
      * a mark that is not true (it was changed from elsewhere) is set back to true.
      * Returns a function that stops it and marks the seat gone. Does nothing on the big screen or for a
      * phone with no seat; a write or read the rules refuse (the seat is not this sign-in's) is dropped.
+     *
+     * onTaken, if given, is called once when the seat's uid becomes another sign-in's (see seatTaken): a
+     * namesake on the same model of phone got the seat back by name while this page was offline.
      */
-    followSeat(pin: string): () => void {
+    followSeat(pin: string, onTaken?: () => void): () => void {
         const user = this.sessionService.user;
         const pid = user && user.pid;
         if (!pin || !pid || this.sessionService.presenter) {
             return () => { };
         }
         const seen = this.gamesRef.child(pin.toUpperCase()).child('seen').child(pid);
+        const owner = this.gamesRef.child(pin.toUpperCase()).child('players').child(pid).child('uid');
         const gone = firebaseCompat.database.ServerValue.TIMESTAMP;
         const connectedRef = firebase.database().ref('.info/connected');
         let stopped = false;
         let connected = false;
         let signedIn = false;
         let watching = false;
+        // The uid the seat has, and this browser's: the seat is taken when they differ (seatTaken).
+        let seatUid: string;
+        let myUid: string;
+        let taken = false;
+        const checkTaken = () => {
+            if (stopped || taken || !onTaken || !seatTaken(seatUid, myUid)) {
+                return;
+            }
+            taken = true;
+            onTaken();
+        };
         const markHere = () => {
-            if (stopped || !connected || !signedIn) {
+            if (stopped || taken || !connected || !signedIn) {
                 return;
             }
             seen.onDisconnect().set(gone)
@@ -247,11 +263,18 @@ export class ApiService {
         });
         const stopAuth = firebase.auth().onAuthStateChanged(signed => {
             signedIn = !!signed;
+            myUid = signed ? signed.uid : undefined;
             markHere();
+            checkTaken();
         });
+        const onOwner = owner.on('value', snap => {
+            seatUid = snap.val();
+            checkTaken();
+        }, () => undefined);
         return () => {
             stopped = true;
             connectedRef.off('value', onConnected);
+            owner.off('value', onOwner);
             stopAuth();
             if (watching) {
                 seen.off('value', onMark);

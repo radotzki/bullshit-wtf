@@ -23,6 +23,9 @@ export interface JoinStrings {
     justEnded: string;
     joinRematch: (pin: string) => string;
     tryAnother: string;
+    /** This phone's seat went to another phone with the same name (GameService.seatTaken). */
+    seatTakenTitle: string;
+    seatTakenText: string;
     /** What to show for a failed PIN or join: the server's code, and its (English) message. */
     error: (code: string, message: string) => string;
 }
@@ -44,6 +47,8 @@ const en: JoinStrings = {
     justEnded: 'If they play again, ask for the new PIN.',
     joinRematch: pin => `JOIN ${pin}`,
     tryAnother: 'TRY ANOTHER PIN',
+    seatTakenTitle: 'Someone else took this seat',
+    seatTakenText: 'Another phone joined under the same name. Pick a new name to join again.',
     // The English pages show the server's own words, as before.
     error: (code, message) => message,
 };
@@ -70,6 +75,8 @@ const he: JoinStrings = {
     justEnded: 'אם הם משחקים שוב, בקשו את הקוד החדש.',
     joinRematch: pin => `הצטרפות למשחק ${pin}`,
     tryAnother: 'לנסות קוד אחר',
+    seatTakenTitle: 'מישהו אחר תפס את המקום הזה',
+    seatTakenText: 'טלפון אחר הצטרף עם אותו כינוי. בחרו כינוי חדש כדי להצטרף שוב.',
     error: code => heErrors[code] || 'אופס, משהו השתבש. נסו שוב',
 };
 
