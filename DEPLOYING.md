@@ -1118,8 +1118,10 @@ A game takes 12 players; it took 8. The thirteenth is told "Sorry, game is full"
   and the Hebrew occasion pages. The pictures made from `graphics/` say 12 too: the search pages'
   link previews (`og-phone-en.png`, `og-phone-he.png`) are drawn again, and the Hanukkah square
   posts (not in the repository) say 12 when `render-hanukkah.js` is run again.
-- Big screen's final at 9 to 12: in three columns the best-lie line keeps "fooled N players" (and
-  the laughs) whole, and only the lie itself gives way with "…". Tables of 2 to 8 are unchanged.
+- Big screen's final at 9 to 12: in three columns the lie gets a line of its own (only it gives
+  way with "…") and "fooled N players" the line under it, whole, with the laughs beside it when the
+  funniest lie is the same lie. Wider columns on a TV, a shorter hero (no trophy) and smaller badges
+  keep all twelve on a 1920x1080 screen. Tables of 2 to 8 are unchanged.
 - Old and new together. The functions go first, so for a minute or two a game can take a ninth
   player while the site is the old one: an old phone's waiting row reuses the first pictures for
   seats 9 to 12, and its lobby and scoreboards show no picture for them until the site's release

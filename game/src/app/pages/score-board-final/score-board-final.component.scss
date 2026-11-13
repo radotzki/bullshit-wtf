@@ -287,6 +287,11 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         }
     }
 
+    // Shown only on the big screen at 9 to 12 players (see .presenter below).
+    .lie-laughs.also {
+        display: none;
+    }
+
     .lie-fooled {
         white-space: nowrap;
         color: $primary;
@@ -350,6 +355,7 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         .final.lots { max-width: 1500px; }
         .final.lots .hero { padding: 2px 12px 4px; margin-bottom: 8px; }
         .final.lots .trophy { display: none; }
+        .final.lots .headline { font-size: 1.8rem; }
         .headline { font-size: 2.2rem; }
         .trophy { width: 56px; height: 56px; }
         .tied, .winner-score { font-size: 1.1rem; }
@@ -365,23 +371,31 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
             // A third of the screen has no room for a label, a lie and its count on one line, and the
             // count was cut to "fo…". So the lie gets a line of its own (only it gives way with "…"),
-            // and the count or the laughs the line under it, always whole. No label: the quotes say it.
+            // and the count the line under it, always whole, with the laughs beside it when the funniest
+            // lie is the same lie. No label: the quotes say it. Badges are smaller, to keep rows short.
             .lie {
                 font-size: .75rem;
                 line-height: 1.2;
             }
             .lie:not(.none) {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr);
+                display: flex;
+                flex-wrap: wrap;
+                align-items: baseline;
                 text-overflow: clip;
             }
             .lie-label { display: none; }
             .lie-text {
+                flex: 0 0 100%;
                 min-width: 0;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .lie-fooled::before, .lie-laughs::before { content: none; }
+            .lie-laughs.also { display: inline; }
+            .lie-laughs.also::before { content: " · "; white-space: pre; }
+            .lie.funny.same { display: none; }
+            .badges { line-height: 1; }
+            .badge { font-size: .55rem; margin-top: 0; }
         }
         .player { padding: 4px 10px; min-width: 0; }
         .name, .score { font-size: 1.2rem; }
