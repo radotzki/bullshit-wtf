@@ -99,7 +99,7 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         qids,
         tick: 0,
         presenter: game.presenter,
-        players: resetPlayersScore(game.players),
+        players: resetPlayersScore(seatsForReplay(game, hostPid)),
         origin: 'replay',
         parent,
     };
@@ -173,6 +173,69 @@ function resetPlayersScore(players: GamePlayers) {
         delete players[k].sent;
     });
     return players;
+}
+
+/**
+ * The finished game's seats, less a second seat of one phone that never sent a lie or a pick: before
+ * one phone was one seat (see seatOf in join.ts), a phone that joined twice left an empty seat, and
+ * Replay carried it into the next game, where the table waited on it again (12 Nov: JVXG to JVXH).
+ * A seat that played, or the only seat of its phone, always comes along.
+ */
+export function withoutSecondSeats(game: GameScheme, hostPid?: string): GamePlayers {
+    const players = game.players || {};
+    // A game from before the flags were kept (no playedFrom) cannot tell who played: keep every seat.
+    if (typeof game.playedFrom !== 'number') {
+        return players;
+    }
+    const played = game.played || {};
+    const keep = (k: string) => !!played[k] || !!players[k].host || k === hostPid;
+    const out: GamePlayers = {};
+    const byUid: { [uid: string]: string[] } = {};
+    Object.keys(players).filter(k => players[k]).forEach(k => {
+        const uid = players[k].uid;
+        if (typeof uid === 'string' && uid) {
+            (byUid[uid] = byUid[uid] || []).push(k);
+        } else {
+            out[k] = players[k];
+        }
+    });
+    Object.keys(byUid).forEach(uid => {
+        const seats = byUid[uid].sort();
+        const kept = seats.filter(keep);
+        // Nobody played any seat of this phone: keep its newest seat, the one the phone holds.
+        (kept.length ? kept : seats.slice(-1)).forEach(k => out[k] = players[k]);
+    });
+    return out;
+}
+
+/**
+ * The seats a Replay starts with: the players who are still at the table. A seat that sent nothing
+ * on the finished game's last question (no lie, no pick and no NEXT on its reveal, see lastSent) is a
+ * player who went home, or a seat nobody played: it is left out. Before, every seat came along, and
+ * the Replay's first question ran its clocks out for players who were gone (the empty seats rule in
+ * seats.ts only helps from question 2). Since 5 Nov, 5 Replays had more seats than phones, one 8 seats
+ * for 4 phones. The seat of the phone that pressed Replay always comes along.
+ *
+ * A player who is still there but sent nothing on the last question loses only their seat: when their
+ * phone follows the Replay and finds no seat of its own, it joins the new game (score-board-final),
+ * as a late phone does.
+ *
+ * A game that ended before lastSent was kept, or where nobody sent anything on its last question,
+ * has nothing to go by: it keeps the seats as withoutSecondSeats does.
+ */
+export function seatsForReplay(game: GameScheme, hostPid?: string): GamePlayers {
+    const players = withoutSecondSeats(game, hostPid);
+    const here = (game && game.lastSent) || {};
+    const seats = Object.keys(players).filter(k => players[k]);
+    if (!seats.some(k => here[k] === true)) {
+        return players;
+    }
+    // The phone that pressed Replay is here. An old client sends no player id: then the old host stays.
+    const presser = hostPid && players[hostPid] ? hostPid : undefined;
+    const keep = (k: string) => here[k] === true || k === presser || (!presser && !!players[k].host);
+    const out: GamePlayers = {};
+    seats.filter(keep).forEach(k => out[k] = players[k]);
+    return out;
 }
 
 function playerUids(game: GameScheme): string[] {
