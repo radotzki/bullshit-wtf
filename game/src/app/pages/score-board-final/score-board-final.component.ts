@@ -66,6 +66,14 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
      * moves up, above SHARE RESULTS, with a line that says why.
      */
     repeatGroup: boolean;
+    /**
+     * The game's crew as it stood when this screen first heard of it: true for a crew that was
+     * saved before (a game started from the crew page), false for none yet, undefined until known.
+     * Only a group with no crew yet gets its save offer moved up: an existing crew's link stays at
+     * the bottom, under SHARE RESULTS, as it was before. Someone saving the crew from the moved-up
+     * offer leaves `hadCrew` false, so the panel does not jump away from the phones looking at it.
+     */
+    hadCrew: boolean;
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
@@ -251,9 +259,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         } catch (e) { }
     }
 
-    /** The save-crew offer sits above SHARE RESULTS on a group's second game, at the bottom otherwise. */
+    /**
+     * The save-crew offer sits above SHARE RESULTS on a group's second game when the group has no
+     * crew yet, at the bottom otherwise (an existing crew's link included).
+     */
     get crewFirst() {
-        return !!this.repeatGroup && !this.presenter && !this.soloTaste;
+        return !!this.repeatGroup && this.hadCrew === false && !this.presenter && !this.soloTaste;
     }
 
     private setPlayers(resp, highlights: Highlights, myPid: string) {
@@ -344,6 +355,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     }
 
     private async onCrew(id: string) {
+        if (this.hadCrew === undefined) {
+            this.hadCrew = !!id;
+        }
         this.crewId = id || undefined;
         if (!id) {
             return;
