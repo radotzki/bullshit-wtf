@@ -74,7 +74,8 @@ export interface GameScheme {
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
     // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
-    // The round-1 lie helper is on for this game (a 50/50 test, set when the game is made).
+    // The round-1 lie helper is on for this game. Set when the game is made: every game since
+    // 13 November 2026, half of them in the 50/50 test before that.
     coach?: boolean;
     // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
     // Each player can read only their own (games/$pin/ideas/$pid).
@@ -82,7 +83,7 @@ export interface GameScheme {
     // The staged reveal, a 50/50 test set when the game is made, and only for a game made by a client
     // that can show it. true: the staged reveal, with the scoreboard folded into it. false: in the
     // test, and the game keeps today's reveal. Absent: not in the test (an older client made it, or it
-    // was made before the test). It follows from the game's PIN and is independent of `coach`; each
+    // was made before the test). It follows from the game's PIN alone, whatever `coach` is; each
     // Replay is a new game with a half of its own. Phones cannot read it: see state.staged.
     bigReveal?: boolean;
     // Each player's best lie so far (the one that fooled the most players), for the final screen.

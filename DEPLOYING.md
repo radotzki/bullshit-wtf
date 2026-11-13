@@ -700,8 +700,8 @@ best lie.
 ## Staged reveal (a 50/50 test)
 
 Half of new games get a staged reveal; the other half keep the reveal as it was. Which half a game is
-in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it is
-independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`revealSchedule`,
+in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it does
+not depend on the round-1 lie helper, which every game has had since 13 November 2026. Timing in `game-model.ts` (`revealSchedule`,
 `stagedRevealTiming`), the page in `game/src/app/pages/reveal-the-truth`, its words in
 `game/src/app/pages/game-strings.ts`.
 
@@ -827,6 +827,27 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Round-1 lie helper for every game (the 50/50 test ended)
+
+From about 5 November 2026 half of new games had the round-1 lie helper ("coach": the hint line and
+"STUCK? GIVE ME A LIE" with up to two ready-made lies per player). On 13 November 2026 it was given to
+every new game, every Replay and every crew rematch: `pickCoach` in
+`functions/src/controllers/lie-helper.ts` now returns `true`.
+
+- Logging is unchanged. `opened_games.coach` and `question_results.coach` are still written for every
+  game, and `question_results.idea_lies` still counts the lies a player took from the helper. Games
+  made after the deploy all log `coach = true`; the no-helper half before it logs `false`, so the
+  switch date is plain in the data.
+- The staged reveal's own 50/50 (by PIN, `functions/bigquery/2026-11-big-reveal.sql`) is untouched.
+- Guardrail for two weeks after the deploy: the share of real games (tests left out) with 2+
+  players where half or more of the players picked on a round-2 question. The no-helper half's 74%
+  is the bar; below about 65%, read Hebrew and English apart and consider turning it back off.
+- Deploy: functions only. No rules, BigQuery or hosting change; the client already shows the helper
+  whenever `games/$pin/coach` is true. A game already in play at the deploy keeps what it had.
+- To turn it back off: make `pickCoach` return `false` and deploy the functions.
+
+Checks: `functions/test/lie-helper.test.js` and `functions/test/big-reveal.test.js` (in `npm test`).
 
 ## Final question card
 
