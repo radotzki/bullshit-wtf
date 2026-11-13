@@ -27,6 +27,20 @@ const rows: { [lang: string]: SearchLink[] } = {
     ],
 };
 
+/**
+ * English links for the December holidays, added to the end of the English row from 20 November to
+ * 1 January only, so the year-round row stays short. Next year's days go in `holidaySeasons`.
+ */
+const holidays: SearchLink[] = [
+    { href: '/christmas-party-game', label: 'Christmas' },
+    { href: '/new-years-eve-party-game', label: 'New Year\'s Eve' },
+    { href: '/office-holiday-party-game', label: 'Office party' },
+];
+
+export const holidaySeasons: { from: string; to: string }[] = [
+    { from: '2026-11-20', to: '2027-01-01' },
+];
+
 const hanukkah: { [lang: string]: SearchLink } = {
     en: { href: '/hanukkah-party-game', label: 'Hanukkah is here: play with Hanukkah questions' },
     he: { href: '/he/hanukkah', label: 'חנוכה כאן: משחקים עם שאלות חנוכה' },
@@ -45,14 +59,17 @@ function withTag(link: SearchLink, campaign: string | null): SearchLink {
     return campaign ? { href: link.href + '?via=' + encodeURIComponent(campaign), label: link.label } : link;
 }
 
-/** The row of links under the home menu. */
-export function searchLinks(locale: string, campaign: string | null): SearchLink[] {
-    return (rows[locale === 'he' ? 'he' : 'en']).map(l => withTag(l, campaign));
-}
-
 function day(d: Date): string {
     const two = (n: number) => (n < 10 ? '0' : '') + n;
     return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+}
+
+/** The row of links under the home menu; in December's holiday season the English row adds the holiday pages. */
+export function searchLinks(locale: string, campaign: string | null, today: Date = new Date()): SearchLink[] {
+    const d = day(today);
+    const lang = locale === 'he' ? 'he' : 'en';
+    const inSeason = lang === 'en' && holidaySeasons.some(s => s.from <= d && d <= s.to);
+    return rows[lang].concat(inSeason ? holidays : []).map(l => withTag(l, campaign));
 }
 
 /** The Hanukkah line above the buttons, on the days of the season; null on every other day. */

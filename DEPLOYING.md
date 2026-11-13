@@ -1116,3 +1116,21 @@ How to read it: games by `campaign` in `opened_games` (test games out) where `ca
 `seo-`. A game from a page counts for the page whether the visitor came from a search engine or from
 the home row; the home row exists only from this release on, so compare the Hanukkah weeks with that in
 mind.
+
+## New search pages and own share pictures
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- New pages, each with its own tag on its Start button: `/free-jackbox-alternative` (`seo-en-jackbox`)
+  and its Hebrew twin `/he/game-like-jackbox` (`seo-he-jackbox`); `/christmas-party-game`
+  (`seo-en-christmas`), `/new-years-eve-party-game` (`seo-en-new-year`) and `/office-holiday-party-game`
+  (`seo-en-office-party`), English only. The holiday pages' Start button opens Create with
+  `pack=none`, so a Christmas game is not handed the Hanukkah pack that is on by default 1 to 13 December.
+- The English home row adds Christmas, New Year's Eve and Office party from 20 November to
+  1 January (`holidaySeasons` in `search-links.ts`: add next season's days there).
+- Every search page now has its own share picture: the Hebrew occasion pages, the kit pages and the
+  new pages no longer use `og-image.png` / `og-image-he.png`. Pictures come from
+  `graphics/more-pages.html`: `node graphics/render-more-pages.js game/src/assets`.
+- Tested by `game/test/more-search-pages.test.js`.
+
+How to read it: games by `campaign` in `opened_games` (test games out) for the tags above.
