@@ -1,6 +1,6 @@
 import { isPlayer } from './scoring';
 import { getQuestion } from './questions';
-import { Answer, GameScheme, GameState } from '../game-model';
+import { Answer, Answers, GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
@@ -87,6 +87,18 @@ async function aboutAnswer(pin: string, game: GameScheme, pid: string, text: str
         await gamesRef.child(pin).child('answers').child(pid).set(stored);
         game.answers = Object.assign({}, game.answers, { [pid]: stored });
     }
+
+    // The lies and the truth are read again after this send is written, as for a normal question:
+    // the game read at the start can miss sends that came at the same moment (the named player's
+    // truth and a lie, or two lies). Each call writes before it reads, so the call whose send lands
+    // last sees them all and ends the question; the others may end it too, and advance() moves the
+    // game on once.
+    const [answers, truth] = await Promise.all([
+        get<Answers>(gamesRef.child(pin).child('answers')),
+        get<GameScheme['aboutTruth']>(gamesRef.child(pin).child('aboutTruth')),
+    ]);
+    game.answers = Object.assign({}, game.answers, answers, isTruth ? {} : { [pid]: game.answers[pid] });
+    game.aboutTruth = isTruth ? game.aboutTruth : (truth || game.aboutTruth);
 
     const marked = writeMarks(pin, sentUpdate(game, [pid]));
     const ended = everyoneSent(game, writingSent(game)) && leftOutGuardWait(game, Date.now()) === 0 ?
