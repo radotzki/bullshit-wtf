@@ -16,6 +16,7 @@ import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
 import { cleanVisit } from './controllers/visit';
 import { laugh } from './controllers/laugh';
+import { joinPreviewPage, readPreviewGame } from './controllers/join-preview';
 import { caught, http, watched } from './report';
 
 // Error bodies always carry a readable message and a code, so the client
@@ -242,6 +243,39 @@ exports.visit = functions.https.onRequest(http('visit', (req, res) => {
         }
     }
     res.status(204).send('');
+}));
+
+// A join link, /join-game/<PIN> or /he/join-game/<PIN> (a Hosting rewrite in firebase.json): the site's
+// own page, with link-preview tags for this game ("Dana invited you to play Bullshit", in the game's
+// language). Every visitor gets the same page, so a browser runs the app as on any other path and the
+// CDN may cache it. See controllers/join-preview.ts and DEPLOYING.md, "Join link previews".
+exports.joinPreview = functions.runWith({ timeoutSeconds: 15 }).https.onRequest(http('joinPreview', async (req, res) => {
+    const started = Date.now();
+    const project = process.env.GCLOUD_PROJECT || (process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG).projectId : '') || '';
+    const url = String(req.originalUrl || req.url || '/');
+    const q = url.indexOf('?');
+    const path = q >= 0 ? url.slice(0, q) : url;
+    const query = q >= 0 ? url.slice(q) : '';
+    const answer = await joinPreviewPage(path, query, req.headers, {
+        readGame: readPreviewGame,
+        fetcher: (u, init) => fetch(u, init) as any,
+        project,
+        emulator: process.env.FUNCTIONS_EMULATOR === 'true',
+        // A GET is no request the site sends, so http() reports nothing by itself: report the faults
+        // here. A slow database read is only logged (the link got the generic preview).
+        fault: (e) => {
+            if (e && e.code === 'SLOW') {
+                console.log('joinPreview slow read');
+                return;
+            }
+            console.warn('joinPreview fault', e && e.message ? e.message : String(e));
+            caught(e, { unasked: false });
+        },
+    });
+    // One short line per answer, no nickname: how often a link got a named preview, and how long it took.
+    console.log('joinPreview ' + JSON.stringify({ kind: answer.kind, ms: Date.now() - started }));
+    Object.keys(answer.headers).forEach(h => res.set(h, answer.headers[h]));
+    res.status(answer.status).send(answer.body);
 }));
 
 // One game night send from a crew page (or another counted share): a row in BigQuery `shares`.
