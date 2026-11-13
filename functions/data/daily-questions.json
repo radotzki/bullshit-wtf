@@ -1,0 +1,874 @@
+{
+  "daily-26-en-001": {
+    "day": "2026-11-27",
+    "lang": "en",
+    "questionText": "Sir Nils Olav, a knighted major general in Norway's King's Guard, is a $blank$",
+    "realAnswer": "penguin",
+    "fakeAnswers": [
+      "reindeer",
+      "husky",
+      "seal"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nils_Olav"
+  },
+  "daily-26-en-002": {
+    "day": "2026-11-28",
+    "lang": "en",
+    "questionText": "It is impossible to keep humming a tune while you $blank$",
+    "realAnswer": "hold your nose",
+    "fakeAnswers": [
+      "stand on one leg",
+      "smile",
+      "look up"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Humming"
+  },
+  "daily-26-en-003": {
+    "day": "2026-11-29",
+    "lang": "en",
+    "questionText": "In 1968 an American tycoon bought $blank$ and rebuilt it in the Arizona desert",
+    "realAnswer": "london bridge",
+    "fakeAnswers": [
+      "stonehenge",
+      "a paris metro station",
+      "the crystal palace"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/London_Bridge_(Lake_Havasu_City)"
+  },
+  "daily-26-en-004": {
+    "day": "2026-11-30",
+    "lang": "en",
+    "questionText": "France's longest land border is with $blank$",
+    "realAnswer": "brazil",
+    "fakeAnswers": [
+      "spain",
+      "germany",
+      "italy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/List_of_countries_and_territories_by_number_of_land_borders"
+  },
+  "daily-26-en-005": {
+    "day": "2026-12-01",
+    "lang": "en",
+    "questionText": "American park ranger Roy Sullivan was struck by lightning $blank$ times, and survived them all",
+    "realAnswer": "seven",
+    "fakeAnswers": [
+      "three",
+      "twelve",
+      "twenty-one"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Roy_Sullivan"
+  },
+  "daily-26-en-006": {
+    "day": "2026-12-02",
+    "lang": "en",
+    "questionText": "The Roman emperor Vespasian put a tax on $blank$",
+    "realAnswer": "urine",
+    "fakeAnswers": [
+      "sneezing",
+      "moustaches",
+      "left-handed people"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pecunia_non_olet"
+  },
+  "daily-26-en-007": {
+    "day": "2026-12-03",
+    "lang": "en",
+    "questionText": "The world's first text message, sent on 3 December 1992, said $blank$",
+    "realAnswer": "merry christmas",
+    "fakeAnswers": [
+      "hello world",
+      "can you hear me?",
+      "happy new year"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/SMS"
+  },
+  "daily-26-en-008": {
+    "day": "2026-12-04",
+    "lang": "en",
+    "questionText": "In 'Friends', Ross teaches his son about Hanukkah dressed as the Holiday $blank$",
+    "realAnswer": "armadillo",
+    "fakeAnswers": [
+      "penguin",
+      "llama",
+      "lobster"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_One_with_the_Holiday_Armadillo",
+    "pack": "hanukkah",
+    "candle": 1
+  },
+  "daily-26-en-009": {
+    "day": "2026-12-05",
+    "lang": "en",
+    "questionText": "The word 'latke' goes back to an ancient Greek word for $blank$",
+    "realAnswer": "oil",
+    "fakeAnswers": [
+      "potato",
+      "moon",
+      "fire"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke",
+    "pack": "hanukkah",
+    "candle": 2
+  },
+  "daily-26-en-010": {
+    "day": "2026-12-06",
+    "lang": "en",
+    "questionText": "The Talmud says it is forbidden to $blank$ by the light of the Hanukkah candles",
+    "realAnswer": "count money",
+    "fakeAnswers": [
+      "eat soup",
+      "tell jokes",
+      "cut your nails"
+    ],
+    "citation": "https://halakhah.com/shabbath/shabbath_22.html",
+    "pack": "hanukkah",
+    "candle": 3
+  },
+  "daily-26-en-011": {
+    "day": "2026-12-07",
+    "lang": "en",
+    "questionText": "By one account, Hanukkah gelt began in 17th-century Poland as coins that children were sent to give to their $blank$",
+    "realAnswer": "teachers",
+    "fakeAnswers": [
+      "matchmakers",
+      "bakers",
+      "neighbors"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_gelt",
+    "pack": "hanukkah",
+    "candle": 4
+  },
+  "daily-26-en-012": {
+    "day": "2026-12-08",
+    "lang": "en",
+    "questionText": "Brooklyn's public menorah is 32 feet tall, so lighting it takes a $blank$",
+    "realAnswer": "cherry picker",
+    "fakeAnswers": [
+      "helicopter",
+      "hot-air balloon",
+      "trampoline"
+    ],
+    "citation": "https://forward.com/schmooze/133610/new-york-vs-washington-whose-menorah-is-bigger/",
+    "pack": "hanukkah",
+    "candle": 5
+  },
+  "daily-26-en-013": {
+    "day": "2026-12-09",
+    "lang": "en",
+    "questionText": "The Ladino Hanukkah song 'Ocho Kandelikas' sounds centuries old, but it was written in $blank$",
+    "realAnswer": "1983",
+    "fakeAnswers": [
+      "1492",
+      "1783",
+      "1883"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ocho_Kandelikas",
+    "pack": "hanukkah",
+    "candle": 6
+  },
+  "daily-26-en-014": {
+    "day": "2026-12-10",
+    "lang": "en",
+    "questionText": "Jews from Aleppo, Syria, light one extra candle every night, to thank the city that took in their ancestors after the expulsion from $blank$",
+    "realAnswer": "spain",
+    "fakeAnswers": [
+      "egypt",
+      "england",
+      "babylon"
+    ],
+    "citation": "https://forward.com/opinion/325492/what-a-syrian-hanukkah-custom-can-teach-us-about-refugees",
+    "pack": "hanukkah",
+    "candle": 7
+  },
+  "daily-26-en-015": {
+    "day": "2026-12-11",
+    "lang": "en",
+    "questionText": "By an old custom, while the Hanukkah candles are burning, women $blank$",
+    "realAnswer": "do no work",
+    "fakeAnswers": [
+      "must not speak",
+      "stand on one foot",
+      "eat only cheese"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "pack": "hanukkah",
+    "candle": 8
+  },
+  "daily-26-en-016": {
+    "day": "2026-12-12",
+    "lang": "en",
+    "questionText": "Australian prime minister Harold Holt vanished while swimming in the sea in 1967. Melbourne honoured him with a $blank$",
+    "realAnswer": "swimming pool",
+    "fakeAnswers": [
+      "lighthouse",
+      "lifeboat station",
+      "surfing trophy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Harold_Holt_Memorial_Swimming_Centre"
+  },
+  "daily-26-en-017": {
+    "day": "2026-12-13",
+    "lang": "en",
+    "questionText": "In the Amazon, butterflies drink the $blank$ of turtles",
+    "realAnswer": "tears",
+    "fakeAnswers": [
+      "blood",
+      "saliva",
+      "eggs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Lachryphagy"
+  },
+  "daily-26-en-018": {
+    "day": "2026-12-14",
+    "lang": "en",
+    "questionText": "It took Ernő Rubik about $blank$ to solve his own cube for the first time",
+    "realAnswer": "a month",
+    "fakeAnswers": [
+      "ten minutes",
+      "a weekend",
+      "seven years"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rubik%27s_Cube"
+  },
+  "daily-26-en-019": {
+    "day": "2026-12-15",
+    "lang": "en",
+    "questionText": "When the Mona Lisa was stolen from the Louvre in 1911, police hauled in $blank$ as a suspect",
+    "realAnswer": "pablo picasso",
+    "fakeAnswers": [
+      "claude monet",
+      "charlie chaplin",
+      "harry houdini"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia"
+  },
+  "daily-26-en-020": {
+    "day": "2026-12-16",
+    "lang": "en",
+    "questionText": "In the late 1800s, several US states passed laws that margarine had to be dyed $blank$",
+    "realAnswer": "pink",
+    "fakeAnswers": [
+      "blue",
+      "green",
+      "purple"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Margarine"
+  },
+  "daily-26-en-021": {
+    "day": "2026-12-17",
+    "lang": "en",
+    "questionText": "In 2007, 171 Swiss soldiers got lost in the dark and accidentally invaded $blank$",
+    "realAnswer": "liechtenstein",
+    "fakeAnswers": [
+      "germany",
+      "austria",
+      "italy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Liechtenstein%E2%80%93Switzerland_relations"
+  },
+  "daily-26-en-022": {
+    "day": "2026-12-18",
+    "lang": "en",
+    "questionText": "In the 1960s, the CIA spent millions of dollars trying to turn a $blank$ into a walking microphone",
+    "realAnswer": "cat",
+    "fakeAnswers": [
+      "poodle",
+      "tortoise",
+      "squirrel"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Acoustic_Kitty"
+  },
+  "daily-26-en-023": {
+    "day": "2026-12-19",
+    "lang": "en",
+    "questionText": "In 897, Pope Stephen VI put a $blank$ on trial in Rome",
+    "realAnswer": "dead pope",
+    "fakeAnswers": [
+      "church bell",
+      "statue",
+      "comet"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cadaver_Synod"
+  },
+  "daily-26-en-024": {
+    "day": "2026-12-20",
+    "lang": "en",
+    "questionText": "A 1986 British law made it an offence to handle a $blank$ in suspicious circumstances",
+    "realAnswer": "salmon",
+    "fakeAnswers": [
+      "swan",
+      "hedgehog",
+      "sausage"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Salmon_Act_1986"
+  },
+  "daily-26-en-025": {
+    "day": "2026-12-21",
+    "lang": "en",
+    "questionText": "A lot of the white sand on coral-reef beaches is really $blank$",
+    "realAnswer": "fish poop",
+    "fakeAnswers": [
+      "crushed pearls",
+      "dried sea foam",
+      "whale dandruff"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Parrotfish"
+  },
+  "daily-26-en-026": {
+    "day": "2026-12-22",
+    "lang": "en",
+    "questionText": "The first video ever uploaded to YouTube shows a man at the $blank$",
+    "realAnswer": "zoo",
+    "fakeAnswers": [
+      "beach",
+      "dentist",
+      "airport"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Me_at_the_zoo"
+  },
+  "daily-26-en-027": {
+    "day": "2026-12-23",
+    "lang": "en",
+    "questionText": "The Scottish village of Dull is twinned with an American town called $blank$",
+    "realAnswer": "boring",
+    "fakeAnswers": [
+      "sleepy hollow",
+      "normal",
+      "yawn"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dull,_Perth_and_Kinross"
+  },
+  "daily-26-en-028": {
+    "day": "2026-12-24",
+    "lang": "en",
+    "questionText": "The first song ever played on a musical instrument in space, in 1965, was $blank$",
+    "realAnswer": "jingle bells",
+    "fakeAnswers": [
+      "fly me to the moon",
+      "happy birthday",
+      "twinkle twinkle little star"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gemini_6A"
+  },
+  "daily-26-en-029": {
+    "day": "2026-12-25",
+    "lang": "en",
+    "questionText": "The logo of Chupa Chups lollipops was designed by $blank$",
+    "realAnswer": "salvador dalí",
+    "fakeAnswers": [
+      "pablo picasso",
+      "andy warhol",
+      "walt disney"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chupa_Chups"
+  },
+  "daily-26-en-030": {
+    "day": "2026-12-26",
+    "lang": "en",
+    "questionText": "Beer was banned in Iceland until $blank$",
+    "realAnswer": "1989",
+    "fakeAnswers": [
+      "1933",
+      "1955",
+      "1968"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Prohibition_in_Iceland"
+  },
+  "daily-26-en-031": {
+    "day": "2026-12-27",
+    "lang": "en",
+    "questionText": "Samsung started out in 1938 as a small trading company. Among other things, it sold $blank$",
+    "realAnswer": "dried fish",
+    "fakeAnswers": [
+      "radios",
+      "bicycles",
+      "umbrellas"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Samsung"
+  },
+  "daily-26-en-032": {
+    "day": "2026-12-28",
+    "lang": "en",
+    "questionText": "In September 1752, Britain's calendar skipped $blank$ days overnight",
+    "realAnswer": "11",
+    "fakeAnswers": [
+      "3",
+      "29",
+      "40"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Calendar_(New_Style)_Act_1750"
+  },
+  "daily-26-en-033": {
+    "day": "2026-12-29",
+    "lang": "en",
+    "questionText": "The hippo's closest living relatives are $blank$",
+    "realAnswer": "whales",
+    "fakeAnswers": [
+      "elephants",
+      "rhinos",
+      "horses"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hippopotamus"
+  },
+  "daily-26-en-034": {
+    "day": "2026-12-30",
+    "lang": "en",
+    "questionText": "In 1896 the first driver known to be convicted of speeding was caught doing $blank$",
+    "realAnswer": "8 mph",
+    "fakeAnswers": [
+      "25 mph",
+      "40 mph",
+      "60 mph"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Speed_limit"
+  },
+  "daily-26-en-035": {
+    "day": "2026-12-31",
+    "lang": "en",
+    "questionText": "The treadmill was designed in England in 1818 to $blank$",
+    "realAnswer": "punish prisoners",
+    "fakeAnswers": [
+      "train racehorses",
+      "test army boots",
+      "cure gout"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Penal_treadmill"
+  },
+  "daily-26-he-001": {
+    "day": "2026-11-27",
+    "lang": "he",
+    "questionText": "בשנות ה-70 הפעילה הטלוויזיה הישראלית מנגנון בשם 'מחיקון'. התפקיד שלו היה $blank$",
+    "realAnswer": "למחוק את הצבע מהשידור",
+    "fakeAnswers": [
+      "לצנזר קללות",
+      "לקצר את הפרסומות",
+      "להסתיר את השעון שבפינת המסך"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Color_killer"
+  },
+  "daily-26-he-002": {
+    "day": "2026-11-28",
+    "lang": "he",
+    "questionText": "במשמר המלך של נורווגיה משרת מייג'ור גנרל בשם סר נילס אולב, שקיבל תואר אבירות. הוא $blank$",
+    "realAnswer": "פינגווין",
+    "fakeAnswers": [
+      "אייל צפוני",
+      "כלב האסקי",
+      "כלב ים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nils_Olav"
+  },
+  "daily-26-he-003": {
+    "day": "2026-11-29",
+    "lang": "he",
+    "questionText": "אי אפשר להמשיך לזמזם מנגינה בזמן ש$blank$",
+    "realAnswer": "סותמים את האף",
+    "fakeAnswers": [
+      "עומדים על רגל אחת",
+      "מחייכים",
+      "מסתכלים למעלה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Humming"
+  },
+  "daily-26-he-004": {
+    "day": "2026-11-30",
+    "lang": "he",
+    "questionText": "המילה 'אקדח' מופיעה כבר בתנ\"ך, ושם היא שם של $blank$",
+    "realAnswer": "אבן יקרה",
+    "fakeAnswers": [
+      "כלי נגינה",
+      "ציפור טרף",
+      "מטבע"
+    ],
+    "citation": "https://www.sefaria.org/Isaiah.54.12?lang=bi"
+  },
+  "daily-26-he-005": {
+    "day": "2026-12-01",
+    "lang": "he",
+    "questionText": "הגבול היבשתי הארוך ביותר של צרפת הוא עם $blank$",
+    "realAnswer": "ברזיל",
+    "fakeAnswers": [
+      "ספרד",
+      "גרמניה",
+      "איטליה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/List_of_countries_and_territories_by_number_of_land_borders"
+  },
+  "daily-26-he-006": {
+    "day": "2026-12-02",
+    "lang": "he",
+    "questionText": "הקיסר הרומי אספסיאנוס הטיל מס על $blank$",
+    "realAnswer": "שתן",
+    "fakeAnswers": [
+      "עיטושים",
+      "שפמים",
+      "שמאליים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pecunia_non_olet"
+  },
+  "daily-26-he-007": {
+    "day": "2026-12-03",
+    "lang": "he",
+    "questionText": "ה-SMS הראשון בעולם נשלח ב-3 בדצמבר 1992, והיה כתוב בו $blank$",
+    "realAnswer": "חג מולד שמח",
+    "fakeAnswers": [
+      "שלום עולם",
+      "שומעים אותי?",
+      "שנה טובה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/SMS"
+  },
+  "daily-26-he-008": {
+    "day": "2026-12-04",
+    "lang": "he",
+    "questionText": "בסדרה 'חברים', רוס מלמד את הבן שלו על חנוכה כשהוא מחופש ל$blank$ החגים",
+    "realAnswer": "ארמדיל",
+    "fakeAnswers": [
+      "פינגווין",
+      "לאמה",
+      "לובסטר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_One_with_the_Holiday_Armadillo",
+    "pack": "hanukkah",
+    "candle": 1
+  },
+  "daily-26-he-009": {
+    "day": "2026-12-05",
+    "lang": "he",
+    "questionText": "לפי התלמוד, לאור נרות החנוכה אסור $blank$",
+    "realAnswer": "לספור כסף",
+    "fakeAnswers": [
+      "לאכול מרק",
+      "לספר בדיחות",
+      "לגזור ציפורניים"
+    ],
+    "citation": "https://halakhah.com/shabbath/shabbath_22.html",
+    "pack": "hanukkah",
+    "candle": 2
+  },
+  "daily-26-he-010": {
+    "day": "2026-12-06",
+    "lang": "he",
+    "questionText": "לפי אחת הגרסאות, דמי חנוכה התחילו בפולין של המאה ה-17 ככסף שהילדים נשלחו לתת ל$blank$",
+    "realAnswer": "מורים",
+    "fakeAnswers": [
+      "שדכנים",
+      "אופים",
+      "שכנים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_gelt",
+    "pack": "hanukkah",
+    "candle": 3
+  },
+  "daily-26-he-011": {
+    "day": "2026-12-07",
+    "lang": "he",
+    "questionText": "החנוכייה הציבורית בברוקלין גבוהה כמעט 10 מטרים, אז כדי להדליק אותה צריך $blank$",
+    "realAnswer": "מנוף",
+    "fakeAnswers": [
+      "מסוק",
+      "כדור פורח",
+      "טרמפולינה"
+    ],
+    "citation": "https://forward.com/schmooze/133610/new-york-vs-washington-whose-menorah-is-bigger/",
+    "pack": "hanukkah",
+    "candle": 4
+  },
+  "daily-26-he-012": {
+    "day": "2026-12-08",
+    "lang": "he",
+    "questionText": "שיר החנוכה 'אוצ'ו קנדליקאס' בלדינו נשמע עתיק, אבל הוא נכתב רק בשנת $blank$",
+    "realAnswer": "1983",
+    "fakeAnswers": [
+      "1492",
+      "1783",
+      "1883"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ocho_Kandelikas",
+    "pack": "hanukkah",
+    "candle": 5
+  },
+  "daily-26-he-013": {
+    "day": "2026-12-09",
+    "lang": "he",
+    "questionText": "יהודים יוצאי חלב שבסוריה מדליקים בכל ערב של חנוכה נר אחד נוסף, כתודה לעיר שקלטה את אבותיהם אחרי הגירוש מ$blank$",
+    "realAnswer": "ספרד",
+    "fakeAnswers": [
+      "מצרים",
+      "אנגליה",
+      "בבל"
+    ],
+    "citation": "https://forward.com/opinion/325492/what-a-syrian-hanukkah-custom-can-teach-us-about-refugees",
+    "pack": "hanukkah",
+    "candle": 6
+  },
+  "daily-26-he-014": {
+    "day": "2026-12-10",
+    "lang": "he",
+    "questionText": "לפי מנהג עתיק, כל עוד נרות החנוכה דולקים, נשים $blank$",
+    "realAnswer": "לא עובדות",
+    "fakeAnswers": [
+      "לא מדברות",
+      "עומדות על רגל אחת",
+      "אוכלות רק גבינה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "pack": "hanukkah",
+    "candle": 7
+  },
+  "daily-26-he-015": {
+    "day": "2026-12-11",
+    "lang": "he",
+    "questionText": "הרמב\"ם פסק שעני שאין לו שמן לנרות חנוכה צריך למכור את $blank$ כדי לקנות",
+    "realAnswer": "הבגדים שלו",
+    "fakeAnswers": [
+      "החמור שלו",
+      "הספרים שלו",
+      "דלת הבית שלו"
+    ],
+    "citation": "https://outorah.org/p/49665",
+    "pack": "hanukkah",
+    "candle": 8
+  },
+  "daily-26-he-016": {
+    "day": "2026-12-12",
+    "lang": "he",
+    "questionText": "המרכב של המכונית הישראלית סוסיתא היה עשוי פיברגלס, ולפי אגדה אורבנית ותיקה $blank$ אהבו ללעוס אותו",
+    "realAnswer": "גמלים",
+    "fakeAnswers": [
+      "עיזים",
+      "חמורים",
+      "יענים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sussita_(car)"
+  },
+  "daily-26-he-017": {
+    "day": "2026-12-13",
+    "lang": "he",
+    "questionText": "באמזונס יש פרפרים ששותים את ה$blank$ של צבים",
+    "realAnswer": "דמעות",
+    "fakeAnswers": [
+      "דם",
+      "רוק",
+      "ביצים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Lachryphagy"
+  },
+  "daily-26-he-018": {
+    "day": "2026-12-14",
+    "lang": "he",
+    "questionText": "על הבולים הראשונים של המדינה, ממאי 1948, לא כתוב 'ישראל' אלא $blank$, כי כשהודפסו עוד לא נבחר לה שם",
+    "realAnswer": "דואר עברי",
+    "fakeAnswers": [
+      "מדינת יהודה",
+      "ציון",
+      "דואר המדינה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Israeli_stamp"
+  },
+  "daily-26-he-019": {
+    "day": "2026-12-15",
+    "lang": "he",
+    "questionText": "כשהמונה ליזה נגנבה מהלובר ב-1911, המשטרה חקרה כחשוד את $blank$",
+    "realAnswer": "פבלו פיקאסו",
+    "fakeAnswers": [
+      "קלוד מונה",
+      "צ'רלי צ'פלין",
+      "הארי הודיני"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Vincenzo_Peruggia"
+  },
+  "daily-26-he-020": {
+    "day": "2026-12-16",
+    "lang": "he",
+    "questionText": "בתקופת הצנע ביקש בן-גוריון מחברת אסם להמציא תחליף ל$blank$, וכך נולדו הפתיתים",
+    "realAnswer": "אורז",
+    "fakeAnswers": [
+      "תפוחי אדמה",
+      "עדשים",
+      "לחם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ptitim"
+  },
+  "daily-26-he-021": {
+    "day": "2026-12-17",
+    "lang": "he",
+    "questionText": "ב-2007 איבדו 171 חיילים שווייצרים את הדרך בלילה ופלשו בטעות ל$blank$",
+    "realAnswer": "ליכטנשטיין",
+    "fakeAnswers": [
+      "גרמניה",
+      "אוסטריה",
+      "איטליה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Liechtenstein%E2%80%93Switzerland_relations"
+  },
+  "daily-26-he-022": {
+    "day": "2026-12-18",
+    "lang": "he",
+    "questionText": "בשנות ה-60 השקיע ה-CIA מיליוני דולרים בניסיון להפוך $blank$ למכשיר האזנה מהלך",
+    "realAnswer": "חתול",
+    "fakeAnswers": [
+      "פודל",
+      "צב",
+      "סנאי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Acoustic_Kitty"
+  },
+  "daily-26-he-023": {
+    "day": "2026-12-19",
+    "lang": "he",
+    "questionText": "ישראל ניצחה באירוויזיון 1979, אבל לא השתתפה בתחרות של 1980, כי היא נקבעה ל$blank$",
+    "realAnswer": "יום הזיכרון",
+    "fakeAnswers": [
+      "יום כיפור",
+      "ליל הסדר",
+      "תשעה באב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Eurovision_Song_Contest_1980"
+  },
+  "daily-26-he-024": {
+    "day": "2026-12-20",
+    "lang": "he",
+    "questionText": "בעברית קוראים לסימן @ שטרודל. באיטלקית קוראים לו $blank$",
+    "realAnswer": "חילזון",
+    "fakeAnswers": [
+      "ספגטי",
+      "קרואסון",
+      "כפתור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/At_sign"
+  },
+  "daily-26-he-025": {
+    "day": "2026-12-21",
+    "lang": "he",
+    "questionText": "חלק גדול מהחול הלבן בחופים של שוניות אלמוגים הוא בעצם $blank$",
+    "realAnswer": "קקי של דגים",
+    "fakeAnswers": [
+      "פנינים שנשחקו",
+      "קצף ים שהתייבש",
+      "קשקשים של לווייתנים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Parrotfish"
+  },
+  "daily-26-he-026": {
+    "day": "2026-12-22",
+    "lang": "he",
+    "questionText": "לפני שהיה הנשיא הראשון, חיים ויצמן היה כימאי. במלחמת העולם הראשונה הוא לימד את הבריטים לייצר $blank$ בעזרת חיידקים",
+    "realAnswer": "אצטון",
+    "fakeAnswers": [
+      "פניצילין",
+      "גומי",
+      "סבון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chaim_Weizmann"
+  },
+  "daily-26-he-027": {
+    "day": "2026-12-23",
+    "lang": "he",
+    "questionText": "את הלוגו של סוכריות צ'ופה צ'ופס עיצב $blank$",
+    "realAnswer": "סלבדור דאלי",
+    "fakeAnswers": [
+      "פבלו פיקאסו",
+      "אנדי וורהול",
+      "וולט דיסני"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chupa_Chups"
+  },
+  "daily-26-he-028": {
+    "day": "2026-12-24",
+    "lang": "he",
+    "questionText": "במבצע שלמה ב-1991 המריא מאתיופיה מטוס ג'מבו אחד של אל על ועליו $blank$ נוסעים, שיא עולם לפי ספר השיאים של גינס",
+    "realAnswer": "1,088",
+    "fakeAnswers": [
+      "612",
+      "745",
+      "850"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Operation_Solomon"
+  },
+  "daily-26-he-029": {
+    "day": "2026-12-25",
+    "lang": "he",
+    "questionText": "בשנות ה-60 קבעה ועדה ממשלתית שלמוזיקה של $blank$ 'אין ערך אמנותי', וסירבה לאשר להם הופעה בישראל",
+    "realAnswer": "הביטלס",
+    "fakeAnswers": [
+      "אלביס פרסלי",
+      "הרולינג סטונס",
+      "הבי ג'יז"
+    ],
+    "citation": "https://www.jewishvirtuallibrary.org/israel-bans-the-beatles"
+  },
+  "daily-26-he-030": {
+    "day": "2026-12-26",
+    "lang": "he",
+    "questionText": "באיסלנד היה אסור למכור בירה עד שנת $blank$",
+    "realAnswer": "1989",
+    "fakeAnswers": [
+      "1933",
+      "1955",
+      "1968"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Prohibition_in_Iceland"
+  },
+  "daily-26-he-031": {
+    "day": "2026-12-27",
+    "lang": "he",
+    "questionText": "שומר הפארק האמריקאי רוי סאליבן נפגע מברק $blank$ פעמים, ושרד את כולן",
+    "realAnswer": "שבע",
+    "fakeAnswers": [
+      "שלוש",
+      "שתים-עשרה",
+      "עשרים ואחת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Roy_Sullivan"
+  },
+  "daily-26-he-032": {
+    "day": "2026-12-28",
+    "lang": "he",
+    "questionText": "סמסונג נוסדה ב-1938 כחברת סחר קטנה, ובין השאר היא מכרה $blank$",
+    "realAnswer": "דגים מיובשים",
+    "fakeAnswers": [
+      "מכשירי רדיו",
+      "אופניים",
+      "מטריות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Samsung"
+  },
+  "daily-26-he-033": {
+    "day": "2026-12-29",
+    "lang": "he",
+    "questionText": "קרובי המשפחה הקרובים ביותר של ההיפופוטם הם $blank$",
+    "realAnswer": "הלווייתנים",
+    "fakeAnswers": [
+      "הפילים",
+      "הקרנפים",
+      "הסוסים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hippopotamus"
+  },
+  "daily-26-he-034": {
+    "day": "2026-12-30",
+    "lang": "he",
+    "questionText": "לארנו רוביק, ממציא הקובייה ההונגרית, לקח $blank$ לפתור אותה בפעם הראשונה",
+    "realAnswer": "בערך חודש",
+    "fakeAnswers": [
+      "עשר דקות",
+      "סוף שבוע אחד",
+      "שבע שנים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rubik%27s_Cube"
+  },
+  "daily-26-he-035": {
+    "day": "2026-12-31",
+    "lang": "he",
+    "questionText": "ההליכון הומצא באנגליה ב-1818 כדי $blank$",
+    "realAnswer": "להעניש אסירים",
+    "fakeAnswers": [
+      "לאמן סוסי מרוץ",
+      "לבדוק נעלי צבא",
+      "לרפא כאבי גב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Penal_treadmill"
+  }
+}
