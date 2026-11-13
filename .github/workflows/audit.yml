@@ -1,0 +1,95 @@
+# Fails when npm audit finds a critical or high advisory in any of the repository's four lockfiles.
+# Dependabot alerts are off on this repository, so this run is what makes a new advisory visible.
+# Needs no secrets, deploys nothing and touches no Firebase project.
+#
+# When it runs, and what it checks:
+# - Every Monday on master, and by hand (Actions > Dependency audit > Run workflow): all four
+#   lockfiles. A failing scheduled run emails the repository owner (GitHub's default setting).
+# - On a pull request that changes a package.json or package-lock.json: only the folders whose
+#   package.json or lockfile that pull request changed, so an advisory published today never fails
+#   a pull request that didn't touch dependencies. A change to this file checks all four.
+#
+# It gates on all dependencies, dev included. The root lockfile is the Firebase CLI, a dev
+# dependency that deploy.yml runs with the production key; game/'s dev dependencies are the
+# toolchain that builds the shipped site. A high advisory there matters even though none of it
+# is served to players.
+name: Dependency audit
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**/package.json'
+      - '**/package-lock.json'
+      - '.github/workflows/audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: npm audit (critical and high)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Choose the lockfiles to audit
+        id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          all=". game functions .github/smoke"
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "dirs=$all" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # The checkout is the pull request merged into its base; diff it against the base.
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          changed=$(git diff --name-only "$BASE_SHA" HEAD)
+          echo "Changed files:"; echo "$changed"
+          if echo "$changed" | grep -qx '.github/workflows/audit.yml'; then
+            echo "dirs=$all" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          dirs=""
+          for d in $all; do
+            if [ "$d" = "." ]; then p=""; else p="$d/"; fi
+            if echo "$changed" | grep -qxF -e "${p}package.json" -e "${p}package-lock.json"; then
+              dirs="$dirs $d"
+            fi
+          done
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+
+      - name: npm audit --audit-level=high
+        env:
+          DIRS: ${{ steps.pick.outputs.dirs }}
+        run: |
+          if [ -z "${DIRS// /}" ]; then
+            echo "This pull request changes no audited package.json or lockfile; nothing to audit."
+            echo "No audited package.json or lockfile changed; nothing audited." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          failed=""
+          { echo "### npm audit, failing on critical or high"; echo; echo "| Folder | Result |"; echo "|---|---|"; } >> "$GITHUB_STEP_SUMMARY"
+          for d in $DIRS; do
+            echo "::group::npm audit in $d"
+            # npm audit reads the lockfile alone; nothing is installed and no install script runs.
+            if (cd "$d" && npm audit --audit-level=high); then
+              echo "| \`$d\` | passed |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "| \`$d\` | **critical or high advisory** |" >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::npm audit found a critical or high advisory in $d (run npm audit there for details)"
+              failed="$failed $d"
+            fi
+            echo "::endgroup::"
+          done
+          if [ -n "$failed" ]; then
+            echo "Failed in:$failed"; exit 1
+          fi
