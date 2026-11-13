@@ -19,7 +19,7 @@
         </svg>
     </a>
 
-    <button *ngIf="button" (click)="onClick.next()" class="button is-primary" [class.is-loading]="buttonLoading"> {{button}} </button>
+    <button *ngIf="button" (click)="onClick.emit()" class="button is-primary" [class.is-loading]="buttonLoading"> {{button}} </button>
 
     <span *ngIf="text" class="text"> {{text | uppercase}} </span>
 

@@ -2,7 +2,7 @@ import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { ShareService } from './../../services/share.service';
 import { CardPlayer, ResultsCardService } from './../../services/results-card.service';
-import { Component, EventEmitter, Input, Output, OnInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 const sheetStrings = {
@@ -18,6 +18,8 @@ const sheetStrings = {
  * Each send is counted in BigQuery's shares table as content_type "results".
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-share-results',
     templateUrl: './share-results.component.html',
     styleUrls: ['./share-results.component.scss'],

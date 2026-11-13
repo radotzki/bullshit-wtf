@@ -9,18 +9,16 @@ import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { startReconnectNudge, pageVisible } from './reconnect-nudge';
 import { clockSync } from './clock-sync';
-import { Observable } from 'rxjs/Observable';
-import { Http } from '@angular/http';
+import { Observable, Subscriber, Subscription, firstValueFrom } from 'rxjs';
+import { map, share } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { initializeApp } from 'firebase';
-import { Subscriber } from 'rxjs/Subscriber';
-import { Subscription } from 'rxjs/Subscription';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/toPromise';
-import 'rxjs/add/operator/publish';
+import firebaseCompat from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/database';
 
-const firebase = initializeApp(environment.firebaseConfig);
+const firebase = firebaseCompat.initializeApp(environment.firebaseConfig);
 
 /** The page's one reconnect nudge (see reconnect-nudge.ts), started with the first ApiService. */
 let nudging = false;
@@ -47,7 +45,7 @@ function keepReconnecting() {
 export const SIGN_IN_WAIT_MS = 1500;
 
 /** The one anonymous sign-in of this page load, shared by every caller. */
-let signingIn: Promise<firebase.User> = null;
+let signingIn: Promise<firebaseCompat.User> = null;
 /** Sign-in took longer than a full wait on this page load. */
 let signInSlow = false;
 
@@ -59,7 +57,7 @@ function apiError(url: string, resp: any) {
     let body: any = null;
 
     try {
-        body = resp.json();
+        body = resp && resp.error && typeof resp.error === 'object' ? resp.error : null;
     } catch (e) {
         body = null;
     }
@@ -83,8 +81,8 @@ function apiError(url: string, resp: any) {
 
 @Injectable()
 export class ApiService {
-    gamesRef: firebase.database.Reference;
-    crewsRef: firebase.database.Reference;
+    gamesRef: firebaseCompat.database.Reference;
+    crewsRef: firebaseCompat.database.Reference;
     /** How far this phone's clock is ahead of the server's (see clock-sync.ts). */
     private timeDiff = clockSync(
         () => this.post<{ now: number }>('time').then(({ now }) => Date.now() - now),
@@ -94,7 +92,7 @@ export class ApiService {
     private gameLocales: { [pin: string]: string } = {};
 
     constructor(
-        private http: Http,
+        private http: HttpClient,
         private sessionService: SessionService,
         private zone: NgZone,
     ) {
@@ -143,12 +141,12 @@ export class ApiService {
      * so sign-in is usually done by the time a player taps. Where Google's sign-in
      * script fails to load, this takes 20 to 30 seconds and resolves to undefined.
      */
-    warmUpSignIn(): Promise<firebase.User> {
+    warmUpSignIn(): Promise<firebaseCompat.User> {
         if (!signingIn) {
             signingIn = (async () => {
                 try {
                     const auth = firebase.auth();
-                    const user = auth.currentUser || await auth.signInAnonymously();
+                    const user = auth.currentUser || (await auth.signInAnonymously()).user;
                     signInSlow = false;
                     return user;
                 } catch (error) {
@@ -162,14 +160,14 @@ export class ApiService {
     }
 
     /** The signed-in user if sign-in finishes within maxWaitMs, and how long we waited. */
-    async userWithin(maxWaitMs: number): Promise<{ user: firebase.User; waitedMs: number }> {
+    async userWithin(maxWaitMs: number): Promise<{ user: firebaseCompat.User; waitedMs: number }> {
         const started = Date.now();
         // Once sign-in has outlasted one full wait, the host's next tap (Join after Create) does not wait again.
         const wait = signInSlow ? 0 : maxWaitMs;
         let timedOut = false;
         const user = await Promise.race([
             this.warmUpSignIn(),
-            new Promise<firebase.User>(resolve => setTimeout(() => { timedOut = true; resolve(undefined); }, wait)),
+            new Promise<firebaseCompat.User>(resolve => setTimeout(() => { timedOut = true; resolve(undefined); }, wait)),
         ]);
         if (timedOut) {
             signInSlow = true;
@@ -553,7 +551,7 @@ export class ApiService {
     revealDoneCount(pin: string) {
         pin = pin.toUpperCase();
         return this.observe<{ [pid: string]: boolean }>(this.gamesRef.child(pin).child('revealDone'))
-            .map(done => Object.keys(done || {}).length);
+            .pipe(map(done => Object.keys(done || {}).length));
     }
 
     playerScore(pin: string, pid: string) {
@@ -650,12 +648,11 @@ export class ApiService {
     }
 
     private post<T>(url: string, body: Object = {}): Promise<T> {
-        return this.http.post(environment.cloudfunctions + url, body)
-            .toPromise()
-            .then(resp => resp.json(), resp => Promise.reject(apiError(url, resp)));
+        return firstValueFrom(this.http.post<T>(environment.cloudfunctions + url, body))
+            .catch(resp => Promise.reject(apiError(url, resp)));
     }
 
-    private observe<T>(query: firebase.database.Query, eventType = 'value') {
+    private observe<T>(query: firebaseCompat.database.Query, eventType: firebaseCompat.database.EventType = 'value') {
         return new Observable<T>((observer: Subscriber<T>) => {
             const listener = query.on(eventType, snap => {
                 this.zone.run(() => {
@@ -664,7 +661,7 @@ export class ApiService {
             }, err => observer.error(err));
 
             return () => query.off(eventType, listener);
-        }).publish().refCount();
+        }).pipe(share());
     }
 
     private get<T>(ref): Promise<T> {

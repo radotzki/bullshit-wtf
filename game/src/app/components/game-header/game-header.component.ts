@@ -2,13 +2,15 @@ import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { GameState } from './../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-game-header',
     templateUrl: './game-header.component.html',
     styleUrls: ['./game-header.component.scss']

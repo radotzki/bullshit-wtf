@@ -2,7 +2,7 @@ import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Howl } from 'howler';
 import { gameStrings, GameStrings } from './../game-strings';
 import { isFinalQuestion, standing, gapLine, Standing } from './final-question';
@@ -16,6 +16,8 @@ const roundPoints = [
 ];
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-round-intro',
     templateUrl: './round-intro.component.html',
     styleUrls: ['./round-intro.component.scss']

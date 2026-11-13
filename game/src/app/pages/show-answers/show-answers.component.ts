@@ -5,13 +5,15 @@ import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { GameState } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../game-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-show-answers',
     templateUrl: './show-answers.component.html',
     styleUrls: ['./show-answers.component.scss']

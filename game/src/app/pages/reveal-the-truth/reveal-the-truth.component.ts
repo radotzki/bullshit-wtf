@@ -2,10 +2,10 @@ import { Howl } from 'howler';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { SoundService } from './../../services/sound.service';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, OnDestroy, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import {
     GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing,
     revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isLie, isPlayerLie,
@@ -44,6 +44,8 @@ const SCORES_MOVE_AFTER_MS = 900;
  * On a big screen both keep the newest row in view: earlier rows fold down, and the page follows it.
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-reveal-the-truth',
     templateUrl: './reveal-the-truth.component.html',
     styleUrls: ['./reveal-the-truth.component.scss']

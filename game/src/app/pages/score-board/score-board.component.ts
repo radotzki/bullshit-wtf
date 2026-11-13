@@ -1,13 +1,15 @@
 import { GamePlayer } from './../../game-model';
 import { SessionService } from './../../services/session.service';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { GameState } from '../../game-model';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-score-board',
     templateUrl: './score-board.component.html',
     styleUrls: ['./score-board.component.scss']

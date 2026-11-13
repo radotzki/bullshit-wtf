@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService, RememberedCrew } from '../../../services/crew.service';
 import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
@@ -20,6 +20,8 @@ function readStored(key: string): string | null {
 }
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-mobile-landing',
     templateUrl: './mobile-landing.component.html',
     styleUrls: ['./mobile-landing.component.scss']

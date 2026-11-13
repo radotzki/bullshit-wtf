@@ -1,9 +1,11 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-present-game',
     templateUrl: './present-game.component.html',
     styleUrls: ['./present-game.component.scss']
