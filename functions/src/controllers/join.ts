@@ -1,4 +1,4 @@
-import { GameScheme, GamePlayer } from '../game-model';
+import { MAX_PLAYERS, GameScheme, GamePlayer } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
@@ -47,7 +47,7 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
         return Promise.reject(over);
     }
 
-    if (Object.keys(game.players || {}).length === 8) {
+    if (Object.keys(game.players || {}).length >= MAX_PLAYERS) {
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });
     }
 

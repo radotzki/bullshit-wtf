@@ -129,7 +129,7 @@
                             [class.climbed]="scoresMoved && p.rowAfter < p.rowBefore"
                             [style.transform]="'translateY(' + ((scoresMoved ? p.rowAfter : p.rowBefore) * 2.7) + 'em)'">
                             <span class="place">{{ scoresMoved ? p.placeAfter : p.placeBefore }}</span>
-                            <img class="picture" [src]="'/assets/avatar' + p.seat + '.png'">
+                            <img class="picture" [src]="'/assets/avatar' + (p.seat % 12) + '.png'">
                             <span class="name">{{ p.nickname }}</span>
                             <span class="change" *ngIf="p.change" [class.negative]="p.change < 0" dir="ltr">{{ p.change | bsPoints }}</span>
                             <span class="total" dir="ltr">{{ scoresMoved ? p.after : p.before }}</span>

@@ -1,4 +1,4 @@
-<section class="game-container show-answers" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+<section class="game-container show-answers" [class.many]="answers && answers.length > 9" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
     <progress *ngIf="answers && past && duration" class="progress" [class.is-primary]="!panic" [class.is-danger]="panic"
         [value]="past" [max]="duration"></progress>
@@ -12,7 +12,7 @@
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <div class="columns is-multiline">
-                <p *ngFor="let answer of answers" class="column is-one-third-tablet is-one-third-desktop">
+                <p *ngFor="let answer of answers" class="column" [ngClass]="answers.length > 9 ? 'is-one-quarter-tablet is-one-quarter-desktop' : 'is-one-third-tablet is-one-third-desktop'">
                     <button class="button is-primary is-fullwidth answer" [class.rtl]="rtl">
                         {{ answer | uppercase }}
                     </button>

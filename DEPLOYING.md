@@ -1093,3 +1093,36 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## Room for the ninth player: 12 seats a game
+
+A game takes 12 players; it took 8. The thirteenth is told "Sorry, game is full", as the ninth was.
+
+- Functions and site. No rule change, no BigQuery change, no new function, none removed or renamed.
+  A merge sends all functions and the site.
+- One number: `MAX_PLAYERS` in `game-model.ts`. `join` and `validateGameName` refuse a seat at it
+  (`>=`, where it was `=== 8`), and a late friend is offered a rematch lobby only below it
+  (`game-over.ts`). The server timer's longest phase (`maxPhaseDuration`, `phase.ts`) is worked out
+  from it: a big-screen reveal of 13 rows, about 70 seconds, under the 120-second limit of
+  `phaseTimer`.
+- House lies: a table of 9 to 12 sees every lie its players wrote and the truth, but house lies
+  fill the list only up to 9 answers (`MAX_HOUSE_FILL`), as many as an 8-seat game ever had.
+  Tables of 2 to 8 get exactly what they got.
+- Pictures: four new seat pictures, `assets/avatar8.png` to `avatar11.png` (sources in
+  `graphics/avatars/`). Every screen that shows players asks for the seat's picture by its place,
+  wrapped at 12, so a thirteenth seat made by two joins in the same instant reuses one.
+- Screens with nine or more: the lobby shows three pictures a line on a phone; the waiting row is
+  three lines of four; the answer buttons sit closer together, and four a line on the big screen;
+  the scoreboard rows are shorter so twelve fit; the big screen's final scores go in three columns.
+- Words: "up to 12 players" on the how-to-play page, the home page's description, the search pages
+  and the Hebrew occasion pages. The pictures made from `graphics/` (Hanukkah and search-page
+  images) still say 8 until they are drawn again.
+- Old and new together. The functions go first, so for a minute or two a game can take a ninth
+  player while the site is the old one: an old phone's waiting row reuses the first pictures for
+  seats 9 to 12, and its lobby and scoreboards show no picture for them until the site's release
+  brings the new files (after it, an old phone that has not reloaded gets them too). Nothing stored
+  changes shape.
+
+How to read it: `functions/bigquery/2026-11-ninth-player.sql` (share of games above 8, seats per
+game on Fridays and by language, whether big tables still play to the last question, and refusals
+once pull request 47's table exists).

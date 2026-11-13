@@ -1,6 +1,6 @@
 // Plain HTML pages that search engines can read without running JavaScript.
 // Each English page has a Hebrew twin (`twin`), linked with hreflang.
-// Facts here must match the game: free, in the browser, up to 8 players,
+// Facts here must match the game: free, in the browser, up to 12 players,
 // 5, 7 or 9 questions, three rounds where points grow, English and Hebrew questions.
 // A page may stand in one language only: leave `twin` out. A page with a `tag` sends it on its
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
@@ -67,7 +67,7 @@ const howEn = `
 <h2>How to start</h2>
 <ol>
   <li>One person opens bullshit.wtf and taps <a href="/create-game">create a game</a>, picks English or Hebrew and the number of questions.</li>
-  <li>The game shows a four-letter PIN. Everyone else opens bullshit.wtf on their phone, taps <a href="/join-game">join</a> and types it. Up to 8 players.</li>
+  <li>The game shows a four-letter PIN. Everyone else opens bullshit.wtf on their phone, taps <a href="/join-game">join</a> and types it. Up to 12 players.</li>
   <li>For a bigger group, put the game on a TV or laptop with <a href="/present-game">present</a>: the screen shows the questions and the scores, and phones are for writing and picking.</li>
 </ol>
 <h2>Tips for a good lie</h2>
@@ -98,7 +98,7 @@ const howHe = `
 <h2>איך מתחילים</h2>
 <ol>
   <li>מישהו אחד נכנס ל-<bdi dir="ltr">bullshit.wtf</bdi>, לוחץ על <a href="/create-game">פתיחת משחק</a>, ובוחר עברית או אנגלית ומספר שאלות.</li>
-  <li>המשחק מציג קוד של ארבע אותיות. כל השאר נכנסים ל-<bdi dir="ltr">bullshit.wtf</bdi> בטלפון, לוחצים <a href="/join-game">הצטרפות</a> ומקלידים אותו. עד 8 שחקנים.</li>
+  <li>המשחק מציג קוד של ארבע אותיות. כל השאר נכנסים ל-<bdi dir="ltr">bullshit.wtf</bdi> בטלפון, לוחצים <a href="/join-game">הצטרפות</a> ומקלידים אותו. עד 12 שחקנים.</li>
   <li>לקבוצה גדולה, אפשר להציג את המשחק על טלוויזיה או מחשב עם <a href="/present-game">מצב הצגה</a>: המסך מראה את השאלות והניקוד, והטלפונים משמשים לכתיבה ולבחירה.</li>
 </ol>
 <h2>טיפים לשקר טוב</h2>
@@ -113,7 +113,7 @@ module.exports = [
         path: '/how-to-play', twin: '/he/how-to-play', site: en,
         image: '/assets/og-how-en.png',
         title: 'How to play Bullshit, the free bluffing trivia game for phones',
-        description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 8 players.',
+        description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 12 players.',
         h1: 'How to play Bullshit',
         body: howEn,
     },
@@ -121,7 +121,7 @@ module.exports = [
         path: '/he/how-to-play', twin: '/how-to-play', site: he,
         image: '/assets/og-how-he.png',
         title: 'איך משחקים בולשיט, משחק הבלוף והטריוויה החינמי בטלפון',
-        description: 'החוקים של בולשיט: ממציאים תשובה שתעבוד על החברים, ואז מחפשים את האמת בין כל התשובות. חינם, בדפדפן, עד 8 שחקנים.',
+        description: 'החוקים של בולשיט: ממציאים תשובה שתעבוד על החברים, ואז מחפשים את האמת בין כל התשובות. חינם, בדפדפן, עד 12 שחקנים.',
         h1: 'איך משחקים בולשיט',
         body: howHe,
     },
@@ -137,7 +137,7 @@ module.exports = [
 <ul>
   <li><strong>No download, no sign-up.</strong> It runs in the phone's browser. Nobody has to install an app or make an account.</li>
   <li><strong>Free.</strong> No paid packs, no ads in the game.</li>
-  <li><strong>Up to 8 players</strong> on phones, plus an optional big screen (a TV or laptop) that shows the questions and scores.</li>
+  <li><strong>Up to 12 players</strong> on phones, plus an optional big screen (a TV or laptop) that shows the questions and scores.</li>
   <li><strong>Short games.</strong> 5, 7 or 9 questions, so it fits before dinner, after dinner or between other games.</li>
   <li><strong>You don't need to know trivia.</strong> Nobody knows these facts. The game is about lying well and reading your friends.</li>
   <li><strong>English and Hebrew questions.</strong></li>
@@ -158,7 +158,7 @@ module.exports = [
 <ul>
   <li><strong>בלי הורדה ובלי הרשמה.</strong> הוא עובד בדפדפן של הטלפון. אף אחד לא צריך להתקין אפליקציה או לפתוח חשבון.</li>
   <li><strong>חינם.</strong> בלי חבילות בתשלום ובלי פרסומות במשחק.</li>
-  <li><strong>עד 8 שחקנים</strong> בטלפונים, ואפשר להוסיף מסך גדול (טלוויזיה או מחשב) שמציג את השאלות והניקוד.</li>
+  <li><strong>עד 12 שחקנים</strong> בטלפונים, ואפשר להוסיף מסך גדול (טלוויזיה או מחשב) שמציג את השאלות והניקוד.</li>
   <li><strong>משחקים קצרים.</strong> 5, 7 או 9 שאלות, כך שזה נכנס לפני ארוחת הערב, אחריה או בין משחקים.</li>
   <li><strong>לא צריך לדעת טריוויה.</strong> אף אחד לא מכיר את העובדות האלה. המשחק הוא על לשקר טוב ולקרוא את החברים.</li>
   <li><strong>שאלות בעברית ובאנגלית.</strong></li>
@@ -181,7 +181,7 @@ module.exports = [
 <h2>Why it fits Hanukkah</h2>
 <ul>
   <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, not know facts.</li>
-  <li><strong>Up to 8 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
+  <li><strong>Up to 12 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
   <li><strong>Free, no app.</strong> Cousins who arrive late join with the PIN in seconds.</li>
   <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
   <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together. Save your group as a crew and the scoreboard carries over from night to night.</li>
@@ -202,7 +202,7 @@ module.exports = [
 <h2>למה זה מתאים לחנוכה</h2>
 <ul>
   <li><strong>מגיל 10 בערך</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות.</li>
-  <li><strong>עד 8 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
+  <li><strong>עד 12 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
   <li><strong>חינם, בלי אפליקציה.</strong> בני דודים שמגיעים באיחור מצטרפים עם הקוד תוך שניות.</li>
   <li><strong>שאלות חנוכה.</strong> במשחק חנוכה יש שלוש שאלות חנוכה בכל משחק: האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג, ועוד.</li>
   <li><strong>שמונה לילות, שאלות חדשות.</strong> בסוף משחק לוחצים שוב, ואותה חבורה ממשיכה למשחק חדש. שומרים את החבורה, וטבלת הניקוד ממשיכה מלילה ללילה.</li>
@@ -222,7 +222,7 @@ module.exports = [
 <h2>Good for Purim parties</h2>
 <ul>
   <li><strong>Free and in the browser.</strong> No app, so a whole party can join with one PIN.</li>
-  <li><strong>Up to 8 players</strong> per game, with an optional big screen for everyone else to watch and shout.</li>
+  <li><strong>Up to 12 players</strong> per game, with an optional big screen for everyone else to watch and shout.</li>
   <li><strong>Youth groups and classes</strong>: short games of 5, 7 or 9 questions, in English or Hebrew.</li>
 </ul>
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
