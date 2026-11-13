@@ -20,7 +20,7 @@ function load(file) {
 const root = path.join(__dirname, '..', '..');
 const pages = path.join(root, 'game', 'src', 'app', 'pages');
 const { aboutStrings, aboutResultLine } = load(path.join(pages, 'about-strings.ts'));
-const { aboutOf, revealScoreChanges } = load(path.join(root, 'game-model.ts'));
+const { aboutOf, aboutView, revealScoreChanges } = load(path.join(root, 'game-model.ts'));
 const { gameStrings } = load(path.join(pages, 'game-strings.ts'));
 
 const en = aboutStrings('en');
@@ -90,4 +90,29 @@ test('the screens use the words: the writing, the answers and the reveal', () =>
     assert.ok(/!presenter && !aboutMe/.test(answers), 'the named player gets no buttons to pick');
     const reveal = read('reveal-the-truth/reveal-the-truth.component.html');
     assert.strictEqual(reveal.split('aboutWords.theirTruth(row.aboutName)').length - 1, 2, 'both reveals name whose truth it is');
+});
+
+test('aboutView: the named player, and the badge, come with the question', () => {
+    const about = { pid: 'p2', prompt: 'fire' };
+    const players = { p1: { nickname: 'Dana' }, p2: { nickname: 'Ben' } };
+    assert.deepStrictEqual(aboutView(about, players, 'p2', false), { aboutMe: true, aboutName: 'Ben' });
+    assert.deepStrictEqual(aboutView(about, players, 'p1', false), { aboutMe: false, aboutName: 'Ben' });
+    // The big screen is nobody, even signed in as the named player.
+    assert.deepStrictEqual(aboutView(about, players, 'p2', true), { aboutMe: false, aboutName: 'Ben' });
+    // Players that could not be read: the named player still gets the badge; the name is empty.
+    assert.deepStrictEqual(aboutView(about, null, 'p2', false), { aboutMe: true, aboutName: '' });
+    // No About question, or no player on this phone.
+    assert.deepStrictEqual(aboutView(null, players, 'p2', false), { aboutMe: false, aboutName: null });
+    assert.strictEqual(aboutView(about, players, null, false).aboutMe, false);
+    assert.strictEqual(aboutView(about, players, undefined, false).aboutMe, false);
+});
+
+test('the writing form and the answers wait for whom the question is about', () => {
+    const src = (p) => fs.readFileSync(path.join(pages, p), 'utf8');
+    const q = src('show-question/show-question.component.ts');
+    // The question is set only from the read that also brings the About question.
+    assert.ok(/getQuestionWithAbout/.test(q));
+    assert.ok(!/getQuestion\(this\.pin\)/.test(q));
+    const a = src('show-answers/show-answers.component.ts');
+    assert.ok(/Promise\.all\(\[this\.apiService\.getAnswers\(this\.pin\), this\.apiService\.getAbout\(this\.pin\)\]\)/.test(a));
 });

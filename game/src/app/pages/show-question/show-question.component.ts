@@ -6,7 +6,7 @@ import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { GameState } from '../../game-model';
+import { GameState, aboutView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
@@ -56,14 +56,13 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.apiService.getQuestion(this.pin).then(q => this.question = q);
+        this.loadQuestion();
         this.useLocale(this.apiService.knownGameLocale(this.pin));
         this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.gameService.register(this.pin);
         this.presenter = !!this.sessionService.presenter;
         this.startTimer();
         this.playBackground();
-        this.loadAbout();
 
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
@@ -77,20 +76,19 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.aboutWords = aboutStrings(locale);
     }
 
-    /** An About question: the player it is about writes the truth, everyone else a lie about them. */
-    private async loadAbout() {
-        try {
-            const about = await this.apiService.getAbout(this.pin);
-            if (!about) {
-                return;
-            }
-            const players = await this.apiService.getPlayers(this.pin);
+    /**
+     * The question, and for an About question whom it is about, set in one go: the player it is about
+     * never sees the writing form before the "about you" badge, however slow the network (an empty
+     * answer typed there would be a lie where their truth belongs).
+     */
+    private loadQuestion() {
+        this.apiService.getQuestionWithAbout(this.pin).then(({ question, about, players }) => {
             const user = this.sessionService.user;
-            this.aboutMe = !this.presenter && !!user && user.pid === about.pid;
-            this.aboutName = players && players[about.pid] ? players[about.pid].nickname : '';
-        } catch (e) {
-            // The screen works as an ordinary question.
-        }
+            const view = aboutView(about, players, user && user.pid, this.presenter);
+            this.aboutMe = view.aboutMe;
+            this.aboutName = view.aboutName;
+            this.question = question;
+        });
     }
 
     /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */

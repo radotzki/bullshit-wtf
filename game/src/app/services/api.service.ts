@@ -437,6 +437,22 @@ export class ApiService {
         return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => aboutOf(state), () => null);
     }
 
+    /**
+     * The question being written, with whom it is about, read together (the question, the state and the
+     * players at once), so a phone shows the writing form and the "about you" badge in the same frame,
+     * even on a slow network. A state or players read that fails leaves an ordinary question.
+     */
+    async getQuestionWithAbout(pin: string): Promise<{ question: string; about: About; players: GamePlayers }> {
+        pin = pin.toUpperCase();
+        const game = this.gamesRef.child(pin);
+        const [question, about, players] = await Promise.all([
+            this.get<string>(game.child('currentQ')),
+            this.getAbout(pin),
+            this.get<GamePlayers>(game.child('players')).catch(() => null),
+        ]);
+        return { question, about, players };
+    }
+
     answer(pin: string, answer: string) {
         pin = pin.toUpperCase();
         const pid = this.sessionService.user.pid;

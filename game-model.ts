@@ -892,3 +892,19 @@ export function aboutOf(state: any): About | null {
     }
     return { pid: about.pid, prompt: typeof about.prompt === 'string' ? about.prompt : '' };
 }
+
+/**
+ * What a screen of an About question shows, from the About (aboutOf) and the game's players: the named
+ * player's nickname, and whether this phone is that player (the big screen never is). A screen sets
+ * both together with the question, so the form never shows without the "about you" badge.
+ */
+export function aboutView(about: About | null, players: any, pid: string | null | undefined, presenter: boolean): { aboutMe: boolean; aboutName: string } {
+    if (!about) {
+        return { aboutMe: false, aboutName: null };
+    }
+    const seat = players && typeof players === 'object' ? players[about.pid] : null;
+    return {
+        aboutMe: !presenter && !!pid && pid === about.pid,
+        aboutName: seat && seat.nickname ? String(seat.nickname) : '',
+    };
+}
