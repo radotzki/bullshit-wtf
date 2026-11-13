@@ -132,7 +132,9 @@ test('every link from a plain page into the site keeps the post tag', () => {
                     // A path of the site: the tag is added once, before any #fragment.
                     assert.match(l.after, /^\/[^#]*[?&]via=fb-he-hanukkah-parents(#.*)?$/, name + ': ' + l.before);
                     assert.strictEqual(l.after.split('via=').length, 2, name + ': ' + l.after);
-                    assert.strictEqual(l.after.replace(/[?&]via=fb-he-hanukkah-parents/, ''), l.before, name);
+                    // A link's own tag (a kit or occasion page's Start button) gives way to the post's.
+                    const own = l.before.replace(/([?&])via=[^&#]*&?/, '$1').replace(/[?&](?=#|$)/, '');
+                    assert.strictEqual(l.after.replace(/[?&]via=fb-he-hanukkah-parents/, ''), own, name);
                 } else {
                     assert.strictEqual(l.after, l.before, name + ': a link to another site is left alone');
                 }
@@ -140,7 +142,7 @@ test('every link from a plain page into the site keeps the post tag', () => {
             // The ways into the game named in the review: the logo, the two buttons, the links in the text.
             const after = links.map(l => l.after);
             assert.ok(after.some(h => /^\/(he)?\?via=fb-he-hanukkah-parents$/.test(h)), name + ': the logo');
-            assert.strictEqual(links.filter(l => l.btn && /via=fb-he-hanukkah-parents/.test(l.after)).length, 2, name + ': both buttons');
+            assert.strictEqual(links.filter(l => l.btn && /via=fb-he-hanukkah-parents/.test(l.after)).length, links.filter(l => l.btn).length, name + ': every button');
             into += links.filter(l => !l.btn && /^\/(he\/)?(create-game|join-game|present-game)\?via=/.test(l.after)).length;
             // No tag on the address: nothing changes. A tag with other characters is not copied.
             assert.ok(linksAfter(html, '').every(l => l.after === l.before), name);

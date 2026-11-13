@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService, RememberedCrew } from '../../../services/crew.service';
 import { preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
 
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-desktop-landing',
     templateUrl: './desktop-landing.component.html',
     styleUrls: ['./desktop-landing.component.scss']

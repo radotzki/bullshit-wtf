@@ -1,7 +1,7 @@
 import { setSentryUser } from './../sentry/sentry.module';
 import { StorageService } from './storage.service';
 import { Injectable } from '@angular/core';
-import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { CanActivate, Router } from '@angular/router';
 
 const playerKey = 'BS_PLAYER';
 const presenterKey = 'BS_PRESENTER';

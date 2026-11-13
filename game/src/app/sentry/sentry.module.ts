@@ -1,9 +1,12 @@
 import { environment } from './../../environments/environment';
-import * as Raven from 'raven-js';
+import Raven from 'raven-js';
 import { NgModule, ErrorHandler } from '@angular/core';
+import { isAutomatedBrowser } from './automated';
 
 Raven.config(environment.sentry, {
     environment: environment.production ? 'production' : 'development',
+    // Automated browser runs are not players: keep them out of Sentry's error and user counts.
+    shouldSendCallback: () => !isAutomatedBrowser(typeof navigator === 'undefined' ? null : navigator as any),
 }).install();
 
 function describe(value: any): string {

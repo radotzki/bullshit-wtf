@@ -14,12 +14,12 @@ ALTER TABLE `bullshit-wtf-prod.analytics.users`
 -- SELECT DATE_TRUNC(DATE(time), WEEK) AS week, COUNT(*) AS joins,
 --   COUNTIF(name_flag IS NOT NULL) AS flagged, ROUND(100 * COUNTIF(name_flag IS NOT NULL) / COUNT(*), 2) AS pct
 -- FROM `bullshit-wtf-prod.analytics.users`
--- WHERE ip != '0.0.0.0' AND time >= '2026-11-09'
+-- WHERE ip != '0.0.0.0' AND time >= '2026-11-09' AND IFNULL(via, '') != 'test'   -- test games out
 -- GROUP BY week ORDER BY week;
 
 -- Games per player for swapped players against everyone else (did the swap drive them away?).
 -- SELECT name_flag IS NOT NULL AS swapped, COUNT(DISTINCT uid) AS players,
 --   ROUND(COUNT(DISTINCT pin) / COUNT(DISTINCT uid), 2) AS games_per_player
 -- FROM `bullshit-wtf-prod.analytics.users`
--- WHERE ip != '0.0.0.0' AND time >= '2026-11-09'
+-- WHERE ip != '0.0.0.0' AND time >= '2026-11-09' AND IFNULL(via, '') != 'test'   -- test games out
 -- GROUP BY swapped;

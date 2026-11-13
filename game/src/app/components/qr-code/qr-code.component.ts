@@ -1,10 +1,12 @@
-import { Component, Input, OnChanges } from '@angular/core';
-import * as qrcode from 'qrcode-generator';
+import { Component, Input, OnChanges, ChangeDetectionStrategy } from '@angular/core';
+import qrcode from 'qrcode-generator';
 
 /**
  * Renders a QR code as plain SVG rects, so there is no canvas or innerHTML involved.
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-qr-code',
     template: `
         <svg *ngIf="size" class="qr-code" [attr.viewBox]="viewBox" shape-rendering="crispEdges"

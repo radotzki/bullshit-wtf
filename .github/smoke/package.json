@@ -1,0 +1,11 @@
+{
+  "name": "game-smoke-test",
+  "private": true,
+  "description": "Loads the built game in headless Chromium and fails on a crash. See smoke.js.",
+  "scripts": {
+    "smoke": "node smoke.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

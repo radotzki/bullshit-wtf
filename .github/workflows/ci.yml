@@ -18,17 +18,33 @@ jobs:
       run:
         working-directory: functions
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
+          # Stays on 22 to match the functions' Cloud runtime (nodejs22, 1st gen) until they move
+          # to 2nd gen; Node 24 is 2nd gen only.
           node-version: 22
           cache: npm
           cache-dependency-path: functions/package-lock.json
       - run: npm ci
       # npm test builds first, then runs every function test. No Firebase sign-in needed.
       - run: npm test
+
+  deploy-scripts:
+    name: Deploy scripts (test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # The scripts deploy.yml runs before a release. Plain Node and git, nothing to install.
+      - run: node --test .github/scripts/*.test.js
 
   game:
     name: Game client (lint, build and test)
@@ -38,18 +54,18 @@ jobs:
       run:
         working-directory: game
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: game/package-lock.json
-      # The workarounds for the 2017 toolchain live in the repository itself: game/.npmrc
-      # (legacy-peer-deps), the node-sass override in package.json, and the OpenSSL legacy
-      # flag inside the build script. Nothing extra is set here.
+      # Angular 22 on the CLI's esbuild builder: plain npm ci and npm run build. Lint (angular-eslint
+      # and typescript-eslint, see game/eslint.config.js) runs first, so sloppy code fails fast.
       - run: npm ci
+      - run: npm run lint
       - run: npm run build
       - run: npm test
       - name: Check the build output
@@ -57,3 +73,25 @@ jobs:
           for f in index.html he.html sitemap.xml robots.txt how-to-play.html; do
             test -s "dist/$f" || { echo "::error::game/dist/$f is missing or empty"; exit 1; }
           done
+      # Loads every public page of the built game in headless Chromium and fails on a page error,
+      # an uncaught exception, a console error or a blank page: the crashes the build, the tests
+      # and the check above can't see. It serves game/dist from 127.0.0.1 and refuses every
+      # request to any other host, so it never reaches Firebase, Sentry or analytics, and writes
+      # nothing. Playwright lives in .github/smoke, apart from game/'s 2017 dependencies.
+      - name: Install the smoke test
+        working-directory: .github/smoke
+        run: npm ci --no-audit --no-fund
+      - name: Cache the smoke test's browser
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('.github/smoke/package-lock.json') }}
+      - name: Download the smoke test's browser
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        working-directory: .github/smoke
+        run: npx playwright install --only-shell chromium
+      - name: Smoke test the built pages in a browser
+        working-directory: .github/smoke
+        timeout-minutes: 5
+        run: node smoke.js ../../game/dist

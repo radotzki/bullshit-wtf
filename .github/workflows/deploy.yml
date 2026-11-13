@@ -44,19 +44,27 @@ jobs:
     # whatever that branch's copy of this file says. The `if` above is only the second lock.
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      # Node 24 runs the Firebase CLI and both builds here. The functions still run on nodejs22 in
+      # Google Cloud (firebase.json): the CLI uploads their source and Google builds it there.
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: |
             package-lock.json
             functions/package-lock.json
             game/package-lock.json
 
-      # First of all: no key, no release. This fails with a plain message before anything is built.
+      # A re-run of an old run checks out that run's old commit, not today's master. Stop here,
+      # before anything is built, unless this commit is still what master holds (or differs from
+      # it only in files that are never deployed). The repository is public: no token is needed.
+      - name: Check this commit is still the head of master
+        run: node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"
+
+      # No key, no release. This fails with a plain message before anything is built.
       # It only checks: nothing is written to disk here, and the secret is in this step's
       # environment alone, so the installs and builds below cannot read it.
       - name: Check the Firebase key
@@ -78,6 +86,11 @@ jobs:
           npm ci
           npm run build
 
+      # The builds took minutes and master may have moved meanwhile: look once more, right before
+      # the first step that can change production.
+      - name: Check again that this commit is still the head of master
+        run: node .github/scripts/check-master-head.js "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" master "$GITHUB_SHA"
+
       # Only now, with every install and build done, does the key touch the disk.
       - name: Write the Firebase key
         env:
@@ -86,26 +99,106 @@ jobs:
           node .github/scripts/write-firebase-key.js "$RUNNER_TEMP/firebase-key.json" "$FIREBASE_PROJECT"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> "$GITHUB_ENV"
 
+      # A release must be whole or nothing, also when the deploy account lacks a role. So before
+      # the first deploy, ask Google which of the permissions the three release steps need the
+      # account holds on the project (Google's "test permissions" question, the one the Firebase
+      # tool asks itself and then ignores). It only reads. Anything but a full yes stops the run
+      # here: a missing permission is named, and so is a refused question, for example because
+      # the Cloud Resource Manager API is off. The script never opens the key file: Google's own
+      # library reads it and signs the request. See the script's header and DEPLOYING.md.
+      - name: Check the deploy account's permissions (releases nothing)
+        run: node .github/scripts/check-deploy-permissions.js "$FIREBASE_PROJECT"
+
+      # A release must not stop halfway: on 2026-11-11 the functions went out, then the rules step
+      # could not read the database instance, and the site was never released. So before the
+      # first deploy, read both, release nothing, and switch nothing on in the Google project:
+      # - the database, with the tool: `deploy --only database --dry-run` reads the database
+      #   instance and sends the rules with dryRun=true (the server checks them and stores
+      #   nothing). The tool skips its deploy and release phases on a dry run, and its database
+      #   path has no call that switches an API on.
+      # - the site, with one plain GET of the project's list of hosting sites, through Google's
+      #   library like the permission check. Not with the tool: each of its hosting commands,
+      #   also the read-only ones, first tries to switch the Hosting API
+      #   (firebasehosting.googleapis.com) on when it is off. Switching an API on is the owner's
+      #   step, never a side effect of a check. With the API off the GET is refused, and the step
+      #   says so by name.
+      # Hosting gets a read and not a dry run on purpose: the tool's hosting dry run creates a
+      # new, empty version on the live site. So this step proves the account can reach the site;
+      # that it may write to it is what the step before this one asked.
+      # Both reads always run, and the step fails afterwards if either failed: on 2026-11-11 the
+      # database read failed first and the site read never ran, so one run could not name
+      # everything that was off. What the script prints is filtered and cleaned like the output
+      # of "Show why the step failed". See the script's header and DEPLOYING.md.
+      # One way on without the database read: when it failed only because the Firebase Realtime
+      # Database Management API is off, and the rules that are live are the same as this commit's
+      # (four GETs, in live-rules.js; the fourth, the rules at the database's own address, signs in
+      # by itself with the two scopes that address asks for, userinfo.email and firebase.database,
+      # and that sign-in is used for nothing else), the step passes with the output rules=unchanged. The rules
+      # step below is then skipped: it could only fail, and it had nothing to change. Rules that
+      # differ, or that could not be read, stop the run here, before anything is released.
+      - name: Check access to the database and the site (releases nothing)
+        id: access
+        run: node .github/scripts/check-access.js "$FIREBASE_PROJECT"
+
       # The order matters: new clients call functions that must already exist, and read paths the
       # new rules open. Each step runs only if the one before it succeeded.
       # Always all functions, never one by name: each carries its own copy of the shared code.
       # No --force: the CLI must never delete a function on its own.
       - name: 1. Deploy all functions
-        run: npx firebase deploy --only functions --project "$FIREBASE_PROJECT" --non-interactive
+        id: functions
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          npx firebase deploy --only functions --project "$FIREBASE_PROJECT" --non-interactive
+      # Skipped in one case only, decided by the access check before anything was released: the
+      # live rules are already this commit's and the API this step asks first is off. A condition
+      # without always() or failure() still needs every step before it to have passed.
       - name: 2. Deploy the database rules
-        run: npx firebase deploy --only database --project "$FIREBASE_PROJECT" --non-interactive
+        id: rules
+        if: steps.access.outputs.rules != 'unchanged'
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          npx firebase deploy --only database --project "$FIREBASE_PROJECT" --non-interactive
       - name: 3. Deploy the site
-        run: npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+        id: site
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+
+      # A failed Firebase command prints one line; Google's answer (the status and the reason) is
+      # only in firebase-debug.log. That file is never printed or uploaded whole: after the
+      # functions step it holds config values and signed upload addresses. The script prints only
+      # the refusals, field by field (see its header), and `reset` before each command above keeps
+      # the file to that one command. The steps after a failed one are skipped, so the file still
+      # holds the command that failed. The two checks before the release print their own reasons
+      # and leave no file; this step then says so.
+      - name: Show why the step failed
+        if: failure()
+        run: node .github/scripts/firebase-refusal.js print
 
       - name: Summary
         if: always()
+        env:
+          FUNCTIONS_STEP: ${{ steps.functions.outcome }}
+          RULES_STEP: ${{ steps.rules.outcome }}
+          SITE_STEP: ${{ steps.site.outcome }}
+          RULES_MODE: ${{ steps.access.outputs.rules }}
         run: |
           {
             echo "### Deploy of ${GITHUB_SHA::7} to $FIREBASE_PROJECT: ${{ job.status }}"
-            echo "Order: all functions, database rules, site. A failed step stops the ones after it;"
-            echo "re-run this workflow to retry (every step is safe to repeat)."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          # What was released and what was left alone, in plain words, from each step's outcome.
+          node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE"
+          {
+            echo "Order: all functions, database rules, site. A failed step stops the ones after it."
+            echo "To retry, start a new run by hand: Actions > Deploy to production > Run workflow > branch master"
+            echo "(every step is safe to repeat). A re-run of an old run stops by itself once master holds newer code."
             echo "Not done here: BigQuery schema SQL, loading questions, Search Console. See DEPLOYING.md."
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Remove the key file
+      # Last, whether the job passed or failed: the key, and both names of the Firebase debug file
+      # (the tool deletes its own only on some exit codes, and never the kept copy).
+      - name: Remove the key file and the Firebase debug files
         if: always()
-        run: rm -f "$RUNNER_TEMP/firebase-key.json"
+        run: |
+          rm -f "$RUNNER_TEMP/firebase-key.json"
+          node .github/scripts/firebase-refusal.js remove

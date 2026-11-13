@@ -1,0 +1,74 @@
+-- Test games mark themselves. NO SCHEMA CHANGE: there is nothing to run in this file.
+-- It holds only read-only queries (in comments, like the other files here).
+--
+-- The mark uses columns that already exist:
+--   opened_games.campaign, closed_games.campaign   'test', or a tag that starts with 'test-'
+--   users.via                                      'test' on every join of a test game
+-- A game is a test game when the tab that created it arrived with ?via=test (or ?via=test-<name>).
+-- Replays of a test game, a crew saved from one and that crew's rematches keep the mark.
+-- question_results, forks and shares have no column for it: they are filtered through the PINs
+-- (question_results.id, forks.origin, forks.forked) and, for shares, through the browser's uid.
+-- See DEPLOYING.md, "Test games".
+
+-- ---------------------------------------------------------------------------
+-- The filters, to paste into any query.
+
+-- On opened_games or closed_games:
+--   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- On users:
+--   AND IFNULL(via, '') != 'test'
+
+-- Every test PIN, for question_results and forks, and to drop whole lobbies (a lobby that never
+-- started has only users rows). Put it first in the query; replace <from>.
+-- WITH test_pins AS (
+--   SELECT DISTINCT pin FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('<from>') AND via = 'test' AND pin IS NOT NULL
+--   UNION DISTINCT
+--   SELECT id FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= TIMESTAMP('<from>') AND REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+--   UNION DISTINCT
+--   SELECT id FROM `bullshit-wtf-prod.analytics.closed_games`
+--   WHERE time >= TIMESTAMP('<from>') AND REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- )
+-- then:  AND id NOT IN (SELECT pin FROM test_pins)
+
+-- Test browsers, for shares (a share row has no PIN): browsers that joined a test game.
+--   AND IFNULL(uid, '') NOT IN (SELECT uid FROM `bullshit-wtf-prod.analytics.users`
+--                               WHERE time >= TIMESTAMP('<from>') AND via = 'test' AND uid IS NOT NULL)
+
+-- ---------------------------------------------------------------------------
+-- Tests from before the mark (5 to 11 November 2026), which carry no mark. For a window that
+-- includes those days, add these PINs to test_pins with UNION DISTINCT. The rule is the one the
+-- baseline report used: the nicknames Alice, Ben or Chen, the campaign test-hanukkah (the mark's
+-- pattern already matches it), or a network address that made 40 or more browser ids that week.
+--   SELECT DISTINCT pin FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2026-11-12')
+--     AND (nickname IN ('Alice', 'Ben', 'Chen') OR ip IN (
+--       SELECT ip FROM `bullshit-wtf-prod.analytics.users`
+--       WHERE time >= TIMESTAMP('2026-11-05') AND time < TIMESTAMP('2026-11-12')
+--       GROUP BY ip HAVING COUNT(DISTINCT uid) >= 40))
+
+-- ---------------------------------------------------------------------------
+-- How much test play there was, per day (to check that the mark is being set).
+-- SELECT DATE(time) AS day, COUNT(DISTINCT pin) AS test_lobbies, COUNT(*) AS test_joins,
+--   COUNT(DISTINCT uid) AS test_browsers
+-- FROM `bullshit-wtf-prod.analytics.users`
+-- WHERE time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY) AND via = 'test'
+-- GROUP BY day ORDER BY day;
+
+-- The three daily numbers, tests out: players, games with 2+ players, and the share of those
+-- games still played on the last question (half or more of the players pick an answer).
+-- WITH test_pins AS (... as above ...),
+-- u AS (SELECT DATE(time) AS day, COUNT(DISTINCT uid) AS players
+--   FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('<from>') AND pin NOT IN (SELECT pin FROM test_pins)
+--     AND uid IS NOT NULL AND uid NOT IN ('', '0') GROUP BY day),
+-- g AS (SELECT DATE(o.time) AS day, COUNT(*) AS games_2plus, COUNTIF(q.end_half) AS played_to_the_end
+--   FROM `bullshit-wtf-prod.analytics.opened_games` o
+--   LEFT JOIN (SELECT id, LOGICAL_OR(q_index = total_q - 1 AND picks * 2 >= players) AS end_half
+--     FROM `bullshit-wtf-prod.analytics.question_results`
+--     WHERE time >= TIMESTAMP('<from>') GROUP BY id) q USING (id)
+--   WHERE o.time >= TIMESTAMP('<from>') AND o.players >= 2
+--     AND o.id NOT IN (SELECT pin FROM test_pins) GROUP BY day)
+-- SELECT day, players, games_2plus, played_to_the_end
+-- FROM u FULL JOIN g USING (day) ORDER BY day;

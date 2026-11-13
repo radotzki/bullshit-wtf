@@ -244,12 +244,73 @@ test('lobby invite sends and "start alone anyway" taps land in shares as invite'
     assert.strictEqual(take('shares').length, 0);
 });
 
+test('results-card shares land in shares as results, by method', async () => {
+    rows.length = 0;
+    for (const method of ['whatsapp', 'native', 'copy', 'download']) {
+        const r = await call('onShare', { content_type: 'results', method, locale: 'he', uid: 'u3' });
+        assert.deepStrictEqual(r, { code: 200, body: { counted: true } });
+    }
+    const shares = take('shares');
+    assert.deepStrictEqual(shares.map(s => s.method), ['whatsapp', 'native', 'copy', 'download']);
+    for (const s of shares) {
+        assert.strictEqual(s.content_type, 'results');
+        assert.strictEqual(s.crew_id, null);
+        assert.strictEqual(s.locale, 'he');
+        assert.strictEqual(s.uid, 'u3');
+        assert.ok(s.time instanceof Date);
+    }
+});
+
+test('presses on the after-game ask land in shares, from the final screen and from the game-over page', async () => {
+    rows.length = 0;
+    for (const contentType of ['after-game', 'game-over']) {
+        for (const method of ['create', 'remind', 'remind-google']) {
+            // A guest whose sign-in failed has no uid: the press still counts.
+            const r = await call('onShare', { content_type: contentType, method, locale: 'en' });
+            assert.deepStrictEqual(r, { code: 200, body: { counted: true } });
+        }
+    }
+    const shares = take('shares');
+    assert.deepStrictEqual(shares.map(s => `${s.content_type}:${s.method}`), [
+        'after-game:create', 'after-game:remind', 'after-game:remind-google',
+        'game-over:create', 'game-over:remind', 'game-over:remind-google',
+    ]);
+    for (const s of shares) {
+        assert.strictEqual(s.locale, 'en');
+        assert.strictEqual(s.uid, null);
+        assert.strictEqual(s.crew_id, null);
+    }
+});
+
+test('the weekly crew entry and the final screen\'s crew saves land in shares, with the crew', async () => {
+    rows.length = 0;
+    const sent = [
+        ['crew-night', 'weekly-share'], ['crew-night', 'weekly-download'], ['crew-night', 'weekly-google'],
+        ['crew-save', 'repeat-offer'], ['crew-save', 'bottom'],
+    ];
+    for (const [contentType, method] of sent) {
+        const r = await call('onShare', { content_type: contentType, method, crew: 'Abc123', locale: 'he', uid: 'u1' });
+        assert.deepStrictEqual(r, { code: 200, body: { counted: true } });
+    }
+    const shares = take('shares');
+    assert.deepStrictEqual(shares.map(s => `${s.content_type}:${s.method}`), sent.map(s => s.join(':')));
+    for (const s of shares) {
+        assert.strictEqual(s.crew_id, 'abc123');
+        assert.strictEqual(s.locale, 'he');
+    }
+    const r = await call('onShare', { content_type: 'crew-save', method: 'weekly-share' });
+    assert.deepStrictEqual(r, { code: 200, body: { counted: false } });
+});
+
 test('shares we do not count are dropped, and bad fields are cleared, without an error', async () => {
     rows.length = 0;
     for (const body of [
         { content_type: 'crew-night', method: 'native' },
         { content_type: 'crew-night', method: 'clipboard' },
-        { content_type: 'results', method: 'whatsapp' },
+        { content_type: 'results', method: 'open' },
+        { content_type: 'after-game', method: 'whatsapp' },
+        { content_type: 'game-over', method: 'solo-start' },
+        { content_type: 'other', method: 'create' },
         {},
         null,
     ]) {

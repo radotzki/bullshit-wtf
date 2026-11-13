@@ -1,28 +1,31 @@
-<div class="arcade-form">
+<div class="arcade-form join-game" [attr.dir]="t.dir === 'rtl' ? 'rtl' : null" [attr.lang]="t.dir === 'rtl' ? t.lang : null"
+    [class.is-rtl]="t.dir === 'rtl'">
     <form (submit)="submit()" novalidate>
 
         <div class="title-area">
-            <h1 class="title" routerLink="/">Bullshit</h1>
-            <h3 *ngIf="!nicknameState && !gameOver" class="sub-title">Enter a game PIN</h3>
-            <h3 *ngIf="nicknameState && !crewName && !gameOver" class="sub-title">Enter a nickname</h3>
-            <h3 *ngIf="nicknameState && crewName && !gameOver" class="sub-title" dir="auto">{{ crewName }} rematch: who are you?</h3>
+            <h1 class="title" routerLink="/">{{ t.title }}</h1>
+            <h3 *ngIf="!nicknameState && !gameOver" class="sub-title">{{ t.pinHeading }}</h3>
+            <h3 *ngIf="nicknameState && !crewName && !gameOver" class="sub-title">{{ t.nicknameHeading }}</h3>
+            <h3 *ngIf="nicknameState && crewName && !gameOver" class="sub-title" dir="auto">{{ t.crewHeading(crewName) }}</h3>
             <div class="separator">♦</div>
         </div>
 
         <div class="controls-wrapper" *ngIf="gameOver">
             <div class="controls game-over">
-                <p class="game-over-title">Game over</p>
-                <p class="game-over-text">Game {{ gameOver.pin }} has finished. Check the PIN and try again.</p>
-                <p class="game-over-text" *ngIf="gameOver.rematch">Its players started a new game: {{ gameOver.rematch }}.</p>
-                <p class="game-over-text" *ngIf="gameOver.justEnded">If they play again, ask for the new PIN.</p>
+                <p class="game-over-title">{{ t.gameOverTitle }}</p>
+                <p class="game-over-text">{{ t.gameOverText(gameOver.pin) }}</p>
+                <p class="game-over-text" *ngIf="gameOver.rematch">{{ t.rematchText(gameOver.rematch) }}</p>
+                <p class="game-over-text" *ngIf="gameOver.justEnded">{{ t.justEnded }}</p>
                 <div class="field" *ngIf="gameOver.rematch">
                     <button class="button is-primary is-medium is-fullwidth join-rematch" type="button"
-                        (click)="joinRematch()">JOIN {{ gameOver.rematch }}</button>
+                        (click)="joinRematch()">{{ t.joinRematch(gameOver.rematch) }}</button>
                 </div>
                 <div class="field">
                     <button class="button is-medium is-fullwidth try-again" type="button"
-                        [class.is-primary]="!gameOver.rematch" (click)="tryAnotherPin()">TRY ANOTHER PIN</button>
+                        [class.is-primary]="!gameOver.rematch" (click)="tryAnotherPin()">{{ t.tryAnother }}</button>
                 </div>
+                <!-- A late joiner has no game: ask them to start one. -->
+                <app-host-ask [locale]="t.lang" place="game-over"></app-host-ask>
             </div>
         </div>
 
@@ -30,14 +33,14 @@
             <div class="controls">
                 <div class="field" *ngIf="!nicknameState">
                     <p class="control">
-                        <input class="input is-large pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin"
+                        <input class="input is-large pin-input" type="text" [placeholder]="t.pinPlaceholder" [(ngModel)]="pin"
                             name="pin" appAutofocus>
                     </p>
                 </div>
 
                 <div class="field" *ngIf="nicknameState">
                     <p class="control">
-                        <input class="input is-large pin-input" type="text" placeholder="Nickname"
+                        <input class="input is-large pin-input" type="text" [placeholder]="t.nicknamePlaceholder"
                             [(ngModel)]="nickname" name="nickname" appAutofocus maxlength="9">
                     </p>
                 </div>
@@ -51,11 +54,11 @@
 
                 <div class="field" *ngIf="!nicknameState">
                     <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin"
-                        [class.is-loading]="loading">NEXT</button>
+                        [class.is-loading]="loading">{{ t.next }}</button>
                 </div>
                 <div class="field" *ngIf="nicknameState">
-                    <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname"
-                        [class.is-loading]="loading">JOIN</button>
+                    <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname || loading"
+                        [class.is-loading]="loading">{{ t.join }}</button>
                 </div>
             </div>
         </div>

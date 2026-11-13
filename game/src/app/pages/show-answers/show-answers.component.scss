@@ -13,4 +13,11 @@
     .presenter .question {
         margin: 15px 0;
     }
+
+    // A taste's question, above its answers: the phone's writing screen shows a question the same way.
+    .taste-question {
+        margin: 10px 0 14px;
+        font-size: 1.3rem;
+        line-height: 1.3;
+    }
 }

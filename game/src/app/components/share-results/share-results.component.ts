@@ -2,7 +2,7 @@ import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { ShareService } from './../../services/share.service';
 import { CardPlayer, ResultsCardService } from './../../services/results-card.service';
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 const sheetStrings = {
@@ -15,8 +15,11 @@ const sheetStrings = {
 /**
  * After the final scoreboard: turn the results into a picture people want to post,
  * with the site address on it, and share it.
+ * Each send is counted in BigQuery's shares table as content_type "results".
  */
 @Component({
+    standalone: false,
+    changeDetection: ChangeDetectionStrategy.Eager,
     selector: 'app-share-results',
     templateUrl: './share-results.component.html',
     styleUrls: ['./share-results.component.scss'],
@@ -25,6 +28,8 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
     @Input() pin: string;
     @Input() players: CardPlayer[];
     @Input() label: string;
+    /** The sheet opened (true) or closed (false): the final screen keeps the player here while it is open. */
+    @Output() sheet = new EventEmitter<boolean>();
     locale = 'en';
     pack: string = null;
     open: boolean;
@@ -104,6 +109,7 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
 
     async openSheet() {
         this.open = true;
+        this.sheet.emit(true);
         this.copied = false;
         this.shareService.track('open', 'results');
 
@@ -124,6 +130,11 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
 
     close() {
         this.open = false;
+        this.sheet.emit(false);
+    }
+
+    private count(method: 'whatsapp' | 'native' | 'copy' | 'download') {
+        this.apiService.logShare('results', method, { locale: this.locale === 'he' ? 'he' : 'en' });
     }
 
     async share() {
@@ -135,15 +146,22 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
             files: this.file ? [this.file] : undefined,
         }, 'results');
         this.copied = result === 'copied';
+        if (result === 'shared') {
+            this.count('native');
+        } else if (result === 'copied') {
+            this.count('copy');
+        }
     }
 
     save() {
         if (this.blob) {
             this.shareService.download(this.blob, 'bullshit-results.png');
+            this.count('download');
         }
     }
 
     whatsapp() {
         this.shareService.track('whatsapp', 'results');
+        this.count('whatsapp');
     }
 }

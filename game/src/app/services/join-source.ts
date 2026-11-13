@@ -11,6 +11,8 @@ const hostedKey = 'BS_HOSTED_PIN';
 const campaignKey = 'BS_CAMPAIGN';
 const localeKey = 'BS_SITE_LOCALE';
 const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
+// The post tag of this page load, for a browser whose tab storage is blocked (see arrivalCampaign).
+let loadedWith: string | null = null;
 
 function storage(): Storage | null {
     try {
@@ -35,6 +37,7 @@ export function readVia(search: string): string | null {
 
 /** Call once at start-up, before the router rewrites the address. */
 export function rememberArrivalSource() {
+    loadedWith = readCampaign(window.location.search) || loadedWith;
     const via = readVia(window.location.search);
     const s = storage();
     if (via && s) {
@@ -81,9 +84,9 @@ export function readCampaign(search: string): string | null {
 export function arrivalCampaign(): string | null {
     const s = storage();
     try {
-        return s ? s.getItem(campaignKey) : null;
+        return (s && s.getItem(campaignKey)) || loadedWith;
     } catch (e) {
-        return null;
+        return loadedWith;
     }
 }
 
