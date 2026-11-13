@@ -53,6 +53,7 @@ async function refused(what, method, p, body, who) {
         await accepted(`${phase}: the same pick written twice`, 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'the truth' }, phone);
         await accepted(`${phase}: a pick in Hebrew`, 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'תשובה ארוכה מאוד עם רווחים, פסיקים ו-123' }, phone);
         await accepted(`${phase}: a pick as long as an answer can get`, 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'x'.repeat(500) }, phone);
+        await accepted(`${phase}: a pick that names its picks step (today's site)`, 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'a lie', step: '4:1763060000000' }, phone);
         const read = await rest('GET', `${picks}/-Nabc_DEF-456`, undefined, phone);
         assert.ok(read.ok && read.json && read.json.text, `${phase}: a phone can read its pick back`);
     }
@@ -74,6 +75,8 @@ async function refused(what, method, p, body, who) {
         await refused('a pick whose text is empty', 'PUT', `${picks}/-Nabc_DEF-456`, { text: '' }, who);
         await refused('a pick whose text is too long', 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'x'.repeat(501) }, who);
         await refused('a pick that brings its own points', 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'the truth', score: 99999 }, who);
+        await refused('a pick whose step is not text', 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'a lie', step: 7 }, who);
+        await refused('a pick whose step is too long', 'PUT', `${picks}/-Nabc_DEF-456`, { text: 'a lie', step: 'x'.repeat(41) }, who);
         await refused('points added to a pick', 'PUT', `${picks}/-Nabc_DEF-456/score`, 99999, who);
         await refused('anything else added to a pick', 'PATCH', `${picks}/-Nabc_DEF-456`, { extra: 'x' }, who);
         await refused('removing a pick', 'DELETE', `${picks}/-Nabc_DEF-456`, undefined, who);

@@ -67,7 +67,7 @@
                         ".write": "newData.exists() && root.child('games').child($pin).child('players').child($pid).exists()",
                         ".validate": "(auth != null && auth.uid == 'bl-service-worker') || (newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 500)",
                         "$field": {
-                            ".validate": "$field == 'text' || (auth != null && auth.uid == 'bl-service-worker')"
+                            ".validate": "$field == 'text' || ($field == 'step' && newData.isString() && newData.val().length <= 40) || (auth != null && auth.uid == 'bl-service-worker')"
                         }
                     }
                 },
