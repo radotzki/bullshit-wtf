@@ -1,7 +1,8 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService, RememberedCrew } from '../../../services/crew.service';
-import { preferredLocale, setPreferredLocale } from '../../../services/join-source';
+import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
+import { SearchLink, searchLinks, seasonLink } from '../search-links';
 
 @Component({
     standalone: false,
@@ -15,14 +16,25 @@ export class DesktopLandingComponent {
     crews: RememberedCrew[];
     // The menu's words: Hebrew, right to left, for visitors who came on /he or whose browser is in Hebrew.
     t: HomeStrings;
+    // Links to the search pages: a row under the menu, and in Hanukkah season a line above it.
+    links: SearchLink[];
+    season: SearchLink | null;
+    private tag: string | null;
 
     constructor(crewService: CrewService) {
         this.crews = crewService.list().slice(0, 3);
-        this.t = homeStrings(preferredLocale());
+        this.tag = arrivalCampaign();
+        this.setLocale(preferredLocale());
     }
 
     switchLanguage() {
         setPreferredLocale(this.t.switchTo);
-        this.t = homeStrings(this.t.switchTo);
+        this.setLocale(this.t.switchTo);
+    }
+
+    private setLocale(locale: string) {
+        this.t = homeStrings(locale);
+        this.links = searchLinks(locale, this.tag);
+        this.season = seasonLink(locale, new Date(), this.tag);
     }
 }

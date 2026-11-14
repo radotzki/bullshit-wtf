@@ -31,15 +31,19 @@ export interface RowSeatView extends RowSeat {
     label: string;
 }
 
+/**
+ * One picture per seat: MAX_PLAYERS in game-model.ts (12; test/waiting-row.test.js holds the two
+ * equal). Kept here as a number so this file stays free of imports. A seat past it (two joins in
+ * the same instant) reuses a picture rather than ask for a file that does not exist.
+ */
+export const PICTURES = 12;
+
 export interface RowView {
     /** The line above the row: "Waiting for Chen" when one seat is left, else the screen's own line. */
     line: string;
     /** No row for a game on an older server (it marks nobody) and none for a player alone. */
     seats: RowSeatView[];
 }
-
-/** The game has eight pictures; a ninth seat cannot exist, but never ask for a ninth file. */
-const PICTURES = 8;
 
 /**
  * `ownLine` is what the screen said before there was a row ("Your answer has been submitted"); it

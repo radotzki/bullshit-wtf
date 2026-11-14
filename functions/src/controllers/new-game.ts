@@ -40,7 +40,7 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
             game.campaign = campaign;
         }
 
-        // The round-1 lie helper, on for half of all games (crew rematches included).
+        // The round-1 lie helper, on for every game (crew rematches included). Logged as coach.
         if (pickCoach()) {
             game.coach = true;
         }

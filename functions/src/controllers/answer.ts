@@ -54,8 +54,13 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
 
         await gamesRef.child(pin).child('answers').child(pid).set(stored);
 
-        // The game as it is with this lie in it.
-        game.answers = Object.assign({}, game.answers, { [pid]: stored });
+        // The game as it is with this lie in it. The lies are read again after this one is written:
+        // the game read above can miss lies that were sent at the same moment. When the last lies of
+        // a question arrive together, every call has written its own lie before it reads, so the call
+        // whose write lands last sees them all and ends the question; the others may end it too, and
+        // advance() moves the game on once.
+        const answers = await get<Answers>(gamesRef.child(pin).child('answers'));
+        game.answers = Object.assign({}, game.answers, answers, { [pid]: stored });
 
         // The seat is marked as done for the waiting screens (see sent.ts): that it sent, not what.
         // Alongside the step below, so the phase ends no later for it.

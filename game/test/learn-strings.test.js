@@ -83,11 +83,14 @@ test('the lengths and the player limit are the game\'s', () => {
     create.replace(/name="length" \[value\]="(\d+)"/g, (m, n) => offered.push(+n));
     assert.deepStrictEqual(GAME_LENGTHS, offered);
     const join = read(root, 'functions', 'src', 'controllers', 'join.ts');
-    assert.strictEqual(MAX_PLAYERS, +/length === (\d+)\) \{\s*return Promise\.reject\(\{ message: 'Sorry, game is full'/.exec(join)[1]);
+    // The join function refuses a seat past the shared model's MAX_PLAYERS; the page says the same number.
+    assert.match(join, /length >= MAX_PLAYERS\) \{\s*return Promise\.reject\(\{ message: 'Sorry, game is full'/);
+    const model = read(root, 'game-model.ts');
+    assert.strictEqual(MAX_PLAYERS, +/export const MAX_PLAYERS = (\d+);/.exec(model)[1]);
     assert.ok(learnStrings('en').start[0].indexOf('5, 7 or 9 questions') >= 0);
     assert.ok(learnStrings('he').start[0].indexOf('5, 7 או 9 שאלות') >= 0);
-    assert.ok(learnStrings('en').start[1].indexOf('Up to 8 players') >= 0);
-    assert.ok(learnStrings('he').start[1].indexOf('עד 8 שחקנים') >= 0);
+    assert.ok(learnStrings('en').start[1].indexOf('Up to 12 players') >= 0);
+    assert.ok(learnStrings('he').start[1].indexOf('עד 12 שחקנים') >= 0);
 });
 
 test('the buttons carry the home menu\'s names, and the big screen is named as a computer shows it', () => {

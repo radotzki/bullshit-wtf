@@ -134,7 +134,7 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.crew = game.crew;
     }
 
-    // The round-1 lie helper, on for half of all games: each Replay is a new draw.
+    // The round-1 lie helper, on for every game, Replay included. Logged as coach.
     if (pickCoach()) {
         forked.coach = true;
     }
