@@ -6,6 +6,7 @@ import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
 import { isSameAnswer } from './same-answer';
+import { stamp } from './answer-times';
 import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
 
@@ -43,6 +44,9 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
         }
 
         await gamesRef.child(pin).child('answers').child(pid).set(stored);
+        // When the lie arrived, to measure the wait. Never fails the answer.
+        await gamesRef.child(pin).child('answerTimes').child('lies').child(pid).set(stamp(game.questionIndex, Date.now()))
+            .catch(e => console.error('lie time not saved', pin, e && e.message));
 
         // The game as it is with this lie in it.
         game.answers = Object.assign({}, game.answers, { [pid]: stored });

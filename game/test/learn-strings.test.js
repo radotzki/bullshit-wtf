@@ -83,7 +83,7 @@ test('the lengths and the player limit are the game\'s', () => {
     create.replace(/name="length" \[value\]="(\d+)"/g, (m, n) => offered.push(+n));
     assert.deepStrictEqual(GAME_LENGTHS, offered);
     const join = read(root, 'functions', 'src', 'controllers', 'join.ts');
-    assert.strictEqual(MAX_PLAYERS, +/length === (\d+)\) \{\s*return Promise\.reject\(\{ message: 'Sorry, game is full'/.exec(join)[1]);
+    assert.strictEqual(MAX_PLAYERS, +/length === (\d+)\) \{[^}]*?return Promise\.reject\(\{ message: 'Sorry, game is full'/.exec(join)[1]);
     assert.ok(learnStrings('en').start[0].indexOf('5, 7 or 9 questions') >= 0);
     assert.ok(learnStrings('he').start[0].indexOf('5, 7 או 9 שאלות') >= 0);
     assert.ok(learnStrings('en').start[1].indexOf('Up to 8 players') >= 0);

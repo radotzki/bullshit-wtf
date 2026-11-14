@@ -7,6 +7,7 @@ import { onPhaseStart } from './controllers/phase-timer';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
 import { onAnswerSelection } from './controllers/on-answer-selection';
+import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
@@ -277,7 +278,8 @@ exports.phaseTimer = functions
 
 exports.onAnswerSelection = functions.database.ref('games/{pin}/answerSelections').onWrite(watched('onAnswerSelection', (change, event) => {
     const pin = event.params.pin;
-    return onAnswerSelection(pin);
+    // Whose pick is new in this write, and when it was written: only for measuring the wait.
+    return onAnswerSelection(pin, newPickers(change.before && change.before.val(), change.after && change.after.val()), eventTime(event.timestamp));
 }));
 
 // Every player tapped NEXT on the reveal: move on without waiting for its deadline.

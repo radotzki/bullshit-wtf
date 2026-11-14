@@ -90,6 +90,20 @@ export interface GameScheme {
     // The question index highlights were first kept from. 0 means the whole game counts, so a player
     // with no highlight really fooled nobody (games already running at a deploy start later).
     highlightsFrom?: number;
+    // Server time each player's lie and pick arrived, for measuring the wait (question_results).
+    // Server only: no rule opens it, so no phone can read or write it.
+    answerTimes?: AnswerTimes;
+}
+
+/** When one player's lie or pick arrived (server time, ms), and for which question. */
+export interface AnswerTime {
+    q: number;
+    at: number;
+}
+
+export interface AnswerTimes {
+    lies?: { [pid: string]: AnswerTime };
+    picks?: { [pid: string]: AnswerTime };
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';

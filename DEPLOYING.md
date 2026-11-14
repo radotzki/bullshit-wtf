@@ -671,6 +671,29 @@ is the cheapest active player there is.
 - Deploy order: functions, then hosting. No rules change. With the new site on old functions the
   game works; the new presses are just not counted until the functions are live.
 
+## Refused joins and answer waits
+
+Three numbers the fun plan ranks on, measured from the release that carries this on.
+
+- **A ninth player.** When `join` answers "game is full" it now also writes one row to BigQuery
+  `analytics.refused_joins`: the PIN, the time, the number of players, whether the game had left the
+  lobby, its language and its campaign tag. Nothing about the player who was turned away.
+- **The wait.** Each `question_results` row gets `lie_span_s` and `pick_span_s`: seconds from the
+  first to the last lie, and from the first to the last pick. The server keeps the arrival times at
+  `games/$pin/answerTimes`, which no rule opens, so no phone can read or write it. Lies are timed by
+  the `answer` function, picks by the `onAnswerSelection` trigger with the time of the write.
+- **Lies that fool nobody.** Each `question_results` row gets `unpicked_lies`.
+- **BigQuery: run `functions/bigquery/2026-11-refused-joins-and-waits.sql` once, before the merge**
+  (it creates the table and adds three NULLABLE columns). Until then no game is affected: question
+  rows land as before without the three numbers, and each refused join logs "Bigquery Insert failed"
+  and is not counted. The same file says how to read the numbers and holds the read-only queries.
+- Test games: `refused_joins.campaign` carries the game's tag, so a test game's rows are left out
+  by the tag; `question_results` is filtered by PIN, as before.
+- Deploy: functions only (all of them, as always). No rules change, no hosting change.
+- Checks: `functions/test/waits.test.js` (in `npm test`) plays a whole game of 8 with a ninth join
+  refused and prints its rows, then plays it again against tables as they are before the SQL is run.
+  `node test/full-table.js` plays the same game in real time against the database emulator.
+
 ## Known leftovers
 
 - npm audit reports moderate issues in transitive Google libraries (functions) and many
