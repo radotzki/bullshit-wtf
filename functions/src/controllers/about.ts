@@ -93,6 +93,33 @@ export function aboutSlots(totalQ: number): number[] {
     return slots;
 }
 
+/**
+ * A pack game's questions, reordered so that no About place holds a pack question. The About question
+ * takes the place's question, so a pack question there would be lost, and a Hanukkah game promises three.
+ * Each pack question on an About place swaps with the nearest bank question on a place that is not an
+ * About place, the later one on a tie (5: P A P A P; 7: P R A P A P R; 9: P R A P A R A P R). An About
+ * question that falls back still plays the place's question, now a bank one. Nothing moves in a game
+ * with no pack question on an About place.
+ */
+export function clearAboutPlaces(qids: string[], places: number[], isPackQuestion: (qid: string) => boolean): string[] {
+    const result = (qids || []).slice();
+    const about = new Set(places || []);
+    const movable = (i: number) => !about.has(i) && !!result[i] && !isPackQuestion(result[i]);
+    (places || []).forEach(place => {
+        if (!result[place] || !isPackQuestion(result[place])) {
+            return;
+        }
+        for (let d = 1; d < result.length; d++) {
+            const to = [place + d, place - d].find(i => i >= 0 && i < result.length && movable(i));
+            if (to !== undefined) {
+                [result[place], result[to]] = [result[to], result[place]];
+                return;
+            }
+        }
+    });
+    return result;
+}
+
 export function slotKey(questionIndex: number): string {
     return `q${questionIndex || 0}`;
 }
