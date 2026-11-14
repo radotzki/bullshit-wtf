@@ -431,5 +431,28 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        // Two to eight players: a long lie, not its count, gives way. On a 1920-wide TV the text is
+        // 38 px a rem inside a 1200 px box, and the line's own "…" cut "fooled 2 players" to
+        // "fooled 2 play…". So the line is a row: the label and the counts keep their width, and
+        // only the lie shrinks with "…". Nine to twelve keep their own two-line layout above.
+        .players:not(.lots) {
+            .lie:not(.none) {
+                display: flex;
+                align-items: baseline;
+            }
+            .lie-label, .lie-fooled, .lie-laughs { flex: none; }
+            .lie-label { margin-inline-end: .3em; }
+            .lie-text {
+                flex: 0 1 auto;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            // A flex item drops its leading space; keep the " · " before each count.
+            .lie-fooled::before, .lie-laughs::before { white-space: pre; }
+        }
+        // Five to eight players: half the screen each, so the label goes (the quotes and the badge say
+        // it) and the lie keeps a few words before its "…".
+        .players.many:not(.lots) .lie-label { display: none; }
     }
 }
