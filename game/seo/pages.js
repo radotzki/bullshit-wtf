@@ -4,6 +4,8 @@
 // 5, 7 or 9 questions, three rounds where points grow, English and Hebrew questions.
 // A page may stand in one language only: leave `twin` out. A page with a `tag` sends it on its
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
+// The weekly-group and home-together pages (marketing drafts 6 and 7), in a file of their own.
+const groupsHome = require('./pages-groups-home');
 const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
 const jackbox = require('./pages-jackbox');
@@ -25,6 +27,9 @@ const en = {
         { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
         { href: '/office-holiday-party-game', label: 'Office holiday party game' },
         { href: '/free-jackbox-alternative', label: 'A free Jackbox alternative' },
+        { href: '/family-game-night', label: 'Family game night' },
+        { href: '/video-call-party-game', label: 'A party game for a video call' },
+        { href: '/snow-day-games', label: 'Snow day games' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -48,6 +53,12 @@ const he = {
         { href: '/he/classroom', label: 'משחק לכיתה' },
         { href: '/he/team-building', label: 'משחק לגיבוש צוות' },
         { href: '/he/game-like-jackbox', label: 'משחק כמו ג\'קבוקס' },
+        { href: '/he/youth-group', label: 'פעולה מוכנה לתנועת נוער' },
+        { href: '/he/gibush', label: 'משחק לערב גיבוש' },
+        { href: '/he/home-together', label: 'משחק קבוצתי לבית' },
+        { href: '/he/days-at-home', label: 'ימים בבית עם הילדים' },
+        { href: '/he/video-call', label: 'משחק בשיחת וידאו' },
+        { href: '/he/school-break', label: 'משחקים לחופש' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -116,6 +127,7 @@ const howHe = `
 </ul>`;
 
 module.exports = [
+    ...groupsHome.pages(en, he),
     {
         path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',
