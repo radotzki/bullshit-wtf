@@ -16,8 +16,8 @@ const meta = (page, name) => (new RegExp(`<meta (?:property|name)="${name}" cont
 
 test('two pages, twins of each other, each in its language', () => {
     assert.deepStrictEqual(daily.pages().map(p => p.path), ['/daily', '/he/daily']);
-    assert.match(html.en, /<html lang="en" dir="ltr">/);
-    assert.match(html.he, /<html lang="he" dir="rtl">/);
+    assert.match(html.en, /<html lang="en" dir="ltr"[ >]/);
+    assert.match(html.he, /<html lang="he" dir="rtl"[ >]/);
     for (const page of [html.en, html.he]) {
         assert.ok(page.includes('<link rel="alternate" hreflang="en" href="https://bullshit.wtf/daily">'));
         assert.ok(page.includes('<link rel="alternate" hreflang="he" href="https://bullshit.wtf/he/daily">'));
@@ -54,7 +54,7 @@ test('before the script runs the page already says what it is, and says so witho
 
 test('the page\'s scripts are whole and cannot be cut short by what they hold', () => {
     for (const page of [html.en, html.he]) {
-        const scripts = [...page.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+        const scripts = [...page.slice(page.indexOf('<body')).matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
         assert.strictEqual(scripts.length, 4, 'the words, the shared checks, the rules, the page script');
         scripts.forEach(js => assert.doesNotThrow(() => new vm.Script(js), 'each parses'));
         assert.ok(!/<\/script/i.test(scripts.join('')) && !scripts.join('').includes('<!--'));
@@ -64,7 +64,7 @@ test('the page\'s scripts are whole and cannot be cut short by what they hold', 
     sandbox.window = sandbox;
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
-    [...html.he.matchAll(/<script>([\s\S]*?)<\/script>/g)].slice(0, 3).forEach(m => vm.runInContext(m[1], sandbox));
+    [...html.he.slice(html.he.indexOf('<body')).matchAll(/<script>([\s\S]*?)<\/script>/g)].slice(0, 3).forEach(m => vm.runInContext(m[1], sandbox));
     assert.strictEqual(sandbox.BSDaily.s.lang, 'he');
     assert.strictEqual(sandbox.BSDaily.s.foolSend, he.foolSend);
     assert.strictEqual(typeof sandbox.BSDailyShared.isSameAnswer, 'function');
@@ -91,7 +91,8 @@ test('the ways in: search pages, How to play, the home page, the taste\'s final 
     assert.strictEqual(daily.linkTo('en', 'daily-seo'), '/daily?via=daily-seo');
     assert.strictEqual(daily.linkTo('he', 'daily-seo'), '/he/daily?via=daily-seo');
     const build = read('game/seo/build-pages.js');
-    assert.ok(build.includes('daily.linkTo(s.lang, \'daily-seo\')') && build.includes('daily.strings[s.lang].seoLink'), 'the footer links of every search page');
+    assert.ok(build.includes('dailyWords[s.lang].path}?via=daily-seo') && build.includes('dailyWords[s.lang].seoLink'), 'the footer links of every search page');
+    assert.ok(!build.includes('daily-page'), 'build-pages.js writes the search pages only; build-daily.js writes the puzzle');
     const how = pages.filter(p => p.path === '/how-to-play' || p.path === '/he/how-to-play');
     assert.strictEqual(how.length, 2);
     assert.ok(how[0].body.includes(`<a href="/daily?via=daily-seo">${en.seoLink}</a>`));
@@ -110,4 +111,38 @@ test('the ways in: search pages, How to play, the home page, the taste\'s final 
     // Every tag on a way in is one the server knows as an arrival.
     const server = read('functions/src/controllers/daily.ts');
     ['daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool'].forEach(tag => assert.ok(server.includes(`'${tag}'`), tag));
+});
+
+test('the build writes both pages after the search pages and lists them in the sitemap, once', () => {
+    const { execFileSync } = require('child_process');
+    const os = require('os');
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), 'daily-build-'));
+    const run = script => execFileSync(process.execPath, [path.join(root, 'game', 'seo', script), out], { stdio: 'pipe' });
+    try {
+        assert.throws(() => run('build-daily.js'), 'not before the search pages: there is no sitemap yet');
+        run('build-pages.js');
+        run('build-daily.js');
+        assert.strictEqual(fs.readFileSync(path.join(out, 'daily.html'), 'utf8'), html.en);
+        assert.strictEqual(fs.readFileSync(path.join(out, 'he', 'daily.html'), 'utf8'), html.he);
+        const sitemap = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf8');
+        for (const loc of ['https://bullshit.wtf/daily', 'https://bullshit.wtf/he/daily']) {
+            assert.strictEqual(sitemap.split(`<loc>${loc}</loc>`).length, 2, loc);
+        }
+        assert.ok(sitemap.trimEnd().endsWith('</urlset>'));
+        assert.ok(fs.readFileSync(path.join(out, 'how-to-play.html'), 'utf8').includes('/daily?via=daily-seo'));
+        assert.throws(() => run('build-daily.js'), 'never twice into one folder');
+    } finally {
+        fs.rmSync(out, { recursive: true, force: true });
+    }
+    assert.ok(/build-pages\.js && node seo\/build-daily\.js/.test(JSON.parse(read('game/package.json')).scripts.build));
+});
+
+test('the visit count: the page carries the site\'s own beacon when the site has one', () => {
+    const index = read('game/src/index.html');
+    const has = index.includes('BS:VISIT');
+    assert.strictEqual(daily.visitBeacon() !== '', has);
+    if (has) {
+        assert.ok(html.en.slice(0, html.en.indexOf('<body')).includes(daily.visitBeacon()));
+    }
+    assert.match(html.en, /<html [^>]*data-page="plain"/);
 });

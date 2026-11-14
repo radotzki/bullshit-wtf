@@ -1,6 +1,6 @@
 // The daily puzzle's page: /daily (English) and /he/daily (Hebrew), plain HTML with a small inline
 // script and no Angular, so a tap from a chat shows the question fast and the page has a link
-// preview of its own. build-pages.js writes both pages and lists them in the sitemap as twins.
+// preview of its own. build-daily.js writes both pages and lists them in the sitemap as twins.
 //
 // The page is the words of its language (daily-strings.js), the rules (daily-core.js), the page
 // script (daily-client.js) and two checks taken from the game as they are, compiled here the way
@@ -61,6 +61,16 @@ function loadShared() {
     return root.BSDailyShared;
 }
 
+/**
+ * The visit beacon of the site's pages, once the game's own page carries one (between BS:VISIT
+ * markers in src/index.html): the same inline script, so a view of the puzzle is counted like a
+ * view of any plain page. Until then, nothing.
+ */
+function visitBeacon() {
+    const m = /<!-- BS:VISIT:START -->\s*(<script>[\s\S]*?<\/script>)\s*<!-- BS:VISIT:END -->/.exec(read(ROOT, 'game', 'src', 'index.html'));
+    return m ? m[1] : '';
+}
+
 const coreScript = () => read(__dirname, 'daily-core.js');
 const clientScript = () => read(__dirname, 'daily-client.js');
 
@@ -77,9 +87,10 @@ function render(lang) {
     };
     const config = { s, max: maxPlayers() };
     return `<!doctype html>
-<html lang="${s.lang}" dir="${s.dir}">
+<html lang="${s.lang}" dir="${s.dir}" data-page="plain">
 <head>
   <meta charset="utf-8">
+  ${visitBeacon()}
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${esc(s.title)}</title>
   <meta name="description" content="${esc(s.description)}">
@@ -200,9 +211,18 @@ ${inScript(clientScript())}
 `;
 }
 
-/** The two pages, as build-pages.js writes them: [{ path, html }]. */
+/** The two pages, as build-daily.js writes them: [{ path, html }]. */
 function pages() {
     return ['en', 'he'].map(lang => ({ path: strings[lang].path, lang, html: render(lang) }));
+}
+
+/** The two pages' entries for sitemap.xml, twins of each other. */
+function sitemapUrls() {
+    return ['en', 'he'].map(lang => `  <url>
+    <loc>${SITE}${strings[lang].path}</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="${SITE}${strings.en.path}"/>
+    <xhtml:link rel="alternate" hreflang="he" href="${SITE}${strings.he.path}"/>
+  </url>`).join('\n');
 }
 
 /** The link to today's question from another page of the site, tagged with where it stands. */
@@ -210,4 +230,4 @@ function linkTo(lang, tag) {
     return strings[lang === 'he' ? 'he' : 'en'].path + '?via=' + tag;
 }
 
-module.exports = { render, pages, linkTo, loadShared, sharedScript, maxPlayers, strings, SITE };
+module.exports = { render, pages, sitemapUrls, linkTo, loadShared, sharedScript, maxPlayers, visitBeacon, strings, SITE };

@@ -10,7 +10,7 @@ link for friends. One button starts a real game, tagged so it can be counted.
 |---|---|
 | The questions | `functions/data/daily-questions.json` (ids `daily-26-(en\|he)-NNN`, a `day` each). Never loaded into the game's bank. |
 | The function | `daily` in `functions/src/index.ts`; its rules, pure and tested, in `functions/src/controllers/daily.ts` |
-| The page | `game/seo/daily-page.js` (built by `build-pages.js`), words in `daily-strings.js`, rules in `daily-core.js`, page script in `daily-client.js` |
+| The page | `game/seo/daily-page.js` (written into `dist/` by `game/seo/build-daily.js`, which `npm run build` runs after `build-pages.js`), words in `daily-strings.js`, rules in `daily-core.js`, page script in `daily-client.js` |
 | Link previews | `graphics/daily.html`, rendered with `node graphics/render-daily.js` into `game/src/assets/og-daily-(en\|he).png` |
 | Tests | `functions/test/daily.test.js`, `game/test/daily-*.test.js` |
 | Emulator run | `node .github/smoke/emulator-daily.js` (both languages; `SHOTS=<dir>` saves screenshots) |
