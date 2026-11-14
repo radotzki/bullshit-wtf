@@ -2,8 +2,9 @@
 // the release's last step. The files are the list FILES below, and nothing else: today the
 // Hanukkah pack (functions/data/hanukkah-questions.json, ids hanukkah-26-en-01.., -he-01..),
 // the strange facts (functions/data/strange-facts-2026-11.json, ids fact-26-en-01.., -he-01..)
-// and the Thanksgiving pack (functions/data/thanksgiving-questions.json, ids
-// thanksgiving-26-en-01.., English only).
+// the Thanksgiving pack (functions/data/thanksgiving-questions.json, ids
+// thanksgiving-26-en-01.., English only) and the Christmas and New Year pack
+// (functions/data/christmas-questions.json, ids christmas-26-en-01.., English only).
 // It adds or rewrites exactly the questions in those files, each under its own id, and touches
 // nothing else.
 //
@@ -70,6 +71,7 @@ const FILES = [
     { file: 'functions/data/strange-facts-2026-11.json', name: 'the strange facts', id: /^fact-26-(en|he)-\d{2}$/, like: 'fact-26-en-01', pack: null },
     // English only: the id rule has no Hebrew, so a Hebrew question cannot be written under it.
     { file: 'functions/data/thanksgiving-questions.json', name: 'the Thanksgiving pack', id: /^thanksgiving-26-(en)-\d{2}$/, like: 'thanksgiving-26-en-01', pack: 'thanksgiving' },
+    { file: 'functions/data/christmas-questions.json', name: 'the Christmas and New Year pack', id: /^christmas-26-(en)-\d{2}$/, like: 'christmas-26-en-01', pack: 'christmas' },
 ];
 // Never a file of the game's bank, whatever a later edit adds to FILES: the daily puzzle reads
 // its questions from the functions bundle, and a daily question in questions/ would turn up in

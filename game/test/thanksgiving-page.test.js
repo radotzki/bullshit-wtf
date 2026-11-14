@@ -89,19 +89,21 @@ test('the English home row links to it in November, and never the Hebrew row', (
     assert.match(searchLinks('en', 'fb-x', at(2026, 11, 26)).find(l => /thanksgiving/.test(l.href)).href, /\?via=fb-x$/);
 });
 
-test('the line above the home buttons: Thanksgiving from 20 to 29 November in English, Hanukkah in its own season', () => {
+test('the line above the home buttons: Thanksgiving from 20 to 29 November in English, then Christmas; Hanukkah in Hebrew', () => {
     assert.strictEqual(seasonLink('en', at(2026, 11, 19), null), null);
     assert.strictEqual(seasonLink('en', at(2026, 11, 20), null).href, '/thanksgiving-party-game');
     assert.strictEqual(seasonLink('en', at(2026, 11, 26), 'test').href, '/thanksgiving-party-game?via=test');
     assert.strictEqual(seasonLink('en', at(2026, 11, 29), null).href, '/thanksgiving-party-game');
     assert.strictEqual(seasonLink('en', at(2026, 11, 30), null), null);
     assert.strictEqual(seasonLink('he', at(2026, 11, 26), null), null);
-    assert.strictEqual(seasonLink('en', at(2026, 12, 5), null).href, '/hanukkah-party-game');
+    // From 1 December the English line is Christmas and New Year's (christmas-pack.test.js).
+    assert.strictEqual(seasonLink('en', at(2026, 12, 5), null).href, '/christmas-party-game');
     assert.strictEqual(seasonLink('he', at(2026, 12, 5), null).href, '/he/hanukkah');
 });
 
 test('the lobby names a Thanksgiving game, and a Hanukkah game as before', () => {
     assert.match(packBanner('thanksgiving', 'en'), /Thanksgiving edition/);
+    assert.match(packBanner('christmas', 'en'), /Christmas and New Year questions/);
     assert.match(packBanner('hanukkah', 'en'), /Hanukkah edition/);
     assert.match(packBanner('hanukkah', 'he'), /חנוכה/);
     assert.strictEqual(packBanner(null, 'en'), null);

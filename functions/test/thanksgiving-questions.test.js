@@ -13,7 +13,7 @@ const openers = require('../data/opening-questions.json');
 const { isRetired } = require('../dist/controllers/retired-questions');
 const { isSameAnswer, normalizeAnswer } = require('../dist/controllers/same-answer');
 const { isBlockedHouseLie } = require('../dist/controllers/house-lie-cleanup');
-const { questionPacks, isPack, packFits, packIcon, seasonalPack } = require('../dist/game-model');
+const { questionPacks, isPack, packFits, packIcon, seasonalPack, packInSeasonFor } = require('../dist/game-model');
 
 const ids = Object.keys(pack);
 const lower = s => s.trim().toLowerCase();
@@ -80,25 +80,30 @@ test('the pack is offered in English games only, from the Friday before Thanksgi
     assert.strictEqual(seasonalPack(at('2026-11-29T23:00:00-08:00'), 'en'), 'thanksgiving');
     // Not before, not after.
     assert.strictEqual(seasonalPack(at('2026-11-19T12:00:00-05:00'), 'en'), undefined);
-    assert.strictEqual(seasonalPack(at('2026-12-01T00:30:00+02:00'), 'en'), 'hanukkah');
+    // From 1 December English games get the Christmas pack (functions/test/christmas-questions.test.js).
+    assert.strictEqual(seasonalPack(at('2026-12-01T00:30:00+02:00'), 'en'), 'christmas');
     // A Hebrew game never gets it, on the create page or in a crew rematch.
     assert.strictEqual(seasonalPack(at('2026-11-26T18:00:00-05:00'), 'he'), undefined);
 });
 
-test('the Hanukkah pack is unchanged: both languages, its own season, its own icon', () => {
+test('the Hanukkah pack: playable in both languages, its own season, its own icon, by default in Hebrew games', () => {
     assert.strictEqual(packFits('hanukkah', 'en'), true);
     assert.strictEqual(packFits('hanukkah', 'he'), true);
     assert.strictEqual(packIcon('hanukkah'), '🕎');
     const dec5 = Date.parse('2026-12-05T12:00:00+02:00');
     assert.strictEqual(seasonalPack(dec5), 'hanukkah');
     assert.strictEqual(seasonalPack(dec5, 'he'), 'hanukkah');
-    assert.strictEqual(seasonalPack(dec5, 'en'), 'hanukkah');
-    // No two seasons overlap: one day, one pack.
-    const seasons = Object.values(questionPacks).map(p => p.season).sort((a, b) => a.from < b.from ? -1 : 1);
-    seasons.forEach((s, i) => {
-        assert.ok(s.from <= s.to);
-        assert.ok(i === 0 || seasons[i - 1].to < s.from);
-    });
+    // English games get the Christmas pack in December; Hanukkah stays playable by link.
+    assert.strictEqual(seasonalPack(dec5, 'en'), 'christmas');
+    // No two seasons overlap in one language: one day, one pack, for every game.
+    for (const locale of ['en', 'he']) {
+        const seasons = Object.keys(questionPacks).filter(id => packInSeasonFor(id, locale))
+            .map(id => questionPacks[id].season).sort((a, b) => a.from < b.from ? -1 : 1);
+        seasons.forEach((s, i) => {
+            assert.ok(s.from <= s.to);
+            assert.ok(i === 0 || seasons[i - 1].to < s.from, locale);
+        });
+    }
 });
 
 test('a new game and a crew rematch take a pack only in a language it has questions in', () => {

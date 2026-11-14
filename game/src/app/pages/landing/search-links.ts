@@ -70,6 +70,17 @@ export const hanukkahSeasons: { from: string; to: string }[] = [
     { from: '2026-12-01', to: '2026-12-13' },
 ];
 
+/**
+ * Christmas and New Year, English only: the days English games get the Christmas and New Year pack
+ * by default (game-model.ts, questionPacks.christmas), by the visitor's own calendar. In those days
+ * the English line shows it in place of Hanukkah; the Hebrew line keeps Hanukkah.
+ */
+const christmas: SearchLink = { href: '/christmas-party-game', label: 'The holidays are here: play with Christmas and New Year questions' };
+
+export const christmasSeasons: { from: string; to: string }[] = [
+    { from: '2026-12-01', to: '2027-01-01' },
+];
+
 /** A link keeps the visitor's post tag (?via=), so a game started from the page still counts for the post. */
 function withTag(link: SearchLink, campaign: string | null): SearchLink {
     return campaign ? { href: link.href + '?via=' + encodeURIComponent(campaign), label: link.label } : link;
@@ -90,13 +101,16 @@ export function searchLinks(locale: string, campaign: string | null, today: Date
 }
 
 /**
- * The season's line above the buttons: Thanksgiving on its days (English only), Hanukkah on the
- * days of its season; null on every other day.
+ * The season's line above the buttons: Thanksgiving on its days and then Christmas and New Year
+ * (English only), Hanukkah on the days of its season in Hebrew; null on every other day.
  */
 export function seasonLink(locale: string, today: Date, campaign: string | null): SearchLink | null {
     const d = day(today);
     if (locale !== 'he' && thanksgivingSeasons.some(s => s.from <= d && d <= s.to)) {
         return withTag(thanksgiving, campaign);
+    }
+    if (locale !== 'he' && christmasSeasons.some(s => s.from <= d && d <= s.to)) {
+        return withTag(christmas, campaign);
     }
     const inSeason = hanukkahSeasons.some(s => s.from <= d && d <= s.to);
     return inSeason ? withTag(hanukkah[locale === 'he' ? 'he' : 'en'], campaign) : null;
