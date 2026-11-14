@@ -13,7 +13,7 @@
 //
 // Needs what emulator-game.js needs (Java, functions/ built, the root's npm ci). From the root:
 //   node .github/smoke/tv-fit.js [path to dist] [--players 2,3,12] [--locales en,he]
-//        [--shots <dir>] [--tag after] [--parallel 3]
+//        [--shots <dir>] [--tag after] [--parallel 1]
 // EMULATORS=running uses emulators you already run. Prints a JSON summary; exits non-zero when
 // something is off a screen, or a game doesn't reach its final.
 
@@ -39,11 +39,14 @@ const PLAYERS = option('--players', '2,3,4,5,6,7,8,9,10,11,12').split(',').map(N
 const LOCALES = option('--locales', 'en,he').split(',');
 const SHOTS = option('--shots', null);
 const TAG = option('--tag', 'after');
-const PARALLEL = Number(option('--parallel', 3));
+const PARALLEL = Number(option('--parallel', 1));
 const PROJECT = 'demo-bullshit';
-const DB = `${HOST}:9000`;
-const FUNCTIONS = `http://${HOST}:5001/${PROJECT}/us-central1`;
-const AUTH = `http://${HOST}:9099`;
+// PORTS=<n> moves the three emulators n ports up, so several runs can play side by side, each on
+// emulators of its own (games that share emulators make the functions emulator start too many workers).
+const PORTS = Number(process.env.PORTS || 0);
+const DB = `${HOST}:${9000 + PORTS}`;
+const FUNCTIONS = `http://${HOST}:${5001 + PORTS}/${PROJECT}/us-central1`;
+const AUTH = `http://${HOST}:${9099 + PORTS}`;
 const GAME_TIMEOUT_MS = Number(process.env.GAME_MINUTES || 12) * 60 * 1000;
 const QUESTIONS = 5;
 const SCREENS = [[1280, 720], [1920, 1080], [1366, 768]];
@@ -84,16 +87,20 @@ async function startEmulators() {
     fs.writeFileSync(path.join(dir, 'firebase.json'), JSON.stringify({
         functions: { source: 'functions', runtime: 'nodejs22' },
         emulators: {
-            auth: { host: HOST, port: 9099 },
-            database: { host: HOST, port: 9000 },
-            functions: { host: HOST, port: 5001 },
+            auth: { host: HOST, port: 9099 + PORTS },
+            database: { host: HOST, port: 9000 + PORTS },
+            functions: { host: HOST, port: 5001 + PORTS },
+            hub: { host: HOST, port: 4400 + PORTS },
+            logging: { host: HOST, port: 4500 + PORTS },
             ui: { enabled: false },
             singleProjectMode: true,
         },
     }, null, 2));
     fs.writeFileSync(path.join(dir, 'loopback.js'), NO_PROXY_FOR_LOOPBACK);
     const tools = path.join(ROOT, 'node_modules', 'firebase-tools');
-    const env = Object.assign({}, process.env, { FIREBASE_TOOLS_DIR: tools });
+    // No Google account for the functions: their BigQuery inserts then fail at once, as they should
+    // here. On a cloud machine they otherwise ask its metadata server for a token, slowly, on every row.
+    const env = Object.assign({}, process.env, { FIREBASE_TOOLS_DIR: tools, METADATA_SERVER_DETECTION: 'none', GCE_METADATA_HOST: '127.0.0.1:9' });
     if (process.env.HTTPS_PROXY || process.env.https_proxy) {
         env.NODE_OPTIONS = `${env.NODE_OPTIONS || ''} --require ${path.join(dir, 'loopback.js')}`.trim();
     }
@@ -328,7 +335,9 @@ async function act(phone, game) {
     }
 }
 
-async function play(browser, base, n, locale) {
+async function play(base, n, locale) {
+    // A browser of its own for each game: fifteen pages are enough for one.
+    const browser = await chromium.launch({ args: [`--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${HOST}`, '--autoplay-policy=no-user-gesture-required', '--disable-dev-shm-usage'] });
     const he = locale === 'he';
     const game = { id: `${locale} ${n} players`, n, locale, results: [], answersShot: {}, others: {}, problems: [] };
     const phones = [];
@@ -390,7 +399,7 @@ async function play(browser, base, n, locale) {
     } catch (e) {
         game.problems.push(`stopped: ${e.message.split('\n')[0]}`);
     } finally {
-        for (const p of everyone) await p.context.close().catch(() => { });
+        await browser.close().catch(() => { });
     }
     return game;
 }
@@ -400,13 +409,11 @@ async function main() {
     if (!fs.existsSync(path.join(ROOT, 'functions', 'dist', 'index.js'))) throw new Error('Build functions/ first: npm run build there');
     if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
     const emulators = await startEmulators();
-    let browser;
     let server;
     try {
         await seed();
         server = await serve(DIST);
         const base = `http://${HOST}:${server.address().port}`;
-        browser = await chromium.launch({ args: [`--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${HOST}`, '--autoplay-policy=no-user-gesture-required'] });
         const queue = [];
         for (const locale of LOCALES) for (const n of PLAYERS) queue.push([n, locale]);
         // The biggest tables first: they take the longest.
@@ -415,7 +422,7 @@ async function main() {
         await Promise.all(Array.from({ length: PARALLEL }, async () => {
             while (queue.length) {
                 const [n, locale] = queue.shift();
-                games.push(await play(browser, base, n, locale));
+                games.push(await play(base, n, locale));
             }
         }));
         games.sort((a, b) => a.locale.localeCompare(b.locale) || a.n - b.n);
@@ -443,7 +450,6 @@ async function main() {
         console.log(failed ? 'FAIL' : 'PASS');
         process.exitCode = failed ? 1 : 0;
     } finally {
-        if (browser) await browser.close();
         if (server) server.close();
         stopEmulators(emulators);
     }
