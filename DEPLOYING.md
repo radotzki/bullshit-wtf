@@ -1370,3 +1370,55 @@ A game takes 12 players; it took 8. The thirteenth is told "Sorry, game is full"
 How to read it: `functions/bigquery/2026-11-ninth-player.sql` (share of games above 8, seats per
 game on Fridays and by language, whether big tables still play to the last question, and refusals
 once pull request 47's table exists).
+
+## About us questions (a 50/50 test)
+
+A second kind of question: one player is named ("The thing Ben would save from a fire is ___"), writes
+the truth privately while everyone else writes a lie about them, and then all but that player pick.
+Finding the truth scores as finding any truth; the named player scores, for each friend who finds it,
+what a lie scores for each friend it fools (500, 750, 1000). Server in
+`functions/src/controllers/about.ts`, the prompts in `about-prompts.ts` (22, English and Hebrew), the
+words of the screens in `game/src/app/pages/about-strings.ts`, how phones read it in `aboutOf`
+(`game-model.ts`). Tests: `functions/test/about.test.js`, `game/test/about-strings.test.js`.
+
+- Who gets it: half of the games made by a client that asks for it (`aboutUs: true` on `newGame`,
+  `fork`, `crewRematch`), by the PIN, or by the crew's id for a game that counts for a crew, so a
+  crew plays all its games in one half. Independent of the staged reveal's half (another hash) and
+  the lie helper's draw. A game plays the questions only when it leaves the lobby with three or more
+  players; never alone (the taste).
+- Where: two questions in a game of 5 or 7, three in a game of 9, at 1 and 3, 2 and 4, or 2, 4 and 6
+  (counting from 0). Never the first (the opener) or the last (the final question). The bank question
+  picked for that place stays in the game as the fallback.
+- Who is named: a seat that has sent a lie or a pick in this game (so never an empty seat), not named
+  before while another is left. With fewer than three seats playing, the question is skipped and the
+  bank question played.
+- The truth is kept at `games/$pin/aboutTruth`, which no phone can read, until the answers are on the
+  table; then it is the `truth` answer, in lower case like every lie. A friend's lie is never refused
+  as too close (that would give the truth away); a lie that is the truth is dropped, and its writer
+  can still pick it. Up to 5 answers are filled with the prompt's own house answers, which cost points
+  like any house lie; an 8-seat table gets none.
+- If the named player sends nothing in the 25 seconds, the bank question is played in its place, with
+  a fresh 25 seconds (the lies about them are dropped). Phones get a new writing step with the same id
+  and rebuild the page, as after any phone comes back to a step.
+- How phones learn it: every state of an About question (writing, answers, reveal, scoreboard) carries
+  `about: { pid, prompt }`. The truth's reveal row carries `about` and `aboutPoints`. The named
+  player is marked as done on the answers' waiting row and is not waited for there; their pick, if an
+  older site sends one, is ignored.
+- Sends at the same moment: when the last sends of an About question (the truth and a lie, or two
+  lies) reach the server together, each `answer` call reads `answers` and `aboutTruth` again after
+  writing its own send, and decides "has everyone sent?" on that. Without it no call saw every send
+  and the room sat out the 25 seconds. It is the same re-read as "Lies sent at the same moment end the
+  question at once" (pull request 108) for a normal question; the two are in different functions of
+  `answer.ts` and merge cleanly. Tests: `about.test.js`, "About question: ... sent at the same moment".
+- Deploy: **run `functions/bigquery/2026-11-about-us.sql` (three ALTERs) first**, then functions,
+  then hosting. **No rules change.** Until the site is live no phone asks, so no game is in the test.
+  A phone still on the old site inside an About game sees the question about the named player and a
+  plain lie box: if it is the named player's phone, what it sends is taken as the truth; on the answers
+  page it shows the list and its pick is ignored. Nothing is held up.
+- In the usage data: `opened_games.about_us` and `closed_games.about_us` (the half, null outside the
+  test); `question_results.about` (`played`, `fallback`, `skipped`) and `about_prompt`. No answer
+  anybody typed goes to BigQuery; the question history (`qHistory`) keeps only the prompt's id for an
+  About question. The read queries are in the SQL file: rematches per finished game and games per crew
+  per week, by half, and the share of About questions that fell back, by prompt.
+- To end the test: make `drawAboutUs` return `true` (everyone) or `undefined` (nobody) and deploy the
+  functions. To change a prompt, edit `about-prompts.ts`: never reuse an id.

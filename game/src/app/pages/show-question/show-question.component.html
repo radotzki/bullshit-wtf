@@ -10,19 +10,23 @@
 
         <div *ngIf="question && presenter" class="screen-center on-big-screen">
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <p *ngIf="aboutName" class="about-line" [class.rtl]="rtl">{{ aboutWords.bigScreen(aboutName) }}</p>
             <app-waiting-row [pin]="pin" [t]="t" [presenter]="true"></app-waiting-row>
         </div>
 
-        <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()">
+        <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()" [class.about-me]="aboutMe">
+            <p *ngIf="aboutMe" class="about-title" [class.rtl]="rtl">{{ aboutWords.youTitle }}</p>
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
-            <p *ngIf="helper.hint" class="lie-hint" [class.rtl]="rtl">{{ helper.hint }}</p>
+            <p *ngIf="aboutMe" class="lie-hint about-hint" [class.rtl]="rtl">{{ aboutWords.youHint }}</p>
+            <p *ngIf="aboutName && !aboutMe" class="lie-hint about-hint" [class.rtl]="rtl">{{ aboutWords.lieHint(aboutName) }}</p>
+            <p *ngIf="helper.hint && !aboutName" class="lie-hint" [class.rtl]="rtl">{{ helper.hint }}</p>
 
             <div class="field">
                 <p class="control">
                     <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text"
                         name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off"
-                        [attr.placeholder]="helper.placeholder">
+                        [attr.placeholder]="aboutMe ? aboutWords.placeholder : helper.placeholder">
                     <span *ngIf="enteredCorrectAnswer" class="help is-danger">{{t.tooCloseToTruth}}</span>
                 </p>
             </div>
@@ -30,11 +34,11 @@
             <div class="field">
                 <p class="control">
                     <button type="submit" class="button is-primary is-fullwidth" [class.is-loading]="loading"
-                        [disabled]="!answer">{{t.send}}</button>
+                        [disabled]="!answer">{{ aboutMe ? aboutWords.sendTruth : t.send }}</button>
                 </p>
             </div>
 
-            <div *ngIf="helper.button" class="field">
+            <div *ngIf="helper.button && !aboutName" class="field">
                 <p class="control">
                     <button type="button" class="button is-text is-fullwidth give-me-a-lie" [class.rtl]="rtl"
                         (click)="giveMeALie()">{{ helper.button }}</button>
@@ -43,7 +47,13 @@
         </form>
 
         <div *ngIf="questionSubmitted" class="screen-center">
-            <app-waiting-row [pin]="pin" [t]="t" [line]="t.answerSubmitted"></app-waiting-row>
+            <ng-container *ngIf="!aboutMe">
+                <app-waiting-row [pin]="pin" [t]="t" [line]="t.answerSubmitted"></app-waiting-row>
+            </ng-container>
+            <!-- An About question, on the phone of the player it is about: their truth is in. -->
+            <ng-container *ngIf="aboutMe">
+                <app-waiting-row [pin]="pin" [t]="t" [line]="aboutWords.truthIn"></app-waiting-row>
+            </ng-container>
         </div>
 
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

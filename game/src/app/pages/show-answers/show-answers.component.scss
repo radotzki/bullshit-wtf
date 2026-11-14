@@ -40,4 +40,16 @@
             margin: 0;
         }
     }
+
+    // An About question, on the phone of the player it is about: the list, to watch, with no buttons.
+    .about-watch-title {
+        margin: 12px 0 6px;
+        font-size: 1.3rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .about-watch .answer {
+        opacity: 0.85;
+    }
 }

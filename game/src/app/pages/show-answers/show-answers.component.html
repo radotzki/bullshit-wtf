@@ -22,7 +22,16 @@
             <app-waiting-row [pin]="pin" [t]="t" [presenter]="true" [compact]="true"></app-waiting-row>
         </div>
 
-        <div *ngIf="answers && !answerSelected && !presenter">
+        <!-- An About question about this player: they know the truth, so they see the list and pick nothing. -->
+        <div *ngIf="answers && aboutMe && !presenter" class="about-watch">
+            <p class="about-watch-title" [class.rtl]="rtl">{{ aboutWords.youWatch }}</p>
+            <p *ngFor="let answer of answers" class="control">
+                <span class="button is-static is-fullwidth answer" [class.rtl]="rtl">{{ answer | uppercase }}</span>
+            </p>
+            <app-waiting-row [pin]="pin" [t]="t" [compact]="true"></app-waiting-row>
+        </div>
+
+        <div *ngIf="answers && !answerSelected && !presenter && !aboutMe">
             <p *ngIf="taste" class="taste-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <p *ngFor="let answer of answers" class="control">

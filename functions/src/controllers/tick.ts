@@ -1,5 +1,5 @@
-import { getQuestion, randomQuestions, markQuestionSeen } from './questions';
-import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart } from '../game-model';
+import { getQuestion, randomQuestions, markQuestionSeen, seenRecordsFor } from './questions';
+import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart, aboutOf, sentMark } from '../game-model';
 import { get, gamesRef, qHistoryRef } from '../firebase';
 import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
 import { pickHouseLies } from './answer-options';
@@ -10,6 +10,10 @@ import { playedUpdate, lastSentSeats } from './seats';
 import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTaste } from './taste';
 import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
+import {
+    ABOUT_SEEN_PREFIX, aboutAnswers, aboutColumns, aboutQuestionText, carryAbout, nameFor, planAbout, plannedSlot, playsAboutUs,
+    slotKey, truthOf, withAbout,
+} from './about';
 
 // How long a run waits before its second try at leaving a phase of no length.
 const leaveRetryDelay = 1000;
@@ -188,6 +192,11 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
         : gameTaste(game);
     const update = await stepUpdate(pin, game, !!taste);
 
+    // An About question's `about` stays on its states up to the next question (see about.ts).
+    if (update && update.state) {
+        update.state = carryAbout(game.state, update.state, update);
+    }
+
     if (taste && update && update.state) {
         update.state = withTaste(update.state, nextTaste(taste, update));
     }
@@ -207,26 +216,23 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
                 };
             }
 
-            return {
+            return Object.assign({
                 state: updateState(GameState.RoundIntro),
                 qids: await pickQuestionsForRoom(game),
-            };
+            }, await aboutPlanFor(game, taste));
 
         case GameState.RoundIntro:
             if (taste) {
                 return tasteQuestion(pin, game, game.questionIndex);
             }
 
-            return {
-                state: updateState(GameState.ShowQuestion),
-                currentQ: await populateQuestion(game, game.questionIndex),
-                ideas: await ideasFor(game, game.questionIndex),
-                answers: {},
-                answerSelections: {},
-                revealAnswers: null,
-            };
+            return questionStep(game, game.questionIndex);
 
         case GameState.ShowQuestion:
+            if (aboutOf(game.state)) {
+                return aboutAnswersStep(pin, game);
+            }
+
             return {
                 state: updateState(GameState.ShowAnswers),
                 answers: await populateQuestionAnswers(pin, game),
@@ -413,7 +419,8 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
     // alongside the history write; a BigQuery failure is logged and never fails the game.
     await Promise.all([
         saveQuestionHistory(game, pin),
-        onQuestionResult(questionResult(pin, Object.assign({}, game, { answerSelections: scoring.playerPicks(game) }))).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
+        onQuestionResult(Object.assign(questionResult(pin, Object.assign({}, game, { answerSelections: scoring.playerPicks(game) })),
+            aboutColumns(game))).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
     ]);
 
     if (secondRound || lastRound) {
@@ -433,19 +440,17 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             answerSelections: {},
             revealAnswers: null,
             ideas: null,
+            aboutTruth: null,
         };
     } else if (gameTaste(game)) {
         res = Object.assign({ questionIndex: game.questionIndex + 1 }, await tasteQuestion(pin, game, game.questionIndex + 1));
     } else {
-        res = {
-            state: updateState(GameState.ShowQuestion),
-            questionIndex: game.questionIndex + 1,
-            currentQ: await populateQuestion(game, game.questionIndex + 1),
-            ideas: await ideasFor(game, game.questionIndex + 1),
-            answers: {},
-            answerSelections: {},
-            revealAnswers: null,
-        };
+        res = Object.assign({ questionIndex: game.questionIndex + 1 }, await questionStep(game, game.questionIndex + 1));
+    }
+
+    // An About question's truth is not kept past its question (see about.ts).
+    if (game.aboutTruth) {
+        res.aboutTruth = null;
     }
 
     // The question is over and its laughs are in: each writer keeps their most laughed-at lie, for the
@@ -460,10 +465,100 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
 }
 
 function saveQuestionHistory(game: GameScheme, pin: string) {
+    // An About question's answers are about a player of the game, and one is their own: not kept.
+    const about = aboutOf(game.state);
+    if (about) {
+        return qHistoryRef.push({ pin, about: about.prompt, timestamp: Date.now() });
+    }
     return qHistoryRef.push({
         pin,
         q: game.currentQ,
         a: game.revealAnswers,
         timestamp: Date.now(),
     });
+}
+
+/**
+ * The writing step of question `qidx`: an About question when one is planned there and enough players
+ * are playing (see about.ts), else the bank question, as before. Starts with no lies and no truth.
+ */
+async function questionStep(game: GameScheme, qidx: number): Promise<Partial<GameScheme>> {
+    const slot = plannedSlot(game, qidx);
+    if (slot) {
+        const pid = nameFor(game);
+        if (pid) {
+            try {
+                await markQuestionSeen(ABOUT_SEEN_PREFIX + slot.prompt, playerUids(game));
+            } catch (e) {
+                console.error(`Failed to save seen About question ${slot.prompt}`, e);
+            }
+            const key = slotKey(qidx);
+            return {
+                state: withAbout(updateState(GameState.ShowQuestion), { pid, prompt: slot.prompt }),
+                currentQ: aboutQuestionText(slot.prompt, game.locale, game.players[pid].nickname),
+                ideas: null,
+                answers: {},
+                answerSelections: {},
+                revealAnswers: null,
+                aboutTruth: null,
+                [`aboutQs/${key}/pid`]: pid,
+                [`aboutQs/${key}/result`]: 'asked',
+            } as Partial<GameScheme>;
+        }
+        return Object.assign(await bankQuestionStep(game, qidx), { [`aboutQs/${slotKey(qidx)}/result`]: 'skipped' });
+    }
+    return bankQuestionStep(game, qidx);
+}
+
+async function bankQuestionStep(game: GameScheme, qidx: number): Promise<Partial<GameScheme>> {
+    return {
+        state: updateState(GameState.ShowQuestion),
+        currentQ: await populateQuestion(game, qidx),
+        ideas: await ideasFor(game, qidx),
+        answers: {},
+        answerSelections: {},
+        revealAnswers: null,
+        aboutTruth: null,
+    };
+}
+
+/**
+ * The writing of an About question is over. With the named player's truth: the answers, with the truth
+ * among them, and that player marked as done on the waiting row (they do not pick). Without it: the bank
+ * question planned for this place, with its own full time to write (the lies about the player are dropped).
+ */
+async function aboutAnswersStep(pin: string, game: GameScheme): Promise<Partial<GameScheme>> {
+    const about = aboutOf(game.state);
+    const truth = truthOf(game);
+    const key = slotKey(game.questionIndex);
+
+    if (!truth) {
+        console.log(`[PIN: ${pin}] About question ${about.prompt} got no truth in time: the bank question instead`);
+        return Object.assign(await bankQuestionStep(game, game.questionIndex), { [`aboutQs/${key}/result`]: 'fallback' });
+    }
+
+    const state = updateState(GameState.ShowAnswers);
+    const answers = aboutAnswers(game, truth, about.prompt, () => gamesRef.child(pin).child('answers').push().key);
+    return {
+        state,
+        answers,
+        answerSelections: {},
+        [`aboutQs/${key}/result`]: 'played',
+        [`players/${truth.pid}/sent`]: sentMark(state),
+    } as Partial<GameScheme>;
+}
+
+/** At START: the About questions of a game that plays them (see about.ts), or nothing to write. */
+async function aboutPlanFor(game: GameScheme, taste: boolean): Promise<Partial<GameScheme>> {
+    if (!playsAboutUs(game, taste)) {
+        return {};
+    }
+    try {
+        const plan = planAbout(game.totalQ, await seenRecordsFor(playerUids(game)));
+        return Object.keys(plan).length ? { aboutQs: plan } : {};
+    } catch (e) {
+        // The game goes on with bank questions only.
+        console.error('Failed to plan the About questions', e);
+        return {};
+    }
 }

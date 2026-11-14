@@ -172,6 +172,8 @@ function origin(game: GameScheme) {
         pack: game.pack || null,
         campaign: game.campaign || null,
         coach: !!game.coach,
+        // The About questions' half (see about.ts): null outside the test.
+        about_us: typeof game.aboutUs === 'boolean' ? game.aboutUs : null,
     };
 }
 
