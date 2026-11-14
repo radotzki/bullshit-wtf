@@ -7,6 +7,7 @@ import {
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
+import { newGameArrival } from './arrival';
 import { startReconnectNudge, pageVisible } from './reconnect-nudge';
 import { clockSync } from './clock-sync';
 import { Observable, Subscriber, Subscription, firstValueFrom } from 'rxjs';
@@ -126,6 +127,8 @@ export class ApiService {
         const { uid, waitedMs } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
         const resp = await this.post<{ pin: string }>(`newGame`, {
+            // Where this visit started and whether this browser played before (see arrival.ts).
+            arrival: newGameArrival(),
             locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
             // This client starts through startGame, so the server may refuse START ticks for this game.
             serverStart: true,

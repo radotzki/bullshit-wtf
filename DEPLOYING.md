@@ -1094,3 +1094,49 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## Where a host came from
+
+Every game made on the Create page carries where its host's visit started, so the usage data can
+tell which routes bring new groups: a search page, a post, an invite link, the home page typed in.
+Before this, six first-time hosts in ten left nothing to go by.
+
+- What is kept, with the game: the first page of the visit (`first_page`: the path alone, with
+  every PIN and crew id replaced, `/join-game/:pin`), the referring site's host name (`referrer`:
+  `www.google.com`, nothing after it), whether the browser had played or hosted before
+  (`played_before`, `hosted_before`, read from what the game already keeps on the phone, before the
+  new game leaves its own mark), and the whole minutes from that first page to creating the game
+  (`visit_minutes`). No full address, no query string, no PIN, no crew id and no new id. A post's
+  tag stays in `campaign`, as before.
+- How it is noted: once per tab, by the first page of the site the tab loads, under `BS_ARRIVAL` in
+  the tab's session storage. The app notes it at start-up (`rememberArrival` in
+  `game/src/app/services/arrival.ts`, called by `AppComponent`), so every page of the app is covered,
+  including pages added later. A plain page (how to play, the search pages) notes it with a small
+  script that `game/seo/build-pages.js` writes into every page it builds, because only the first
+  page sees the site the visitor came from. A page of the site that carries no note (one built some
+  other way, or tab storage blocked) is still named: the app reads it from its own referrer, and the
+  referring site is then NULL.
+- Where it goes: the phone sends `arrival` with `newGame`; the server keeps only what `cleanArrival`
+  (`game-model.ts`) lets through at `games/$pin/arrival`, which no phone can read (**no rules
+  change**: a child of a game without a rule of its own is readable by the server alone). It is
+  written to `opened_games` and `closed_games`, and to `users` on the host's own join only, so a
+  lobby that never starts still says where its host came from. A Replay and a crew rematch carry
+  none of it: it counts the first game only.
+- **BigQuery: run `functions/bigquery/2026-11-host-arrival.sql` (three ALTERs, additive) once,
+  before the merge.** Until then the rows land without the new fields and those days are lost;
+  nothing else is affected. The same file holds the read-only queries: first-time hosts by first
+  page and referring site, lobbies that never started by where their host came from, and a check
+  that the fields are arriving.
+- Deploy functions and hosting together (a merge does both). A phone still on the older site sends
+  no arrival: its game is made as before, with the five fields NULL.
+- Test games (`?via=test`) carry the fields like any game and are left out of every count by their
+  mark, as before (`campaign`, and `via = 'test'` on `users`).
+- Reading it: `referrer` is NULL for a typed address and for most links opened from WhatsApp and
+  other chat apps, which send none; an in-app browser shows in the `users.useragent` of the host's
+  join. A large `visit_minutes` means a tab left open from an earlier evening: `first_page` is then
+  that evening's page. `played_before` holds when a browser's id changed, which is what the
+  "played on an earlier day" count by id misses.
+- Check locally: `cd functions && npm test` (`test/arrival.test.js` prints one row,
+  `# where a host came from {...}`), `cd game && npm test` (`test/arrival.test.js`), and a run in a
+  real browser against the emulators, from a search page and from an invite link:
+  `node .github/smoke/emulator-arrival.js`.
