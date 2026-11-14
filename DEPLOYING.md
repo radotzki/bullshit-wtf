@@ -1095,6 +1095,28 @@ pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
 
+## Lies sent at the same moment end the question at once
+
+When the last lies of a question reached the server at the same moment, each `answer` call checked
+"has everyone sent?" on the game it had read before the others wrote their lies. None of them saw
+every lie, so none ended the question, and the room waited out the whole 25 seconds with nothing on
+screen to do. In an emulator game of three phones answering together it happened on 2 of 5 questions.
+
+- `answer.ts` now reads the game's lies again after writing its own, and decides on those. Each call
+  writes before it reads, so the call whose lie lands last sees them all and ends the question.
+- Two or three calls can now end the same question. `advance()` already takes a phase once (see
+  `step-once.test.js`), so the game moves on once.
+- Picks were not affected: their database trigger reads the game after each pick is written.
+- One more database read per lie sent. Nothing else changes: no new field, table or rule.
+- Deploy: functions only (the site and the rules are unchanged). Old and new together are fine.
+
+Tests: `functions/test/step-once.test.js`, "lies that arrive at the same moment" (two and three
+lies at once). Both fail on the code before this change and pass after it.
+
+How to read it: no table holds when a question's lies came in or how long the question ran (that
+waits on the wait columns of pull request 47), so this change has no number of its own yet. Until
+then it is checked by the test above and by a whole emulator game (`.github/smoke/emulator-game.js`).
+
 ## Search pages: a tag on every page, and links from home
 
 Client only. No new function, rule, table or column; nothing to run before the merge.
