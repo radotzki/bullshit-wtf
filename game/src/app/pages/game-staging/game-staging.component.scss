@@ -40,6 +40,15 @@
         height: 90px;
     }
 
+    // The lone-host help's light line: "Best with 4 or more players."
+    .best-with {
+        text-align: center;
+        color: #7a7a7a;
+        // Light on a computer too, where the page's rem is twice a phone's.
+        font-size: clamp(13px, 0.65rem, 20px);
+        margin: 10px 16px 2px;
+    }
+
     .start-alone {
         text-align: center;
         margin: 4px 0 8px;

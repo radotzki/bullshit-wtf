@@ -19,15 +19,18 @@
             <div class="loader"> </div>
         </div>
 
-        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false" [inline]="!!lobby?.alone"></app-invite>
+        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false" [inline]="!!lobby?.alone || !!help?.show"
+            [help]="help?.show ? help.device : null" [compact]="!!help?.show && !lobby?.alone" [counted]="!!help?.inTest"></app-invite>
+
+        <p *ngIf="bestLine" class="best-with" [attr.dir]="lobby?.rtl ? 'rtl' : null"> {{bestLine}} </p>
 
         <div *ngIf="lobby?.alone" class="start-alone" [attr.dir]="lobby.rtl ? 'rtl' : null">
             <a class="start-alone-link" [class.is-disabled]="loading" (click)="startAlone()"> {{lobby.startAlone}} </a>
         </div>
 
-        <div class="spacer is-hidden-mobile"> </div>
+        <div *ngIf="!help?.show" class="spacer is-hidden-mobile"> </div>
 
-        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone">
+        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone || help?.show">
             <div class="columns is-mobile is-multiline">
                 <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
                     <img [src]="'/assets/avatar' + i + '.png'" class="picture">

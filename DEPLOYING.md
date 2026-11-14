@@ -1028,6 +1028,90 @@ the same `creator_uid`, and `parent_pin` the taste when it came from INVITE FRIE
 end per day (a pick on the fifth question), against 2 of 10 games alone in the week before; and
 the browsers that created a game of two or more within 7 days of their taste, against 1 of 8.
 
+## Lone-host help (a 50/50 test in the lobby)
+
+Why: from 6 to 13 November 2026, 21 of 69 browsers that opened a lobby stayed alone and left, 13 of
+them on a computer. A computer host got a table 36% of the time, a phone host 74%, and none of the
+lone computer hosts pressed an invite button. Each lobby that fills is a new group.
+
+**What the new half shows**, on the host's own page, while the lobby holds one or two players:
+
+- **On a phone** the invite stays on the page with one guest in (today it folds into INVITE FRIENDS),
+  with COPY LINK beside WhatsApp and the share sheet. With a guest in, the QR code is left out so
+  the players show.
+- **On a computer** the invite is a card: a big QR code, "Friends join on their phones", the short
+  link to read out (`bullshit.wtf/join-game/<PIN>`), COPY LINK first, then WhatsApp, and two lines:
+  "On a call? Paste the link in the chat." and "In one room? Turn this screen so everyone can scan it."
+- One light line: "Best with 4 or more players." (with one guest: "Two can play, but it's best with
+  4 or more. Invite one or two more."). START is never held back: it is in the header from the
+  second player on, as before, and a host alone keeps "Try 5 quick questions alone".
+
+From the third player on, both halves show the lobby as it was. Guests and the big screen never see
+the help, and a lobby with a big screen is not in the test. The other half is today's lobby.
+
+**Which half.** One bit of a hash of the PIN, worked out on the page
+(`game/src/app/pages/game-staging/lone-host.ts`, `loneHostHalf`), the way the staged reveal's half
+follows the PIN. In BigQuery, with the PIN in column `pin`:
+`MOD(TO_CODE_POINTS(SHA256(CONCAT('lone-host:', UPPER(pin))))[OFFSET(0)], 2) = 1` is the new half.
+A phone or a computer: a phone or tablet by its user agent, or any window under 700 px, is a phone.
+
+**A tester's switch.** In the browser console, `localStorage.BS_LONE_HOST = 'new'` (or `'classic'`)
+puts that browser's lobbies in a half. A test game (`?via=test`) shows its half but sends no row.
+
+**What is counted.** Rows in `shares` with `content_type = 'lobby-help'`. `shares` has no PIN column,
+so these rows carry the lobby's PIN, in capitals, in `crew_id`. No new column and no database rule.
+
+| `method` | When |
+|---|---|
+| `seen-new-phone`, `seen-new-computer` | the lobby first held one or two players and showed the help (once per lobby and browser) |
+| `seen-classic-phone`, `seen-classic-computer` | the same moment in the other half |
+| `whatsapp`, `native`, `copy` | the host's invite sends from this lobby, in either half, with any number of players in (each is an `invite` row too, as before) |
+
+**How to read it.** Lobbies that reached 3 players, and hosts who pressed an invite, by half and device:
+
+```sql
+WITH seen AS (
+  SELECT crew_id AS pin, MIN(time) AS seen_at, ANY_VALUE(uid) AS host_uid,
+    ANY_VALUE(REGEXP_EXTRACT(method, r'^seen-(new|classic)-')) AS half,
+    ANY_VALUE(REGEXP_EXTRACT(method, r'-(phone|computer)$')) AS device
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'lobby-help' AND method LIKE 'seen-%' AND time >= TIMESTAMP('2026-11-14')
+  GROUP BY crew_id),
+seats AS (
+  SELECT UPPER(TRIM(pin)) AS pin, COUNT(DISTINCT uid) AS players,
+    COUNTIF(via IN ('replay', 'crew')) AS carried, COUNTIF(via = 'test') AS test_joins
+  FROM `bullshit-wtf-prod.analytics.users`
+  WHERE time >= TIMESTAMP('2026-11-14') AND pin IS NOT NULL
+  GROUP BY 1),
+sent AS (
+  SELECT crew_id AS pin, COUNT(*) AS sends
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'lobby-help' AND method IN ('whatsapp', 'native', 'copy') AND time >= TIMESTAMP('2026-11-14')
+  GROUP BY 1)
+SELECT half, device, COUNT(*) AS lobbies,
+  COUNTIF(IFNULL(sends, 0) > 0) AS pressed_invite,
+  COUNTIF(players >= 2) AS got_a_guest,
+  COUNTIF(players >= 3) AS reached_3,
+  ROUND(SAFE_DIVIDE(COUNTIF(players >= 3), COUNT(*)), 2) AS share_reached_3,
+  -- A tester's switch can put a lobby in the other half than its PIN: these should be 0.
+  COUNTIF((MOD(TO_CODE_POINTS(SHA256(CONCAT('lone-host:', seen.pin)))[OFFSET(0)], 2) = 1) != (half = 'new')) AS half_set_by_hand
+FROM seen LEFT JOIN seats USING (pin) LEFT JOIN sent USING (pin)
+-- Not a Replay's or a crew's lobby (its players are carried in), and no test game.
+WHERE IFNULL(carried, 0) = 0 AND IFNULL(test_joins, 0) = 0
+GROUP BY half, device
+ORDER BY device, half
+```
+
+The new half wins if `share_reached_3` is higher, on computers above all (today about one computer
+host in three gets a table at all). With about 11 lobbies a day the first read worth making is after
+two weeks. A Replay's lobby and a crew's lobby also send a seen row (their host is alone for a
+moment); the query leaves them out by the joins they carry. To keep the help for everyone, make
+`loneHostHelp` return `half: 'new'`; to drop it, `'classic'`.
+
+**Checked** with `game/test/lone-host.test.js`, `functions/test/lobby-help.test.js` and a run on the
+Firebase emulators, `.github/smoke/lone-host-lobby.js`: a phone and a computer, English and Hebrew,
+both halves, one to four players, and a test game.
+
 ## Who the room is waiting for
 
 After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.

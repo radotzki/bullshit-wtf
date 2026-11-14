@@ -2,6 +2,7 @@ import { ApiService } from './../../services/api.service';
 import { ShareService } from './../../services/share.service';
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
+import { loneHostStrings, LoneHostStrings } from './../../pages/game-staging/lone-host';
 
 /**
  * Lobby invite: a QR code and a shareable join link for the game PIN.
@@ -9,6 +10,11 @@ import { gameStrings, GameStrings } from './../../pages/game-strings';
  * On a phone it is a button that opens a sheet with the QR, share, WhatsApp and copy.
  * With `inline` (the host is alone in the lobby) the sheet's content is shown on the page instead.
  * Each send is counted in BigQuery's shares table as content_type "invite".
+ *
+ * The lone-host help, a 50/50 test (pages/game-staging/lone-host.ts): with `help` the inline invite is
+ * the new half's, for a phone (COPY LINK beside the others) or a computer (a card with a big QR code
+ * and the short link). With `counted` (the host's lobby is in the test, either half) each send is
+ * also counted as content_type "lobby-help", with the PIN.
  */
 @Component({
     standalone: false,
@@ -21,6 +27,13 @@ export class InviteComponent implements OnInit {
     @Input() pin: string;
     @Input() presenter: boolean;
     @Input() inline: boolean;
+    /** The lone-host help's layout, or null for today's invite. */
+    @Input() help: 'phone' | 'computer' | null = null;
+    /** With `help`: a guest is in, so the players need the room. The phone's QR code is left out. */
+    @Input() compact: boolean;
+    /** This lobby is in the lone-host test: count each send as "lobby-help" too. */
+    @Input() counted: boolean;
+    h: LoneHostStrings = loneHostStrings('en');
     locale = 'en';
     open: boolean;
     copied: boolean;
@@ -41,6 +54,7 @@ export class InviteComponent implements OnInit {
             this.locale = locale || 'en';
             this.t = this.shareService.strings(this.locale);
             this.g = gameStrings(this.locale);
+            this.h = loneHostStrings(this.locale);
             this.ready = true;
         }, () => this.ready = true);
     }
@@ -106,5 +120,8 @@ export class InviteComponent implements OnInit {
 
     private count(method: 'whatsapp' | 'native' | 'copy') {
         this.apiService.logShare('invite', method, { locale: this.locale });
+        if (this.counted) {
+            this.apiService.logShare('lobby-help', method, { crew: this.pinUpper, locale: this.locale });
+        }
     }
 }
