@@ -3,7 +3,7 @@
         <span class="crew-link-text" dir="auto">{{ t.crewLink(crewName) }}</span>
     </a>
 
-    <button *ngIf="!crewId && !naming && displayPlayers.length > 1" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
+    <button *ngIf="!crewId && !naming && displayPlayers.length > 1 && !nextWeekOn" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
         {{ t.saveCrew }}
     </button>
 
@@ -44,9 +44,10 @@
                 <p *ngIf="winners.length > 1" class="tied" [attr.dir]="rtl ? 'rtl' : 'auto'">{{ tiedNames }}</p>
                 <p class="winner-score" *ngIf="winners.length">{{ t.points(winners[0].score) }}</p>
                 <p *ngIf="myLine" class="my-line">{{ myLine }}</p>
+                <p *ngIf="nextWeekScreenLine" class="next-week-screen">{{ nextWeekScreenLine }}</p>
             </div>
 
-            <div class="actions" *ngIf="!presenter">
+            <div class="actions" *ngIf="!presenter" [class.next-week-first]="nextWeekOn && nextWeekFirst">
                 <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
                      and its lobby opens on the invite. -->
                 <div *ngIf="soloTaste && !rematchPin" class="taste-ask">
@@ -69,6 +70,10 @@
                     {{ rematchJoin }}
                 </button>
                 <p *ngIf="rematchPin" class="hint rematch-line" dir="auto">{{ rematchLine }}</p>
+                <!-- A group's second game or later, in the new half of the test: one button sets next week's
+                     date and sends it to the group; once it is set, every phone shows it here. -->
+                <app-next-week *ngIf="nextWeekOn" [pin]="pin" [locale]="locale" [crewId]="crewId" [myNickname]="myNickname"
+                    [hostName]="hostName" [winner]="!!mine && mine.place === 1" (sheet)="onNextWeekSheet($event)" (named)="onCrewNamed($event)"></app-next-week>
                 <!-- The same group's second game (or later): saving the crew comes before sharing. -->
                 <div *ngIf="crewFirst" class="crew-panel crew-first">
                     <p *ngIf="!crewId && !naming" class="crew-offer" dir="auto">{{ t.crewOffer }}</p>

@@ -33,6 +33,7 @@ import { QrCodeComponent } from './components/qr-code/qr-code.component';
 import { InviteComponent } from './components/invite/invite.component';
 import { ShareResultsComponent } from './components/share-results/share-results.component';
 import { HostAskComponent } from './components/host-ask/host-ask.component';
+import { NextWeekComponent } from './components/next-week/next-week.component';
 import { WaitingRowComponent } from './components/waiting-row/waiting-row.component';
 import { ShareService } from './services/share.service';
 import { ResultsCardService } from './services/results-card.service';
@@ -67,6 +68,7 @@ import { StepComponent } from './pages/step/step.component';
         InviteComponent,
         ShareResultsComponent,
         HostAskComponent,
+        NextWeekComponent,
         WaitingRowComponent,
         CrewComponent,
         StepComponent,

@@ -1,4 +1,4 @@
-import { replayLength } from './taste';
+import { replayLength, gameTaste } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { incGameCounter, generateGameName } from './new-game';
@@ -127,6 +127,12 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
     }
     if (Object.keys(players).some(k => players[k] && players[k].host)) {
         forked.hasHost = true;
+    }
+
+    // The sitting's first game, carried from Replay to Replay ("Same time next week?" draws its half
+    // from it, see next-week.ts). A taste was played alone: its Replay is the group's first game.
+    if (!gameTaste(game)) {
+        forked.root = game.root || parent;
     }
 
     // Replay keeps counting for the same crew.

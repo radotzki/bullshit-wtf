@@ -14,6 +14,7 @@ import {
     ABOUT_SEEN_PREFIX, aboutAnswers, aboutColumns, aboutQuestionText, carryAbout, clearAboutPlaces, nameFor, planAbout, plannedSlot,
     playsAboutUs, slotKey, truthOf, withAbout,
 } from './about';
+import { withNextWeek } from './next-week';
 
 // How long a run waits before its second try at leaving a phase of no length.
 const leaveRetryDelay = 1000;
@@ -434,7 +435,8 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
         };
     } else if (gameOver) {
         res = {
-            state: updateState(GameState.ScoreBoardFinal),
+            // In the "Same time next week?" test, the final state says which half (next-week.ts).
+            state: withNextWeek(updateState(GameState.ScoreBoardFinal), pin, game),
             // Who is still at the table, for a Replay (fork.ts seatsForReplay).
             lastSent: lastSentSeats(game),
             currentQ: {},
