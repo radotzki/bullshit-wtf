@@ -548,8 +548,9 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   (`tick`) keeps the pack, so deploy all functions.
 - The pack's questions live in `questions/hanukkah-*` in the database. Load them only **after** the
   new functions are live: old functions would mix them into every game.
-- The repository's set is `functions/data/hanukkah-questions.json`: 18 English and 16 Hebrew questions,
-  ids `hanukkah-26-en-01..18` and `hanukkah-26-he-01..16`, with the ones the two Hanukkah pages name (the
+- The repository's set is `functions/data/hanukkah-questions.json`: 77 English and 72 Hebrew questions,
+  ids `hanukkah-26-en-01..77` and `hanukkah-26-he-01..72` (a room that plays three games on each of the
+  eight nights uses 72 in its language; a pack question never repeats in a room), with the ones the two Hanukkah pages name (the
   astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). The pack turns on
   by itself on 1 December.
 - **Every release adds this file to the live question bank by itself**, in the last step, "4. Add
@@ -736,8 +737,8 @@ best lie.
 ## Staged reveal (a 50/50 test)
 
 Half of new games get a staged reveal; the other half keep the reveal as it was. Which half a game is
-in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it is
-independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`revealSchedule`,
+in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it does
+not depend on the round-1 lie helper, which every game has had since 13 November 2026. Timing in `game-model.ts` (`revealSchedule`,
 `stagedRevealTiming`), the page in `game/src/app/pages/reveal-the-truth`, its words in
 `game/src/app/pages/game-strings.ts`.
 
@@ -863,6 +864,27 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Round-1 lie helper for every game (the 50/50 test ended)
+
+From about 5 November 2026 half of new games had the round-1 lie helper ("coach": the hint line and
+"STUCK? GIVE ME A LIE" with up to two ready-made lies per player). On 13 November 2026 it was given to
+every new game, every Replay and every crew rematch: `pickCoach` in
+`functions/src/controllers/lie-helper.ts` now returns `true`.
+
+- Logging is unchanged. `opened_games.coach` and `question_results.coach` are still written for every
+  game, and `question_results.idea_lies` still counts the lies a player took from the helper. Games
+  made after the deploy all log `coach = true`; the no-helper half before it logs `false`, so the
+  switch date is plain in the data.
+- The staged reveal's own 50/50 (by PIN, `functions/bigquery/2026-11-big-reveal.sql`) is untouched.
+- Guardrail for two weeks after the deploy: the share of real games (tests left out) with 2+
+  players where half or more of the players picked on a round-2 question. The no-helper half's 74%
+  is the bar; below about 65%, read Hebrew and English apart and consider turning it back off.
+- Deploy: functions only. No rules, BigQuery or hosting change; the client already shows the helper
+  whenever `games/$pin/coach` is true. A game already in play at the deploy keeps what it had.
+- To turn it back off: make `pickCoach` return `false` and deploy the functions.
+
+Checks: `functions/test/lie-helper.test.js` and `functions/test/big-reveal.test.js` (in `npm test`).
 
 ## Final question card
 
@@ -1130,3 +1152,65 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## Lies sent at the same moment end the question at once
+
+When the last lies of a question reached the server at the same moment, each `answer` call checked
+"has everyone sent?" on the game it had read before the others wrote their lies. None of them saw
+every lie, so none ended the question, and the room waited out the whole 25 seconds with nothing on
+screen to do. In an emulator game of three phones answering together it happened on 2 of 5 questions.
+
+- `answer.ts` now reads the game's lies again after writing its own, and decides on those. Each call
+  writes before it reads, so the call whose lie lands last sees them all and ends the question.
+- Two or three calls can now end the same question. `advance()` already takes a phase once (see
+  `step-once.test.js`), so the game moves on once.
+- Picks were not affected: their database trigger reads the game after each pick is written.
+- One more database read per lie sent. Nothing else changes: no new field, table or rule.
+- Deploy: functions only (the site and the rules are unchanged). Old and new together are fine.
+
+Tests: `functions/test/step-once.test.js`, "lies that arrive at the same moment" (two and three
+lies at once). Both fail on the code before this change and pass after it.
+
+How to read it: no table holds when a question's lies came in or how long the question ran (that
+waits on the wait columns of pull request 47), so this change has no number of its own yet. Until
+then it is checked by the test above and by a whole emulator game (`.github/smoke/emulator-game.js`).
+
+## Search pages: a tag on every page, and links from home
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- Every plain search page now carries its own tag on its Start button, so a game started from it is
+  counted in `campaign`: `seo-en-how`, `seo-he-how`, `seo-en-phone`, `seo-he-phone`,
+  `seo-en-hanukkah`, `seo-he-hanukkah` and `seo-en-purim` join the tags the Hebrew occasion pages and
+  the kit pages already had. A post's own `?via=` still takes the page tag's place.
+- The home menu (phone and desktop, both languages) links the search pages in a small row under the
+  buttons: English How to play, Hanukkah, Party games on your phone, Classroom, Team building; Hebrew
+  איך משחקים, חנוכה, ארוחת שישי, בכיתה, גיבוש. Before, only the `<noscript>` block linked any of them.
+  From 1 to 13 December 2026 a Hanukkah line sits above the buttons too. Hanukkah moves every year:
+  add next season's days to `hanukkahSeasons` in `game/src/app/pages/landing/search-links.ts`.
+- A visitor who came from a post keeps the post's tag on these links, so a game they start from a
+  search page still counts for the post (and a `?via=test` play-test stays a test).
+- Tested by `game/test/search-pages.test.js`.
+
+How to read it: games by `campaign` in `opened_games` (test games out) where `campaign` starts with
+`seo-`. A game from a page counts for the page whether the visitor came from a search engine or from
+the home row; the home row exists only from this release on, so compare the Hanukkah weeks with that in
+mind.
+
+## New search pages and own share pictures
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- New pages, each with its own tag on its Start button: `/free-jackbox-alternative` (`seo-en-jackbox`)
+  and its Hebrew twin `/he/game-like-jackbox` (`seo-he-jackbox`); `/christmas-party-game`
+  (`seo-en-christmas`), `/new-years-eve-party-game` (`seo-en-new-year`) and `/office-holiday-party-game`
+  (`seo-en-office-party`), English only. The holiday pages' Start button opens Create with
+  `pack=none`, so a Christmas game is not handed the Hanukkah pack that is on by default 1 to 13 December.
+- The English home row adds Christmas, New Year's Eve and Office party from 20 November to
+  1 January (`holidaySeasons` in `search-links.ts`: add next season's days there).
+- Every search page now has its own share picture: the Hebrew occasion pages, the kit pages and the
+  new pages no longer use `og-image.png` / `og-image-he.png`. Pictures come from
+  `graphics/more-pages.html`: `node graphics/render-more-pages.js game/src/assets`.
+- Tested by `game/test/more-search-pages.test.js`.
+
+How to read it: games by `campaign` in `opened_games` (test games out) for the tags above.
