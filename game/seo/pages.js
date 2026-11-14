@@ -6,6 +6,8 @@
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
 const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
+const jackbox = require('./pages-jackbox');
+const holidays = require('./pages-en-holidays');
 
 const en = {
     lang: 'en',
@@ -19,6 +21,10 @@ const en = {
         { href: '/purim-party-game', label: 'Purim party game' },
         { href: '/classroom-game', label: 'A game for the classroom' },
         { href: '/team-building-game', label: 'A team-building game' },
+        { href: '/christmas-party-game', label: 'Christmas party game' },
+        { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
+        { href: '/office-holiday-party-game', label: 'Office holiday party game' },
+        { href: '/free-jackbox-alternative', label: 'A free Jackbox alternative' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -41,6 +47,7 @@ const he = {
         { href: '/he/made-up-answers', label: 'משחק שממציאים בו תשובות' },
         { href: '/he/classroom', label: 'משחק לכיתה' },
         { href: '/he/team-building', label: 'משחק לגיבוש צוות' },
+        { href: '/he/game-like-jackbox', label: 'משחק כמו ג\'קבוקס' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -110,7 +117,7 @@ const howHe = `
 
 module.exports = [
     {
-        path: '/how-to-play', twin: '/he/how-to-play', site: en,
+        path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',
         title: 'How to play Bullshit, the free bluffing trivia game for phones',
         description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 8 players.',
@@ -118,7 +125,7 @@ module.exports = [
         body: howEn,
     },
     {
-        path: '/he/how-to-play', twin: '/how-to-play', site: he,
+        path: '/he/how-to-play', twin: '/how-to-play', site: he, tag: 'seo-he-how',
         image: '/assets/og-how-he.png',
         title: 'איך משחקים בולשיט, משחק הבלוף והטריוויה החינמי בטלפון',
         description: 'החוקים של בולשיט: ממציאים תשובה שתעבוד על החברים, ואז מחפשים את האמת בין כל התשובות. חינם, בדפדפן, עד 8 שחקנים.',
@@ -126,7 +133,7 @@ module.exports = [
         body: howHe,
     },
     {
-        path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en,
+        path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en, tag: 'seo-en-phone',
         image: '/assets/og-phone-en.png',
         title: 'A free party game on your phones: Bullshit, the bluffing trivia game',
         description: 'Looking for a party game everyone can play on their own phone, in the same room, with no download? Bullshit is free and starts in under a minute.',
@@ -147,7 +154,7 @@ module.exports = [
 <p>New here? Read <a href="/how-to-play">how to play</a>, or just start: the rules explain themselves after one question.</p>`,
     },
     {
-        path: '/he/party-game-phone', twin: '/party-games-on-your-phone', site: he,
+        path: '/he/party-game-phone', twin: '/party-games-on-your-phone', site: he, tag: 'seo-he-phone',
         image: '/assets/og-phone-he.png',
         title: 'משחק חברה חינמי בטלפון: בולשיט, משחק הבלוף והטריוויה',
         description: 'מחפשים משחק חברה שכל אחד משחק מהטלפון שלו, באותו חדר, בלי להוריד כלום? בולשיט חינמי ומתחיל בפחות מדקה.',
@@ -168,7 +175,7 @@ module.exports = [
 <p>פעם ראשונה? קראו <a href="/he/how-to-play">איך משחקים</a>, או פשוט תתחילו: החוקים מובנים אחרי שאלה אחת.</p>`,
     },
     {
-        path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en,
+        path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en, tag: 'seo-en-hanukkah',
         start: { href: '/create-game?lang=en&pack=hanukkah', label: 'Start a Hanukkah game' },
         image: '/assets/og-hanukkah-en.png',
         title: 'A Hanukkah party game for the whole family, free on your phones',
@@ -189,7 +196,7 @@ module.exports = [
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {
-        path: '/he/hanukkah', twin: '/hanukkah-party-game', site: he,
+        path: '/he/hanukkah', twin: '/hanukkah-party-game', site: he, tag: 'seo-he-hanukkah',
         start: { href: '/create-game?lang=he&pack=hanukkah', label: 'פותחים משחק חנוכה' },
         image: '/assets/og-hanukkah-he.png',
         title: 'משחק לחנוכה לכל המשפחה, חינם בטלפון',
@@ -210,7 +217,7 @@ module.exports = [
 <p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
     },
     {
-        path: '/purim-party-game', twin: '/he/purim', site: en,
+        path: '/purim-party-game', twin: '/he/purim', site: en, tag: 'seo-en-purim',
         image: '/assets/og-purim-en.png',
         title: 'A Purim party game: free bluffing trivia on your phones',
         description: 'On the holiday of masks, the best liar wins. Bullshit is a free party game for phones where you fool your friends with fake answers. No download.',
@@ -236,4 +243,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en));
