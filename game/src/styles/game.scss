@@ -24,3 +24,8 @@
     height: 100%;
     width: 100%;
 }
+// The big screen in the room (see FitScreenDirective): the page is shrunk until it fits the screen, so
+// nothing is left to scroll to. A TV shows no scroll bar and can't scroll; a laptop would show one.
+.game-container.fit-screen {
+    overflow: hidden;
+}

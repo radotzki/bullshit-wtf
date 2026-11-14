@@ -1,4 +1,4 @@
-<section class="game-container game-staging" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+<section class="game-container game-staging" [appFitScreen]="presenter" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header *ngIf="showStartButton && !lobby?.alone" [button]="t.start" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
     <app-game-header *ngIf="!showStartButton || lobby?.alone"></app-game-header>
 

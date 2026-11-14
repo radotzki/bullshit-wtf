@@ -28,6 +28,7 @@ import { ScoreBoardComponent } from './pages/score-board/score-board.component';
 import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-final.component';
 import { BsPointsPipe } from './pipes/bs-points.pipe';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { FitScreenDirective } from './directives/fit-screen.directive';
 import { LearnComponent } from './pages/learn/learn.component';
 import { QrCodeComponent } from './components/qr-code/qr-code.component';
 import { InviteComponent } from './components/invite/invite.component';
@@ -62,6 +63,7 @@ import { StepComponent } from './pages/step/step.component';
         ScoreBoardFinalComponent,
         BsPointsPipe,
         AutofocusDirective,
+        FitScreenDirective,
         LearnComponent,
         QrCodeComponent,
         InviteComponent,
