@@ -26,6 +26,7 @@ const stand = {
     'crew': controller(['createCrew', 'crewRematch']),
     'crew-night': controller(['crewNight']),
     'laugh': controller(['laugh']),
+    'join-preview': controller(['joinPreviewPage', 'readPreviewGame']),
     'analytics': Object.assign(controller(['onJoinGame', 'onShare', 'onStateChange', 'onFork']),
         { cleanVia: () => null, cleanShare: (b) => b && b.content_type ? b : null }),
 };

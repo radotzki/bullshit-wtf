@@ -47,6 +47,11 @@ export function markQuestionSeen(qid: string, uids: string[]) {
     return seenQuestionsRef.update(update);
 }
 
+/** What these devices have seen (for picking the About questions' prompts, see about.ts). */
+export function seenRecordsFor(uids: string[]): Promise<SeenRecord[]> {
+    return getSeenRecords(uids);
+}
+
 function getSeenRecords(uids: string[]): Promise<SeenRecord[]> {
     return Promise.all(validUids(uids).map(uid => get<SeenRecord>(seenQuestionsRef.child(uid))))
         .then(records => records.map(r => r || {}));
