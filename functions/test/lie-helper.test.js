@@ -79,12 +79,8 @@ test('a sent lie counts as an idea whatever its case and spacing', () => {
     assert.strictEqual(isIdea(['a'], ''), false);
 });
 
-test('about half of all games get the helper', () => {
-    assert.strictEqual(pickCoach(() => 0.49), true);
-    assert.strictEqual(pickCoach(() => 0.5), false);
-    let on = 0;
-    for (let i = 0; i < 2000; i++) { if (pickCoach()) on++; }
-    assert.ok(on > 850 && on < 1150, `${on} of 2000`);
+test('every game gets the helper (the 50/50 test has ended)', () => {
+    for (let i = 0; i < 200; i++) { assert.strictEqual(pickCoach(), true); }
 });
 
 test('a question result counts lies, helper lies, picks and friends fooled', () => {
