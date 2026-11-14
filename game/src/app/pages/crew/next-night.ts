@@ -1,7 +1,8 @@
 /**
  * "Pick the next game night" on a crew page: a day and time the group gets as a calendar file
- * and a WhatsApp text with the crew link. Client-only: nothing is stored on the server, the
- * date travels in the group's chat and calendars. Kept free of Angular so it can be tested in Node.
+ * and a WhatsApp text with the crew link. The date travels in the group's chat and calendars; the
+ * page that sends it also stores it on the crew (see crew-night.ts), so the link opens on that night.
+ * Kept free of Angular so it can be tested in Node.
  */
 
 export const NIGHT_MINUTES = 90;

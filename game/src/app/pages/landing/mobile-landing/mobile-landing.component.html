@@ -5,6 +5,10 @@
 <section class="home" [attr.dir]="t.dir" [attr.lang]="t.lang" [class.is-rtl]="t.dir === 'rtl'">
 
     <div class="crews" *ngIf="crews.length">
+        <a class="crew tonight" *ngIf="tonight" [routerLink]="['/c', tonight.id]">
+            <i class="fa fa-calendar-check-o"></i>
+            <span class="crew-name" dir="auto">{{ t.tonight(tonight.time, tonight.name) }}</span>
+        </a>
         <a class="crew" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
             <i class="fa fa-trophy"></i>
             <span class="crew-name" dir="auto">{{ crew.name }}</span>
@@ -49,6 +53,9 @@
             <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
         </div>
     </div>
+
+    <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
+    <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
 
     <!-- Create leads for a visitor with no PIN; a returning guest keeps Join on top (front-door.ts). -->
     <ng-container *ngTemplateOutlet="first === 'create' ? create : join"></ng-container>
@@ -98,4 +105,10 @@
             <p class="menu-button-text-second"> {{ t.learnHint }} </p>
         </div>
     </div>
+
+    <!-- The search pages, linked from home so search engines (and players) find them. Plain links:
+         each is a page of its own, outside the app. -->
+    <nav class="search-links">
+        <a *ngFor="let link of links" [href]="link.href">{{ link.label }}</a>
+    </nav>
 </section>

@@ -15,8 +15,9 @@ import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import { crewNight } from './controllers/crew-night';
 import * as analytics from './controllers/analytics';
-import { cleanVisit } from './controllers/visit';
+import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visit';
 import { laugh } from './controllers/laugh';
+import { joinPreviewPage, readPreviewGame } from './controllers/join-preview';
 import { caught, http, watched } from './report';
 
 // Error bodies always carry a readable message and a code, so the client
@@ -73,8 +74,10 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const serverStart = req.body.serverStart === true;
             // The phone can show the staged reveal: the game is in that 50/50 test (see big-reveal.ts).
             const stagedReveal = req.body.stagedReveal === true;
+            // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
+            const aboutUs = req.body.aboutUs === true;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal,
+                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
             });
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
@@ -93,7 +96,7 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
 
         try {
             const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
-                req.body.stagedReveal === true);
+                req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(forked);
         } catch (e) {
             caught(e);
@@ -120,7 +123,7 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
     cors(req, res, async () => {
         try {
             const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
-                req.body.serverStart === true, req.body.stagedReveal === true);
+                req.body.serverStart === true, req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(result);
         } catch (e) {
             caught(e);
@@ -244,18 +247,58 @@ exports.onJoinGame = functions.https.onRequest(http('onJoinGame', (req, res) => 
     });
 }, 'game'));
 
-// One page view from the visit beacon (game/src/index.html), sent to /_v on the game's own site
+// One row from the visit beacon (game/src/index.html), sent to /_v on the game's own site
 // (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,
-// so no CORS preflight. Logged as one line starting "visit "; always answers 204.
-exports.visit = functions.https.onRequest(http('visit', (req, res) => {
+// so no CORS preflight. Written to BigQuery `visits` and logged as one line starting "visit ".
+// Reads no IP and stores no user agent. Always answers 204, whatever BigQuery says.
+// At most VISIT_MAX_INSTANCES copies run at once (controllers/visit.ts says why).
+exports.visit = functions.runWith({ maxInstances: VISIT_MAX_INSTANCES }).https.onRequest(http('visit', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'POST') {
-        const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
-        if (row) {
-            console.log('visit ' + JSON.stringify(row));
+        try {
+            const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
+            if (row) {
+                console.log('visit ' + JSON.stringify(row));
+                await analytics.onVisit(visitRecord(row));
+            }
+        } catch (e) {
+            console.error('visit failed', e && e.message);
         }
     }
     res.status(204).send('');
+}));
+
+// A join link, /join-game/<PIN> or /he/join-game/<PIN> (a Hosting rewrite in firebase.json): the site's
+// own page, with link-preview tags for this game ("Dana invited you to play Bullshit", in the game's
+// language). Every visitor gets the same page, so a browser runs the app as on any other path and the
+// CDN may cache it. See controllers/join-preview.ts and DEPLOYING.md, "Join link previews".
+exports.joinPreview = functions.runWith({ timeoutSeconds: 15 }).https.onRequest(http('joinPreview', async (req, res) => {
+    const started = Date.now();
+    const project = process.env.GCLOUD_PROJECT || (process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG).projectId : '') || '';
+    const url = String(req.originalUrl || req.url || '/');
+    const q = url.indexOf('?');
+    const path = q >= 0 ? url.slice(0, q) : url;
+    const query = q >= 0 ? url.slice(q) : '';
+    const answer = await joinPreviewPage(path, query, req.headers, {
+        readGame: readPreviewGame,
+        fetcher: (u, init) => fetch(u, init) as any,
+        project,
+        emulator: process.env.FUNCTIONS_EMULATOR === 'true',
+        // A GET is no request the site sends, so http() reports nothing by itself: report the faults
+        // here. A slow database read is only logged (the link got the generic preview).
+        fault: (e) => {
+            if (e && e.code === 'SLOW') {
+                console.log('joinPreview slow read');
+                return;
+            }
+            console.warn('joinPreview fault', e && e.message ? e.message : String(e));
+            caught(e, { unasked: false });
+        },
+    });
+    // One short line per answer, no nickname: how often a link got a named preview, and how long it took.
+    console.log('joinPreview ' + JSON.stringify({ kind: answer.kind, ms: Date.now() - started }));
+    Object.keys(answer.headers).forEach(h => res.set(h, answer.headers[h]));
+    res.status(answer.status).send(answer.body);
 }));
 
 // One game night send from a crew page (or another counted share): a row in BigQuery `shares`.
@@ -281,7 +324,7 @@ exports.tick = functions.database.ref('games/{pin}/tick').onWrite(watched('tick'
 }));
 
 // Ends each timed phase on the server at its deadline, so a game keeps going when every phone sleeps.
-// The longest phase (a big-screen reveal with 8 players) is under 50 seconds, hence the longer timeout.
+// The longest phase (a big-screen reveal with 12 players) is about 70 seconds, hence the longer timeout.
 exports.phaseTimer = functions
     .runWith({ timeoutSeconds: 120, memory: '128MB' })
     .database.ref('games/{pin}/state').onWrite(watched('phaseTimer', (change, context) => {

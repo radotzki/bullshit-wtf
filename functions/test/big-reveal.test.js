@@ -84,15 +84,17 @@ test('half of the games in the test get the staged reveal, also among PINs given
     assert.ok(runs > 1850 && runs < 2150, `${runs} of 3999 neighbours alike`);
 });
 
-test('the half is independent of the lie helper: each half of one test holds both halves of the other', () => {
+test('the staged reveal keeps its own 50/50 now that every game has the lie helper', () => {
     const cells = { tt: 0, tf: 0, ft: 0, ff: 0 };
     for (let i = 0; i < 8000; i++) {
-        // The lie helper's own random draw, and the half the PIN falls in.
+        // The lie helper is on for every game; the staged half still follows from the PIN alone.
         const coach = pickCoach();
         const big = drawBigReveal(true, pinAt(i));
         cells[(coach ? 't' : 'f') + (big ? 't' : 'f')]++;
     }
-    Object.keys(cells).forEach(k => assert.ok(cells[k] > 1750 && cells[k] < 2250, `${k}: ${cells[k]} of 8000`));
+    assert.strictEqual(cells.ft + cells.ff, 0, 'no game without the helper');
+    assert.ok(cells.tt > 3700 && cells.tt < 4300, `staged: ${cells.tt} of 8000`);
+    assert.ok(cells.tf > 3700 && cells.tf < 4300, `plain: ${cells.tf} of 8000`);
 });
 
 test('the usage rows carry no column for the test: the PIN is enough', () => {
@@ -344,4 +346,13 @@ test('the folded scoreboard: before, change, after, places and the order on scre
     const added = { a: { nickname: 'Alice', score: 750 }, b: { nickname: 'Ben', score: 500 }, c: { nickname: 'Chen', score: 1500 } };
     assert.deepStrictEqual(revealStandings(added, { c: 1000, a: -250 }, true), s);
     assert.deepStrictEqual(revealStandings(null, {}), []);
+});
+
+test('every Replay gets the lie helper, whatever the parent had', () => {
+    const base = { locale: 'he', totalQ: 5, presenter: false, players: { a: { nickname: 'A', score: 500, uid: 'u' } } };
+    [true, false, undefined].forEach(parentCoach => {
+        const parent = Object.assign({}, base, parentCoach === undefined ? {} : { coach: parentCoach });
+        const forked = createFork('AAAA', parent, ['q'], 'u', 'a', undefined, true, stagedPin);
+        assert.strictEqual(forked.coach, true, `parent coach ${parentCoach}`);
+    });
 });

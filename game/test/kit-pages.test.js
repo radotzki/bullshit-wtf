@@ -79,7 +79,7 @@ kit.forEach(p => {
             assert.match(h2, /projector|big screen/);
             assert.match(h2, /15 minutes/);
         }
-        assert.match(p.body, /\b8\b/);
+        assert.match(p.body, /\b12\b/);
     });
 
     test(`${p.path}: every button it names is one the site shows there`, () => {
@@ -109,7 +109,8 @@ kit.forEach(p => {
         assert.match(phase, /ShowAnswers\]: 20000/);
         assert.match(p.body, /25/);
         assert.match(p.body, /20/);
-        assert.match(read('functions/src/controllers/join.ts'), /length === 8\)/);
+        assert.match(read('functions/src/controllers/join.ts'), /length >= MAX_PLAYERS\)/);
+        assert.match(read('game-model.ts'), /export const MAX_PLAYERS = 12;/);
         assert.match(read('name-flag.ts'), /NICKNAME_MAX = 9;/);
         assert.match(p.body, /\b9\b/);
         // No promise the game cannot keep.

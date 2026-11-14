@@ -160,3 +160,29 @@ test('live games still take players; a wrong PIN is still GAME_NOT_EXIST', async
     assert.strictEqual((await call('validateGameName', { pin: 'NOPE' })).body.code, 'GAME_NOT_EXIST');
     assert.strictEqual((await call('join', { pin: 'NOPE', nickname: 'Bob', uid: 'u1' })).body.code, 'GAME_NOT_EXIST');
 });
+
+// Room for the ninth player: a game takes 12 seats, and the thirteenth is told it is full.
+test('a game takes 12 players; the 13th join is refused as full, and a full rematch is not offered', async () => {
+    const { MAX_PLAYERS } = require(path.join(__dirname, '..', 'dist', 'game-model'));
+    assert.strictEqual(MAX_PLAYERS, 12);
+    seed({ BIGG: game(Staging, now - 1000) });
+    for (let i = 2; i <= 12; i++) {
+        assert.strictEqual((await call('validateGameName', { pin: 'BIGG' })).code, 200, `seat ${i}`);
+        const j = await call('join', { pin: 'BIGG', nickname: 'P' + i, uid: 'u' + i });
+        assert.strictEqual(j.code, 200, `seat ${i}`);
+    }
+    assert.strictEqual(Object.keys(db.games.BIGG.players).length, 12);
+    const v = await call('validateGameName', { pin: 'BIGG' });
+    assert.deepStrictEqual([v.code, v.body.code], [400, 'GAME_IS_FULL']);
+    const j = await call('join', { pin: 'BIGG', nickname: 'P13', uid: 'u13' });
+    assert.deepStrictEqual([j.code, j.body.code], [400, 'GAME_IS_FULL']);
+    assert.strictEqual(Object.keys(db.games.BIGG.players).length, 12);
+
+    // A rematch lobby with 11 seats is offered to a late friend; with 12 it is not.
+    const eleven = {};
+    for (let i = 0; i < 11; i++) eleven['s' + i] = { nickname: 'S' + i, score: 0 };
+    seed({ ABCD: game(Final, now - 60 * 1000, { fork: 'EFGH' }), EFGH: game(Staging, now - 1000, { players: eleven }) });
+    assert.strictEqual((await call('validateGameName', { pin: 'ABCD' })).body.rematch, 'EFGH');
+    db.games.EFGH.players.s11 = { nickname: 'S11', score: 0 };
+    assert.strictEqual((await call('validateGameName', { pin: 'ABCD' })).body.rematch, undefined);
+});

@@ -30,7 +30,7 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="displayPlayers" class="final">
+        <div *ngIf="displayPlayers" class="final" [class.lots]="!soloTaste && displayPlayers.length > 8">
             <div class="confetti" aria-hidden="true">
                 <i *ngFor="let c of confetti" [class]="'c' + (c % 7)" [style.left.%]="(c * 37) % 100"
                     [style.animation-delay.ms]="(c * 173) % 1400"></i>
@@ -82,9 +82,9 @@
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
             </div>
 
-            <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
+            <app-host-ask *ngIf="hostAsk" [locale]="locale" [pack]="pack" place="after-game"></app-host-ask>
 
-            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4">
+            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4" [class.lots]="displayPlayers.length > 8">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
                     <div class="row">
                         <span class="place">{{ player.place }}</span>
@@ -100,8 +100,10 @@
                         <span class="lie-label">{{ t.bestLie }}:</span>
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
+                        <!-- Big screen, 9 to 12: when the funniest lie is the best one, its laughs join this line. -->
+                        <span *ngIf="player.funniest && player.funniest.text === player.best.text" class="lie-laughs also">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>
-                    <div class="lie funny" *ngIf="player.funniest">
+                    <div class="lie funny" *ngIf="player.funniest" [class.same]="player.best && player.funniest.text === player.best.text">
                         <span class="lie-label">{{ t.funniestLie }}:</span>
                         <span class="lie-text" dir="auto">"{{ player.funniest.text }}"</span>
                         <span class="lie-laughs">{{ t.laughs(player.funniest.laughs) }}</span>

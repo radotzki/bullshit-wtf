@@ -14,7 +14,7 @@
 export const ROUND_ONE = { truth: 1000, fooled: 500, houseLie: 250 };
 export const ROUND_FACTORS = [1, 1.5, 2];
 export const GAME_LENGTHS = [5, 7, 9];
-export const MAX_PLAYERS = 8;
+export const MAX_PLAYERS = 12;
 
 export interface LearnStrings {
     lang: 'he' | 'en';

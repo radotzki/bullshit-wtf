@@ -9,6 +9,9 @@
     <div class="columns main-columns">
         <div class="column is-half">
 
+            <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
+            <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
+
             <div class="columns">
                 <div class="column">
                     <div class="menu-button" routerLink="/join-game">
@@ -43,11 +46,20 @@
 
             <div class="your-crews" *ngIf="crews.length">
                 <p class="your-crews-title">{{ t.yourCrews }}</p>
+                <a class="button is-primary is-fullwidth tonight" *ngIf="tonight" [routerLink]="['/c', tonight.id]">
+                    <span class="icon"><i class="fa fa-calendar-check-o"></i></span>
+                    <span dir="auto">{{ t.tonight(tonight.time, tonight.name) }}</span>
+                </a>
                 <a class="button is-info is-fullwidth" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
                     <span class="icon"><i class="fa fa-trophy"></i></span>
                     <span><span dir="auto">{{ crew.name }}</span>: {{ t.crewActionShort }}</span>
                 </a>
             </div>
+
+            <!-- The search pages, linked from home so search engines (and players) find them. -->
+            <nav class="search-links">
+                <a *ngFor="let link of links" [href]="link.href">{{ link.label }}</a>
+            </nav>
 
         </div>
     </div>

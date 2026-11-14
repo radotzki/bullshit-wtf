@@ -130,6 +130,17 @@
         font-size: .8em;
         color: #f3d467;
     }
+
+    // A crew whose game night is today leads the menu.
+    .crew.tonight {
+        background-color: #db7151;
+        color: #fff;
+        font-weight: 700;
+
+        i {
+            color: #fff;
+        }
+    }
 }
 
 
@@ -377,5 +388,33 @@
         .dots {
             display: none;
         }
+    }
+}
+
+// One line to the Hanukkah page, in season only.
+.season {
+    flex: none;
+    display: block;
+    padding: 10px 15px;
+    background-color: #2f1b2c;
+    color: #f3d467;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+// The row of links to the search pages, at the foot of the menu: small, so the four buttons keep the screen.
+.search-links {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 16px;
+    padding: 12px 15px;
+    background-color: #2f1b2c;
+    font-size: .85rem;
+
+    a {
+        color: #f4fcca;
+        text-decoration: underline;
     }
 }

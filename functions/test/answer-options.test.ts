@@ -55,6 +55,18 @@ const tests: { [name: string]: () => void } = {
         assert.strictEqual(pickHouseLies(fakes, lies.slice(0, 6), 'truth', 8, seeded(6)).length, 2);
     },
 
+    'a table of 9 to 12: every player lie shows, house lies fill only up to 9 answers'() {
+        const many = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'h11', 'h12'];
+        const lies = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'];
+        // 12 players, 11 lies: 11 lies and the truth, no house lie.
+        assert.strictEqual(pickHouseLies(many, lies, 'truth', 12, seeded(9)).length, 0);
+        // 12 players, 4 lies: topped up to 9 answers, as an 8-seat game would be, not to 13.
+        assert.strictEqual(pickHouseLies(many, lies.slice(0, 4), 'truth', 12, seeded(9)).length, 4);
+        assert.strictEqual(pickHouseLies(many, lies.slice(0, 4), 'truth', 8, seeded(9)).length, 4);
+        // Nobody wrote: 8 house lies and the truth.
+        assert.strictEqual(pickHouseLies(many, [], 'truth', 10, seeded(9)).length, 8);
+    },
+
     'nobody answered: house lies still fill the screen'() {
         assert.strictEqual(pickHouseLies(fakes, [], 'truth', 3, seeded(7)).length, 4);
     },
