@@ -164,9 +164,10 @@ jobs:
           node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
       # Adds the questions of the reviewed question files to the live question bank: the files
-      # listed in the script (FILES), today functions/data/hanukkah-questions.json and
-      # functions/data/strange-facts-2026-11.json, and no other file. One update (PATCH) of
-      # questions/ naming exactly those files' own ids (hanukkah-26-*, fact-26-*),
+      # listed in the script (FILES), today functions/data/hanukkah-questions.json,
+      # functions/data/strange-facts-2026-11.json and functions/data/thanksgiving-questions.json,
+      # and no other file. One update (PATCH) of questions/ naming exactly those files' own ids
+      # (hanukkah-26-*, fact-26-*, thanksgiving-26-en-*),
       # never a set or import, which would replace the whole bank. Nothing else under questions/
       # is sent, so nothing else is changed or deleted, and sending the same values again on every
       # release changes nothing. After the functions on purpose: older functions would mix pack

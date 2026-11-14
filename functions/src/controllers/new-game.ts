@@ -2,7 +2,7 @@ import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
 import { withStaged } from './phase';
-import { GameScheme, GameState, isPack, cleanCampaign } from '../game-model';
+import { GameScheme, GameState, packFits, cleanCampaign } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export interface NewGameOptions {
@@ -24,7 +24,8 @@ export interface NewGameOptions {
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
     return incGameCounter().then(async gameCounter => {
         const gamePin = generateGameName(gameCounter);
-        const pack = isPack(options.pack) ? options.pack : undefined;
+        // A pack with questions in one language only (Thanksgiving: English) is dropped from any other game.
+        const pack = packFits(options.pack, locale) ? options.pack : undefined;
         const questions = await randomQuestions(locale, count, options.uids || [], pack);
         const game = emptyGame(locale, count, questions, creator);
 

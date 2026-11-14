@@ -578,7 +578,9 @@ puts the questions of the repository's reviewed question files there itself, in 
     every question with `pack: "hanukkah"` (see "Hanukkah pack" below);
   - `functions/data/strange-facts-2026-11.json`, ids `fact-26-en-NN` and `fact-26-he-NN`, questions
     of the normal bank: exactly `questionText`, `realAnswer`, `fakeAnswers`, `citation` and `lang`,
-    and no `pack` field.
+    and no `pack` field;
+  - `functions/data/thanksgiving-questions.json`, ids `thanksgiving-26-en-NN` (English only: the id
+    rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below).
 - **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
   body is exactly those files. Every key must be an id of the file it stands in, and every value a
   whole question in that id's language with that file's fields and no other, or nothing is sent for
@@ -605,6 +607,44 @@ puts the questions of the repository's reviewed question files there itself, in 
   `npx firebase database:update /questions <file> --instance bullshit-wtf-prod -P bullshit-wtf-prod`
 - `node .github/scripts/load-pack-questions.js --dry-run` prints the files and every id that would
   be sent, without sending anything.
+
+## Thanksgiving pack and its search page
+
+For US Thanksgiving, Thursday 26 November 2026. Nothing to run before or after the merge: the
+release adds the questions itself (see "Question files the release adds").
+
+- **The pack:** 32 English questions in `functions/data/thanksgiving-questions.json`, ids
+  `thanksgiving-26-en-01..32`, each with `pack: "thanksgiving"`: the turkey, the parade, football,
+  the Pilgrims, food and TV. Each `citation` is the page the truth was checked against on
+  14 November 2026, and each house lie was checked as false against the same page. Pack questions
+  never appear in other games. A pack game takes up to 3 of them, ones nobody in the room has seen.
+- **English only.** A pack can now name the game languages it has questions in
+  (`locales` in `questionPacks`, `game-model.ts`); Hanukkah names none and stays in both. The Create
+  page offers the Thanksgiving pack only while English is picked on the form, `newGame` drops it
+  from a game in any other language, and a crew rematch takes it only for an English crew.
+- **Season:** 20 to 30 November 2026 by the date in Israel, as every season is counted, which
+  covers the Friday before Thanksgiving to the end of the Sunday after it anywhere in the United
+  States. In those days the Create page shows "🦃 Thanksgiving questions" ticked for every English
+  game, wherever the host is; a host can untick it. Outside them the pack is still playable by link
+  (`/create-game?lang=en&pack=thanksgiving`). Next year: add the days in `questionPacks`
+  (2027: Thursday 25 November) and in `search-links.ts`.
+- **The lobby** of a pack game says "🦃 Thanksgiving edition: new Thanksgiving questions in this game".
+  The after-game ask and the results card treat it as a normal game.
+- **The page:** `/thanksgiving-party-game`, English only, tag `seo-en-thanksgiving`, in the
+  sitemap and the English pages' nav. Its Start button opens Create with the pack. Its share picture
+  is the `thanksgiving-en` card of `graphics/more-pages.html`.
+- **Home (English only):** the row of links shows "Thanksgiving" from 1 to 29 November, and the
+  line above the buttons says "Thanksgiving is here: play with Thanksgiving questions" from 20 to
+  29 November, by the visitor's own calendar (`search-links.ts`).
+- **Until the first release after the merge has added the questions,** a Thanksgiving game is a
+  normal game: the picker finds no pack question and fills the game from the normal bank.
+- Tested by `functions/test/thanksgiving-questions.test.js`, `game/test/thanksgiving-page.test.js`
+  and `.github/scripts/load-pack-questions.test.js`.
+- To retire a question, add its id to `retired-questions.ts`. Edit a question in the file, never in
+  the Firebase console: each release rewrites it from the file.
+
+How to read it: games by `campaign = 'seo-en-thanksgiving'` in `opened_games` for the page, and
+games with `pack = 'thanksgiving'` for the pack (test games out).
 
 ## Hanukkah pack and campaign tags
 

@@ -8,6 +8,7 @@ const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
 const jackbox = require('./pages-jackbox');
 const holidays = require('./pages-en-holidays');
+const thanksgiving = require('./pages-en-thanksgiving');
 
 const en = {
     lang: 'en',
@@ -21,6 +22,7 @@ const en = {
         { href: '/purim-party-game', label: 'Purim party game' },
         { href: '/classroom-game', label: 'A game for the classroom' },
         { href: '/team-building-game', label: 'A team-building game' },
+        { href: '/thanksgiving-party-game', label: 'Thanksgiving party game' },
         { href: '/christmas-party-game', label: 'Christmas party game' },
         { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
         { href: '/office-holiday-party-game', label: 'Office holiday party game' },
@@ -243,4 +245,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en));

@@ -3,7 +3,7 @@ import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
-import { questionPacks, isPack, seasonalPack } from '../../game-model';
+import { questionPacks, seasonalPack, packFits, packIcon } from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
@@ -21,8 +21,8 @@ export class CreateGameComponent implements OnInit {
     length = 7;
     loading: boolean;
     errorMsg: string;
-    // The seasonal pack on offer (in season, or asked for with ?pack=), and whether it is switched on.
-    pack: string = null;
+    // The pack asked for with ?pack=, if any, and whether a pack on offer is switched on.
+    private askedPack: string = null;
     usePack = false;
     // A tag on this page's own address (the after-game ask links here with ?via=after-game).
     private campaign: string = null;
@@ -42,9 +42,21 @@ export class CreateGameComponent implements OnInit {
 
         this.campaign = typeof params.via === 'string' ? readCampaign(`?via=${encodeURIComponent(params.via)}`) : null;
 
-        const asked = isPack(params.pack) ? params.pack : null;
-        this.pack = asked || seasonalPack() || null;
-        this.usePack = !!this.pack && params.pack !== 'none';
+        this.askedPack = typeof params.pack === 'string' ? params.pack : null;
+        this.usePack = params.pack !== 'none';
+    }
+
+    /**
+     * The seasonal pack on offer for the language picked on the form: the one asked for with ?pack=,
+     * else the one in season. A pack with questions in one language only (Thanksgiving: English)
+     * leaves the form when the other language is picked.
+     */
+    get pack(): string {
+        return packFits(this.askedPack, this.locale) ? this.askedPack : seasonalPack(Date.now(), this.locale) || null;
+    }
+
+    get packIcon(): string {
+        return packIcon(this.pack);
     }
 
     get packLabel(): string {

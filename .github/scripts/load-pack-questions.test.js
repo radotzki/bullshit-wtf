@@ -16,9 +16,11 @@ const FACTS_FILE = 'functions/data/strange-facts-2026-11.json';
 const read = file => JSON.parse(fs.readFileSync(path.join(ROOT, file), 'utf8'));
 const PACK = read(PACK_FILE);
 const FACTS = read(FACTS_FILE);
+const THANKS_FILE = 'functions/data/thanksgiving-questions.json';
+const THANKS = read(THANKS_FILE);
 // What the release sends: every listed file's questions, in the list's order.
-const QUESTIONS = { ...PACK, ...FACTS };
-const ANY_ID = /^(hanukkah|fact)-26-(en|he)-\d{2}$/;
+const QUESTIONS = { ...PACK, ...FACTS, ...THANKS };
+const ANY_ID = /^((hanukkah|fact)-26-(en|he)|thanksgiving-26-en)-\d{2}$/;
 const URLS = {
     project: `https://firebase.googleapis.com/v1beta1/projects/${PROJECT}`,
     config: `https://firebase.googleapis.com/v1beta1/projects/${PROJECT}/adminSdkConfig`,
@@ -45,7 +47,7 @@ const noAnswer = (place, e) => [`no answer from ${place}: ${e && e.code}`];
 const tmpWith = (data, files = { [PACK_FILE]: data }) => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pack-'));
     fs.mkdirSync(path.join(dir, 'functions', 'data'), { recursive: true });
-    const all = { [PACK_FILE]: PACK, [FACTS_FILE]: FACTS, ...files };
+    const all = { [PACK_FILE]: PACK, [FACTS_FILE]: FACTS, [THANKS_FILE]: THANKS, ...files };
     for (const file of Object.keys(all)) {
         if (all[file] !== undefined) {
             fs.writeFileSync(path.join(dir, file), JSON.stringify(all[file]));
@@ -59,9 +61,15 @@ const fact = () => JSON.parse(JSON.stringify(FACTS['fact-26-en-01']));
 test('the repository\'s files pass the check, and every key is an id of its own file', () => {
     const { questions, counts } = payload(ROOT);
     assert.deepStrictEqual(questions, QUESTIONS);
-    assert.deepStrictEqual(counts.map(c => c.file), [PACK_FILE, FACTS_FILE]);
+    assert.deepStrictEqual(counts.map(c => c.file), [PACK_FILE, FACTS_FILE, THANKS_FILE]);
     assert.deepStrictEqual(counts[0].ids, Object.keys(PACK));
     assert.deepStrictEqual(counts[1].ids, Object.keys(FACTS));
+    assert.deepStrictEqual(counts[2].ids, Object.keys(THANKS));
+    for (const id of Object.keys(THANKS)) {
+        assert.match(id, /^thanksgiving-26-en-\d{2}$/);
+        assert.strictEqual(questions[id].pack, 'thanksgiving');
+        assert.strictEqual(questions[id].lang, 'en');
+    }
     for (const id of Object.keys(PACK)) {
         assert.match(id, /^hanukkah-26-(en|he)-\d{2}$/);
         assert.strictEqual(questions[id].pack, 'hanukkah');
@@ -79,6 +87,7 @@ test('the list of question files is exactly the reviewed ones, and never the dai
     assert.deepStrictEqual(FILES.map(f => [f.file, String(f.id), f.pack]), [
         ['functions/data/hanukkah-questions.json', '/^hanukkah-26-(en|he)-\\d{2}$/', 'hanukkah'],
         ['functions/data/strange-facts-2026-11.json', '/^fact-26-(en|he)-\\d{2}$/', null],
+        ['functions/data/thanksgiving-questions.json', '/^thanksgiving-26-(en)-\\d{2}$/', 'thanksgiving'],
     ]);
     assert.doesNotThrow(() => checkList(FILES));
     assert.deepStrictEqual(NEVER, ['functions/data/daily-questions.json']);
@@ -124,12 +133,13 @@ test('the daily puzzle\'s questions are refused, as a file and as a body', async
 test('the dry run names exactly the file\'s ids, as an update', () => {
     const lines = dryRun(ROOT);
     assert.match(lines[0], /^Would send: PATCH .*\/questions\.json \(an update, never a set\)$/);
-    assert.strictEqual(lines[1], `Question files (2): ${PACK_FILE}, ${FACTS_FILE}`);
+    assert.strictEqual(lines[1], `Question files (3): ${PACK_FILE}, ${FACTS_FILE}, ${THANKS_FILE}`);
     assert.strictEqual(lines[2], `Children of questions/ it writes (${Object.keys(QUESTIONS).length}):`);
     assert.strictEqual(lines[3], `  from ${PACK_FILE}, the Hanukkah pack (${Object.keys(PACK).length}): ${Object.keys(PACK).join(', ')}`);
     assert.strictEqual(lines[4], `  from ${FACTS_FILE}, the strange facts (120): ${Object.keys(FACTS).join(', ')}`);
-    assert.match(lines[5], /: yes$/);
-    assert.strictEqual(lines.length, 7);
+    assert.strictEqual(lines[5], `  from ${THANKS_FILE}, the Thanksgiving pack (${Object.keys(THANKS).length}): ${Object.keys(THANKS).join(', ')}`);
+    assert.match(lines[6], /: yes$/);
+    assert.strictEqual(lines.length, 8);
 });
 
 test('one update of questions/ is sent, its body exactly the file, and nothing else is written', async () => {
@@ -347,4 +357,22 @@ test('a request built with headers is never sent, by either sign-in', async () =
     for (const o of w.sent) {
         assert.deepStrictEqual(Object.keys(o).sort(), ['data', 'method', 'url']);
     }
+});
+
+test('the Thanksgiving pack is English only: a Hebrew id, a question without its pack or one of another pack is not written', () => {
+    const turkey = () => JSON.parse(JSON.stringify(THANKS['thanksgiving-26-en-01']));
+    assert.doesNotThrow(() => check({ 'thanksgiving-26-en-01': turkey() }));
+    for (const data of [
+        { 'thanksgiving-26-he-01': { ...turkey(), lang: 'he' } },
+        { 'thanksgiving-26-en-01': { ...turkey(), lang: 'he' } },
+        { 'thanksgiving-26-en-01': { ...turkey(), pack: 'hanukkah' } },
+        { 'thanksgiving-26-en-01': { ...turkey(), pack: undefined } },
+        { 'thanksgiving-26-en-01': fact() },
+        { 'thanksgiving-27-en-01': turkey() },
+        { 'thanksgiving-26-en-001': turkey() },
+        { 'hanukkah-26-en-01': turkey() },
+    ]) {
+        assert.throws(() => check(data), JSON.stringify(Object.keys(data)));
+    }
+    assert.throws(() => payload(tmpWith(null, { [THANKS_FILE]: { ...THANKS, 'fact-26-en-90': fact() } })), /thanksgiving-questions\.json: Not an id/);
 });
