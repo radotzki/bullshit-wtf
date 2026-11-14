@@ -3,6 +3,8 @@
     padding: 15px;
     background-color: #502440;
     color: #fff;
+    // Holds the language switch in its corner, in both languages.
+    position: relative;
 
     .title {
         letter-spacing: 2px;
@@ -23,11 +25,8 @@
         cursor: pointer;
     }
 
-    // Only the Hebrew menu has the switch; the English bar stays exactly as it was.
-    &[dir="rtl"] {
-        position: relative;
-    }
-
+    // Both menus have the switch: עברית on the English bar (a Hebrew speaker whose phone is set
+    // to English lands on the English menu), English on the Hebrew bar, on the side the text ends.
     &[dir="rtl"] .lang-switch {
         right: auto;
         left: 12px;
