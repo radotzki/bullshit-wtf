@@ -158,3 +158,74 @@ test('the final screen: the new button replaces the save-crew offer, and its she
     assert.match(code, /return !!this\.sheetOpen \|\| !!this\.nextWeekSheet \|\|/);
     assert.match(code, /this\.hadCrew === false && !this\.presenter && !this\.soloTaste && !this\.nextWeekOn/);
 });
+
+test('a date other than the one offered is a game night, not "same time next week"', () => {
+    const offered = new Date(2026, 10, 20, 21, 0);
+    const sunday = new Date(2026, 10, 15, 19, 45);
+    assert.strictEqual(w.nextWeekText({ winner: false, when: sunday, leader: 'Dana leads 2 to 0', locale: 'en', offered }),
+        'I want a rematch. Bullshit game night: Sunday 15 November, 19:45. Dana leads 2 to 0. Who\'s in? Tap here:');
+    assert.strictEqual(w.nextWeekText({ winner: true, when: sunday, leader: '', locale: 'he', offered }),
+        'בואו לקחת לי את התואר. ערב בולשיט: יום ראשון, 15 בנובמבר, 19:45. מי בפנים? לוחצים כאן:');
+    // The date offered keeps its words; so does a message with no offered date.
+    assert.strictEqual(w.nextWeekText({ winner: false, when: new Date(offered), leader: '', locale: 'he', offered }),
+        'מגיע לי משחק חוזר. בולשיט, אותה שעה בשבוע הבא: יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
+    // Only the time changed: still another night.
+    assert.match(w.nextWeekText({ winner: false, when: new Date(2026, 10, 20, 20, 30), leader: '', locale: 'en', offered }),
+        /^I want a rematch\. Bullshit game night: Friday 20 November, 20:30\./);
+});
+
+test('the leader line in the message: "בראש" in Hebrew, the crew page\'s line in English and for a tie', () => {
+    const rows = [{ nickname: 'יוסי', wins: 2 }, { nickname: 'דנה', wins: 0 }];
+    assert.strictEqual(w.messageLeader(rows, 'יוסי מוביל/ה 2–0', 'he'), 'יוסי בראש, 2–0');
+    assert.strictEqual(w.messageLeader([{ nickname: 'יוסי', wins: 2 }], 'יוסי מוביל/ה עם 2', 'he'), 'יוסי בראש עם 2');
+    assert.strictEqual(w.messageLeader([{ nickname: 'מיכל', wins: 1 }, { nickname: 'דנה', wins: 1 }], 'תיקו 1–1 בין מיכל ל־דנה', 'he'),
+        'תיקו 1–1 בין מיכל ל־דנה');
+    assert.strictEqual(w.messageLeader([{ nickname: 'Dana', wins: 2 }, { nickname: 'Avi', wins: 1 }], 'Dana leads 2 to 1', 'en'),
+        'Dana leads 2 to 1');
+    assert.strictEqual(w.messageLeader([{ nickname: 'Dana', wins: 0 }], 'No winner yet. Who takes the first one?', 'en'), '');
+    assert.strictEqual(w.messageLeader([], 'x', 'he'), '');
+    // In the message itself: no slash.
+    const text = w.nextWeekText({ winner: false, when: new Date(2026, 10, 20, 21), leader: w.messageLeader(rows, '', 'he'), locale: 'he' });
+    assert.strictEqual(text, 'מגיע לי משחק חוזר. בולשיט, אותה שעה בשבוע הבא: יום שישי, 20 בנובמבר, 21:00. יוסי בראש, 2–0. מי בפנים? לוחצים כאן:');
+    assert.ok(!/\//.test(text));
+});
+
+test('the big screen asks until a phone sets the date, then shows the date', () => {
+    const now = new Date(2026, 10, 13, 22, 30);
+    const night = new Date(2026, 10, 20, 21, 0).getTime();
+    assert.strictEqual(w.bigScreenLine(undefined, now, 'en'), 'Same time next week? It\'s on your phones.');
+    assert.strictEqual(w.bigScreenLine(night, now, 'en'), 'Next game night: Friday 20 November, 21:00');
+    assert.strictEqual(w.bigScreenLine(night, now, 'he'), 'ערב המשחק הבא: יום שישי, 20 בנובמבר, 21:00');
+    // Tonight's own night is the one being played: the ask stays.
+    assert.strictEqual(w.bigScreenLine(new Date(2026, 10, 13, 21, 0).getTime(), now, 'he'), 'אותה שעה בשבוע הבא? זה אצלכם בטלפונים.');
+});
+
+test('a date another phone set while this sheet was open takes the sheet over; this phone\'s own does not', () => {
+    const now = new Date(2026, 10, 13, 22, 30);
+    const a = new Date(2026, 10, 22, 21, 0).getTime();
+    const b = new Date(2026, 10, 20, 21, 0).getTime();
+    // The sheet opened with no night: A's night arrives, the sheet shows it.
+    assert.strictEqual(w.nightTaken(a, null, null, now), true);
+    // This phone sent B, and the crew has B: its own.
+    assert.strictEqual(w.nightTaken(b, null, b, now), false);
+    // This phone sent B, but the server kept A (sent first): the sheet shows A.
+    assert.strictEqual(w.nightTaken(a, null, b, now), true);
+    // The sender changing their night: the night it opened on is not "taken".
+    assert.strictEqual(w.nightTaken(a, a, null, now), false);
+    // No night, or one that is tonight or past: nothing to show.
+    assert.strictEqual(w.nightTaken(undefined, null, null, now), false);
+    assert.strictEqual(w.nightTaken(new Date(2026, 10, 13, 21).getTime(), null, null, now), false);
+});
+
+test('the sheet sends the night it opened on, shows a taken night with I\'M IN, and the sender\'s banner can change it', () => {
+    const dir = path.join(app, 'components', 'next-week');
+    const html = fs.readFileSync(path.join(dir, 'next-week.component.html'), 'utf8');
+    const code = fs.readFileSync(path.join(dir, 'next-week.component.ts'), 'utf8');
+    assert.match(code, /crewNight\(this\.id, \{ time: night\.getTime\(\), by: this\.myNickname \|\| '', prev: this\.seenNight \}\)/);
+    assert.match(code, /!this\.nameError && !this\.taken;/);
+    assert.match(html, /<div \*ngIf="taken" class="sheet-taken">/);
+    assert.match(html, /<ng-container \*ngIf="!taken">/);
+    assert.match(html, /<button \*ngIf="mineNight" class="button is-small is-text banner-change" type="button" \(click\)="changeNight\(\)">/);
+    // The message knows which date the sheet offered first.
+    assert.match(code, /offered: this\.offered/);
+});
