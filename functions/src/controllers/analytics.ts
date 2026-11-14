@@ -3,13 +3,14 @@ import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
 import { nameFlag } from '../name-flag';
-import { arrivalColumns, hostArrivalColumns } from './arrival';
-
-// Where a host's visit started, kept with the game as it is made (index.ts calls it through here).
-export { recordArrival } from './arrival';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
+
+// Where a host's visit started (arrival.ts): its columns, and recordArrival, which index.ts calls
+// through here as the game is made.
+import { arrivalColumns, hostArrivalColumns } from './arrival';
+export { recordArrival } from './arrival';
 
 export async function onFork(pin: string) {
     pin = pin.toUpperCase();

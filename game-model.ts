@@ -71,11 +71,11 @@ export interface GameScheme {
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
     pack?: string;
+    // Where the host's visit started (see GameArrival). No phone can read it; not carried by Replay.
+    arrival?: GameArrival;
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
     // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
-    // Where the host's visit started (see GameArrival). No phone can read it; not carried by Replay.
-    arrival?: GameArrival;
     // The round-1 lie helper is on for this game (a 50/50 test, set when the game is made).
     coach?: boolean;
     // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
