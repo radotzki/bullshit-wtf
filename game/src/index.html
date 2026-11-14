@@ -4,20 +4,42 @@
   <meta charset="utf-8">
   <title>Bullshit: a free party game for phones. Lie, bluff, find the truth</title>
   <!--
-    Visit beacon: one small row per page view in the `visit` function's log, sent when the
-    page is hidden or closed (up to 3 times; v groups the rows of one page view), and once at 12 s if the app has still not drawn (stuck spinner).
-    It runs before every other script, so it also sees a phone where the app never starts
-    (a script that fails to load or parse, before Sentry is up). No IP, no player data.
+    Visit beacon: counts page views, with no cookie and nothing that names a person. It posts small
+    rows to /_v (the `visit` function), which writes them to BigQuery `analytics.visits`:
+      view    once, as the page opens
+      create  when this page view creates a game; join when it joins one (the app calls bsVisit)
+      end     when the page is hidden or closed (up to 3 times)
+      stuck   once at 12 s if the app has still not drawn (stuck spinner)
+    v is a random id made new on every page load and stored nowhere; it groups the rows of one
+    page view. It runs before every other script, so it also sees a phone where the app never
+    starts (a script that fails to load or parse, before Sentry is up).
+    game/seo/build-pages.js copies the script between the BS:VISIT markers into the plain pages.
   -->
+  <!-- BS:VISIT:START -->
   <script>
   (function () {
-    var w = window, sent = { stuck: 0, end: 0 }, v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
+    var w = window, d = document, max = { view: 1, stuck: 1, end: 3, create: 3, join: 3 }, sent = {}, did = {};
+    var v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
+    // A plain page (how to play and the other search pages) has no app to wait for.
+    var plain = d.documentElement.getAttribute('data-page') === 'plain';
     // Same site on Firebase Hosting (firebase.json sends /_v to the visit function): blockers
     // drop every beacon to another site (EasyPrivacy's "*$ping,third-party", used by Samsung
     // Internet's ad-block add-ons, Brave and uBlock), and sendBeacon still says true then.
     var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-(prod|dev)(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/.test(location.hostname)
       ? '/_v'
       : 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/visit';
+    // The tag of the link that brought the visitor (?via=fb-he-hanukkah, ?via=qr, ?via=test), else
+    // the post tag this tab arrived with earlier (the game keeps it in sessionStorage for Create).
+    // A tab that arrived as a play-test (test, test-<name>) stays one: its tag wins over the tag
+    // of an invite link or a lobby code opened later in the same tab (?via=link, ?via=qr).
+    var tag = '', kept = '';
+    try { var m = /[?&]via=([^&#]*)/.exec(location.search); tag = m ? decodeURIComponent(m[1]) : ''; } catch (e) { }
+    try { kept = w.sessionStorage.getItem('BS_CAMPAIGN') || ''; } catch (e) { }
+    if (!tag || /^test(-|$)/.test(kept)) { tag = kept || tag; }
+    // First visit: the browser holds nothing of the game yet (no player, crew, language or sign-in).
+    // Read from what the game already keeps; the beacon itself stores nothing.
+    var fresh = null;
+    try { fresh = w.localStorage.length === 0; } catch (e) { }
     var res = '';
     // The first script error wins; a failed load counts only for a file of our own site
     // (an outside script, stylesheet or font that a network blocks does not stop the game).
@@ -31,27 +53,34 @@
       }
     }, true);
     function booted() {
-      var r = document.querySelector('app-root');
+      var r = d.querySelector('app-root');
       return !!(r && r.children.length && !(r.children.length === 1 && r.firstElementChild && r.firstElementChild.className === 'l'));
     }
     function send(kind) {
-      if (sent[kind] >= (kind === 'end' ? 3 : 1)) { return; }
-      sent[kind]++;
+      if ((sent[kind] || 0) >= max[kind]) { return; }
+      sent[kind] = (sent[kind] || 0) + 1;
       var body = JSON.stringify({
         k: kind, v: v, first: first.slice(0, 80), last: location.pathname.slice(0, 80), booted: booted(),
         ms: new Date().getTime() - t0, err: err || res, lang: (navigator.language || '').slice(0, 10),
-        ref: (document.referrer || '').replace(/^https?:\/\/([^\/?#]+).*$/, '$1').slice(0, 60)
+        ref: (d.referrer || '').replace(/^https?:\/\/([^\/?#]+).*$/, '$1').slice(0, 60),
+        tag: tag.slice(0, 40), fv: fresh, cr: !!did.create, jn: !!did.join, pl: plain, wd: navigator.webdriver === true
       });
       try {
         if (navigator.sendBeacon && navigator.sendBeacon(url, body)) { return; }
       } catch (e) { }
       try { var x = new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type', 'text/plain'); x.send(body); } catch (e) { }
     }
-    setTimeout(function () { if (!booted()) { send('stuck'); } }, 12000);
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') { send('end'); } });
+    // The app calls bsVisit('create') after a game is created and bsVisit('join') after a join.
+    w.bsVisit = function (what) {
+      if (what === 'create' || what === 'join') { did[what] = true; send(what); }
+    };
+    send('view');
+    if (!plain) { setTimeout(function () { if (!booted()) { send('stuck'); } }, 12000); }
+    d.addEventListener('visibilitychange', function () { if (d.visibilityState === 'hidden') { send('end'); } });
     w.addEventListener('pagehide', function () { send('end'); });
   })();
   </script>
+  <!-- BS:VISIT:END -->
 
   <!--
     Link previews (WhatsApp, Facebook, X, Telegram, Slack) and search.
@@ -100,15 +129,6 @@
   <link rel="icon" type="image/png" href="assets/favicon-16x16.png" sizes="16x16" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
   <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
-   <!-- Global site tag (gtag.js) - Google Analytics -->
-   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-113955106-1"></script>
-   <script>
-   window.dataLayer = window.dataLayer || [];
-   function gtag(){dataLayer.push(arguments);}
-   gtag('js', new Date());
-
-   gtag('config', 'UA-113955106-1');
-   </script>
 </head>
 <body>
   <app-root><div class="l"></div></app-root>
@@ -117,7 +137,9 @@
     <p>Everyone plays on their own phone. A strange true fact appears with a blank, everyone writes a lie to fill it,
       and then everyone tries to find the truth among all the answers. Up to 12 players, in English or Hebrew.</p>
     <p><a href="/how-to-play">How to play</a> · <a href="/party-games-on-your-phone">Party games on your phone</a> ·
-      <a href="/he/how-to-play" hreflang="he" lang="he">איך משחקים</a> · <a href="/he/party-game-phone" hreflang="he" lang="he">משחק חברה בטלפון</a></p>
+      <a href="/hanukkah-party-game">Hanukkah party game</a> ·
+      <a href="/he/how-to-play" hreflang="he" lang="he">איך משחקים</a> · <a href="/he/party-game-phone" hreflang="he" lang="he">משחק חברה בטלפון</a> ·
+      <a href="/he/hanukkah" hreflang="he" lang="he">משחק לחנוכה</a></p>
     <p>The game itself needs JavaScript turned on.</p>
   </noscript>
 </body>

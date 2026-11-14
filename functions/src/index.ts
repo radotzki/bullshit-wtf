@@ -14,7 +14,7 @@ import { startGame, hostHere } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
-import { cleanVisit } from './controllers/visit';
+import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visit';
 import { laugh } from './controllers/laugh';
 import { caught, http, watched } from './report';
 
@@ -230,15 +230,22 @@ exports.onJoinGame = functions.https.onRequest(http('onJoinGame', (req, res) => 
     });
 }, 'game'));
 
-// One page view from the visit beacon (game/src/index.html), sent to /_v on the game's own site
+// One row from the visit beacon (game/src/index.html), sent to /_v on the game's own site
 // (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,
-// so no CORS preflight. Logged as one line starting "visit "; always answers 204.
-exports.visit = functions.https.onRequest(http('visit', (req, res) => {
+// so no CORS preflight. Written to BigQuery `visits` and logged as one line starting "visit ".
+// Reads no IP and stores no user agent. Always answers 204, whatever BigQuery says.
+// At most VISIT_MAX_INSTANCES copies run at once (controllers/visit.ts says why).
+exports.visit = functions.runWith({ maxInstances: VISIT_MAX_INSTANCES }).https.onRequest(http('visit', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'POST') {
-        const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
-        if (row) {
-            console.log('visit ' + JSON.stringify(row));
+        try {
+            const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
+            if (row) {
+                console.log('visit ' + JSON.stringify(row));
+                await analytics.onVisit(visitRecord(row));
+            }
+        } catch (e) {
+            console.error('visit failed', e && e.message);
         }
     }
     res.status(204).send('');

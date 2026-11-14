@@ -9,8 +9,7 @@ const ts = require('typescript');
 const source = fs.readFileSync(path.join(__dirname, '..', '..', 'game', 'src', 'app', 'services', 'join-source.ts'), 'utf8');
 const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2017 } }).outputText;
 
-function load(search, storageBlocked = false, pathname = '/', local = {}) {
-    const store = {};
+function load(search, storageBlocked = false, pathname = '/', local = {}, store = {}) {
     const sessionStorage = {
         getItem: k => k in store ? store[k] : null,
         setItem: (k, v) => { store[k] = String(v); },
@@ -65,6 +64,28 @@ test('a post tag is kept as the campaign for a game this tab creates; join sourc
     assert.strictEqual(load('?via=qr').arrivalCampaign(), null);
     assert.strictEqual(load('?via=<script>').arrivalCampaign(), null);
     assert.strictEqual(load('').arrivalCampaign(), null);
+});
+
+test('a tab that arrived as a play-test keeps its test tag when a later address carries another tag', () => {
+    // One tab: the same sessionStorage across page loads.
+    const tab = {};
+    assert.strictEqual(load('?via=test', false, '/he', {}, tab).arrivalCampaign(), 'test');
+    assert.strictEqual(load('?via=link', false, '/join-game/ABCD', {}, tab).arrivalCampaign(), 'test');
+    assert.strictEqual(load('?via=fb-he-hanukkah', false, '/', {}, tab).arrivalCampaign(), 'test');
+    assert.strictEqual(load('?via=test-qa', false, '/', {}, tab).arrivalCampaign(), 'test');
+    // The join source of the link is still recorded as before.
+    assert.strictEqual(load('?via=qr', false, '/join-game/ABCD', {}, tab).takeJoinSource('ABCD', 'qr', true), 'qr');
+    // A tab that arrived from a post still takes the tag of a newer post, and can become a test.
+    const post = {};
+    load('?via=fb-he-hanukkah', false, '/', {}, post);
+    assert.strictEqual(load('?via=wa-he', false, '/', {}, post).arrivalCampaign(), 'wa-he');
+    assert.strictEqual(load('?via=test-qa', false, '/', {}, post).arrivalCampaign(), 'test-qa');
+    // Words that only start like test are ordinary tags.
+    const m = load('');
+    assert.deepStrictEqual(['test', 'test-qa', 'testing', 'fb-test', '', null].map(m.isTestTag), [true, true, false, false, false, false]);
+    const other = {};
+    load('?via=testing', false, '/', {}, other);
+    assert.strictEqual(load('?via=fb-x', false, '/', {}, other).arrivalCampaign(), 'fb-x');
 });
 
 test('arriving on a Hebrew address makes Hebrew the default for new games', () => {
