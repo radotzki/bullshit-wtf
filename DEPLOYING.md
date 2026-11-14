@@ -543,8 +543,9 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   (`tick`) keeps the pack, so deploy all functions.
 - The pack's questions live in `questions/hanukkah-*` in the database. Load them only **after** the
   new functions are live: old functions would mix them into every game.
-- The repository's set is `functions/data/hanukkah-questions.json`: 18 English and 16 Hebrew questions,
-  ids `hanukkah-26-en-01..18` and `hanukkah-26-he-01..16`, with the ones the two Hanukkah pages name (the
+- The repository's set is `functions/data/hanukkah-questions.json`: 77 English and 72 Hebrew questions,
+  ids `hanukkah-26-en-01..77` and `hanukkah-26-he-01..72` (a room that plays three games on each of the
+  eight nights uses 72 in its language; a pack question never repeats in a room), with the ones the two Hanukkah pages name (the
   astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). Load it before
   1 December (the pack turns on by itself then):
   `npx firebase database:update /questions functions/data/hanukkah-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`

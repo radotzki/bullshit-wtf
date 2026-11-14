@@ -89,17 +89,29 @@ const two = (n: number) => (n < 10 ? '0' : '') + n;
 const dayOf = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
 
 /**
+ * The hour the candle evening turns over. A game that ends at 00:40 is still that night's game
+ * for the family around the table, so until this hour the evening is yesterday's.
+ */
+export const EVENING_TURNS_AT = 5;
+
+/** The local day whose evening `now` belongs to: before EVENING_TURNS_AT, the day before. */
+export function eveningOf(now: Date): Date {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() - EVENING_TURNS_AT, 12);
+}
+
+/**
  * Where tonight stands in Hanukkah, for a game of the Hanukkah pack: 'first' on the eve of the
  * first candle, 'next' when tomorrow is another candle (first to seventh evening), 'last' on the
- * eighth evening, null outside the candles or in a game of no pack.
+ * eighth evening, null outside the candles or in a game of no pack. The evening runs on past
+ * midnight until EVENING_TURNS_AT (see eveningOf).
  */
 export function hanukkahEvening(now: Date, pack?: string | null): 'first' | 'next' | 'last' | null {
     if (pack !== 'hanukkah') {
         return null;
     }
-    const today = dayOf(now);
-    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 12);
-    const tomorrow = dayOf(t);
+    const e = eveningOf(now);
+    const today = dayOf(e);
+    const tomorrow = dayOf(new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1, 12));
     if (tomorrow === HANUKKAH_CANDLES.first) {
         return 'first';
     }
@@ -183,24 +195,31 @@ export function askCreateUrl(tag: string, locale: string, pack?: string | null) 
 
 /**
  * The night the reminder is for: the coming game night (see defaultNight), at 21:00. In Hanukkah,
- * when tomorrow is a candle (hanukkahEvening 'first' or 'next'): tomorrow at 21:00.
+ * when tomorrow is a candle (hanukkahEvening 'first' or 'next'): the next candle's evening at
+ * 21:00, counted from tonight's candle, so a game that ends after midnight does not skip one.
  */
 export function reminderNight(now: Date, locale: string, evening?: 'first' | 'next' | 'last' | null): Date {
     if (evening === 'first' || evening === 'next') {
-        return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 21, 0, 0, 0);
+        const e = eveningOf(now);
+        return new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1, 21, 0, 0, 0);
     }
     return defaultNight(now, locale);
 }
 
-/** The calendar entry "Remind me" saves: a game night, with the link that opens Create. */
+/**
+ * The calendar entry "Remind me" saves: a game night, with the link that opens Create. A night
+ * after the eighth candle gets a plain game: the Hanukkah pack would put "Hanukkah edition" on a
+ * game a week after Hanukkah.
+ */
 export function reminderEvent(start: Date, place: AskPlace, locale: string, pack?: string | null,
     evening?: 'first' | 'next' | 'last' | null): CalendarEvent {
     const t = askStrings(locale, evening);
     const tag = ASK_TAGS[place === 'game-over' ? 'game-over' : 'after-game'].remind;
+    const afterHanukkah = pack === 'hanukkah' && dayOf(start) > HANUKKAH_CANDLES.last;
     return {
         title: t.eventTitle,
         text: t.eventText,
-        url: askCreateUrl(tag, locale, pack),
+        url: askCreateUrl(tag, locale, afterHanukkah ? null : pack),
         uid: `host-${start.getTime()}`,
     };
 }
