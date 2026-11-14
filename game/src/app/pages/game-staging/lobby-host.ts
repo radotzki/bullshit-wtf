@@ -92,6 +92,8 @@ export interface LobbyHostView {
     alone: boolean;
     /** The host joined but has not been seen for HOST_GONE_MS, so anyone may start: their name. */
     hostGone?: string | null;
+    /** This page is the known host's own phone or computer (never the big screen): see lone-host.ts. */
+    isHost?: boolean;
 }
 
 export function lobbyHost(input: LobbyHostInput): LobbyHostView {
@@ -114,7 +116,7 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
     // A phone with the host key may start: it created the game, or pressed Replay (when two phones press
     // Replay at once, both get the key, and the lobby names the first as the host).
     if (!input.isPresenter && input.holdsHostKey) {
-        return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1 };
+        return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1, isHost: true };
     }
 
     // A marked host row wins; the creator's uid is for games made before host keys.
@@ -122,7 +124,7 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
         ? !!input.myPid && marked.pid === input.myPid
         : !!input.creator && !!input.myUid && input.myUid === input.creator);
     if (isMe) {
-        return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1 };
+        return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1, isHost: true };
     }
 
     const host = marked || (input.creator ? players.filter(p => p.uid === input.creator)[0] : null);
