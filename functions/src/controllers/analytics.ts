@@ -103,6 +103,17 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //   crew-save   a crew saved on the final screen (a save, not a send; the crew id comes with it):
 //     repeat-offer       from the offer above SHARE RESULTS, shown when the same group plays again
 //     bottom             from SAVE THIS CREW at the bottom of the screen
+//     next-week          made by the "Same time next week?" sheet, with a name nobody typed
+//   next-week   "Same time next week?" on the final screen of a group's second or later game of a
+//               sitting, a 50/50 test (see next-week.ts; the crew id comes with every row once there is one):
+//     seen-card          a phone showed the new button, or its banner (once per phone per game)
+//     seen-control       a phone in the other half showed today's screen (once per phone per game)
+//     open               pressed the button: the sheet opened
+//     whatsapp           tapped SEND TO THE GROUP ON WHATSAPP
+//     native             sent the date through the phone's share sheet (Share another way)
+//     copy               Share another way on a phone with no share sheet: the text and link were copied
+//     calendar           tapped ADD TO MY CALENDAR, on the sheet or the banner
+//     in                 tapped I'M IN on the banner
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
@@ -125,7 +136,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
         'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby'],
-    'crew-save': ['repeat-offer', 'bottom'],
+    'crew-save': ['repeat-offer', 'bottom', 'next-week'],
+    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],

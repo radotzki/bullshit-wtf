@@ -646,10 +646,27 @@ export class ApiService {
         return this.observe<Crew>(this.crewsRef.child(id.toLowerCase()));
     }
 
-    async createCrew(pin: string, name: string) {
+    /**
+     * Saves the game's players as a crew. `auto`: made by "Same time next week?" under a name nobody
+     * typed; the browser that made it may call again with another name to rename it. `created` says
+     * whether this call made the crew (older functions do not send it).
+     */
+    async createCrew(pin: string, name: string, auto = false) {
         pin = pin.toUpperCase();
         const uid = await this.currentUid();
-        return this.post<{ id: string; name: string }>(`createCrew`, { pin, name, uid });
+        return this.post<{ id: string; name: string; created?: boolean }>(
+            `createCrew`, auto ? { pin, name, uid, auto } : { pin, name, uid });
+    }
+
+    /**
+     * "Same time next week?", a 50/50 test: true when this finished game's final screen offers it,
+     * false when the game is in the other half, null when it is not in the test (or cannot be read).
+     * The server says so on the game's final state (see functions: controllers/next-week.ts).
+     */
+    getNextWeek(pin: string): Promise<boolean | null> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state').child('nextWeek'))
+            .then(v => v === true ? true : v === false ? false : null, () => null);
     }
 
     async crewRematch(crew: string) {

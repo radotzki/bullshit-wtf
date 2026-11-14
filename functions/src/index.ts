@@ -109,7 +109,7 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
 exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => {
     cors(req, res, async () => {
         try {
-            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid));
+            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid), req.body.auto === true);
             return res.status(200).send(crew);
         } catch (e) {
             caught(e);

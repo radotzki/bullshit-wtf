@@ -162,6 +162,23 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
             min-height: 3.2rem;
             white-space: normal;
         }
+
+        // "Same time next week?": nobody pressed REMATCH for 40 seconds, so its button goes first.
+        &.next-week-first {
+            display: flex;
+            flex-direction: column;
+
+            app-next-week {
+                order: -1;
+            }
+        }
+    }
+
+    // The big screen's line under the winner: the date is set from the phones.
+    .next-week-screen {
+        margin-top: 8px;
+        font-size: 1.15rem;
+        color: $gold;
     }
 
     .players {
