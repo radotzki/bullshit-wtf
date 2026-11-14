@@ -170,7 +170,7 @@
   "daily-26-en-014": {
     "day": "2026-12-10",
     "lang": "en",
-    "questionText": "Jews from Aleppo, Syria, light one extra candle every night, to thank the city that took in their ancestors after the expulsion from $blank$",
+    "questionText": "Some Jews from Aleppo, Syria, light one extra candle every night of Hanukkah, in thanks for the refuge their ancestors found there after the expulsion from $blank$",
     "realAnswer": "spain",
     "fakeAnswers": [
       "egypt",
@@ -592,7 +592,7 @@
   "daily-26-he-013": {
     "day": "2026-12-09",
     "lang": "he",
-    "questionText": "יהודים יוצאי חלב שבסוריה מדליקים בכל ערב של חנוכה נר אחד נוסף, כתודה לעיר שקלטה את אבותיהם אחרי הגירוש מ$blank$",
+    "questionText": "יש יהודים יוצאי חלב שבסוריה שמדליקים בכל ערב של חנוכה נר אחד נוסף, כתודה על המקלט שאבותיהם מצאו בעיר אחרי הגירוש מ$blank$",
     "realAnswer": "ספרד",
     "fakeAnswers": [
       "מצרים",
@@ -620,7 +620,7 @@
   "daily-26-he-015": {
     "day": "2026-12-11",
     "lang": "he",
-    "questionText": "הרמב\"ם פסק שעני שאין לו שמן לנרות חנוכה צריך למכור את $blank$ כדי לקנות",
+    "questionText": "הרמב\"ם פסק שעני שאין לו כסף לנרות חנוכה צריך למכור את $blank$ כדי לקנות אותם",
     "realAnswer": "הבגדים שלו",
     "fakeAnswers": [
       "החמור שלו",
@@ -758,7 +758,7 @@
     "realAnswer": "אצטון",
     "fakeAnswers": [
       "פניצילין",
-      "גומי",
+      "אספירין",
       "סבון"
     ],
     "citation": "https://en.wikipedia.org/wiki/Chaim_Weizmann"
