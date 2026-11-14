@@ -8,16 +8,20 @@
 // the step was never reached). The fourth is the access check's output `rules`: `unchanged`
 // when that check found the Firebase Realtime Database Management API off and the live rules
 // the same as this commit's, so the rules step is skipped on purpose; else `deploy` or empty.
-// The fifth is GitHub's outcome of "4. Add the Hanukkah questions to the database", and the
+// The fifth is GitHub's outcome of "4. Add the new questions to the database", and the
 // sixth that step's output `result` (load-pack-questions.js): written, not-sent, refused or
 // unclear, or empty when the step never got to say.
 //
 // The verdict's first words say which of four it was, so it reads at a glance:
-//   "A whole release"          the game (functions, rules, site) and the Hanukkah questions;
-//   "WARNING: the game was released whole, but the Hanukkah questions were NOT added"
+//   "A whole release"          the game (functions, rules, site) and the new questions: the
+//                              questions of every reviewed question file the release adds
+//                              (FILES in load-pack-questions.js: the Hanukkah pack, the strange
+//                              facts, later files);
+//   "WARNING: the game was released whole, but the new questions were NOT added"
 //                              (or "may NOT have been added"): production runs the new game,
-//                              and Hanukkah games from 1 December play ordinary questions until
-//                              a run adds them;
+//                              and until a run adds them the questions of those files that were
+//                              not in the bank before are missing from games, so Hanukkah games
+//                              from 1 December play ordinary questions;
 //   "NOT a whole release"      the game itself stopped halfway;
 //   "Nothing was released".
 // The run itself still fails when the questions step fails (that step exits 1), so the run is
@@ -28,27 +32,27 @@
 // released", never as released.
 const fs = require('fs');
 
-const QUESTIONS_STEP = '4. Add the Hanukkah questions to the database';
+const QUESTIONS_STEP = '4. Add the new questions to the database';
 
 // Why the questions step failed, from its output `result`.
 const QUESTIONS_FAILED = {
-    'not-sent': 'NOT added: the Hanukkah questions. The step stopped before sending the update, so nothing was written.',
-    refused: 'NOT added: the Hanukkah questions. The database refused the update, so nothing was written (an update is all or nothing).',
-    unclear: 'Maybe not added: the Hanukkah questions. The update got no clear answer, so it may or may not have been written.',
+    'not-sent': 'NOT added: the new questions. The step stopped before sending the update, so nothing was written.',
+    refused: 'NOT added: the new questions. The database refused the update, so nothing was written (an update is all or nothing).',
+    unclear: 'Maybe not added: the new questions. The update got no clear answer, so it may or may not have been written.',
 };
 
 function questionsLine(outcome, result) {
     if (outcome === 'success') {
-        return '- Added: the Hanukkah questions, to the live question bank. Nothing else under questions/ was sent.';
+        return '- Added: the new questions (those of every question file the release lists), to the live question bank. Nothing else under questions/ was sent.';
     }
     if (outcome === 'failure') {
         return '- ' + (QUESTIONS_FAILED[result] ||
-            `NOT added: the Hanukkah questions. The step "${QUESTIONS_STEP}" failed; its log says why.`);
+            `NOT added: the new questions. The step "${QUESTIONS_STEP}" failed; its log says why.`);
     }
     if (outcome === 'cancelled') {
-        return `- Maybe not added: the Hanukkah questions. The step "${QUESTIONS_STEP}" was cancelled, so the update may or may not have been written.`;
+        return `- Maybe not added: the new questions. The step "${QUESTIONS_STEP}" was cancelled, so the update may or may not have been written.`;
     }
-    return `- Not added: the Hanukkah questions. The step "${QUESTIONS_STEP}" did not run.`;
+    return `- Not added: the new questions. The step "${QUESTIONS_STEP}" did not run.`;
 }
 
 const PARTS = [
@@ -82,13 +86,13 @@ function summary(outcomes, rulesMode, questions = '', questionsResult = '') {
     let verdict;
     if (game && questions === 'success') {
         verdict = game === 'whole' ?
-            `A whole release: ${runs}, and the Hanukkah questions are in the database.` :
-            `A whole release without the rules step: ${runs}. The Hanukkah questions are in the database.`;
+            `A whole release: ${runs}, and the new questions are in the database.` :
+            `A whole release without the rules step: ${runs}. The new questions are in the database.`;
     } else if (game) {
         const maybe = (questions === 'failure' && questionsResult === 'unclear') || questions === 'cancelled';
-        verdict = `WARNING: the game was released whole, but the Hanukkah questions ${maybe ? 'may NOT have been' : 'were NOT'} added. ` +
-            `${runs[0].toUpperCase() + runs.slice(1)}. Until a run adds the questions, Hanukkah games from 1 December play ordinary questions. ` +
-            `Read the step "${QUESTIONS_STEP}", fix its cause, and start a new run by hand on master, or load the file by hand (DEPLOYING.md, Hanukkah pack).`;
+        verdict = `WARNING: the game was released whole, but the new questions ${maybe ? 'may NOT have been' : 'were NOT'} added. ` +
+            `${runs[0].toUpperCase() + runs.slice(1)}. Until a run adds them, questions of the repository's question files that are not yet in the bank stay out of games, and Hanukkah games from 1 December play ordinary questions. ` +
+            `Read the step "${QUESTIONS_STEP}", fix its cause, and start a new run by hand on master, or load the files by hand (DEPLOYING.md, Question files the release adds).`;
     } else if (!released.length && !PARTS.some(p => outcomes[p.key] === 'failure' || outcomes[p.key] === 'cancelled')) {
         verdict = 'Nothing was released: production is as it was before this run.';
     } else {

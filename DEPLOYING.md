@@ -39,11 +39,12 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
    keep old clients working, so that state is safe, and a new run finishes the release.
-7. Adds the **Hanukkah pack's questions** to the live question bank (see "Hanukkah pack" below):
-   one update of `questions/` naming exactly the ids in `functions/data/hanukkah-questions.json`,
+7. Adds the **new questions** to the live question bank (see "Question files the release adds"
+   below): one update of `questions/` naming exactly the ids in the listed question files, today
+   `functions/data/hanukkah-questions.json` and `functions/data/strange-facts-2026-11.json`,
    and nothing else. It runs last, after the functions that know pack questions are live; if it is
    refused, the release before it stands, and the run fails and says why. The summary's verdict
-   then starts "WARNING: the game was released whole, but the Hanukkah questions were NOT added".
+   then starts "WARNING: the game was released whole, but the new questions were NOT added".
 
 Things to know:
 
@@ -303,7 +304,8 @@ prints less, never more.
   If it is skipped, rows still land, but the new fields are dropped silently.
 - **Loading questions** into the database (`firebase database:update /questions ...`), which goes
   **after** the functions that understand them are live, so after the deploy run is green. The one
-  exception is the Hanukkah pack's file, which every release adds itself (below).
+  exception is the listed question files, which every release adds itself ("Question files the
+  release adds", below). A file that is not on that list is still loaded by hand.
 - **Deleting a function**, as above.
 - **Google Search Console** (submitting the sitemap) and anything in the Firebase or Google Cloud
   consoles.
@@ -547,12 +549,15 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   `fact-26-en-01..60` and `fact-26-he-01..60`, in `functions/data/strange-facts-2026-11.json`.
   Each is a strange-but-true fact with one blank, the truth, three house lies and a `citation`, a
   page that states the fact. The Hebrew set is written in Hebrew, not translated, and leans on Israel.
-- Nothing in the code changes, so the release deploys nothing new for them and they are not in the
-  game until they are in the database. Load them by hand, any time after the merge (the functions
+- Nothing in the game's code changes for them, and they are not in the game until they are in the
+  database. **Every release adds them itself**, in its last step (see "Question files the release
+  adds" below), so nobody has to load them. By hand, if that step is ever refused (the functions
   already live pick any question without a pack):
   `npx firebase database:update /questions functions/data/strange-facts-2026-11.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
   An update writes only these 120 ids and leaves every other question as it is. Never a set or an
   import on `questions/`, which would replace the whole bank. Running it again changes nothing.
+- **Edit these questions in the file, never in the Firebase console:** each release rewrites every
+  one of them in full from the file, so a fix made in the console is undone by the next release.
 - `functions/test/strange-facts-questions.test.js` checks the shape: one blank, lower-case answers of
   40 characters or less, three house lies none of which the game would read as the truth, no blocked
   house lie, 60 per language with ids from 01, a citation, and no repeat of the openers or the Hebrew fixes.
@@ -561,6 +566,45 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   openers, the Hebrew fixes and the Hanukkah pack's open pull requests. A fact added to the live bank
   after that may repeat: retire the double in `retired-questions.ts`.
 - To retire one, add its id to `retired-questions.ts` as with any question.
+
+## Question files the release adds
+
+New questions reach players only once they are in `questions/` in the live database. Every release
+puts the questions of the repository's reviewed question files there itself, in its last step,
+"4. Add the new questions to the database" (`.github/scripts/load-pack-questions.js`).
+
+- **The list** is `FILES` at the top of that script, written out file by file. Today:
+  - `functions/data/hanukkah-questions.json`, ids `hanukkah-26-en-NN` and `hanukkah-26-he-NN`,
+    every question with `pack: "hanukkah"` (see "Hanukkah pack" below);
+  - `functions/data/strange-facts-2026-11.json`, ids `fact-26-en-NN` and `fact-26-he-NN`, questions
+    of the normal bank: exactly `questionText`, `realAnswer`, `fakeAnswers`, `citation` and `lang`,
+    and no `pack` field.
+- **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
+  body is exactly those files. Every key must be an id of the file it stands in, and every value a
+  whole question in that id's language with that file's fields and no other, or nothing is sent for
+  any file. An update writes the children it names and leaves every other child of `questions/` as
+  it is. Never a set or an import on `questions/`, which would replace the whole bank. Sending the
+  same files again changes nothing, so the step runs on every release.
+- **A new question file** is one more entry in `FILES`: the file's path and the one shape of id it
+  may write, added in the pull request that adds the file (a test lists the entries, so it fails
+  until it is told). There is no glob on purpose: a file that merely lies in `functions/data` is
+  not loaded. Give a new file ids of its own (`<name>-<yy>-<lang>-NN`), two digits, so at most 99
+  per language; a bigger set needs a second file or a wider id rule.
+- **Never on the list:** `functions/data/daily-questions.json`. The daily puzzle reads its questions
+  from the functions bundle; in `questions/` they would turn up in games and give a coming puzzle
+  away. The script refuses that path even if it is added. `opening-questions.json` and
+  `hebrew-question-fixes-2026-11.json` were loaded by hand before this step existed and are not
+  listed either.
+- **Edits and removals.** A question edited in a listed file is changed live by the next release.
+  One removed from a file stays live: retire it in `retired-questions.ts`. Edit listed questions in
+  their file, never in the Firebase console, or the next release undoes the edit.
+- **If it fails,** the run is red and its summary starts "WARNING: the game was released whole, but
+  the new questions were NOT added" (or "may NOT have been added"); the functions, rules and site
+  released before it stand. One update carries every file, so a refusal or a bad file leaves all of
+  them unwritten. Fix the cause and start a new run by hand on master, or load each file by hand:
+  `npx firebase database:update /questions <file> --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+- `node .github/scripts/load-pack-questions.js --dry-run` prints the files and every id that would
+  be sent, without sending anything.
 
 ## Hanukkah pack and campaign tags
 
@@ -576,7 +620,8 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). The pack turns on
   by itself on 1 December.
 - **Every release adds this file to the live question bank by itself**, in the last step, "4. Add
-  the Hanukkah questions to the database" (`.github/scripts/load-pack-questions.js`). It sends one
+  the new questions to the database" (`.github/scripts/load-pack-questions.js`), together with the
+  other listed files ("Question files the release adds", above). It sends one
   update (`PATCH`) to `questions.json` at the database's own address, whose body is exactly the
   file: every key must be a `hanukkah-26-en-NN` or `hanukkah-26-he-NN` id, and every value a whole
   question with `pack: "hanukkah"` in its id's language, or nothing is sent. An update writes the
@@ -588,9 +633,9 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   **Edit these 34 questions in the file, never in the Firebase console:** each release rewrites every
   pack question in full from the file, so a fix made in the console is undone by the next release
   unless the same fix is in the file.
-  The run's summary says how the step went. Its verdict starts "A whole release ... and the Hanukkah
+  The run's summary says how the step went. Its verdict starts "A whole release ... and the new
   questions are in the database" when it passed, and "WARNING: the game was released whole, but the
-  Hanukkah questions were NOT added" (or "may NOT have been added", when the update got no clear answer) when it
+  new questions were NOT added" (or "may NOT have been added", when the update got no clear answer) when it
   failed. The run is red then, but the functions, rules and site released before it stand. A line
   under the verdict says why: the database refused the update, nothing was sent (a bad file, or the
   project's database not as expected), or no clear answer. Fix the cause and start a new run by hand

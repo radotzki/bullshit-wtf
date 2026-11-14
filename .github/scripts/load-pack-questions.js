@@ -1,12 +1,22 @@
-// Adds the Hanukkah pack's questions to the live question bank, as the release's last step.
-// It adds or rewrites exactly the questions in functions/data/hanukkah-questions.json, each
-// under its own id (hanukkah-26-en-01.., hanukkah-26-he-01..), and touches nothing else.
+// Adds the questions of the repository's reviewed question files to the live question bank, as
+// the release's last step. The files are the list FILES below, and nothing else: today the
+// Hanukkah pack (functions/data/hanukkah-questions.json, ids hanukkah-26-en-01.., -he-01..) and
+// the strange facts (functions/data/strange-facts-2026-11.json, ids fact-26-en-01.., -he-01..).
+// It adds or rewrites exactly the questions in those files, each under its own id, and touches
+// nothing else.
 //
 //   node .github/scripts/load-pack-questions.js <project id> [dir]
 //   node .github/scripts/load-pack-questions.js --dry-run [dir]
 //
-// Why in the release: the pack turns on by itself on 1 December and takes its questions from
-// questions/hanukkah-* in the live database. Until now a person had to load them by hand
+// A new question file: add one entry to FILES, with the file's path and the one shape of id it
+// may write, in the pull request that adds the file, so the questions and their place in the
+// release are reviewed together. The list is written out on purpose. A glob over functions/data
+// would load any JSON file that lands there, reviewed or not, and that folder also holds files
+// that must never be in the game's bank: the daily puzzle's questions (NEVER below), which the
+// puzzle reads from the functions bundle, and files that were loaded by hand long ago.
+//
+// Why in the release: questions reach players only once they are in questions/ in the live
+// database. Until now a person had to load each file by hand
 // (`firebase database:update /questions ...`). That command cannot run in the release: the tool
 // first asks the Firebase Realtime Database Management API for the database's details, and that
 // API is off in the Google project (see live-rules.js). The database's own address does not need
@@ -18,24 +28,28 @@
 //   2. GET https://firebase.googleapis.com/v1beta1/projects/<id>/adminSdkConfig
 //      The database's address, which must be the default instance's own.
 //   3. PATCH https://<the database's address>/questions.json
-//      body: { "<id>": <question>, ... } for exactly the questions in the file.
+//      body: { "<id>": <question>, ... } for exactly the questions in the listed files.
 // A PATCH is the database's "update": it writes each named child of questions/ and leaves every
 // other child as it is. It is what `firebase database:update /questions <file>` sends. A PUT on
 // questions/ (the tool's database:set, or the console's Import JSON) would replace the whole
 // bank; this file has no PUT, POST or DELETE, and lock() refuses any request but these three.
+// One update carries every file, and an update is all or nothing: a file that fails its check
+// stops the whole step before anything is sent, and a refusal writes none of the files.
 // Running it again sends the same values again, so it is safe on every release. A question
-// whose text is changed in the file is changed live by the next release; one that is removed
-// from the file stays live (retire it in retired-questions.ts, as with any question).
+// whose text is changed in a file is changed live by the next release; one that is removed
+// from a file stays live (retire it in retired-questions.ts, as with any question).
 //
 // The sign-in: requests 1 and 2 with the run's usual scope (cloud-platform); request 3 with a
 // sign-in of its own with the two scopes the database's own address asks for (RULES_SCOPES of
 // live-rules.js, the ones the live rules read uses). A scope gives the account no role.
 // The database lets an account with a Google sign-in and the database role write anywhere,
-// whatever the rules say, which is why the payload is checked here, before it is sent:
-// every key must be a pack id, and every value a whole question of the pack in its language.
+// whatever the rules say, which is why the payload is checked here, before it is sent, and
+// again by the lock: every key must be an id of one listed file, and every value a whole
+// question of that file in its id's language, with that file's fields and no other.
 //
-// Before 1 December it does no harm: pack questions never appear in normal games, and the
-// functions released in step 1 of the same run already know them (DEPLOYING.md, Hanukkah pack).
+// The order does no harm: pack questions never appear in normal games, and the functions
+// released in step 1 of the same run already know them (DEPLOYING.md, Hanukkah pack). A question
+// without a pack is a normal question, which the functions already live pick like any other.
 //
 // What is printed: the ids, the status of each answer, and from a JSON error the same few fields
 // as firebase-refusal.js, each through scrub(). Never the database's address, a token or an
@@ -45,50 +59,116 @@ const path = require('path');
 const { scrub } = require('./firebase-refusal.js');
 const { allowedApi, canonical, RULES_SCOPES } = require('./live-rules.js');
 
-const PACK_FILE = 'functions/data/hanukkah-questions.json';
-const PACK = 'hanukkah';
-const ID = /^hanukkah-26-(en|he)-\d{2}$/;
+// The reviewed question files, and for each the only ids it may write. `pack` is the value every
+// question of the file carries in its `pack` field; null means a question of the normal bank,
+// which has no `pack` field at all (a pack name there would hide it from normal games, and a
+// missing one on a pack question would put it into every game).
+const FILES = [
+    { file: 'functions/data/hanukkah-questions.json', name: 'the Hanukkah pack', id: /^hanukkah-26-(en|he)-\d{2}$/, like: 'hanukkah-26-en-01', pack: 'hanukkah' },
+    { file: 'functions/data/strange-facts-2026-11.json', name: 'the strange facts', id: /^fact-26-(en|he)-\d{2}$/, like: 'fact-26-en-01', pack: null },
+];
+// Never a file of the game's bank, whatever a later edit adds to FILES: the daily puzzle reads
+// its questions from the functions bundle, and a daily question in questions/ would turn up in
+// games and give tomorrow's puzzle away.
+const NEVER = ['functions/data/daily-questions.json'];
 const PROJECT_ORIGIN = 'https://firebase.googleapis.com';
 const DATABASE_HOST = /^[a-z0-9][a-z0-9-]*\.(firebaseio\.com|[a-z0-9-]+\.firebasedatabase\.app)$/;
 const INSTANCE = /^[a-z0-9][a-z0-9-]{1,62}$/;
 const WRITE_PATH = '/questions.json';
-const FIELDS = ['questionText', 'realAnswer', 'fakeAnswers', 'citation', 'lang', 'pack'];
+// The five fields of every question; a pack question has `pack` as its sixth.
+const FIELDS = ['questionText', 'realAnswer', 'fakeAnswers', 'citation', 'lang'];
 const MAX_QUESTIONS = 200;
 
-// The file's questions, checked. Throws a plain reason for anything that is not a pack question.
-function payload(dir) {
-    let data;
-    try {
-        data = JSON.parse(fs.readFileSync(path.join(dir, PACK_FILE), 'utf8'));
-    } catch (e) {
-        throw new Error(`${PACK_FILE} could not be read as JSON.`);
+// Throws unless the list itself is sound: known paths under functions/data, no file twice, none
+// of NEVER, and no id that two files could both write.
+function checkList(files) {
+    if (!Array.isArray(files) || !files.length) {
+        throw new Error('The list of question files is empty.');
     }
-    check(data);
-    return data;
+    const seen = new Set();
+    for (const f of files) {
+        if (!f || typeof f.file !== 'string' || !/^functions\/data\/[a-z0-9][a-z0-9.-]*\.json$/.test(f.file) || f.file.includes('..')) {
+            throw new Error('A listed question file is not a JSON file in functions/data.');
+        }
+        if (NEVER.includes(f.file)) {
+            throw new Error(`${f.file} is never loaded into the game's question bank.`);
+        }
+        if (seen.has(f.file)) {
+            throw new Error(`${f.file} is listed twice.`);
+        }
+        seen.add(f.file);
+        if (!(f.id instanceof RegExp) || !f.id.source.startsWith('^') || !f.id.source.endsWith('$') || f.id.flags ||
+            typeof f.like !== 'string' || !f.id.test(f.like) || !(f.pack === null || (typeof f.pack === 'string' && f.pack))) {
+            throw new Error(`${f.file}: its id rule or pack is not as expected.`);
+        }
+        if (files.some(o => o !== f && o.id instanceof RegExp && o.id.test(f.like))) {
+            throw new Error(`${f.file}: its ids could be another file's.`);
+        }
+    }
 }
 
-// Throws unless `data` is an object of pack questions only, keyed by pack ids.
-function check(data) {
+// The questions of every listed file, checked, as one object by id. Throws a plain reason for
+// a file that is missing, or for anything in a file that is not a question of that file.
+// Resolves nothing halfway: one bad file and no question of any file is returned.
+function payload(dir, files = FILES) {
+    checkList(files);
+    const all = {};
+    const counts = [];
+    for (const f of files) {
+        let data;
+        try {
+            data = JSON.parse(fs.readFileSync(path.join(dir, f.file), 'utf8'));
+        } catch (e) {
+            throw new Error(`${f.file} could not be read as JSON.`);
+        }
+        try {
+            check(data, [f]);
+        } catch (e) {
+            throw new Error(`${f.file}: ${e.message}`);
+        }
+        for (const id of Object.keys(data)) {
+            if (Object.prototype.hasOwnProperty.call(all, id)) {
+                throw new Error(`${f.file}: ${id} is in two files.`);
+            }
+            all[id] = data[id];
+        }
+        counts.push({ file: f.file, name: f.name, ids: Object.keys(data) });
+    }
+    return { questions: all, counts };
+}
+
+// Throws unless `data` is an object of whole questions only, each keyed by an id of one of
+// `files` and shaped as that file's questions are.
+function check(data, files = FILES) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
         throw new Error('The questions are not an object of questions by id.');
     }
     const ids = Object.keys(data);
-    if (!ids.length || ids.length > MAX_QUESTIONS) {
-        throw new Error(`Expected 1 to ${MAX_QUESTIONS} questions, found ${ids.length}.`);
+    const most = MAX_QUESTIONS * files.length;
+    if (!ids.length || ids.length > most) {
+        throw new Error(`Expected 1 to ${most} questions, found ${ids.length}.`);
     }
+    const perFile = new Map(files.map(f => [f, 0]));
     for (const id of ids) {
-        const m = ID.exec(id);
-        if (!m) {
-            throw new Error(`Not a pack id: ${scrub(id).slice(0, 60)}. Only ids like hanukkah-26-en-01 are written.`);
+        const owners = files.filter(f => f.id.test(id));
+        if (owners.length !== 1) {
+            throw new Error(`Not an id of a listed question file: ${scrub(id).slice(0, 60)}. Only ids like ${files.map(f => f.like).join(' or ')} are written.`);
         }
+        const file = owners[0];
+        perFile.set(file, perFile.get(file) + 1);
+        if (perFile.get(file) > MAX_QUESTIONS) {
+            throw new Error(`More than ${MAX_QUESTIONS} questions with ids like ${file.like}.`);
+        }
+        const lang = file.id.exec(id)[1];
         const q = data[id];
         const bad = why => new Error(`Question ${id}: ${why}`);
         if (!q || typeof q !== 'object' || Array.isArray(q)) {
             throw bad('not an object.');
         }
-        const extra = Object.keys(q).filter(k => !FIELDS.includes(k));
+        const fields = file.pack ? FIELDS.concat('pack') : FIELDS;
+        const extra = Object.keys(q).filter(k => !fields.includes(k));
         if (extra.length) {
-            throw bad('unknown field ' + scrub(extra[0]).slice(0, 40) + '.');
+            throw bad((extra[0] === 'pack' ? 'a question of the normal bank has no pack field' : 'unknown field ' + scrub(extra[0]).slice(0, 40)) + '.');
         }
         for (const k of ['questionText', 'realAnswer', 'citation']) {
             if (typeof q[k] !== 'string' || !q[k].trim()) {
@@ -101,11 +181,11 @@ function check(data) {
         if (!Array.isArray(q.fakeAnswers) || q.fakeAnswers.length < 1 || q.fakeAnswers.some(a => typeof a !== 'string' || !a.trim())) {
             throw bad('fakeAnswers is not a list of answers.');
         }
-        if (q.lang !== m[1]) {
-            throw bad(`lang is not ${m[1]}, the language its id names.`);
+        if (q.lang !== lang) {
+            throw bad(`lang is not ${lang}, the language its id names.`);
         }
-        if (q.pack !== PACK) {
-            throw bad(`pack is not "${PACK}".`);
+        if (file.pack && q.pack !== file.pack) {
+            throw bad(`pack is not "${file.pack}".`);
         }
     }
 }
@@ -118,7 +198,7 @@ const READ_KEYS = ['url', 'method'];
 const onlyKeys = (options, keys) => Object.keys(options).every(k => keys.includes(k));
 
 // The one write: a PATCH to <database address>/questions.json, no query, no other option, a
-// body of pack questions only.
+// body of the listed files' questions only.
 function allowedWrite(options) {
     if (!options || typeof options !== 'object' || options.method !== 'PATCH' || typeof options.url !== 'string' ||
         !onlyKeys(options, WRITE_KEYS)) {
@@ -173,10 +253,11 @@ async function load(project, dir, request, writeRequest, noAnswer) {
     const lines = [];
     const done = (ok, more, result = ok ? 'written' : 'not-sent') => ({ ok, result, lines: lines.concat(more) });
     let questions;
+    let counts;
     try {
-        questions = payload(dir);
+        ({ questions, counts } = payload(dir));
     } catch (e) {
-        return done(false, [e.message, 'Nothing was sent.']);
+        return done(false, [e.message, 'Nothing was sent, for any question file.']);
     }
     const ids = Object.keys(questions);
     const send = lock(request, allowedRead);
@@ -236,7 +317,7 @@ async function load(project, dir, request, writeRequest, noAnswer) {
     }
 
     // 3. The update.
-    const writeShown = `PATCH questions/ (the database's own address) with ${ids.length} pack questions`;
+    const writeShown = `PATCH questions/ (the database's own address) with ${ids.length} questions of ${counts.length} question files`;
     const three = await ask(write, { url: address + WRITE_PATH, method: 'PATCH', data: questions }, writeShown);
     if (three.failed) {
         return done(false, three.failed.concat('The update may or may not have been written; the next release sends it again.'), 'unclear');
@@ -248,19 +329,23 @@ async function load(project, dir, request, writeRequest, noAnswer) {
     if (canonical(three.data) !== canonical(questions)) {
         return done(false, [`200 to ${writeShown}`, '    The answer is not the values that were sent, so the run cannot tell what was written.'], 'unclear');
     }
-    return done(true, [`200 to ${writeShown}`, `    Written: ${ids.join(', ')}.`, '    Nothing else under questions/ was sent.']);
+    return done(true, [`200 to ${writeShown}`]
+        .concat(counts.map(c => `    Written from ${c.file} (${c.ids.length}): ${c.ids.join(', ')}.`))
+        .concat('    Nothing else under questions/ was sent.'));
 }
 
 function dryRun(dir) {
-    const questions = payload(dir);
+    const { questions, counts } = payload(dir);
     const ids = Object.keys(questions);
     const ok = allowedWrite({ url: 'https://made-up-instance.firebaseio.com' + WRITE_PATH, method: 'PATCH', data: questions });
     return [
         `Would send: PATCH <the database's address>${WRITE_PATH} (an update, never a set)`,
-        `Children of questions/ it writes (${ids.length}): ${ids.join(', ')}`,
-        `Every key a pack id (${ID}), every value a whole ${PACK} question: ${ok ? 'yes' : 'NO'}`,
+        `Question files (${counts.length}): ${counts.map(c => c.file).join(', ')}`,
+        `Children of questions/ it writes (${ids.length}):`,
+    ].concat(counts.map(c => `  from ${c.file}, ${c.name} (${c.ids.length}): ${c.ids.join(', ')}`)).concat([
+        `Every key an id of a listed file (${FILES.map(f => f.id).join(' or ')}), every value a whole question of that file: ${ok ? 'yes' : 'NO'}`,
         'Nothing else under questions/ is in the body, so nothing else is changed or deleted.',
-    ];
+    ]);
 }
 
 async function main(project, dir) {
@@ -269,10 +354,10 @@ async function main(project, dir) {
     const out = result.lines.join('\n');
     console.log(out);
     if (!result.ok) {
-        console.log('::error title=The Hanukkah questions were not added::The functions, rules and site steps before this one are not affected. The reason is in this step\'s log.');
+        console.log('::error title=The new questions were not added::The functions, rules and site steps before this one are not affected. The reason is in this step\'s log.');
     }
     if (process.env.GITHUB_STEP_SUMMARY) {
-        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '### The Hanukkah questions\n\n```\n' + out.replace(/```/g, "'''") + '\n```\n\n');
+        fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '### The new questions\n\n```\n' + out.replace(/```/g, "'''") + '\n```\n\n');
     }
     // The step's output `result`, read by the Summary step (release-summary.js). One of RESULTS
     // and nothing else, so no text of an answer reaches the output.
@@ -299,9 +384,9 @@ if (require.main === module) {
         process.exit(1);
     }
     main(project, dir).then(code => process.exit(code), () => {
-        console.log('::error title=The Hanukkah questions were not added::The step failed in a way it does not know.');
+        console.log('::error title=The new questions were not added::The step failed in a way it does not know.');
         process.exit(1);
     });
 }
 
-module.exports = { PACK_FILE, ID, WRITE_PATH, RESULTS, payload, check, allowedWrite, allowedRead, load, dryRun, main };
+module.exports = { FILES, NEVER, MAX_QUESTIONS, WRITE_PATH, RESULTS, checkList, payload, check, allowedWrite, allowedRead, load, dryRun, main };

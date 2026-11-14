@@ -1,5 +1,5 @@
 // Shape check for the strange-facts set (functions/data/strange-facts-2026-11.json): 60 English and
-// 60 Hebrew questions for the normal bank, loaded into /questions by hand (DEPLOYING.md, "Strange
+// 60 Hebrew questions for the normal bank, loaded into /questions by the release (DEPLOYING.md, "Strange
 // facts: 120 more questions").
 const test = require('node:test');
 const assert = require('node:assert');
