@@ -92,14 +92,14 @@
                         <span *ngIf="player.funniest" class="badge funny">{{ t.funniest }}</span>
                     </div>
                     <div class="lie" *ngIf="player.best">
-                        <span class="lie-label">{{ t.bestLie }}:</span>
+                        <span class="lie-label">{{ t.bestLie }}: </span>
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
                         <!-- Big screen, 9 to 12: when the funniest lie is the best one, its laughs join this line. -->
                         <span *ngIf="player.funniest && player.funniest.text === player.best.text" class="lie-laughs also">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>
                     <div class="lie funny" *ngIf="player.funniest" [class.same]="player.best && player.funniest.text === player.best.text">
-                        <span class="lie-label">{{ t.funniestLie }}:</span>
+                        <span class="lie-label">{{ t.funniestLie }}: </span>
                         <span class="lie-text" dir="auto">"{{ player.funniest.text }}"</span>
                         <span class="lie-laughs">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>
