@@ -25,6 +25,14 @@ export interface AboutStrings {
     foundYours: (names: string, points: string) => string;
     nobodyFoundYours: string;
     knowYou: (names: string) => string;
+    /**
+     * The writing screen of the bank question played in place of an About question whose named player
+     * sent no truth in time: why the question changed. On their own phone, and on everyone else's
+     * screen (the big screen too) with their name, or without it when it is unknown.
+     */
+    missedMe: string;
+    missed: (name: string) => string;
+    missedNoName: string;
 }
 
 const en: AboutStrings = {
@@ -40,6 +48,9 @@ const en: AboutStrings = {
     foundYours: (names, points) => `${names} found your truth! ${points}`,
     nobodyFoundYours: 'Nobody found your truth. Do they know you at all?',
     knowYou: names => `${names} know${/ and /.test(names) ? '' : 's'} you!`,
+    missedMe: 'Your truth didn\'t come in time, so here\'s a regular question.',
+    missed: name => `${name} didn't send the truth, so here's a regular question.`,
+    missedNoName: 'The truth didn\'t come in time, so here\'s a regular question.',
 };
 
 const he: AboutStrings = {
@@ -55,10 +66,21 @@ const he: AboutStrings = {
     foundYours: (names, points) => `מצאו את האמת שלך: ${names}! ${points}`,
     nobodyFoundYours: 'אף אחד לא מצא את האמת שלך. מכירים אותך בכלל?',
     knowYou: names => `מכירים אותך: ${names}!`,
+    missedMe: 'האמת שלך לא הגיעה בזמן, אז הנה שאלה רגילה.',
+    missed: name => `האמת של ${name} לא הגיעה בזמן, אז הנה שאלה רגילה.`,
+    missedNoName: 'האמת לא הגיעה בזמן, אז הנה שאלה רגילה.',
 };
 
 export function aboutStrings(locale: string): AboutStrings {
     return locale === 'he' ? he : en;
+}
+
+/** The line of a bank question that replaced an About question (see aboutMissedView), or null. */
+export function aboutMissedLine(t: AboutStrings, view: { me: boolean; name: string } | null): string | null {
+    if (!view) {
+        return null;
+    }
+    return view.me ? t.missedMe : view.name ? t.missed(view.name) : t.missedNoName;
 }
 
 /** What the named player's own result says, from the truth's row: who found it, and their points. */
