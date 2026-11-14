@@ -59,6 +59,75 @@ exports.time = functions.https.onRequest(http('time', (req, res) => {
     });
 }));
 
+// The daily puzzle (/daily, /he/daily), reached on the site's own address as /_daily (a Hosting
+// rewrite, like the visit beacon). See controllers/daily.ts for what it answers and keeps.
+//   GET  ?lang=he               today's question and its tallies; Hosting's cache answers most visitors
+//   GET  ?lang=he&d=<day>&f=<id>  the same, with how many friends a sender's lie fooled
+//   POST {lang, day, m, k, f, src, uid}  (sendBeacon, text/plain): one pick or one press. Answers 204.
+import * as daily from './controllers/daily';
+
+let dailyBank: daily.DailyBank = null;
+const dailyWarned: { [lang: string]: string } = {};
+function dailyQuestions(): daily.DailyBank {
+    if (!dailyBank) {
+        try {
+            // On the emulators only, a play-test brings a file of its own (.github/smoke/emulator-daily.js).
+            const own = process.env.FUNCTIONS_EMULATOR === 'true' && process.env.DAILY_QUESTIONS_FILE;
+            dailyBank = daily.loadDaily(require(own || '../data/daily-questions.json'));
+        } catch (e) {
+            console.error('daily: the question file did not load', e);
+            return { en: [], he: [] };
+        }
+    }
+    return dailyBank;
+}
+// The tallies' reads and writes, loaded at the first request (it opens the database).
+const dailyStore = (): typeof import('./controllers/daily-store') => require('./controllers/daily-store');
+
+exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
+    const bank = dailyQuestions();
+    const now = Date.now();
+    if (req.method === 'POST') {
+        const raw = req.rawBody ? req.rawBody.toString('utf8') : req.body;
+        const post = typeof raw === 'string' && raw.length > 600 ? null : daily.cleanPost(raw, bank, now);
+        if (post) {
+            try {
+                await dailyStore().addPicks(post);
+                await analytics.onShare(post.row);
+            } catch (e) {
+                console.error('daily: a post was not kept', e);
+            }
+        }
+        return res.status(204).send('');
+    }
+    if (req.method !== 'GET') {
+        return res.status(405).send('');
+    }
+    const lang = daily.cleanLang(req.query.lang);
+    const list = bank[lang];
+    const today = daily.israelDay(now);
+    if (!daily.questionFor(list, today)) {
+        res.set('Cache-Control', 'no-store');
+        return res.status(503).send({ error: 'no-question' });
+    }
+    // Sentry hears once a day (per running copy) that the questions are running out.
+    const left = daily.daysLeft(list, today);
+    if (left < daily.WARN_DAYS_LEFT && dailyWarned[lang] !== today) {
+        dailyWarned[lang] = today;
+        console.error(`daily: ${left < 0 ? 'no' : left} days of new ${lang} questions left after today; `
+            + 'the page repeats the file from its first question when they run out');
+    }
+    let tallies: { picks: daily.Picks, before: daily.Picks, friend: daily.FriendCount | null } = null;
+    try {
+        tallies = await dailyStore().readTallies(lang, list, today, daily.cleanCountDay(req.query.d, now), daily.cleanLinkId(req.query.f));
+    } catch (e) {
+        // The question still goes out, without numbers, and is not kept by the cache.
+        console.error('daily: the tallies did not load', e);
+    }
+    res.set('Cache-Control', tallies ? `public, max-age=0, s-maxage=${daily.cacheSeconds(now, !!tallies.friend)}` : 'no-store');
+    return res.status(200).send(daily.puzzleBody(list, now, tallies && tallies.picks, tallies && tallies.before, tallies && tallies.friend));
+}));
+
 exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
     cors(req, res, async () => {
         const locale = req.body.locale;

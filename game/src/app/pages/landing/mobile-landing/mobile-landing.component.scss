@@ -148,6 +148,15 @@
         text-wrap: balance;
     }
 
+    .daily-link {
+        display: inline-block;
+        margin-top: 6px;
+        color: #f3d467;
+        font-size: 1rem;
+        line-height: 1.35;
+        text-decoration: underline;
+    }
+
     &.has-picture {
         padding-bottom: 10px;
     }

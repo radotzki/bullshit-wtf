@@ -6,7 +6,7 @@
     "ng": "ng",
     "copy-model": "node ../copy-shared.js src/app",
     "start": "npm run copy-model && ng serve",
-    "build": "npm run copy-model && ng build && node scripts/build-he.js && node seo/build-pages.js",
+    "build": "npm run copy-model && ng build && node scripts/build-he.js && node seo/build-pages.js && node seo/build-daily.js",
     "lint": "ng lint",
     "test": "node --test test/*.test.js"
   },

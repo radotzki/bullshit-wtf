@@ -16,6 +16,8 @@
          looping picture of one round. Text and CSS only: no image to download. -->
     <div class="front-door" [class.has-picture]="picture">
         <p class="pitch">{{ t.pitch }}</p>
+        <!-- The daily puzzle: a plain link, the page is outside the app. -->
+        <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a>
 
         <div class="picture" *ngIf="picture" role="img" [attr.aria-label]="p.alt">
             <div class="screen" aria-hidden="true">

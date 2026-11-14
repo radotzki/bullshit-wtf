@@ -56,6 +56,7 @@ const howEn = `
   <li><strong>Everyone picks the answer they believe.</strong> Find the truth and you score. Every friend who picks your lie scores for you too. Fall for one of the house lies and you lose points.</li>
   <li><strong>The truth is revealed</strong>, and you see who fooled whom.</li>
 </ol>
+<p><a href="/daily?via=daily-seo">Try today's question</a></p>
 <h2>Rounds and points</h2>
 <p>A game has 5, 7 or 9 questions over three rounds, and points grow each round, so nobody is out of it until the end.</p>
 <table>
@@ -87,6 +88,7 @@ const howHe = `
   <li><strong>כל אחד בוחר את התשובה שהוא מאמין לה.</strong> מצאתם את האמת? קיבלתם נקודות. כל חבר שבחר בשקר שלכם מביא לכם נקודות. נפלתם בשקר של הבית? מפסידים נקודות.</li>
   <li><strong>האמת נחשפת</strong>, ורואים מי עבד על מי.</li>
 </ol>
+<p><a href="/he/daily?via=daily-seo">נסו את השאלה של היום</a></p>
 <h2>סבבים ונקודות</h2>
 <p>במשחק יש 5, 7 או 9 שאלות בשלושה סבבים, והנקודות גדלות בכל סבב, כך שאף אחד לא בחוץ עד הסוף.</p>
 <table>
