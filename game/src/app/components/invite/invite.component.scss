@@ -98,6 +98,18 @@
         margin-top: 0.4rem;
     }
 
+    // The lone-host help with a guest in: a friend on the same couch scans it, the players stay in view.
+    .qr.small {
+        display: none;
+        width: 120px;
+        height: 120px;
+        margin-top: 0.7rem;
+
+        @media (min-height: 640px) {
+            display: block;
+        }
+    }
+
     .pin {
         margin-top: 0.4rem;
         font-size: 1.25rem;

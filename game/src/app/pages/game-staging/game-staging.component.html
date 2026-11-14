@@ -30,7 +30,7 @@
 
         <div *ngIf="!help?.show" class="spacer is-hidden-mobile"> </div>
 
-        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone || help?.show">
+        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone || help?.show" [class.with-guest]="help?.show && !lobby?.alone">
             <div class="columns is-mobile is-multiline">
                 <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
                     <img [src]="'/assets/avatar' + i + '.png'" class="picture">

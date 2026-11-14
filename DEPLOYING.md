@@ -1037,17 +1037,20 @@ lone computer hosts pressed an invite button. Each lobby that fills is a new gro
 **What the new half shows**, on the host's own page, while the lobby holds one or two players:
 
 - **On a phone** the invite stays on the page with one guest in (today it folds into INVITE FRIENDS),
-  with COPY LINK beside WhatsApp and the share sheet. With a guest in, the QR code is left out so
-  the players show.
+  with COPY LINK beside WhatsApp and the share sheet. With a guest in, the QR code is small (120 px),
+  and left out on a screen under 640 px high, so the players show.
 - **On a computer** the invite is a card: a big QR code, "Friends join on their phones", the short
   link to read out (`bullshit.wtf/join-game/<PIN>`), COPY LINK first, then WhatsApp, and two lines:
   "On a call? Paste the link in the chat." and "In one room? Turn this screen so everyone can scan it."
+  With a guest in the card shrinks, and the two players are drawn with the picture beside the name.
 - One light line: "Best with 4 or more players." (with one guest: "Two can play, but it's best with
   4 or more. Invite one or two more."). START is never held back: it is in the header from the
   second player on, as before, and a host alone keeps "Try 5 quick questions alone".
 
 From the third player on, both halves show the lobby as it was. Guests and the big screen never see
 the help, and a lobby with a big screen is not in the test. The other half is today's lobby.
+The host's page asks about the big screen once, as it loads: a big screen opened after that leaves
+the lobby in the test, and the help on the page, until the host reloads. It is the same in both halves.
 
 **Which half.** One bit of a hash of the PIN, worked out on the page
 (`game/src/app/pages/game-staging/lone-host.ts`, `loneHostHalf`), the way the staged reveal's half
@@ -1105,7 +1108,9 @@ ORDER BY device, half
 The new half wins if `share_reached_3` is higher, on computers above all (today about one computer
 host in three gets a table at all). With about 11 lobbies a day the first read worth making is after
 two weeks. A Replay's lobby and a crew's lobby also send a seen row (their host is alone for a
-moment); the query leaves them out by the joins they carry. To keep the help for everyone, make
+moment); the query leaves them out by the joins they carry. A lobby whose big screen was opened
+after the host has rows in both halves alike; the query keeps it. For a stricter read, leave out the
+PINs whose `opened_games.presenter` is true (only a lobby that started has that row). To keep the help for everyone, make
 `loneHostHelp` return `half: 'new'`; to drop it, `'classic'`.
 
 **Checked** with `game/test/lone-host.test.js`, `functions/test/lobby-help.test.js` and a run on the

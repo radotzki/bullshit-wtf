@@ -21,10 +21,9 @@
         <span> {{copied ? g.linkCopied : g.copyLink}} </span>
     </button>
 
-    <ng-container *ngIf="!compact">
-        <p class="scan-hint" [attr.dir]="locale === 'he' ? 'rtl' : null"> {{t?.scanHint}} </p>
-        <app-qr-code class="qr" [data]="qrUrl" [label]="g.scanLabel(pinUpper)"></app-qr-code>
-    </ng-container>
+    <p *ngIf="!compact" class="scan-hint" [attr.dir]="locale === 'he' ? 'rtl' : null"> {{t?.scanHint}} </p>
+    <!-- With a guest in, the code is small and only on a screen tall enough to keep the players in view. -->
+    <app-qr-code class="qr" [class.small]="compact" [data]="qrUrl" [label]="g.scanLabel(pinUpper)"></app-qr-code>
     <p class="pin"> {{g.pin(pinUpper)}} </p>
 </div>
 

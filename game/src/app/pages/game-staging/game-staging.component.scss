@@ -46,7 +46,30 @@
         color: #7a7a7a;
         // Light on a computer too, where the page's rem is twice a phone's.
         font-size: clamp(13px, 0.65rem, 20px);
-        margin: 10px 16px 2px;
+        // The gap below keeps the line clear of the players' pictures.
+        margin: 10px 16px 22px;
+    }
+
+    // The lone-host help on a computer with a guest in: the friend who just joined is the good news,
+    // so the two players are drawn at a proper size, each picture beside its name to save height.
+    @media screen and (min-width: 769px) {
+        // Bulma pulls a row of columns up by 0.75rem, which is 28 px on a wide screen: into the line above.
+        .lobby.alone.with-guest .columns {
+            margin-top: 0;
+        }
+
+        .lobby.alone.with-guest .player {
+            flex-direction: row;
+            gap: 14px;
+            height: 84px;
+            margin: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+
+            .picture {
+                height: 76px;
+            }
+        }
     }
 
     .start-alone {

@@ -94,9 +94,9 @@ async function join(phone, base, pin, he) {
     await phone.page.waitForURL(/\/game-staging\//, { timeout: 30000 });
 }
 
-// The lobby's row of players is 4 px wider than a computer's window on each side (Bulma's columns), in
-// both halves and before this change: that much is let through, so the check is about the help alone.
-const noSideScroll = (page) => page.evaluate(() => document.scrollingElement.scrollWidth <= window.innerWidth + (window.innerWidth >= 769 ? 8 : 1));
+// The lobby's row of players is wider than a computer's window (Bulma's columns: 4 px at 1280, 9 px at
+// 1920), in both halves and before this change: that much is let through, so the check is about the help alone.
+const noSideScroll = (page) => page.evaluate(() => document.scrollingElement.scrollWidth <= window.innerWidth + (window.innerWidth >= 769 ? 12 : 1));
 
 /** One lobby: a host on `device`, in `locale`, in the half asked for, then guests up to four players. */
 async function lobby(browser, base, { locale, wantNew, device, testGame }, problems) {
@@ -207,17 +207,44 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
             check(!(await visible(sheetButton)), 'with one guest: the folded invite button shows beside the help');
             check((await best.innerText().catch(() => '')).trim() === words.bestWithOne, `with one guest: the line is "${await best.innerText().catch(() => '')}"`);
             check(!(await visible(tryAlone)), 'with one guest: the "try alone" link is still there');
-            if (!computer) check(!(await visible(inline.locator('app-qr-code'))), 'with one guest: the phone keeps the QR code');
             const names2 = await page.locator('.lobby .player span').allInnerTexts();
             check(names2.length === 2, `with one guest: ${names2.length} players on the page`);
-            const last = await page.locator('.lobby .player').last().boundingBox();
-            if (computer) check(last && last.y + last.height <= COMPUTER.height, 'with one guest: the players are below a 1280x720 screen');
-            check(await noSideScroll(page), 'with one guest: the page scrolls sideways');
-            if (!computer) {
+            // The line must not touch the players' pictures, at every window size.
+            const clear = async (size) => {
+                const line = await best.boundingBox();
+                const pictures = await page.locator('.lobby .player .picture').evaluateAll((list) => list.map((el) => {
+                    const r = el.getBoundingClientRect();
+                    return { top: r.top, bottom: r.bottom, height: r.height };
+                }));
+                check(line && pictures.length === 2 && pictures.every((r) => r.top >= line.y + line.height),
+                    `with one guest, ${size}: the line (to ${line && Math.round(line.y + line.height)}) runs into a picture (from ${pictures.map((r) => Math.round(r.top))})`);
+                check(await noSideScroll(page), `with one guest, ${size}: the page scrolls sideways`);
+                return pictures;
+            };
+            if (computer) {
+                for (const [width, height] of [[800, 600], [1024, 768], [1280, 720], [1366, 768], [1920, 1080]]) {
+                    await page.setViewportSize({ width, height });
+                    await sleep(300);
+                    const pictures = await clear(`${width}x${height}`);
+                    check(pictures.every((r) => r.height >= 60), `with one guest, ${width}x${height}: the pictures are ${pictures.map((r) => Math.round(r.height))} px high`);
+                    if (height === 720) check(pictures.every((r) => r.bottom <= height), 'with one guest: a picture is below a 1280x720 screen');
+                    if (width === 1920) await shot(page, `${tag}-2-one-guest-1920x1080`);
+                }
+                await page.setViewportSize(COMPUTER);
+                await sleep(300);
+            } else {
+                // A small QR code for the friend on the same couch, where the screen is tall enough for it.
+                const qr = await inline.locator('app-qr-code').boundingBox();
+                check(qr && Math.round(qr.width) === 120 && Math.round(qr.height) === 120, `with one guest: the phone's QR code is ${qr && qr.width}x${qr && qr.height}`);
+                const lastPlayer = await page.locator('.lobby .player').last().boundingBox();
+                check(lastPlayer && lastPlayer.y + lastPlayer.height <= PHONE.height, 'with one guest: the players are below a 390x800 screen');
+                await clear('390x800');
                 await page.setViewportSize(SMALL_PHONE);
                 await sleep(300);
-                check(await noSideScroll(page), 'with one guest: the page scrolls sideways at 320 px');
+                check(!(await visible(inline.locator('app-qr-code'))), 'with one guest: a 568 px high phone shows the QR code');
+                await clear('320x568');
                 await page.setViewportSize(PHONE);
+                await sleep(300);
             }
         } else {
             check(await visible(sheetButton), 'the other half, one guest: no INVITE FRIENDS button');

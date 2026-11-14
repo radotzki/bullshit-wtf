@@ -7,7 +7,7 @@
  *
  * The new half, while the lobby holds one or two players:
  * - on a phone the invite stays on the page with one guest in (today it folds into a button), with
- *   COPY LINK beside WhatsApp and the share sheet;
+ *   COPY LINK beside WhatsApp and the share sheet, and a small QR code for the friend on the same couch;
  * - on a computer the invite is a card for the room and the call: a big QR code, "Friends join on
  *   their phones", the short link to read out, COPY LINK first;
  * - one light line says the game is best with 4 or more. START is never held back by it.
@@ -167,10 +167,11 @@ const strings = {
         bestWithOne: 'Two can play, but it\'s best with 4 or more. Invite one or two more.',
     },
     he: {
-        title: 'החברים מצטרפים מהטלפון',
-        scanOrOpen: 'סורקים את הקוד, או פותחים בטלפון את',
+        title: 'החברים מצטרפים מהטלפון שלהם',
+        // "הקוד" is the PIN in the header above, so the QR code is a ברקוד here, as people say.
+        scanOrOpen: 'סורקים את הברקוד, או נכנסים בטלפון לכתובת:',
         call: 'בשיחת וידאו? הדביקו את הקישור בצ\'אט.',
-        room: 'כולם באותו חדר? סובבו את המסך כדי שכולם יוכלו לסרוק.',
+        room: 'יושבים באותו חדר? סובבו את המסך כדי שכולם יוכלו לסרוק.',
         best: 'הכי כיף עם 4 שחקנים ומעלה.',
         bestWithOne: 'אפשר לשחק בשניים, אבל הכי כיף עם 4 ומעלה. הזמינו עוד אחד או שניים.',
     },
