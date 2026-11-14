@@ -14,8 +14,8 @@ const joinSource = fs.readFileSync(path.join(root, 'game', 'src', 'app', 'servic
 const known = JSON.parse(/const known = (\[[^\]]+\])/.exec(joinSource)[1].replace(/'/g, '"'));
 
 // The Hebrew search pages for an occasion (seo-he-...). The kit pages for teachers and teams, and the
-// general search pages (how to play, phone, Hanukkah: test/search-pages.test.js), have their own tests.
-const general = ['/he/how-to-play', '/he/party-game-phone', '/he/hanukkah'];
+// general search pages (how to play, phone, Hanukkah, a game like Jackbox: test/search-pages.test.js), have their own tests.
+const general = ['/he/how-to-play', '/he/party-game-phone', '/he/hanukkah', '/he/game-like-jackbox'];
 const tagged = pages.filter(p => p.tag && p.tag.indexOf('seo-he-') === 0 && general.indexOf(p.path) < 0);
 
 // The Hebrew site's own words, so that a page names only a button its reader will find.

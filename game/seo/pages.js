@@ -6,6 +6,8 @@
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
 const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
+const jackbox = require('./pages-jackbox');
+const holidays = require('./pages-en-holidays');
 
 const en = {
     lang: 'en',
@@ -19,6 +21,10 @@ const en = {
         { href: '/purim-party-game', label: 'Purim party game' },
         { href: '/classroom-game', label: 'A game for the classroom' },
         { href: '/team-building-game', label: 'A team-building game' },
+        { href: '/christmas-party-game', label: 'Christmas party game' },
+        { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
+        { href: '/office-holiday-party-game', label: 'Office holiday party game' },
+        { href: '/free-jackbox-alternative', label: 'A free Jackbox alternative' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -41,6 +47,7 @@ const he = {
         { href: '/he/made-up-answers', label: 'משחק שממציאים בו תשובות' },
         { href: '/he/classroom', label: 'משחק לכיתה' },
         { href: '/he/team-building', label: 'משחק לגיבוש צוות' },
+        { href: '/he/game-like-jackbox', label: 'משחק כמו ג\'קבוקס' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -236,4 +243,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en));
