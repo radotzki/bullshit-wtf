@@ -10,7 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
-import { startGame, hostHere } from './controllers/start';
+import { startGame, hostHere, hostToBigScreen } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import * as analytics from './controllers/analytics';
@@ -146,6 +146,19 @@ exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
     cors(req, res, async () => {
         try {
             return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
+        } catch (e) {
+            caught(e);
+            return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
+        }
+    });
+}, 'game'));
+
+// The host's computer becomes the big screen: frees the host's seat there, so the host joins from a
+// phone. Only for the browser with the game's host key, in the lobby: see hostToBigScreen in start.ts.
+exports.hostToBigScreen = functions.https.onRequest(http('hostToBigScreen', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await hostToBigScreen(req.body.pin, cleanHostKey(req.body.hostKey)));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));

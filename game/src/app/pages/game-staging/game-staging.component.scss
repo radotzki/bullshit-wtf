@@ -72,6 +72,48 @@
         }
     }
 
+    // A host on a computer: "Everyone in one room?" and the button that makes this the big screen.
+    // One quiet row above the invite: on the first screen whatever the invite's size, and clear of the players.
+    .big-screen-offer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        // Wide enough for one line of words at 1280 px: with a guest in, the players must stay on a 720 px high screen.
+        max-width: 1080px;
+        margin: 6px auto 0;
+        padding: 5px 14px;
+        border: 1px dashed #c9c9c9;
+        border-radius: 10px;
+
+        .words {
+            flex: 1 1 auto;
+            color: #5a5a5a;
+            // In px like the invite card beside it: the page's rem is a headline's size on a computer.
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        .button {
+            flex: 0 0 auto;
+            font-size: 14px;
+        }
+    }
+
+    // The big screen the host made of their computer, before anyone is in: where the host goes next.
+    .waiting-for-players.join-now {
+        // Clear of the invite card with the code, which stands at the lobby's far side.
+        padding: 0 22rem 0 2rem;
+        text-align: center;
+        font-size: 1.3rem;
+        line-height: 1.4;
+        pointer-events: none;
+    }
+
+    &[dir="rtl"] .waiting-for-players.join-now {
+        padding: 0 2rem 0 22rem;
+    }
+
     .start-alone {
         text-align: center;
         margin: 4px 0 8px;

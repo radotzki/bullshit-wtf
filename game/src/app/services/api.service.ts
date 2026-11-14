@@ -112,10 +112,29 @@ export class ApiService {
         return this.get<string>(this.gamesRef.child(pin).child('creator'));
     }
 
-    /** Whether the server marks this game's host by the creating phone's host key (see host-key.ts). */
+    /**
+     * Whether the server marks this game's host by the creating phone's host key (see host-key.ts):
+     * true, or 'screen' once the host made their computer the big screen (see hostToBigScreen).
+     */
     getGameHasHost(pin: string) {
         pin = pin.toUpperCase();
-        return this.get<boolean>(this.gamesRef.child(pin).child('hasHost'));
+        return this.get<boolean | 'screen'>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
+    /** The same, live: it changes in the lobby when the host makes their computer the big screen. */
+    getGameHasHostObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<boolean | 'screen'>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
+    /**
+     * The host's computer becomes the big screen: the server frees the host's seat and marks the game as
+     * hosted from its big screen. Only the browser with the game's host key may ask, in the lobby.
+     */
+    hostToBigScreen(pin: string) {
+        pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin) || null;
+        return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
     async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {

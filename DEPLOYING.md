@@ -347,7 +347,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 20 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit + laugh), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 21 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit + laugh + hostToBigScreen), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -365,6 +365,18 @@ made with a host key only for the phone that brings that key, big screen or not 
 shows the lobby; it starts only games with no host key). Games made by this
 client carry `serverStart`, and for them the server ignores START ticks and the rules refuse writing
 `tick` in the lobby. Games made by an older client keep starting by tick.
+
+The host's computer as the big screen: a host who made the game on a computer has a button in the lobby
+that calls `hostToBigScreen` with the host key. In one write the server removes the seat marked as the
+host, sets `presenter`, and sets `games/$pin/hasHost` to `'screen'` (it is `true` in every other hosted
+game). The browser keeps the host key and is the big screen from then on: it shows START and reports in
+with `hostHere`. The host joins from a phone as an ordinary player; no phone is handed the key. While
+`hasHost` is `'screen'`, startGame waits for no host row, so the 90 s "host never joined" rule does not
+open START to everyone; only a big screen that has not reported in for 5 minutes does. Phones read
+`hasHost` live and show "The game starts from the big screen". No rules change: `hasHost` and
+`presenter` were readable already. A page from before this release reads `'screen'` as "no host key" and
+shows "Waiting for the host to join"; the server still refuses its START. Each press is one row in
+`shares`: content_type `lobby-help`, method `big-screen`, the PIN in `crew_id`.
 
 Host gone: in a `serverStart` game the host's lobby page calls `hostHere` every 20 s with its key, and
 the server stores its own time in `games/$pin/hostSeen` (the host's join and Replay set it too). Once a
