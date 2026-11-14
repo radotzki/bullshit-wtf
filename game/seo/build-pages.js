@@ -105,6 +105,7 @@ function render(p) {
   <meta property="og:image:alt" content="${esc(p.h1)}">` : ''}
   <meta property="og:locale" content="${s.lang === 'he' ? 'he_IL' : 'en_US'}">
   <meta name="twitter:card" content="${p.image ? 'summary_large_image' : 'summary'}">
+  ${ARRIVAL_NOTE}
   <link rel="icon" type="image/png" href="/assets/favicon-32x32.png" sizes="32x32">
   <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
   <script type="application/ld+json">${JSON.stringify(ld)}</script>
@@ -172,7 +173,6 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
       }
     })();
   </script>
-  ${ARRIVAL_NOTE}
 </body>
 </html>
 `;
