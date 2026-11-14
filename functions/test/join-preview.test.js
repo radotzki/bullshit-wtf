@@ -375,3 +375,46 @@ test('firebase.json sends both join paths to joinPreview, ahead of the Hebrew an
     assert.strictEqual(rewrites[at('/_v')].function, 'visit');
     assert.strictEqual(rewrites[at('**')].destination, '/index.html');
 });
+
+test('a nickname with $&, $\' or $` stays literal: the page around the title is intact', () => {
+    for (const name of ['a$&', "b$'", 'c$`', '$$x']) {
+        const preview = jp.previewOf(lobby({ players: { a: { nickname: name, host: true } } }), 'QBCD', now);
+        assert.strictEqual(preview.host, name);
+        const page = jp.personalize(EN_SHELL, preview, 'https://bullshit.wtf/join-game/QBCD');
+        const title = `${jp.escapeHtml(name)} invited you to play Bullshit`;
+        assert.strictEqual(page.match(/<title>([^<]*)<\/title>/)[1], title);
+        assert.strictEqual(one(page, 'og:title'), title);
+        assert.strictEqual((page.match(/<title>/g) || []).length, 1);
+        // Nothing but the title changed outside the BS:META block: no stray text, no tags pushed down.
+        const outside = (h) => h.replace(/<!-- BS:META:START -->[\s\S]*?<!-- BS:META:END -->/, '').replace(/<title>[^<]*<\/title>/, '');
+        assert.strictEqual(outside(page), outside(EN_SHELL));
+        assert.strictEqual(page.indexOf('<meta name="robots" content="noindex">'), page.indexOf('<!-- BS:META:START -->') + '<!-- BS:META:START -->\n  '.length);
+    }
+});
+
+test('an English invite from a host whose name starts right to left begins in English', () => {
+    assert.strictEqual(jp.startsRightToLeft('נועה'), true);
+    assert.strictEqual(jp.startsRightToLeft('12 נועה'), true);
+    assert.strictEqual(jp.startsRightToLeft('محمد'), true);
+    assert.strictEqual(jp.startsRightToLeft('Dana'), false);
+    assert.strictEqual(jp.startsRightToLeft('Dana נועה'), false);
+    assert.strictEqual(jp.startsRightToLeft('42'), false);
+    const he = jp.previewOf(lobby({ players: { a: { nickname: 'נועה', host: true } } }), 'QBCD', now);
+    assert.strictEqual(he.title, 'You\'re invited by נועה to play Bullshit');
+    assert.ok(/^[A-Za-z]/.test(he.title), 'starts with a Latin letter');
+    const page = jp.personalize(EN_SHELL, he, 'https://bullshit.wtf/join-game/QBCD');
+    assert.strictEqual(one(page, 'og:title'), 'You&#39;re invited by נועה to play Bullshit');
+    assert.strictEqual(one(page, 'twitter:title'), 'You&#39;re invited by נועה to play Bullshit');
+    // A Latin name is unchanged, and so is a Hebrew game (its title starts in Hebrew either way).
+    assert.strictEqual(jp.previewOf(lobby(), 'QBCD', now).title, 'Dana invited you to play Bullshit');
+    assert.strictEqual(jp.previewOf(lobby({ locale: 'he', players: { a: { nickname: 'נועה', host: true } } }), 'QBCD', now).title, 'הזמנה לבולשיט: נועה מחכה לך');
+});
+
+test('the personalised page drops rel=canonical (it sits beside noindex); the generic page keeps it', () => {
+    for (const shell of [EN_SHELL, HE_SHELL]) {
+        assert.ok(/<link rel="canonical"/.test(shell), 'the site\'s page has one');
+        const page = jp.personalize(shell, jp.previewOf(lobby(), 'QBCD', now), 'https://bullshit.wtf/join-game/QBCD');
+        assert.ok(!/rel="canonical"/.test(page));
+        assert.ok(/rel="alternate" hreflang/.test(page) || shell === EN_SHELL, 'the language links stay');
+    }
+});

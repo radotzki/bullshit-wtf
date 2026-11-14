@@ -42,6 +42,12 @@ export class InviteComponent implements OnInit {
             this.t = this.shareService.strings(this.locale);
             this.g = gameStrings(this.locale);
             this.ready = true;
+            // The host's phone, as its lobby opens: wake the invite link's preview before it is shared.
+            // Only the host's (it has joined, so the preview names it); a guest's phone could cache the
+            // nameless invite for a minute before the host is in.
+            if (!this.presenter && this.apiService.holdsHostKey(this.pin)) {
+                this.shareService.warmInvite(this.pin, this.locale);
+            }
         }, () => this.ready = true);
     }
 
@@ -73,6 +79,8 @@ export class InviteComponent implements OnInit {
         this.open = !this.open;
         this.copied = false;
         if (this.open) {
+            // Whoever opens the sheet is about to share: make the preview ready (once every few minutes).
+            this.shareService.warmInvite(this.pin, this.locale);
             this.shareService.track('open', 'invite');
         }
     }
