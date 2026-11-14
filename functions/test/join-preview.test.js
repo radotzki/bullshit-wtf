@@ -249,6 +249,7 @@ test('joinPreviewPage: a named preview from the page at the visitor\'s host, cac
     assert.strictEqual(a.kind, 'named');
     assert.strictEqual(a.status, 200);
     assert.strictEqual(a.headers['Content-Type'], 'text/html; charset=utf-8');
+    assert.strictEqual(a.headers['X-Robots-Tag'], 'noindex');
     assert.strictEqual(a.headers['Cache-Control'], 'public, max-age=300, s-maxage=600');
     assert.strictEqual(one(a.body, 'og:title'), 'Dana invited you to play Bullshit');
     assert.strictEqual(one(a.body, 'og:url'), 'https://bullshit.wtf/join-game/QBCD');
@@ -296,7 +297,10 @@ test('joinPreviewPage: a slow or failing database gets the generic page, cached 
     assert.strictEqual(slow.faults.length, 1);
 
     const failing = deps({}, site(), { readGame: async () => { throw new Error('permission denied'); } });
-    assert.strictEqual((await jp.joinPreviewPage('/join-game/QBCD', '', PROD, failing)).body, EN_SHELL);
+    const failed = await jp.joinPreviewPage('/join-game/QBCD', '', PROD, failing);
+    assert.strictEqual(failed.body, EN_SHELL);
+    // The generic answer is the home page's own copy: the header keeps it out of search.
+    assert.strictEqual(failed.headers['X-Robots-Tag'], 'noindex');
 });
 
 test('joinPreviewPage: the page is kept in memory, then checked with its ETag', async () => {
@@ -319,6 +323,7 @@ test('joinPreviewPage: a site that cannot be fetched gets a page that tries agai
     const a = await jp.joinPreviewPage('/join-game/QBCD', '?via=link', PROD, down);
     assert.strictEqual(a.kind, 'fallback');
     assert.strictEqual(a.headers['Cache-Control'], 'no-store');
+    assert.strictEqual(a.headers['X-Robots-Tag'], 'noindex');
     assert.ok(a.body.includes('http-equiv="refresh"'));
     assert.ok(a.body.includes('href="/join-game/QBCD?via=link"'));
     assert.strictEqual(down.faults.length, 1);
@@ -365,13 +370,21 @@ test('the joinPreview function reads only what the preview needs, never writes, 
     }
 });
 
-test('firebase.json sends both join paths to joinPreview, ahead of the Hebrew and catch-all rewrites', () => {
+test('firebase.json sends both join paths to joinPreview, ahead of every rewrite to a page', () => {
     const rewrites = JSON.parse(fs.readFileSync(path.join(ROOT, 'firebase.json'), 'utf8')).hosting.rewrites;
     const at = (src) => rewrites.findIndex(r => r.source === src);
     assert.strictEqual(rewrites[at('/join-game/*')].function, 'joinPreview');
     assert.strictEqual(rewrites[at('/he/join-game/*')].function, 'joinPreview');
-    assert.ok(at('/he/join-game/*') < at('/he/**'));
-    assert.ok(at('/join-game/*') < at('**'));
     assert.strictEqual(rewrites[at('/_v')].function, 'visit');
-    assert.strictEqual(rewrites[at('**')].destination, '/index.html');
+    const pages = rewrites.map((r, i) => ({ r, i })).filter(x => x.r.destination);
+    assert.ok(pages.length > 0);
+    pages.forEach(({ r, i }) => {
+        assert.ok(at('/join-game/*') < i && at('/he/join-game/*') < i, JSON.stringify(r));
+        // No page rewrite takes a join link (the function answers those), and none is a catch-all:
+        // an unknown address gets Hosting's 404 page (game/scripts/build-404.js).
+        const re = new RegExp(r.regex);
+        ['/join-game/QBCD', '/he/join-game/QBCD'].forEach(p => assert.ok(!re.test(p), p + ' ' + r.regex));
+        assert.ok(!re.test('/no-such-page') && !re.test('/he/no-such-page'), r.regex);
+        assert.notStrictEqual(r.source, '**');
+    });
 });
