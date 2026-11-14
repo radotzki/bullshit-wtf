@@ -71,6 +71,8 @@ export interface GameScheme {
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
     pack?: string;
+    // Where the host's visit started (see GameArrival). No phone can read it; not carried by Replay.
+    arrival?: GameArrival;
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
     // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
@@ -674,6 +676,92 @@ export const TEST_CAMPAIGN = 'test';
 export function isTestCampaign(tag: any): boolean {
     const t = cleanCampaign(tag);
     return !!t && (t === TEST_CAMPAIGN || t.indexOf(TEST_CAMPAIGN + '-') === 0);
+}
+
+/**
+ * Where the visit of the browser that created a game started, so the usage data can tell which
+ * routes bring new hosts (opened_games.first_page and its neighbours; DEPLOYING.md, "Where a host
+ * came from"). The creating phone sends it with newGame; the server keeps only what cleanArrival
+ * lets through, at games/$pin/arrival, which no phone can read.
+ */
+export interface GameArrival {
+    /** The first page of the visit, as arrivalPage writes it: /, /how-to-play, /join-game/:pin. */
+    page?: string;
+    /** The host name of the site the visit came from (www.google.com); absent when the browser sent none. */
+    ref?: string;
+    /** The browser had sat in a game before it created this one. */
+    played?: boolean;
+    /** The browser had created a game before this one. */
+    hosted?: boolean;
+    /** Whole minutes from the first page of the visit to creating the game. */
+    minutes?: number;
+}
+
+/**
+ * A page of the site as the usage data names it: the path alone (never a query string), with every
+ * PIN and crew id replaced and the Hebrew twin of an app page folded into the page itself:
+ * /he/join-game/ABCD -> /join-game/:pin, /c/k3j9 -> /c/:id, /he -> /. A plain page keeps its own
+ * address (/he/hanukkah). The same form as `page` in the visits table (pull request 46).
+ */
+export function arrivalPage(path: any): string | undefined {
+    if (typeof path !== 'string') {
+        return undefined;
+    }
+    const p = path.split(/[?#]/)[0];
+    if (p.length > 80 || !/^\/[A-Za-z0-9\/_-]*$/.test(p)) {
+        return undefined;
+    }
+    let m = /^(\/he)?\/(join-game|present-game|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)\/[^\/]+\/?$/.exec(p);
+    if (m) {
+        return '/' + m[2] + '/:pin';
+    }
+    m = /^(\/he)?\/c\/[^\/]+\/?$/.exec(p);
+    if (m) {
+        return '/c/:id';
+    }
+    if (/^\/he\/join-game\/?$/.test(p)) {
+        return '/join-game';
+    }
+    if (/^\/he\/?$/.test(p)) {
+        return '/';
+    }
+    return p.length > 1 ? p.replace(/\/+$/, '') || '/' : p;
+}
+
+/** A referring site's host name, in lower case: letters, digits, dots and dashes, never an address. */
+export function arrivalRef(host: any): string | undefined {
+    if (typeof host !== 'string') {
+        return undefined;
+    }
+    const h = host.toLowerCase().trim();
+    return /^[a-z0-9.-]{1,60}$/.test(h) && /[a-z]/.test(h) ? h : undefined;
+}
+
+/** What the server keeps of the arrival a phone sends: only the five fields, each in its own form. */
+export function cleanArrival(raw: any): GameArrival | undefined {
+    if (!raw || typeof raw !== 'object') {
+        return undefined;
+    }
+    const arrival: GameArrival = {};
+    const page = arrivalPage(raw.page);
+    if (page) {
+        arrival.page = page;
+    }
+    const ref = arrivalRef(raw.ref);
+    if (ref) {
+        arrival.ref = ref;
+    }
+    if (typeof raw.played === 'boolean') {
+        arrival.played = raw.played;
+    }
+    if (typeof raw.hosted === 'boolean') {
+        arrival.hosted = raw.hosted;
+    }
+    if (typeof raw.minutes === 'number' && isFinite(raw.minutes) && raw.minutes >= 0) {
+        // Capped at 30 days: a tab left open longer says nothing more.
+        arrival.minutes = Math.min(Math.floor(raw.minutes), 43200);
+    }
+    return Object.keys(arrival).length ? arrival : undefined;
 }
 
 /** A player's best lie of the game, and how many players their lies fooled in all. */

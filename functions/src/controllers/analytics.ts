@@ -7,6 +7,11 @@ import { nameFlag } from '../name-flag';
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
 
+// Where a host's visit started (arrival.ts): its columns, and recordArrival, which index.ts calls
+// through here as the game is made.
+import { arrivalColumns, hostArrivalColumns } from './arrival';
+export { recordArrival } from './arrival';
+
 export async function onFork(pin: string) {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
@@ -69,10 +74,13 @@ async function isTestGame(pin: string): Promise<boolean> {
 export async function onJoinGame(uid: string, ip: string, useragent: string, pin: string, nickname: string, via: string | null = null) {
     // The users table has no campaign column, and a lobby that never starts has no other row:
     // a join of a test game says so in via, so the lobby can be left out with nothing else to go by.
+    // The host's own join also says where the host's visit started (see arrival.ts).
+    const arrival = await hostArrivalColumns(pin, via);
     if (await isTestGame(pin)) {
         via = TEST_VIA;
     }
     return insert('users', {
+        ...arrival,
         uid,
         ip,
         useragent,
@@ -159,6 +167,7 @@ export async function onShare(row: ShareRow) {
 // Host and start kind, the same on opened_games and closed_games.
 function origin(game: GameScheme) {
     return {
+        ...arrivalColumns(game.arrival),
         creator_uid: game.creator || null,
         origin: game.origin || null,
         parent_pin: game.parent || null,
