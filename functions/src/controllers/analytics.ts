@@ -133,7 +133,9 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-save': ['repeat-offer', 'bottom'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
-        'whatsapp', 'native', 'copy'],
+        'whatsapp', 'native', 'copy',
+        // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
+        'big-screen'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],

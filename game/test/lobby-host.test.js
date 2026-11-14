@@ -325,3 +325,61 @@ test('the lobby asks for the clock again only while it is unknown, and at most o
     assert.strictEqual(shouldAskClock(null, false, 1000, 1000 + CLOCK_RETRY_MS - 1), false);
     assert.strictEqual(shouldAskClock(null, false, 1000, 1000 + CLOCK_RETRY_MS), true);
 });
+
+// ---- the host's computer is the big screen (hasHost 'screen', see big-screen-host.ts) ----
+
+const onScreen = (over) => view(Object.assign({
+    hasPresenter: true, hasHost: true, hostScreen: true, players: [ben, chen], myUid: 'uid-ben',
+}, over));
+
+test('host screen: the big screen with the host key starts the game', () => {
+    const v = onScreen({ isPresenter: true, holdsHostKey: true, myUid: null });
+    assert.strictEqual(v.canStart, true);
+    assert.strictEqual(v.hostScreen, true);
+    assert.strictEqual(lobbyText(v, 2, 'en').message, 'Press START when everyone is in');
+});
+
+test('host screen: phones wait for the big screen, however long they have waited', () => {
+    for (const waitedMs of [0, HOST_GRACE_MS, HOST_GRACE_MS * 10]) {
+        const v = onScreen({ waitedMs });
+        assert.strictEqual(v.canStart, false);
+        assert.strictEqual(v.wait, 'big-screen');
+        assert.strictEqual(lobbyText(v, 2, 'en').message, 'The game starts from the big screen');
+        assert.strictEqual(lobbyText(v, 2, 'he').message, 'המשחק מתחיל מהמסך הגדול');
+    }
+});
+
+test('host screen: the host who joined from a phone is a guest like the others', () => {
+    // The host's phone has another uid than the computer that made the game, and no host key.
+    const phone = { nickname: 'Alice', score: 0, uid: 'uid-alice-phone', pid: 'p9' };
+    const v = onScreen({ players: [ben, chen, phone], myUid: 'uid-alice-phone', myPid: 'p9' });
+    assert.strictEqual(v.canStart, false);
+    assert.strictEqual(v.wait, 'big-screen');
+    assert.ok(!v.isHost);
+});
+
+test('host screen: a second big screen without the key does not start the game', () => {
+    const v = onScreen({ isPresenter: true, holdsHostKey: false, myUid: null });
+    assert.strictEqual(v.canStart, false);
+    assert.strictEqual(v.wait, 'big-screen');
+});
+
+test('host screen: a big screen gone five minutes lets anyone start, and says so', () => {
+    assert.strictEqual(onScreen({ hostAwayMs: HOST_GONE_MS - 1 }).canStart, false);
+    const v = onScreen({ hostAwayMs: HOST_GONE_MS });
+    assert.strictEqual(v.canStart, true);
+    assert.strictEqual(v.screenGone, true);
+    assert.strictEqual(lobbyText(v, 2, 'en').message, 'The big screen seems to be gone. Anyone can press START');
+    assert.match(lobbyText(v, 2, 'he').message, /המסך הגדול/);
+    // An unknown clock offset never makes it look gone.
+    assert.strictEqual(onScreen({ hostAwayMs: null }).canStart, false);
+});
+
+test('host screen: a seat marked as the host again wins over the big screen', () => {
+    const host = { nickname: 'Alice', score: 0, uid: 'uid-alice', pid: 'p1', host: true };
+    const mine = onScreen({ players: [host, ben], myUid: 'uid-alice', myPid: 'p1' });
+    assert.strictEqual(mine.canStart, true);
+    const guest = onScreen({ players: [host, ben] });
+    assert.strictEqual(guest.wait, 'host');
+    assert.strictEqual(guest.hostName, 'Alice');
+});

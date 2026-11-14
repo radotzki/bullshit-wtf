@@ -50,7 +50,10 @@ export interface GameScheme {
     // can write) never starts it. Games from older clients lack it, so their START tick still works.
     serverStart?: boolean;
     // This game has a host marked by hostKey (readable): other phones wait for that host to join.
-    hasHost?: boolean;
+    // 'screen': the host turned the computer that made the game into the big screen and gave up the
+    // seat there (see hostToBigScreen in functions: start.ts). That big screen holds the host key and
+    // starts the game; no player row is the host. Only the server writes it.
+    hasHost?: boolean | 'screen';
     // Server time the host's lobby page last reported in (serverStart games only, written only by the
     // server for the phone with the host key). Readable: when it is 90 s old, anyone may start.
     hostSeen?: number;

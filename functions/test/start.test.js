@@ -391,3 +391,94 @@ test('Replay with a host key marks the new host seen', async () => {
 test('the host-gone wait is 5 minutes, the same as the lobby', () => {
     assert.strictEqual(HOST_GONE_MS, 5 * 60 * 1000);
 });
+
+// ---- the host's computer becomes the big screen (hostToBigScreen) ----
+
+const seats = (pin) => Object.keys(db.games[pin].players || {}).filter(k => db.games[pin].players[k]);
+
+test('the host makes the computer the big screen: the seat goes, the big screen starts the game', async () => {
+    const { pin, host, friend } = await hostedLobby();
+    const r = await call('hostToBigScreen', { pin, hostKey: KEY });
+    assert.deepStrictEqual([r.code, r.body], [200, { screen: true }]);
+    assert.deepStrictEqual(seats(pin), [friend]);
+    assert.ok(!seats(pin).includes(host));
+    assert.strictEqual(db.games[pin].hasHost, 'screen');
+    assert.strictEqual(db.games[pin].presenter, true);
+    assert.strictEqual(typeof db.games[pin].hostSeen, 'number');
+
+    // The host joins from a phone, with no key: an ordinary seat, never the host's.
+    const phone = (await call('join', { pin, nickname: 'alice', uid: 0 })).body.pid;
+    assert.ok(!db.games[pin].players[phone].host);
+    assert.strictEqual((await call('startGame', { pin })).body.code, 'NOT_HOST');
+    assert.strictEqual((await call('startGame', { pin, hostKey: OTHER })).body.code, 'NOT_HOST');
+
+    // The big screen holds the key and starts the game.
+    assert.deepStrictEqual((await call('startGame', { pin, hostKey: KEY })).body, { started: true });
+    assert.strictEqual(db.games[pin].state.id, RoundIntro);
+});
+
+test('nobody but the host key frees a seat, and only in the lobby', async () => {
+    const { pin, host, friend } = await hostedLobby();
+    for (const body of [{ pin }, { pin, hostKey: OTHER }, { pin, hostKey: 'short' }, { pin, hostKey: KEY + '!' }]) {
+        const r = await call('hostToBigScreen', body);
+        assert.deepStrictEqual([r.code, r.body.code], [403, 'NOT_HOST']);
+    }
+    assert.deepStrictEqual(seats(pin).sort(), [host, friend].sort());
+    assert.strictEqual(db.games[pin].hasHost, true);
+    assert.strictEqual(db.games[pin].presenter, false);
+    assert.strictEqual((await call('hostToBigScreen', { pin: 'ZZZZ', hostKey: KEY })).code, 400);
+
+    await call('startGame', { pin, hostKey: KEY });
+    const late = await call('hostToBigScreen', { pin, hostKey: KEY });
+    assert.deepStrictEqual([late.code, late.body.code], [400, 'GAME_STARTED']);
+    assert.deepStrictEqual(seats(pin).sort(), [host, friend].sort());
+});
+
+test('a game with no host key has no seat to free', async () => {
+    seedQuestions();
+    const pin = (await call('newGame', { locale: 'en', count: 5 })).body.pin;
+    const p = (await call('join', { pin, nickname: 'alice', uid: 0 })).body.pid;
+    const r = await call('hostToBigScreen', { pin, hostKey: KEY });
+    assert.strictEqual(r.body.code, 'NOT_HOST');
+    assert.deepStrictEqual(seats(pin), [p]);
+});
+
+test('only the seat marked as the host goes, and asking twice changes nothing', async () => {
+    const { pin, friend } = await hostedLobby();
+    const third = (await call('join', { pin, nickname: 'chen', uid: 0 })).body.pid;
+    await call('hostToBigScreen', { pin, hostKey: KEY });
+    await call('hostToBigScreen', { pin, hostKey: KEY });
+    assert.deepStrictEqual(seats(pin).sort(), [friend, third].sort());
+    assert.strictEqual(db.games[pin].hasHost, 'screen');
+});
+
+test('with the big screen as the host, START never opens to everyone while it reports in', async () => {
+    const { pin } = await hostedLobby();
+    await call('hostToBigScreen', { pin, hostKey: KEY });
+    const game = db.games[pin];
+    const t0 = game.state.timestamp;
+    // No host row, long past the 90 s for a host who never joined: still the big screen's game.
+    game.hostSeen = t0 + 10 * 60 * 1000;
+    assert.strictEqual(startVerdict(game, undefined, t0 + 10 * 60 * 1000 + 1000), 'not-host');
+    assert.strictEqual(startVerdict(game, KEY, t0 + 10 * 60 * 1000 + 1000), 'host');
+    // The big screen gone 5 minutes (a closed laptop): anyone may start.
+    assert.strictEqual(startVerdict(game, undefined, game.hostSeen + HOST_GONE_MS - 1), 'not-host');
+    assert.strictEqual(startVerdict(game, undefined, game.hostSeen + HOST_GONE_MS), 'host-gone');
+});
+
+test('the big screen keeps reporting in with the host key', async () => {
+    const { pin } = await hostedLobby();
+    await call('hostToBigScreen', { pin, hostKey: KEY });
+    db.games[pin].hostSeen = 1;
+    assert.deepStrictEqual((await call('hostHere', { pin, hostKey: KEY })).body, { seen: true });
+    assert.ok(db.games[pin].hostSeen > 1);
+    assert.strictEqual((await call('hostHere', { pin })).code, 403);
+});
+
+test('the computer that became the big screen can take a seat again: that seat is the host', async () => {
+    const { pin } = await hostedLobby();
+    await call('hostToBigScreen', { pin, hostKey: KEY });
+    const back = (await call('join', { pin, nickname: 'alice', uid: 0, hostKey: KEY })).body.pid;
+    assert.strictEqual(db.games[pin].players[back].host, true);
+    assert.deepStrictEqual((await call('startGame', { pin, hostKey: KEY })).body, { started: true });
+});

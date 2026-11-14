@@ -21,7 +21,7 @@ const stand = {
     'on-reveal-done': controller(['onRevealDone']),
     'join': controller(['join']),
     'fork': controller(['fork']),
-    'start': controller(['startGame', 'hostHere']),
+    'start': controller(['startGame', 'hostHere', 'hostToBigScreen']),
     'validate-game-name': controller(['validateGameName']),
     'crew': controller(['createCrew', 'crewRematch']),
     'laugh': controller(['laugh']),
@@ -131,7 +131,7 @@ test('a fault in an HTTP function: the same answer as before, and one report', a
 test('every HTTP function with a catch reports its fault under its own name', async () => {
     const bodies = { newGame: { locale: 'en', count: 5 }, crewRematch: { crew: 'c1' } };
     for (const [name, step] of [['newGame', 'newGame'], ['fork', 'fork'], ['createCrew', 'createCrew'], ['crewRematch', 'crewRematch'],
-        ['startGame', 'startGame'], ['hostHere', 'hostHere'], ['answer', 'answer'], ['join', 'join'], ['validateGameName', 'validateGameName'],
+        ['startGame', 'startGame'], ['hostHere', 'hostHere'], ['hostToBigScreen', 'hostToBigScreen'], ['answer', 'answer'], ['join', 'join'], ['validateGameName', 'validateGameName'],
         ['onJoinGame', 'onJoinGame'], ['onShare', 'onShare'], ['laugh', 'laugh']]) {
         fresh();
         steps[step] = async () => { throw boom(); };
@@ -269,7 +269,7 @@ test('a request the site never sends is answered as before and is no report', as
     const lookups = [];
     fresh({ gameLookup: async (pin) => { lookups.push(pin); return false; } });
     const fault = () => { throw boom("Cannot read properties of undefined (reading 'toUpperCase')"); };
-    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'validateGameName', 'createCrew', 'laugh']) {
+    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'hostToBigScreen', 'validateGameName', 'createCrew', 'laugh']) {
         const step = name === 'validateGameName' ? 'validateGameName' : name;
         steps[step] = async () => fault();
         for (const body of [{}, { nickname: 'Dana' }, { pin: 1234 }, { pin: 'AB.CD' }, { pin: 'ABCD/../x' }, { pin: '' }, { pin: null }, { pin: ['ABCD'] }]) {
