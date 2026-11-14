@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { PACK_FILE, ID, WRITE_PATH, payload, check, allowedWrite, load, dryRun } = require('./load-pack-questions.js');
+const { PACK_FILE, ID, WRITE_PATH, RESULTS, payload, check, allowedWrite, allowedRead, load, dryRun } = require('./load-pack-questions.js');
 
 const ROOT = path.join(__dirname, '..', '..');
 const PROJECT = 'made-up-project';
@@ -154,4 +154,51 @@ test('the update is sent with the database sign-in only, and the API reads never
     await load(PROJECT, ROOT, a.request, w.request, noAnswer);
     assert.ok(a.sent.every(o => o.method === 'GET' && o.url.startsWith('https://firebase.googleapis.com/')));
     assert.ok(w.sent.every(o => o.method === 'PATCH' && o.url === DB + WRITE_PATH));
+});
+
+test('each way the step can end says which, for the run\'s summary', async () => {
+    const result = async (answers, write, dir = ROOT) => (await load(PROJECT, dir, api(answers).request, write, noAnswer)).result;
+    assert.strictEqual(await result({}, writer().request), 'written');
+    assert.strictEqual(await result({}, writer(() => ({ status: 401, data: { error: 'Permission denied' } })).request), 'refused');
+    assert.strictEqual(await result({}, writer(() => ({ status: 503, data: null })).request), 'refused');
+    assert.strictEqual(await result({}, writer(() => ({ status: 200, data: null })).request), 'unclear');
+    assert.strictEqual(await result({}, async () => { throw Object.assign(new Error('x'), { code: 'ECONNREFUSED' }); }), 'unclear');
+    assert.strictEqual(await result({}, writer().request, tmpWith({ 'opener-en-01': one() })), 'not-sent');
+    assert.strictEqual(await result({ [URLS.project]: { status: 403, data: null } }, writer().request), 'not-sent');
+    assert.strictEqual(await result({ [URLS.config]: { status: 200, data: { projectId: PROJECT, databaseURL: 'https://evil.example.com' } } }, writer().request), 'not-sent');
+    assert.deepStrictEqual(RESULTS, ['written', 'not-sent', 'refused', 'unclear']);
+});
+
+test('the lock refuses any option but the url, the method and the body: no headers, no params', () => {
+    const ok = { url: DB + '/questions.json', method: 'PATCH', data: QUESTIONS };
+    for (const more of [
+        { headers: { 'X-HTTP-Method-Override': 'PUT' } },
+        { headers: {} },
+        { params: { 'x-http-method-override': 'PUT' } },
+        { params: { print: 'silent' } },
+        { baseURL: 'https://example.com' },
+        { body: '{}' },
+        { method: 'PATCH', paramsSerializer: () => 'x' },
+    ]) {
+        assert.strictEqual(allowedWrite({ ...ok, ...more }), false, Object.keys(more).join());
+    }
+    const read = { url: URLS.project, method: 'GET' };
+    assert.strictEqual(allowedRead(read), true);
+    for (const more of [{ headers: { 'X-HTTP-Method-Override': 'DELETE' } }, { params: { x: 1 } }, { data: {} }]) {
+        assert.strictEqual(allowedRead({ ...read, ...more }), false, Object.keys(more).join());
+    }
+});
+
+test('a request built with headers is never sent, by either sign-in', async () => {
+    // The lock sits between the script and Google's library: what reaches the library is
+    // exactly what load() built, url, method and data alone.
+    const a = api();
+    const w = writer();
+    await load(PROJECT, ROOT, a.request, w.request, noAnswer);
+    for (const o of a.sent) {
+        assert.deepStrictEqual(Object.keys(o).sort(), ['method', 'url']);
+    }
+    for (const o of w.sent) {
+        assert.deepStrictEqual(Object.keys(o).sort(), ['data', 'method', 'url']);
+    }
 });

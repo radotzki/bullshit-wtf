@@ -110,10 +110,18 @@ function check(data) {
     }
 }
 
-// The one write: a PATCH to <database address>/questions.json, no query, a body of pack
-// questions only.
+// The only keys a request of this file may carry. Anything else, such as headers or params
+// (an X-HTTP-Method-Override header, a query added outside the url), is refused by the lock, so
+// it holds whatever a later edit adds to a request.
+const WRITE_KEYS = ['url', 'method', 'data'];
+const READ_KEYS = ['url', 'method'];
+const onlyKeys = (options, keys) => Object.keys(options).every(k => keys.includes(k));
+
+// The one write: a PATCH to <database address>/questions.json, no query, no other option, a
+// body of pack questions only.
 function allowedWrite(options) {
-    if (!options || typeof options !== 'object' || options.method !== 'PATCH' || typeof options.url !== 'string') {
+    if (!options || typeof options !== 'object' || options.method !== 'PATCH' || typeof options.url !== 'string' ||
+        !onlyKeys(options, WRITE_KEYS)) {
         return false;
     }
     let u;
@@ -134,6 +142,11 @@ function allowedWrite(options) {
     return true;
 }
 
+// Requests 1 and 2: a plain GET of firebase.googleapis.com (live-rules.js), with no other option.
+function allowedRead(options) {
+    return Boolean(options) && typeof options === 'object' && onlyKeys(options, READ_KEYS) && allowedApi(options);
+}
+
 function lock(request, may) {
     return async options => {
         if (!may(options)) {
@@ -143,11 +156,22 @@ function lock(request, may) {
     };
 }
 
+// What became of the update, for the run's summary (the step's output `result`):
+//   written   the database answered 200 with exactly the values sent;
+//   not-sent  nothing was sent: a bad file, or the project or its database address was not as
+//             expected (or that question got no answer);
+//   refused   the update was sent and the database refused it; an update is all or nothing, so
+//             nothing was written;
+//   unclear   the update was sent and got no answer, or an answer that is not what was sent: it
+//             may or may not have been written.
+const RESULTS = ['written', 'not-sent', 'refused', 'unclear'];
+
 // `request` signs in with cloud-platform (requests 1 and 2), `writeRequest` with RULES_SCOPES
-// (request 3). Each resolves to { status, data } for any answer. Resolves to { ok, lines }.
+// (request 3). Each resolves to { status, data } for any answer.
+// Resolves to { ok, result, lines }, `result` one of RESULTS.
 async function load(project, dir, request, writeRequest, noAnswer) {
     const lines = [];
-    const done = (ok, more) => ({ ok, lines: lines.concat(more) });
+    const done = (ok, more, result = ok ? 'written' : 'not-sent') => ({ ok, result, lines: lines.concat(more) });
     let questions;
     try {
         questions = payload(dir);
@@ -155,7 +179,7 @@ async function load(project, dir, request, writeRequest, noAnswer) {
         return done(false, [e.message, 'Nothing was sent.']);
     }
     const ids = Object.keys(questions);
-    const send = lock(request, allowedApi);
+    const send = lock(request, allowedRead);
     const write = lock(writeRequest, allowedWrite);
     const ask = async (by, options, shown) => {
         try {
@@ -215,14 +239,14 @@ async function load(project, dir, request, writeRequest, noAnswer) {
     const writeShown = `PATCH questions/ (the database's own address) with ${ids.length} pack questions`;
     const three = await ask(write, { url: address + WRITE_PATH, method: 'PATCH', data: questions }, writeShown);
     if (three.failed) {
-        return done(false, three.failed.concat('The update may or may not have been written; the next release sends it again.'));
+        return done(false, three.failed.concat('The update may or may not have been written; the next release sends it again.'), 'unclear');
     }
     if (three.status !== 200) {
-        return done(false, status(three, writeShown).concat('    The database refused the update. Nothing was written (an update is all or nothing).'));
+        return done(false, status(three, writeShown).concat('    The database refused the update. Nothing was written (an update is all or nothing).'), 'refused');
     }
     // The database answers an update with the values it wrote.
     if (canonical(three.data) !== canonical(questions)) {
-        return done(false, [`200 to ${writeShown}`, '    The answer is not the values that were sent, so the run cannot tell what was written.']);
+        return done(false, [`200 to ${writeShown}`, '    The answer is not the values that were sent, so the run cannot tell what was written.'], 'unclear');
     }
     return done(true, [`200 to ${writeShown}`, `    Written: ${ids.join(', ')}.`, '    Nothing else under questions/ was sent.']);
 }
@@ -250,6 +274,11 @@ async function main(project, dir) {
     if (process.env.GITHUB_STEP_SUMMARY) {
         fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '### The Hanukkah questions\n\n```\n' + out.replace(/```/g, "'''") + '\n```\n\n');
     }
+    // The step's output `result`, read by the Summary step (release-summary.js). One of RESULTS
+    // and nothing else, so no text of an answer reaches the output.
+    if (process.env.GITHUB_OUTPUT && RESULTS.includes(result.result)) {
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `result=${result.result}\n`);
+    }
     return result.ok ? 0 : 1;
 }
 
@@ -275,4 +304,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { PACK_FILE, ID, WRITE_PATH, payload, check, allowedWrite, load, dryRun };
+module.exports = { PACK_FILE, ID, WRITE_PATH, RESULTS, payload, check, allowedWrite, allowedRead, load, dryRun, main };

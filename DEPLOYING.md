@@ -42,7 +42,8 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
 7. Adds the **Hanukkah pack's questions** to the live question bank (see "Hanukkah pack" below):
    one update of `questions/` naming exactly the ids in `functions/data/hanukkah-questions.json`,
    and nothing else. It runs last, after the functions that know pack questions are live; if it is
-   refused, the release before it stands, and the run fails and says why.
+   refused, the release before it stands, and the run fails and says why. The summary's verdict
+   then starts "WARNING: the game was released whole, but the Hanukkah questions were NOT added".
 
 Things to know:
 
@@ -563,6 +564,16 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   which would replace the whole bank. Sending the same file again changes nothing, so the step
   runs on every release. A question edited in the file is changed live by the next release; one
   removed from the file stays live (retire it in `retired-questions.ts`).
+  **Edit these 34 questions in the file, never in the Firebase console:** each release rewrites every
+  pack question in full from the file, so a fix made in the console is undone by the next release
+  unless the same fix is in the file.
+  The run's summary says how the step went. Its verdict starts "A whole release ... and the Hanukkah
+  questions are in the database" when it passed, and "WARNING: the game was released whole, but the
+  Hanukkah questions were NOT added" (or "may NOT have been added", when the update got no clear answer) when it
+  failed. The run is red then, but the functions, rules and site released before it stand. A line
+  under the verdict says why: the database refused the update, nothing was sent (a bad file, or the
+  project's database not as expected), or no clear answer. Fix the cause and start a new run by hand
+  on master, or load the file by hand with the command below.
   Why not the tool's command: `database:update` first asks the Firebase Realtime Database
   Management API for the database's details, and that API is off in the Google project. The
   database's own address does not need it; the access check already reads the live rules there with

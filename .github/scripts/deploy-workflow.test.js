@@ -207,7 +207,7 @@ test('only the access check\'s output rules=unchanged skips the rules step, and 
 test('the summary says what was released from each release step\'s own outcome', () => {
     const step = yml.slice(yml.indexOf('      - name: Summary'), yml.indexOf('      # Last, whether the job passed or failed'));
     const code = step.split('\n').filter(l => !l.trim().startsWith('#')).map(l => l.trim());
-    assert.deepStrictEqual(code.slice(0, 7), [
+    assert.deepStrictEqual(code.slice(0, 9), [
         '- name: Summary',
         'if: always()',
         'env:',
@@ -215,8 +215,16 @@ test('the summary says what was released from each release step\'s own outcome',
         'RULES_STEP: ${{ steps.rules.outcome }}',
         'SITE_STEP: ${{ steps.site.outcome }}',
         'RULES_MODE: ${{ steps.access.outputs.rules }}',
+        'QUESTIONS_STEP: ${{ steps.questions.outcome }}',
+        'QUESTIONS_RESULT: ${{ steps.questions.outputs.result }}',
     ]);
-    assert.ok(code.includes('node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE"'));
+    assert.ok(code.includes('node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE" "$QUESTIONS_STEP" "$QUESTIONS_RESULT"'));
+    // The questions step's output is read here alone.
+    const all = yml.split('\n').filter(l => !l.trim().startsWith('#'));
+    assert.deepStrictEqual(all.filter(l => l.includes('steps.questions.')).map(l => l.trim()), [
+        'QUESTIONS_STEP: ${{ steps.questions.outcome }}',
+        'QUESTIONS_RESULT: ${{ steps.questions.outputs.result }}',
+    ]);
     // No expression is written into the shell text of a release step or of this call.
     assert.doesNotMatch(code.filter(l => l.includes('release-summary.js')).join('\n'), /\$\{\{/);
 });
@@ -228,7 +236,11 @@ test('the Hanukkah questions are added last, by the update script alone, for the
     assert.strictEqual(step.trim(), [
         '- name: 4. Add the Hanukkah questions to the database',
         '        id: questions',
-        '        run: node .github/scripts/load-pack-questions.js "$FIREBASE_PROJECT"',
+        '        run: |',
+        // Empties the debug file the site step left, so "Show why the step failed" never quotes
+        // the site deploy for a failure of this step.
+        '          node .github/scripts/firebase-refusal.js reset',
+        '          node .github/scripts/load-pack-questions.js "$FIREBASE_PROJECT"',
     ].join('\n'));
     assert.ok(at('1. Deploy all functions') < at('4. Add the Hanukkah questions to the database'));
     assert.ok(at('3. Deploy the site') < at('4. Add the Hanukkah questions to the database'));
