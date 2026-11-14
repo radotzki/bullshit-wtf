@@ -1,0 +1,410 @@
+{
+  "hanukkah-26-en-01": {
+    "questionText": "In 1993 astronaut Jeffrey Hoffman spun a dreidel in orbit, on a mission to repair the $blank$",
+    "realAnswer": "hubble telescope",
+    "fakeAnswers": [
+      "space station mir",
+      "moon buggy",
+      "first gps satellite"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jeffrey_A._Hoffman",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-02": {
+    "questionText": "In 2013 the first day of Hanukkah fell on Thanksgiving, and Americans named the mash-up $blank$",
+    "realAnswer": "thanksgivukkah",
+    "fakeAnswers": [
+      "turkey latke day",
+      "the festival of gravy",
+      "menorah thursday"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-03": {
+    "questionText": "Before potatoes reached Europe, the first latkes were often made of $blank$",
+    "realAnswer": "cheese",
+    "fakeAnswers": [
+      "rice",
+      "seaweed",
+      "chickpeas"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-04": {
+    "questionText": "The dreidel's letters began as Yiddish betting words: nun stood for $blank$",
+    "realAnswer": "nothing",
+    "fakeAnswers": [
+      "now",
+      "nine",
+      "next player"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-05": {
+    "questionText": "Counting the helper candle, one menorah burns $blank$ candles over all eight nights",
+    "realAnswer": "44",
+    "fakeAnswers": [
+      "36",
+      "64",
+      "52"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-06": {
+    "questionText": "Adam Sandler first sang \"The Chanukah Song\" in 1994 on $blank$",
+    "realAnswer": "saturday night live",
+    "fakeAnswers": [
+      "sesame street",
+      "the tonight show",
+      "a bar mitzvah in queens"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Chanukah_Song",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-07": {
+    "questionText": "The name Maccabee most likely comes from an old word for $blank$",
+    "realAnswer": "hammer",
+    "fakeAnswers": [
+      "lion",
+      "olive",
+      "shield"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Maccabees",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-08": {
+    "questionText": "The miracle of the oil is missing from the Books of Maccabees; it first appears in the $blank$",
+    "realAnswer": "talmud",
+    "fakeAnswers": [
+      "dead sea scrolls",
+      "book of esther",
+      "new testament"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-09": {
+    "questionText": "King Antiochus IV called himself Epiphanes, \"god made visible\". Behind his back he was Epimanes: $blank$",
+    "realAnswer": "the madman",
+    "fakeAnswers": [
+      "the bald one",
+      "the tax man",
+      "the little goat"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-10": {
+    "questionText": "Hanukkah candles are added to the menorah from right to left, but lit starting from the $blank$",
+    "realAnswer": "newest one",
+    "fakeAnswers": [
+      "tallest one",
+      "middle",
+      "one nearest the door"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_menorah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-11": {
+    "questionText": "On dreidels made in Israel, the last letter stands for \"here\" instead of \"$blank$\"",
+    "realAnswer": "there",
+    "fakeAnswers": [
+      "far away",
+      "in egypt",
+      "once upon a time"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-12": {
+    "questionText": "In the 1920s, jelly doughnuts became Israel's Hanukkah food partly thanks to the $blank$",
+    "realAnswer": "labor union",
+    "fakeAnswers": [
+      "army",
+      "dentists' association",
+      "chief rabbi of yemen"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sufganiyah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-13": {
+    "questionText": "The word dreidel comes from a Yiddish word meaning $blank$",
+    "realAnswer": "to turn",
+    "fakeAnswers": [
+      "little top",
+      "to bet",
+      "sleepy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-14": {
+    "questionText": "In 1746 the composer $blank$ wrote an oratorio about Judah Maccabee",
+    "realAnswer": "handel",
+    "fakeAnswers": [
+      "bach",
+      "vivaldi",
+      "beethoven's teacher"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Judas_Maccabaeus_(Handel)",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-15": {
+    "questionText": "The menorah on Israel's state emblem was copied from a carving on the Arch of $blank$ in Rome",
+    "realAnswer": "titus",
+    "fakeAnswers": [
+      "constantine",
+      "nero",
+      "julius caesar"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emblem_of_Israel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-16": {
+    "questionText": "The Hebrew word for latkes appears in the Bible, in the story of Amnon and $blank$",
+    "realAnswer": "tamar",
+    "fakeAnswers": [
+      "ruth",
+      "the whale",
+      "his mother-in-law"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-17": {
+    "questionText": "The menorah's helper candle, the shamash, is named after the word for $blank$",
+    "realAnswer": "servant",
+    "fakeAnswers": [
+      "sun",
+      "spark",
+      "uncle"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_menorah",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-en-18": {
+    "questionText": "Add up a dreidel's four letters as Hebrew numbers and you get 358, the same as the word $blank$",
+    "realAnswer": "messiah",
+    "fakeAnswers": [
+      "jerusalem",
+      "chocolate",
+      "maccabee"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "en",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-01": {
+    "questionText": "ב-1993 האסטרונאוט ג'פרי הופמן סובב סביבון בחלל, במשימה לתקן את $blank$",
+    "realAnswer": "טלסקופ האבל",
+    "fakeAnswers": [
+      "תחנת החלל מיר",
+      "רכב הירח",
+      "לוויין הג'י.פי.אס הראשון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jeffrey_A._Hoffman",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-02": {
+    "questionText": "בשנות ה-20 מי שדחפה את הסופגנייה להיות מאכל החנוכה בארץ הייתה $blank$",
+    "realAnswer": "ההסתדרות",
+    "fakeAnswers": [
+      "הסוכנות היהודית",
+      "התאחדות האופים של פולין",
+      "ויצו"
+    ],
+    "citation": "https://he.wikipedia.org/wiki/%D7%A1%D7%95%D7%A4%D7%92%D7%A0%D7%99%D7%99%D7%94",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-03": {
+    "questionText": "השם \"סופגנייה\" בא מהמילה $blank$",
+    "realAnswer": "ספוג",
+    "fakeAnswers": [
+      "סוף גן",
+      "ספגטי",
+      "סיפון"
+    ],
+    "citation": "https://he.wikipedia.org/wiki/%D7%A1%D7%95%D7%A4%D7%92%D7%A0%D7%99%D7%99%D7%94",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-04": {
+    "questionText": "לפני שתפוחי האדמה הגיעו לאירופה, הלביבות הראשונות הוכנו לרוב מ$blank$",
+    "realAnswer": "גבינה",
+    "fakeAnswers": [
+      "אורז",
+      "אצות ים",
+      "חומוס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-05": {
+    "questionText": "האותיות על הסביבון היו במקור מילים של הימורים ביידיש: נ' הייתה $blank$",
+    "realAnswer": "כלום",
+    "fakeAnswers": [
+      "עכשיו",
+      "תשע",
+      "השחקן הבא"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-06": {
+    "questionText": "כולל השמש, חנוכייה אחת שורפת $blank$ נרות בכל שמונת הלילות",
+    "realAnswer": "44",
+    "fakeAnswers": [
+      "36",
+      "64",
+      "52"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-07": {
+    "questionText": "השם \"מכבי\" בא כנראה ממילה עתיקה שפירושה $blank$",
+    "realAnswer": "פטיש",
+    "fakeAnswers": [
+      "אריה",
+      "זית",
+      "מגן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Maccabees",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-08": {
+    "questionText": "נס פך השמן לא מופיע בספרי המקבים. הוא מסופר לראשונה ב$blank$",
+    "realAnswer": "תלמוד",
+    "fakeAnswers": [
+      "מגילות ים המלח",
+      "מגילת אסתר",
+      "הברית החדשה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-09": {
+    "questionText": "אנטיוכוס הרביעי קרא לעצמו אפיפנס, \"האל הנגלה\". מאחורי גבו קראו לו אפימנס: $blank$",
+    "realAnswer": "המשוגע",
+    "fakeAnswers": [
+      "הקירח",
+      "גובה המסים",
+      "הגדי הקטן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-10": {
+    "questionText": "את נרות החנוכה מוסיפים מימין לשמאל, אבל מדליקים קודם את $blank$",
+    "realAnswer": "הנר החדש",
+    "fakeAnswers": [
+      "הנר הגבוה",
+      "הנר האמצעי",
+      "הנר הקרוב לדלת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_menorah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-11": {
+    "questionText": "ב-2013 היום הראשון של חנוכה יצא בדיוק ביום של $blank$ האמריקאי, והאמריקאים המציאו לצירוף שם",
+    "realAnswer": "חג ההודיה",
+    "fakeAnswers": [
+      "יום העצמאות",
+      "ליל כל הקדושים",
+      "הסופרבול"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-12": {
+    "questionText": "המילה \"דריידל\" באה מפועל ביידיש שפירושו $blank$",
+    "realAnswer": "לסובב",
+    "fakeAnswers": [
+      "להמר",
+      "לנמנם",
+      "להפיל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-13": {
+    "questionText": "ב-1746 המלחין $blank$ כתב אורטוריה על יהודה המכבי",
+    "realAnswer": "הנדל",
+    "fakeAnswers": [
+      "באך",
+      "ויוואלדי",
+      "המורה של בטהובן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Judas_Maccabaeus_(Handel)",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-14": {
+    "questionText": "את המנורה שבסמל המדינה העתיקו מתבליט על שער $blank$ ברומא",
+    "realAnswer": "טיטוס",
+    "fakeAnswers": [
+      "קונסטנטינוס",
+      "נירון",
+      "יוליוס קיסר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emblem_of_Israel",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-15": {
+    "questionText": "המילה \"לביבות\" מופיעה כבר בתנ\"ך, בסיפור של אמנון ו$blank$",
+    "realAnswer": "תמר",
+    "fakeAnswers": [
+      "רות",
+      "הלוויתן",
+      "חמותו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Latke",
+    "lang": "he",
+    "pack": "hanukkah"
+  },
+  "hanukkah-26-he-16": {
+    "questionText": "אם מחברים את ארבע האותיות של הסביבון לפי הגימטריה יוצא 358, כמו המילה $blank$",
+    "realAnswer": "משיח",
+    "fakeAnswers": [
+      "ירושלים",
+      "שוקולד",
+      "מכבי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "lang": "he",
+    "pack": "hanukkah"
+  }
+}

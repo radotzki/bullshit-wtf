@@ -58,8 +58,70 @@ export const hostAskStrings = {
 
 export type HostAskStrings = typeof hostAskStrings.en;
 
-export function askStrings(locale: string): HostAskStrings {
-    return locale === 'he' ? hostAskStrings.he : hostAskStrings.en;
+/**
+ * The ask after a Hanukkah game, in the evenings around the candles (growth plan, "Hanukkah"):
+ * the title asks about the other side of the family, and REMIND ME becomes "another candle
+ * tomorrow", saving tomorrow evening rather than the coming Friday.
+ */
+export const hanukkahAskStrings = {
+    en: {
+        title: 'Lighting with the other side of the family? Start a game there.',
+        remindFirst: 'FIRST CANDLE TOMORROW: PLAY AGAIN',
+        remindNext: 'ANOTHER CANDLE TOMORROW: PLAY AGAIN',
+        eventTitle: 'Hanukkah: host a game of Bullshit',
+    },
+    he: {
+        title: 'מדליקים גם אצל הצד השני של המשפחה? פתחו שם משחק.',
+        remindFirst: 'הנר הראשון מחר: משחקים שוב',
+        remindNext: 'עוד נר מחר: משחקים שוב',
+        eventTitle: 'חנוכה: לפתוח משחק בולשיט',
+    },
+};
+
+/**
+ * The evenings of the first and the eighth candle, by the local date. Hanukkah 5787: the first
+ * candle is lit on the evening of Friday 4 December 2026, the eighth on Friday 11 December.
+ * Change these for another year; the pack's season is questionPacks in game-model.ts.
+ */
+export const HANUKKAH_CANDLES = { first: '2026-12-04', last: '2026-12-11' };
+
+const two = (n: number) => (n < 10 ? '0' : '') + n;
+const dayOf = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
+
+/**
+ * Where tonight stands in Hanukkah, for a game of the Hanukkah pack: 'first' on the eve of the
+ * first candle, 'next' when tomorrow is another candle (first to seventh evening), 'last' on the
+ * eighth evening, null outside the candles or in a game of no pack.
+ */
+export function hanukkahEvening(now: Date, pack?: string | null): 'first' | 'next' | 'last' | null {
+    if (pack !== 'hanukkah') {
+        return null;
+    }
+    const today = dayOf(now);
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 12);
+    const tomorrow = dayOf(t);
+    if (tomorrow === HANUKKAH_CANDLES.first) {
+        return 'first';
+    }
+    if (today >= HANUKKAH_CANDLES.first && today < HANUKKAH_CANDLES.last) {
+        return 'next';
+    }
+    return today === HANUKKAH_CANDLES.last ? 'last' : null;
+}
+
+/** The ask's words; after a Hanukkah game, the Hanukkah title and REMIND ME (see hanukkahEvening). */
+export function askStrings(locale: string, evening?: 'first' | 'next' | 'last' | null): HostAskStrings {
+    const base = locale === 'he' ? hostAskStrings.he : hostAskStrings.en;
+    if (!evening) {
+        return base;
+    }
+    const k = locale === 'he' ? hanukkahAskStrings.he : hanukkahAskStrings.en;
+    return Object.assign({}, base, {
+        title: k.title,
+        // On the eighth evening there is no candle tomorrow: the plain REMIND ME, for Friday.
+        remind: evening === 'first' ? k.remindFirst : evening === 'next' ? k.remindNext : base.remind,
+        eventTitle: evening === 'last' ? base.eventTitle : k.eventTitle,
+    });
 }
 
 /** A player row of the finished game, as the final screen reads it. */
@@ -111,24 +173,34 @@ export function showHostAsk(input: HostAskInput): boolean {
     return !hostedGame(input);
 }
 
-/** The Create page, in the game's language, with the tag that marks the new game. */
-export function askCreateUrl(tag: string, locale: string) {
-    return `${SITE}/create-game?via=${tag}&lang=${locale === 'he' ? 'he' : 'en'}`;
+/**
+ * The Create page, in the game's language, with the tag that marks the new game. After a game of
+ * a pack, the pack too, so the guest's own game has its questions (?pack= works out of season).
+ */
+export function askCreateUrl(tag: string, locale: string, pack?: string | null) {
+    return `${SITE}/create-game?via=${tag}&lang=${locale === 'he' ? 'he' : 'en'}${pack === 'hanukkah' ? '&pack=hanukkah' : ''}`;
 }
 
-/** The night the reminder is for: the coming game night (see defaultNight), at 21:00. */
-export function reminderNight(now: Date, locale: string): Date {
+/**
+ * The night the reminder is for: the coming game night (see defaultNight), at 21:00. In Hanukkah,
+ * when tomorrow is a candle (hanukkahEvening 'first' or 'next'): tomorrow at 21:00.
+ */
+export function reminderNight(now: Date, locale: string, evening?: 'first' | 'next' | 'last' | null): Date {
+    if (evening === 'first' || evening === 'next') {
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 21, 0, 0, 0);
+    }
     return defaultNight(now, locale);
 }
 
 /** The calendar entry "Remind me" saves: a game night, with the link that opens Create. */
-export function reminderEvent(start: Date, place: AskPlace, locale: string): CalendarEvent {
-    const t = askStrings(locale);
+export function reminderEvent(start: Date, place: AskPlace, locale: string, pack?: string | null,
+    evening?: 'first' | 'next' | 'last' | null): CalendarEvent {
+    const t = askStrings(locale, evening);
     const tag = ASK_TAGS[place === 'game-over' ? 'game-over' : 'after-game'].remind;
     return {
         title: t.eventTitle,
         text: t.eventText,
-        url: askCreateUrl(tag, locale),
+        url: askCreateUrl(tag, locale, pack),
         uid: `host-${start.getTime()}`,
     };
 }
