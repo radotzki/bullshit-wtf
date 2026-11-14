@@ -907,6 +907,9 @@ export interface About {
 
 export interface AboutState extends GameStateInfo {
     about?: About;
+    // On the writing step of the bank question played in place of an About question whose named player
+    // sent no truth in time: who that was, so every screen can say why the question changed.
+    aboutMissed?: { pid: string };
 }
 
 /** The About question a state is on, or null: for every other question, and for anything unreadable. */
@@ -916,6 +919,25 @@ export function aboutOf(state: any): About | null {
         return null;
     }
     return { pid: about.pid, prompt: typeof about.prompt === 'string' ? about.prompt : '' };
+}
+
+/** The player whose About question was just replaced by a bank question (see AboutState), or null. */
+export function aboutMissedOf(state: any): string | null {
+    const missed = state && typeof state === 'object' ? state.aboutMissed : null;
+    return missed && typeof missed === 'object' && typeof missed.pid === 'string' && missed.pid ? missed.pid : null;
+}
+
+/**
+ * The line a writing screen shows when its bank question replaces an About question whose named player
+ * sent no truth: whose question it was (their nickname, '' when unknown) and whether this phone is theirs.
+ * Null on every other question.
+ */
+export function aboutMissedView(missed: string | null, players: any, pid: string | null | undefined, presenter: boolean): { me: boolean; name: string } | null {
+    if (!missed) {
+        return null;
+    }
+    const seat = players && typeof players === 'object' ? players[missed] : null;
+    return { me: !presenter && !!pid && pid === missed, name: seat && seat.nickname ? String(seat.nickname) : '' };
 }
 
 /**

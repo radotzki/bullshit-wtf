@@ -6,11 +6,11 @@ import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { GameState, aboutView } from '../../game-model';
+import { GameState, aboutView, aboutMissedView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
-import { aboutStrings, AboutStrings } from './../about-strings';
+import { aboutStrings, AboutStrings, aboutMissedLine } from './../about-strings';
 
 @Component({
     standalone: false,
@@ -45,6 +45,9 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     aboutName: string = null;
     aboutMe = false;
     aboutWords: AboutStrings = aboutStrings('en');
+    // A bank question played in place of an About question that got no truth: the line saying why.
+    missedLine: string = null;
+    private missedView: { me: boolean; name: string } = null;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -74,6 +77,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
         this.aboutWords = aboutStrings(locale);
+        this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
     }
 
     /**
@@ -82,11 +86,13 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
      * answer typed there would be a lie where their truth belongs).
      */
     private loadQuestion() {
-        this.apiService.getQuestionWithAbout(this.pin).then(({ question, about, players }) => {
+        this.apiService.getQuestionWithAbout(this.pin).then(({ question, about, missed, players }) => {
             const user = this.sessionService.user;
             const view = aboutView(about, players, user && user.pid, this.presenter);
             this.aboutMe = view.aboutMe;
             this.aboutName = view.aboutName;
+            this.missedView = aboutMissedView(missed, players, user && user.pid, this.presenter);
+            this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
             this.question = question;
         });
     }

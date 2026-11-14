@@ -12,7 +12,7 @@ import { TASTE_QUESTIONS } from '../game-model';
 import * as scoring from './scoring';
 import {
     ABOUT_SEEN_PREFIX, aboutAnswers, aboutColumns, aboutQuestionText, carryAbout, clearAboutPlaces, nameFor, planAbout, plannedSlot,
-    playsAboutUs, slotKey, truthOf, withAbout,
+    playsAboutUs, slotKey, truthOf, withAbout, withAboutMissed,
 } from './about';
 
 // How long a run waits before its second try at leaving a phase of no length.
@@ -527,7 +527,8 @@ async function bankQuestionStep(game: GameScheme, qidx: number): Promise<Partial
 /**
  * The writing of an About question is over. With the named player's truth: the answers, with the truth
  * among them, and that player marked as done on the waiting row (they do not pick). Without it: the bank
- * question planned for this place, with its own full time to write (the lies about the player are dropped).
+ * question planned for this place, with its own full time to write (the lies about the player are dropped),
+ * its state naming the player who sent nothing (withAboutMissed), so every screen says why it changed.
  */
 async function aboutAnswersStep(pin: string, game: GameScheme): Promise<Partial<GameScheme>> {
     const about = aboutOf(game.state);
@@ -536,7 +537,11 @@ async function aboutAnswersStep(pin: string, game: GameScheme): Promise<Partial<
 
     if (!truth) {
         console.log(`[PIN: ${pin}] About question ${about.prompt} got no truth in time: the bank question instead`);
-        return Object.assign(await bankQuestionStep(game, game.questionIndex), { [`aboutQs/${key}/result`]: 'fallback' });
+        const step = await bankQuestionStep(game, game.questionIndex);
+        return Object.assign(step, {
+            state: withAboutMissed(step.state as GameStateInfo, about.pid),
+            [`aboutQs/${key}/result`]: 'fallback',
+        });
     }
 
     const state = updateState(GameState.ShowAnswers);
