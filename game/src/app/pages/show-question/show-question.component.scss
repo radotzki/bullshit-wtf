@@ -11,6 +11,32 @@
         opacity: 0.85;
     }
 
+    // An About question: a badge over the question on the phone of the player it is about.
+    .about-title {
+        display: inline-block;
+        margin-top: 16px;
+        margin-bottom: -10px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        background: #ffdd57;
+        color: #363636;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.05em;
+    }
+
+    .about-me .input {
+        border-color: #ffdd57;
+        box-shadow: 0 0 0 2px rgba(255, 221, 87, 0.5);
+    }
+
+    .about-line {
+        margin-top: -10px;
+        margin-bottom: 20px;
+        font-size: 1.4rem;
+        opacity: 0.9;
+    }
+
     .give-me-a-lie {
         text-decoration: none;
         font-size: 0.9rem;

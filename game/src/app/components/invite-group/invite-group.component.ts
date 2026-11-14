@@ -41,7 +41,7 @@ export class InviteGroupComponent {
     nightDate: string;
     nightTime: string;
     /** The guest's table, once the server has made it. */
-    table: { id: string; name: string; time: number };
+    table: { id: string; name: string; time: number; again?: boolean };
     making: boolean;
     failed: boolean;
     copied: boolean;
@@ -120,6 +120,12 @@ export class InviteGroupComponent {
         this.failed = false;
         try {
             this.table = await this.apiService.createTable(this.pin, night.getTime());
+            // This seat made its table before (a reload): the sheet opens on that table's night.
+            if (this.table.again && this.table.time > Date.now()) {
+                const d = new Date(this.table.time);
+                this.nightDate = dateValue(d);
+                this.nightTime = timeValue(d);
+            }
         } catch (err) {
             this.failed = true;
             reportError(err, 'createTable', { pin: this.pin });

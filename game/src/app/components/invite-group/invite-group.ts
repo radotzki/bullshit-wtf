@@ -8,6 +8,7 @@
  * A 50/50 test by browser. Kept free of Angular so it can be tested in Node.
  */
 import { CalendarEvent, nightLabel } from '../../pages/crew/next-night';
+import { hanukkahEvening } from '../host-ask/host-ask';
 
 const SITE = 'https://bullshit.wtf';
 
@@ -56,27 +57,16 @@ export function inviteHalf(uid: string | null | undefined, forced?: string | nul
     return Math.floor(h / 65536) % 2 === 1 ? 'new' : 'classic';
 }
 
-// Hanukkah. The pack's own guest ask (pull requests 100 and 104: "Lighting with the other side of
-// the family?", "another candle tomorrow") wins on its evenings: every guest of a Hanukkah game
-// keeps today's ask then, and none of them is in this test.
-
-/** The evenings that ask speaks of Hanukkah: from the eve of the first candle to the eighth. Hanukkah 5787. */
-export const CANDLE_EVENINGS = { from: '2026-12-03', to: '2026-12-11' };
-/** An evening runs past midnight to this hour: a game that ends at 00:40 is still that night's. */
-const EVENING_TURNS_AT = 5;
+// Hanukkah. The pack's own guest ask ("Lighting with the other side of the family?", "another
+// candle tomorrow") wins on its evenings: every guest of a Hanukkah game keeps today's ask then, and
+// none of them is in this test.
 
 /**
- * Is the Hanukkah ask on for this game, now? The same rule as hanukkahEvening in host-ask.ts once
- * the Hanukkah pack is merged (any value but null); when both are in, this can call that.
+ * Is the Hanukkah ask on for this game, now? The evenings that ask speaks of Hanukkah, from the eve
+ * of the first candle to the eighth, an evening running on past midnight (hanukkahEvening).
  */
 export function candleEvening(now: Date, pack?: string | null): boolean {
-    if (pack !== 'hanukkah') {
-        return false;
-    }
-    const e = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() - EVENING_TURNS_AT, 12);
-    const two = (n: number) => (n < 10 ? '0' : '') + n;
-    const day = `${e.getFullYear()}-${two(e.getMonth() + 1)}-${two(e.getDate())}`;
-    return day >= CANDLE_EVENINGS.from && day <= CANDLE_EVENINGS.to;
+    return hanukkahEvening(now, pack) !== null;
 }
 
 /** Words of the ask and its sheet, in the game's language. Hebrew avoids gendered verbs. */
@@ -106,8 +96,8 @@ export const inviteStrings = {
     },
     he: {
         title: 'יש עוד חבורה שתיפול בזה?',
-        text: 'קובעים ערב ושולחים להם קישור. המשחק אצלכם: בחינם, 10 שניות.',
-        button: 'להזמין חבורה אחרת',
+        text: 'קובעים ערב ושולחים להם קישור. אתם פותחים את המשחק: בחינם, 10 שניות.',
+        button: 'להזמין עוד חבורה',
         now: 'או לפתוח משחק עכשיו',
         sheetTitle: 'ערב המשחק שלך',
         change: 'שינוי',
@@ -121,7 +111,7 @@ export const inviteStrings = {
         copied: 'הועתק. הדביקו בקבוצה שלהם.',
         set: 'ערב המשחק נקבע:',
         see: 'לראות מי בפנים',
-        failed: 'זה לא עבר.',
+        failed: 'משהו השתבש.',
         retry: 'נסו שוב',
         done: 'סיום',
         eventText: 'ערב המשחק שלך. פותחים את הקישור ולוחצים על "פותחים משחק": החברים מצטרפים מהטלפון.',
@@ -149,15 +139,16 @@ export interface BestLie {
 export function inviteMessage(night: Date, locale: string, best?: BestLie | null): string {
     const he = locale === 'he';
     const when = nightLabel(night, locale);
-    const lie = best && best.fooled >= 1 ? String(best.text || '').replace(/\s+/g, ' ').trim() : '';
-    const tail = he ? `משחק אצלי, ${when}. מי בפנים? לוחצים כאן:` : `My game, ${when}. Who's in? Tap here:`;
+    // Single marks inside, so a lie with quotation marks does not close the message's own.
+    const lie = best && best.fooled >= 1 ? String(best.text || '').replace(/\s+/g, ' ').replace(/["\u201c\u201d]/g, '\'').trim() : '';
+    const tail = he ? `המשחק עליי, ${when}. מי בפנים? לוחצים כאן:` : `My game, ${when}. Who's in? Tap here:`;
     if (!lie) {
         return he
             ? `מצאתי לנו משחק: בולשיט. כולם ממציאים שקר ומנסים לזהות את האמת. ${tail}`
             : `Found us a game: Bullshit. Everyone makes up a lie and tries to spot the truth. ${tail}`;
     }
     if (he) {
-        const who = best.fooled === 1 ? 'מישהו' : `${best.fooled} אנשים`;
+        const who = best.fooled === 1 ? 'מישהו' : best.fooled === 2 ? 'שני אנשים' : `${best.fooled} אנשים`;
         return `הערב עבדתי על ${who} בבולשיט עם השקר הזה: "${lie}". נראה אתכם. ${tail}`;
     }
     const who = best.fooled === 1 ? 'someone' : `${best.fooled} people`;

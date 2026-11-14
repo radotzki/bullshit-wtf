@@ -1,4 +1,4 @@
-<section class="game-container score-board" [attr.dir]="rtl ? 'rtl' : null">
+<section class="game-container score-board" [class.many]="displayPlayers && displayPlayers.length > 8" [attr.dir]="rtl ? 'rtl' : null">
     <app-game-header></app-game-header>
 
     <div class="game-main">

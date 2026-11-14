@@ -3,7 +3,7 @@
         <span class="crew-link-text" dir="auto">{{ t.crewLink(crewName) }}</span>
     </a>
 
-    <button *ngIf="!crewId && !naming && displayPlayers.length > 1" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
+    <button *ngIf="!crewId && !naming && displayPlayers.length > 1 && !nextWeekOn" class="button is-info is-fullwidth save-crew" (click)="startNaming()">
         {{ t.saveCrew }}
     </button>
 
@@ -30,7 +30,7 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="displayPlayers" class="final">
+        <div *ngIf="displayPlayers" class="final" [class.lots]="!soloTaste && displayPlayers.length > 8">
             <div class="confetti" aria-hidden="true">
                 <i *ngFor="let c of confetti" [class]="'c' + (c % 7)" [style.left.%]="(c * 37) % 100"
                     [style.animation-delay.ms]="(c * 173) % 1400"></i>
@@ -44,9 +44,10 @@
                 <p *ngIf="winners.length > 1" class="tied" [attr.dir]="rtl ? 'rtl' : 'auto'">{{ tiedNames }}</p>
                 <p class="winner-score" *ngIf="winners.length">{{ t.points(winners[0].score) }}</p>
                 <p *ngIf="myLine" class="my-line">{{ myLine }}</p>
+                <p *ngIf="nextWeekScreenLine" class="next-week-screen">{{ nextWeekScreenLine }}</p>
             </div>
 
-            <div class="actions" *ngIf="!presenter">
+            <div class="actions" *ngIf="!presenter" [class.next-week-first]="nextWeekOn && nextWeekFirst">
                 <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
                      and its lobby opens on the invite. -->
                 <div *ngIf="soloTaste && !rematchPin" class="taste-ask">
@@ -69,6 +70,10 @@
                     {{ rematchJoin }}
                 </button>
                 <p *ngIf="rematchPin" class="hint rematch-line" dir="auto">{{ rematchLine }}</p>
+                <!-- A group's second game or later, in the new half of the test: one button sets next week's
+                     date and sends it to the group; once it is set, every phone shows it here. -->
+                <app-next-week *ngIf="nextWeekOn" [pin]="pin" [locale]="locale" [crewId]="crewId" [myNickname]="myNickname"
+                    [hostName]="hostName" [winner]="!!mine && mine.place === 1" (sheet)="onNextWeekSheet($event)" (named)="onCrewNamed($event)"></app-next-week>
                 <!-- The same group's second game (or later): saving the crew comes before sharing. -->
                 <div *ngIf="crewFirst" class="crew-panel crew-first">
                     <p *ngIf="!crewId && !naming" class="crew-offer" dir="auto">{{ t.crewOffer }}</p>
@@ -80,9 +85,9 @@
             <app-invite-group *ngIf="inviteAsk" [pin]="pin" [locale]="locale" [nickname]="myNickname" [best]="mine ? mine.best : null"
                 (sheet)="onSheet($event)"></app-invite-group>
 
-            <app-host-ask *ngIf="hostAsk" [locale]="locale" place="after-game"></app-host-ask>
+            <app-host-ask *ngIf="hostAsk" [locale]="locale" [pack]="pack" place="after-game"></app-host-ask>
 
-            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4">
+            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4" [class.lots]="displayPlayers.length > 8">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
                     <div class="row">
                         <span class="place">{{ player.place }}</span>
@@ -98,8 +103,10 @@
                         <span class="lie-label">{{ t.bestLie }}:</span>
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
+                        <!-- Big screen, 9 to 12: when the funniest lie is the best one, its laughs join this line. -->
+                        <span *ngIf="player.funniest && player.funniest.text === player.best.text" class="lie-laughs also">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>
-                    <div class="lie funny" *ngIf="player.funniest">
+                    <div class="lie funny" *ngIf="player.funniest" [class.same]="player.best && player.funniest.text === player.best.text">
                         <span class="lie-label">{{ t.funniestLie }}:</span>
                         <span class="lie-text" dir="auto">"{{ player.funniest.text }}"</span>
                         <span class="lie-laughs">{{ t.laughs(player.funniest.laughs) }}</span>

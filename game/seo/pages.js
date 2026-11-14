@@ -1,11 +1,13 @@
 // Plain HTML pages that search engines can read without running JavaScript.
 // Each English page has a Hebrew twin (`twin`), linked with hreflang.
-// Facts here must match the game: free, in the browser, up to 8 players,
+// Facts here must match the game: free, in the browser, up to 12 players,
 // 5, 7 or 9 questions, three rounds where points grow, English and Hebrew questions.
 // A page may stand in one language only: leave `twin` out. A page with a `tag` sends it on its
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
 const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
+const jackbox = require('./pages-jackbox');
+const holidays = require('./pages-en-holidays');
 
 const en = {
     lang: 'en',
@@ -19,6 +21,10 @@ const en = {
         { href: '/purim-party-game', label: 'Purim party game' },
         { href: '/classroom-game', label: 'A game for the classroom' },
         { href: '/team-building-game', label: 'A team-building game' },
+        { href: '/christmas-party-game', label: 'Christmas party game' },
+        { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
+        { href: '/office-holiday-party-game', label: 'Office holiday party game' },
+        { href: '/free-jackbox-alternative', label: 'A free Jackbox alternative' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -41,6 +47,7 @@ const he = {
         { href: '/he/made-up-answers', label: 'משחק שממציאים בו תשובות' },
         { href: '/he/classroom', label: 'משחק לכיתה' },
         { href: '/he/team-building', label: 'משחק לגיבוש צוות' },
+        { href: '/he/game-like-jackbox', label: 'משחק כמו ג\'קבוקס' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -67,7 +74,7 @@ const howEn = `
 <h2>How to start</h2>
 <ol>
   <li>One person opens bullshit.wtf and taps <a href="/create-game">create a game</a>, picks English or Hebrew and the number of questions.</li>
-  <li>The game shows a four-letter PIN. Everyone else opens bullshit.wtf on their phone, taps <a href="/join-game">join</a> and types it. Up to 8 players.</li>
+  <li>The game shows a four-letter PIN. Everyone else opens bullshit.wtf on their phone, taps <a href="/join-game">join</a> and types it. Up to 12 players.</li>
   <li>For a bigger group, put the game on a TV or laptop with <a href="/present-game">present</a>: the screen shows the questions and the scores, and phones are for writing and picking.</li>
 </ol>
 <h2>Tips for a good lie</h2>
@@ -98,7 +105,7 @@ const howHe = `
 <h2>איך מתחילים</h2>
 <ol>
   <li>מישהו אחד נכנס ל-<bdi dir="ltr">bullshit.wtf</bdi>, לוחץ על <a href="/create-game">פתיחת משחק</a>, ובוחר עברית או אנגלית ומספר שאלות.</li>
-  <li>המשחק מציג קוד של ארבע אותיות. כל השאר נכנסים ל-<bdi dir="ltr">bullshit.wtf</bdi> בטלפון, לוחצים <a href="/join-game">הצטרפות</a> ומקלידים אותו. עד 8 שחקנים.</li>
+  <li>המשחק מציג קוד של ארבע אותיות. כל השאר נכנסים ל-<bdi dir="ltr">bullshit.wtf</bdi> בטלפון, לוחצים <a href="/join-game">הצטרפות</a> ומקלידים אותו. עד 12 שחקנים.</li>
   <li>לקבוצה גדולה, אפשר להציג את המשחק על טלוויזיה או מחשב עם <a href="/present-game">מצב הצגה</a>: המסך מראה את השאלות והניקוד, והטלפונים משמשים לכתיבה ולבחירה.</li>
 </ol>
 <h2>טיפים לשקר טוב</h2>
@@ -110,23 +117,23 @@ const howHe = `
 
 module.exports = [
     {
-        path: '/how-to-play', twin: '/he/how-to-play', site: en,
+        path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',
         title: 'How to play Bullshit, the free bluffing trivia game for phones',
-        description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 8 players.',
+        description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 12 players.',
         h1: 'How to play Bullshit',
         body: howEn,
     },
     {
-        path: '/he/how-to-play', twin: '/how-to-play', site: he,
+        path: '/he/how-to-play', twin: '/how-to-play', site: he, tag: 'seo-he-how',
         image: '/assets/og-how-he.png',
         title: 'איך משחקים בולשיט, משחק הבלוף והטריוויה החינמי בטלפון',
-        description: 'החוקים של בולשיט: ממציאים תשובה שתעבוד על החברים, ואז מחפשים את האמת בין כל התשובות. חינם, בדפדפן, עד 8 שחקנים.',
+        description: 'החוקים של בולשיט: ממציאים תשובה שתעבוד על החברים, ואז מחפשים את האמת בין כל התשובות. חינם, בדפדפן, עד 12 שחקנים.',
         h1: 'איך משחקים בולשיט',
         body: howHe,
     },
     {
-        path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en,
+        path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en, tag: 'seo-en-phone',
         image: '/assets/og-phone-en.png',
         title: 'A free party game on your phones: Bullshit, the bluffing trivia game',
         description: 'Looking for a party game everyone can play on their own phone, in the same room, with no download? Bullshit is free and starts in under a minute.',
@@ -137,7 +144,7 @@ module.exports = [
 <ul>
   <li><strong>No download, no sign-up.</strong> It runs in the phone's browser. Nobody has to install an app or make an account.</li>
   <li><strong>Free.</strong> No paid packs, no ads in the game.</li>
-  <li><strong>Up to 8 players</strong> on phones, plus an optional big screen (a TV or laptop) that shows the questions and scores.</li>
+  <li><strong>Up to 12 players</strong> on phones, plus an optional big screen (a TV or laptop) that shows the questions and scores.</li>
   <li><strong>Short games.</strong> 5, 7 or 9 questions, so it fits before dinner, after dinner or between other games.</li>
   <li><strong>You don't need to know trivia.</strong> Nobody knows these facts. The game is about lying well and reading your friends.</li>
   <li><strong>English and Hebrew questions.</strong></li>
@@ -147,7 +154,7 @@ module.exports = [
 <p>New here? Read <a href="/how-to-play">how to play</a>, or just start: the rules explain themselves after one question.</p>`,
     },
     {
-        path: '/he/party-game-phone', twin: '/party-games-on-your-phone', site: he,
+        path: '/he/party-game-phone', twin: '/party-games-on-your-phone', site: he, tag: 'seo-he-phone',
         image: '/assets/og-phone-he.png',
         title: 'משחק חברה חינמי בטלפון: בולשיט, משחק הבלוף והטריוויה',
         description: 'מחפשים משחק חברה שכל אחד משחק מהטלפון שלו, באותו חדר, בלי להוריד כלום? בולשיט חינמי ומתחיל בפחות מדקה.',
@@ -158,7 +165,7 @@ module.exports = [
 <ul>
   <li><strong>בלי הורדה ובלי הרשמה.</strong> הוא עובד בדפדפן של הטלפון. אף אחד לא צריך להתקין אפליקציה או לפתוח חשבון.</li>
   <li><strong>חינם.</strong> בלי חבילות בתשלום ובלי פרסומות במשחק.</li>
-  <li><strong>עד 8 שחקנים</strong> בטלפונים, ואפשר להוסיף מסך גדול (טלוויזיה או מחשב) שמציג את השאלות והניקוד.</li>
+  <li><strong>עד 12 שחקנים</strong> בטלפונים, ואפשר להוסיף מסך גדול (טלוויזיה או מחשב) שמציג את השאלות והניקוד.</li>
   <li><strong>משחקים קצרים.</strong> 5, 7 או 9 שאלות, כך שזה נכנס לפני ארוחת הערב, אחריה או בין משחקים.</li>
   <li><strong>לא צריך לדעת טריוויה.</strong> אף אחד לא מכיר את העובדות האלה. המשחק הוא על לשקר טוב ולקרוא את החברים.</li>
   <li><strong>שאלות בעברית ובאנגלית.</strong></li>
@@ -168,7 +175,7 @@ module.exports = [
 <p>פעם ראשונה? קראו <a href="/he/how-to-play">איך משחקים</a>, או פשוט תתחילו: החוקים מובנים אחרי שאלה אחת.</p>`,
     },
     {
-        path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en,
+        path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en, tag: 'seo-en-hanukkah',
         start: { href: '/create-game?lang=en&pack=hanukkah', label: 'Start a Hanukkah game' },
         image: '/assets/og-hanukkah-en.png',
         title: 'A Hanukkah party game for the whole family, free on your phones',
@@ -177,11 +184,11 @@ module.exports = [
         body: `
 <p>Hanukkah has eight nights and most of them end with the family around a table. Bullshit gives that table a game: everyone on their own phone, the grandparents included, and nothing to set up or clean away.</p>
 <h2>How it works</h2>
-<p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 5 questions takes about ten minutes.</p>
+<p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 5 questions takes five to ten minutes.</p>
 <h2>Why it fits Hanukkah</h2>
 <ul>
   <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, not know facts.</li>
-  <li><strong>Up to 8 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
+  <li><strong>Up to 12 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
   <li><strong>Free, no app.</strong> Cousins who arrive late join with the PIN in seconds.</li>
   <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
   <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together. Save your group as a crew and the scoreboard carries over from night to night.</li>
@@ -189,7 +196,7 @@ module.exports = [
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {
-        path: '/he/hanukkah', twin: '/hanukkah-party-game', site: he,
+        path: '/he/hanukkah', twin: '/hanukkah-party-game', site: he, tag: 'seo-he-hanukkah',
         start: { href: '/create-game?lang=he&pack=hanukkah', label: 'פותחים משחק חנוכה' },
         image: '/assets/og-hanukkah-he.png',
         title: 'משחק לחנוכה לכל המשפחה, חינם בטלפון',
@@ -198,11 +205,11 @@ module.exports = [
         body: `
 <p>בחנוכה יש שמונה לילות, ורובם נגמרים עם המשפחה סביב השולחן. בולשיט נותן לשולחן הזה משחק: כל אחד מהטלפון שלו, גם סבא וסבתא, ובלי שום דבר לסדר או לאסוף אחר כך.</p>
 <h2>איך זה עובד</h2>
-<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 5 שאלות לוקח בערך עשר דקות.</p>
+<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 5 שאלות לוקח בין חמש לעשר דקות.</p>
 <h2>למה זה מתאים לחנוכה</h2>
 <ul>
   <li><strong>מגיל 10 בערך</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות.</li>
-  <li><strong>עד 8 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
+  <li><strong>עד 12 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
   <li><strong>חינם, בלי אפליקציה.</strong> בני דודים שמגיעים באיחור מצטרפים עם הקוד תוך שניות.</li>
   <li><strong>שאלות חנוכה.</strong> במשחק חנוכה יש שלוש שאלות חנוכה בכל משחק: האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג, ועוד.</li>
   <li><strong>שמונה לילות, שאלות חדשות.</strong> בסוף משחק לוחצים שוב, ואותה חבורה ממשיכה למשחק חדש. שומרים את החבורה, וטבלת הניקוד ממשיכה מלילה ללילה.</li>
@@ -210,7 +217,7 @@ module.exports = [
 <p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
     },
     {
-        path: '/purim-party-game', twin: '/he/purim', site: en,
+        path: '/purim-party-game', twin: '/he/purim', site: en, tag: 'seo-en-purim',
         image: '/assets/og-purim-en.png',
         title: 'A Purim party game: free bluffing trivia on your phones',
         description: 'On the holiday of masks, the best liar wins. Bullshit is a free party game for phones where you fool your friends with fake answers. No download.',
@@ -222,7 +229,7 @@ module.exports = [
 <h2>Good for Purim parties</h2>
 <ul>
   <li><strong>Free and in the browser.</strong> No app, so a whole party can join with one PIN.</li>
-  <li><strong>Up to 8 players</strong> per game, with an optional big screen for everyone else to watch and shout.</li>
+  <li><strong>Up to 12 players</strong> per game, with an optional big screen for everyone else to watch and shout.</li>
   <li><strong>Youth groups and classes</strong>: short games of 5, 7 or 9 questions, in English or Hebrew.</li>
 </ul>
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
@@ -236,4 +243,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en));

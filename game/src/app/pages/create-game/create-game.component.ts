@@ -2,7 +2,7 @@ import { reportError } from './../../sentry/sentry.module';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { markHosted, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
+import { markHosted, markVisit, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
 import { questionPacks, isPack, seasonalPack } from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
@@ -62,6 +62,7 @@ export class CreateGameComponent implements OnInit {
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);
+                markVisit('create');
                 // The nickname page follows this page's language. It decides by the same rule, so the
                 // language is sent along only when it came from this page's own address.
                 const lang = this.t.lang !== preferredLocale() ? { lang: this.t.lang } : {};

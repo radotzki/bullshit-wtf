@@ -85,13 +85,23 @@ test('the message, English: a lie that fooled 3, a lie that fooled 1, no lie', (
 test('the message, Hebrew: a lie that fooled 3, a lie that fooled 1, no lie', () => {
     assert.strictEqual(g.inviteMessage(friday, 'he', { text: 'עיטוש יכול לשבור צלע', fooled: 3 }),
         'הערב עבדתי על 3 אנשים בבולשיט עם השקר הזה: "עיטוש יכול לשבור צלע". נראה אתכם. '
-        + 'משחק אצלי, יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
+        + 'המשחק עליי, יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
     assert.strictEqual(g.inviteMessage(friday, 'he', { text: 'עיטוש יכול לשבור צלע', fooled: 1 }),
         'הערב עבדתי על מישהו בבולשיט עם השקר הזה: "עיטוש יכול לשבור צלע". נראה אתכם. '
-        + 'משחק אצלי, יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
+        + 'המשחק עליי, יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
     assert.strictEqual(g.inviteMessage(friday, 'he', null),
         'מצאתי לנו משחק: בולשיט. כולם ממציאים שקר ומנסים לזהות את האמת. '
-        + 'משחק אצלי, יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
+        + 'המשחק עליי, יום שישי, 20 בנובמבר, 21:00. מי בפנים? לוחצים כאן:');
+});
+
+test('Hebrew: a lie that fooled two says the word, from three up the digit', () => {
+    assert.ok(g.inviteMessage(friday, 'he', { text: 'עיטוש', fooled: 2 }).startsWith('הערב עבדתי על שני אנשים בבולשיט'));
+    assert.ok(g.inviteMessage(friday, 'he', { text: 'עיטוש', fooled: 4 }).startsWith('הערב עבדתי על 4 אנשים בבולשיט'));
+});
+
+test('quotation marks inside a lie become single marks, so the message\'s own quotes stay whole', () => {
+    assert.ok(g.inviteMessage(friday, 'en', { text: 'he said "no" and left', fooled: 1 })
+        .includes('"he said \'no\' and left"'));
 });
 
 test('a lie typed over several lines goes out as one line', () => {
@@ -111,8 +121,9 @@ test('the words of the ask and the sheet are the spec\'s, in both languages', ()
     assert.strictEqual(en.other, 'Share another way');
     const he = g.inviteWords('he');
     assert.strictEqual(he.title, 'יש עוד חבורה שתיפול בזה?');
-    assert.strictEqual(he.text, 'קובעים ערב ושולחים להם קישור. המשחק אצלכם: בחינם, 10 שניות.');
-    assert.strictEqual(he.button, 'להזמין חבורה אחרת');
+    assert.strictEqual(he.text, 'קובעים ערב ושולחים להם קישור. אתם פותחים את המשחק: בחינם, 10 שניות.');
+    assert.strictEqual(he.button, 'להזמין עוד חבורה');
+    assert.strictEqual(he.failed, 'משהו השתבש.');
     assert.strictEqual(he.now, 'או לפתוח משחק עכשיו');
     assert.strictEqual(he.sheetTitle, 'ערב המשחק שלך');
     assert.strictEqual(he.whatsapp, 'שליחה בוואטסאפ');

@@ -163,6 +163,25 @@ jobs:
         run: |
           node .github/scripts/firebase-refusal.js reset
           npx firebase deploy --only hosting --project "$FIREBASE_PROJECT" --non-interactive
+      # Adds the questions of the reviewed question files to the live question bank: the files
+      # listed in the script (FILES), today functions/data/hanukkah-questions.json and
+      # functions/data/strange-facts-2026-11.json, and no other file. One update (PATCH) of
+      # questions/ naming exactly those files' own ids (hanukkah-26-*, fact-26-*),
+      # never a set or import, which would replace the whole bank. Nothing else under questions/
+      # is sent, so nothing else is changed or deleted, and sending the same values again on every
+      # release changes nothing. After the functions on purpose: older functions would mix pack
+      # questions into every game. Last, so a refusal here leaves the release before it whole.
+      # It writes at the database's own address, which does not need the Management API that is
+      # off. See the script's header and DEPLOYING.md.
+      # It runs no Firebase command, but `reset` empties the debug file the site step left, so
+      # "Show why the step failed" never quotes the site deploy for a failure of this step.
+      # The script sets the step's output `result` (written, not-sent, refused or unclear), which
+      # the Summary turns into its verdict.
+      - name: 4. Add the new questions to the database
+        id: questions
+        run: |
+          node .github/scripts/firebase-refusal.js reset
+          node .github/scripts/load-pack-questions.js "$FIREBASE_PROJECT"
 
       # A failed Firebase command prints one line; Google's answer (the status and the reason) is
       # only in firebase-debug.log. That file is never printed or uploaded whole: after the
@@ -182,18 +201,20 @@ jobs:
           RULES_STEP: ${{ steps.rules.outcome }}
           SITE_STEP: ${{ steps.site.outcome }}
           RULES_MODE: ${{ steps.access.outputs.rules }}
+          QUESTIONS_STEP: ${{ steps.questions.outcome }}
+          QUESTIONS_RESULT: ${{ steps.questions.outputs.result }}
         run: |
           {
             echo "### Deploy of ${GITHUB_SHA::7} to $FIREBASE_PROJECT: ${{ job.status }}"
             echo
           } >> "$GITHUB_STEP_SUMMARY"
           # What was released and what was left alone, in plain words, from each step's outcome.
-          node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE"
+          node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE" "$QUESTIONS_STEP" "$QUESTIONS_RESULT"
           {
-            echo "Order: all functions, database rules, site. A failed step stops the ones after it."
+            echo "Order: all functions, database rules, site, then the new questions. A failed step stops the ones after it."
             echo "To retry, start a new run by hand: Actions > Deploy to production > Run workflow > branch master"
             echo "(every step is safe to repeat). A re-run of an old run stops by itself once master holds newer code."
-            echo "Not done here: BigQuery schema SQL, loading questions, Search Console. See DEPLOYING.md."
+            echo "Not done here: BigQuery schema SQL, loading questions from a file the release does not list, Search Console. See DEPLOYING.md."
           } >> "$GITHUB_STEP_SUMMARY"
       # Last, whether the job passed or failed: the key, and both names of the Firebase debug file
       # (the tool deletes its own only on some exit codes, and never the kept copy).

@@ -1,9 +1,13 @@
 /**
  * The round-1 lie helper ("coach"), and the per-question numbers that measure it.
  *
- * In half of all games (coach: true), round 1's writing screen tells players to make up a fake answer
+ * In every game (coach: true), round 1's writing screen tells players to make up a fake answer
  * and offers each player up to two ready-made lies ("STUCK? GIVE ME A LIE"). The lies come from the
  * question's own fake answers, after cleanHouseLies, never the real answer.
+ *
+ * It began as a 50/50 test (from about 5 November 2026) and was given to every new game and every
+ * Replay on 13 November 2026. The coach column is still written on every game and question row, so
+ * the switch shows in the data: games made before it have coach false for the no-helper half.
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
@@ -13,9 +17,12 @@ import { GameScheme } from '../game-model';
 
 export const IDEAS_PER_PLAYER = 2;
 
-/** Half of all new games get the helper. */
-export function pickCoach(random: Random = Math.random): boolean {
-    return random() < 0.5;
+/**
+ * Every new game and every Replay gets the helper (the 50/50 test ended on 13 November 2026).
+ * To turn it back off, return false here and deploy the functions: no client change is needed.
+ */
+export function pickCoach(): boolean {
+    return true;
 }
 
 /**

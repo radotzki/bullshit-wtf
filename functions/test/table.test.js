@@ -146,6 +146,28 @@ test('a guest makes a table: one member, no game, a night with the guest in, the
     assert.strictEqual(db.games[pin].crew, undefined);
 });
 
+test('one table per seat: a reload or a second tap gets the same table and its night back', async () => {
+    const { pin, time, r, guest } = await table();
+    const pid = pidOf(pin, guest);
+    assert.strictEqual(db.crews[r.body.id].from, pin);
+    assert.strictEqual(db.games[pin].tables[pid], r.body.id);
+    const before = Object.keys(db.crews).filter(k => db.crews[k]).length;
+    // The reloaded sheet asks for its default night, a day later: it gets the table's own night.
+    const again = await call('createTable', { pin, pid, time: time + 24 * HOUR, uid: 'u2' });
+    assert.strictEqual(again.code, 200);
+    assert.deepStrictEqual(again.body, { id: r.body.id, name: r.body.name, time, again: true });
+    assert.strictEqual(Object.keys(db.crews).filter(k => db.crews[k]).length, before);
+    // The other seat of the same game makes a table of its own.
+    const other = await call('createTable', { pin, pid: pidOf(pin, 'Dana'), time, uid: 'u1' });
+    assert.notStrictEqual(other.body.id, r.body.id);
+    // A seat whose table is gone may make a new one.
+    delete db.crews[r.body.id];
+    const fresh = await call('createTable', { pin, pid, time, uid: 'u2' });
+    assert.notStrictEqual(fresh.body.id, r.body.id);
+    assert.strictEqual(fresh.body.again, undefined);
+    assert.strictEqual(db.games[pin].tables[pid], fresh.body.id);
+});
+
 test('a Hebrew game makes a Hebrew table', async () => {
     const { r } = await table('he');
     assert.strictEqual(r.body.name, 'השולחן של נועה');
