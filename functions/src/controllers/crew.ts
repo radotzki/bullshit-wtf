@@ -156,7 +156,7 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
     Object.keys(crew.members || {}).forEach(k => Object.keys(crew.members[k].uids || {}).forEach(u => uids.push(u)));
 
     const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
-        crew: id, uids, pack: seasonalPack(), hostKey, serverStart, stagedReveal,
+        crew: id, uids, pack: seasonalPack(Date.now(), crew.locale || 'en'), hostKey, serverStart, stagedReveal,
         campaign: isTestCampaign(crew.test) ? crew.test : undefined,
     });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });

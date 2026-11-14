@@ -179,7 +179,7 @@ module.exports = {
         {
             path: '/classroom-game', twin: '/he/classroom', site: en, tag: 'kit-en-teachers',
             start: { href: '/create-game?lang=en', label: 'Start a class game' },
-            image: '/assets/og-image.png',
+            image: '/assets/og-classroom-en.png',
             title: 'A 15-minute classroom game on the projector: Bullshit, free bluffing trivia',
             description: 'For teachers and youth leaders: run Bullshit on a projector, split a class of up to 30 into teams, and fit a game into 15 minutes. Free, in the browser, no sign-up.',
             h1: 'A 15-minute game for the whole class',
@@ -188,7 +188,7 @@ module.exports = {
         {
             path: '/he/classroom', twin: '/classroom-game', site: he, tag: 'kit-he-teachers',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לכיתה' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-classroom-he.png',
             title: 'משחק לכיתה על המקרן, לרבע שעה: בולשיט, בלוף וטריוויה בחינם',
             description: 'למורים ולמדריכים: איך מציגים את בולשיט על המקרן, איך מחלקים כיתה של עד 30 לצוותים, ואיך משחק נכנס ברבע שעה. חינם, בדפדפן, בלי הרשמה.',
             h1: 'משחק של רבע שעה לכל הכיתה',
@@ -197,7 +197,7 @@ module.exports = {
         {
             path: '/team-building-game', twin: '/he/team-building', site: en, tag: 'kit-en-teams',
             start: { href: '/create-game?lang=en', label: 'Start a team game' },
-            image: '/assets/og-image.png',
+            image: '/assets/og-team-en.png',
             title: 'A 15-minute team-building game on the big screen: Bullshit, free bluffing trivia',
             description: 'For team leads: run Bullshit on the meeting-room screen or a video call, split a team of up to 30, and fit a game into 15 minutes. Free, in the browser, no sign-up.',
             h1: 'A 15-minute team game for the meeting room',
@@ -206,7 +206,7 @@ module.exports = {
         {
             path: '/he/team-building', twin: '/team-building-game', site: he, tag: 'kit-he-teams',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לצוות' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-team-he.png',
             title: 'משחק לגיבוש צוות, לרבע שעה על המסך: בולשיט, בלוף וטריוויה בחינם',
             description: 'לראשי צוותים: איך מציגים את בולשיט על המסך בחדר הישיבות או בשיחת וידאו, איך מחלקים צוות של עד 30, ואיך משחק נכנס ברבע שעה. חינם, בלי הרשמה.',
             h1: 'משחק של רבע שעה לגיבוש הצוות',

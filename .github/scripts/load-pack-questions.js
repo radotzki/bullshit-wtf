@@ -1,7 +1,9 @@
 // Adds the questions of the repository's reviewed question files to the live question bank, as
 // the release's last step. The files are the list FILES below, and nothing else: today the
-// Hanukkah pack (functions/data/hanukkah-questions.json, ids hanukkah-26-en-01.., -he-01..) and
-// the strange facts (functions/data/strange-facts-2026-11.json, ids fact-26-en-01.., -he-01..).
+// Hanukkah pack (functions/data/hanukkah-questions.json, ids hanukkah-26-en-01.., -he-01..),
+// the strange facts (functions/data/strange-facts-2026-11.json, ids fact-26-en-01.., -he-01..)
+// and the Thanksgiving pack (functions/data/thanksgiving-questions.json, ids
+// thanksgiving-26-en-01.., English only).
 // It adds or rewrites exactly the questions in those files, each under its own id, and touches
 // nothing else.
 //
@@ -66,6 +68,8 @@ const { allowedApi, canonical, RULES_SCOPES } = require('./live-rules.js');
 const FILES = [
     { file: 'functions/data/hanukkah-questions.json', name: 'the Hanukkah pack', id: /^hanukkah-26-(en|he)-\d{2}$/, like: 'hanukkah-26-en-01', pack: 'hanukkah' },
     { file: 'functions/data/strange-facts-2026-11.json', name: 'the strange facts', id: /^fact-26-(en|he)-\d{2}$/, like: 'fact-26-en-01', pack: null },
+    // English only: the id rule has no Hebrew, so a Hebrew question cannot be written under it.
+    { file: 'functions/data/thanksgiving-questions.json', name: 'the Thanksgiving pack', id: /^thanksgiving-26-(en)-\d{2}$/, like: 'thanksgiving-26-en-01', pack: 'thanksgiving' },
 ];
 // Never a file of the game's bank, whatever a later edit adds to FILES: the daily puzzle reads
 // its questions from the functions bundle, and a daily question in questions/ would turn up in
