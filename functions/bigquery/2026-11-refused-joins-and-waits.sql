@@ -16,7 +16,7 @@
 CREATE TABLE IF NOT EXISTS `bullshit-wtf-prod.analytics.refused_joins` (
   time TIMESTAMP NOT NULL OPTIONS (description = 'When the server refused the join'),
   pin STRING NOT NULL OPTIONS (description = 'Game PIN (opened_games.id, users.pin)'),
-  players INT64 OPTIONS (description = 'Players in the game at that moment (8: the table is full)'),
+  players INT64 OPTIONS (description = 'Players in the game at that moment (the table is full: 12, or 8 before the 12-seat release)'),
   started BOOL OPTIONS (description = 'The game had left the lobby; FALSE means the ninth player came while friends were still gathering'),
   locale STRING OPTIONS (description = 'Game language, en or he'),
   campaign STRING OPTIONS (description = "The game's campaign tag (as on opened_games); test or test-... marks a play-test")
@@ -61,9 +61,10 @@ ALTER TABLE `bullshit-wtf-prod.analytics.question_results`
 --   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
 -- GROUP BY day ORDER BY day;
 
--- Of the games that started with 8 players, the share that turned somebody away.
+-- Of the games that started with a full table, the share that turned somebody away.
+-- A full table is 12 players; use 8 for games before the 12-seat release.
 -- WITH o AS (SELECT id, MIN(time) AS t FROM `bullshit-wtf-prod.analytics.opened_games`
---   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND players = 8
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND players = 12
 --     AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)') GROUP BY id),
 -- r AS (SELECT pin, COUNT(*) AS refusals FROM `bullshit-wtf-prod.analytics.refused_joins`
 --   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP_ADD(TIMESTAMP('<to>'), INTERVAL 1 DAY) GROUP BY pin)

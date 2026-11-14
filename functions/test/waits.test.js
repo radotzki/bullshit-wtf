@@ -108,6 +108,10 @@ const { answer } = require(path.join(dist, 'answer'));
 const { advance } = require(path.join(dist, 'tick'));
 const analytics = require(path.join(dist, 'analytics'));
 const api = require(path.join(__dirname, '..', 'dist', 'index'));
+// A full table: the model's limit where it has one (12 seats), else the 8 that join.ts had before.
+// Seats past the eighth lie once and pick a house lie in question 1, inside the others' times.
+const SEATS = require(path.join(__dirname, '..', 'dist', 'game-model')).MAX_PLAYERS || 8;
+const EXTRA = SEATS - 8;
 
 function call(name, body) {
     return new Promise((resolve) => {
@@ -222,11 +226,11 @@ test('the question row holds numbers only: no player id, name or text', () => {
 async function fullLobby(options = {}) {
     const pin = await newGame('en', 3, 'hostUid', options);
     db.games[pin].coach = false;
-    for (let i = 1; i <= 8; i++) await join(pin, 'player' + i, 'uid' + i);
+    for (let i = 1; i <= SEATS; i++) await join(pin, 'player' + i, 'uid' + i);
     return pin;
 }
 
-test('a ninth join is refused and leaves one row about the game, nothing about the player', async () => {
+test('a join to a full table is refused and leaves one row about the game, nothing about the player', async () => {
     seed();
     quiet();
     const pin = await fullLobby({ campaign: 'fb-he-hanukkah' });
@@ -236,14 +240,14 @@ test('a ninth join is refused and leaves one row about the game, nothing about t
 
     assert.strictEqual(res.code, 400);
     assert.strictEqual(res.body.code, 'GAME_IS_FULL');
-    assert.strictEqual(Object.keys(db.games[pin].players).length, 8);
+    assert.strictEqual(Object.keys(db.games[pin].players).length, SEATS);
     assert.strictEqual(rows.length, 1);
     const { row, table, opts } = rows[0];
     assert.strictEqual(table, 'refused_joins');
     assert.strictEqual(opts.ignoreUnknownValues, true);
     assert.ok(row.time instanceof Date);
     assert.deepStrictEqual(Object.assign({}, row, { time: null }),
-        { pin, players: 8, started: false, locale: 'en', campaign: 'fb-he-hanukkah', time: null });
+        { pin, players: SEATS, started: false, locale: 'en', campaign: 'fb-he-hanukkah', time: null });
     assert.ok(!/ninth/i.test(JSON.stringify(row)));
 });
 
@@ -311,6 +315,7 @@ async function wholeGame(t, options = {}) {
     const pin = await fullLobby(options);
     const pids = Object.keys(db.games[pin].players);
     const [p1, p2, p3, p4, p5, p6, p7, p8] = pids;
+    const extra = pids.slice(8);
 
     await advance(pin, db.games[pin].state);                       // START
     await analytics.onStateChange(pin);                            // the gameState trigger: opened_games
@@ -318,13 +323,14 @@ async function wholeGame(t, options = {}) {
     await advance(pin, db.games[pin].state);                       // round intro over
 
     // Question 1: everyone lies within 18.4 s and picks within 9.5 s. Three lies are picked.
-    await playQuestion(t, pin,
-        pids.map((pid, i) => [pid, 4 + i * 2 + (i === 7 ? 0.4 : 0), 'lie ' + (i + 1)]),
+    const lies = pids.slice(0, 8).map((pid, i) => [pid, 4 + i * 2 + (i === 7 ? 0.4 : 0), 'lie ' + (i + 1)]);
+    lies.splice(7, 0, ...extra.map((pid, i) => [pid, 17, 'lie ' + (i + 9)]));
+    await playQuestion(t, pin, lies,
         [[p1, 2, 'lie 2'], [p2, 3, 'lie 1'], [p3, 3.5, 'lie 1'], [p4, 4, 'lie 5'], [p5, 6, 'truth'],
-            [p6, 7, 'house a'], [p7, 9, 'lie 2'], [p8, 11.5, 'lie 1']]);
+            [p6, 7, 'house a'], ...extra.map(pid => [pid, 8, 'house a']), [p7, 9, 'lie 2'], [p8, 11.5, 'lie 1']]);
     await advance(pin, db.games[pin].state);                       // round 2 intro over
 
-    // Question 2: five lie (p6 to p8 are slow or gone), the timer runs out; six pick, the timer runs out.
+    // Question 2: five lie (p6 and up are slow or gone), the timer runs out; six pick, the timer runs out.
     await playQuestion(t, pin,
         [[p1, 3, 'alpha'], [p2, 5, 'beta'], [p3, 5.5, 'gamma'], [p4, 9, 'beta'], [p5, 21.3, 'delta']],
         [[p1, 1, 'beta'], [p2, 2, 'alpha'], [p3, 2.5, 'beta'], [p4, 3, 'delta'], [p5, 4, 'house b'], [p6, 16.2, 'beta']]);
@@ -337,7 +343,7 @@ async function wholeGame(t, options = {}) {
     return { pin, ninth };
 }
 
-test('a whole game of 8 with a ninth join refused: the rows it sends', async (t) => {
+test('a whole game at a full table with one more join refused: the rows it sends', async (t) => {
     seed();
     t.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2026, 10, 11, 20, 0, 0) });
     quiet();
@@ -348,15 +354,15 @@ test('a whole game of 8 with a ninth join refused: the rows it sends', async (t)
     assert.strictEqual(ninth.body.code, 'GAME_IS_FULL');
     const [refused] = take('refused_joins');
     assert.deepStrictEqual(Object.assign({}, refused, { time: null }),
-        { pin, players: 8, started: true, locale: 'en', campaign: 'test-waits', time: null });
+        { pin, players: SEATS, started: true, locale: 'en', campaign: 'test-waits', time: null });
 
     const q = take('question_results');
     assert.strictEqual(q.length, 3);
     const got = q.map(r => [r.q_index, r.players, r.lies, r.lie_span_s, r.picks, r.pick_span_s, r.unpicked_lies, r.friend_fooled]);
     assert.deepStrictEqual(got, [
-        [0, 8, 8, 14.4, 8, 9.5, 5, 6],     // lies 1, 2 and 5 were picked; 5 of 8 fooled nobody
-        [1, 8, 5, 18.3, 6, 15.2, 1, 5],    // "gamma" fooled nobody; "beta" (two writers) was picked
-        [2, 8, 1, null, 2, 3, 1, 0],       // one lie is not a wait
+        [0, SEATS, SEATS, 14.4, SEATS, 9.5, 5 + EXTRA, 6],   // lies 1, 2 and 5 were picked; the rest fooled nobody
+        [1, SEATS, 5, 18.3, 6, 15.2, 1, 5],    // "gamma" fooled nobody; "beta" (two writers) was picked
+        [2, SEATS, 1, null, 2, 3, 1, 0],       // one lie is not a wait
     ]);
     assert.strictEqual(take('opened_games').length, 1);
     assert.strictEqual(take('closed_games').length, 1);
@@ -379,7 +385,7 @@ test('before the SQL is run: the same game plays, question rows land without the
     loud();
 
     assert.strictEqual(ninth.code, 400);
-    assert.strictEqual(ninth.body.code, 'GAME_IS_FULL', 'the ninth player gets the same answer');
+    assert.strictEqual(ninth.body.code, 'GAME_IS_FULL', 'the player turned away gets the same answer');
     assert.strictEqual(names[db.games[pin].state.id], 'ScoreBoardFinal', 'the game played to the end');
     assert.strictEqual(take('refused_joins').length, 0);
     assert.ok(errors.some(e => /Bigquery Insert failed/.test(e) && /refused_joins/.test(e)), 'the lost row is logged');
@@ -390,7 +396,7 @@ test('before the SQL is run: the same game plays, question rows land without the
         assert.deepStrictEqual(Object.keys(r).sort(), TODAY.question_results.slice().sort());
         assert.ok(!('lie_span_s' in r) && !('pick_span_s' in r) && !('unpicked_lies' in r));
     });
-    assert.deepStrictEqual(q.map(r => [r.lies, r.picks, r.friend_fooled]), [[8, 8, 6], [5, 6, 5], [1, 2, 0]]);
+    assert.deepStrictEqual(q.map(r => [r.lies, r.picks, r.friend_fooled]), [[SEATS, SEATS, 6], [5, 6, 5], [1, 2, 0]]);
     assert.strictEqual(take('opened_games').length, 1);
     assert.strictEqual(take('closed_games').length, 1);
     console.log('before the SQL: question_results ' + JSON.stringify(q[0]));
@@ -407,7 +413,7 @@ test('a time stamp that cannot be saved never fails a lie or a pick: the span is
     assert.strictEqual(names[db.games[pin].state.id], 'ScoreBoardFinal');
     const q = take('question_results');
     assert.deepStrictEqual(q.map(r => [r.lies, r.lie_span_s, r.picks, r.pick_span_s, r.unpicked_lies]),
-        [[8, null, 8, null, 5], [5, null, 6, null, 1], [1, null, 2, null, 1]]);
+        [[SEATS, null, SEATS, null, 5 + EXTRA], [5, null, 6, null, 1], [1, null, 2, null, 1]]);
 });
 
 test('a pick that is not a player\'s, or comes after picks closed, is not stamped', async () => {

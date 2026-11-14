@@ -1,4 +1,4 @@
-// Local run: a full table of 8 plays a whole game in real time, and a ninth player is turned away.
+// Local run: a full table plays a whole game in real time, and one more player is turned away.
 // Prints the rows the game sends to BigQuery: refused_joins, and question_results with the wait
 // columns (lie_span_s, pick_span_s, unpicked_lies).
 //
@@ -42,6 +42,11 @@ const { answer } = require('../dist/controllers/answer');
 const { onPhaseStart } = require('../dist/controllers/phase-timer');
 const analytics = require('../dist/controllers/analytics');
 
+// A full table: the model's limit where it has one (12 seats), else the 8 that join.ts had before.
+// Seats past the eighth lie once and pick a house lie in question 1, inside the others' times.
+const SEATS = require('../dist/game-model').MAX_PLAYERS || 8;
+const EXTRA = SEATS - 8;
+
 const names = ['GameStaging', 'RoundIntro', 'ShowQuestion', 'ShowAnswers', 'RevealTheTruth', 'ScoreBoard', 'ScoreBoardFinal'];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -83,14 +88,14 @@ async function waitForState(pin, id, timeoutMs = 60000) {
 
     const pin = await newGame('en', 3, 'hostUid', { campaign: 'test-full-table' });
     await gamesRef.child(pin).child('coach').set(false);
-    for (let i = 1; i <= 8; i++) await join(pin, 'tester' + i, 'uid' + i);
+    for (let i = 1; i <= SEATS; i++) await join(pin, 'tester' + i, 'uid' + i);
     const game = async () => (await gamesRef.child(pin).once('value')).val();
     const pids = Object.keys((await game()).players);
-    say(`${at()} [${pin}] 8 players in the lobby`);
+    say(`${at()} [${pin}] ${SEATS} players in the lobby`);
 
-    say(`${at()} [${pin}] a ninth player tries to join`);
-    await assert.rejects(join(pin, 'ninth', 'uid9'), { code: 'GAME_IS_FULL' });
-    say(`${at()} [${pin}] the ninth player was told: game is full`);
+    say(`${at()} [${pin}] one more player tries to join`);
+    await assert.rejects(join(pin, 'late', 'uidLate'), { code: 'GAME_IS_FULL' });
+    say(`${at()} [${pin}] that player was told: game is full`);
 
     wireTriggers(pin);
     await sleep(300);
@@ -98,7 +103,9 @@ async function waitForState(pin, id, timeoutMs = 60000) {
 
     // Per question: when each player lies (s into the question; null = never) and what they pick, and when.
     const plan = [
-        { lies: [1, 2, 2.5, 3, 4, 5, 6, 7.5], picks: [[0, 0.5, 'lie 1'], [1, 1, 'lie 0'], [2, 1.5, 'lie 0'], [3, 2, 'lie 4'], [4, 2.5, null], [5, 3, 'house a'], [6, 3.5, 'lie 1'], [7, 5, 'lie 0']] },
+        { lies: [1, 2, 2.5, 3, 4, 5, 6, 7.5].concat(Array(EXTRA).fill(7)),
+            picks: [[0, 0.5, 'lie 1'], [1, 1, 'lie 0'], [2, 1.5, 'lie 0'], [3, 2, 'lie 4'], [4, 2.5, null], [5, 3, 'house a'], [6, 3.5, 'lie 1'], [7, 5, 'lie 0']]
+                .concat(Array.from({ length: EXTRA }, (x, i) => [8 + i, 4, 'house a'])) },
         { lies: [1, 2, 3, 4, 6.2, null, null, null], picks: [[0, 1, 'lie 1'], [1, 1.5, 'lie 0'], [2, 2, 'lie 1'], [3, 2.5, 'lie 4'], [4, 3, 'house b'], [5, 6.4, 'lie 1']] },
         { lies: [2, null, null, null, null, null, null, null], picks: [[1, 1, 'house a'], [2, 3, 'house c']] },
     ];
@@ -125,7 +132,7 @@ async function waitForState(pin, id, timeoutMs = 60000) {
     const refused = rows.filter(r => r.table === 'refused_joins').map(r => r.row);
     const results = rows.filter(r => r.table === 'question_results').map(r => r.row);
     assert.strictEqual(refused.length, 1);
-    assert.deepStrictEqual([refused[0].pin, refused[0].players, refused[0].started, refused[0].campaign], [pin, 8, false, 'test-full-table']);
+    assert.deepStrictEqual([refused[0].pin, refused[0].players, refused[0].started, refused[0].campaign], [pin, SEATS, false, 'test-full-table']);
     assert.strictEqual(results.length, 3);
     const near = (got, want, what) => assert.ok(got !== null && Math.abs(got - want) < 1, `${what}: ${got}, wanted about ${want}`);
     near(results[0].lie_span_s, 6.5, 'question 1, lies');
@@ -134,11 +141,11 @@ async function waitForState(pin, id, timeoutMs = 60000) {
     near(results[1].pick_span_s, 5.4, 'question 2, picks');
     assert.strictEqual(results[2].lie_span_s, null);
     near(results[2].pick_span_s, 2, 'question 3, picks');
-    assert.deepStrictEqual(results.map(r => [r.lies, r.picks, r.unpicked_lies, r.friend_fooled]), [[8, 8, 5, 6], [5, 6, 2, 5], [1, 2, 1, 0]]);
+    assert.deepStrictEqual(results.map(r => [r.lies, r.picks, r.unpicked_lies, r.friend_fooled]), [[SEATS, SEATS, 5 + EXTRA, 6], [5, 6, 2, 5], [1, 2, 1, 0]]);
     assert.strictEqual(rows.filter(r => r.table === 'opened_games').length, 1);
     assert.strictEqual(rows.filter(r => r.table === 'closed_games').length, 1);
     const end = await game();
     say(`${at()} [${pin}] final scores: ${pids.map(p => end.players[p].score).join(', ')}`);
-    say(`${at()} PASS: 8 played 3 questions to the end, the ninth join was refused and counted, the waits were measured.`);
+    say(`${at()} PASS: ${SEATS} played 3 questions to the end, one more join was refused and counted, the waits were measured.`);
     process.exit(0);
 })().catch(e => { console.error(`${at()} FAIL`, e); process.exit(1); });
