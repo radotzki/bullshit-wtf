@@ -46,3 +46,30 @@
     text-decoration: underline;
     cursor: pointer;
 }
+
+// One line to the Hanukkah page, in season only.
+.season {
+    display: block;
+    margin: 0 .75rem 12px;
+    text-align: center;
+    color: #f3d467;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+// The row of links to the search pages, under the menu.
+.search-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 18px;
+    margin-top: 20px;
+    padding: 0 .75rem;
+    font-size: .9rem;
+
+    a {
+        color: #fff;
+        font-size: .9rem;
+        text-decoration: underline;
+    }
+}

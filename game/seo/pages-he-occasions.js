@@ -217,7 +217,7 @@ module.exports = {
         {
             path: '/he/friday-dinner', site: he, tag: 'seo-he-friday',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לשישי' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-friday-he.png',
             title: 'משחק לארוחת שישי: כל המשפחה משחקת, כל אחד מהטלפון שלו',
             description: 'מחפשים משחק לארוחת שישי עם המשפחה? בבולשיט כולם ממציאים תשובות לעובדות מוזרות ומנסים לעבוד אחד על השני. חינם, בדפדפן, בלי להוריד כלום.',
             h1: 'משחק לארוחת שישי, בין המנה העיקרית לקינוח',
@@ -226,7 +226,7 @@ module.exports = {
         {
             path: '/he/family-evening', site: he, tag: 'seo-he-family',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק משפחתי' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-family-he.png',
             title: 'משחק לערב משפחתי: משחק חברה בטלפון לילדים, להורים ולסבא וסבתא',
             description: 'רעיון לערב משפחתי בבית: בולשיט, משחק שבו כולם ממציאים תשובות לעובדות מוזרות. כל אחד מהטלפון שלו, בחינם, בלי הורדה ובלי הרשמה.',
             h1: 'משחק לערב משפחתי שגם ההורים נהנים ממנו',
@@ -235,7 +235,7 @@ module.exports = {
         {
             path: '/he/seder', site: he, tag: 'seo-he-seder',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לפסח' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-seder-he.png',
             title: 'משחק לליל הסדר ולפסח: כל המשפחה, כל אחד מהטלפון שלו',
             description: 'כל המשפחה ביחד בפסח? בולשיט הוא משחק חינמי בטלפון שבו ממציאים תשובות לעובדות מוזרות ומנסים לעבוד על הדודים. בלי הורדה, עד 8 שחקנים.',
             h1: 'משחק לליל הסדר, לכל מי שיושב סביב השולחן',
@@ -244,7 +244,7 @@ module.exports = {
         {
             path: '/he/made-up-answers', site: he, tag: 'seo-he-made-up',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-made-up-he.png',
             title: 'משחק שממציאים בו תשובות: בולשיט, משחק בלוף וטריוויה בטלפון',
             description: 'מחפשים את המשחק שבו כל אחד ממציא תשובה לשאלה, וכולם מנחשים מה האמת? זה בולשיט: חינם, בעברית, בדפדפן של הטלפון, עד 8 שחקנים.',
             h1: 'המשחק שבו ממציאים תשובות ומנסים לעבוד על כולם',
@@ -253,7 +253,7 @@ module.exports = {
         {
             path: '/he/friends-evening', site: he, tag: 'seo-he-friends',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לחברים' },
-            image: '/assets/og-image-he.png',
+            image: '/assets/og-friends-he.png',
             title: 'משחק לערב חברים: בלוף וטריוויה בטלפון, בחינם ובלי להוריד כלום',
             description: 'מה משחקים בערב חברים? בבולשיט כל אחד ממציא תשובה לעובדה מוזרה ומנסה לעבוד על השאר. משחקים מהטלפון, בדפדפן, בחינם, עד 8 שחקנים.',
             h1: 'משחק לערב חברים, בלי קופסה ובלי הכנות',

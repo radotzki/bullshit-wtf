@@ -3,6 +3,7 @@ import { CrewService, RememberedCrew } from '../../../services/crew.service';
 import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
 import { PictureStrings, createQuery, firstButton, pictureStrings, readVisitor, showPicture } from '../front-door';
+import { SearchLink, searchLinks, seasonLink } from '../search-links';
 
 /** Reads a key the game keeps in this browser: localStorage, else the tab's storage, else nothing. */
 function readStored(key: string): string | null {
@@ -38,12 +39,16 @@ export class MobileLandingComponent {
     first: 'create' | 'join';
     picture: boolean;
     createQuery: { via?: string };
+    // Links to the search pages: a row under the menu, and in Hanukkah season a line above it.
+    links: SearchLink[];
+    season: SearchLink | null;
+    private tag: string | null;
 
     constructor(crewService: CrewService) {
         this.crews = crewService.list().slice(0, 3);
+        const tag = this.tag = arrivalCampaign();
         this.setLocale(preferredLocale());
 
-        const tag = arrivalCampaign();
         const visitor = readVisitor(readStored, tag);
         this.first = firstButton(visitor);
         this.picture = showPicture(visitor);
@@ -58,5 +63,7 @@ export class MobileLandingComponent {
     private setLocale(locale: string) {
         this.t = homeStrings(locale);
         this.p = pictureStrings(locale);
+        this.links = searchLinks(locale, this.tag);
+        this.season = seasonLink(locale, new Date(), this.tag);
     }
 }
