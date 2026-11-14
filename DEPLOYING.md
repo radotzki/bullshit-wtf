@@ -670,7 +670,7 @@ puts the questions of the repository's reviewed question files there itself, in 
   which would replace the whole bank. Sending the same file again changes nothing, so the step
   runs on every release. A question edited in the file is changed live by the next release; one
   removed from the file stays live (retire it in `retired-questions.ts`).
-  **Edit these 34 questions in the file, never in the Firebase console:** each release rewrites every
+  **Edit these 149 questions in the file, never in the Firebase console:** each release rewrites every
   pack question in full from the file, so a fix made in the console is undone by the next release
   unless the same fix is in the file.
   The run's summary says how the step went. Its verdict starts "A whole release ... and the new
