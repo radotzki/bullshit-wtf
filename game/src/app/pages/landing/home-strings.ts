@@ -28,6 +28,8 @@ export interface HomeStrings {
     crewAction: string;
     yourCrews: string;
     crewActionShort: string;
+    /** A remembered crew whose game night is today: "TONIGHT 21:00: Dana's crew". */
+    tonight: (time: string, crew: string) => string;
     /** The language the switch moves to, and its label (written in that language). Only the Hebrew menu shows it. */
     switchTo: 'he' | 'en';
     switchLabel: string;
@@ -55,6 +57,7 @@ const en: HomeStrings = {
     crewAction: 'SCORES & REMATCH',
     yourCrews: 'Your crews',
     crewActionShort: 'scores & rematch',
+    tonight: (time, crew) => `TONIGHT ${time}: ${crew}`,
     switchTo: 'he',
     switchLabel: 'עברית',
 };
@@ -81,6 +84,7 @@ const he: HomeStrings = {
     crewAction: 'ניקוד ומשחק חוזר',
     yourCrews: 'החבורות שלכם',
     crewActionShort: 'ניקוד ומשחק חוזר',
+    tonight: (time, crew) => `הערב ב־${time}: ${crew}`,
     switchTo: 'en',
     switchLabel: 'English',
 };

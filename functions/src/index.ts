@@ -13,6 +13,7 @@ import { fork } from './controllers/fork';
 import { startGame, hostHere } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
+import { crewNight } from './controllers/crew-night';
 import * as analytics from './controllers/analytics';
 import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visit';
 import { laugh } from './controllers/laugh';
@@ -124,6 +125,19 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
             const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
                 req.body.serverStart === true, req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(result);
+        } catch (e) {
+            caught(e);
+            return res.status(400).send(errorBody(e));
+        }
+    });
+}, 'crew'));
+
+// A crew's game night: set its date, or say "I'm in" (or "Can't make it") by nickname.
+// Written here because phones may not write a crew (see controllers/crew-night.ts).
+exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await crewNight(req.body));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));

@@ -15,7 +15,64 @@
             </div>
 
             <div *ngIf="crew" class="box crew-box" [attr.dir]="t.dir" [class.is-rtl]="t.dir === 'rtl'">
-                <p class="leader" dir="auto">{{ leader }}</p>
+                <!-- WHO'S IN? The crew's stored night: the date and who is in, then on the night the lobby button. -->
+                <p class="what-is-it" *ngIf="newcomer && nightState !== 'none'">{{ t.whatIsIt }}</p>
+
+                <div class="game-night is-before" *ngIf="nightState === 'before'">
+                    <h4 class="night-title">{{ t.gameNight }}</h4>
+                    <p class="night-when"><span dir="auto">{{ storedWhen }}</span> · {{ countdown }}</p>
+                    <p class="title-holder" dir="auto">{{ titleLine }}</p>
+
+                    <h5 class="whos-in-title">{{ t.whosIn }}</h5>
+                    <p class="whos-in" *ngIf="inNames.length">
+                        <span class="in-name" *ngFor="let n of inNames"><span class="tick">✓</span> <span dir="auto">{{ n }}</span></span>
+                    </p>
+
+                    <form *ngIf="!amIn" (ngSubmit)="imIn()">
+                        <input *ngIf="!myNickname" class="input in-name-input" type="text" name="inName" [(ngModel)]="inName"
+                            [attr.maxlength]="nameMax" [placeholder]="t.namePrompt" [attr.aria-label]="t.namePrompt"
+                            autocomplete="nickname" autocapitalize="words">
+                        <button type="submit" class="button is-primary is-medium is-fullwidth im-in" [class.is-loading]="inLoading"
+                            [disabled]="!myNickname && !inName.trim()">
+                            {{ t.imIn }}
+                        </button>
+                    </form>
+
+                    <div class="im-in-done" *ngIf="amIn">
+                        <p class="youre-in"><span class="tick">✓</span> {{ youreIn }}</p>
+                        <button class="button is-fullwidth add-calendar" (click)="addToCalendar()">
+                            <span class="icon"><i class="fa fa-calendar"></i></span>
+                            <span> {{ t.addToCalendar }} </span>
+                        </button>
+                        <p class="night-google">
+                            <a [href]="storedGoogleUrl" target="_blank" rel="noopener" (click)="addToGoogle()">{{ t.google }}</a>
+                        </p>
+                        <a *ngIf="canNudge" class="button is-fullwidth whatsapp nudge" [href]="nudgeUrl" target="_blank"
+                            rel="noopener" (click)="nudged()">
+                            <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                            <span> {{ t.nudge }} </span>
+                        </a>
+                        <p class="cant-make-it"><button type="button" class="link-button" (click)="imOut()">{{ t.cantMakeIt }}</button></p>
+                    </div>
+                    <div class="notification is-danger" *ngIf="inError">{{ inError }}</div>
+                </div>
+
+                <div class="game-night is-tonight" *ngIf="nightState === 'tonight'">
+                    <h4 class="night-title">{{ t.itsGameNight }}</h4>
+                    <button class="button is-primary is-medium is-fullwidth open-lobby" (click)="rematch(true)" [class.is-loading]="loading">
+                        {{ lobbyPin ? t.joinRematch : t.openLobby }}
+                    </button>
+                    <p class="hint" *ngIf="lobbyPin">{{ t.lobby(lobbyCount, lobbyPin) }}</p>
+                    <p class="in-count" *ngIf="inNames.length" dir="auto">{{ t.inCount(inNames) }}</p>
+                    <div class="notification is-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
+                </div>
+
+                <div class="game-night is-passed" *ngIf="nightState === 'passed'">
+                    <p class="night-passed">{{ t.nightPassed }}</p>
+                    <button class="button is-primary is-fullwidth pick-night" (click)="pickNight()">{{ t.pickNight }}</button>
+                </div>
+
+                <p class="leader" dir="auto" *ngIf="!(nightState === 'before' && titleLine === leader)">{{ leader }}</p>
                 <p class="meta">{{ t.played(crew.gameCount) }}</p>
 
                 <table class="standings">
@@ -37,13 +94,16 @@
                     </tbody>
                 </table>
 
-                <button class="button is-primary is-medium is-fullwidth rematch" (click)="rematch()" [class.is-loading]="loading">
-                    {{ lobbyPin ? t.joinRematch : t.rematch }}
-                </button>
-                <p class="hint" *ngIf="lobbyPin">{{ t.lobby(lobbyCount, lobbyPin) }}</p>
-                <p class="hint" *ngIf="!lobbyPin">{{ t.rematchHint }}</p>
+                <!-- On the night the button at the top of the page does this. -->
+                <ng-container *ngIf="nightState !== 'tonight'">
+                    <button class="button is-primary is-medium is-fullwidth rematch" (click)="rematch()" [class.is-loading]="loading">
+                        {{ lobbyPin ? t.joinRematch : t.rematch }}
+                    </button>
+                    <p class="hint" *ngIf="lobbyPin">{{ t.lobby(lobbyCount, lobbyPin) }}</p>
+                    <p class="hint" *ngIf="!lobbyPin">{{ t.rematchHint }}</p>
 
-                <div class="notification is-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
+                    <div class="notification is-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
+                </ng-container>
 
                 <div class="send">
                     <button *ngIf="canShare" class="button is-fullwidth" (click)="share()">

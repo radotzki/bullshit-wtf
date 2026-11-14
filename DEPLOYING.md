@@ -553,7 +553,8 @@ games (wins, then points) and a REMATCH button that opens one shared lobby for t
 - Next game night (client only, hosting deploy is enough): the crew page has a day and time picker,
   next Friday 21:00 by default. It sends the date with the crew link as a WhatsApp text, a calendar
   file (shared into the chat on phones that can share files, downloaded elsewhere) and a Google
-  Calendar link. Nothing is stored on the server; the browser remembers its own last pick.
+  Calendar link. Since "Who's in?" (below) a send also stores the date on the crew; the browser
+  still remembers its own last pick.
   Analytics: gtag `share` events with `content_type: crew-night` (Universal Analytics records nothing,
   so the count that matters is in BigQuery, below).
 
@@ -569,6 +570,80 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   function logs an insert failure and nothing is counted), then functions (all 16), then hosting.
   Rules are unchanged.
 - The same file holds the query for sends per method per day.
+
+## Who's in? The crew page as the door to game night
+
+A crew link (`bullshit.wtf/c/<id>`) used to open on the standings. When the crew has a night stored,
+it now opens on that night:
+
+- **Before the night:** GAME NIGHT, the date with "in 6 days / tomorrow / tonight", who holds the
+  title, and WHO'S IN? with the names. I'M IN is one tap on a phone that played with the crew (it
+  remembers its nickname); a new phone types a name first, so a friend who never played can come.
+  After the tap: "You're in. See you Friday.", ADD TO MY CALENDAR, ASK WHO ELSE IS IN (a WhatsApp
+  text naming who is in, offered once two are in) and "Can't make it". A browser that has never
+  played gets one line on what the game is.
+- **On the night,** from two hours before the time until 05:00 the next morning (the phone's
+  clock): IT'S GAME NIGHT and one button, OPEN THE LOBBY, with "3 in: ...". It is the crew's
+  REMATCH: one shared lobby, and JOIN THE REMATCH once it is open.
+- **After a night nobody played** (for a week): "That night has passed. Pick a new one?" and PICK A
+  NIGHT, which goes to the date inputs the page already had. After a night that was played, the
+  plain page.
+- **Home page:** a browser whose newest remembered crew has its night today sees it first:
+  "TONIGHT 21:00: Dana's crew". That is one crew read, and only for a browser that remembers a crew.
+
+For everyone, no test. Every word follows the crew's language (`crew-strings.ts`).
+
+- **Functions and site. No rule change, no BigQuery change, nothing to run before the merge.** One
+  new HTTP function, `crewNight`; none removed or renamed. A merge sends all functions and the site.
+- **Where it is stored:** `crews/<id>/night = { time, by, in: { <member key>: <nickname> } }`
+  (`CrewNight` in `game-model.ts`). Crews were already readable by link and written only by the
+  functions, and that is unchanged: a phone cannot write there, so both writes go through
+  `crewNight` (`functions/src/controllers/crew-night.ts`):
+  - `{ crew, time, by }` sets the night (a time from now to a year ahead, to the minute). Whoever
+    sets it is in. The same time again keeps the list; a new time starts a new one.
+  - `{ crew, nickname, in: true | false }` adds or removes a name. The name goes through the
+    nickname filter (checked whole, then cut to 9 letters): one the filter flags is refused, in the
+    crew's language. Saying it twice is one name. A list holds at most 30 names.
+  Like everything on a crew, this needs only the link: no accounts. Anyone with the link can set a
+  night or add a name, as anyone with it can already open a rematch.
+- **When a night gets stored:** a send from the page's NEXT GAME NIGHT section (WhatsApp, calendar
+  invite, Google Calendar) now also stores that date, fire and forget. The weekly entry does not.
+- **What it counts** (`shares`, `content_type = 'crew-night'`, new methods; no new column): `in`,
+  `in-new` (a name the crew did not have), `out`, `nudge`, `open-lobby`. ADD TO MY CALENDAR counts
+  as the existing `calendar-download` and `google-calendar`. A test crew's presses in this block
+  send no row. Joins from the lobby arrive with `via=crew`, and the game carries `crew_id`, as before.
+- **Old and new together.** An old site on the new functions shows the old page and ignores
+  `night`. The new site on old functions (the few minutes between the two deploy steps do not
+  happen in this order, but a rollback could): the page shows no night block, since none is stored,
+  and a send still goes out; storing its date fails quietly and is reported to Sentry.
+- **Clocks.** "On the night" and the countdown come from the stored time and the phone's clock. A
+  phone whose clock is far off sees the button early or late; the lobby itself does not depend on it.
+
+Play it on the emulators, in both languages (a test crew, opened from a `?via=test` link):
+`node .github/smoke/emulator-crew-night.js [--locale he]`, after building `functions/` and `game/`.
+
+How to read it (read-only; replace `<release time>`):
+
+```sql
+-- Per crew and day: who tapped in, how many of them were new names, and whether the lobby was opened.
+SELECT crew_id, DATE(time) AS day, locale,
+  COUNTIF(method IN ('in', 'in-new')) AS in_taps,
+  COUNT(DISTINCT IF(method IN ('in', 'in-new'), uid, NULL)) AS phones_in,
+  COUNTIF(method = 'in-new') AS new_names,
+  COUNTIF(method = 'out') AS cant_make_it,
+  COUNTIF(method = 'nudge') AS nudges,
+  COUNTIF(method = 'open-lobby') AS lobby_taps
+FROM `bullshit-wtf-prod.analytics.shares`
+WHERE content_type = 'crew-night' AND time >= TIMESTAMP('<release time>')
+  AND method IN ('in', 'in-new', 'out', 'nudge', 'open-lobby')
+GROUP BY crew_id, day, locale
+ORDER BY day DESC, in_taps DESC;
+```
+
+Nights kept (a crew with a date that played a game of two or more from 12 hours before it to 24
+hours after) needs the date itself, which is in the Realtime Database (`crews/<id>/night/time`),
+not in BigQuery: `opened_games.crew_id` gives the crew's games, and an `open-lobby` row on the day
+is the nearest sign in BigQuery alone.
 
 ## Opening questions
 

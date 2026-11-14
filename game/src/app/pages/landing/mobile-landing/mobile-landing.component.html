@@ -5,6 +5,10 @@
 <section class="home" [attr.dir]="t.dir" [attr.lang]="t.lang" [class.is-rtl]="t.dir === 'rtl'">
 
     <div class="crews" *ngIf="crews.length">
+        <a class="crew tonight" *ngIf="tonight" [routerLink]="['/c', tonight.id]">
+            <i class="fa fa-calendar-check-o"></i>
+            <span class="crew-name" dir="auto">{{ t.tonight(tonight.time, tonight.name) }}</span>
+        </a>
         <a class="crew" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
             <i class="fa fa-trophy"></i>
             <span class="crew-name" dir="auto">{{ crew.name }}</span>

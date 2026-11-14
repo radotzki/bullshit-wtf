@@ -11,8 +11,14 @@ import {
     nightLabel, nightText, nightTitle, parseNight, timeValue, weekdayName, weeklyFileName, weeklyShareText,
 } from './next-night';
 import { CrewStrings, crewStrings, localeFromPath } from './crew-strings';
+import { NightState, countdown, daysUntil, isIn, nightState, titleLine } from './crew-night';
+import { readVisitor } from '../landing/front-door';
 import { markHosted } from '../../services/join-source';
-import { Crew, CrewMember, GameState, crewStandings, crewLeaderLine } from './../../game-model';
+import { Crew, CrewMember, GameState, crewStandings, crewLeaderLine, crewNightNames } from './../../game-model';
+import { NICKNAME_MAX } from './../../name-flag';
+
+/** How often the page looks at the clock, so "in 2 days" becomes the lobby button by itself. */
+const CLOCK_MS = 30 * 1000;
 
 /**
  * A crew's page, at bullshit.wtf/c/<id>: its standings across games and a one-tap rematch.
@@ -41,6 +47,19 @@ export class CrewComponent implements OnInit, OnDestroy {
     nightSent: boolean;
     /** The weekday the weekly entry went into the calendar for, once it did. */
     weeklySentDay: string;
+    // WHO'S IN? The crew's stored night (crew.night), by this phone's clock: see crew-night.ts.
+    /** The phone's clock, looked at every half minute. */
+    now = Date.now();
+    /** Who said "I'm in", as the server lists them. */
+    inNames: string[] = [];
+    /** The name a new phone types before I'M IN. */
+    inName = '';
+    inLoading: boolean;
+    inError: string;
+    /** This browser had never played when it opened the page: it gets one line on what the game is. */
+    newcomer: boolean;
+    readonly nameMax = NICKNAME_MAX;
+    private clock: any;
     private nightLocale: string;
     private pathLocale = 'en';
     private crewSub: Subscription;
@@ -59,6 +78,15 @@ export class CrewComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.id = (this.activatedRoute.snapshot.params['id'] || '').toLowerCase();
         this.pathLocale = localeFromPath(typeof window !== 'undefined' ? window.location.pathname : '');
+        // Read before the crew loads: loading it remembers the crew, and then this browser "has played".
+        this.newcomer = !readVisitor(key => {
+            try {
+                return this.storageService.getItem(key);
+            } catch (e) {
+                return null;
+            }
+        }).played;
+        this.clock = setInterval(() => this.now = Date.now(), CLOCK_MS);
         this.crewSub = this.apiService.getCrewObservable(this.id).subscribe(
             crew => this.onCrew(crew),
             err => { this.notFound = true; reportError(err, 'crew', { crew: this.id }); },
@@ -68,6 +96,7 @@ export class CrewComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.crewSub.unsubscribe();
         this.watchLobby(null);
+        clearInterval(this.clock);
     }
 
     /** The crew's language once it has loaded; until then (or if it is not found), the link's. */
@@ -104,6 +133,8 @@ export class CrewComponent implements OnInit, OnDestroy {
         this.crew = crew;
         this.standings = crewStandings(crew);
         this.leader = crewLeaderLine(crew, crew.locale);
+        this.inNames = crewNightNames(crew);
+        this.now = Date.now();
         this.crewService.remember(crew.id, crew.name);
         this.watchLobby(crew.rematch && crew.rematch.pin);
         // The default night depends on the crew's language, so it is set once the crew is known,
@@ -136,7 +167,10 @@ export class CrewComponent implements OnInit, OnDestroy {
         });
     }
 
-    async rematch() {
+    async rematch(fromNight = false) {
+        if (fromNight) {
+            this.count('open-lobby');
+        }
         this.loading = true;
         this.errorMsg = '';
 
@@ -186,8 +220,133 @@ export class CrewComponent implements OnInit, OnDestroy {
         this.shareService.track('whatsapp', 'crew');
     }
 
+    // WHO'S IN? The night the crew has stored: its date, who is in, and on the night the lobby button.
+
+    private get storedNight(): number {
+        return this.crew && this.crew.night ? this.crew.night.time : undefined;
+    }
+
+    get nightState(): NightState {
+        return nightState(this.storedNight, this.now, this.crew ? this.crew.lastPlayed : undefined);
+    }
+
+    /** "Friday 20 November, 21:00" */
+    get storedWhen() {
+        return this.storedNight ? nightLabel(new Date(this.storedNight), this.locale) : '';
+    }
+
+    get countdown() {
+        return this.storedNight ? countdown(this.storedNight, this.now, this.locale) : '';
+    }
+
+    /** "Dana holds the title", or the leader line when the top is tied or nobody has won yet. */
+    get titleLine() {
+        return titleLine(this.standings, this.leader, this.locale);
+    }
+
+    get amIn() {
+        return isIn(this.inNames, this.myNickname);
+    }
+
+    /** "You're in. See you Friday." (or "tonight", when the night is today). */
+    get youreIn() {
+        const today = daysUntil(this.storedNight, this.now) <= 0;
+        return this.t.youreIn(today ? '' : weekdayName(new Date(this.storedNight), this.locale));
+    }
+
+    /** Presses on the night block, counted in BigQuery `shares`. A test crew's presses are not counted. */
+    private count(method: string) {
+        if (this.crew && !this.crew.test) {
+            this.apiService.logShare('crew-night', method, { crew: this.id, locale: this.locale });
+        }
+    }
+
+    /** I'M IN: one tap for a phone the crew knows, a name first for a new one. */
+    async imIn() {
+        const nickname = (this.myNickname || this.inName || '').trim();
+        if (!nickname || this.inLoading) {
+            return;
+        }
+        this.inLoading = true;
+        this.inError = '';
+        try {
+            const resp = await this.apiService.crewNight(this.id, { nickname, in: true });
+            // The phone is known by this name from now on, here and at the crew's next lobby.
+            this.crewService.remember(this.id, this.crew.name, resp.nickname || nickname);
+            this.inName = '';
+            this.count(resp.isNew ? 'in-new' : 'in');
+        } catch (err) {
+            // A refused name comes with the server's own words, in the crew's language.
+            this.inError = err && err.code === 'BAD_NAME' && err.message ? err.message : this.t.inFailed;
+            if (!err || ['BAD_NAME', 'NIGHT_FULL', 'NO_NIGHT'].indexOf(err.code) < 0) {
+                reportError(err, 'crewNight', { crew: this.id });
+            }
+        }
+        this.inLoading = false;
+    }
+
+    /** "Can't make it": takes the name off the list. */
+    async imOut() {
+        const nickname = this.myNickname;
+        if (!nickname || this.inLoading) {
+            return;
+        }
+        this.inLoading = true;
+        this.inError = '';
+        try {
+            await this.apiService.crewNight(this.id, { nickname, in: false });
+            this.count('out');
+        } catch (err) {
+            this.inError = this.t.inFailed;
+            reportError(err, 'crewNight', { crew: this.id });
+        }
+        this.inLoading = false;
+    }
+
+    /** Offered once two or more are in: one name alone is no news for the group. */
+    get canNudge() {
+        return this.inNames.length >= 2;
+    }
+
+    /** ASK WHO ELSE IS IN: a WhatsApp text naming who is in, with the crew link. The player's own tap and chat. */
+    get nudgeUrl() {
+        return this.shareService.whatsappUrl(this.t.nudgeText(this.inNames.length, this.storedWhen, this.inNames), this.crewUrl);
+    }
+
+    nudged() {
+        this.shareService.track('whatsapp', 'crew-night');
+        this.count('nudge');
+    }
+
+    get storedGoogleUrl() {
+        return this.storedNight ? googleCalendarUrl(new Date(this.storedNight), this.nightInfo) : '';
+    }
+
+    /** ADD TO MY CALENDAR: the stored night as a calendar file, for this phone's own calendar. */
+    addToCalendar() {
+        const info = this.nightInfo;
+        this.downloadIcs(buildIcs(new Date(this.storedNight), info, this.id, new Date()), icsFileName(info.crewName));
+        this.count('calendar-download');
+    }
+
+    addToGoogle() {
+        this.count('google-calendar');
+    }
+
+    /** PICK A NIGHT: down to the date inputs the page already has. */
+    pickNight() {
+        const inputs = typeof document !== 'undefined' ? document.querySelector('.next-night') : null;
+        if (inputs && inputs.scrollIntoView) {
+            inputs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        const date = inputs ? inputs.querySelector('input') : null;
+        if (date) {
+            date.focus({ preventScroll: true });
+        }
+    }
+
     // Next game night: a date the group agrees on, sent as a calendar file and a WhatsApp text.
-    // This browser remembers the last date it picked for the crew; nothing goes to the server.
+    // Sending it also stores it on the crew (crewNight), so the page becomes the door to that night.
 
     private get nightKey() {
         return `BS_NIGHT_${this.id}`;
@@ -199,7 +358,9 @@ export class CrewComponent implements OnInit, OnDestroy {
             const t = +this.storageService.getItem(this.nightKey);
             saved = t > Date.now() ? new Date(t) : undefined;
         } catch (e) { }
-        const d = saved || defaultNight(new Date(), this.locale);
+        // The night the crew has stored, while it is still ahead, comes before this phone's last pick.
+        const stored = this.storedNight > Date.now() ? new Date(this.storedNight) : undefined;
+        const d = stored || saved || defaultNight(new Date(), this.locale);
         this.nightDate = dateValue(d);
         this.nightTime = timeValue(d);
     }
@@ -238,6 +399,9 @@ export class CrewComponent implements OnInit, OnDestroy {
         this.nightSent = true;
         this.shareService.track(how, 'crew-night');
         this.apiService.logShare('crew-night', how, { crew: this.id, locale: this.locale });
+        // Fire and forget, like the count: the send itself never waits on it or fails with it.
+        this.apiService.crewNight(this.id, { time: this.night.getTime(), by: this.myNickname })
+            .catch(err => reportError(err, 'crewNight', { crew: this.id }));
     }
 
     get nightWhatsappUrl() {

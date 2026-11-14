@@ -46,6 +46,10 @@
 
             <div class="your-crews" *ngIf="crews.length">
                 <p class="your-crews-title">{{ t.yourCrews }}</p>
+                <a class="button is-primary is-fullwidth tonight" *ngIf="tonight" [routerLink]="['/c', tonight.id]">
+                    <span class="icon"><i class="fa fa-calendar-check-o"></i></span>
+                    <span dir="auto">{{ t.tonight(tonight.time, tonight.name) }}</span>
+                </a>
                 <a class="button is-info is-fullwidth" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
                     <span class="icon"><i class="fa fa-trophy"></i></span>
                     <span><span dir="auto">{{ crew.name }}</span>: {{ t.crewActionShort }}</span>
