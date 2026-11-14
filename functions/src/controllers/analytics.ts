@@ -3,6 +3,7 @@ import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
 import { nameFlag } from '../name-flag';
+import { VisitRecord } from './visit';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
@@ -156,6 +157,11 @@ export async function onShare(row: ShareRow) {
     return insert('shares', { ...row, time: new Date() });
 }
 
+/** One row of the visit beacon (see visit.ts): a page view, or what became of it. */
+export async function onVisit(row: VisitRecord) {
+    return insert('visits', row);
+}
+
 // Host and start kind, the same on opened_games and closed_games.
 function origin(game: GameScheme) {
     return {
@@ -166,6 +172,8 @@ function origin(game: GameScheme) {
         pack: game.pack || null,
         campaign: game.campaign || null,
         coach: !!game.coach,
+        // The About questions' half (see about.ts): null outside the test.
+        about_us: typeof game.aboutUs === 'boolean' ? game.aboutUs : null,
     };
 }
 

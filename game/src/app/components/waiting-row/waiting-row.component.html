@@ -1,7 +1,7 @@
 <div class="waiting-row" [class.on-big-screen]="presenter" [class.in-top-bar]="compact" [attr.dir]="t.rtl ? 'rtl' : null">
     <p *ngIf="view.line" class="waiting-line">{{ view.line }}</p>
 
-    <ul *ngIf="view.seats.length" class="seats">
+    <ul *ngIf="view.seats.length" class="seats" [class.many]="view.seats.length > 8">
         <li *ngFor="let seat of view.seats; trackBy: seatId" class="seat" [ngClass]="'is-' + seat.mark"
             [attr.aria-label]="seat.label || null">
             <span class="picture-box">

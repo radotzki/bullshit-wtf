@@ -10,7 +10,7 @@
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
-import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor } from '../game-model';
+import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor, aboutOf } from '../game-model';
 import { houseLiePoints } from './house-lie';
 import { isSamePick } from './same-pick';
 
@@ -48,8 +48,16 @@ export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
         return picks;
     }
 
+    // An About question: the player it is about knows the truth, so their pick (from an older site,
+    // which offers them the answers) is no pick.
+    const about = aboutOf(game.state);
+
     Object.keys(selections).forEach(pid => {
         const pick = selections[pid];
+
+        if (about && pid === about.pid) {
+            return;
+        }
 
         if (!isPlayer(game, pid) || !pick || typeof pick !== 'object' || typeof pick.text !== 'string' || !pick.text) {
             return;
@@ -120,7 +128,19 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
         }
     });
 
-    return { answers, answerSelections, revealAnswers: revealRows(answers, answerSelections) };
+    const revealAnswers = revealRows(answers, answerSelections);
+
+    // An About question: the player it is about scores for each friend who found their truth, as much
+    // as a lie scores for each friend it fools.
+    const about = aboutOf(game.state);
+    if (about && isPlayer(game, about.pid)) {
+        revealAnswers.filter(row => row.realAnswer).forEach(row => {
+            row.about = about.pid;
+            row.aboutPoints = row.selectors.length * pointsForBullshitting[game.roundIndex];
+        });
+    }
+
+    return { answers, answerSelections, revealAnswers };
 }
 
 function revealRows(answers: Answers, answerSelections: AnswerSelections): RevealAnswer[] {
@@ -208,6 +228,11 @@ export function addQuestionScores(game: GameScheme): GamePlayers {
             counted[pid] = true;
             players[pid].score = num(players[pid].score) + pickPoints(row, pid);
         });
+
+        // An About question's truth: the points of the player it is about.
+        if (row && row.realAnswer && typeof row.about === 'string' && isPlayer(game, row.about)) {
+            players[row.about].score = num(players[row.about].score) + num(row.aboutPoints);
+        }
     });
 
     return players;

@@ -4,7 +4,8 @@ import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
 import { buildEventIcs, googleEventUrl } from './../../pages/crew/next-night';
 import {
-    ASK_TAGS, AskPlace, HostAskStrings, REMINDER_FILE, askContentType, askStrings, reminderEvent, reminderNight,
+    ASK_TAGS, AskPlace, HostAskStrings, REMINDER_FILE, askContentType, askStrings, hanukkahEvening, reminderEvent,
+    reminderNight,
 } from './host-ask';
 
 /**
@@ -23,6 +24,8 @@ import {
 export class HostAskComponent {
     @Input() locale = 'en';
     @Input() place: AskPlace = 'after-game';
+    /** The finished game's seasonal pack: after a Hanukkah game, the Hanukkah words (hanukkahEvening). */
+    @Input() pack: string = null;
     /** REMIND ME was pressed: say so, and offer Google Calendar for phones that ignore the file. */
     reminded: boolean;
     googleUrl: string;
@@ -34,7 +37,12 @@ export class HostAskComponent {
     ) { }
 
     get t(): HostAskStrings {
-        return askStrings(this.locale);
+        return askStrings(this.locale, this.evening);
+    }
+
+    /** Where tonight stands in Hanukkah, after a Hanukkah game (null otherwise). */
+    get evening() {
+        return hanukkahEvening(new Date(), this.pack);
     }
 
     get rtl() {
@@ -54,7 +62,11 @@ export class HostAskComponent {
         // The finished game must not move this phone any more (a rematch there starting, say).
         this.gameService.unregister();
         const tag = ASK_TAGS[this.late ? 'game-over' : 'after-game'].create;
-        this.router.navigate(['/create-game'], { queryParams: { via: tag, lang: this.rtl ? 'he' : 'en' } });
+        const queryParams: any = { via: tag, lang: this.rtl ? 'he' : 'en' };
+        if (this.pack === 'hanukkah') {
+            queryParams.pack = this.pack;
+        }
+        this.router.navigate(['/create-game'], { queryParams });
     }
 
     /**
@@ -63,8 +75,9 @@ export class HostAskComponent {
      */
     remind() {
         this.count('remind');
-        const start = reminderNight(new Date(), this.locale);
-        const event = reminderEvent(start, this.place, this.locale);
+        const evening = this.evening;
+        const start = reminderNight(new Date(), this.locale, evening);
+        const event = reminderEvent(start, this.place, this.locale, this.pack, evening);
         this.googleUrl = googleEventUrl(start, event);
         this.reminded = true;
         this.download(buildEventIcs(start, event, new Date()));

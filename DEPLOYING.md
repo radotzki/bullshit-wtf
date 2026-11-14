@@ -39,6 +39,12 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    step runs only if the one before it succeeded, so a failure never leaves a new site calling old
    functions. It can leave new functions with the old rules and site; functions are written to
    keep old clients working, so that state is safe, and a new run finishes the release.
+7. Adds the **new questions** to the live question bank (see "Question files the release adds"
+   below): one update of `questions/` naming exactly the ids in the listed question files, today
+   `functions/data/hanukkah-questions.json` and `functions/data/strange-facts-2026-11.json`,
+   and nothing else. It runs last, after the functions that know pack questions are live; if it is
+   refused, the release before it stands, and the run fails and says why. The summary's verdict
+   then starts "WARNING: the game was released whole, but the new questions were NOT added".
 
 Things to know:
 
@@ -297,7 +303,9 @@ prints less, never more.
   column or table must say so in its description, and the SQL must be run **before** the merge.
   If it is skipped, rows still land, but the new fields are dropped silently.
 - **Loading questions** into the database (`firebase database:update /questions ...`), which goes
-  **after** the functions that understand them are live, so after the deploy run is green.
+  **after** the functions that understand them are live, so after the deploy run is green. The one
+  exception is the listed question files, which every release adds itself ("Question files the
+  release adds", below). A file that is not on that list is still loaded by hand.
 - **Deleting a function**, as above.
 - **Google Search Console** (submitting the sitemap) and anything in the Firebase or Google Cloud
   consoles.
@@ -378,16 +386,56 @@ Deploy functions first, then the game: the new client reads the error `message` 
 
 ## Visit beacon
 
-`game/src/index.html` runs a tiny script before everything else. When a page is hidden or closed
-(up to 3 times), and once at 12 s if the app has still not drawn, it posts one line to `/_v` on the
-game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to another site is
-dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon still reports success).
-Deploy hosting for the rewrite; the `visit` function itself is unchanged. It posts: first and last path, whether the app started, the first script error, browser language,
-referrer host, and a random id per page load (`view`, never stored on the phone) that groups the
-rows of one page view. The function logs it as `visit {...}` with device and browser from the user agent;
-no IP, no player data. Count visits (distinct `view`), stuck loads and how far people got (the last row of each view) from the function log
-(filter `textPayload:"visit "`). Test phones say `HeadlessChrome` nowhere, so tell them apart by
-time or by the scripted paths.
+`game/src/index.html` runs a tiny script before everything else (between the `BS:VISIT` markers),
+and `game/seo/build-pages.js` copies the same script into every plain page. It posts small rows to
+`/_v` on the game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to
+another site is dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon
+still reports success):
+
+- `view` once, as the page opens;
+- `create` when that page view creates a game and `join` when it joins one (the app calls
+  `window.bsVisit`, through `markVisit` in `join-source.ts`);
+- `end` when the page is hidden or closed (up to 3 times);
+- `stuck` once at 12 s if the app has still not drawn (never on a plain page).
+
+Each row carries a random id per page load (`view`, never stored on the phone) that groups the rows
+of one page view, the first and last path, the referring site's host, the `?via=` tag of the link
+(else the post tag the tab arrived with), the browser language, whether the browser held nothing of
+the game yet (a first visit, read from what the game already keeps), whether the app started, and
+the first script error.
+
+The function writes each row to BigQuery `analytics.visits` and also logs it as `visit {...}`. It
+adds device, kind of device and browser from the user agent, and replaces every PIN and crew id in
+the paths (`/join-game/:pin`). A row holds no IP address, no user agent, no uid, no nickname and no
+PIN, and the beacon sets no cookie and stores nothing, so nothing in the table names a person.
+The retired Google Analytics tag is gone from the page.
+
+- **BigQuery: run `functions/bigquery/2026-11-visits.sql` once** (creates the table), before the
+  merge. Until then the function logs "Bigquery Insert failed" for each row and visits are not
+  counted; the site is unaffected. The same file holds the read-only queries, first of all home
+  views that become created games, by referring site and tag.
+- Deploy functions and hosting together (a merge does both). An old page still open in a tab keeps
+  sending the old `end` and `stuck` rows, which land with the new columns empty.
+- Count page views as `COUNT(DISTINCT view)`; a view made a game when any of its rows has `created`.
+- Tests and bots: a play-test link (`?via=test`, `?via=test-<name>`) sets `test` on every row of the
+  tab from then on, also when the tab later opens an invite link or a lobby code with its own tag
+  (`?via=link`, `?via=qr`): the test tag stays the row's `tag`. A scripted browser or a crawler
+  sets `bot`. The saved queries leave both out. Not marked: a test in a tab that arrived without
+  the tag, another tab or another phone (a code scanned with a camera opens a new tab), and a
+  browser that blocks session storage once it leaves the address that carries the tag. So open
+  every play-test tab, guests too, from a `?via=test` link first.
+- Post tags on the plain pages: every link of a plain page that stays on the site (the buttons,
+  the logo, the links in the text, the other pages, the other language) carries the page's
+  `?via=` tag on, so a game created after any of them is credited to the post.
+- The visit function runs at most 3 copies at once (`VISIT_MAX_INSTANCES` in
+  `functions/src/controllers/visit.ts`, with the reason). The endpoint is still public, with no
+  rate limit and no check that a row came from the site: the cap bounds what a flood can cost,
+  not whether rows can be forged, so a number from this table can be inflated by someone who
+  wants to. A merge deploys the cap with the function; there is nothing to set by hand.
+- First visit means the browser held nothing of the game when the page opened. A visitor who only
+  looked at the English home page and left stores nothing, so a second look counts as first again.
+- Check locally: `cd functions && npm test` prints the rows of one visit (`# visits {...}`, from
+  `test/visit-row.test.js`, which runs the shipped beacon against the function and a fake BigQuery).
 
 ## What a deploy changes compared with what is live (checked 2026-11-05)
 
@@ -535,6 +583,69 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   `npx firebase database:update /questions functions/data/opening-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
 - To retire one, add its id to `retired-questions.ts` as with any question.
 
+## Strange facts: 120 more questions
+
+- 60 English and 60 Hebrew questions for the normal bank (no pack, no opener flag), ids
+  `fact-26-en-01..60` and `fact-26-he-01..60`, in `functions/data/strange-facts-2026-11.json`.
+  Each is a strange-but-true fact with one blank, the truth, three house lies and a `citation`, a
+  page that states the fact. The Hebrew set is written in Hebrew, not translated, and leans on Israel.
+- Nothing in the game's code changes for them, and they are not in the game until they are in the
+  database. **Every release adds them itself**, in its last step (see "Question files the release
+  adds" below), so nobody has to load them. By hand, if that step is ever refused (the functions
+  already live pick any question without a pack):
+  `npx firebase database:update /questions functions/data/strange-facts-2026-11.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+  An update writes only these 120 ids and leaves every other question as it is. Never a set or an
+  import on `questions/`, which would replace the whole bank. Running it again changes nothing.
+- **Edit these questions in the file, never in the Firebase console:** each release rewrites every
+  one of them in full from the file, so a fix made in the console is undone by the next release.
+- `functions/test/strange-facts-questions.test.js` checks the shape: one blank, lower-case answers of
+  40 characters or less, three house lies none of which the game would read as the truth, no blocked
+  house lie, 60 per language with ids from 01, a citation, and no repeat of the openers or the Hebrew fixes.
+- Repeats: the live bank cannot be read from the repository. The set was checked by hand against the
+  last copy of the bank kept in git (`functions/raw-data.json`, removed in 2017, 414 questions), the
+  openers, the Hebrew fixes and the Hanukkah pack's open pull requests. A fact added to the live bank
+  after that may repeat: retire the double in `retired-questions.ts`.
+- To retire one, add its id to `retired-questions.ts` as with any question.
+
+## Question files the release adds
+
+New questions reach players only once they are in `questions/` in the live database. Every release
+puts the questions of the repository's reviewed question files there itself, in its last step,
+"4. Add the new questions to the database" (`.github/scripts/load-pack-questions.js`).
+
+- **The list** is `FILES` at the top of that script, written out file by file. Today:
+  - `functions/data/hanukkah-questions.json`, ids `hanukkah-26-en-NN` and `hanukkah-26-he-NN`,
+    every question with `pack: "hanukkah"` (see "Hanukkah pack" below);
+  - `functions/data/strange-facts-2026-11.json`, ids `fact-26-en-NN` and `fact-26-he-NN`, questions
+    of the normal bank: exactly `questionText`, `realAnswer`, `fakeAnswers`, `citation` and `lang`,
+    and no `pack` field.
+- **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
+  body is exactly those files. Every key must be an id of the file it stands in, and every value a
+  whole question in that id's language with that file's fields and no other, or nothing is sent for
+  any file. An update writes the children it names and leaves every other child of `questions/` as
+  it is. Never a set or an import on `questions/`, which would replace the whole bank. Sending the
+  same files again changes nothing, so the step runs on every release.
+- **A new question file** is one more entry in `FILES`: the file's path and the one shape of id it
+  may write, added in the pull request that adds the file (a test lists the entries, so it fails
+  until it is told). There is no glob on purpose: a file that merely lies in `functions/data` is
+  not loaded. Give a new file ids of its own (`<name>-<yy>-<lang>-NN`), two digits, so at most 99
+  per language; a bigger set needs a second file or a wider id rule.
+- **Never on the list:** `functions/data/daily-questions.json`. The daily puzzle reads its questions
+  from the functions bundle; in `questions/` they would turn up in games and give a coming puzzle
+  away. The script refuses that path even if it is added. `opening-questions.json` and
+  `hebrew-question-fixes-2026-11.json` were loaded by hand before this step existed and are not
+  listed either.
+- **Edits and removals.** A question edited in a listed file is changed live by the next release.
+  One removed from a file stays live: retire it in `retired-questions.ts`. Edit listed questions in
+  their file, never in the Firebase console, or the next release undoes the edit.
+- **If it fails,** the run is red and its summary starts "WARNING: the game was released whole, but
+  the new questions were NOT added" (or "may NOT have been added"); the functions, rules and site
+  released before it stand. One update carries every file, so a refusal or a bad file leaves all of
+  them unwritten. Fix the cause and start a new run by hand on master, or load each file by hand:
+  `npx firebase database:update /questions <file> --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+- `node .github/scripts/load-pack-questions.js --dry-run` prints the files and every id that would
+  be sent, without sending anything.
+
 ## Hanukkah pack and campaign tags
 
 - Questions can carry `pack: "hanukkah"`. Pack questions never appear in normal games. A pack game
@@ -543,6 +654,49 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   (`tick`) keeps the pack, so deploy all functions.
 - The pack's questions live in `questions/hanukkah-*` in the database. Load them only **after** the
   new functions are live: old functions would mix them into every game.
+- The repository's set is `functions/data/hanukkah-questions.json`: 77 English and 72 Hebrew questions,
+  ids `hanukkah-26-en-01..77` and `hanukkah-26-he-01..72` (a room that plays three games on each of the
+  eight nights uses 72 in its language; a pack question never repeats in a room), with the ones the two Hanukkah pages name (the
+  astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). The pack turns on
+  by itself on 1 December.
+- **Every release adds this file to the live question bank by itself**, in the last step, "4. Add
+  the new questions to the database" (`.github/scripts/load-pack-questions.js`), together with the
+  other listed files ("Question files the release adds", above). It sends one
+  update (`PATCH`) to `questions.json` at the database's own address, whose body is exactly the
+  file: every key must be a `hanukkah-26-en-NN` or `hanukkah-26-he-NN` id, and every value a whole
+  question with `pack: "hanukkah"` in its id's language, or nothing is sent. An update writes the
+  children it names and leaves every other child of `questions/` as it is; it is what
+  `firebase database:update /questions <file>` sends. Never a set or an import on `questions/`,
+  which would replace the whole bank. Sending the same file again changes nothing, so the step
+  runs on every release. A question edited in the file is changed live by the next release; one
+  removed from the file stays live (retire it in `retired-questions.ts`).
+  **Edit these 34 questions in the file, never in the Firebase console:** each release rewrites every
+  pack question in full from the file, so a fix made in the console is undone by the next release
+  unless the same fix is in the file.
+  The run's summary says how the step went. Its verdict starts "A whole release ... and the new
+  questions are in the database" when it passed, and "WARNING: the game was released whole, but the
+  new questions were NOT added" (or "may NOT have been added", when the update got no clear answer) when it
+  failed. The run is red then, but the functions, rules and site released before it stand. A line
+  under the verdict says why: the database refused the update, nothing was sent (a bad file, or the
+  project's database not as expected), or no clear answer. Fix the cause and start a new run by hand
+  on master, or load the file by hand with the command below.
+  Why not the tool's command: `database:update` first asks the Firebase Realtime Database
+  Management API for the database's details, and that API is off in the Google project. The
+  database's own address does not need it; the access check already reads the live rules there with
+  the deploy account and the same two sign-in scopes (`userinfo.email`, `firebase.database`).
+  Whether Google lets the deploy account *write* there is decided on the first run from `master`:
+  if not, the step fails with Google's status, the release before it stands, and the command below
+  is the way to load the file by hand.
+  `node .github/scripts/load-pack-questions.js --dry-run` prints what would be sent, without
+  sending anything. By hand, as before:
+  `npx firebase database:update /questions functions/data/hanukkah-questions.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+  It adds questions and changes none. If the console already shows other `hanukkah-*` questions on the
+  same facts, retire the doubles (`retired-questions.ts`), or a room can meet one fact twice.
+  Without any pack question in the database, a Hanukkah game is a normal game under a Hanukkah banner.
+- After a Hanukkah game, from the eve of the first candle to the eighth (`HANUKKAH_CANDLES` in
+  `host-ask.ts`), a guest's ask reads "Lighting with the other side of the family? Start a game there."
+  and REMIND ME reads "Another candle tomorrow: play again", saving tomorrow evening, with a link that
+  opens a Hanukkah game.
 - The create page offers the pack from `?pack=hanukkah`, and switched on by default during the season
   in `questionPacks` (game-model.ts). The lobby shows a Hanukkah line and the results card says so.
 - `?lang=he` or arriving on a `/he` address makes Hebrew the default on the create page.
@@ -700,8 +854,8 @@ best lie.
 ## Staged reveal (a 50/50 test)
 
 Half of new games get a staged reveal; the other half keep the reveal as it was. Which half a game is
-in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it is
-independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`revealSchedule`,
+in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it does
+not depend on the round-1 lie helper, which every game has had since 13 November 2026. Timing in `game-model.ts` (`revealSchedule`,
 `stagedRevealTiming`), the page in `game/src/app/pages/reveal-the-truth`, its words in
 `game/src/app/pages/game-strings.ts`.
 
@@ -827,6 +981,27 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Round-1 lie helper for every game (the 50/50 test ended)
+
+From about 5 November 2026 half of new games had the round-1 lie helper ("coach": the hint line and
+"STUCK? GIVE ME A LIE" with up to two ready-made lies per player). On 13 November 2026 it was given to
+every new game, every Replay and every crew rematch: `pickCoach` in
+`functions/src/controllers/lie-helper.ts` now returns `true`.
+
+- Logging is unchanged. `opened_games.coach` and `question_results.coach` are still written for every
+  game, and `question_results.idea_lies` still counts the lies a player took from the helper. Games
+  made after the deploy all log `coach = true`; the no-helper half before it logs `false`, so the
+  switch date is plain in the data.
+- The staged reveal's own 50/50 (by PIN, `functions/bigquery/2026-11-big-reveal.sql`) is untouched.
+- Guardrail for two weeks after the deploy: the share of real games (tests left out) with 2+
+  players where half or more of the players picked on a round-2 question. The no-helper half's 74%
+  is the bar; below about 65%, read Hebrew and English apart and consider turning it back off.
+- Deploy: functions only. No rules, BigQuery or hosting change; the client already shows the helper
+  whenever `games/$pin/coach` is true. A game already in play at the deploy keeps what it had.
+- To turn it back off: make `pickCoach` return `false` and deploy the functions.
+
+Checks: `functions/test/lie-helper.test.js` and `functions/test/big-reveal.test.js` (in `npm test`).
 
 ## Final question card
 
@@ -1094,6 +1269,159 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## Lies sent at the same moment end the question at once
+
+When the last lies of a question reached the server at the same moment, each `answer` call checked
+"has everyone sent?" on the game it had read before the others wrote their lies. None of them saw
+every lie, so none ended the question, and the room waited out the whole 25 seconds with nothing on
+screen to do. In an emulator game of three phones answering together it happened on 2 of 5 questions.
+
+- `answer.ts` now reads the game's lies again after writing its own, and decides on those. Each call
+  writes before it reads, so the call whose lie lands last sees them all and ends the question.
+- Two or three calls can now end the same question. `advance()` already takes a phase once (see
+  `step-once.test.js`), so the game moves on once.
+- Picks were not affected: their database trigger reads the game after each pick is written.
+- One more database read per lie sent. Nothing else changes: no new field, table or rule.
+- Deploy: functions only (the site and the rules are unchanged). Old and new together are fine.
+
+Tests: `functions/test/step-once.test.js`, "lies that arrive at the same moment" (two and three
+lies at once). Both fail on the code before this change and pass after it.
+
+How to read it: no table holds when a question's lies came in or how long the question ran (that
+waits on the wait columns of pull request 47), so this change has no number of its own yet. Until
+then it is checked by the test above and by a whole emulator game (`.github/smoke/emulator-game.js`).
+
+## Search pages: a tag on every page, and links from home
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- Every plain search page now carries its own tag on its Start button, so a game started from it is
+  counted in `campaign`: `seo-en-how`, `seo-he-how`, `seo-en-phone`, `seo-he-phone`,
+  `seo-en-hanukkah`, `seo-he-hanukkah` and `seo-en-purim` join the tags the Hebrew occasion pages and
+  the kit pages already had. A post's own `?via=` still takes the page tag's place.
+- The home menu (phone and desktop, both languages) links the search pages in a small row under the
+  buttons: English How to play, Hanukkah, Party games on your phone, Classroom, Team building; Hebrew
+  איך משחקים, חנוכה, ארוחת שישי, בכיתה, גיבוש. Before, only the `<noscript>` block linked any of them.
+  From 1 to 13 December 2026 a Hanukkah line sits above the buttons too. Hanukkah moves every year:
+  add next season's days to `hanukkahSeasons` in `game/src/app/pages/landing/search-links.ts`.
+- A visitor who came from a post keeps the post's tag on these links, so a game they start from a
+  search page still counts for the post (and a `?via=test` play-test stays a test).
+- Tested by `game/test/search-pages.test.js`.
+
+How to read it: games by `campaign` in `opened_games` (test games out) where `campaign` starts with
+`seo-`. A game from a page counts for the page whether the visitor came from a search engine or from
+the home row; the home row exists only from this release on, so compare the Hanukkah weeks with that in
+mind.
+
+## New search pages and own share pictures
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- New pages, each with its own tag on its Start button: `/free-jackbox-alternative` (`seo-en-jackbox`)
+  and its Hebrew twin `/he/game-like-jackbox` (`seo-he-jackbox`); `/christmas-party-game`
+  (`seo-en-christmas`), `/new-years-eve-party-game` (`seo-en-new-year`) and `/office-holiday-party-game`
+  (`seo-en-office-party`), English only. The holiday pages' Start button opens Create with
+  `pack=none`, so a Christmas game is not handed the Hanukkah pack that is on by default 1 to 13 December.
+- The English home row adds Christmas, New Year's Eve and Office party from 20 November to
+  1 January (`holidaySeasons` in `search-links.ts`: add next season's days there).
+- Every search page now has its own share picture: the Hebrew occasion pages, the kit pages and the
+  new pages no longer use `og-image.png` / `og-image-he.png`. Pictures come from
+  `graphics/more-pages.html`: `node graphics/render-more-pages.js game/src/assets`.
+- Tested by `game/test/more-search-pages.test.js`.
+
+How to read it: games by `campaign` in `opened_games` (test games out) for the tags above.
+
+## Room for the ninth player: 12 seats a game
+
+A game takes 12 players; it took 8. The thirteenth is told "Sorry, game is full", as the ninth was.
+
+- Functions and site. No rule change, no BigQuery change, no new function, none removed or renamed.
+  A merge sends all functions and the site.
+- One number: `MAX_PLAYERS` in `game-model.ts`. `join` and `validateGameName` refuse a seat at it
+  (`>=`, where it was `=== 8`), and a late friend is offered a rematch lobby only below it
+  (`game-over.ts`). The server timer's longest phase (`maxPhaseDuration`, `phase.ts`) is worked out
+  from it: a big-screen reveal of 13 rows, about 70 seconds, under the 120-second limit of
+  `phaseTimer`.
+- House lies: a table of 9 to 12 sees every lie its players wrote and the truth, but house lies
+  fill the list only up to 9 answers (`MAX_HOUSE_FILL`), as many as an 8-seat game ever had.
+  Tables of 2 to 8 get exactly what they got.
+- Pictures: four new seat pictures, `assets/avatar8.png` to `avatar11.png` (sources in
+  `graphics/avatars/`). Every screen that shows players asks for the seat's picture by its place,
+  wrapped at 12, so a thirteenth seat made by two joins in the same instant reuses one.
+- Screens with nine or more: the lobby shows three pictures a line on a phone; the waiting row is
+  three lines of four; the answer buttons sit closer together, and four a line on the big screen;
+  the scoreboard rows are shorter so twelve fit; the big screen's final scores go in three columns.
+- Words: "up to 12 players" on the how-to-play page, the home page's description, the search pages
+  and the Hebrew occasion pages. The pictures made from `graphics/` say 12 too: the search pages'
+  link previews (`og-phone-en.png`, `og-phone-he.png`) are drawn again, and the Hanukkah square
+  posts (not in the repository) say 12 when `render-hanukkah.js` is run again.
+- Big screen's final at 9 to 12: in three columns the lie gets a line of its own (only it gives
+  way with "…") and "fooled N players" the line under it, whole, with the laughs beside it when the
+  funniest lie is the same lie, and the badges at that line's end; a different funniest lie takes
+  one line. Wider columns on a TV, a shorter hero (no trophy) and smaller badges keep all twelve
+  on a 1920x1080 screen. Tables of 2 to 8 are unchanged.
+- Old and new together. The functions go first, so for a minute or two a game can take a ninth
+  player while the site is the old one: an old phone's waiting row reuses the first pictures for
+  seats 9 to 12, and its lobby and scoreboards show no picture for them until the site's release
+  brings the new files (after it, an old phone that has not reloaded gets them too). Nothing stored
+  changes shape.
+
+How to read it: `functions/bigquery/2026-11-ninth-player.sql` (share of games above 8, seats per
+game on Fridays and by language, whether big tables still play to the last question, and refusals
+once pull request 47's table exists).
+
+## About us questions (a 50/50 test)
+
+A second kind of question: one player is named ("The thing Ben would save from a fire is ___"), writes
+the truth privately while everyone else writes a lie about them, and then all but that player pick.
+Finding the truth scores as finding any truth; the named player scores, for each friend who finds it,
+what a lie scores for each friend it fools (500, 750, 1000). Server in
+`functions/src/controllers/about.ts`, the prompts in `about-prompts.ts` (22, English and Hebrew), the
+words of the screens in `game/src/app/pages/about-strings.ts`, how phones read it in `aboutOf`
+(`game-model.ts`). Tests: `functions/test/about.test.js`, `game/test/about-strings.test.js`.
+
+- Who gets it: half of the games made by a client that asks for it (`aboutUs: true` on `newGame`,
+  `fork`, `crewRematch`), by the PIN, or by the crew's id for a game that counts for a crew, so a
+  crew plays all its games in one half. Independent of the staged reveal's half (another hash) and
+  the lie helper's draw. A game plays the questions only when it leaves the lobby with three or more
+  players; never alone (the taste).
+- Where: two questions in a game of 5 or 7, three in a game of 9, at 1 and 3, 2 and 4, or 2, 4 and 6
+  (counting from 0). Never the first (the opener) or the last (the final question). The bank question
+  picked for that place stays in the game as the fallback.
+- Who is named: a seat that has sent a lie or a pick in this game (so never an empty seat), not named
+  before while another is left. With fewer than three seats playing, the question is skipped and the
+  bank question played.
+- The truth is kept at `games/$pin/aboutTruth`, which no phone can read, until the answers are on the
+  table; then it is the `truth` answer, in lower case like every lie. A friend's lie is never refused
+  as too close (that would give the truth away); a lie that is the truth is dropped, and its writer
+  can still pick it. Up to 5 answers are filled with the prompt's own house answers, which cost points
+  like any house lie; an 8-seat table gets none.
+- If the named player sends nothing in the 25 seconds, the bank question is played in its place, with
+  a fresh 25 seconds (the lies about them are dropped). Phones get a new writing step with the same id
+  and rebuild the page, as after any phone comes back to a step.
+- How phones learn it: every state of an About question (writing, answers, reveal, scoreboard) carries
+  `about: { pid, prompt }`. The truth's reveal row carries `about` and `aboutPoints`. The named
+  player is marked as done on the answers' waiting row and is not waited for there; their pick, if an
+  older site sends one, is ignored.
+- Sends at the same moment: when the last sends of an About question (the truth and a lie, or two
+  lies) reach the server together, each `answer` call reads `answers` and `aboutTruth` again after
+  writing its own send, and decides "has everyone sent?" on that. Without it no call saw every send
+  and the room sat out the 25 seconds. It is the same re-read as "Lies sent at the same moment end the
+  question at once" (pull request 108) for a normal question; the two are in different functions of
+  `answer.ts` and merge cleanly. Tests: `about.test.js`, "About question: ... sent at the same moment".
+- Deploy: **run `functions/bigquery/2026-11-about-us.sql` (three ALTERs) first**, then functions,
+  then hosting. **No rules change.** Until the site is live no phone asks, so no game is in the test.
+  A phone still on the old site inside an About game sees the question about the named player and a
+  plain lie box: if it is the named player's phone, what it sends is taken as the truth; on the answers
+  page it shows the list and its pick is ignored. Nothing is held up.
+- In the usage data: `opened_games.about_us` and `closed_games.about_us` (the half, null outside the
+  test); `question_results.about` (`played`, `fallback`, `skipped`) and `about_prompt`. No answer
+  anybody typed goes to BigQuery; the question history (`qHistory`) keeps only the prompt's id for an
+  About question. The read queries are in the SQL file: rematches per finished game and games per crew
+  per week, by half, and the share of About questions that fell back, by prompt.
+- To end the test: make `drawAboutUs` return `true` (everyone) or `undefined` (nobody) and deploy the
+  functions. To change a prompt, edit `about-prompts.ts`: never reuse an id.
 
 ## Join link previews
 

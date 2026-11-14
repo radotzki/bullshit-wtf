@@ -6,6 +6,7 @@ import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
 import { withStaged } from './phase';
+import { drawAboutUs } from './about';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = 10 * 1000;
@@ -23,7 +24,7 @@ export const FORK_WAIT_MS = 10 * 1000;
  * Replay could end up in the other phone's lobby without START (Friday 6 Nov: JVQP made JVRQ and JVRR).
  */
 export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string,
-    stagedReveal = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
+    stagedReveal = false, aboutUs = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
     const game = await get<GameScheme>(gamesRef.child(pin));
     const gameCounter = await incGameCounter();
@@ -50,7 +51,7 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     }
 
     const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin);
+    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin, aboutUs);
 
     await gamesRef.child(forkedGamePin).set(forkedGame);
     await gamesRef.child(pin).child('forking').set(forkedGamePin);
@@ -84,7 +85,7 @@ async function forkReady(pin: string, claimed: string): Promise<boolean> {
 }
 
 export function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
-    hostKey?: string, stagedReveal = false, forkedPin = ''): GameScheme {
+    hostKey?: string, stagedReveal = false, forkedPin = '', aboutUs = false): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -133,7 +134,7 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.crew = game.crew;
     }
 
-    // The round-1 lie helper, on for half of all games: each Replay is a new draw.
+    // The round-1 lie helper, on for every game, Replay included. Logged as coach.
     if (pickCoach()) {
         forked.coach = true;
     }
@@ -144,6 +145,12 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
     if (bigReveal !== undefined) {
         forked.bigReveal = bigReveal;
         forked.state = withStaged(forked.state, forked);
+    }
+
+    // The About questions: a crew's Replay stays in the crew's half, any other is a new draw by its PIN.
+    const about = drawAboutUs(aboutUs === true && !!forkedPin, forkedPin, game.crew);
+    if (about !== undefined) {
+        forked.aboutUs = about;
     }
 
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).

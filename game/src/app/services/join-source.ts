@@ -47,10 +47,14 @@ export function rememberArrivalSource() {
     }
 
     // The raw tag of a post link (?via=fb-he-hanukkah), sent with a game this tab creates.
+    // A tab that arrived as a play-test (test, test-<name>) stays one: a later post tag does not
+    // replace it, so the visit beacon and a game this tab creates keep the test mark.
     const tag = readCampaign(window.location.search);
     if (tag && s) {
         try {
-            s.setItem(campaignKey, tag);
+            if (!isTestTag(s.getItem(campaignKey))) {
+                s.setItem(campaignKey, tag);
+            }
         } catch (e) { }
     }
 
@@ -62,6 +66,11 @@ export function rememberArrivalSource() {
             window.localStorage.setItem(localeKey, locale);
         } catch (e) { }
     }
+}
+
+/** A play-test tag: `test` or `test-<name>` (the same rule as isTestTag in the visit function). */
+export function isTestTag(tag: string | null): boolean {
+    return /^test(-|$)/.test(tag || '');
 }
 
 /** A post's campaign tag, as cleanCampaign in game-model allows; known join sources are not campaigns. */
@@ -104,6 +113,19 @@ export function setPreferredLocale(locale: string) {
     }
     try {
         window.localStorage.setItem(localeKey, locale);
+    } catch (e) { }
+}
+
+/**
+ * Tell the visit beacon (the inline script in index.html) that this page view created or joined a
+ * game. It sends no PIN and no name: only that it happened, for the visits table.
+ */
+export function markVisit(what: 'create' | 'join') {
+    try {
+        const beacon = (window as any).bsVisit;
+        if (typeof beacon === 'function') {
+            beacon(what);
+        }
     } catch (e) { }
 }
 
