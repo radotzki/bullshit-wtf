@@ -10,6 +10,7 @@
 import { shuffle, Random } from './question-picker';
 import { normalize } from './answer-options';
 import { GameScheme } from '../game-model';
+import { isSamePick } from './same-pick';
 
 export const IDEAS_PER_PLAYER = 2;
 
@@ -80,6 +81,9 @@ export interface QuestionResultRow {
     friend_fooled: number;
     coach: boolean;
     locale: string | null;
+    qid: string | null;
+    truth_picks: number;
+    house_picks: number;
 }
 
 /**
@@ -88,6 +92,10 @@ export interface QuestionResultRow {
  *   idea_lies      of those, lies the helper offered them
  *   picks          players who picked an answer
  *   friend_fooled  picks of a lie another player wrote
+ *   qid            the question's id in the bank (game.qids), to rank questions by how they play
+ *   truth_picks    picks of the real answer
+ *   house_picks    picks of a house lie
+ * A pick is the truth or a house lie as scoring counts it: it matches that answer alone (case aside).
  */
 export function questionResult(pin: string, game: GameScheme): QuestionResultRow {
     const answers = game.answers || {};
@@ -102,6 +110,20 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
         }
     });
 
+    const answerList = Object.keys(answers).map(k => answers[k]).filter(a => !!a);
+    let truthPicks = 0;
+    let housePicks = 0;
+    Object.keys(selections).forEach(pid => {
+        const text = selections[pid] && selections[pid].text;
+        const matches = answerList.filter(a => isSamePick(a.text, text));
+        if (matches.length === 1 && matches[0].realAnswer) {
+            truthPicks++;
+        } else if (matches.length === 1 && matches[0].houseLie) {
+            housePicks++;
+        }
+    });
+    const qid = game.qids && game.qids[game.questionIndex || 0];
+
     return {
         id: pin,
         q_index: game.questionIndex || 0,
@@ -114,5 +136,8 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
         friend_fooled: friendFooled,
         coach: !!game.coach,
         locale: game.locale || null,
+        qid: qid !== undefined && qid !== null && qid !== '' ? String(qid) : null,
+        truth_picks: truthPicks,
+        house_picks: housePicks,
     };
 }
