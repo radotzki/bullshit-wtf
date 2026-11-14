@@ -379,7 +379,9 @@ export async function joinPreviewPage(path: string, query: string, headers: any,
     const parsed = parseJoinPath(path);
     const shellKind: PreviewLocale = parsed ? parsed.shell : (/^\/he(\/|$)/.test(path || '') ? 'he' : 'en');
     const origin = originOf(headers, deps.project, deps.emulator);
-    const html = { 'Content-Type': 'text/html; charset=utf-8' };
+    // Every answer is a join screen, never a page for search (the generic answer is the home page's
+    // own copy): the header keeps it out of search even where the page has no robots tag.
+    const html = { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex' };
 
     let shell: string;
     try {

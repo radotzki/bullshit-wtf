@@ -108,7 +108,7 @@ module.exports = {
             path: '/office-holiday-party-game', site: en, tag: 'seo-en-office-party',
             start: { href: '/create-game?lang=en&pack=none', label: 'Start an office party game' },
             image: '/assets/og-office-party-en.png',
-            title: 'An office holiday party game on phones and the big screen: free, no sign-up',
+            title: 'An office holiday party game for phones and the big screen',
             description: 'A game for the work holiday party: everyone writes a lie, everyone hunts for the truth, on their own phone and the room\'s screen. Free, in the browser, teams for big groups.',
             h1: 'A game for the office holiday party',
             body: office,

@@ -1,13 +1,19 @@
-// Writes dist/he.html: the built index.html with Hebrew link-preview tags.
-// firebase.json serves /he and /he/** from it, so a Hebrew invite link
-// (bullshit.wtf/he/join-game/ABCD) previews in Hebrew on WhatsApp and friends.
+// Writes dist/he.html: the built index.html as a Hebrew page. firebase.json serves /he and the
+// Hebrew app addresses (/he/join-game, /he/c/<id>) from it, so a Hebrew invite link
+// (bullshit.wtf/he/join-game/ABCD) previews in Hebrew on WhatsApp and friends, and a search engine
+// reads /he as what it is: a Hebrew page (lang and dir, title, description, the schema.org block and
+// the text under the app, between the BS:ABOUT markers).
 // Run after `ng build` (see the "build" script in package.json).
 const fs = require('fs');
 const path = require('path');
 
-const dist = path.join(__dirname, '..', 'dist');
+// node scripts/build-he.js [outDir]
+const dist = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist'));
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 
+// The page's own title carries the words people add to the name when they search for it
+// ("בולשיט משחק"); the link-preview title stays the short one.
+const pageTitle = 'בולשיט: משחק מסיבות חינם בטלפון, לכל המשפחה';
 const title = 'בולשיט - משחק השקרים למסיבות';
 const description = 'עבדו על החברים עם תשובות מזויפות לעובדות מוזרות ואמיתיות. חינם, עד 12 שחקנים, כל אחד משחק מהטלפון.';
 const image = 'https://bullshit.wtf/assets/og-image-he.png';
@@ -38,14 +44,65 @@ const hebrewMeta = `
   <meta itemprop="image" content="${image}">
   `;
 
-const block = /<!-- BS:META:START -->[\s\S]*?<!-- BS:META:END -->/;
-if (!block.test(html)) {
-    throw new Error('build-he: BS:META markers not found in dist/index.html');
+const ld = {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: 'בולשיט',
+    alternateName: 'Bullshit',
+    url: 'https://bullshit.wtf/he',
+    description: 'משחק מסיבות חינמי בטלפון. כל אחד ממציא שקר שמשלים עובדה אמיתית ומוזרה, ואז כולם מחפשים את האמת בין כל התשובות.',
+    genre: ['משחק מסיבות', 'טריוויה', 'בלוף'],
+    gamePlatform: 'Web browser',
+    playMode: 'MultiPlayer',
+    numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 12 },
+    inLanguage: ['he', 'en'],
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'ILS' },
+};
+
+// The text under the app, in Hebrew. Facts must match the game, as in seo/pages.js.
+const about = `
+  <main id="bs-about" class="bs-about" lang="he" dir="rtl">
+    <h2>בולשיט: משחק מסיבות חינם בטלפון</h2>
+    <p>כל אחד משחק מהטלפון שלו, באותו חדר, בדפדפן. מופיעה עובדה אמיתית ומוזרה עם חלק חסר, כל אחד ממציא שקר שישלים אותה,
+      ואז כולם מחפשים את האמת בין כל התשובות. עבדתם על חבר? קיבלתם נקודות. מצאתם את האמת? גם. חינם, בלי הורדה ובלי הרשמה,
+      עד 12 שחקנים, עם שאלות בעברית או באנגלית. מתאים לערב משפחתי, לארוחת שישי, לערב חברים, לכיתה ולגיבוש.</p>
+    <h2>איך זה עובד</h2>
+    <ol>
+      <li><strong>מישהו אחד פותח משחק</strong> ומקבל קוד של ארבע אותיות.</li>
+      <li><strong>כל השאר מצטרפים</strong> מהטלפון שלהם עם הקוד.</li>
+      <li><strong>ממציאים שקר, ואז מחפשים את האמת.</strong> 5, 7 או 9 שאלות, והנקודות גדלות בכל סבב.</li>
+    </ol>
+    <p>לקבוצה גדולה, אפשר להציג את השאלות והניקוד על טלוויזיה או מחשב במצב הצגה.</p>
+    <h2>עוד על המשחק</h2>
+    <p class="bs-links"><a href="/he/how-to-play">איך משחקים</a> · <a href="/he/party-game-phone">משחק חברה בטלפון</a> ·
+      <a href="/he/hanukkah">משחק לחנוכה</a> · <a href="/he/friday-dinner">משחק לארוחת שישי</a> ·
+      <a href="/he/family-evening">משחק לערב משפחתי</a> · <a href="/he/friends-evening">משחק לערב חברים</a> ·
+      <a href="/he/classroom">משחק לכיתה</a> · <a href="/he/team-building">משחק לגיבוש צוות</a> ·
+      <a href="/he/game-like-jackbox">משחק כמו ג'קבוקס</a> ·
+      <a href="/" hreflang="en" lang="en">Bullshit in English</a></p>
+    <noscript><p>המשחק עצמו צריך JavaScript פעיל בדפדפן.</p></noscript>
+  </main>
+  `;
+
+// Each part of index.html that becomes Hebrew, by its markers; a missing marker fails the build.
+function swap(page, name, inner) {
+    const block = new RegExp(`<!-- BS:${name}:START -->[\\s\\S]*?<!-- BS:${name}:END -->`);
+    if (!block.test(page)) {
+        throw new Error(`build-he: BS:${name} markers not found in dist/index.html`);
+    }
+    return page.replace(block, () => `<!-- BS:${name}:START -->${inner}<!-- BS:${name}:END -->`);
 }
 
-const out = html
-    .replace(block, `<!-- BS:META:START -->${hebrewMeta}<!-- BS:META:END -->`)
-    .replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`);
+let out = swap(html, 'META', hebrewMeta);
+out = swap(out, 'LD', `\n  <script type="application/ld+json">${JSON.stringify(ld)}</script>\n  `);
+out = swap(out, 'ABOUT', about);
+// The build may add its own attributes to <html> (data-beasties-container): change only the language.
+if (!/<html lang="en"[ >]/.test(out)) {
+    throw new Error('build-he: <html lang="en"> not found in dist/index.html');
+}
+out = out
+    .replace(/<html lang="en"([ >])/, '<html lang="he" dir="rtl"$1')
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${pageTitle}</title>`);
 
 fs.writeFileSync(path.join(dist, 'he.html'), out);
 console.log('build-he: wrote dist/he.html');

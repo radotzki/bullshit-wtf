@@ -80,7 +80,7 @@ module.exports = {
             path: '/free-jackbox-alternative', twin: '/he/game-like-jackbox', site: en, tag: 'seo-en-jackbox',
             start: { href: '/create-game?lang=en', label: 'Start a free game' },
             image: '/assets/og-jackbox-en.png',
-            title: 'A free Jackbox and Fibbage alternative: Bullshit, bluffing trivia on your phones',
+            title: 'A free Jackbox and Fibbage alternative on your phones',
             description: 'Like Fibbage, but free and with no TV needed: write a lie, find the truth, fool your friends. Bullshit runs in the phone browser, up to 8 players, English and Hebrew.',
             h1: 'A free alternative to Jackbox\'s Fibbage',
             body: jackboxEn,
