@@ -11,7 +11,7 @@
     </div>
 
     <div *ngIf="packBanner" class="pack-banner" [class.presenter]="presenter" [attr.dir]="locale === 'he' ? 'rtl' : null">
-        🕎 {{ packBanner }}
+        {{ packIcon }} {{ packBanner }}
     </div>
 
     <div class="game-main">

@@ -227,6 +227,9 @@ export function lobbyText(view: LobbyHostView, playerCount: number, locale: stri
 
 /** The lobby line for a seasonal pack game, or null. */
 export function packBanner(pack: string, locale: string): string {
+    if (pack === 'thanksgiving') {
+        return 'Thanksgiving edition: new Thanksgiving questions in this game';
+    }
     if (pack !== 'hanukkah') {
         return null;
     }

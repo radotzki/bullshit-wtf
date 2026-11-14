@@ -41,6 +41,22 @@ export const holidaySeasons: { from: string; to: string }[] = [
     { from: '2026-11-20', to: '2027-01-01' },
 ];
 
+/**
+ * Thanksgiving (US, Thursday 26 November 2026), English only. The row shows its page all November;
+ * the line above the buttons shows on the days English games are offered the Thanksgiving pack, by
+ * the visitor's own calendar. Next year's days go here (2027: Thursday 25 November).
+ */
+const thanksgivingRow: SearchLink = { href: '/thanksgiving-party-game', label: 'Thanksgiving' };
+const thanksgiving: SearchLink = { href: '/thanksgiving-party-game', label: 'Thanksgiving is here: play with Thanksgiving questions' };
+
+export const thanksgivingRowSeasons: { from: string; to: string }[] = [
+    { from: '2026-11-01', to: '2026-11-29' },
+];
+
+export const thanksgivingSeasons: { from: string; to: string }[] = [
+    { from: '2026-11-20', to: '2026-11-29' },
+];
+
 const hanukkah: { [lang: string]: SearchLink } = {
     en: { href: '/hanukkah-party-game', label: 'Hanukkah is here: play with Hanukkah questions' },
     he: { href: '/he/hanukkah', label: 'חנוכה כאן: משחקים עם שאלות חנוכה' },
@@ -69,12 +85,19 @@ export function searchLinks(locale: string, campaign: string | null, today: Date
     const d = day(today);
     const lang = locale === 'he' ? 'he' : 'en';
     const inSeason = lang === 'en' && holidaySeasons.some(s => s.from <= d && d <= s.to);
-    return rows[lang].concat(inSeason ? holidays : []).map(l => withTag(l, campaign));
+    const turkey = lang === 'en' && thanksgivingRowSeasons.some(s => s.from <= d && d <= s.to);
+    return rows[lang].concat(turkey ? [thanksgivingRow] : [], inSeason ? holidays : []).map(l => withTag(l, campaign));
 }
 
-/** The Hanukkah line above the buttons, on the days of the season; null on every other day. */
+/**
+ * The season's line above the buttons: Thanksgiving on its days (English only), Hanukkah on the
+ * days of its season; null on every other day.
+ */
 export function seasonLink(locale: string, today: Date, campaign: string | null): SearchLink | null {
     const d = day(today);
+    if (locale !== 'he' && thanksgivingSeasons.some(s => s.from <= d && d <= s.to)) {
+        return withTag(thanksgiving, campaign);
+    }
     const inSeason = hanukkahSeasons.some(s => s.from <= d && d <= s.to);
     return inSeason ? withTag(hanukkah[locale === 'he' ? 'he' : 'en'], campaign) : null;
 }
