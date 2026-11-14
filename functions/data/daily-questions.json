@@ -534,7 +534,7 @@
   "daily-26-en-044": {
     "day": "2026-11-22",
     "lang": "en",
-    "questionText": "The world's shortest scheduled passenger flight, between two Scottish islands, is timetabled at $blank$",
+    "questionText": "The world's shortest scheduled passenger flight, between two Scottish islands, usually takes about $blank$",
     "realAnswer": "90 seconds",
     "fakeAnswers": [
       "6 minutes",
@@ -558,7 +558,7 @@
   "daily-26-en-046": {
     "day": "2026-11-24",
     "lang": "en",
-    "questionText": "The national anthem of $blank$ is one of only three in the world with no official words",
+    "questionText": "The national anthem of $blank$ is one of the very few in the world with no official words",
     "realAnswer": "spain",
     "fakeAnswers": [
       "portugal",
@@ -1078,7 +1078,7 @@
   "daily-26-he-040": {
     "day": "2026-11-18",
     "lang": "he",
-    "questionText": "ההמנון הלאומי של $blank$ הוא אחד משלושה בלבד בעולם שאין להם מילים רשמיות",
+    "questionText": "ההמנון הלאומי של $blank$ הוא אחד הבודדים בעולם שאין להם מילים רשמיות",
     "realAnswer": "ספרד",
     "fakeAnswers": [
       "פורטוגל",
@@ -1090,7 +1090,7 @@
   "daily-26-he-041": {
     "day": "2026-11-19",
     "lang": "he",
-    "questionText": "דואר ישראל מקבל כל שנה עשרות מכתבים מכל העולם שממוענים לאלוהים, ו$blank$",
+    "questionText": "דואר ישראל מקבל כל שנה מכתבים מכל העולם שממוענים לאלוהים, ו$blank$",
     "realAnswer": "שם אותם בכותל",
     "fakeAnswers": [
       "מחזיר אותם לשולח",
@@ -1174,7 +1174,7 @@
   "daily-26-he-048": {
     "day": "2026-11-26",
     "lang": "he",
-    "questionText": "רוב הלוויינים בעולם משוגרים מזרחה. לווייני 'אופק' הישראליים משוגרים $blank$",
+    "questionText": "רוב הלוויינים בעולם משוגרים מזרחה. ישראל משגרת את לווייני 'אופק' משטחה $blank$",
     "realAnswer": "מערבה",
     "fakeAnswers": [
       "צפונה",
