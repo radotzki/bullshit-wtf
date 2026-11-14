@@ -50,6 +50,9 @@
         </div>
     </div>
 
+    <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
+    <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
+
     <!-- Create leads for a visitor with no PIN; a returning guest keeps Join on top (front-door.ts). -->
     <ng-container *ngTemplateOutlet="first === 'create' ? create : join"></ng-container>
     <ng-container *ngTemplateOutlet="first === 'create' ? join : create"></ng-container>
@@ -98,4 +101,10 @@
             <p class="menu-button-text-second"> {{ t.learnHint }} </p>
         </div>
     </div>
+
+    <!-- The search pages, linked from home so search engines (and players) find them. Plain links:
+         each is a page of its own, outside the app. -->
+    <nav class="search-links">
+        <a *ngFor="let link of links" [href]="link.href">{{ link.label }}</a>
+    </nav>
 </section>

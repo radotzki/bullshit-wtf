@@ -1116,3 +1116,25 @@ lies at once). Both fail on the code before this change and pass after it.
 How to read it: no table holds when a question's lies came in or how long the question ran (that
 waits on the wait columns of pull request 47), so this change has no number of its own yet. Until
 then it is checked by the test above and by a whole emulator game (`.github/smoke/emulator-game.js`).
+
+## Search pages: a tag on every page, and links from home
+
+Client only. No new function, rule, table or column; nothing to run before the merge.
+
+- Every plain search page now carries its own tag on its Start button, so a game started from it is
+  counted in `campaign`: `seo-en-how`, `seo-he-how`, `seo-en-phone`, `seo-he-phone`,
+  `seo-en-hanukkah`, `seo-he-hanukkah` and `seo-en-purim` join the tags the Hebrew occasion pages and
+  the kit pages already had. A post's own `?via=` still takes the page tag's place.
+- The home menu (phone and desktop, both languages) links the search pages in a small row under the
+  buttons: English How to play, Hanukkah, Party games on your phone, Classroom, Team building; Hebrew
+  איך משחקים, חנוכה, ארוחת שישי, בכיתה, גיבוש. Before, only the `<noscript>` block linked any of them.
+  From 1 to 13 December 2026 a Hanukkah line sits above the buttons too. Hanukkah moves every year:
+  add next season's days to `hanukkahSeasons` in `game/src/app/pages/landing/search-links.ts`.
+- A visitor who came from a post keeps the post's tag on these links, so a game they start from a
+  search page still counts for the post (and a `?via=test` play-test stays a test).
+- Tested by `game/test/search-pages.test.js`.
+
+How to read it: games by `campaign` in `opened_games` (test games out) where `campaign` starts with
+`seo-`. A game from a page counts for the page whether the visitor came from a search engine or from
+the home row; the home row exists only from this release on, so compare the Hanukkah weeks with that in
+mind.
