@@ -1422,3 +1422,65 @@ words of the screens in `game/src/app/pages/about-strings.ts`, how phones read i
   per week, by half, and the share of About questions that fell back, by prompt.
 - To end the test: make `drawAboutUs` return `true` (everyone) or `undefined` (nobody) and deploy the
   functions. To change a prompt, edit `about-prompts.ts`: never reuse an id.
+
+## Join link previews
+
+A lobby's invite link (`/join-game/<PIN>?via=link`, `/he/join-game/<PIN>?via=link` for a Hebrew game)
+now previews in WhatsApp, Telegram, Facebook, iMessage, Slack and X as that game's own invite, in the
+game's language: "Dana invited you to play Bullshit" / "הזמנה לבולשיט: Dana מחכה לך", with "Tap to
+join game QBCD…" under it and the language's picture (the Hanukkah picture for a Hanukkah game).
+Before, every join link showed the site's generic card. The Hebrew words are the same for a man and
+a woman ("מחכה לך", "הוזמנת").
+
+- **Functions and site. New HTTP function `joinPreview`; no rule change, no BigQuery change.** The
+  site's `firebase.json` sends `/join-game/*` and `/he/join-game/*` to it (two rewrites, ahead of
+  `/he/**` and `**`). A merge deploys all functions first, so the function exists before Hosting
+  points at it; the normal order is all this needs. Earlier releases added new HTTP functions the same
+  way (`laugh`, for one); if the functions step ever fails on it with a permission or
+  IAM error, nothing else is released, and the owner gives the deploy account the missing role.
+- **How it works** (`functions/src/controllers/join-preview.ts`). The function answers with the
+  site's own page: it fetches `/` (or `/he`) from the site, through Hosting's CDN, keeps it in
+  memory and checks it again with its ETag every 15 s, so it always names the site's current
+  scripts. It rewrites only the tags between the `BS:META` markers and the `<title>`: title,
+  description, picture, `og:url` (the link itself, so Facebook doesn't fold it into the home page),
+  `og:locale`, and `robots: noindex` (a page with a player's nickname is no page for search).
+  Everything else in the page is the same bytes. Every visitor gets the same page: a preview fetcher
+  reads the tags, a browser runs the app, which shows the join page for the PIN in the address as
+  before. No user-agent sniffing; the address, the PIN and `?via=` stay as they were.
+- **What it reads.** Seven small paths of the game: `locale`, `state`, `timestamp`, `hostSeen`,
+  `pack`, `creator`, `players` (nicknames and the host mark; phones can already read all of them).
+  Never the questions, answers or host key, and it never writes. One log line per answer,
+  `joinPreview {"kind":…,"ms":…}`, with no PIN or nickname.
+- **Whose name.** The seat the server marked as host (the newest mark), else the seat of the
+  browser that created the game. Shown only when it passes the nickname filter (`name-flag.ts`)
+  and is not one of the swap names a flagged player gets, so a swapped host is never "Grandma
+  invited you". Cut to `NICKNAME_MAX` (9), invisible and direction-changing characters removed,
+  HTML-escaped. No usable name: a nameless invite ("You're invited to a game of Bullshit").
+- **When it shows the generic card.** An unknown PIN, a finished game, one nobody moved on for six
+  hours (`isGameOver`, the join page's own test), a database read slower than 1.5 s or failing, or
+  a page that lacks one of the tags: the page exactly as Hosting serves it. If the site's own page
+  can't be fetched twice in a row, a small page with the generic tags reloads the same address after
+  2 s (never cached) and the fault goes to Sentry; it should never happen.
+- **Caching.** Named and generic answers: `public, max-age=300, s-maxage=600`, so the CDN answers most
+  taps on a link the sender's WhatsApp just previewed without running the function. A nameless invite
+  (the host hasn't joined yet) and a slow read: 60 s, so the name shows soon. Hosting empties its CDN
+  on every release.
+- **Speed.** A person's first load of a join link now runs a function when the CDN has no copy: on
+  the emulators the function took 11 to 17 ms; in production add a cold start when no copy of the
+  functions is running (they share one code bundle, about a second or two). The `ms` in the log
+  line measures the warm part. Keeping one copy warm (minimum instances) would cost money: the
+  owner's call, not done here.
+- **Old and new together.** The site isn't changed, so an old site works with the new rewrites and
+  the new function works with any site that keeps the `BS:META` block. Roll back by reverting the
+  pull request: Hosting then serves the join links as before; the function stays deployed but
+  unused (the CLI never deletes a function by itself) and can be deleted by the owner.
+- **Tests.** `functions/test/join-preview.test.js` (in `npm test`). On the emulators, with Hosting:
+  `node .github/smoke/emulator-join-preview.js` (needs Java, functions and game built, the root's
+  `npm ci`): two hosts make an English and a Hebrew game, six preview fetchers fetch both links, an
+  unknown PIN and the other pages are checked unchanged, and an iPhone opens the English link, joins
+  and lands in the lobby with its join counted as `via = link`.
+
+How to read it (read-only queries in `functions/bigquery/2026-11-join-preview.sql`): link joins per
+lobby, the share of lobbies with at least one link join, and players per started game, per week,
+tests out, before and after the release. Before (6 to 12 November 2026, tests out): 207 lobbies and
+571 joins; 211 joins (37%) came by the invite link, in 66 lobbies (32%), about 1.0 per lobby.

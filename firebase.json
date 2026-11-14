@@ -8,6 +8,14 @@
         "function": "visit"
       },
       {
+        "source": "/join-game/*",
+        "function": "joinPreview"
+      },
+      {
+        "source": "/he/join-game/*",
+        "function": "joinPreview"
+      },
+      {
         "source": "/he",
         "destination": "/he.html"
       },
