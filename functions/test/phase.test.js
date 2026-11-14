@@ -34,9 +34,17 @@ test('with a big screen each row gets 4.5 s', () => {
     assert.strictEqual(phaseDuration(S.RevealTheTruth, { revealAnswers, presenter: true }), 2 * 4500 - 2250 + 3000);
 });
 
-test('the longest reveal (8 players and the truth, on a big screen) fits the server timer', () => {
-    const nine = Array.from({ length: 9 }, (_, i) => ({ text: 't' + i, selectors: ['p'], realAnswer: i === 8 }));
-    assert.ok(phaseDuration(S.RevealTheTruth, { revealAnswers: nine, presenter: true }) <= maxPhaseDuration);
+test('the longest reveal (12 players on 12 answers and the truth, on a big screen) fits the server timer', () => {
+    const rows = Array.from({ length: 13 }, (_, i) => ({ text: 't' + i, selectors: ['p'], realAnswer: i === 12 }));
+    const laugh = rows.concat([{ text: 'nobody', selectors: [], creators: ['p'], realAnswer: false, houseLie: false }]);
+    for (const staged of [undefined, true]) {
+        for (const r of [rows, laugh]) {
+            const d = phaseDuration(S.RevealTheTruth, { revealAnswers: r, presenter: true, bigReveal: staged });
+            assert.ok(d <= maxPhaseDuration, `${d} > ${maxPhaseDuration}`);
+        }
+    }
+    // The server timer's function may run for 120 s.
+    assert.ok(maxPhaseDuration < 120 * 1000);
 });
 
 function revealGame(done, extra) {

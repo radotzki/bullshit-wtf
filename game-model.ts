@@ -10,6 +10,27 @@ export enum GameState {
     ScoreBoardFinal = 6,
 }
 
+/**
+ * The most seats one game takes. A join past it is refused as "game is full" (functions: join and
+ * validateGameName), and a rematch lobby that holds this many is not offered to a late friend.
+ * It was 8 until November 2026: 8% of games were full then, and the big days (Fridays, holidays)
+ * are the big tables. Twelve makes three even lines of four pictures on a phone.
+ * The game has one picture per seat (assets/avatar0.png to avatar11.png): add pictures with seats.
+ */
+export const MAX_PLAYERS = 12;
+
+/**
+ * The most answers that house lies fill the pick list up to: one per player and the truth, as many
+ * as an 8-seat game ever had. A bigger table still sees every lie its players wrote (one answer each,
+ * and the truth), but no more house lies than before, so the list stays one a phone can read.
+ */
+export const MAX_HOUSE_FILL = 9;
+
+/** A seat's picture file, from its place in the game (0 for the first player). */
+export function seatPicture(index: number): string {
+    return `avatar${Math.max(0, index) % MAX_PLAYERS}.png`;
+}
+
 export interface GameStateInfo {
     id: number;
     timestamp: number;

@@ -9,11 +9,11 @@ const dist = path.join(__dirname, '..', 'dist');
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 
 const title = 'בולשיט - משחק השקרים למסיבות';
-const description = 'עבדו על החברים עם תשובות מזויפות לעובדות מוזרות ואמיתיות. חינם, עד 8 שחקנים, כל אחד משחק מהטלפון.';
+const description = 'עבדו על החברים עם תשובות מזויפות לעובדות מוזרות ואמיתיות. חינם, עד 12 שחקנים, כל אחד משחק מהטלפון.';
 const image = 'https://bullshit.wtf/assets/og-image-he.png';
 
 const hebrewMeta = `
-  <meta name="description" content="בולשיט הוא משחק מסיבות חינמי לעד 8 שחקנים בטלפון. המציאו תשובות מזויפות לעובדות מוזרות ואמיתיות, עבדו על החברים וגלו את האמת.">
+  <meta name="description" content="בולשיט הוא משחק מסיבות חינמי לעד 12 שחקנים בטלפון. המציאו תשובות מזויפות לעובדות מוזרות ואמיתיות, עבדו על החברים וגלו את האמת.">
   <link rel="canonical" href="https://bullshit.wtf/he">
   <link rel="alternate" hreflang="en" href="https://bullshit.wtf/">
   <link rel="alternate" hreflang="he" href="https://bullshit.wtf/he">

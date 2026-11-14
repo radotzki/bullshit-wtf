@@ -124,9 +124,10 @@ test('a phone with no uid gets its seat back by its player id, and a stranger ca
 test('a different phone still gets a new seat, and a full game still says full', async () => {
     const pin = lobby();
     const pids = [];
-    for (let i = 1; i <= 8; i++) pids.push((await join(pin, 'p' + i, 'u' + i)).pid);
-    assert.strictEqual(new Set(pids).size, 8);
-    await assert.rejects(join(pin, 'p9', 'u9'), e => e.code === 'GAME_IS_FULL');
+    const { MAX_PLAYERS } = require(path.join(__dirname, '..', 'dist', 'game-model'));
+    for (let i = 1; i <= MAX_PLAYERS; i++) pids.push((await join(pin, 'p' + i, 'u' + i)).pid);
+    assert.strictEqual(new Set(pids).size, MAX_PLAYERS);
+    await assert.rejects(join(pin, 'p' + (MAX_PLAYERS + 1), 'u' + (MAX_PLAYERS + 1)), e => e.code === 'GAME_IS_FULL');
     // A phone at the full table that reloads its join page gets its seat back, not "full".
     const back = await join(pin, 'p3', 'u3', undefined, pids[2]);
     assert.strictEqual(back.pid, pids[2]);

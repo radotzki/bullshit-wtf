@@ -444,7 +444,7 @@
             }
         }
 
-        // Six rows or more (up to nine: eight players' lies and the truth): fold them smaller still.
+        // Six rows or more (up to thirteen: twelve players' picks and the truth): fold them smaller still.
         &.many-rows .row.past,
         &.many-rows .srow.past {
             padding: 0.3vh 2vh;

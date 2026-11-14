@@ -12,7 +12,7 @@ import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTION
 import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
-import { GameState } from './../../game-model';
+import { GameState, seatPicture } from './../../game-model';
 import { StorageService } from './../../services/storage.service';
 import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
 import { biggestBullshitters } from './biggest';
@@ -311,7 +311,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
                 pid,
                 nickname: resp[pid].nickname,
                 score: resp[pid].score || 0,
-                picture: `avatar${i}.png`,
+                picture: seatPicture(i),
                 best: highlights[pid] && highlights[pid].text ? highlights[pid] : undefined,
             }))
             .sort((a, b) => b.score - a.score);

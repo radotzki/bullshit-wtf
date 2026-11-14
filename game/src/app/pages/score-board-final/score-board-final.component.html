@@ -79,7 +79,7 @@
 
             <app-host-ask *ngIf="hostAsk" [locale]="locale" [pack]="pack" place="after-game"></app-host-ask>
 
-            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4">
+            <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4" [class.lots]="displayPlayers.length > 8">
                 <li class="box player" *ngFor="let player of displayPlayers" [class.winner]="player.place === 1" [class.me]="player.me">
                     <div class="row">
                         <span class="place">{{ player.place }}</span>

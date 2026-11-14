@@ -274,7 +274,7 @@ exports.tick = functions.database.ref('games/{pin}/tick').onWrite(watched('tick'
 }));
 
 // Ends each timed phase on the server at its deadline, so a game keeps going when every phone sleeps.
-// The longest phase (a big-screen reveal with 8 players) is under 50 seconds, hence the longer timeout.
+// The longest phase (a big-screen reveal with 12 players) is about 70 seconds, hence the longer timeout.
 exports.phaseTimer = functions
     .runWith({ timeoutSeconds: 120, memory: '128MB' })
     .database.ref('games/{pin}/state').onWrite(watched('phaseTimer', (change, context) => {

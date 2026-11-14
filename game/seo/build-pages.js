@@ -72,7 +72,7 @@ function render(p) {
             genre: ['Party game', 'Trivia', 'Bluffing'],
             gamePlatform: 'Web browser',
             playMode: 'MultiPlayer',
-            numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 8 },
+            numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 12 },
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
         },
     };

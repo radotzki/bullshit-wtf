@@ -341,7 +341,7 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
 
     // A big screen in the room: nobody scrolls it, so the list goes in two columns when it is long.
     // Phones rematch and share; the big screen only shows the result.
-    // Rows stay one line of name and one line of lie, so 8 players fit 1080 px.
+    // Rows stay one line of name and one line of lie, so 12 players (six rows of two) fit 1080 px.
     &.presenter {
         .final { max-width: 1200px; }
         .hero { padding: 6px 12px 10px; margin-bottom: 14px; }
@@ -354,6 +354,10 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             grid-gap: 8px 12px;
             .player { margin-bottom: 0; }
+        }
+        // Nine to twelve players: three columns, so twelve rows are four lines and still fit 1080 px.
+        .players.many.lots {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
         }
         .player { padding: 4px 10px; min-width: 0; }
         .name, .score { font-size: 1.2rem; }

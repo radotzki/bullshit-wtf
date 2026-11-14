@@ -7,7 +7,7 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import {
-    GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing,
+    GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing, seatPicture,
     revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isLie, isPlayerLie,
 } from '../../game-model';
 import { gameStrings, GameStrings } from './../game-strings';
@@ -390,7 +390,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         const index = playersArray.findIndex(p => p.pid === pid);
         return index === -1 ? undefined : {
             nickname: playersArray[index].nickname,
-            picture: `avatar${index}.png`,
+            picture: seatPicture(index),
         };
     }
 
