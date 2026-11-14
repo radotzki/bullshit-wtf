@@ -107,6 +107,7 @@ test('a question result counts lies, helper lies, picks and friends fooled', () 
     assert.deepStrictEqual(questionResult('JUPU', game), {
         id: 'JUPU', q_index: 0, round: 1, total_q: 7, players: 4,
         lies: 2, idea_lies: 1, picks: 4, friend_fooled: 2, coach: true, locale: 'he',
+        qid: null, truth_picks: 1, house_picks: 1,
     });
 });
 
@@ -115,5 +116,56 @@ test('a question nobody wrote or picked on still gives a row', () => {
     assert.deepStrictEqual(r, {
         id: 'ABCD', q_index: 4, round: 2, total_q: 7, players: 1,
         lies: 0, idea_lies: 0, picks: 0, friend_fooled: 0, coach: false, locale: 'en',
+        qid: null, truth_picks: 0, house_picks: 0,
     });
+});
+
+// The question's id and its picks of the truth and of house lies, to rank questions by how they play.
+function pickGame(picks) {
+    return {
+        questionIndex: 2, roundIndex: 0, totalQ: 7, locale: 'en',
+        qids: ['q-first', 'q-second', 'q-third', 'q-fourth'],
+        players: { a: {}, b: {}, c: {} },
+        answers: {
+            a: { text: 'a goat named steve', houseLie: false, realAnswer: false },
+            h1: { text: 'Gloom Atoll', houseLie: true, realAnswer: false },
+            h2: { text: 'Sandbar Nine', houseLie: true, realAnswer: false },
+            truth: { text: 'KFC', houseLie: false, realAnswer: true },
+        },
+        answerSelections: picks,
+    };
+}
+
+test('a question result names the question and counts picks of the truth (any case)', () => {
+    const r = questionResult('QQQQ', pickGame({ b: { text: 'kfc' }, c: { text: 'KFC' } }));
+    assert.strictEqual(r.qid, 'q-third');
+    assert.strictEqual(r.truth_picks, 2);
+    assert.strictEqual(r.house_picks, 0);
+    assert.strictEqual(r.friend_fooled, 0);
+});
+
+test('a question result counts picks of house lies, apart from the truth and friends\' lies', () => {
+    const r = questionResult('QQQQ', pickGame({ a: { text: 'gloom atoll' }, b: { text: 'sandbar nine' }, c: { text: 'a goat named steve' } }));
+    assert.strictEqual(r.qid, 'q-third');
+    assert.strictEqual(r.truth_picks, 0);
+    assert.strictEqual(r.house_picks, 2);
+    assert.strictEqual(r.friend_fooled, 1);
+});
+
+test('a question nobody picked on gives zero truth and house picks, and keeps its id', () => {
+    const r = questionResult('QQQQ', pickGame({}));
+    assert.strictEqual(r.qid, 'q-third');
+    assert.strictEqual(r.truth_picks, 0);
+    assert.strictEqual(r.house_picks, 0);
+    assert.strictEqual(r.picks, 0);
+});
+
+test('a player lie with a house lie\'s words counts as neither, as in scoring; a missing id is null', () => {
+    const g = pickGame({ b: { text: 'gloom atoll' } });
+    g.answers.a.text = 'gloom atoll';
+    g.qids = { 0: 'q-first' };
+    const r = questionResult('QQQQ', g);
+    assert.strictEqual(r.house_picks, 0);
+    assert.strictEqual(r.truth_picks, 0);
+    assert.strictEqual(r.qid, null);
 });
