@@ -11,6 +11,20 @@ const IMAGE = 'https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/
 const out = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist'));
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// The visit beacon: the same inline script as the game's own page (src/index.html, between the
+// BS:VISIT markers), so a view of a plain page is counted like any other. data-page="plain" on
+// <html> tells it there is no app to wait for.
+function visitBeacon() {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.html'), 'utf8');
+    const m = /<!-- BS:VISIT:START -->\s*(<script>[\s\S]*?<\/script>)\s*<!-- BS:VISIT:END -->/.exec(html);
+    if (!m) {
+        throw new Error('The visit beacon (BS:VISIT markers) is missing from src/index.html');
+    }
+    return m[1];
+}
+const beacon = visitBeacon();
+
 const byPath = {};
 pages.forEach(p => byPath[p.path] = p);
 
@@ -67,9 +81,10 @@ function render(p) {
         : `<a href="${n.href}">${esc(n.label)}</a>`).join('\n      ');
 
     return `<!doctype html>
-<html lang="${s.lang}" dir="${s.dir}">
+<html lang="${s.lang}" dir="${s.dir}" data-page="plain">
 <head>
   <meta charset="utf-8">
+  ${beacon}
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${esc(p.title)}</title>
   <meta name="description" content="${esc(p.description)}">
@@ -141,15 +156,21 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
   </main>
   <footer>${esc(s.footer)}</footer>
   <script>
-    // Keep a post's ?via= tag on the way into the game, so the game records which post it came from.
-    // A post's tag takes the place of the page's own tag on the Start button: one tag reaches the game.
+    // Keep a post's ?via= tag on every link of this page that stays on the site (the two buttons,
+    // the logo, the links in the text, the other pages and the other language), so the game
+    // records which post a visitor came from whichever link they tap. A post's tag takes the place
+    // of a link's own tag (the Start button's): one tag reaches the game.
     (function () {
-      var m = /[?&]via=([a-z0-9-]{1,40})/i.exec(location.search);
+      var m = /[?&]via=([a-z0-9-]{1,40})(?=[&#]|$)/i.exec(location.search);
       if (!m) return;
-      var links = document.querySelectorAll('a.btn');
+      var links = document.querySelectorAll('a[href]');
       for (var i = 0; i < links.length; i++) {
-        var h = links[i].getAttribute('href').replace(/([?&])via=[^&#]*&?/, '$1').replace(/[?&]$/, '');
-        links[i].setAttribute('href', h + (h.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1]);
+        var h = links[i].getAttribute('href');
+        // Only a path of this site ("/create-game"), never another site ("//x", "https://x").
+        if (h.charAt(0) !== '/' || h.charAt(1) === '/') continue;
+        var at = h.indexOf('#'), hash = at < 0 ? '' : h.slice(at), path = at < 0 ? h : h.slice(0, at);
+        path = path.replace(/([?&])via=[^&#]*&?/, '$1').replace(/[?&]$/, '');
+        links[i].setAttribute('href', path + (path.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1] + hash);
       }
     })();
   </script>
