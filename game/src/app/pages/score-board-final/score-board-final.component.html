@@ -57,6 +57,8 @@
                         {{ tasteWords.invite }}
                     </button>
                     <p class="hint">{{ tasteWords.inviteHint }}</p>
+                    <!-- The daily puzzle: a plain link, the page is outside the app. -->
+                    <a class="taste-daily" [href]="locale === 'he' ? '/he/daily?via=daily-game' : '/daily?via=daily-game'">{{ tasteWords.daily }}</a>
                 </div>
                 <button *ngIf="!rematchPin && !soloTaste" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
                     [class.is-loading]="loading">

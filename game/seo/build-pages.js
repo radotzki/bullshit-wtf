@@ -5,6 +5,8 @@
 const fs = require('fs');
 const path = require('path');
 const pages = require('./pages');
+// The daily puzzle (/daily, /he/daily) is a page of its own kind: see daily-page.js.
+const daily = require('./daily-page');
 
 const SITE = 'https://bullshit.wtf';
 const IMAGE = 'https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/logo_y0uyd5.png';
@@ -137,6 +139,7 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
     </div>
     <nav class="more">
       ${nav}
+      <a href="${daily.linkTo(s.lang, 'daily-seo')}">${esc(daily.strings[s.lang].seoLink)}</a>
     </nav>
   </main>
   <footer>${esc(s.footer)}</footer>
@@ -184,9 +187,15 @@ function sitemap() {
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}${he.path}"/>
   </url>`;
     });
+    // The daily puzzle's two pages, twins of each other.
+    const dailyUrls = daily.pages().map(d => `  <url>
+    <loc>${SITE}${d.path}</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="${SITE}${daily.strings.en.path}"/>
+    <xhtml:link rel="alternate" hreflang="he" href="${SITE}${daily.strings.he.path}"/>
+  </url>`);
     return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${homes.concat(urls).join('\n')}
+${homes.concat(urls, dailyUrls).join('\n')}
 </urlset>
 `;
 }
@@ -226,6 +235,14 @@ pages.forEach(p => {
     const file = path.join(out, p.path.replace(/^\//, '') + '.html');
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, render(p));
+});
+daily.pages().forEach(d => {
+    if (byPath[d.path]) {
+        throw new Error(`The daily puzzle and a search page share the path ${d.path}`);
+    }
+    const file = path.join(out, d.path.replace(/^\//, '') + '.html');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, d.html);
 });
 fs.writeFileSync(path.join(out, 'sitemap.xml'), sitemap());
 fs.writeFileSync(path.join(out, 'robots.txt'), robots);
