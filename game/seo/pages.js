@@ -131,7 +131,7 @@ module.exports = [
     {
         path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',
-        title: 'How to play Bullshit, the free bluffing trivia game for phones',
+        title: 'How to play Bullshit, the free bluffing game for phones',
         description: 'The rules of Bullshit: write a lie that fools your friends, then find the truth among everyone\'s answers. Free, in the browser, up to 12 players.',
         h1: 'How to play Bullshit',
         body: howEn,
@@ -147,7 +147,7 @@ module.exports = [
     {
         path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en, tag: 'seo-en-phone',
         image: '/assets/og-phone-en.png',
-        title: 'A free party game on your phones, no download',
+        title: 'A free party game on your phones, no download · Bullshit',
         description: 'Looking for a party game everyone can play on their own phone, in the same room, with no download? Bullshit is free and starts in under a minute.',
         h1: 'A party game everyone plays on their own phone',
         body: `
@@ -216,7 +216,7 @@ module.exports = [
         path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en, tag: 'seo-en-hanukkah',
         start: { href: '/create-game?lang=en&pack=hanukkah', label: 'Start a Hanukkah game' },
         image: '/assets/og-hanukkah-en.png',
-        title: 'A Hanukkah party game for the whole family, free on your phones',
+        title: 'Hanukkah party game for the whole family, free · Bullshit',
         description: 'Eight nights, one family, a lot of latkes. Bullshit is a free bluffing trivia game everyone plays on their own phone after candle lighting. No download.',
         h1: 'A Hanukkah game for after the candles',
         body: `
@@ -237,7 +237,7 @@ module.exports = [
         path: '/he/hanukkah', twin: '/hanukkah-party-game', site: he, tag: 'seo-he-hanukkah',
         start: { href: '/create-game?lang=he&pack=hanukkah', label: 'פותחים משחק חנוכה' },
         image: '/assets/og-hanukkah-he.png',
-        title: 'משחק לחנוכה לכל המשפחה, חינם בטלפון',
+        title: 'משחק לחנוכה לכל המשפחה: בולשיט, חינם בטלפון',
         description: 'שמונה לילות, משפחה אחת והרבה סופגניות. בולשיט הוא משחק בלוף וטריוויה חינמי שכל אחד משחק מהטלפון שלו אחרי הדלקת הנרות. בלי הורדה.',
         h1: 'משחק לחנוכה, לאחרי הדלקת הנרות',
         body: `
@@ -257,7 +257,7 @@ module.exports = [
     {
         path: '/purim-party-game', twin: '/he/purim', site: en, tag: 'seo-en-purim',
         image: '/assets/og-purim-en.png',
-        title: 'A Purim party game: free bluffing trivia on your phones',
+        title: 'Purim party game: free bluffing trivia on phones · Bullshit',
         description: 'On the holiday of masks, the best liar wins. Bullshit is a free party game for phones where you fool your friends with fake answers. No download.',
         h1: 'A Purim game where the best liar wins',
         body: `
@@ -276,7 +276,7 @@ module.exports = [
         path: '/he/purim', twin: '/purim-party-game', site: he, tag: 'seo-he-purim',
         start: { href: '/create-game?lang=he', label: 'פותחים משחק לפורים' },
         image: '/assets/og-purim-he.png',
-        title: 'משחק לפורים: בלוף וטריוויה בטלפון, בחינם',
+        title: 'משחק לפורים: בולשיט, בלוף וטריוויה בטלפון, בחינם',
         description: 'בחג התחפושות, השקרן הכי טוב מנצח. בולשיט הוא משחק חברה חינמי בטלפון שבו עובדים על החברים עם תשובות מומצאות. בלי הורדה.',
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,

@@ -1,7 +1,7 @@
 // English holiday pages: Christmas, New Year's Eve and the office holiday party. One language only (no
 // Hebrew twin: Israel has no such season to search for). Each carries its own tag on its Start button.
 //
-// Say only what the game really does (November 2026): free, in the phone's browser, up to 8 players a
+// Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
 // game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen (Present), Rematch,
 // saved crews. There is no Christmas or New Year question pack: the Start button turns the seasonal
 // pack off (?pack=none), since from 1 to 13 December the Create page would otherwise switch the Hanukkah
@@ -30,7 +30,7 @@ ${example('In Japan, millions of families eat ____ for Christmas dinner',
 <ul>
   <li><strong>Nobody needs to know trivia.</strong> Nobody knows these facts. The game is about writing a believable lie and knowing who in the family will fall for what.</li>
   <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, that's all.</li>
-  <li><strong>Up to 8 phones a game.</strong> A bigger family can play in pairs, one phone per pair.</li>
+  <li><strong>Up to 12 phones a game.</strong> A bigger family can play in pairs, one phone per pair.</li>
   <li><strong>The TV can join in.</strong> On a laptop or computer connected to the TV, open bullshit.wtf, click "Present" and type the PIN. The whole room sees the questions, the answers and the scores, with music, while phones are for writing and picking.</li>
   <li><strong>Free, no app, no sign-up.</strong> A cousin who arrives late joins with the PIN in seconds.</li>
   <li><strong>Short.</strong> A game of 5 questions takes about ten minutes. "Rematch" at the end starts another with the same players and new questions.</li>
@@ -51,7 +51,7 @@ ${example('The world\'s first webcam was set up to keep an eye on a ____',
 <ul>
   <li><strong>It fits around the party.</strong> A game of 5 questions takes about ten minutes, so you can play one, go back to the drinks, and play another before midnight. "Rematch" keeps the same players and brings new questions.</li>
   <li><strong>Points grow each round</strong>, so nobody is out of it until the last question, and the "final question" card says how far first place leads.</li>
-  <li><strong>Up to 8 phones a game.</strong> A bigger party plays in pairs, one phone per pair, or opens a second game in the kitchen.</li>
+  <li><strong>Up to 12 phones a game.</strong> A bigger party plays in pairs, one phone per pair, or opens a second game in the kitchen.</li>
   <li><strong>The big screen.</strong> On a laptop or computer connected to the TV, open bullshit.wtf, click "Present" and type the PIN, and everyone else can watch, read the lies and shout bad advice.</li>
   <li><strong>Free and in the browser.</strong> No app, no sign-up, no ads in the game.</li>
 </ul>
@@ -73,8 +73,8 @@ ${example('The first thing ever sold on eBay was a broken ____',
   <li><strong>The screen in the room.</strong> Open bullshit.wtf on the computer connected to the screen, click "Present" and type the PIN. The room sees the questions, every answer, who picked what and the scores.</li>
   <li><strong>Remote colleagues can play.</strong> On a video call, everyone joins with the PIN from wherever they are, and whoever shares their screen shows the big-screen view.</li>
 </ul>
-<h2>More than 8 people</h2>
-<p>A game takes 8 phones at most. For a bigger party, play in teams of two to four on one phone, up to 8 teams in one game on one screen, or let each table open its own game and play a final between the winners. The <a href="/team-building-game">team game page</a> has the details: how to put it on the big screen, how to split a room of up to 30, and which settings fit 15 minutes.</p>
+<h2>More than 12 people</h2>
+<p>A game takes 12 phones at most. For a bigger party, play in teams of two to four on one phone, up to 12 teams in one game on one screen, or let each table open its own game and play a final between the winners. The <a href="/team-building-game">team game page</a> has the details: how to put it on the big screen, how to split a room of up to 40, and which settings fit 15 minutes.</p>
 <h2>Before the party</h2>
 <ul>
   <li><strong>Try it once yourself.</strong> Open a game, and in the empty lobby tap "Try 5 quick questions alone" to see five of the game's questions.</li>
@@ -90,8 +90,8 @@ module.exports = {
             path: '/christmas-party-game', site: en, tag: 'seo-en-christmas',
             start: { href: '/create-game?lang=en&pack=none', label: 'Start a Christmas game' },
             image: '/assets/og-christmas-en.png',
-            title: 'A Christmas party game for the whole family, free on your phones',
-            description: 'After presents and dinner: Bullshit is a free bluffing trivia game everyone plays on their own phone. Write a lie, find the truth, fool the family. No app, up to 8 players.',
+            title: 'Christmas party game for the whole family, free · Bullshit',
+            description: 'After presents and dinner: Bullshit is a free bluffing trivia game everyone plays on their own phone. Write a lie, find the truth, fool the family. No app, up to 12 players.',
             h1: 'A Christmas game for after dinner',
             body: christmas,
         },
@@ -99,7 +99,7 @@ module.exports = {
             path: '/new-years-eve-party-game', site: en, tag: 'seo-en-new-year',
             start: { href: '/create-game?lang=en&pack=none', label: 'Start a New Year\'s game' },
             image: '/assets/og-new-year-en.png',
-            title: 'A New Year\'s Eve party game: free bluffing trivia on your phones',
+            title: 'New Year\'s Eve party game: bluffing trivia · Bullshit',
             description: 'Something to play before midnight: Bullshit is a free party game where everyone writes a lie and tries to find the truth, on their own phone. No app, 10-minute games.',
             h1: 'A New Year\'s Eve game for the hours before midnight',
             body: newYear,
@@ -108,7 +108,7 @@ module.exports = {
             path: '/office-holiday-party-game', site: en, tag: 'seo-en-office-party',
             start: { href: '/create-game?lang=en&pack=none', label: 'Start an office party game' },
             image: '/assets/og-office-party-en.png',
-            title: 'An office holiday party game for phones and the big screen',
+            title: 'Office holiday party game on phones and screen · Bullshit',
             description: 'A game for the work holiday party: everyone writes a lie, everyone hunts for the truth, on their own phone and the room\'s screen. Free, in the browser, teams for big groups.',
             h1: 'A game for the office holiday party',
             body: office,
