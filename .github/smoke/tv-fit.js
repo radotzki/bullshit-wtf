@@ -8,12 +8,20 @@
 // - every avatar and the invite card (lobby), every answer and the question (answers), every
 //   player's card and the crew button (final) must be whole inside the screen.
 //
+// The question page and the scores between questions are measured too, all the time they are up
+// (the scores stay three seconds, too short to stop the game for): each big screen watches itself
+// several times a second, and anything that stays off the screen is reported once per game.
+// Every phone watches itself too: a page of a phone must never be fitted.
+//
 // Players have short and 11-letter names, and some send a long lie, so answers wrap.
 // Games start from a ?via=test-tv-fit link: test games, kept out of every count.
 //
 // Needs what emulator-game.js needs (Java, functions/ built, the root's npm ci). From the root:
 //   node .github/smoke/tv-fit.js [path to dist] [--players 2,3,12] [--locales en,he]
-//        [--shots <dir>] [--tag after] [--parallel 1]
+//        [--shots <dir>] [--tag after] [--parallel 1] [--reveal classic]
+// --reveal: half of the real games draw the staged reveal, which shows the scores itself and has no
+// scores page. "classic" (the default) gives every game here the scores page, so it is measured in
+// each; "staged" gives none of them the page; "drawn" leaves each game as the server drew it.
 // EMULATORS=running uses emulators you already run. Prints a JSON summary; exits non-zero when
 // something is off a screen, or a game doesn't reach its final.
 
@@ -28,7 +36,7 @@ const { serve, fileIn, HOST } = require('./smoke');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const args = process.argv.slice(2);
-const OPTIONS = ['--players', '--locales', '--shots', '--tag', '--parallel'];
+const OPTIONS = ['--players', '--locales', '--shots', '--tag', '--parallel', '--reveal'];
 const option = (name, fallback) => {
     const i = args.indexOf(name);
     return i >= 0 ? args[i + 1] : fallback;
@@ -40,6 +48,7 @@ const LOCALES = option('--locales', 'en,he').split(',');
 const SHOTS = option('--shots', null);
 const TAG = option('--tag', 'after');
 const PARALLEL = Number(option('--parallel', 1));
+const REVEAL = option('--reveal', 'classic');
 const PROJECT = 'demo-bullshit';
 // PORTS=<n> moves the three emulators n ports up, so several runs can play side by side, each on
 // emulators of its own (games that share emulators make the functions emulator start too many workers).
@@ -228,6 +237,21 @@ const MUST_SHOW = {
     final: ['.hero', '.players .player', '.players .player .lie', '.crew-panel .button'],
 };
 
+// The pages each big screen watches by itself, by the page's path: what must be whole, and of what
+// there is one for every player.
+const WATCHED = {
+    'show-question': {
+        name: 'question',
+        show: ['.on-big-screen .question', '.on-big-screen .waiting-line', '.on-big-screen .seat', '.on-big-screen .seat .picture', '.on-big-screen .seat .name'],
+        perPlayer: '.on-big-screen .seat',
+    },
+    'score-board': {
+        name: 'scores',
+        show: ['.score-board .player', '.score-board .player .picture', '.score-board .player .name', '.score-board .player .score'],
+        perPlayer: '.score-board .player',
+    },
+};
+
 /** Runs in the page: what is off the screen, and how small the text got. */
 function measure(selectors) {
     const w = window.innerWidth;
@@ -257,6 +281,61 @@ function measure(selectors) {
     };
 }
 
+/**
+ * Runs in a big screen's page from its start: measures the watched pages every 150 ms while they are
+ * up. The page is fitted in the frame after it changes, so one look can catch it in between: only
+ * what is off the screen in two looks in a row counts.
+ */
+function watch(measureIt, watched) {
+    const seen = window.__tvFit = {};
+    let before = null;
+    setInterval(() => {
+        const screen = location.pathname.replace(/^\/he(?=\/|$)/, '').split('/')[1];
+        const page = watched[screen];
+        if (!page || !document.querySelector(page.perPlayer)) {
+            before = null;
+            return;
+        }
+        const m = measureIt(page.show);
+        const bad = [];
+        if (m.scrolls) bad.push(`the page is ${m.page}`);
+        if (m.off.length) bad.push(`off the screen: ${m.off.join(', ')}`);
+        const s = seen[screen] = seen[screen] || { looks: 0, fit: 1, perPlayer: 0, bad: [] };
+        s.looks++;
+        s.fit = Math.min(s.fit, m.fit === null ? 1 : m.fit);
+        s.fitted = m.fit !== null;
+        s.perPlayer = Math.max(s.perPlayer, m.counts[page.perPlayer]);
+        if (bad.length && before && before.screen === screen && before.bad && !s.bad.includes(bad.join('; '))) {
+            s.bad.push(bad.join('; '));
+        }
+        before = { screen, bad: bad.length > 0 };
+    }, 150);
+}
+
+/** At the game's end: what each big screen saw of the pages it watched. */
+async function collectWatched(game) {
+    for (const s of game.screens) {
+        const seen = await s.page.evaluate(() => window.__tvFit || {}).catch(() => ({}));
+        for (const [screen, page] of Object.entries(WATCHED)) {
+            const key = `${game.id} ${s.size.join('x')} ${page.name}`;
+            const got = seen[screen];
+            if (!got) {
+                // A game with the staged reveal shows its scores on the reveal, and has no scores page.
+                game.notShown.push(key);
+                if (screen === 'score-board' && !game.staged) game.problems.push(`no look at the scores on ${s.size.join('x')}`);
+                continue;
+            }
+            const bad = got.bad.slice();
+            if (got.perPlayer !== game.n) bad.push(`${got.perPlayer} ${page.perPlayer}, expected ${game.n}`);
+            if (!got.fitted) bad.push('the page is not fitted to the screen');
+            game.results.push({ key, fit: got.fit, shown: got.perPlayer, looks: got.looks, ok: !bad.length, bad });
+            if (bad.length) log(`NOT FITTING ${key}: ${bad.join('; ')}`);
+        }
+    }
+}
+
+const shotPath = (game, moment, size) => path.join(SHOTS, `${TAG}-${game.locale}-${String(game.n).padStart(2, '0')}-${moment}-${size.join('x')}.png`);
+
 async function capture(game, moment, kind) {
     await sleep(kind === 'final' ? 5000 : 1200);
     for (const s of game.screens) {
@@ -272,7 +351,7 @@ async function capture(game, moment, kind) {
         if (kind === 'answers' ? have < expected[1] : have !== expected[1]) bad.push(`${have} ${expected[0]}, expected ${expected[1]}`);
         game.results.push({ key, fit: m.fit, shown: have, ok: !bad.length, bad });
         if (bad.length) log(`NOT FITTING ${key}: ${bad.join('; ')}`);
-        if (SHOTS) await s.page.screenshot({ path: path.join(SHOTS, `${TAG}-${game.locale}-${String(game.n).padStart(2, '0')}-${moment}-${s.size.join('x')}.png`) }).catch(() => { });
+        if (SHOTS) await s.page.screenshot({ path: shotPath(game, moment, s.size) }).catch(() => { });
     }
 }
 
@@ -281,8 +360,14 @@ async function act(phone, game) {
     const screen = screenOf(page);
     if (phone.role === 'screen') {
         if (screen === 'score-board-final') phone.done = true;
+        // The scores are up for three seconds: photographed once a game, as soon as they are seen.
+        if (screen === 'score-board' && SHOTS && !phone.scoresShot) {
+            phone.scoresShot = true;
+            await sleep(400);
+            if (screenOf(page) === 'score-board') await page.screenshot({ path: shotPath(game, 'scores', phone.size) }).catch(() => { });
+        }
         // The screens this change leaves alone: only noted, the tallest each got (see "otherScreens").
-        if (['show-question', 'reveal-the-truth', 'score-board', 'round-intro'].includes(screen)) {
+        if (['reveal-the-truth', 'round-intro'].includes(screen)) {
             const tall = await page.evaluate(() => document.documentElement.scrollHeight);
             const key = `${screen} ${phone.size.join('x')}`;
             game.others[key] = Math.max(game.others[key] || 0, tall);
@@ -309,6 +394,9 @@ async function act(phone, game) {
         const input = page.locator('form input.input');
         if (await visible(input)) {
             const question = await db('GET', `games/${game.pin}/questionIndex`);
+            // The big screens are photographed first, while the room still waits: after the host's lie,
+            // since the row of who is in appears with the first lie.
+            if (SHOTS && phone.role !== 'host' && (question === 0 || question === QUESTIONS - 1) && !game.questionShot[question]) return;
             if (phone.lies[phone.lies.length - 1] !== question) {
                 // Every third player lies at length, so the answers wrap.
                 const lie = phone.index % 3 === 1 ? `${phone.index} ${LONG_LIE[game.locale]}` : `${phone.name} ${question}`;
@@ -339,15 +427,25 @@ async function play(base, n, locale) {
     // A browser of its own for each game: fifteen pages are enough for one.
     const browser = await chromium.launch({ args: [`--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${HOST}`, '--autoplay-policy=no-user-gesture-required', '--disable-dev-shm-usage'] });
     const he = locale === 'he';
-    const game = { id: `${locale} ${n} players`, n, locale, results: [], answersShot: {}, others: {}, problems: [] };
+    const game = { id: `${locale} ${n} players`, n, locale, results: [], answersShot: {}, questionShot: {}, others: {}, notShown: [], problems: [] };
     const phones = [];
     for (let i = 0; i < n; i++) {
         const phone = await newPhone(browser, base, NAMES[locale][i], i === 0 ? 'host' : 'player');
+        // A phone is never fitted: it scrolls, as before. Each phone watches itself for the whole game.
+        await phone.context.addInitScript(() => {
+            setInterval(() => {
+                if (document.querySelector('.fit-screen, [data-fit]')) window.__fitted = location.pathname;
+            }, 150);
+        });
         phone.index = i;
         phones.push(phone);
     }
     game.screens = [];
-    for (const size of SCREENS) game.screens.push(await newPhone(browser, base, `screen ${size.join('x')}`, 'screen', size));
+    for (const size of SCREENS) {
+        const screen = await newPhone(browser, base, `screen ${size.join('x')}`, 'screen', size);
+        await screen.context.addInitScript(`(${watch})(${measure}, ${JSON.stringify(WATCHED)})`);
+        game.screens.push(screen);
+    }
     const everyone = phones.concat(game.screens);
     try {
         const host = phones[0];
@@ -359,7 +457,10 @@ async function play(base, n, locale) {
         game.pin = new URL(host.page.url()).pathname.split('/').pop().toUpperCase();
         const created = await db('GET', `games/${game.pin}`);
         if (!created || created.campaign !== 'test-tv-fit') game.problems.push(`the game is not marked a test game (campaign ${created && created.campaign})`);
-        log(`${game.id}: game ${game.pin}`);
+        // Before the game starts: every later step of the game then follows this reveal.
+        if (REVEAL !== 'drawn') await db('PUT', `games/${game.pin}/bigReveal`, REVEAL === 'staged');
+        game.staged = REVEAL === 'drawn' ? created.bigReveal === true : REVEAL === 'staged';
+        log(`${game.id}: game ${game.pin}, ${game.staged ? 'staged reveal (no scores page)' : 'classic reveal'}`);
         for (const s of game.screens) await s.page.goto(`${base}/present-game/${game.pin}`);
         for (const p of phones.slice(1)) await p.page.goto(`${base}${he ? '/he' : ''}/join-game/${game.pin}`);
 
@@ -374,6 +475,13 @@ async function play(base, n, locale) {
                 }
             } else if (game.started) {
                 const question = await db('GET', `games/${game.pin}/questionIndex`);
+                if (SHOTS && (question === 0 || question === QUESTIONS - 1) && !game.questionShot[question]
+                    && game.screens.every((s) => screenOf(s.page) === 'show-question')
+                    && (await Promise.all(game.screens.map((s) => s.page.locator('.on-big-screen .seat').count()))).every((c) => c === n)) {
+                    await sleep(800);
+                    for (const s of game.screens) await s.page.screenshot({ path: shotPath(game, `question-q${question + 1}`, s.size) }).catch(() => { });
+                    game.questionShot[question] = true;
+                }
                 if ((question === 0 || question === QUESTIONS - 1) && !game.answersShot[question]
                     && game.screens.every((s) => screenOf(s.page) === 'show-answers')) {
                     await capture(game, `answers-q${question + 1}`, 'answers');
@@ -390,9 +498,14 @@ async function play(base, n, locale) {
             await sleep(300);
         }
         everyone.forEach((p) => { if (!p.done) game.problems.push(`${p.name} never showed the final scoreboard`); });
+        await collectWatched(game);
+        for (const p of phones) {
+            const fitted = await p.page.evaluate(() => window.__fitted || null).catch(() => null);
+            if (fitted) game.problems.push(`${p.name}'s phone was fitted like a big screen, on ${fitted}`);
+        }
         if (game.screens.every((s) => s.done)) await capture(game, 'final', 'final');
         everyone.forEach((p) => p.problems.forEach((x) => game.problems.push(`${p.name}: ${x}`)));
-        for (const moment of ['lobby', 'answers-q1', `answers-q${QUESTIONS}`, 'final']) {
+        for (const moment of ['lobby', 'question', 'answers-q1', `answers-q${QUESTIONS}`, 'final']) {
             if (!game.results.some((r) => r.key.endsWith(` ${moment}`))) game.problems.push(`no look at ${moment}`);
         }
         log(`${game.id}: done, ${game.results.filter((r) => !r.ok).length} looks not fitting, ${game.problems.length} problems`);
@@ -439,6 +552,8 @@ async function main() {
             smallestScale: Object.fromEntries(SCREENS.map((s) => [s.join('x'),
                 Math.min(...looks.filter((r) => r.key.includes(` ${s.join('x')} `)).map((r) => (r.fit === null ? 1 : r.fit)))])),
             scales: Object.fromEntries(looks.map((r) => [r.key, r.fit])),
+            // The big screens that never showed their scores page (see collectWatched).
+            scoresNotShown: games.flatMap((g) => g.notShown.filter((k) => k.endsWith(' scores'))),
             // Not checked: the other screens of the game that were taller than their big screen, and by how much.
             otherScreens: games.flatMap((g) => Object.entries(g.others)
                 .filter(([key, tall]) => tall > Number(key.split('x').pop()))
