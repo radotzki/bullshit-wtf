@@ -1,44 +1,180 @@
-.main-columns {
-    justify-content: center;
-    margin-top: 60px;
+@use '../round-picture' as rp;
+
+// The computer home: a front door like the phone's (what the game is, a picture of one round,
+// one big button to host on this screen), then the quieter ways in and the search pages.
+// Sizes are in px and em, not rem: the site's root font grows to 32px and more on wide screens.
+.computer-home {
+    // Under the arcade picture, and in its place if it fails to load: white words need a dark page.
+    background-color: #2f1b2c;
+    display: flex;
+    flex-direction: column;
+    // The text about the game starts one screen down (index.html): a short window scrolls in here.
+    overflow-y: auto;
 }
 
-.daily-link {
-    display: block;
-    margin-top: 10px;
-    color: #f3d467;
-    text-decoration: underline;
+.title-area {
+    position: relative;
+    // With the auto margin under .below, the page sits in the middle of a tall window.
+    margin-top: auto;
+    padding-top: 14px !important;
+
+    .title {
+        margin-bottom: 0;
+        font-size: 3em;
+        line-height: 1.35;
+    }
+
+    .sub-title {
+        margin-bottom: 0;
+        font-size: 1em;
+    }
 }
 
-.menu-button {
-    transition: .5s;
-    border: 1px solid #f1f2f3;
-    border-radius: 5px;
-    padding: 0.5rem;
-    text-align: center;
+// The language switch, small, in the top corner on the side the text ends.
+.lang-switch {
+    position: absolute;
+    top: 18px;
+    right: 28px;
+    padding: 6px 4px;
+    font-size: 16px;
     color: #fff;
-    background-color: #db7151;
-    opacity: 0.9;
+    text-decoration: underline;
+    cursor: pointer;
 
-    &:hover {
-        box-shadow: 0 0 36px rgba(0,0,0,0.3);
-        cursor: pointer;
+    [dir="rtl"] & {
+        right: auto;
+        left: 28px;
+    }
+}
+
+.front-door {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    width: calc(100% - 48px);
+    max-width: 1040px;
+    margin: 22px auto 0;
+    padding: 28px 40px;
+    border-radius: 12px;
+    background-color: rgba(47, 27, 44, .9);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, .35);
+    color: #f4fcca;
+
+    // The same picture as on the phone home, half as big again.
+    @include rp.round-picture($px: 1.4px, $rem: 19.6px);
+
+    .picture {
+        flex: none;
+        width: 462px;
+        margin: 0;
+        text-align: center;
+    }
+}
+
+.pitch-side {
+    flex: 1 1 0;
+    max-width: 470px;
+    text-align: start;
+}
+
+.pitch {
+    margin: 0 0 22px;
+    font-size: 30px;
+    line-height: 1.3;
+    text-wrap: balance;
+}
+
+// The one thing to do: host a game on this screen.
+.host-button {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 26px;
+    border-radius: 8px;
+    background-color: #97374e;
+    color: #fff;
+    font-size: 26px;
+    line-height: 1.2;
+    box-shadow: 0 3px 15px 0 rgba(0, 0, 0, .55);
+    transition: background-color .2s, box-shadow .2s;
+
+    i {
+        font-size: 32px;
+    }
+
+    &:hover,
+    &:focus-visible {
+        background-color: #ad3f5a;
+        color: #fff;
+        box-shadow: 0 0 36px rgba(0, 0, 0, .45);
+    }
+}
+
+.host-hint {
+    margin: 8px 2px 0;
+    font-size: 16px;
+    opacity: .85;
+}
+
+// Join, Present, How to play: still one click each, but quieter than the big button.
+.other-ways {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin-top: 24px;
+    font-size: 17px;
+
+    a {
+        color: #f4fcca;
+        text-decoration: underline;
+        white-space: nowrap;
+
+        &:hover {
+            color: #fff;
+        }
     }
 
     i {
-        font-size: 2rem;
-        margin-bottom: 10px;
+        margin-inline-end: 4px;
+        text-decoration: none;
     }
 }
 
+// For someone on their own: today's question.
+.alone {
+    margin: 18px 0 0;
+    font-size: 17px;
+    opacity: .95;
+
+    .daily-link {
+        color: #f3d467;
+        text-decoration: underline;
+    }
+}
+
+.below {
+    flex: none;
+    width: calc(100% - 48px);
+    max-width: 1040px;
+    margin: 18px auto auto;
+    padding-bottom: 24px;
+}
+
 .your-crews {
-    margin-top: 10px;
-    padding: 0 .75rem;
+    max-width: 480px;
+    margin: 0 auto 6px;
 
     .your-crews-title {
         color: #fff;
         text-align: center;
         margin-bottom: 8px;
+        font-size: 18px;
+    }
+
+    .button {
+        font-size: 17px;
     }
 
     .button + .button {
@@ -46,37 +182,67 @@
     }
 }
 
-.lang-switch {
-    display: inline-block;
-    margin-top: 6px;
-    color: #fff;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 // One line to the Hanukkah page, in season only.
 .season {
     display: block;
-    margin: 0 .75rem 12px;
+    margin-bottom: 12px;
     text-align: center;
     color: #f3d467;
+    font-size: 17px;
     font-weight: 600;
     text-decoration: underline;
 }
 
-// The row of links to the search pages, under the menu.
+// The row of links to the search pages, at the foot.
 .search-links {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px 18px;
-    margin-top: 20px;
-    padding: 0 .75rem;
-    font-size: .9rem;
+    margin-top: 14px;
+    font-size: 14px;
 
     a {
-        color: #fff;
-        font-size: .9rem;
+        color: #f4fcca;
+        opacity: .85;
         text-decoration: underline;
+    }
+}
+
+// A narrow window: the picture goes under the words.
+@media (max-width: 999px) {
+    .front-door {
+        flex-direction: column;
+        gap: 28px;
+        padding: 24px;
+    }
+
+    .front-door .picture {
+        width: 100%;
+        max-width: 462px;
+    }
+
+    .pitch-side {
+        max-width: none;
+    }
+}
+
+@include rp.round-picture-keyframes;
+
+// Less motion asked for: one still frame, the reveal, as on the phone.
+@media (prefers-reduced-motion: reduce) {
+    .front-door {
+        .frame,
+        .dots i {
+            animation: none;
+        }
+
+        .frame-reveal {
+            opacity: 1;
+        }
+
+        .dots {
+            display: none;
+        }
     }
 }
