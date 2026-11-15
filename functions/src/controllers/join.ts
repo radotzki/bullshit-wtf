@@ -114,7 +114,8 @@ function clearOtherHosts(game: GameScheme, pid: string, update: { [path: string]
 async function hostIsHere(pin: string, game: GameScheme) {
     if (game.serverStart) {
         // The host is in the lobby now; their lobby page keeps reporting in (see hostHere).
-        await gamesRef.child(pin).child('hostSeen').set(Date.now());
+        // On the screen, too: not away (see hostAwaySince).
+        await gamesRef.child(pin).update({ hostSeen: Date.now(), hostAwaySince: null });
     }
 }
 

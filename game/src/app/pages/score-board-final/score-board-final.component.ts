@@ -120,6 +120,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         private router: Router,
     ) { }
 
+    /** Nobody played question 1, so the game ended there: the final screen says so. */
+    idle = false;
+
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
         this.presenter = !!this.sessionService.presenter;
@@ -132,7 +135,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.apiService.getHighlightsFrom(this.pin).catch(() => null),
             this.apiService.getGameLocale(this.pin).catch(() => 'en'),
             this.apiService.getTaste(this.pin),
-        ]).then(([resp, highlights, from, locale, taste]: any[]) => {
+            this.apiService.getIdle(this.pin),
+        ]).then(([resp, highlights, from, locale, taste, idle]: any[]) => {
+            this.idle = idle === true;
             // The words are in the game's language from the first paint.
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];

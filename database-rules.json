@@ -111,6 +111,14 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "hostAwaySince": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
+                "idle": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
                 "crew": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"

@@ -4,6 +4,12 @@
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
+    <!-- The host is back on screen to a full lobby: one big START (startPanelDue in lobby-host.ts). -->
+    <div *ngIf="panel && showStartButton && !lobby?.alone" class="start-panel" [attr.dir]="lobby?.rtl ? 'rtl' : null">
+        <p class="start-panel-line"> {{panel.line}} </p>
+        <button class="button is-primary is-large is-fullwidth start-panel-button" [class.is-loading]="loading" (click)="startGame()"> {{panel.button}} </button>
+    </div>
+
     <div *ngIf="lobby && players?.length" class="lobby-status" [class.presenter]="presenter" [attr.dir]="lobby.rtl ? 'rtl' : null">
         <span class="lobby-message" [class.alone]="lobby.alone"> {{lobby.message}} </span>
         <span *ngIf="lobby.sub" class="lobby-sub"> {{lobby.sub}} </span>
