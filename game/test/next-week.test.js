@@ -221,11 +221,84 @@ test('the sheet sends the night it opened on, shows a taken night with I\'M IN, 
     const dir = path.join(app, 'components', 'next-week');
     const html = fs.readFileSync(path.join(dir, 'next-week.component.html'), 'utf8');
     const code = fs.readFileSync(path.join(dir, 'next-week.component.ts'), 'utf8');
-    assert.match(code, /crewNight\(this\.id, \{ time: night\.getTime\(\), by: this\.myNickname \|\| '', prev: this\.seenNight \}\)/);
+    assert.match(code, /time: sentNight, by: this\.myNickname \|\| '', prev: this\.seenNight, tz: new Date\(\)\.getTimezoneOffset\(\),/);
     assert.match(code, /!this\.nameError && !this\.taken;/);
     assert.match(html, /<div \*ngIf="taken" class="sheet-taken">/);
     assert.match(html, /<ng-container \*ngIf="!taken">/);
     assert.match(html, /<button \*ngIf="mineNight" class="button is-small is-text banner-change" type="button" \(click\)="changeNight\(\)">/);
     // The message knows which date the sheet offered first.
     assert.match(code, /offered: this\.offered/);
+});
+
+test('a date that lost says which night stands, in English and Hebrew, with the night for the group', () => {
+    const now = new Date(2026, 10, 13, 22, 30);
+    const a = new Date(2026, 10, 21, 16, 30).getTime();
+    const b = new Date(2026, 10, 20, 21, 0).getTime();
+    // This phone sent B, the server kept A: lost, while A is still ahead.
+    assert.strictEqual(w.nightLost(a, b, now), true);
+    // Nothing lost, or the crew moved to this phone's date after all, or A is tonight's: nothing to say.
+    assert.strictEqual(w.nightLost(a, null, now), false);
+    assert.strictEqual(w.nightLost(b, b, now), false);
+    assert.strictEqual(w.nightLost(new Date(2026, 10, 13, 23, 0).getTime(), b, now), false);
+    assert.strictEqual(w.nightLost(undefined, b, now), false);
+
+    const whenEn = n.nightLabel(new Date(a), 'en');
+    const whenHe = n.nightLabel(new Date(a), 'he');
+    assert.strictEqual(w.nextWeekStrings.en.lost('Ana', whenEn), 'Ana set Saturday 21 November, 16:30 first. Tell the group?');
+    assert.strictEqual(w.nextWeekStrings.en.lost('', whenEn), 'Another phone set Saturday 21 November, 16:30 first. Tell the group?');
+    assert.strictEqual(w.nextWeekStrings.he.lost('מיכל', whenHe), `קודם נקבע ${whenHe} (הצעה של מיכל). לעדכן את הקבוצה?`);
+    assert.strictEqual(w.nextWeekStrings.he.lost('', whenHe), `קודם נקבע ${whenHe}. לעדכן את הקבוצה?`);
+    assert.strictEqual(w.nextWeekStrings.en.tellText(whenEn),
+        'Change of plan: Bullshit game night is Saturday 21 November, 16:30. Who\'s in? Tap here:');
+    assert.match(w.nextWeekStrings.he.tellText(whenHe), /^שינוי בתוכנית: ערב בולשיט נקבע ליום שבת, 21 בנובמבר, 16:30\. מי בפנים\? לוחצים כאן:$/);
+    // No gendered slash in the Hebrew.
+    assert.doesNotMatch(w.nextWeekStrings.he.lost('מיכל', whenHe) + w.nextWeekStrings.he.tell + w.nextWeekStrings.he.tellText(whenHe), /\//);
+
+    const dir = path.join(app, 'components', 'next-week');
+    const html = fs.readFileSync(path.join(dir, 'next-week.component.html'), 'utf8');
+    const code = fs.readFileSync(path.join(dir, 'next-week.component.ts'), 'utf8');
+    // The line shows on the taken sheet and on the banner; only the server's `kept` makes a date lost.
+    assert.match(html, /<div \*ngIf="lost" class="sheet-lost">/);
+    assert.match(html, /<div \*ngIf="lost" class="banner-lost">/);
+    assert.match(code, /if \(answer\.kept\) \{\s*this\.lostNight = sentNight;/);
+    // The press is counted, and the server knows the method.
+    assert.match(code, /this\.count\('tell'\)/);
+    const analytics = fs.readFileSync(path.join(__dirname, '..', '..', 'functions', 'src', 'controllers', 'analytics.ts'), 'utf8');
+    assert.match(analytics, /'next-week': \[[^\]]*'tell'\]/);
+});
+
+test('"You\'re in" and CHANGE go by the server\'s answer, not by the date this phone sent', () => {
+    const code = fs.readFileSync(path.join(app, 'components', 'next-week', 'next-week.component.ts'), 'utf8');
+    const imIn = code.slice(code.indexOf('get imIn()'), code.indexOf('get mineNight()'));
+    const mine = code.slice(code.indexOf('get mineNight()'), code.indexOf('get lost()'));
+    assert.doesNotMatch(imIn, /sentNight/);
+    assert.doesNotMatch(mine, /sentNight/);
+    assert.match(imIn, /this\.setByMe === time/);
+    assert.match(mine, /this\.setByMe === night\.time/);
+    // The answer sets it, and only for the latest send.
+    assert.match(code, /if \(this\.sentNight !== sentNight \|\| !answer \|\| !answer\.night\) \{\s*return;/);
+    assert.match(code, /this\.setByMe = answer\.night\.time;/);
+});
+
+test('the phone and the server tell "still ahead" by one rule', () => {
+    const m = load(path.join(app, 'game-model.ts'));
+    // The phone's rule is the shared one, on its own clock.
+    const now = new Date(2026, 10, 20, 20, 30);
+    assert.strictEqual(w.tonightEnds(now).getTime(), m.tonightEndsAt(now.getTime(), now.getTimezoneOffset()));
+    // Israel in winter is -120: tonight ends at 05:00 Israel, 03:00Z, the server's sum for the same phone.
+    const at = Date.UTC(2026, 10, 20, 18, 30);
+    assert.strictEqual(m.tonightEndsAt(at, -120), Date.UTC(2026, 10, 21, 3, 0));
+    // 01:00 Israel (23:00Z) is still the same night; 05:00 Israel starts the next one.
+    assert.strictEqual(m.tonightEndsAt(Date.UTC(2026, 10, 20, 23, 0), -120), Date.UTC(2026, 10, 21, 3, 0));
+    assert.strictEqual(m.tonightEndsAt(Date.UTC(2026, 10, 21, 3, 0), -120), Date.UTC(2026, 10, 22, 3, 0));
+    // New York (300): 05:00 there is 10:00Z.
+    assert.strictEqual(m.tonightEndsAt(Date.UTC(2026, 10, 21, 2, 0), 300), Date.UTC(2026, 10, 21, 10, 0));
+    // A night later tonight is not ahead; tomorrow's is.
+    assert.strictEqual(m.nightStillAhead(Date.UTC(2026, 10, 20, 20, 0), at, -120), false);
+    assert.strictEqual(m.nightStillAhead(Date.UTC(2026, 10, 21, 18, 0), at, -120), true);
+    assert.strictEqual(m.nightStillAhead('x', at, -120), false);
+    // Only a real clock offset is one.
+    assert.strictEqual(m.cleanTzOffset(-120), -120);
+    assert.strictEqual(m.cleanTzOffset(0), 0);
+    [undefined, null, '-120', 1.5, NaN, 900, -900].forEach(v => assert.strictEqual(m.cleanTzOffset(v), null, String(v)));
 });

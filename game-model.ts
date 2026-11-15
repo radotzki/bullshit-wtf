@@ -587,6 +587,43 @@ export interface CrewNight {
 /** The most names one night's list holds. */
 export const NIGHT_IN_MAX = 30;
 
+/** A night runs past midnight: until this hour it is still the evening before. */
+export const NIGHT_ENDS_HOUR = 5;
+
+const NIGHT_DAY_MS = 24 * 60 * 60 * 1000;
+const NIGHT_MINUTE_MS = 60 * 1000;
+
+/**
+ * A phone's clock, as Date.getTimezoneOffset gives it (minutes behind UTC: Israel is -120 in winter),
+ * or null when it is not one (an old site sends none). Offsets run from -14:00 to +12:00.
+ */
+export function cleanTzOffset(offset: any): number | null {
+    return typeof offset === 'number' && isFinite(offset) && Math.floor(offset) === offset
+        && offset >= -840 && offset <= 720 ? offset : null;
+}
+
+/**
+ * The end of tonight: the next 05:00 on a clock `offset` minutes behind UTC, at the moment `now`.
+ * One rule for the phones and the server: the server takes `now` from its own clock and `offset`
+ * from the phone, so "still ahead" means the same on both sides.
+ */
+export function tonightEndsAt(now: number, offset: number): number {
+    const local = new Date(now - offset * NIGHT_MINUTE_MS);
+    let end = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), NIGHT_ENDS_HOUR) + offset * NIGHT_MINUTE_MS;
+    if (end <= now) {
+        end += NIGHT_DAY_MS;
+    }
+    return end;
+}
+
+/**
+ * Is this night still to come? A night that is tonight (before the next 05:00), or has passed, is the
+ * one being played; a later night is set. The same test on the final screen and in crewNight.
+ */
+export function nightStillAhead(time: any, now: number, offset: number): boolean {
+    return typeof time === 'number' && isFinite(time) && time >= tonightEndsAt(now, offset);
+}
+
 export interface CrewMember {
     nickname: string;
     games: number;

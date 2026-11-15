@@ -116,6 +116,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     calendar           tapped ADD TO MY CALENDAR, on the sheet or the banner
 //     in                 tapped I'M IN on the banner (or on a sheet another phone's date reached)
 //     change             tapped CHANGE on the banner of the phone that set the date: the sheet opened again
+//     tell               tapped TELL THE GROUP ON WHATSAPP: this phone's date lost to one set first, and it
+//                        sent the night that stands to the group
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
@@ -162,7 +164,8 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
         'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby',
         'join-lobby'],
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
-    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change'],
+    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change',
+        'tell'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',
