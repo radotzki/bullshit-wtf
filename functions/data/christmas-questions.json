@@ -1,0 +1,410 @@
+{
+  "christmas-26-en-01": {
+    "questionText": "In December 1965 the Gemini 6 astronauts played \"Jingle Bells\" from orbit, on a smuggled harmonica and $blank$",
+    "realAnswer": "sleigh bells",
+    "fakeAnswers": [
+      "a kazoo",
+      "a toy xylophone",
+      "a spoon on a helmet"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jingle_Bells",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-02": {
+    "questionText": "In Catalonia, children beat a smiling Christmas log with sticks, singing to it, until it $blank$ presents",
+    "realAnswer": "poops out",
+    "fakeAnswers": [
+      "sneezes out",
+      "coughs up",
+      "spits out"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ti%C3%B3_de_Nadal",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-03": {
+    "questionText": "Iceland's Yule Cat is said to eat anyone who has not been given $blank$ before Christmas Eve",
+    "realAnswer": "new clothes",
+    "fakeAnswers": [
+      "a haircut",
+      "a kiss",
+      "a letter from home"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Yule_Cat",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-04": {
+    "questionText": "Every Christmas Eve since 1960, millions of Swedes have sat down at 3 pm to watch the same Disney TV special, known there simply as $blank$",
+    "realAnswer": "donald duck",
+    "fakeAnswers": [
+      "pippi longstocking",
+      "charlie chaplin",
+      "the muppets"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/From_All_of_Us_to_All_of_You",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-05": {
+    "questionText": "Sweden's giant straw Christmas goat in Gävle has been destroyed dozens of times, mostly by fire. In 2023 it was pecked nearly bare by $blank$",
+    "realAnswer": "jackdaws",
+    "fakeAnswers": [
+      "seagulls",
+      "pigeons",
+      "woodpeckers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/G%C3%A4vle_goat",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-06": {
+    "questionText": "Tinsel was invented in Nuremberg around 1610, and the first tinsel was made of shredded $blank$",
+    "realAnswer": "silver",
+    "fakeAnswers": [
+      "fish scales",
+      "onion skins",
+      "spun sugar"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tinsel",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-07": {
+    "questionText": "Since 1947, London's Trafalgar Square Christmas tree has been a yearly thank-you for wartime help from the city of $blank$",
+    "realAnswer": "oslo",
+    "fakeAnswers": [
+      "copenhagen",
+      "stockholm",
+      "reykjavik"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Trafalgar_Square_Christmas_tree",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-08": {
+    "questionText": "Before settling on Rudolph, the red-nosed reindeer's creator thought of naming him Rollo or $blank$",
+    "realAnswer": "reginald",
+    "fakeAnswers": [
+      "rupert",
+      "randolph",
+      "roscoe"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rudolph_the_Red-Nosed_Reindeer",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-09": {
+    "questionText": "From 1659 to 1681, anyone caught celebrating Christmas in Puritan Massachusetts was fined $blank$",
+    "realAnswer": "five shillings",
+    "fakeAnswers": [
+      "one goose",
+      "ten pounds",
+      "a barrel of cider"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Christmas_in_Puritan_New_England",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-10": {
+    "questionText": "\"Silent Night\" was first sung on Christmas Eve 1818, in an Austrian village church, with music written for the $blank$",
+    "realAnswer": "guitar",
+    "fakeAnswers": [
+      "accordion",
+      "alphorn",
+      "harpsichord"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Silent_Night",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-11": {
+    "questionText": "Counting every repeat, the true love in \"The Twelve Days of Christmas\" sends $blank$ gifts in all",
+    "realAnswer": "364",
+    "fakeAnswers": [
+      "144",
+      "52",
+      "1,212"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Twelve_Days_of_Christmas_(song)",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-12": {
+    "questionText": "In Spain, people welcome the new year by eating twelve $blank$, one at each stroke of midnight",
+    "realAnswer": "grapes",
+    "fakeAnswers": [
+      "olives",
+      "almonds",
+      "chocolate coins"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Twelve_Grapes",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-13": {
+    "questionText": "In 1942 and 1943 wartime rules stopped the Times Square ball drop. The crowd kept a minute's silence, then heard bells played from $blank$",
+    "realAnswer": "sound trucks",
+    "fakeAnswers": [
+      "a blimp overhead",
+      "the subway grates",
+      "the empire state building"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Times_Square_Ball",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-14": {
+    "questionText": "Robert Burns wrote down the words of \"Auld Lang Syne\", sung at midnight; its title literally means $blank$",
+    "realAnswer": "old long since",
+    "fakeAnswers": [
+      "all hands join",
+      "old lamps shine",
+      "good luck to all"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Auld_Lang_Syne",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-15": {
+    "questionText": "In Scotland, the luckiest first visitor after midnight on New Year is a tall, dark-haired man bringing $blank$",
+    "realAnswer": "coal",
+    "fakeAnswers": [
+      "an onion",
+      "a live hen",
+      "a bucket of snow"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/First-foot",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-16": {
+    "questionText": "In Russia, Ded Moroz, Grandfather Frost, brings New Year presents with his granddaughter, $blank$",
+    "realAnswer": "the snow maiden",
+    "fakeAnswers": [
+      "the ice princess",
+      "the north wind",
+      "the frost fairy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Snegurochka",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-17": {
+    "questionText": "On New Year's Eve, most Buddhist temples in Japan ring their great bell $blank$ times",
+    "realAnswer": "108",
+    "fakeAnswers": [
+      "12",
+      "365",
+      "1,000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Joya_no_Kane",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-18": {
+    "questionText": "In Denmark, many people leap into the new year at midnight, quite literally: they jump off $blank$",
+    "realAnswer": "a chair",
+    "fakeAnswers": [
+      "a garden wall",
+      "a snowbank",
+      "the front steps"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/New_Year%27s_Eve",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-19": {
+    "questionText": "On New Year's Eve, many Filipino families set out twelve $blank$ fruits, to bring money in the year ahead",
+    "realAnswer": "round",
+    "fakeAnswers": [
+      "imported",
+      "unripe",
+      "peeled"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/New_Year%27s_Eve",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-20": {
+    "questionText": "In Italy, children's presents come on the night of 5 January from La Befana, an old $blank$ who comes down the chimney",
+    "realAnswer": "witch",
+    "fakeAnswers": [
+      "baker",
+      "sailor",
+      "postwoman"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Befana",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-21": {
+    "questionText": "NORAD's Santa tracker began in 1955 because of a misprinted phone number in a newspaper ad for $blank$",
+    "realAnswer": "sears",
+    "fakeAnswers": [
+      "coca-cola",
+      "macy's",
+      "woolworth's"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/NORAD_Tracks_Santa",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-22": {
+    "questionText": "The first Rockefeller Center Christmas tree, in 1931, was put up by $blank$ and hung with cranberries, paper and tin cans",
+    "realAnswer": "construction workers",
+    "fakeAnswers": [
+      "a mounted policeman",
+      "the mayor's children",
+      "a group of nuns"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rockefeller_Center_Christmas_Tree",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-23": {
+    "questionText": "Every 23 December, the Mexican city of Oaxaca holds a contest of scenes carved from giant $blank$",
+    "realAnswer": "radishes",
+    "fakeAnswers": [
+      "pumpkins",
+      "blocks of butter",
+      "pineapples"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Night_of_the_Radishes",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-24": {
+    "questionText": "Finnish tradition says Santa lives on Korvatunturi, a fell in Lapland whose name means $blank$",
+    "realAnswer": "ear fell",
+    "fakeAnswers": [
+      "reindeer hill",
+      "frozen beard",
+      "elf mountain"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Korvatunturi",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-25": {
+    "questionText": "The first royal Christmas message, read on the radio by King George V in 1932, was written by $blank$",
+    "realAnswer": "rudyard kipling",
+    "fakeAnswers": [
+      "winston churchill",
+      "agatha christie",
+      "j. m. barrie"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Royal_Christmas_message",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-26": {
+    "questionText": "Charles Dickens wrote \"A Christmas Carol\" in $blank$",
+    "realAnswer": "six weeks",
+    "fakeAnswers": [
+      "four days",
+      "two years",
+      "a single night"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/A_Christmas_Carol",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-27": {
+    "questionText": "Festivus, the holiday from \"Seinfeld\", has no tree. Instead it has an unadorned $blank$",
+    "realAnswer": "aluminum pole",
+    "fakeAnswers": [
+      "potted cactus",
+      "garden gnome",
+      "broomstick"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Festivus",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-28": {
+    "questionText": "Before \"It's a Wonderful Life\" (1946), movie snow was often $blank$, so loud underfoot that dialogue had to be redubbed",
+    "realAnswer": "cornflakes",
+    "fakeAnswers": [
+      "potato chips",
+      "crushed eggshells",
+      "mashed potatoes"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/It%27s_a_Wonderful_Life",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-29": {
+    "questionText": "In 1930 the Addis Brush Company made artificial Christmas trees with the same machinery it used to make $blank$",
+    "realAnswer": "toilet brushes",
+    "fakeAnswers": [
+      "doormats",
+      "tennis balls",
+      "hairpieces"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Artificial_Christmas_tree",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-30": {
+    "questionText": "One of the first inhabited places on Earth to reach New Year's Day is a Pacific island whose name is Gilbertese for $blank$",
+    "realAnswer": "christmas",
+    "fakeAnswers": [
+      "sunrise",
+      "first light",
+      "tomorrow"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kiritimati",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-31": {
+    "questionText": "Each winter in Utqiagvik, Alaska, the sun does not rise for about $blank$",
+    "realAnswer": "two months",
+    "fakeAnswers": [
+      "three days",
+      "two weeks",
+      "six months"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Utqiagvik,_Alaska",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-32": {
+    "questionText": "Queen Elizabeth I had gingerbread figures made in the likeness of her $blank$",
+    "realAnswer": "important guests",
+    "fakeAnswers": [
+      "favourite horses",
+      "enemies",
+      "ancestors"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gingerbread_man",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-33": {
+    "questionText": "The tune of \"Carol of the Bells\" comes from a Ukrainian New Year's song about a $blank$",
+    "realAnswer": "swallow",
+    "fakeAnswers": [
+      "lost goat",
+      "snow fox",
+      "blacksmith's daughter"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Carol_of_the_Bells",
+    "lang": "en",
+    "pack": "christmas"
+  },
+  "christmas-26-en-34": {
+    "questionText": "In Norway, whoever finds the single almond hidden in the Christmas Eve rice porridge wins a $blank$",
+    "realAnswer": "marzipan pig",
+    "fakeAnswers": [
+      "silver spoon",
+      "chocolate reindeer",
+      "day off from chores"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Christmas_in_Norway",
+    "lang": "en",
+    "pack": "christmas"
+  }
+}

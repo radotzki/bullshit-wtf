@@ -61,9 +61,9 @@ Object.keys(added).forEach(p => {
     });
 });
 
-test('the holiday pages start a game without the Hanukkah pack, which is on by default in early December', () => {
+test('the holiday pages start an English game with the Christmas and New Year pack', () => {
     ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game'].forEach(p => {
-        assert.strictEqual(page(p).start.href, '/create-game?lang=en&pack=none', p);
+        assert.strictEqual(page(p).start.href, '/create-game?lang=en&pack=christmas', p);
         assert.ok(!page(p).twin, `${p} is English only`);
     });
 });

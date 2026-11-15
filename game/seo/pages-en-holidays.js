@@ -3,9 +3,9 @@
 //
 // Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
 // game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen (Present), Rematch,
-// saved crews. There is no Christmas or New Year question pack: the Start button turns the seasonal
-// pack off (?pack=none), since from 1 to 13 December the Create page would otherwise switch the Hanukkah
-// pack on for everyone. Each example is a real question of the game (functions/data/opening-questions.json).
+// saved crews. The Start button opens an English game with the Christmas and New Year question pack
+// (?pack=christmas, functions/data/christmas-questions.json), in season and out of it. Each example
+// is a real question of the game (functions/data/opening-questions.json).
 
 const example = (q, story) => `<div class="example">
   <p class="q">${q}</p>
@@ -88,7 +88,7 @@ module.exports = {
     pages: (en) => [
         {
             path: '/christmas-party-game', site: en, tag: 'seo-en-christmas',
-            start: { href: '/create-game?lang=en&pack=none', label: 'Start a Christmas game' },
+            start: { href: '/create-game?lang=en&pack=christmas', label: 'Start a Christmas game' },
             image: '/assets/og-christmas-en.png',
             title: 'Christmas party game for the whole family, free · Bullshit',
             description: 'After presents and dinner: Bullshit is a free bluffing trivia game everyone plays on their own phone. Write a lie, find the truth, fool the family. No app, up to 12 players.',
@@ -97,7 +97,7 @@ module.exports = {
         },
         {
             path: '/new-years-eve-party-game', site: en, tag: 'seo-en-new-year',
-            start: { href: '/create-game?lang=en&pack=none', label: 'Start a New Year\'s game' },
+            start: { href: '/create-game?lang=en&pack=christmas', label: 'Start a New Year\'s game' },
             image: '/assets/og-new-year-en.png',
             title: 'New Year\'s Eve party game: bluffing trivia · Bullshit',
             description: 'Something to play before midnight: Bullshit is a free party game where everyone writes a lie and tries to find the truth, on their own phone. No app, 10-minute games.',
@@ -106,7 +106,7 @@ module.exports = {
         },
         {
             path: '/office-holiday-party-game', site: en, tag: 'seo-en-office-party',
-            start: { href: '/create-game?lang=en&pack=none', label: 'Start an office party game' },
+            start: { href: '/create-game?lang=en&pack=christmas', label: 'Start an office party game' },
             image: '/assets/og-office-party-en.png',
             title: 'Office holiday party game on phones and screen · Bullshit',
             description: 'A game for the work holiday party: everyone writes a lie, everyone hunts for the truth, on their own phone and the room\'s screen. Free, in the browser, teams for big groups.',

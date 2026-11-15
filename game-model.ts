@@ -731,12 +731,16 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
  * default and crew rematches use it; outside it the pack is still playable by link (?pack=<id>).
  * `locales`, when set, are the only game languages the pack has questions in: a game in another
  * language is never offered the pack and never gets it. `icon` stands before its name (default 🕎).
+ * `seasonIn`, when set, are the only game languages that get the pack by default in its season
+ * (default: every language it fits). In other languages it is still playable by link. Seasons may
+ * overlap only for packs that no one language gets by default, so a game has one pack a day.
  */
 export interface QuestionPack {
     perGame: number;
     season: { from: string; to: string };
     label: { en: string; he: string };
     locales?: string[];
+    seasonIn?: string[];
     icon?: string;
 }
 
@@ -745,6 +749,9 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         perGame: 3,
         season: { from: '2026-12-01', to: '2026-12-13' },
         label: { en: 'Hanukkah questions', he: 'שאלות חנוכה' },
+        // English games get the Christmas pack by default in December; Hanukkah stays one tap
+        // away for them with ?pack=hanukkah (the Hanukkah page's Start button).
+        seasonIn: ['he'],
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
@@ -756,6 +763,17 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Thanksgiving questions', he: 'שאלות חג ההודיה (באנגלית)' },
         locales: ['en'],
         icon: '🦃',
+    },
+    // Christmas and New Year's Eve, English questions only (functions/data/christmas-questions.json).
+    // By default in English games from 1 December, office party season, to 2 January: by the date
+    // in Israel that is New Year's Eve until midnight on the US West Coast. Hebrew games keep
+    // Hanukkah. Next year's days go here.
+    christmas: {
+        perGame: 3,
+        season: { from: '2026-12-01', to: '2027-01-02' },
+        label: { en: 'Christmas and New Year questions', he: 'שאלות חג המולד והשנה החדשה (באנגלית)' },
+        locales: ['en'],
+        icon: '🎄',
     },
 };
 
@@ -777,16 +795,22 @@ export function packIcon(id: any): string {
     return (isPack(id) && questionPacks[id].icon) || '🕎';
 }
 
+/** Whether a game in `locale` gets pack `id` by default in its season. */
+export function packInSeasonFor(id: any, locale: any): boolean {
+    const only = isPack(id) && questionPacks[id].seasonIn;
+    return packFits(id, locale) && (!only || only.indexOf(locale) >= 0);
+}
+
 /**
  * The pack whose season includes `now` (by the date in Israel), if any. With a `locale`, only a
- * pack that a game in that language can use.
+ * pack that a game in that language gets by default (see `seasonIn`).
  */
 export function seasonalPack(now: number = Date.now(), locale?: string): string | undefined {
     // Israel is UTC+2 in winter; close enough for a day-level season.
     const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
     return Object.keys(questionPacks).find(id => {
         const s = questionPacks[id].season;
-        return day >= s.from && day <= s.to && (locale === undefined || packFits(id, locale));
+        return day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
     });
 }
 

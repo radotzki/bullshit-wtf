@@ -829,7 +829,9 @@ puts the questions of the repository's reviewed question files there itself, in 
     of the normal bank: exactly `questionText`, `realAnswer`, `fakeAnswers`, `citation` and `lang`,
     and no `pack` field;
   - `functions/data/thanksgiving-questions.json`, ids `thanksgiving-26-en-NN` (English only: the id
-    rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below).
+    rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below);
+  - `functions/data/christmas-questions.json`, ids `christmas-26-en-NN` (English only), every
+    question with `pack: "christmas"` (see "Christmas and New Year pack" below).
 - **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
   body is exactly those files. Every key must be an id of the file it stands in, and every value a
   whole question in that id's language with that file's fields and no other, or nothing is sent for
@@ -894,6 +896,41 @@ release adds the questions itself (see "Question files the release adds").
 
 How to read it: games by `campaign = 'seo-en-thanksgiving'` in `opened_games` for the page, and
 games with `pack = 'thanksgiving'` for the pack (test games out).
+
+## Christmas and New Year pack
+
+For office parties, Christmas and New Year's Eve, English games only. Nothing to run before or
+after the merge: the release adds the questions itself (see "Question files the release adds").
+It must merge by Friday 27 November to be live on 1 December.
+
+- **The pack:** 34 English questions in `functions/data/christmas-questions.json`, ids
+  `christmas-26-en-01..34`, each with `pack: "christmas"`: Christmas customs around the world,
+  winter, and New Year's Eve. Nothing about any faith's beliefs. Each `citation` is the page the
+  truth was checked against on 14 November 2026; the Marketer's sources and Product's review sit
+  with the project's notes, not in the repository.
+- **English only,** as Thanksgiving: `locales: ['en']` in `questionPacks`.
+- **The default depends on the game's language.** A pack can now name the languages that get it by
+  default in its season (`seasonIn`; without it, every language it fits). Hanukkah has
+  `seasonIn: ['he']`. So from 1 December to 2 January (by the date in Israel, which is New Year's
+  Eve until midnight on the US West Coast) the Create page ticks "🎄 Christmas and New Year
+  questions" for an English game, and from 1 to 13 December "🕎 Hanukkah questions" for a Hebrew
+  one. A crew rematch takes the same pack by the crew's language. Hanukkah stays one tap away for an
+  English game: the Hanukkah page's Start button (`?pack=hanukkah`). Seasons may overlap only
+  between packs that no one language gets by default (a test checks each language).
+- **The lobby** of a pack game says "🎄 Holiday edition: new Christmas and New Year questions in this game".
+- **The pages:** the Christmas, New Year's Eve and office party pages' Start buttons now open
+  `/create-game?lang=en&pack=christmas` (before: `pack=none`), in season and out of it.
+- **Home (English only):** from 1 December to 1 January, by the visitor's own calendar, the line
+  above the buttons says "The holidays are here: play with Christmas and New Year questions" and
+  links the Christmas page, in place of the Hanukkah line. The Hebrew home keeps the Hanukkah line.
+- **Until the first release after the merge has added the questions,** a Christmas game is a normal
+  game, as with every pack.
+- Tested by `functions/test/christmas-questions.test.js`, `game/test/christmas-pack.test.js` and
+  `.github/scripts/load-pack-questions.test.js`. Next year: new days in `questionPacks` and in
+  `christmasSeasons` (`search-links.ts`).
+
+How to read it: games with `pack = 'christmas'` in `opened_games` (test games out), and the three
+pages' tags as before.
 
 ## Hanukkah pack and campaign tags
 
