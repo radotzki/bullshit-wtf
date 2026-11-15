@@ -10,7 +10,57 @@
             <div class="separator">♦</div>
         </div>
 
-        <div class="controls-wrapper" *ngIf="gameOver">
+        <!-- The week after a finished game, in the test's new half: the night's recap (night-after.ts). -->
+        <div class="controls-wrapper" *ngIf="gameOver && recapShown && recap">
+            <div class="controls night-after">
+                <p class="recap-heading" dir="auto">{{ recapHeading }}</p>
+                <p class="recap-line recap-winner">
+                    <span class="recap-label">{{ recapWinnerCount > 1 ? n.winners : n.winner }}:</span>
+                    <span class="recap-name" dir="auto">{{ recapWinners }}</span>
+                </p>
+                <p class="recap-line recap-biggest" *ngIf="recapBiggest">
+                    <span class="recap-label">{{ n.biggest }}:</span>
+                    <span class="recap-name" dir="auto">{{ recapBiggest }}</span>
+                </p>
+                <div class="recap-lie" *ngIf="recap.lie">
+                    <p class="recap-label">{{ n.lieOfTheNight }}</p>
+                    <p class="recap-lie-text" dir="auto">"{{ recap.lie.text }}"</p>
+                    <p class="recap-lie-by"><span dir="auto">{{ n.lieBy(recap.lie.by) }}</span> · {{ n.lieFooled(recap.lie.fooled) }}</p>
+                </div>
+                <p class="recap-facts">{{ n.facts(recap.played, recap.questions, recap.fooledTotal) }}</p>
+
+                <div class="recap-scores">
+                    <p class="recap-label">{{ n.scores }}</p>
+                    <div class="recap-row" *ngFor="let row of recap.rows" [class.first]="row.place === 1">
+                        <span class="recap-place">{{ row.place }}</span>
+                        <span class="recap-row-name" dir="auto">{{ row.name }}</span>
+                        <span class="recap-row-fooled">{{ n.fooledRow(row.fooled) }}</span>
+                        <span class="recap-row-score">{{ row.score }}</span>
+                    </div>
+                </div>
+
+                <div class="recap-ask" *ngIf="!recap.player">
+                    <p class="recap-ask-title">{{ n.missedTitle }}</p>
+                    <p class="recap-ask-text">{{ n.missedText }}</p>
+                    <button class="button is-primary is-medium is-fullwidth recap-create" type="button"
+                        (click)="recapCreate()">{{ n.create }}</button>
+                </div>
+                <div class="recap-ask" *ngIf="recap.player">
+                    <p class="recap-ask-title">{{ n.playerTitle }}</p>
+                    <p class="recap-ask-text">{{ n.playerText }}</p>
+                    <button class="button is-primary is-medium is-fullwidth recap-create" type="button"
+                        (click)="recapCreate()">{{ n.createPlayer }}</button>
+                </div>
+                <div class="field" *ngIf="recap.crew">
+                    <a class="button is-info is-fullwidth recap-crew" [routerLink]="['/c', recap.crew]" (click)="recapCrew()">{{ n.crew }}</a>
+                </div>
+                <div class="field">
+                    <button class="button is-medium is-fullwidth try-again" type="button" (click)="tryAnotherPin()">{{ n.tryAnother }}</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-wrapper" *ngIf="gameOver && !(recapShown && recap)">
             <div class="controls game-over">
                 <p class="game-over-title">{{ t.gameOverTitle }}</p>
                 <p class="game-over-text">{{ t.gameOverText(gameOver.pin) }}</p>
