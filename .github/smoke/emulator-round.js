@@ -10,7 +10,9 @@
 // can only add a lie. And what must not happen: a full round takes nobody new, a round that is over
 // shows its final board read-only, one past nine days is erased and shows nothing, a missing round
 // falls back to today's question, the other half of the test keeps the puzzle as built, and a
-// play-test's round (?via=test) writes no tally and no row.
+// play-test's round (?via=test) writes no tally and no row. Last, the owner's phone: ?round=on
+// with a post's own tag moves a puzzle-half browser to the group card, its round link keeps the
+// tag, a friend plays it from that link, and the rows say so (round-forced, round-via, daily-post).
 //
 // Needs Java and functions/ built. From the repository root, with the root's npm ci done:
 //   node .github/smoke/emulator-round.js [path to dist]
@@ -35,8 +37,10 @@ const GROUP = (c) => (c + 'groupbrowser0000').slice(0, 16);
 const PUZZLE_HALF = (c) => ('s' + c + 'plainbrowser000').slice(0, 16);
 
 const MORE = {
-    en: { yossi: 'whistling', noa: 'Noa', dad: 'Dad', yossiName: 'Yossi', other: 'humming', late: 'falling off', elsewhere: 'clapping' },
-    he: { yossi: 'לשרוק', noa: 'נועה', dad: 'אבא', yossiName: 'יוסי', other: 'לזמזם', late: 'ליפול', elsewhere: 'למחוא כפיים' },
+    en: { yossi: 'whistling', noa: 'Noa', dad: 'Dad', yossiName: 'Yossi', other: 'humming', late: 'falling off', elsewhere: 'clapping',
+        owner: 'Itai', ownerLie: 'giggling', guest: 'Shira', guestLie: 'snoring', tag: 'daily-round-wa-en-friends' },
+    he: { yossi: 'לשרוק', noa: 'נועה', dad: 'אבא', yossiName: 'יוסי', other: 'לזמזם', late: 'ליפול', elsewhere: 'למחוא כפיים',
+        owner: 'איתי', ownerLie: 'לצחקק', guest: 'שירה', guestLie: 'לנחור', tag: 'daily-round-wa-he-family' },
 };
 
 function visitor(browser, base, name, id, options) {
@@ -322,6 +326,65 @@ async function run(browser, base, lang) {
     await h.sleep(1500);
     check(`${L}: a test round changes no tally`, JSON.stringify(await db('GET', `${day}/picks`)) === JSON.stringify(picksBefore), await db('GET', `${day}/picks`));
     check(`${L}: and writes no row`, rowsOf(gt).length === 0 && shareRows().length === rowsBefore, shareRows().slice(rowsBefore));
+
+    // 12. The owner's phone before a post: in the puzzle half by its id, ?round=on with the post's
+    // own tag (no test tag) shows the group card, the round's link carries the tag, and a friend
+    // who opens it plays the round. Counted: one round-forced row, one round-via row, and every
+    // other row with the content type of a post's tag (daily-post), the round's id in crew_id.
+    const ownerId = PUZZLE_HALF('2');
+    const owner = await visitor(browser, base, `${L} owner`, ownerId);
+    others.push(owner);
+    await open(owner, `${P}?via=${m.tag}&round=on`);
+    await h.pickAnswer(owner, q.realAnswer);
+    const oCard = owner.page.locator('.card.round-start');
+    check(`${L}: ?round=on with a post's tag shows the group card in the puzzle half`, (await oCard.count()) === 1
+        && (await owner.page.locator('.card.fool').count()) === 0 && (await owner.page.locator('#d-reveal > .send').count()) === 0);
+    await waitFor(`${L}: one round-forced row for the owner's browser`, async () => shareRows().filter((r) => r.uid === ownerId && r.locale === lang && r.method === 'round-forced'),
+        (rows) => rows.length === 1 && rows[0].content_type === 'daily-post' && rows[0].crew_id === null && rows[0].locale === lang);
+    await shot(owner.page, `${L}-s1-owner-card`);
+    await oCard.locator('#d-lie').fill(m.ownerLie);
+    await oCard.locator('#d-name').fill(m.owner);
+    await oCard.locator('.send a.btn').click();
+    const oMsg = await waMessage(oCard.locator('.send a.btn'));
+    const go = idOf(oMsg);
+    const oLink = `${P}?n=2&g=${go}&via=${m.tag}`;
+    check(`${L}: the owner's round link carries the post's tag`, oMsg.split('\n')[3] === oLink, oMsg);
+    const oRound = await waitFor(`${L}: the owner's round is saved, not a test round`, () => roundOf(lang, TODAY, go), (r) => r && r.lies && !r.test);
+    check(`${L}: and counted`, oRound && !oRound.test, oRound);
+    await waitFor(`${L}: round-start (daily-post) and one round-via row with the tag`, async () => rowsOf(go),
+        (rows) => rows.some((r) => r.method === 'round-start' && r.content_type === 'daily-post' && r.uid === ownerId)
+            && rows.filter((r) => r.content_type === 'round-via').length === 1
+            && rows.some((r) => r.content_type === 'round-via' && r.method === m.tag && r.uid === ownerId && r.locale === lang));
+    await owner.page.locator('.card.round-start .see-board a').waitFor({ timeout: 8000 });
+    check(`${L}: the owner's board link keeps the tag`, (await owner.page.locator('.see-board a').getAttribute('href')) === `${s.path}?n=2&g=${go}&via=${m.tag}`,
+        await owner.page.locator('.see-board a').getAttribute('href'));
+    await shot(owner.page, `${L}-s2-owner-sent`);
+
+    const guest = await visitor(browser, base, `${L} owner's friend`, PUZZLE_HALF('3'));
+    others.push(guest);
+    await open(guest, oLink);
+    check(`${L}: the friend gets the owner's round`, (await raw(guest.page, '#d-how')) === fill(s.liarsOne, { name: m.owner }) && (await answers(guest.page)).includes(m.ownerLie),
+        await raw(guest.page, '#d-how'));
+    await shot(guest.page, `${L}-s3-friend-question`);
+    await guest.page.locator('#d-answers .answer').filter({ hasText: m.ownerLie }).first().click();
+    await guest.page.locator('#d-reveal h2.head').waitFor({ timeout: 10000 });
+    check(`${L}: the friend fell for the owner's lie`, (await raw(guest.page, '#d-reveal h2.head')) === fill(s.headFriendNamed, { name: m.owner }));
+    const gCard = guest.page.locator('.card.round-lie');
+    await gCard.locator('#d-name').fill(m.guest);
+    await gCard.locator('#d-lie').fill(m.guestLie);
+    await gCard.locator('.send a.btn').click();
+    const gMsg = await waMessage(gCard.locator('.send a.btn'));
+    check(`${L}: the friend's message carries the same tagged link`, gMsg.endsWith(oLink), gMsg);
+    await guest.page.locator('.send.score').waitFor({ timeout: 8000 });
+    await waitFor(`${L}: the friend's rows: daily-post, the round in crew_id, no round-via or round-forced`, async () => rowsOf(go).filter((r) => r.uid === PUZZLE_HALF('3')),
+        (rows) => ['open', 'friend', 'round-lie', 'round-tell-whatsapp'].every((x) => rows.some((r) => r.method === x && r.content_type === 'daily-post'))
+            && rows.every((r) => r.content_type === 'daily-post'));
+    check(`${L}: the friend sent no round-forced row`, shareRows().filter((r) => r.uid === PUZZLE_HALF('3') && r.locale === lang && r.method === 'round-forced').length === 0);
+    await shot(guest.page, `${L}-s4-friend-board`);
+    await owner.page.reload();
+    await owner.page.locator('#d-reveal').waitFor({ timeout: 10000 });
+    await h.sleep(800);
+    check(`${L}: still one round-forced row a day after a reload`, shareRows().filter((r) => r.uid === ownerId && r.locale === lang && r.method === 'round-forced').length === 1);
 
     for (const v of others) await v.context.close();
 }

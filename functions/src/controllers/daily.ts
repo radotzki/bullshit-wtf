@@ -304,13 +304,16 @@ export const DAILY_ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game',
  *   round-tell-whatsapp, round-tell-native, round-tell-copy   sent "I fell for Dana's lie" to the group
  *   round-score                       sent the score so far
  *   round-back                        came back to the board (once per browser per round per day)
+ * and once a day from a browser that ?round=on or ?round=off moved out of its half of the round's
+ * 50/50 test (no round id; leave its uid out of the test's comparison):
+ *   round-forced
  * The round's own acts leave their rows from the act itself (daily-round.ts): round-start,
  * round-other, round-lie, round-flag, and truth, house or friend for a pick in a round.
  */
 export const DAILY_PICKS = ['truth', 'house', 'friend'];
 export const ROUND_BEACONS = ['round-tell-whatsapp', 'round-tell-native', 'round-tell-copy', 'round-score', 'round-back'];
 export const DAILY_METHODS = ['open'].concat(DAILY_PICKS,
-    ['whatsapp', 'native', 'copy', 'fool-whatsapp', 'fool-native', 'fool-copy', 'create'], ROUND_BEACONS);
+    ['whatsapp', 'native', 'copy', 'fool-whatsapp', 'fool-native', 'fool-copy', 'create', 'round-forced'], ROUND_BEACONS);
 const ROUND_ID = /^[a-z0-9]{10}$/;
 
 export function contentTypeOf(src: any): string {

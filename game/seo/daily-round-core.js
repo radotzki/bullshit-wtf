@@ -20,23 +20,72 @@
     }
 
     /**
+     * How the page names the way its visitor came (BigQuery shares.content_type), as the server's
+     * DAILY_ARRIVALS in functions/src/controllers/daily.ts: these fixed tags keep their own name, any
+     * other tag is a post's own (written daily-post).
+     */
+    var ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool', 'daily-round'];
+
+    /** A post's own tag (?via=daily-round-wa-he-family): not empty, not a play-test's, not one of the puzzle's fixed arrivals. */
+    function isPostTag(tag) {
+        return !!core.cleanTag(tag) && !isTestTag(tag) && ARRIVALS.indexOf(tag) < 0;
+    }
+
+    /** The switch in the page's address: 'on', 'off', or '' when there is none. */
+    function roundSwitch(search) {
+        var m = /[?&]round=(on|off)(&|#|$)/.exec(search || '');
+        return m ? m[1] : '';
+    }
+
+    /**
      * The 50/50 test: which half of browsers gets the group card in place of the puzzle's own send
      * buttons and lie card. By the page's random browser id, so a browser stays in its half: ids
      * starting a to r (18 of the 36 letters and digits) are the group half. In SQL:
-     * REGEXP_CONTAINS(uid, r'^[a-r]'). No id (storage blocked): the puzzle as built. A play-test may
-     * choose its half with ?round=on or ?round=off.
+     * REGEXP_CONTAINS(uid, r'^[a-r]'). No id (storage blocked): the puzzle as built.
+     * The switch ?round=on or ?round=off in the address moves this one visit of this browser, with any
+     * tag or none (the owner's own phone, before a post); see forcedHalf for how it is counted.
      */
     function groupHalf(uid, tag, search) {
-        if (isTestTag(tag)) {
-            var m = /[?&]round=(on|off)(&|#|$)/.exec(search || '');
-            if (m) { return m[1] === 'on'; }
-        }
+        var sw = roundSwitch(search);
+        if (sw) { return sw === 'on'; }
+        return byId(uid);
+    }
+
+    function byId(uid) {
         return typeof uid === 'string' && /^[a-r][a-z0-9]{15}$/.test(uid);
     }
 
-    /** The round's link: the puzzle's number (so the server finds its day) and the round's id. */
+    /**
+     * Whether the switch put this browser in the other half than its id would (?round=on in the
+     * puzzle half, or ?round=off in the group half). Such a browser sends one round-forced row a day,
+     * so the test's comparison can leave its id out. A play-test sends none: it is not counted anyway.
+     */
+    function forcedHalf(uid, tag, search) {
+        var sw = roundSwitch(search);
+        return !!sw && !isTestTag(tag) && (sw === 'on') !== byId(uid);
+    }
+
+    /**
+     * The round's link: the puzzle's number (so the server finds its day) and the round's id, and
+     * the starter's tag when it is a play-test's or a post's own, so a post's round keeps its tag
+     * for everyone who opens it. The puzzle's fixed arrivals (daily-home and the like) stay off it:
+     * a round link without a tag is written daily-round.
+     */
     function roundUrl(origin, s, no, g, tag) {
-        return origin + s.path + '?n=' + no + '&g=' + g + (isTestTag(tag) ? '&via=' + tag : '');
+        return origin + s.path + '?n=' + no + '&g=' + g + (isTestTag(tag) || isPostTag(tag) ? '&via=' + tag : '');
+    }
+
+    /**
+     * The tag of a full game started from a round (opened_games.campaign): daily-round, a
+     * play-test's own tag, or for a post's round daily-round-<the post's tag> (the tag itself when it
+     * starts with daily-round- already), at most 40 letters as every tag. All start with daily-round
+     * but the test's, so STARTS_WITH(campaign, 'daily-round') counts every game from a round.
+     */
+    function roundCampaign(tag) {
+        if (isTestTag(tag)) { return tag; }
+        if (!isPostTag(tag)) { return 'daily-round'; }
+        var t = tag.indexOf('daily-round-') === 0 ? tag : 'daily-round-' + tag;
+        return t.slice(0, 40).replace(/-+$/, '');
     }
 
     /** "Yossi, Noa and Dad", "Yossi and 2 more", "2 more", or "nobody yet". */
@@ -206,7 +255,8 @@
     }
 
     var api = {
-        cleanRoundId: cleanRoundId, isTestTag: isTestTag, groupHalf: groupHalf, roundUrl: roundUrl, names: names,
+        cleanRoundId: cleanRoundId, isTestTag: isTestTag, isPostTag: isPostTag, groupHalf: groupHalf, forcedHalf: forcedHalf,
+        roundCampaign: roundCampaign, roundUrl: roundUrl, names: names,
         liarsLine: liarsLine, fooled: fooled, leader: leader, mineOf: mineOf, startText: startText, tellText: tellText,
         scoreText: scoreText, overLine: overLine, snapshot: snapshot, backLine: backLine, liveTitle: liveTitle,
         validRound: validRound,

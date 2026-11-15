@@ -62,10 +62,16 @@ lie"). There are no stages and no host. Spec: Product's "a round the whole chat 
 - **The 50/50 test.** Half of browsers, by the page's random id (ids starting `a` to `r`; in SQL
   `REGEXP_CONTAINS(uid, r'^[a-r]')`), get one card on the reveal, "Now fool your group", in place of
   SEND TO YOUR GROUP and "Now fool your friends". A browser that arrives by a round link always gets
-  the round. A play-test can choose its half with `&round=on` or `&round=off`.
+  the round. `&round=on` or `&round=off` in the address moves that visit to a half, with any tag or
+  none (the owner's phone before a post: `/he/daily?via=daily-round-wa-he-family&round=on`). A
+  browser it moved out of its own half sends one `round-forced` row a day (`shares`, no `crew_id`;
+  not from a play-test): leave those `uid`s out of the test's comparison:
+  `AND uid NOT IN (SELECT uid FROM shares WHERE method = 'round-forced')`.
 - **The link** is `/daily?n=<puzzle number>&g=<round id>` (`/he/daily` in Hebrew): the number tells
   the server the round's day, the id is ten random letters and digits made in the starter's browser.
-  A play-test's round link carries its `via=test` tag, so everyone who opens it is a tester too.
+  A play-test's round link carries its `via=test` tag, so everyone who opens it is a tester too, and
+  a post's round carries the post's tag (`&via=daily-round-wa-he-family`), so everyone who opens it
+  keeps it. The puzzle's fixed arrivals (`daily-home`, `daily-share` and the like) stay off the link.
 - **Where a round lives:** `qHistory/daily/<lang>/<day>/rounds/<id>`, beside the day's tallies, so
   no database rule changed. It keeps the browsers' names (9 letters), their lies (40), their picks,
   and the answers each browser was dealt. Browser ids never leave the server: lies go out under ids
@@ -89,7 +95,21 @@ lie"). There are no stages and no host. Spec: Product's "a round the whole chat 
   came by a round link: `round-start`, `round-other` (a round in another group), `round-lie`,
   `round-flag`, `truth`/`house`/`friend` for a pick in a round, and from the page `round-tell-whatsapp`,
   `round-tell-native`, `round-tell-copy`, `round-score`, `round-back`, `open` and `create`. A pick in
-  a round also adds to the day's tallies. A test round writes neither.
+  a round also adds to the day's tallies. A test round writes neither. Rows from a post's tagged round
+  are `daily-post`, as every post's are; its start adds one more row, `content_type` `round-via`, with
+  the post's tag in `method` and the round's id in `crew_id`, so the post's rounds are told apart:
+
+```sql
+-- A post's rounds: players and rounds by the post's tag (a round started from another round of the
+-- same post carries the same tag)
+WITH via AS (SELECT crew_id AS round, method AS tag FROM `bullshit-wtf-prod.analytics.shares` WHERE content_type = 'round-via')
+SELECT tag, COUNT(DISTINCT s.crew_id) AS rounds, COUNT(DISTINCT s.uid) AS players
+FROM `bullshit-wtf-prod.analytics.shares` s JOIN via ON s.crew_id = via.round
+WHERE STARTS_WITH(s.content_type, 'daily')
+  AND s.method IN ('truth', 'house', 'friend', 'round-start', 'round-other', 'round-lie')
+GROUP BY tag ORDER BY players DESC;
+```
+
 - **Chat-round players are not weekly players.** They are reported as a line of their own:
 
 ```sql
@@ -107,7 +127,9 @@ SELECT week, COUNT(DISTINCT IF(players >= 2, uid, NULL)) AS chat_round_players,
 FROM part JOIN size USING (round) GROUP BY week ORDER BY week;
 ```
 
-Live games that came from a round carry the tag `daily-round` (`opened_games.campaign`).
+Live games that came from a round carry the tag `daily-round` (`opened_games.campaign`), or on a
+post's round `daily-round-<the post's tag>` (the tag itself when it starts with `daily-round-`, cut to
+40 letters): `STARTS_WITH(campaign, 'daily-round')` counts them all.
 
 ## Play-testing
 

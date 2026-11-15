@@ -460,14 +460,14 @@
             return wrap;
         }
 
-        /** From three players on: the full game, tagged daily-round (a play-test keeps its test tag). */
+        /** From three players on: the full game, tagged daily-round, or daily-round-<tag> on a post's round (a play-test keeps its test tag). */
         function liveCard(r) {
             var box = el('section', 'card game');
             box.appendChild(el('h2', '', rc.liveTitle(s, page.today() || r.day, r.board.played)));
             box.appendChild(el('p', '', s.liveText));
             var hanukkah = r.pack === 'hanukkah';
             var go = el('a', 'btn primary', hanukkah ? s.gameStartHanukkah : s.gameStart);
-            go.href = core.createUrl(s, rc.isTestTag(page.src()) ? page.src() : 'daily-round', hanukkah ? 'hanukkah' : '');
+            go.href = core.createUrl(s, rc.roundCampaign(page.src()), hanukkah ? 'hanukkah' : '');
             go.onclick = function () { page.post('create', { g: r.g, day: r.day }); };
             box.appendChild(go);
             return box;
