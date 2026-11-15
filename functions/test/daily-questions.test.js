@@ -6,11 +6,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const daily = require('../data/daily-questions.json');
 
-const FIRST_DAY = '2026-11-27';
-const DAYS = 35;
+// The first 35 ids of each language (001 to 035) run from 27 November to 31 December. The 13 written
+// after them (036 to 048) are for the days before: 14 to 26 November, from the puzzle's first weekend.
+const FIRST_DAY = '2026-11-14';
+const DAYS = 48;
+const FIRST_ID_DAY = '2026-11-27'; // the day of id 001
+const FIRST_IDS = 35;
 const HANUKKAH_FIRST = '2026-12-04'; // first candle; eight days to 11 December
 const norm = s => String(s).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-const dayAt = n => new Date(Date.parse(FIRST_DAY + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+const dayFrom = (first, n) => new Date(Date.parse(first + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+const dayAt = n => dayFrom(FIRST_DAY, n);
+const dayOfId = no => no <= FIRST_IDS ? dayFrom(FIRST_ID_DAY, no - 1) : dayFrom(FIRST_DAY, no - FIRST_IDS - 1);
 
 test('every daily question is well formed', () => {
     const ids = Object.keys(daily);
@@ -20,7 +26,7 @@ test('every daily question is well formed', () => {
         const m = /^daily-26-(en|he)-(\d{3})$/.exec(id);
         assert.ok(m, id);
         assert.strictEqual(q.lang, m[1], id);
-        assert.strictEqual(q.day, dayAt(Number(m[2]) - 1), id);
+        assert.strictEqual(q.day, dayOfId(Number(m[2])), id);
         assert.strictEqual(q.questionText.split('$blank$').length, 2, id);
         assert.ok(q.realAnswer && q.realAnswer === q.realAnswer.trim(), id);
         assert.ok(Array.isArray(q.fakeAnswers) && q.fakeAnswers.length >= 3 && q.fakeAnswers.length <= 5, id);
@@ -41,7 +47,7 @@ test('every daily question is well formed', () => {
     }
 });
 
-test('each language has one question for every day, 27 November to 31 December', () => {
+test('each language has one question for every day, 14 November to 31 December', () => {
     for (const lang of ['en', 'he']) {
         const days = Object.values(daily).filter(q => q.lang === lang).map(q => q.day).sort();
         assert.deepStrictEqual(days, Array.from({ length: DAYS }, (_, n) => dayAt(n)), lang);
