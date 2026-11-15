@@ -12,6 +12,16 @@ import { swapToast } from './../../name-flag';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
     hostAwayMs, shouldAskClock } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
+import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY } from './lone-host';
+
+/** A value from the browser's storage, or null where storage is closed (private mode). */
+function stored(storage: () => Storage, key: string): string | null {
+    try {
+        return storage().getItem(key);
+    } catch (e) {
+        return null;
+    }
+}
 
 @Component({
     standalone: false,
@@ -29,6 +39,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     loading: boolean;
     showStartButton: boolean;
     lobby: LobbyText;
+    /** The lone-host help, a 50/50 test (lone-host.ts): what this lobby shows and counts. */
+    help: LoneHostHelp = null;
+    /** "Best with 4 or more": the light line under the help. */
+    bestLine: string = null;
     sound: Howl;
 
     private hasPresenter: boolean;
@@ -57,6 +71,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private lobbyTimer: any;
     /** The host has been alone in this lobby, so the first friend in is greeted by name. */
     private wasAlone = false;
+    private helpSeen = false;
     private onVisible = () => {
         if (!document.hidden) {
             this.reportIn();
@@ -208,6 +223,31 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         const friend = firstFriend(view, this.players || [], this.myUid, this.wasAlone, this.myPid);
         this.showStartButton = view.canStart;
         this.lobby = lobbyText(view, (this.players || []).length, this.locale, friend);
+        this.updateHelp(!!view.isHost);
+    }
+
+    private updateHelp(isHost: boolean) {
+        const count = (this.players || []).length;
+        this.help = loneHostHelp({
+            pin: this.pin,
+            isHost,
+            isPresenter: this.presenter,
+            hasPresenter: this.hasPresenter,
+            playerCount: count,
+            userAgent: navigator.userAgent,
+            width: window.innerWidth,
+            override: stored(() => localStorage, HALF_OVERRIDE_KEY),
+        });
+        this.bestLine = this.help.show ? bestLine(count, this.locale) : null;
+        // Counted once per lobby and browser, the first time the help is due, in both halves.
+        const key = 'BS_LOBBY_HELP_' + String(this.pin || '').toUpperCase();
+        if (this.help.due && !this.helpSeen && !stored(() => sessionStorage, key)) {
+            this.apiService.logShare('lobby-help', this.help.seen, { crew: this.pin, locale: this.locale });
+            try {
+                sessionStorage.setItem(key, '1');
+            } catch (e) { }
+        }
+        this.helpSeen = this.helpSeen || this.help.due;
     }
 
     ngOnDestroy() {
