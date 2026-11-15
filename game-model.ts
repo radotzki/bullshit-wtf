@@ -83,22 +83,6 @@ export interface GameScheme {
     // Server time the host's lobby page last reported in (serverStart games only, written only by the
     // server for the phone with the host key). Readable: when it is 90 s old, anyone may start.
     hostSeen?: number;
-    // Server time the host's lobby page said it was hidden (another app, a locked phone), or null
-    // once it reports in from the screen again. Written only by the server, for the phone with the
-    // host key (see hostHere in functions: start.ts). Readable: guests are told the host stepped away,
-    // and in a lobby of HOST_AWAY_MIN_PLAYERS or more anyone may start once it is HOST_AWAY_MS old.
-    hostAwaySince?: number | null;
-    // Server time the lobby first had HOST_AWAY_MIN_PLAYERS (5) players, or null once it drops below
-    // (serverStart games only, written only by the server: join, Replay, hostToBigScreen). Readable: the
-    // host-away 45 s count from the later of this and hostAwaySince, so a room that fills while the host
-    // is away still waits 45 s from the fifth friend.
-    fullSince?: number | null;
-    // How the game left the lobby, from startVerdict: 'host', 'host-away', 'host-gone', 'host-missing'
-    // or 'open'. Server only; copied to opened_games.start_by. Absent on a game started by an old tick.
-    startBy?: string;
-    // Nobody sent a lie or a pick in question 1, so the game ended there (see handleScoreBoardState
-    // in functions: tick.ts). Readable, for the final screen's line. It writes no closed_games row.
-    idle?: boolean;
     origin?: GameOrigin;
     parent?: string;         // PIN of the finished game this one was replayed from
     // PIN of the first game of this sitting: copied from Replay to Replay. Absent on a sitting's first

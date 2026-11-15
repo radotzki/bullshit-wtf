@@ -30,19 +30,10 @@ import { GamePlayer } from '../../game-model';
  * - The host's lobby page reports in every HOST_PING_MS; the server keeps the time (`hostSeen`).
  *   If a joined host has not reported in for HOST_GONE_MS (a dead phone, a closed browser), everyone
  *   may start, and the lobby says the host seems to be gone. The server checks the same.
- * - The host's lobby page also says when it is hidden (WhatsApp, a locked phone): the server keeps
- *   the time (`hostAwaySince`) until the page is back. Guests are told at once that the host stepped
- *   away and to hang on. In a lobby of HOST_AWAY_MIN_PLAYERS or more, everyone may start once the host
- *   has been away HOST_AWAY_MS and the lobby has had 5 players (`fullSince`) for HOST_AWAY_MS: a big
- *   room's patience is under a minute, counted from the fifth friend in. The server checks the same.
  */
 export const HOST_GRACE_MS = 90 * 1000;
 /** Must match HOST_GONE_MS in functions/src/controllers/start.ts. */
 export const HOST_GONE_MS = 5 * 60 * 1000;
-/** Must match HOST_AWAY_MS in functions/src/controllers/start.ts. */
-export const HOST_AWAY_MS = 45 * 1000;
-/** Must match HOST_AWAY_MIN_PLAYERS in functions/src/controllers/start.ts: players, the host included. */
-export const HOST_AWAY_MIN_PLAYERS = 5;
 /** How often the host's lobby page reports in. */
 export const HOST_PING_MS = 20 * 1000;
 /** While this phone's clock offset is unknown (the server could not be asked), how often the lobby asks again. */
@@ -91,15 +82,6 @@ export interface LobbyHostInput {
     waitedMs: number;
     /** How long ago (server time) the host's lobby page last reported in, or null if unknown. */
     hostAwayMs?: number | null;
-    /** The server says the host's lobby page is hidden now (`hostAwaySince` is set). */
-    hostStepped?: boolean;
-    /** How long ago (server time) it was hidden, or null if unknown (no clock offset yet). */
-    hostSteppedMs?: number | null;
-    /**
-     * How long ago (server time) the lobby reached HOST_AWAY_MIN_PLAYERS (`fullSince`), or null if unknown
-     * or not full. The 45 s count from the later of this and the host hiding, as the server counts.
-     */
-    fullMs?: number | null;
 }
 
 export type LobbyWait = 'none' | 'host' | 'host-to-join' | 'big-screen';
@@ -122,10 +104,6 @@ export interface LobbyHostView {
     screenGone?: boolean;
     /** This page is the big screen the host made of their computer: it starts the game. */
     hostScreen?: boolean;
-    /** The host's page is hidden: their name, for "stepped away, hang on". START stays the host's. */
-    hostAway?: string | null;
-    /** The host's page has been hidden HOST_AWAY_MS in a lobby of 5 or more: their name; anyone may start. */
-    hostAwayOpen?: string | null;
 }
 
 export function lobbyHost(input: LobbyHostInput): LobbyHostView {
@@ -173,15 +151,6 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
     if (marked && typeof input.hostAwayMs === 'number' && input.hostAwayMs >= HOST_GONE_MS) {
         return { canStart: true, wait: 'none', hostName: null, alone: false, hostGone: marked.nickname };
     }
-    // Only a marked host's phone says it stepped away. While the time is unknown, START stays the host's.
-    if (marked && input.hostStepped) {
-        // From the later of the two: the smaller of the two ages. Either one unknown keeps START the host's.
-        if (players.length >= HOST_AWAY_MIN_PLAYERS && typeof input.hostSteppedMs === 'number' && typeof input.fullMs === 'number'
-            && Math.min(input.hostSteppedMs, input.fullMs) >= HOST_AWAY_MS) {
-            return { canStart: true, wait: 'none', hostName: null, alone: false, hostAwayOpen: marked.nickname };
-        }
-        return { canStart: false, wait: 'host', hostName: marked.nickname, alone: false, hostAway: marked.nickname };
-    }
     if (host) {
         return { canStart: false, wait: 'host', hostName: host.nickname, alone: false };
     }
@@ -224,9 +193,6 @@ const strings = {
         // Starts the taste: the number is TASTE_QUESTIONS in game-model.
         startAlone: () => 'Try 5 quick questions alone',
         count: (n: number) => n === 1 ? '1 player in' : `${n} players in`,
-        hostAway: (name: string) => `${name} stepped away for a moment. Hang on, the game starts when they're back`,
-        hostAwayOpen: (name: string) => `${name} stepped away. Anyone can press START`,
-        bigHint: (n: number) => `${n} players in. Start when you're ready`,
     },
     he: {
         host: (name: string) => `מחכים ל־${name} להתחיל את המשחק`,
@@ -241,10 +207,6 @@ const strings = {
         aloneSub: () => 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.',
         startAlone: () => 'לנסות לבד 5 שאלות מהירות',
         count: (n: number) => n === 1 ? 'שחקן אחד במשחק' : `${n} שחקנים במשחק`,
-        // The masculine "יצא ... כשיחזור", as in hostGone above.
-        hostAway: (name: string) => `${name} יצא לרגע. חכו רגע, המשחק מתחיל כשיחזור`,
-        hostAwayOpen: (name: string) => `${name} יצא לרגע. כל אחד יכול ללחוץ על "מתחילים"`,
-        bigHint: (n: number) => `${n} שחקנים בפנים. מתחילים כשמוכנים`,
     },
 };
 
@@ -252,8 +214,7 @@ export interface LobbyText {
     message: string;
     /** A second line under the message, or null. */
     sub: string | null;
-    /** The small count line under the message, or null when the message already says the count. */
-    count: string | null;
+    count: string;
     rtl: boolean;
     /** Invite-first lobby: the invite is inline, START waits behind the link that starts the taste. */
     alone: boolean;
@@ -266,27 +227,18 @@ export function lobbyText(view: LobbyHostView, playerCount: number, locale: stri
     const t = he ? strings.he : strings.en;
     let message: string;
     let sub: string = null;
-    let showCount = true;
 
     if (view.alone) {
         message = t.alone();
         sub = t.aloneSub();
     } else if (view.canStart && view.hostGone) {
         message = t.hostGone(view.hostGone);
-    } else if (view.canStart && view.hostAwayOpen) {
-        message = t.hostAwayOpen(view.hostAwayOpen);
     } else if (view.canStart && view.screenGone) {
         message = t.screenGone();
     } else if (view.canStart && friendName) {
         message = t.friendIn(friendName);
-    } else if (view.canStart && view.isHost && playerCount >= HOST_AWAY_MIN_PLAYERS) {
-        message = t.bigHint(playerCount);
-        // "9 players in. Start when you're ready" already says it: no "9 players in" under it.
-        showCount = false;
     } else if (view.canStart) {
         message = t.startHint();
-    } else if (view.wait === 'host' && view.hostAway) {
-        message = t.hostAway(view.hostAway);
     } else if (view.wait === 'host') {
         message = t.host(view.hostName);
     } else if (view.wait === 'big-screen') {
@@ -295,38 +247,7 @@ export function lobbyText(view: LobbyHostView, playerCount: number, locale: stri
         message = t.hostToJoin();
     }
 
-    return { message, sub, count: showCount ? t.count(playerCount) : null, rtl: he, alone: !!view.alone, startAlone: t.startAlone() };
-}
-
-/**
- * The host's own lobby page came back on screen: show the big START panel? When the lobby has 5 or more
- * players, or 2 or more joined while the page was hidden. Not for a big screen, nor for the lone host.
- */
-export function startPanelDue(isHost: boolean, alone: boolean, playersNow: number, playersAtHide: number): boolean {
-    if (!isHost || alone) {
-        return false;
-    }
-    return playersNow >= HOST_AWAY_MIN_PLAYERS || playersNow - playersAtHide >= 2;
-}
-
-export interface StartPanel {
-    /** "{n} friends are waiting for you" (one: "1 friend is waiting for you"): n is the players in, not counting the host. */
-    line: string;
-    button: string;
-}
-
-export function startPanel(playerCount: number, locale: string): StartPanel {
-    const n = Math.max(0, playerCount - 1);
-    if (locale === 'he') {
-        return { line: n === 1 ? 'חבר אחד מחכה לך' : `${n} חברים מחכים לך`, button: 'מתחילים' };
-    }
-    return { line: n === 1 ? '1 friend is waiting for you' : `${n} friends are waiting for you`, button: 'START' };
-}
-
-/** The tab's title while the host's lobby page is hidden and someone joined: the tab switcher shows it. */
-export function hiddenTitle(playerCount: number, locale: string): string {
-    const n = Math.max(0, playerCount - 1);
-    return locale === 'he' ? `(${n}) מתחילים – בולשיט` : `(${n}) Start the game – Bullshit`;
+    return { message, sub, count: t.count(playerCount), rtl: he, alone: !!view.alone, startAlone: t.startAlone() };
 }
 
 /** The lobby line for a seasonal pack game, or null. */
