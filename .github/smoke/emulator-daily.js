@@ -624,7 +624,9 @@ async function run(browser, base, lang) {
 
     // 19. The ways in: the home page, the search pages.
     const home = await newVisitor(browser, base, `${L} home`);
-    for (const [where, url] of [['phone home', lang === 'he' ? '/he' : '/m'], ['desktop home', lang === 'he' ? '/he/d' : '/d']]) {
+    // Hebrew has no /he/d address (it answers 404): /he is the Hebrew home, and the app itself opens the
+    // phone or the computer page there, as it does for every Hebrew visitor.
+    for (const [where, url] of [['phone home', lang === 'he' ? '/he' : '/m'], ['desktop home', lang === 'he' ? '/he' : '/d']]) {
         await home.page.goto(base + url);
         const line = home.page.locator('a.daily-link');
         const found = await line.waitFor({ timeout: 15000 }).then(() => true, () => false);

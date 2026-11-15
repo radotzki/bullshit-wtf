@@ -283,7 +283,9 @@ test('the wiring: /_daily is served before the Hebrew rewrites, and nothing need
     const rewrites = JSON.parse(fs.readFileSync(path.join(root, 'firebase.json'), 'utf8')).hosting.rewrites;
     const at = source => rewrites.findIndex(r => r.source === source);
     assert.deepStrictEqual(rewrites[at('/_daily')], { source: '/_daily', function: 'daily' });
-    assert.ok(at('/_daily') >= 0 && at('/_daily') < at('/he') && at('/_daily') < at('/he/**') && at('/_daily') < at('**'));
+    // Before every rewrite to a page (the Hebrew and app-screen lists), so /_daily always reaches the function.
+    const firstPage = rewrites.findIndex(r => r.destination);
+    assert.ok(at('/_daily') >= 0 && firstPage > 0 && at('/_daily') < firstPage);
     assert.match(fs.readFileSync(path.join(root, 'functions', 'src', 'firebase.ts'), 'utf8'), /dailyRef = qHistoryRef\.child\('daily'\)/);
     const rules = JSON.parse(fs.readFileSync(path.join(root, 'database-rules.json'), 'utf8')).rules;
     assert.strictEqual(rules.daily, undefined);

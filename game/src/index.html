@@ -85,7 +85,7 @@
   <!--
     Link previews (WhatsApp, Facebook, X, Telegram, Slack) and search.
     scripts/build-he.js copies this file to he.html with the Hebrew versions of
-    every tag between the BS:META markers; /he/** is served from that file.
+    every tag between the BS:META markers; /he and the Hebrew app addresses are served from that file.
   -->
   <!-- BS:META:START -->
   <meta name="description" content="A free party game everyone plays on their own phone, in the browser. Write a lie that fools your friends, then find the truth. Up to 12 players, no download. In English and Hebrew.">
@@ -115,7 +115,9 @@
   <meta itemprop="description" content="Fool your friends with fake answers to strange true facts. Free, up to 12 players, everyone plays on their phone.">
   <meta itemprop="image" content="https://bullshit.wtf/assets/og-image.png">
   <!-- BS:META:END -->
+  <!-- BS:LD:START -->
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Bullshit","alternateName":"בולשיט","url":"https://bullshit.wtf/","description":"A free party game for phones. Everyone writes a lie to fill in a strange true fact, then tries to find the truth among all the answers.","genre":["Party game","Trivia","Bluffing"],"gamePlatform":"Web browser","playMode":"MultiPlayer","numberOfPlayers":{"@type":"QuantitativeValue","minValue":2,"maxValue":12},"inLanguage":["en","he"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+  <!-- BS:LD:END -->
   <meta name="theme-color" content="#db7151">
 
   <base href="/">
@@ -124,6 +126,20 @@
   <meta name="format-detection" content="telephone=no">
   <meta name="msapplication-tap-highlight" content="no">
   <style>.l{-webkit-animation:spinAround .5s infinite linear;animation:spinAround .5s infinite linear;border:2px solid #dbdbdb;border-radius:290486px;border-right-color:transparent;border-top-color:transparent;content:"";display:block;height:1rem;width:1rem;position:absolute;top:0;bottom:0;left:0;right:0;margin:auto}</style>
+  <style>
+    /* The text under the app (BS:ABOUT). Hidden until the app has drawn, so it never flashes above the
+       menu while the game loads; the app hides it on every screen but home (app.component.ts). */
+    .bs-about { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; color: #2b2523; background: #fffaf3;
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+    .bs-about h2 { color: #97374e; font-size: 20px; font-weight: 700; margin: 20px 0 6px; }
+    .bs-about p { margin: 0 0 10px; }
+    .bs-about ol { padding-inline-start: 22px; margin: 0 0 10px; }
+    .bs-about a { color: #97374e; }
+    .bs-about[hidden], body:has(app-root > .l:only-child) .bs-about { display: none; }
+    /* The desktop menu covers the first screen (position: absolute): start the text below it. */
+    .bs-about[data-at="d"] { margin-top: 100vh; }
+  </style>
+  <noscript><style>.bs-about { display: block !important; } app-root { display: none; }</style></noscript>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" href="assets/favicon-32x32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="assets/favicon-16x16.png" sizes="16x16" />
@@ -132,15 +148,34 @@
 </head>
 <body>
   <app-root><div class="l"></div></app-root>
-  <noscript>
-    <h1>Bullshit: a free party game for phones</h1>
-    <p>Everyone plays on their own phone. A strange true fact appears with a blank, everyone writes a lie to fill it,
-      and then everyone tries to find the truth among all the answers. Up to 12 players, in English or Hebrew.</p>
-    <p><a href="/how-to-play">How to play</a> · <a href="/party-games-on-your-phone">Party games on your phone</a> ·
-      <a href="/hanukkah-party-game">Hanukkah party game</a> ·
-      <a href="/he/how-to-play" hreflang="he" lang="he">איך משחקים</a> · <a href="/he/party-game-phone" hreflang="he" lang="he">משחק חברה בטלפון</a> ·
-      <a href="/he/hanukkah" hreflang="he" lang="he">משחק לחנוכה</a></p>
-    <p>The game itself needs JavaScript turned on.</p>
-  </noscript>
+  <!--
+    What the game is, as plain page text that search engines read without running anything. It sits
+    under the app: the phone menu fills the first screen, and this follows below it. The app shows it
+    on the home screens only (app.component.ts) and hides it on every other screen.
+    scripts/build-he.js puts the Hebrew text between the BS:ABOUT markers in he.html.
+  -->
+  <!-- BS:ABOUT:START -->
+  <main id="bs-about" class="bs-about" lang="en" dir="ltr">
+    <h2>Bullshit: a free party game for phones</h2>
+    <p>Everyone plays on their own phone, in the same room, in the browser. A strange true fact appears with a blank,
+      everyone writes a lie to fill it, and then everyone tries to find the truth among all the answers. Fool a friend
+      and you score. Find the truth and you score. Free, no download, no sign-up, up to 12 players, with questions in
+      English or Hebrew.</p>
+    <h2>How it works</h2>
+    <ol>
+      <li><strong>One person creates a game</strong> and gets a four-letter PIN.</li>
+      <li><strong>Everyone else joins</strong> from their own phone with the PIN.</li>
+      <li><strong>Write a lie, then find the truth.</strong> 5, 7 or 9 questions, and the points grow each round.</li>
+    </ol>
+    <p>For a bigger group, put the questions and the scores on a TV or laptop with Present Game.</p>
+    <h2>More about the game</h2>
+    <p class="bs-links"><a href="/how-to-play">How to play</a> · <a href="/party-games-on-your-phone">Party games on your phone</a> ·
+      <a href="/hanukkah-party-game">Hanukkah party game</a> · <a href="/christmas-party-game">Christmas party game</a> ·
+      <a href="/classroom-game">A game for the classroom</a> · <a href="/team-building-game">A team-building game</a> ·
+      <a href="/free-jackbox-alternative">A free Jackbox alternative</a> ·
+      <a href="/he" hreflang="he" lang="he">בולשיט בעברית</a></p>
+    <noscript><p>The game itself needs JavaScript turned on.</p></noscript>
+  </main>
+  <!-- BS:ABOUT:END -->
 </body>
 </html>
