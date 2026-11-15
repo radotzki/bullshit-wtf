@@ -32,14 +32,19 @@ export function isMoved(game: GameScheme | null | undefined): boolean {
     return !!(game && game.kept && typeof game.kept === 'object');
 }
 
-/** The game with its moved parts back where they were, for the server's readers. A part written since wins. */
+/**
+ * The game with its moved parts back where they were, for the server's readers. What `kept` holds wins:
+ * a moved game plays no more, so a part written at its old place since can only be a stranger's
+ * (answerSelections is the one part phones may write), and it never takes the place of the real one.
+ * A part `kept` doesn't hold is read from its old place, as before.
+ */
 export function withKept<T extends GameScheme>(game: T | null): T | null {
     if (!isMoved(game)) {
         return game;
     }
     const out: any = Object.assign({}, game);
     KEPT_PARTS.forEach(part => {
-        if ((out[part] === undefined || out[part] === null) && game.kept[part] !== undefined && game.kept[part] !== null) {
+        if (game.kept[part] !== undefined && game.kept[part] !== null) {
             out[part] = game.kept[part];
         }
     });
@@ -51,7 +56,11 @@ export function readGame(pin: string): Promise<GameScheme | null> {
     return get<GameScheme>(gamesRef.child(pin)).then(game => withKept(game));
 }
 
-/** One part of a game, from its own place, or from `kept` once the game is old. */
+/**
+ * One part of a game, from its own place, or from `kept` once the game is old. Its own place is read
+ * first, so a live game pays no second read. Only the server writes the parts its readers ask for here
+ * (players, revealAnswers, creator), so nothing a stranger writes on a moved game is read back this way.
+ */
 export async function readPart<T>(pin: string, part: string): Promise<T | null> {
     const here = await get<T>(gamesRef.child(pin).child(part));
     if ((here !== null && here !== undefined) || KEPT_PARTS.indexOf(part) < 0) {
@@ -115,16 +124,7 @@ export function moveUpdate(game: GameScheme, now: number): { [path: string]: any
 
 /** Moves one game's private parts, if it is old. Resolves to whether anything moved. */
 export async function moveGame(pin: string, now: number): Promise<boolean> {
-    const game = await get<GameScheme>(gamesRef.child(pin));
-    if (!game || !isOld(game, now)) {
-        return false;
-    }
-    const update = moveUpdate(game, now);
-    if (!Object.keys(update).length) {
-        return false;
-    }
-    await gamesRef.child(pin).update(update);
-    return true;
+    return (await moveOne(pin, now)).moved;
 }
 
 // ---- the sweep ----
@@ -133,12 +133,27 @@ export async function moveGame(pin: string, now: number): Promise<boolean> {
 export const SWEEP_BATCH = 200;
 /** Games read at once. */
 const SWEEP_CHUNK = 25;
-/** A running copy sweeps at most this often. */
+/**
+ * The whole project sweeps at most this often, however many copies are running (gameSweep.at, kept
+ * in the lease), and each running copy doesn't even ask more often than this.
+ */
 export const SWEEP_EVERY_MS = 60 * 1000;
 /** One copy sweeps at a time: it holds the sweep this long (it gives it back when it is done). */
 const LEASE_MS = 3 * 60 * 1000;
 /** A PIN this close to the counter with no game may still be being made: the sweep waits for it. */
 const FRESH_PINS = 20;
+/**
+ * A game made less than this long ago can't be old (see isOld: a finished game ended after it was
+ * made, and a game never finished waits a day), and nor can any made after it. The walk stops there.
+ */
+export const YOUNG_MS = AFTER_END_MS;
+/**
+ * The walk passes over an older game that isn't old yet (a game that ended less than 6 hours ago, a
+ * lobby less than a day old, a lobby still open in a host's tab) and notes it under gameSweep/wait, with
+ * the time it may first be old, for a later sweep to look at again. At most this many: with the list
+ * full, the walk stops at such a game instead, so nothing is ever passed over unnoted.
+ */
+export const WAIT_MAX = 100;
 
 let lastSweep = 0;
 
@@ -147,19 +162,51 @@ export function forgetSweep() {
     lastSweep = 0;
 }
 
+/** PIN to the time its game may first be old. */
+export type SweepWait = { [pin: string]: number };
+
 export interface SweepResult {
     /** The counter of the first game the next sweep looks at. */
     next: number;
     moved: number;
     looked: number;
-    skipped?: 'busy';
+    /** Older games passed over, noted to be looked at again. */
+    waiting?: number;
+    /** busy: another copy is sweeping. soon: a sweep started somewhere less than SWEEP_EVERY_MS ago. */
+    skipped?: 'busy' | 'soon';
+}
+
+/** The game was made less than YOUNG_MS ago, so neither it nor any game after it can be old. */
+export function isYoung(game: GameStamp | null, now: number): boolean {
+    if (!game) {
+        return false;
+    }
+    const made = Number(game.timestamp) || Number(game.state && game.state.timestamp) || 0;
+    return made > 0 && now - made < YOUNG_MS;
+}
+
+/** When a game that isn't old yet may first be old (see isOld). Never sooner than the next sweep. */
+export function dueAt(game: GameStamp, now: number): number {
+    const state = game.state || {};
+    const ended = Number(state.timestamp) || 0;
+    const made = Number(game.timestamp) || 0;
+    let due: number;
+    if (state.id === GameState.ScoreBoardFinal) {
+        due = (ended || made) + AFTER_END_MS;
+    } else {
+        const last = Math.max(ended, made, Number(game.hostSeen) || 0);
+        due = Math.max((made || ended) + AFTER_MADE_MS, last + STALE_MS);
+    }
+    return Math.max(due, now + SWEEP_EVERY_MS);
 }
 
 /**
- * Walks the games in the order they were made, from where the last sweep stopped, and moves each old
- * one's private parts (see moveGame). It stops at the first game that is not old yet, since those after
- * it are younger, or after SWEEP_BATCH games; the next sweep goes on from there. A PIN with no game is
- * passed over. Runs at most once a SWEEP_EVERY_MS per running copy, and in one copy at a time.
+ * Looks first at the older games an earlier sweep passed over whose time has come, then walks on
+ * through the games in the order they were made, from where the last sweep stopped, and moves each
+ * old one's private parts (see moveGame). An older game that isn't old yet is passed over and noted
+ * (see WAIT_MAX); the walk stops at the first young game (see YOUNG_MS), since those after it are
+ * younger, or after SWEEP_BATCH games in all; the next sweep goes on from there. A PIN with no game is
+ * passed over. Runs at most once a SWEEP_EVERY_MS for the whole project, and in one copy at a time.
  * Never rejects.
  */
 export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH): Promise<SweepResult | null> {
@@ -171,21 +218,24 @@ export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH): Prom
         return null;
     }
     try {
-        const start = await takeLease(now);
-        if (start === null) {
-            return { next: -1, moved: 0, looked: 0, skipped: 'busy' };
+        const lease = await takeLease(now);
+        if (lease.skipped) {
+            return { next: -1, moved: 0, looked: 0, skipped: lease.skipped };
         }
-        let result: SweepResult;
+        let result: SweepResult & { wait: SweepWait };
         try {
-            result = await walk(start, now, batch);
+            result = await walk(lease.next, lease.wait, now, batch);
         } catch (e) {
-            await gameSweepRef.child('lease').set(0).catch(() => null);
+            await saveSweep(lease.until, null).catch(() => null);
             throw e;
         }
-        await gameSweepRef.update({ next: result.next, lease: 0, at: now });
+        // Kept only while this copy still holds the sweep: a copy frozen past its lease and woken
+        // later never takes the cursor back to where it started.
+        await saveSweep(lease.until, { next: result.next, wait: result.wait, at: now });
         if (result.moved) {
-            console.log('oldGames ' + JSON.stringify({ moved: result.moved, looked: result.looked, next: generateGameName(result.next) }));
+            console.log('oldGames ' + JSON.stringify({ moved: result.moved, looked: result.looked, waiting: result.waiting, next: generateGameName(result.next) }));
         }
+        delete result.wait;
         return result;
     } catch (e) {
         console.error('oldGames: the sweep failed', e && e.message ? e.message : e);
@@ -193,31 +243,153 @@ export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH): Prom
     }
 }
 
-/** Claims the sweep for LEASE_MS: resolves to the counter it starts at, or null when another copy holds it. */
-function takeLease(now: number): Promise<number | null> {
+interface Lease {
+    next: number;
+    wait: SweepWait;
+    /** The lease's end, which also tells this copy's lease from another's. */
+    until: number;
+    skipped?: 'busy' | 'soon';
+}
+
+/** What a stored wait list holds that is a PIN and a time. */
+function cleanWait(raw: any): SweepWait {
+    const wait: SweepWait = {};
+    if (raw && typeof raw === 'object') {
+        Object.keys(raw).forEach(pin => {
+            const due = Number(raw[pin]);
+            if (/^[A-Z0-9]{1,12}$/.test(pin) && due > 0) {
+                wait[pin] = due;
+            }
+        });
+    }
+    return wait;
+}
+
+/**
+ * Claims the sweep for LEASE_MS, unless another copy holds it or a sweep started anywhere less than
+ * SWEEP_EVERY_MS ago. A start time far ahead of this copy's clock doesn't hold the sweep back for long.
+ */
+function takeLease(now: number): Promise<Lease> {
     return new Promise((resolve, reject) => {
-        let start: number | null = null;
+        let lease: Lease = { next: 0, wait: {}, until: 0, skipped: 'busy' };
         gameSweepRef.transaction(
             (current: any) => {
                 current = current || {};
                 if (Number(current.lease) > now) {
-                    start = null;
+                    lease = { next: 0, wait: {}, until: 0, skipped: 'busy' };
                     return; // abort: another copy is sweeping
                 }
+                const at = Number(current.at) || 0;
+                if (now - at < SWEEP_EVERY_MS && at - now < LEASE_MS) {
+                    lease = { next: 0, wait: {}, until: 0, skipped: 'soon' };
+                    return; // abort: the project swept less than a minute ago
+                }
                 // The first game ever made is counter 1 (incGameCounter adds one first).
-                start = Number(current.next) >= 1 ? Number(current.next) : 1;
-                return Object.assign({}, current, { lease: now + LEASE_MS });
+                lease = { next: Number(current.next) >= 1 ? Number(current.next) : 1, wait: cleanWait(current.wait), until: now + LEASE_MS };
+                return Object.assign({}, current, { lease: lease.until, at: now });
             },
-            (error, committed) => error ? reject(error) : resolve(committed ? start : null),
+            (error, committed) => error ? reject(error) : resolve(committed ? lease : Object.assign({}, lease, { skipped: lease.skipped || 'busy' })),
         );
     });
 }
 
-async function walk(start: number, now: number, batch: number): Promise<SweepResult> {
-    const counter = Number(await get<number>(gameCounterRef)) || 0;
-    let next = start;
+/** Gives the sweep back, with where it got to (or, after a fault, as it was), if this lease still holds it. */
+function saveSweep(until: number, done: { next: number; wait: SweepWait; at: number } | null): Promise<void> {
+    return new Promise((resolve, reject) => {
+        gameSweepRef.transaction(
+            (current: any) => {
+                if (current === null) {
+                    // The database's first guess, before it has read the sweep: an abort here would end the
+                    // transaction unsent. Returning it as it is lets the database read it and ask again.
+                    return null;
+                }
+                if (Number(current.lease) !== until) {
+                    return; // abort: this copy's lease ran out, and another may hold the sweep
+                }
+                const out = Object.assign({}, current, { lease: 0 });
+                if (done) {
+                    out.next = done.next;
+                    out.at = done.at;
+                    if (Object.keys(done.wait).length) {
+                        out.wait = done.wait;
+                    } else {
+                        delete out.wait;
+                    }
+                }
+                return out;
+            },
+            (error) => error ? reject(error) : resolve(),
+        );
+    });
+}
+
+/** What moving one game came to: moved, or not old yet (with when it may be), or nothing to move. */
+async function moveOne(pin: string, now: number): Promise<{ moved: boolean; due?: number }> {
+    const game = await get<GameScheme>(gamesRef.child(pin));
+    if (!game) {
+        return { moved: false };
+    }
+    if (!isOld(game, now)) {
+        return { moved: false, due: dueAt(game, now) };
+    }
+    const update = moveUpdate(game, now);
+    if (!Object.keys(update).length) {
+        return { moved: false };
+    }
+    await gamesRef.child(pin).update(update);
+    return { moved: true };
+}
+
+/** Moves the old ones of these games; one found not old after all is noted in `wait`. Resolves to how many moved. */
+async function moveAll(pins: string[], now: number, wait: SweepWait): Promise<number> {
+    const results = await Promise.all(pins.map(pin => moveOne(pin, now)));
+    let moved = 0;
+    results.forEach((r, i) => {
+        if (r.moved) {
+            moved++;
+        } else if (r.due) {
+            wait[pins[i]] = r.due;
+        }
+    });
+    return moved;
+}
+
+async function walk(start: number, wait: SweepWait, now: number, batch: number): Promise<SweepResult & { wait: SweepWait }> {
+    const keep: SweepWait = {};
     let moved = 0;
     let looked = 0;
+
+    // First the games passed over before whose time has come, soonest first; the rest wait on.
+    const due = Object.keys(wait).filter(pin => wait[pin] <= now).sort((a, b) => wait[a] - wait[b]);
+    Object.keys(wait).forEach(pin => {
+        if (wait[pin] > now) {
+            keep[pin] = wait[pin];
+        }
+    });
+    due.slice(batch).forEach(pin => keep[pin] = wait[pin]);
+    const look = due.slice(0, batch);
+    for (let i = 0; i < look.length; i += SWEEP_CHUNK) {
+        const pins = look.slice(i, i + SWEEP_CHUNK);
+        const stamps = await Promise.all(pins.map(readStamp));
+        const old: string[] = [];
+        pins.forEach((pin, j) => {
+            const stamp = stamps[j];
+            if (!stamp) {
+                return; // no game there any more: nothing to wait for
+            }
+            if (isOld(stamp, now)) {
+                old.push(pin);
+            } else {
+                keep[pin] = dueAt(stamp, now);
+            }
+        });
+        moved += await moveAll(old, now, keep);
+        looked += pins.length;
+    }
+
+    // Then on from the cursor.
+    const counter = Number(await get<number>(gameCounterRef)) || 0;
+    let next = start;
     while (looked < batch && next <= counter) {
         const size = Math.min(SWEEP_CHUNK, batch - looked, counter - next + 1);
         const pins: string[] = [];
@@ -236,20 +408,25 @@ async function walk(start: number, now: number, batch: number): Promise<SweepRes
                 }
                 continue;
             }
-            if (!isOld(stamp, now)) {
+            if (isOld(stamp, now)) {
+                old.push(pins[done]);
+                continue;
+            }
+            if (isYoung(stamp, now) || Object.keys(keep).length >= WAIT_MAX) {
                 break;
             }
-            old.push(pins[done]);
+            // Older but not old yet: passed over, and looked at again once it may be.
+            keep[pins[done]] = dueAt(stamp, now);
         }
-        moved += (await Promise.all(old.map(pin => moveGame(pin, now)))).filter(Boolean).length;
-        // Up to the first game that is not old yet, which the next sweep looks at again.
+        moved += await moveAll(old, now, keep);
+        // Up to the first game the walk stopped at, which the next sweep looks at again.
         next += done;
         looked += done;
         if (done < pins.length) {
             break;
         }
     }
-    return { next, moved, looked };
+    return { next, moved, looked, waiting: Object.keys(keep).length, wait: keep };
 }
 
 async function readStamp(pin: string): Promise<GameStamp | null> {

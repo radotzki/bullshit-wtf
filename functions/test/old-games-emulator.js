@@ -218,13 +218,16 @@ async function seed() {
     const now = Date.now();
     // PINs as the counter makes them, for the first five games ever made: the sweep starts from counter 1.
     const pin = (c) => c.toString(26).replace(/\d/g, d => 'qrstuvwxyz'[d]).toUpperCase().padStart(4, 'Q');
-    const pins = { earlier: pin(1), old: pin(2), lobby: pin(3), hour: pin(4), live: pin(5) };
+    const pins = { earlier: pin(1), open: pin(2), old: pin(3), lobby: pin(4), hour: pin(5), live: pin(6) };
     await db('PUT', `games/${pins.earlier}`, game(6, now - 8 * H, now - 9 * H));
+    // A lobby made 30 hours ago that is still open in a host's tab (it reports in every 20 seconds):
+    // the sweep passes over it, notes it, and goes on to the old games after it.
+    await db('PUT', `games/${pins.open}`, game(0, now - 30 * H, now - 30 * H, { roundIndex: 0, questionIndex: 0, hostSeen: now - 20000 }));
     await db('PUT', `games/${pins.old}`, game(6, now - 7 * H, now - 7.5 * H, { parent: pins.earlier }));
     await db('PUT', `games/${pins.lobby}`, game(0, now - 48 * H, now - 48 * H, { roundIndex: 0, questionIndex: 0 }));
     await db('PUT', `games/${pins.hour}`, game(6, now - H, now - 1.5 * H));
     await db('PUT', `games/${pins.live}`, game(3, now - 5000, now - 10 * 60 * 1000, { serverStart: true }));
-    await db('PUT', 'gameCounter', 5);
+    await db('PUT', 'gameCounter', 6);
     return pins;
 }
 
@@ -244,21 +247,23 @@ async function main() {
         log('games', JSON.stringify(pins));
 
         // 2. Before the sweep: everything is readable by a stranger, as on master.
-        for (const which of ['old', 'lobby', 'hour', 'live']) {
+        for (const which of ['open', 'old', 'lobby', 'hour', 'live']) {
             const r = await stranger(`games/${pins[which]}/players`);
             check(`before: a stranger reads the ${which} game's players`, r.status === 200 && r.value && r.value.p1, `${r.status}`);
         }
 
-        // 3. A call of the daily puzzle runs the sweep (not waited for there). A running copy sweeps at
+        // 3. A call of the daily puzzle runs the sweep, and answers once it is done. The project sweeps at
         // most once a minute, and the games' own writes above may have just run it: call again until it has.
         const until = Date.now() + 150000;
-        while (Date.now() < until && ((await db('GET', 'qHistory/gameSweep')) || {}).next !== 4) {
+        while (Date.now() < until && ((await db('GET', 'qHistory/gameSweep')) || {}).next !== 5) {
             const daily = await fetch(`${FUNCTIONS}/daily?lang=en`);
             log(`daily answered ${daily.status}`);
             await sleep(10000);
         }
         const sweep = await db('GET', 'qHistory/gameSweep');
-        check('the sweep ran and stopped at the game that ended an hour ago', sweep && sweep.next === 4, JSON.stringify(sweep));
+        check('the sweep ran past the open lobby and stopped at the game that ended an hour ago', sweep && sweep.next === 5, JSON.stringify(sweep));
+        check('the open lobby is noted for a later look', sweep && sweep.wait && sweep.wait[pins.open] > Date.now(), JSON.stringify(sweep && sweep.wait));
+        check('the sweep\'s start time is kept, for the once-a-minute limit', sweep && sweep.at > 0 && sweep.lease === 0, JSON.stringify(sweep));
 
         // 4. After the sweep.
         for (const which of ['old', 'lobby']) {
@@ -276,7 +281,7 @@ async function main() {
         const moved = await db('GET', `games/${pins.old}/kept`);
         check('nothing erased: the old game\'s parts are all under kept', PRIVATE.every(p => moved && moved[p] !== undefined)
             && moved.players.p1.nickname === 'Dana' && moved.highlights.p1.text === 'a secret lie', Object.keys(moved || {}).join(','));
-        for (const which of ['hour', 'live']) {
+        for (const which of ['open', 'hour', 'live']) {
             for (const part of PRIVATE) {
                 const r = await stranger(`games/${pins[which]}/${part}`);
                 check(`after: the ${which} game's ${part} still reads`, r.status === 200 && r.value !== null, `${r.status}`);

@@ -35,8 +35,12 @@ function ref(parts) {
         set: async (v) => put(parts, v),
         update: async (v) => Object.keys(v).forEach(k => put(parts.concat(k.split('/')), v[k])),
         push: (v) => { const key = 'k' + (++pushId); if (v !== undefined) put(parts.concat(key), v); return { key }; },
-        // Returning undefined aborts, as in the real database.
+        // Returning undefined aborts, as in the real database. Like it, the first call may be given
+        // null, before the value has been read: an abort then ends the transaction unsent.
         transaction: (fn, done) => {
+            const first = fn(null);
+            if (first === undefined) return done(null, false, { val: () => clone(at(parts)) });
+            if (at(parts) === null) { put(parts, first); return done(null, true, { val: () => clone(at(parts)) }); }
             const v = fn(clone(at(parts)));
             if (v === undefined) return done(null, false, { val: () => clone(at(parts)) });
             put(parts, v);
@@ -168,7 +172,7 @@ test('a live game and one that ended an hour ago are not moved', async () => {
     assert.strictEqual(db.games.HOUR.kept, undefined);
 });
 
-test('the sweep walks the PINs in order, passes missing ones, and stops at the first game not old yet', async () => {
+test('the sweep walks the PINs in order, passes missing ones, and stops at the first young game', async () => {
     const games = {};
     // Counters 1..6: old, missing, old lobby, old, ended an hour ago, old (behind the young one).
     games[generateGameName(1)] = finished(30 * H);
@@ -225,6 +229,108 @@ test('a sweep looks at no more than its batch, and the next goes on', async () =
     for (let c = 1; c <= 30; c++) assert.ok(db.games[generateGameName(c)].kept);
 });
 
+test('the sweep passes over an older game that is not old yet, notes it, and carries on to the old games after it', async () => {
+    const games = {};
+    // 1 old; 2 a lobby made 20 hours ago; 3 a day-old lobby still open in a host's tab; 4 and 5 ended
+    // 7 hours ago; 6 ended an hour ago (made 2 hours ago: young, so the walk stops there).
+    games[generateGameName(1)] = finished(30 * H);
+    games[generateGameName(2)] = lobby(20 * H);
+    games[generateGameName(3)] = lobby(30 * H, { hostSeen: NOW - 20 * 1000 });
+    games[generateGameName(4)] = finished(7 * H);
+    games[generateGameName(5)] = finished(7 * H);
+    games[generateGameName(6)] = finished(H);
+    seed(games, 6);
+    const r = await og.sweepOldGames(NOW);
+    assert.deepStrictEqual({ next: r.next, moved: r.moved, waiting: r.waiting }, { next: 6, moved: 3, waiting: 2 });
+    [1, 4, 5].forEach(c => assert.ok(db.games[generateGameName(c)].kept, `${c} moved`));
+    [2, 3, 6].forEach(c => assert.ok(!db.games[generateGameName(c)].kept, `${c} not moved`));
+    // Each passed-over game is noted with the time it may first be old.
+    assert.deepStrictEqual(db.gameSweep.wait, {
+        [generateGameName(2)]: NOW + 4 * H,
+        [generateGameName(3)]: NOW - 20 * 1000 + 6 * H,
+    });
+
+    // Five hours on: the 20-hour lobby is a day old and moves; the open tab isn't due yet and isn't read.
+    og.forgetSweep();
+    const r2 = await og.sweepOldGames(NOW + 5 * H);
+    assert.deepStrictEqual({ next: r2.next, moved: r2.moved, waiting: r2.waiting, looked: r2.looked }, { next: 7, moved: 2, waiting: 1, looked: 2 });
+    assert.ok(db.games[generateGameName(2)].kept && db.games[generateGameName(6)].kept);
+    // The host's tab is still open: its lobby waits on, and games made after it still move.
+    db.games[generateGameName(3)].hostSeen = NOW + 6.5 * H;
+    db.games[generateGameName(7)] = finished(7 * H, { timestamp: NOW - 6 * H });
+    db.gameCounter = 7;
+    og.forgetSweep();
+    const r3 = await og.sweepOldGames(NOW + 7 * H);
+    assert.strictEqual(r3.moved, 1);
+    assert.ok(db.games[generateGameName(7)].kept, 'a game after the open lobby moved');
+    assert.ok(!db.games[generateGameName(3)].kept, 'the open lobby is not moved under its host');
+    assert.deepStrictEqual(db.gameSweep.wait, { [generateGameName(3)]: NOW + 12.5 * H });
+    // The tab closes: six hours later the lobby moves, and nothing waits any more.
+    og.forgetSweep();
+    const r4 = await og.sweepOldGames(NOW + 13 * H);
+    assert.strictEqual(r4.moved, 1);
+    assert.ok(db.games[generateGameName(3)].kept);
+    assert.strictEqual(db.gameSweep.wait, undefined);
+    // Nothing of any game was erased.
+    Object.keys(db.games).forEach(pin => assert.ok(Object.keys(og.withKept(db.games[pin]).players).length >= 1));
+});
+
+test('with the wait list full, the walk stops at the next game that is not old yet, as before', async () => {
+    const games = {};
+    for (let c = 1; c <= og.WAIT_MAX + 1; c++) games[generateGameName(c)] = lobby(20 * H);
+    games[generateGameName(og.WAIT_MAX + 2)] = finished(7 * H);
+    seed(games, og.WAIT_MAX + 40);
+    const r = await og.sweepOldGames(NOW);
+    assert.deepStrictEqual({ next: r.next, moved: r.moved, waiting: r.waiting }, { next: og.WAIT_MAX + 1, moved: 0, waiting: og.WAIT_MAX });
+    assert.ok(!db.games[generateGameName(og.WAIT_MAX + 2)].kept);
+});
+
+test('the whole project sweeps at most once a minute, however many copies run', async () => {
+    const games = {};
+    for (let c = 1; c <= 30; c++) games[generateGameName(c)] = finished(30 * H);
+    seed(games, 60);
+    const r = await og.sweepOldGames(NOW, 10);
+    assert.strictEqual(r.moved, 10);
+    assert.strictEqual(db.gameSweep.at, NOW);
+    // Another running copy (its own minute is free), half a minute later: refused, nothing read.
+    og.forgetSweep();
+    const r2 = await og.sweepOldGames(NOW + 30 * 1000, 10);
+    assert.strictEqual(r2.skipped, 'soon');
+    assert.strictEqual(db.gameSweep.next, 11);
+    assert.ok(!db.games[generateGameName(11)].kept);
+    // A third copy, a minute after the first sweep started: it sweeps.
+    og.forgetSweep();
+    const r3 = await og.sweepOldGames(NOW + 61 * 1000, 10);
+    assert.strictEqual(r3.moved, 10);
+    assert.strictEqual(db.gameSweep.at, NOW + 61 * 1000);
+    // A start time far ahead (a clock gone wrong) doesn't hold the sweep back.
+    db.gameSweep.at = NOW + 24 * H;
+    og.forgetSweep();
+    const r4 = await og.sweepOldGames(NOW + 2 * 60 * 1000, 10);
+    assert.strictEqual(r4.moved, 10);
+    assert.strictEqual(db.gameSweep.lease, 0);
+});
+
+test('a copy whose lease ran out, and another took the sweep, keeps nothing of its walk', async () => {
+    const games = {};
+    for (let c = 1; c <= 30; c++) games[generateGameName(c)] = finished(30 * H);
+    seed(games, 60);
+    // Another copy takes the sweep while this one walks, as if this one had been frozen past its lease.
+    const counter = fakeFirebase.gameCounterRef;
+    const realOnce = counter.once;
+    counter.once = async () => {
+        db.gameSweep = { next: 25, lease: NOW + 10 * 60 * 1000, at: NOW + 4 * 60 * 1000 };
+        return realOnce();
+    };
+    try {
+        const r = await og.sweepOldGames(NOW, 10);
+        assert.strictEqual(r.moved, 10);
+    } finally {
+        counter.once = realOnce;
+    }
+    assert.deepStrictEqual(db.gameSweep, { next: 25, lease: NOW + 10 * 60 * 1000, at: NOW + 4 * 60 * 1000 });
+});
+
 // ---- every server reader still works on an old game ----
 
 async function oldGame(pin, extra) {
@@ -279,6 +385,9 @@ test('a pick written on an old game, or the move itself, plays nothing and write
     await oldGame('OLDE');
     const before = clone(db.games.OLDE);
     db.games.OLDE.answerSelections = { stranger: 'x' };
+    // The stranger's pick never takes the place of the real ones for the server's readers.
+    assert.deepStrictEqual(og.withKept(db.games.OLDE).answerSelections, before.kept.answerSelections);
+    assert.deepStrictEqual((await og.readGame('OLDE')).answerSelections, { p2: 'a cat', p3: 'a cat' });
     await onAnswerSelection('OLDE');
     assert.strictEqual(db.games.OLDE.players, undefined);
     await advance('OLDE', clone(db.games.OLDE.state));
