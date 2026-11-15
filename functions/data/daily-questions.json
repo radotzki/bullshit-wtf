@@ -435,6 +435,162 @@
     ],
     "citation": "https://en.wikipedia.org/wiki/Penal_treadmill"
   },
+  "daily-26-en-036": {
+    "day": "2026-11-14",
+    "lang": "en",
+    "questionText": "In 1945 a chicken called Mike, in Colorado, lived for $blank$ after his head was chopped off",
+    "realAnswer": "18 months",
+    "fakeAnswers": [
+      "18 minutes",
+      "3 days",
+      "2 weeks"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mike_the_Headless_Chicken"
+  },
+  "daily-26-en-037": {
+    "day": "2026-11-15",
+    "lang": "en",
+    "questionText": "The Hundred Years' War between England and France lasted $blank$ years",
+    "realAnswer": "116",
+    "fakeAnswers": [
+      "99",
+      "87",
+      "131"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hundred_Years%27_War"
+  },
+  "daily-26-en-038": {
+    "day": "2026-11-16",
+    "lang": "en",
+    "questionText": "After Albert Einstein died in 1955, the pathologist kept his $blank$ in jars for decades",
+    "realAnswer": "brain",
+    "fakeAnswers": [
+      "moustache",
+      "left hand",
+      "violin strings"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Albert_Einstein%27s_brain"
+  },
+  "daily-26-en-039": {
+    "day": "2026-11-17",
+    "lang": "en",
+    "questionText": "The first computer mouse, built in the 1960s, had a shell made of $blank$",
+    "realAnswer": "wood",
+    "fakeAnswers": [
+      "leather",
+      "glass",
+      "clay"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Douglas_Engelbart"
+  },
+  "daily-26-en-040": {
+    "day": "2026-11-18",
+    "lang": "en",
+    "questionText": "The name of the Canary Islands most likely comes from the Latin for 'islands of the $blank$'",
+    "realAnswer": "dogs",
+    "fakeAnswers": [
+      "canaries",
+      "pirates",
+      "singers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Canary_Islands"
+  },
+  "daily-26-en-041": {
+    "day": "2026-11-19",
+    "lang": "en",
+    "questionText": "Alfred Hitchcock's 'Psycho' (1960) was the first mainstream American film to show a $blank$",
+    "realAnswer": "flushing toilet",
+    "fakeAnswers": [
+      "ticking bomb",
+      "kitchen knife",
+      "burning car"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Psycho_(1960_film)"
+  },
+  "daily-26-en-042": {
+    "day": "2026-11-20",
+    "lang": "en",
+    "questionText": "On 20 November 1820, the whaling ship Essex was sunk by $blank$",
+    "realAnswer": "a sperm whale",
+    "fakeAnswers": [
+      "a giant squid",
+      "an iceberg",
+      "its own cannon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Essex_(whaleship)"
+  },
+  "daily-26-en-043": {
+    "day": "2026-11-21",
+    "lang": "en",
+    "questionText": "The first passengers ever to fly in a hot-air balloon, in 1783, were a duck, a rooster and a $blank$",
+    "realAnswer": "sheep",
+    "fakeAnswers": [
+      "pig",
+      "goat",
+      "monkey"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Montgolfier_brothers"
+  },
+  "daily-26-en-044": {
+    "day": "2026-11-22",
+    "lang": "en",
+    "questionText": "The world's shortest scheduled passenger flight, between two Scottish islands, usually takes about $blank$",
+    "realAnswer": "90 seconds",
+    "fakeAnswers": [
+      "6 minutes",
+      "11 minutes",
+      "15 minutes"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Loganair_Westray_to_Papa_Westray_route"
+  },
+  "daily-26-en-045": {
+    "day": "2026-11-23",
+    "lang": "en",
+    "questionText": "In 1962, an epidemic of $blank$ shut down 14 schools in Tanganyika",
+    "realAnswer": "laughter",
+    "fakeAnswers": [
+      "hiccups",
+      "yawning",
+      "sleepwalking"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tanganyika_laughter_epidemic"
+  },
+  "daily-26-en-046": {
+    "day": "2026-11-24",
+    "lang": "en",
+    "questionText": "The national anthem of $blank$ is one of the very few in the world with no official words",
+    "realAnswer": "spain",
+    "fakeAnswers": [
+      "portugal",
+      "norway",
+      "mexico"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Marcha_Real"
+  },
+  "daily-26-en-047": {
+    "day": "2026-11-25",
+    "lang": "en",
+    "questionText": "Back from the Moon in 1969, the Apollo 11 astronauts signed a $blank$ that listed moon rock and moon dust",
+    "realAnswer": "customs form",
+    "fakeAnswers": [
+      "tax return",
+      "parking permit",
+      "fishing licence"
+    ],
+    "citation": "https://space.com/7044-moon-apollo-astronauts-customs.html"
+  },
+  "daily-26-en-048": {
+    "day": "2026-11-26",
+    "lang": "en",
+    "questionText": "Sarah Josepha Hale, who campaigned to make Thanksgiving a national holiday in the US, also wrote the nursery rhyme $blank$",
+    "realAnswer": "mary had a little lamb",
+    "fakeAnswers": [
+      "humpty dumpty",
+      "three blind mice",
+      "jack and jill"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sarah_Josepha_Hale"
+  },
   "daily-26-he-001": {
     "day": "2026-11-27",
     "lang": "he",
@@ -870,5 +1026,161 @@
       "לרפא כאבי גב"
     ],
     "citation": "https://en.wikipedia.org/wiki/Penal_treadmill"
+  },
+  "daily-26-he-036": {
+    "day": "2026-11-14",
+    "lang": "he",
+    "questionText": "בשנת 1945 תרנגול בשם מייק, מקולורדו, המשיך לחיות $blank$ אחרי שכרתו לו את הראש",
+    "realAnswer": "18 חודשים",
+    "fakeAnswers": [
+      "18 דקות",
+      "3 ימים",
+      "שבועיים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mike_the_Headless_Chicken"
+  },
+  "daily-26-he-037": {
+    "day": "2026-11-15",
+    "lang": "he",
+    "questionText": "הצדעת הוולקן של ספוק מ'מסע בין כוכבים' מבוססת על $blank$, שלאונרד נימוי ראה כילד בבית הכנסת",
+    "realAnswer": "ברכת כוהנים",
+    "fakeAnswers": [
+      "הנחת תפילין",
+      "נטילת לולב",
+      "תקיעת שופר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Vulcan_salute"
+  },
+  "daily-26-he-038": {
+    "day": "2026-11-16",
+    "lang": "he",
+    "questionText": "מלחמת מאה השנים בין אנגליה לצרפת נמשכה $blank$ שנים",
+    "realAnswer": "116",
+    "fakeAnswers": [
+      "99",
+      "87",
+      "131"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hundred_Years%27_War"
+  },
+  "daily-26-he-039": {
+    "day": "2026-11-17",
+    "lang": "he",
+    "questionText": "הצבר, שעל שמו נקראים ילידי הארץ, הוא בכלל צמח שמקורו ב$blank$",
+    "realAnswer": "מקסיקו",
+    "fakeAnswers": [
+      "הודו",
+      "אוסטרליה",
+      "דרום אפריקה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Opuntia_ficus-indica"
+  },
+  "daily-26-he-040": {
+    "day": "2026-11-18",
+    "lang": "he",
+    "questionText": "ההמנון הלאומי של $blank$ הוא אחד הבודדים בעולם שאין להם מילים רשמיות",
+    "realAnswer": "ספרד",
+    "fakeAnswers": [
+      "פורטוגל",
+      "נורווגיה",
+      "מקסיקו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Marcha_Real"
+  },
+  "daily-26-he-041": {
+    "day": "2026-11-19",
+    "lang": "he",
+    "questionText": "דואר ישראל מקבל כל שנה מכתבים מכל העולם שממוענים לאלוהים, ו$blank$",
+    "realAnswer": "שם אותם בכותל",
+    "fakeAnswers": [
+      "מחזיר אותם לשולח",
+      "שומר אותם במוזיאון",
+      "שולח אותם לוותיקן"
+    ],
+    "citation": "https://www.timesofisrael.com/israeli-postal-workers-deliver-worlds-letters-to-god/"
+  },
+  "daily-26-he-042": {
+    "day": "2026-11-20",
+    "lang": "he",
+    "questionText": "את השם של קואופרטיב האוטובוסים 'אגד' נתן לו $blank$",
+    "realAnswer": "חיים נחמן ביאליק",
+    "fakeAnswers": [
+      "דוד בן-גוריון",
+      "אליעזר בן-יהודה",
+      "מאיר דיזנגוף"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Egged_(company)"
+  },
+  "daily-26-he-043": {
+    "day": "2026-11-21",
+    "lang": "he",
+    "questionText": "הנוסעים הראשונים אי פעם בכדור פורח, ב-1783, היו ברווז, תרנגול ו$blank$",
+    "realAnswer": "כבשה",
+    "fakeAnswers": [
+      "חזיר",
+      "עז",
+      "קוף"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Montgolfier_brothers"
+  },
+  "daily-26-he-044": {
+    "day": "2026-11-22",
+    "lang": "he",
+    "questionText": "ב-1909 חולקו המגרשים הראשונים של תל אביב בהגרלה, שנערכה בעזרת $blank$",
+    "realAnswer": "צדפים",
+    "fakeAnswers": [
+      "קלפי משחק",
+      "גפרורים",
+      "אבני דומינו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tel_Aviv"
+  },
+  "daily-26-he-045": {
+    "day": "2026-11-23",
+    "lang": "he",
+    "questionText": "השם של האיים הקנריים בא כנראה מהמילה הלטינית ל$blank$",
+    "realAnswer": "כלבים",
+    "fakeAnswers": [
+      "כנריות",
+      "שודדי ים",
+      "זמרים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Canary_Islands"
+  },
+  "daily-26-he-046": {
+    "day": "2026-11-24",
+    "lang": "he",
+    "questionText": "ב-1954 הוצעו ארבע ממגילות ים המלח למכירה ב$blank$",
+    "realAnswer": "מודעה בעיתון",
+    "fakeAnswers": [
+      "שוק הפשפשים",
+      "מכירה פומבית בלונדון",
+      "חנות מזכרות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dead_Sea_Scrolls"
+  },
+  "daily-26-he-047": {
+    "day": "2026-11-25",
+    "lang": "he",
+    "questionText": "בחבר הנאמנים הראשון של האוניברסיטה העברית בירושלים ישב גם $blank$",
+    "realAnswer": "זיגמונד פרויד",
+    "fakeAnswers": [
+      "פרנץ קפקא",
+      "צ'רלי צ'פלין",
+      "תומס אדיסון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hebrew_University_of_Jerusalem"
+  },
+  "daily-26-he-048": {
+    "day": "2026-11-26",
+    "lang": "he",
+    "questionText": "רוב הלוויינים בעולם משוגרים מזרחה. ישראל משגרת את לווייני 'אופק' משטחה $blank$",
+    "realAnswer": "מערבה",
+    "fakeAnswers": [
+      "צפונה",
+      "דרומה",
+      "ישר למעלה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ofeq"
   }
 }
