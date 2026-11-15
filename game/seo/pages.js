@@ -87,7 +87,7 @@ const howEn = `
 </table>
 <h2>How to start</h2>
 <ol>
-  <li>One person opens bullshit.wtf and taps <a href="/create-game">create a game</a>, picks English or Hebrew and the number of questions.</li>
+  <li>One person opens bullshit.wtf and taps <a href="/create-game?via=seo-en-how">create a game</a>, picks English or Hebrew and the number of questions.</li>
   <li>The game shows a four-letter PIN. Everyone else opens bullshit.wtf on their phone, taps <a href="/join-game">join</a> and types it. Up to 12 players.</li>
   <li>For a bigger group, put the game on a TV or laptop with <a href="/present-game">present</a>: the screen shows the questions and the scores, and phones are for writing and picking.</li>
 </ol>
@@ -119,7 +119,7 @@ const howHe = `
 </table>
 <h2>איך מתחילים</h2>
 <ol>
-  <li>מישהו אחד נכנס ל-<bdi dir="ltr">bullshit.wtf</bdi>, לוחץ על <a href="/create-game">פתיחת משחק</a>, ובוחר עברית או אנגלית ומספר שאלות.</li>
+  <li>מישהו אחד נכנס ל-<bdi dir="ltr">bullshit.wtf</bdi>, לוחץ על <a href="/create-game?lang=he&amp;via=seo-he-how">פתיחת משחק</a>, ובוחר עברית או אנגלית ומספר שאלות.</li>
   <li>המשחק מציג קוד של ארבע אותיות. כל השאר נכנסים ל-<bdi dir="ltr">bullshit.wtf</bdi> בטלפון, לוחצים <a href="/join-game">הצטרפות</a> ומקלידים אותו. עד 12 שחקנים.</li>
   <li>לקבוצה גדולה, אפשר להציג את המשחק על טלוויזיה או מחשב עם <a href="/present-game">מצב הצגה</a>: המסך מראה את השאלות והניקוד, והטלפונים משמשים לכתיבה ולבחירה.</li>
 </ol>
@@ -174,7 +174,7 @@ module.exports = [
 <p>That is the whole game. It is a bluffing game first and a trivia game second: the facts are strange on purpose, so the person who knows the most is no better off than the person who lies the best.</p>
 <h2>How to start a game on your phones</h2>
 <ol>
-  <li><strong>One person opens bullshit.wtf</strong> on a phone or a laptop and taps <a href="/create-game">create a game</a>. Pick English or Hebrew questions and 5, 7 or 9 questions.</li>
+  <li><strong>One person opens bullshit.wtf</strong> on a phone or a laptop and taps <a href="/create-game?via=seo-en-phone">create a game</a>. Pick English or Hebrew questions and 5, 7 or 9 questions.</li>
   <li><strong>The game shows a four-letter PIN</strong> and a link to send to the group chat.</li>
   <li><strong>Everyone else opens the link</strong>, or goes to bullshit.wtf, taps <a href="/join-game">join</a> and types the PIN, then picks a nickname.</li>
   <li><strong>The host starts the game</strong> once everyone is in. The first question appears on every phone.</li>
