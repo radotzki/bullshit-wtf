@@ -93,6 +93,7 @@ const dailyStore = (): typeof import('./controllers/daily-store') => require('./
 exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
     const bank = dailyQuestions();
     const now = Date.now();
+    eraseOldRounds(now);
     if (req.method === 'POST') {
         const raw = req.rawBody ? req.rawBody.toString('utf8') : req.body;
         let parsed: any = raw;
@@ -151,8 +152,26 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
     return res.status(200).send(body);
 }));
 
-// Erasing rounds past keeping: once a day per running copy and language, on the first round opened.
-const roundsErased: { [lang: string]: string } = {};
+// Erasing a chat group's rounds past keeping (nine days and more after their day): once a day per
+// running copy, from any call of the daily function: a question asked, a pick, a press, on the
+// plain puzzle as much as in a round. So rounds are erased while anyone plays the daily puzzle,
+// whether or not anybody opens a round, and after the round test is switched off; a year back, so a
+// quiet spell leaves nothing behind. No timer of its own: a scheduled function would be a new one.
+let roundsErasedOn = '';
+function eraseOldRounds(now: number) {
+    const today = daily.israelDay(now);
+    if (roundsErasedOn === today) {
+        return;
+    }
+    roundsErasedOn = today;
+    (['en', 'he'] as daily.DailyLang[]).forEach(lang => {
+        try {
+            dailyStore().eraseOldRounds(lang, now).catch(e => console.error('daily: old rounds were not erased', e));
+        } catch (e) {
+            console.error('daily: old rounds were not erased', e);
+        }
+    });
+}
 
 /** The round a browser opens, as it sees it (see dailyRound.roundView); a load error reads as missing. */
 async function roundFor(lang: daily.DailyLang, list: daily.DailyQuestion[], no: number, g: string, u: any, now: number) {
@@ -164,10 +183,6 @@ async function roundFor(lang: daily.DailyLang, list: daily.DailyQuestion[], no: 
     const found = daily.questionFor(list, day);
     const today = daily.israelDay(now);
     try {
-        if (roundsErased[lang] !== today) {
-            roundsErased[lang] = today;
-            dailyStore().eraseOldRounds(lang, now).catch(e => console.error('daily: old rounds were not erased', e));
-        }
         const phase = dailyRound.roundPhase(day, now);
         if (phase === 'gone' || phase === 'early' || !found) {
             return dailyRound.roundView(null, g, day, null, no, uid, now);

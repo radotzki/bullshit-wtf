@@ -72,8 +72,10 @@ lie"). There are no stages and no host. Spec: Product's "a round the whole chat 
   of their own.
 - **How long:** a round takes plays on its day and the next (the puzzle's "today or yesterday"),
   shows its final board read-only for a week after that, and is erased nine days after its day: the
-  first round opened each day (per running copy and language) erases every day's rounds from nine
-  to forty days back. The board says so in one line.
+  first call of the `daily` function each day (per running copy; any question asked, pick or press,
+  on the plain puzzle too, round or no round) erases every day's rounds from nine to four hundred
+  days back. So the board's line holds while anyone plays the daily puzzle, also after the round
+  test stops. If the puzzle itself is ever taken down, erase `qHistory/daily/*/*/rounds` by hand.
 - **`GET /_daily?lang=&n=&g=&u=<browser id>`** answers the puzzle as usual plus `round`, never cached:
   the names on the lies, this browser's answers (the truth, up to three of the group's lies, four once
   there are four or more, fewest-seen first, and the house's lies to make four; kept for the browser),

@@ -40,6 +40,8 @@ test('the line under the kicker, with one, two and many liars', () => {
     assert.strictEqual(rc.liarsLine(en, ['Dana'], 1), 'Dana hid a lie in here. One answer is true.');
     assert.strictEqual(rc.liarsLine(en, ['Dana', 'Yossi'], 2), 'Dana and Yossi hid lies in here. One answer is true.');
     assert.strictEqual(rc.liarsLine(en, ['Dana', 'Yossi', 'Noa', 'Dad'], 4), 'Dana, Yossi and 2 more hid lies in here. One answer is true.');
+    assert.strictEqual(rc.liarsLine(en, ['Dana', 'Yossi', 'Noa'], 3), 'Dana, Yossi and 1 more hid lies in here. One answer is true.');
+    assert.strictEqual(rc.liarsLine(he, ['דנה', 'יוסי', 'נועה'], 3), 'יש כאן שקרים של דנה, של יוסי ושל עוד אחד. רק תשובה אחת נכונה.');
     assert.strictEqual(rc.liarsLine(he, [], 0), 'עוד אין כאן שקרים של הקבוצה. אחרי שתבחרו, תהיו הראשונים.');
     assert.strictEqual(rc.liarsLine(he, ['דנה'], 1), 'יש כאן שקר של דנה. רק תשובה אחת נכונה.');
     assert.strictEqual(rc.liarsLine(he, ['דנה', 'יוסי'], 2), 'יש כאן שקרים של דנה ושל יוסי. רק תשובה אחת נכונה.');
@@ -82,6 +84,16 @@ test('message 2, a player\'s: the reveal in the chat, never an answer', () => {
     assert.strictEqual(rc.tellText(en, { kind: 'truth' }, [], false, 0, URL), '✅ Found the truth. Your turn: ' + URL);
     assert.strictEqual(rc.tellText(en, { kind: 'house' }, dana, false, 1, URL), '🤥 I fell for a lie, and it wasn\'t even one of yours. Your turn: ' + URL);
     assert.strictEqual(rc.tellText(en, null, dana, true, 2, URL), 'I hid one of my own. 2 lies in there now. Your turn: ' + URL, 'played elsewhere: no pick to tell');
+    // The round's first lie (a round started with no lie): never "1 lies".
+    assert.strictEqual(rc.tellText(en, { kind: 'truth' }, [], true, 1, URL), '✅ Found the truth. I hid one of my own. It\'s the first lie in there. Your turn: ' + URL);
+    assert.strictEqual(rc.tellText(en, { kind: 'house' }, [], true, 1, URL), '🤥 I fell for a lie, and it wasn\'t even one of yours. I hid one of my own. It\'s the first lie in there. Your turn: ' + URL);
+    assert.strictEqual(rc.tellText(he, { kind: 'truth' }, [], true, 1, HE_URL), '✅ מצאתי את האמת. החבאתי שם שקר משלי, הראשון בסיבוב. תורכם: ' + HE_URL);
+    for (const s of [en, he]) {
+        for (let n = 1; n <= 30; n++) {
+            const t = rc.tellText(s, { kind: 'truth' }, [], true, n, URL);
+            assert.ok(!/(^|\D)1 (lies|שקרים)/.test(t), `no "1 lies" in ${s.lang}: ${t}`);
+        }
+    }
     assert.strictEqual(rc.tellText(he, { kind: 'friend', by: 'דנה' }, [lie('דנה', 'לצחוק')], true, 2, HE_URL),
         '🤥 נפלתי בשקר של דנה. החבאתי שם גם שקר משלי. יש שם כבר 2 שקרים. תורכם: ' + HE_URL);
     assert.strictEqual(rc.tellText(he, { kind: 'truth' }, [lie('דנה', 'לצחוק')], false, 1, HE_URL), '✅ מצאתי את האמת. השקר של דנה לא עבד עליי. תורכם: ' + HE_URL);
@@ -94,7 +106,7 @@ test('message 2, a player\'s: the reveal in the chat, never an answer', () => {
 test('message 3, the score so far, and the line of a round that is over', () => {
     const b = board([lie('Dana', 'laughing', ['Yossi', 'Noa'], 1), lie('Me', 'sneezing', ['Dad'], 0, true)], 5);
     assert.strictEqual(rc.scoreText(en, 12, b, URL), 'Bullshit #12 so far: Dana\'s lie fooled 3 of 5. Mine fooled 1. Who hasn\'t played? ' + URL);
-    assert.strictEqual(rc.scoreText(he, 12, b, HE_URL), 'בולשיט #12, מצב ביניים: השקר של Dana עבד על 3 מתוך 5. השקר שלי על 1. מי עוד לא שיחק? ' + HE_URL);
+    assert.strictEqual(rc.scoreText(he, 12, b, HE_URL), 'בולשיט #12, מצב ביניים: השקר של Dana עבד על 3 מתוך 5. השקר שלי עבד על 1. מי עוד לא שיחק? ' + HE_URL);
     const lead = board([lie('Dana', 'laughing', ['Yossi'], 0), lie('Me', 'sneezing', ['Dad', 'Noa', 'Avi'], 0, true)], 5);
     assert.strictEqual(rc.scoreText(en, 12, lead, URL), 'Bullshit #12 so far: My lie fooled 3 of 5. Who hasn\'t played? ' + URL);
     assert.strictEqual(rc.scoreText(he, 12, lead, HE_URL), 'בולשיט #12, מצב ביניים: השקר שלי עבד על 3 מתוך 5. מי עוד לא שיחק? ' + HE_URL);

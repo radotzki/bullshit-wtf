@@ -32,6 +32,9 @@ test('a lie passes the same screen as on the page', () => {
     assert.strictEqual(round.screenLie('see bit.ly/abc', 'dancing', []), 'refused');
     assert.strictEqual(round.screenLie('call 0541234567', 'dancing', []), 'refused');
     assert.strictEqual(round.screenLie('me@x', 'dancing', []), 'refused');
+    assert.strictEqual(round.screenLie('tel 052-123-4567', 'dancing', []), 'refused', 'a phone number with dashes');
+    assert.strictEqual(round.screenLie('0 5 2 1 2 3 4 5 6 7', 'dancing', []), 'refused', 'or with spaces');
+    assert.strictEqual(round.screenLie('in 1518', 'dancing', []), null, 'a year is no phone number');
     assert.strictEqual(round.screenLie('x'.repeat(41), 'dancing', []), 'refused');
     assert.strictEqual(round.screenLie('singing hymns', 'dancing', ['laughing']), null);
     assert.strictEqual(round.screenName('Dana'), null);
@@ -52,7 +55,9 @@ test('the day of a round: from the puzzle number; open today and tomorrow, then 
     assert.strictEqual(round.roundPhase('2026-11-28', noon('2026-12-07')), 'gone', 'nine days on: erased');
     const erase = round.daysToErase(NOW);
     assert.strictEqual(erase[0], '2026-11-19');
-    assert.ok(!erase.includes('2026-11-20') && erase.length === 32);
+    assert.ok(!erase.includes('2026-11-20'));
+    assert.strictEqual(erase.length, 392, 'nine to four hundred days back: a long quiet spell leaves nothing');
+    assert.strictEqual(erase[erase.length - 1], '2025-10-24');
 });
 
 test('a start: the starter is in, with their lie and name; the same tap again changes nothing', () => {

@@ -66,6 +66,9 @@
         if (count === 2 && liars.length >= 2) {
             return fill(s.liarsTwo, { a: liars[0], b: liars[1] });
         }
+        if (count === 3 && liars.length >= 2) {
+            return fill(s.liarsThree, { a: liars[0], b: liars[1] });
+        }
         return fill(s.liarsMore, { a: liars[0], b: liars[1] || '', n: count - Math.min(2, liars.length) });
     }
 
@@ -130,7 +133,8 @@
             parts.push(s.tellHouse);
         }
         if (addedLie) {
-            parts.push(fill(s.tellAdded, { n: lies }));
+            // The round's first lie has words of its own: "1 lies" is no sentence.
+            parts.push(lies === 1 ? s.tellAddedOne : fill(s.tellAdded, { n: lies }));
         }
         parts.push(fill(s.tellTurn, { link: url }));
         return parts.join(' ');

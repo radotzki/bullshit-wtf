@@ -58,6 +58,10 @@ async function startByHand(lang, no, g, uid, name, lie, src) {
     return res.json();
 }
 
+const old = (n) => addDays(TODAY, -n);
+const roundAt = (uid, name, lie) => ({ at: Date.now(), by: uid, names: { [uid]: name }, lies: { [uid]: { id: 'abc123', l: lie, at: Date.now(), seen: 2 } },
+    picks: { [uid]: { k: 't', at: Date.now() }, ['x'.repeat(16)]: { k: 'abc123', at: Date.now() } } });
+
 async function run(browser, base, lang) {
     const s = strings[lang];
     const w = WORDS[lang];
@@ -69,15 +73,6 @@ async function run(browser, base, lang) {
     const others = [];
     log(`--- ${lang}: a chat group's round`);
 
-    // Rounds of past days, put in before this language opens any round: the first round opened in a
-    // day erases those past keeping.
-    const old = (n) => addDays(TODAY, -n);
-    const roundAt = (uid, name, lie) => ({ at: Date.now(), by: uid, names: { [uid]: name }, lies: { [uid]: { id: 'abc123', l: lie, at: Date.now(), seen: 2 } },
-        picks: { [uid]: { k: 't', at: Date.now() }, ['x'.repeat(16)]: { k: 'abc123', at: Date.now() } } });
-    await db('PUT', `qHistory/daily/${lang}/${old(3)}/rounds/overround0`, roundAt(GROUP('g'), w.name, m.late));
-    await db('PUT', `qHistory/daily/${lang}/${old(9)}/rounds/goneround0`, roundAt(GROUP('g'), w.name, m.late));
-    await db('PUT', `qHistory/daily/${lang}/${old(12)}/rounds/oldround00`, roundAt(GROUP('g'), w.name, m.late));
-
     // 0. The other half of the test keeps the puzzle as built.
     const plain = await visitor(browser, base, `${L} puzzle half`, PUZZLE_HALF('0'));
     others.push(plain);
@@ -85,6 +80,14 @@ async function run(browser, base, lang) {
     await h.pickAnswer(plain, q.realAnswer);
     check(`${L}: the puzzle half keeps its two send buttons and lie card`, (await plain.page.locator('.card.fool').count()) === 1
         && (await plain.page.locator('.card.round-start').count()) === 0 && (await plain.page.locator('#d-reveal > .send').count()) === 1);
+
+    // The erase ran at this run's first call of the function, a plain question asked before any
+    // round was opened: rounds 12 and 300 days back are gone, those still kept are not.
+    await waitFor(`${L}: rounds past keeping are erased with no round opened`, async () => [await db('GET', `qHistory/daily/${lang}/${old(12)}/rounds`),
+        await db('GET', `qHistory/daily/${lang}/${old(300)}/rounds`)], (r) => r[0] === null && r[1] === null);
+    check(`${L}: rounds still kept are not`, (await db('GET', `qHistory/daily/${lang}/${old(3)}/rounds/overround0`)) !== null
+        && (await db('GET', `qHistory/daily/${lang}/${old(9)}/rounds/goneround0`)) === null);
+
 
     // 1. Dana starts: the group card in place of the puzzle's.
     const dana = await visitor(browser, base, `${L} Dana`, GROUP('a'));
@@ -244,6 +247,21 @@ async function run(browser, base, lang) {
     check(`${L}: then they see the board`, (await boardRows(plain.page)).some((r) => r.includes(m.elsewhere)));
     await shot(plain.page, `${L}-r7-played-elsewhere`);
 
+    // 8b. A round started with no lie: the first friend's lie is "the first lie in there", not "1 lies".
+    const gFirst = lang === 'en' ? 'firstlie01' : 'firstlie02';
+    check(`${L}: a round started with no lie`, (await startByHand(lang, 2, gFirst, GROUP('k'), '', '', 'daily-home')).ok === true);
+    const first = await visitor(browser, base, `${L} first liar`, GROUP('l'));
+    others.push(first);
+    await open(first, `${P}?n=2&g=${gFirst}`);
+    check(`${L}: nobody's lie in it yet`, (await raw(first.page, '#d-how')) === s.liarsNone);
+    await first.page.locator('#d-answers .answer').filter({ hasText: new RegExp(`^${q.realAnswer}$`) }).first().click();
+    await first.page.locator('#d-reveal h2.head').waitFor({ timeout: 10000 });
+    await first.page.locator('.card.round-lie #d-name').fill(m.yossiName);
+    await first.page.locator('.card.round-lie #d-lie').fill(m.yossi);
+    await first.page.locator('.card.round-lie .send a.btn').click();
+    const firstMsg = await waMessage(first.page.locator('.card.round-lie .send a.btn'));
+    check(`${L}: message 2 with the round's first lie`, firstMsg === [s.tellTruth, s.tellAddedOne, fill(s.tellTurn, { link: `${P}?n=2&g=${gFirst}` })].join(' '), firstMsg);
+
     // 9. A late opener, after midnight: yesterday's round still plays, on yesterday's question.
     const gLate = lang === 'en' ? 'lateround1' : 'lateround2';
     const started = await startByHand(lang, 1, gLate, GROUP('e').replace('group', 'later'), w.name, m.late, 'daily-home');
@@ -270,11 +288,10 @@ async function run(browser, base, lang) {
         && (await misc.page.locator('.board').count()) === 1 && (await misc.page.locator('.card.round-lie').count()) === 0
         && (await raw(misc.page, 'a.play-today')) === s.playToday, await raw(misc.page, '#d-note'));
     await shot(misc.page, `${L}-r9-over`);
+    await db('PUT', `qHistory/daily/${lang}/${old(9)}/rounds/goneround0`, roundAt(GROUP('g'), w.name, m.late));
     await open(misc, `${P}?n=-7&g=goneround0`);
     check(`${L}: past nine days: "over" and today's question, nothing of the round`, (await raw(misc.page, '#d-note')) === s.over && (await answers(misc.page)).includes(q.realAnswer)
         && !(await misc.page.locator('main').innerText()).includes(m.late));
-    await waitFor(`${L}: rounds past keeping are erased`, () => db('GET', `qHistory/daily/${lang}/${old(12)}/rounds`), (r) => r === null);
-    check(`${L}: rounds still kept are not`, (await db('GET', `qHistory/daily/${lang}/${old(3)}/rounds/overround0`)) !== null);
     await open(misc, `${P}?n=2&g=fullround0`);
     check(`${L}: a full round takes nobody new`, (await raw(misc.page, '#d-note')) === s.roundFull && (await answers(misc.page)).length === 4);
     await open(misc, `${P}?n=2&g=nosuchrnd0`);
@@ -318,6 +335,16 @@ async function main() {
     let server;
     try {
         await h.seed();
+        // Rounds of past days, put in before the run's first call of the function, which erases
+        // those past keeping (nine days and more), whether or not anyone opens a round.
+        for (const lang of ['en', 'he']) {
+            const w = WORDS[lang];
+            const m = MORE[lang];
+            await db('PUT', `qHistory/daily/${lang}/${old(3)}/rounds/overround0`, roundAt(GROUP('g'), w.name, m.late));
+            await db('PUT', `qHistory/daily/${lang}/${old(9)}/rounds/goneround0`, roundAt(GROUP('g'), w.name, m.late));
+            await db('PUT', `qHistory/daily/${lang}/${old(12)}/rounds/oldround00`, roundAt(GROUP('g'), w.name, m.late));
+            await db('PUT', `qHistory/daily/${lang}/${old(300)}/rounds/oldround00`, roundAt(GROUP('g'), w.name, m.late));
+        }
         server = await serve(DIST);
         const base = `http://${HOST}:${server.address().port}`;
         browser = await chromium.launch({ args: [`--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${HOST}`] });

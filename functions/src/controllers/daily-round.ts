@@ -55,6 +55,8 @@ function lengthOf(text: string): number {
 function carriesContact(text: string): boolean {
     return /@/.test(text)
         || /\d{5,}/.test(text)
+        // A phone number written with dashes, dots or spaces: seven digits or more in a run.
+        || /\d(?:[\s.-]*\d){6,}/.test(text)
         || /(https?:|www\.|:\/\/)/i.test(text)
         || /[a-z0-9-]\.[a-z]{2,}(\/|$|[^a-z])/i.test(text + ' ');
 }
@@ -145,8 +147,12 @@ export function roundPhase(day: string, now: number): 'open' | 'over' | 'gone' |
     return since <= 1 ? 'open' : since <= KEEP_DAYS ? 'over' : 'gone';
 }
 
-/** The days whose rounds are past keeping: from KEEP_DAYS + 1 to `back` days before today. */
-export function daysToErase(now: number, back = 40): string[] {
+/**
+ * The days whose rounds are past keeping: from KEEP_DAYS + 1 to `back` days before today. A year
+ * back, so a long quiet spell (the round test switched off, a slow season) leaves nothing behind
+ * once the site is used again; one write of a few hundred empty paths.
+ */
+export function daysToErase(now: number, back = 400): string[] {
     const today = israelDay(now);
     const out: string[] = [];
     for (let n = KEEP_DAYS + 1; n <= back; n++) {
