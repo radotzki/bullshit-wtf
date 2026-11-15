@@ -216,7 +216,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-19": {
-    "questionText": "Some eat cheese on Hanukkah to honor Judith, who fed an enemy general salty cheese and wine, then $blank$",
+    "questionText": "Some eat dairy on Hanukkah to honor Judith, who fed an enemy general salty food and wine, then $blank$",
     "realAnswer": "cut off his head",
     "fakeAnswers": [
       "married him",
@@ -312,7 +312,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-27": {
-    "questionText": "On Saturday Night Live, Jon Lovitz played $blank$, who filled in when Santa got sick",
+    "questionText": "On a late-night comedy show, Jon Lovitz played $blank$, who filled in when Santa got sick",
     "realAnswer": "hanukkah harry",
     "fakeAnswers": [
       "uncle menorah",
@@ -360,7 +360,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-31": {
-    "questionText": "In the Talmud, the school of Shammai said the first night should have $blank$ candles, one fewer each night",
+    "questionText": "The ancient school of Shammai said the first night should have $blank$ candles, one fewer each night",
     "realAnswer": "eight",
     "fakeAnswers": [
       "one",
@@ -444,7 +444,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-38": {
-    "questionText": "The Talmud asks who pays when a Hanukkah lamp sets fire to $blank$",
+    "questionText": "Ancient Jewish law asks who pays when a Hanukkah lamp sets fire to $blank$",
     "realAnswer": "a camel carrying flax",
     "fakeAnswers": [
       "the rabbi's beard",
@@ -480,7 +480,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-41": {
-    "questionText": "A tune from Handel's oratorio about Judah Maccabee became a famous Christian hymn for $blank$",
+    "questionText": "A tune from an 18th-century oratorio about Judah Maccabee became a famous Christian hymn for $blank$",
     "realAnswer": "easter",
     "fakeAnswers": [
       "halloween",
@@ -516,7 +516,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-44": {
-    "questionText": "For Thanksgivukkah 2013, a New York schoolboy invented the $blank$, a turkey-shaped menorah",
+    "questionText": "In 2013, when Hanukkah's first day fell on Thanksgiving, a New York schoolboy invented the $blank$, a turkey-shaped menorah",
     "realAnswer": "menurkey",
     "fakeAnswers": [
       "turkorah",
@@ -540,7 +540,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-46": {
-    "questionText": "Before battle, the Seleucid army roused its elephants by showing them $blank$",
+    "questionText": "Before battle, the Seleucid army roused its war beasts by showing them $blank$",
     "realAnswer": "grape and mulberry juice",
     "fakeAnswers": [
       "red cloth",
@@ -600,7 +600,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-51": {
-    "questionText": "The Talmud says a Hanukkah lamp is not valid if placed higher than $blank$, because nobody looks up that high",
+    "questionText": "By ancient Jewish law, a Hanukkah lamp is not valid if placed higher than $blank$, because nobody looks up that high",
     "realAnswer": "20 cubits",
     "fakeAnswers": [
       "10 cubits",
@@ -696,7 +696,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-59": {
-    "questionText": "The Talmud says the one jar of pure oil the Maccabees found was sealed by the $blank$",
+    "questionText": "By tradition, the one jar of pure oil the Maccabees found was sealed by the $blank$",
     "realAnswer": "high priest",
     "fakeAnswers": [
       "king",
@@ -888,7 +888,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-75": {
-    "questionText": "In the 2003 comedy The Hebrew Hammer, the hero saves Hanukkah from $blank$",
+    "questionText": "In a 2003 comedy, a Jewish crime-fighter named Mordechai Jefferson Carver saves Hanukkah from $blank$",
     "realAnswer": "santa's evil son",
     "fakeAnswers": [
       "the grinch",
@@ -900,7 +900,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-76": {
-    "questionText": "Judah's brother Simon, first ruler of the independent Hasmonean state, was killed at a banquet by $blank$",
+    "questionText": "Judah's brother Simon, first ruler of the independent Jewish state, was killed at a banquet by $blank$",
     "realAnswer": "his son-in-law",
     "fakeAnswers": [
       "his cook",
@@ -1116,7 +1116,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-17": {
-    "questionText": "יש שאוכלים גבינה בחנוכה לזכר יהודית, שהאכילה מצביא אויב גבינה מלוחה ויין, ואז $blank$",
+    "questionText": "יש שאוכלים מאכלי חלב בחנוכה לזכר יהודית, שהאכילה מצביא אויב מאכל מלוח ויין, ואז $blank$",
     "realAnswer": "כרתה את ראשו",
     "fakeAnswers": [
       "התחתנה איתו",
@@ -1308,7 +1308,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-33": {
-    "questionText": "התלמוד דן במי משלם כשנר חנוכה מצית $blank$",
+    "questionText": "ההלכה העתיקה דנה במי משלם כשנר חנוכה מצית $blank$",
     "realAnswer": "גמל טעון פשתן",
     "fakeAnswers": [
       "זקן של רב",
@@ -1332,7 +1332,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-35": {
-    "questionText": "לחן מהאורטוריה של הנדל על יהודה המכבי הפך למזמור נוצרי מפורסם של חג $blank$",
+    "questionText": "לחן מאורטוריה מהמאה ה-18 על יהודה המכבי הפך למזמור נוצרי מפורסם של חג $blank$",
     "realAnswer": "הפסחא",
     "fakeAnswers": [
       "ליל כל הקדושים",
@@ -1356,7 +1356,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-37": {
-    "questionText": "לחנוכה של 2013, שיצא על חג ההודיה, ילד מניו יורק המציא $blank$: חנוכייה בצורת תרנגול הודו",
+    "questionText": "ב-2013, כשחנוכה חל יחד עם חג אמריקאי, ילד מניו יורק המציא $blank$: חנוכייה בצורת תרנגול הודו",
     "realAnswer": "מנורקי",
     "fakeAnswers": [
       "הודוכייה",
@@ -1380,7 +1380,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-39": {
-    "questionText": "לפני הקרב, הצבא הסלווקי הרגיז את הפילים שלו כשהראה להם $blank$",
+    "questionText": "לפני הקרב, הצבא הסלווקי הרגיז את חיות המלחמה שלו כשהראה להם $blank$",
     "realAnswer": "מיץ ענבים ותותים",
     "fakeAnswers": [
       "בד אדום",
@@ -1428,7 +1428,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-43": {
-    "questionText": "לפי התלמוד, חנוכייה שמונחת גבוה מ$blank$ פסולה, כי אף אחד לא מרים את העיניים כל כך גבוה",
+    "questionText": "לפי ההלכה, חנוכייה שמונחת גבוה מ$blank$ פסולה, כי אף אחד לא מרים את העיניים כל כך גבוה",
     "realAnswer": "עשרים אמה",
     "fakeAnswers": [
       "עשר אמות",
@@ -1512,7 +1512,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-50": {
-    "questionText": "לפי התלמוד, פך השמן היחיד שנמצא היה חתום בחותמו של $blank$",
+    "questionText": "לפי המסורת, פך השמן היחיד שנמצא היה חתום בחותמו של $blank$",
     "realAnswer": "הכוהן הגדול",
     "fakeAnswers": [
       "המלך",
@@ -1704,7 +1704,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-66": {
-    "questionText": "בסרט הקומדיה 'הפטיש העברי' מ-2003 הגיבור מציל את חנוכה מ$blank$",
+    "questionText": "בקומדיה מ-2003, לוחם צדק יהודי בשם מרדכי ג'פרסון קארבר מציל את חנוכה מ$blank$",
     "realAnswer": "הבן המרושע של סנטה",
     "fakeAnswers": [
       "הגרינץ'",
@@ -1716,7 +1716,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-67": {
-    "questionText": "שמעון, אחי יהודה והשליט הראשון של המדינה החשמונאית העצמאית, נרצח במשתה בידי $blank$",
+    "questionText": "שמעון, אחי יהודה והשליט הראשון של המדינה היהודית העצמאית, נרצח במשתה בידי $blank$",
     "realAnswer": "חתנו",
     "fakeAnswers": [
       "הטבח שלו",
