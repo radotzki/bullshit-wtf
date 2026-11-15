@@ -27,6 +27,8 @@ export const finalStrings = {
         crewPlaceholder: 'The Office Liars',
         save: 'SAVE',
         crewError: 'Could not save the crew',
+        // The game ended after question 1, where nobody sent a lie or a pick (idle in game-model).
+        idle: 'Nobody played the first question, so the game ended.',
     },
     he: {
         wins: (name: string) => `הניצחון של ${name}!`,
@@ -55,6 +57,7 @@ export const finalStrings = {
         crewPlaceholder: 'השקרנים מהמשרד',
         save: 'שמירה',
         crewError: 'לא הצלחנו לשמור את החבורה',
+        idle: 'אף אחד לא שיחק בשאלה הראשונה, אז המשחק נגמר.',
     },
 };
 

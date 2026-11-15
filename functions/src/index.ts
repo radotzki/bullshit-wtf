@@ -50,6 +50,24 @@ function cleanHostKey(key: any): string | undefined {
     return typeof key === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(key) ? key : undefined;
 }
 
+// hostHere's body: JSON from the app's own calls, or a text/plain JSON string from the hidden page.
+function hostHereBody(req: any): { pin?: any; hostKey?: any; away?: any } {
+    const raw = req.body;
+    if (raw && typeof raw === 'object' && !Buffer.isBuffer(raw)) {
+        return raw;
+    }
+    const text = typeof raw === 'string' ? raw : req.rawBody ? req.rawBody.toString('utf8') : '';
+    if (!text || text.length > 400) {
+        return {};
+    }
+    try {
+        const parsed = JSON.parse(text);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (e) {
+        return {};
+    }
+}
+
 // A player id (a database push key); ignore anything else.
 function cleanPid(pid: any): string | undefined {
     return typeof pid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(pid) ? pid : undefined;
@@ -325,7 +343,8 @@ exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
 }, 'crew'));
 
 // START in the lobby. In a game with a host key only the host's phone may start it, unless the host
-// never joined within 90 s or has been gone 5 minutes: see startVerdict in controllers/start.ts.
+// never joined within 90 s or has been gone 5 minutes, or a lobby of 5 or more whose host's page has
+// been hidden 45 s: see startVerdict in controllers/start.ts.
 exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
     cors(req, res, async () => {
         try {
@@ -338,10 +357,13 @@ exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
 }, 'game'));
 
 // The host's lobby page reports in, so the group can start without a host whose phone died.
+// With `away: true` it says the page was just hidden (sent with fetch keepalive as text/plain, so no
+// CORS preflight, the way the visit beacon sends its end row): guests are told the host stepped away.
 exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
     cors(req, res, async () => {
         try {
-            return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
+            const body = hostHereBody(req);
+            return res.status(200).send(await hostHere(body.pin, cleanHostKey(body.hostKey), Date.now(), body.away === true));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));

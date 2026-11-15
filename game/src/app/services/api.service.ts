@@ -351,6 +351,12 @@ export class ApiService {
      * The taste this game is (five pick-only questions for a host who started alone), or null for any
      * other game. The server says so on the game's state; a state that cannot be read is no taste.
      */
+    /** The game ended after question 1 because nobody played it (idle in game-model). False if unreadable. */
+    getIdle(pin: string): Promise<boolean> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('idle')).then(v => v === true, () => false);
+    }
+
     getTaste(pin: string): Promise<Taste> {
         pin = pin.toUpperCase();
         return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => tasteOf(state), () => null);
@@ -543,13 +549,52 @@ export class ApiService {
      * The host's lobby page reports that it is still there, so the group can start without a host
      * whose phone died (see hostSeen in game-model). Only the browser with the host key reports.
      */
-    hostHere(pin: string) {
+    hostHere(pin: string, away = false) {
         pin = pin.toUpperCase();
         const hostKey = hostKeyFor(pin);
         if (!hostKey) {
             return Promise.resolve({ seen: false });
         }
-        return this.post<{ seen: boolean }>(`hostHere`, { pin, hostKey });
+        return this.post<{ seen: boolean }>(`hostHere`, away ? { pin, hostKey, away: true } : { pin, hostKey });
+    }
+
+    /**
+     * The host's lobby page was just hidden (another app, a locked phone): tell the server now, while
+     * the page can still send. fetch with keepalive outlives the page going to the background, and a
+     * text/plain body needs no CORS preflight; sendBeacon if fetch can't. The answer is not read.
+     */
+    hostAway(pin: string) {
+        pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin);
+        if (!hostKey) {
+            return;
+        }
+        const url = environment.cloudfunctions + 'hostHere';
+        const body = JSON.stringify({ pin, hostKey, away: true });
+        try {
+            if (typeof fetch === 'function') {
+                fetch(url, { method: 'POST', body, keepalive: true, mode: 'no-cors', credentials: 'omit',
+                    headers: { 'Content-Type': 'text/plain' } }).catch(() => null);
+                return;
+            }
+        } catch (e) { }
+        try {
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(url, body);
+            }
+        } catch (e) { }
+    }
+
+    /** Server time the host's lobby page was hidden, or null while it is on screen. Errors until the rules are deployed. */
+    getHostAwayObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<number>(this.gamesRef.child(pin).child('hostAwaySince'));
+    }
+
+    /** Server time the lobby reached 5 players (`fullSince`), live; null while it has fewer. */
+    getFullSinceObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<number>(this.gamesRef.child(pin).child('fullSince'));
     }
 
     /** Server time the host last reported in, live. Errors until the rules that expose it are deployed. */
