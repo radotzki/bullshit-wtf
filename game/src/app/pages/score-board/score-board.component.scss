@@ -20,6 +20,14 @@
     }
 }
 
+// Nine to twelve players: twelve shorter rows still fit the screen.
+.score-board.many .player {
+    height: calc((100vh - 100px - 40px - 70px - 6px * 12) / 12);
+    min-height: 34px;
+    padding: 2px 10px;
+    margin-bottom: 6px;
+}
+
 .score-board[dir="rtl"] .picture {
     margin-right: 0;
     margin-left: 10px;

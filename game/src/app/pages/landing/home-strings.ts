@@ -13,6 +13,8 @@ export interface HomeStrings {
     subTitle: string;
     /** What the game is, in one line, above the phone menu. */
     pitch: string;
+    /** The line under the pitch that opens the daily puzzle (/daily, a page outside the app). */
+    daily: string;
     join: string;
     joinHint: string;
     joinShort: string;
@@ -28,6 +30,8 @@ export interface HomeStrings {
     crewAction: string;
     yourCrews: string;
     crewActionShort: string;
+    /** A remembered crew whose game night is today: "TONIGHT 21:00: Dana's crew". */
+    tonight: (time: string, crew: string) => string;
     /** The language the switch moves to, and its label (written in that language). Only the Hebrew menu shows it. */
     switchTo: 'he' | 'en';
     switchLabel: string;
@@ -40,6 +44,7 @@ const en: HomeStrings = {
     name: 'Bullshit',
     subTitle: 'Because the truth is overrated',
     pitch: 'Everyone writes a lie. One answer is true. Fool your friends.',
+    daily: 'Today\'s question: can you spot the truth?',
     join: 'Join Game',
     joinHint: 'Join a game by entering its PIN',
     joinShort: 'Join',
@@ -55,6 +60,7 @@ const en: HomeStrings = {
     crewAction: 'SCORES & REMATCH',
     yourCrews: 'Your crews',
     crewActionShort: 'scores & rematch',
+    tonight: (time, crew) => `TONIGHT ${time}: ${crew}`,
     switchTo: 'he',
     switchLabel: 'עברית',
 };
@@ -66,6 +72,7 @@ const he: HomeStrings = {
     name: 'בולשיט',
     subTitle: 'כי האמת מוערכת יותר מדי',
     pitch: 'כולם ממציאים שקר. רק תשובה אחת נכונה. תעבדו על החברים.',
+    daily: 'השאלה של היום: תמצאו את האמת?',
     join: 'הצטרפות למשחק',
     joinHint: 'הקלידו את קוד המשחק כדי להצטרף',
     joinShort: 'הצטרפות',
@@ -81,6 +88,7 @@ const he: HomeStrings = {
     crewAction: 'ניקוד ומשחק חוזר',
     yourCrews: 'החבורות שלכם',
     crewActionShort: 'ניקוד ומשחק חוזר',
+    tonight: (time, crew) => `הערב ב־${time}: ${crew}`,
     switchTo: 'en',
     switchLabel: 'English',
 };

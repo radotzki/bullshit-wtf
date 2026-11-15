@@ -9,8 +9,8 @@
  * A game's half follows from its PIN alone (stagedHalf), so it can be read wherever the PIN is: every
  * usage row in BigQuery carries the PIN, and no column of its own is needed. A PIN is given once (a
  * counter), and the half is one bit of a hash of it, so the halves are even, a game's half never
- * changes, and it says nothing about the lie helper's draw (pickCoach, a random draw of its own): each
- * half of one test holds both halves of the other.
+ * changes, and it does not depend on the lie helper (pickCoach), which every game has had since
+ * 13 November 2026; before that the two draws were independent, so each half held both helper halves.
  *
  * A game made by a client that does not say it can show it (a phone still on an older build, as every
  * phone is between the release of the functions and of the site) is not in the test: no bigReveal at

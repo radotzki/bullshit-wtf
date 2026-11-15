@@ -1,0 +1,72 @@
+<div class="next-week" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+    <ng-container *ngIf="!banner">
+        <button class="button is-info is-medium is-fullwidth next-week-button" type="button" (click)="openSheet()">
+            {{ winner ? t.defend : t.revenge }}
+        </button>
+        <p class="hint next-week-line">{{ t.line }}</p>
+    </ng-container>
+
+    <!-- One player has set the date: every phone on the final screen gets it. -->
+    <div *ngIf="banner" class="next-week-banner">
+        <p class="banner-when" dir="auto">{{ t.next(bannerWhen) }}</p>
+        <p *ngIf="bannerBy" class="banner-by" dir="auto">{{ bannerBy }}</p>
+        <button *ngIf="!imIn" class="button is-info is-fullwidth banner-in" type="button" (click)="sayIn()">{{ t.imIn }}</button>
+        <p *ngIf="imIn" class="banner-done">
+            <span class="banner-youre-in"><i class="fa fa-check"></i> {{ t.youreIn }}</span>
+            <button class="button is-small banner-calendar" type="button" (click)="bannerCalendar()">{{ t.calendar }}</button>
+        </p>
+        <p *ngIf="calendarUrl" class="saved">
+            {{ calendarSaved }}
+            <a class="google" [href]="calendarUrl" target="_blank" rel="noopener">{{ crewWords.google }}</a>
+        </p>
+    </div>
+
+    <div class="modal" [class.is-active]="open">
+        <div class="modal-background" (click)="close()"></div>
+        <div class="modal-content">
+            <section class="modal-card-body next-week-sheet">
+                <h2 class="sheet-title">{{ t.title }}</h2>
+
+                <p class="sheet-when">
+                    <span class="when" dir="auto">{{ when }}</span>
+                    <button class="button is-small is-text sheet-change" type="button" (click)="changing = !changing">{{ t.change }}</button>
+                </p>
+                <div *ngIf="changing" class="night-inputs">
+                    <input class="input" type="date" name="nextWeekDate" [(ngModel)]="nightDate" [attr.aria-label]="crewWords.day">
+                    <input class="input" type="time" name="nextWeekTime" [(ngModel)]="nightTime" [attr.aria-label]="crewWords.time" step="900">
+                </div>
+                <p *ngIf="nightInPast" class="sheet-error">{{ crewWords.nightPast }}</p>
+
+                <label class="sheet-crew">
+                    <span class="crew-label">{{ t.crew }}:</span>
+                    <input *ngIf="canRename" class="input crew-name" type="text" name="nextWeekCrew" maxlength="24" dir="auto"
+                        [(ngModel)]="crewName" (ngModelChange)="onName()">
+                    <span *ngIf="!canRename" class="crew-name-fixed" dir="auto">{{ crewName }}</span>
+                </label>
+                <p *ngIf="nameError" class="sheet-error">{{ nameError }}</p>
+                <p *ngIf="failed" class="sheet-error">{{ t.failed }}</p>
+
+                <a class="button is-fullwidth whatsapp sheet-whatsapp" [class.is-disabled]="!ready" [class.is-loading]="making || (!!crewId && !crew)"
+                    [attr.href]="whatsappUrl || null" target="_blank" rel="noopener" (click)="whatsapp()">
+                    <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                    <span> {{ t.send }} </span>
+                </a>
+                <button class="button is-fullwidth sheet-calendar" type="button" [disabled]="!ready" (click)="calendar()">
+                    <span class="icon"><i class="fa fa-calendar"></i></span>
+                    <span> {{ t.calendar }} </span>
+                </button>
+                <button class="button is-text sheet-other" type="button" [disabled]="!ready" (click)="other()">{{ t.other }}</button>
+
+                <p *ngIf="copied" class="saved">{{ crewWords.copied }}</p>
+                <p *ngIf="calendarUrl" class="saved">
+                    {{ calendarSaved }}
+                    <a class="google" [href]="calendarUrl" target="_blank" rel="noopener">{{ crewWords.google }}</a>
+                </p>
+                <p *ngIf="sent" class="sheet-set"><i class="fa fa-check"></i> <span dir="auto">{{ t.set(when) }}</span></p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-primary sheet-done" type="button" (click)="close()">{{ t.done }}</button>
+            </footer>
+        </div>
+    </div>
+</div>

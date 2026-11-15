@@ -3,6 +3,7 @@ import { get, gamesRef } from '../firebase';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
 import { nameFlag } from '../name-flag';
+import { VisitRecord } from './visit';
 
 const { BigQuery } = require('@google-cloud/bigquery');
 const bigquery = new BigQuery();
@@ -94,9 +95,25 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     weekly-share       EVERY FRIDAY IN MY CALENDAR (a weekly entry), sent through the share sheet
 //     weekly-download    the weekly entry, downloaded as a .ics file
 //     weekly-google      tapped "or every week in Google Calendar"
+//     in                 pressed I'M IN on the crew page's GAME NIGHT block (a press, like the next four)
+//     in-new             the same, by a name the crew did not have: a friend who comes along
+//     out                pressed "Can't make it"
+//     nudge              pressed ASK WHO ELSE IS IN (opens WhatsApp)
+//     open-lobby         pressed OPEN THE LOBBY on the night
 //   crew-save   a crew saved on the final screen (a save, not a send; the crew id comes with it):
 //     repeat-offer       from the offer above SHARE RESULTS, shown when the same group plays again
 //     bottom             from SAVE THIS CREW at the bottom of the screen
+//     next-week          made by the "Same time next week?" sheet, with a name nobody typed
+//   next-week   "Same time next week?" on the final screen of a group's second or later game of a
+//               sitting, a 50/50 test (see next-week.ts; the crew id comes with every row once there is one):
+//     seen-card          a phone showed the new button, or its banner (once per phone per game)
+//     seen-control       a phone in the other half showed today's screen (once per phone per game)
+//     open               pressed the button: the sheet opened
+//     whatsapp           tapped SEND TO THE GROUP ON WHATSAPP
+//     native             sent the date through the phone's share sheet (Share another way)
+//     copy               Share another way on a phone with no share sheet: the text and link were copied
+//     calendar           tapped ADD TO MY CALENDAR, on the sheet or the banner
+//     in                 tapped I'M IN on the banner
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
@@ -129,8 +146,9 @@ export const LOBBY_HELP = 'lobby-help';
 
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
-        'weekly-share', 'weekly-download', 'weekly-google'],
-    'crew-save': ['repeat-offer', 'bottom'],
+        'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby'],
+    'crew-save': ['repeat-offer', 'bottom', 'next-week'],
+    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',
@@ -182,6 +200,11 @@ export async function onShare(row: ShareRow, testGame: (pin: string) => Promise<
     return insert('shares', { ...row, time: new Date() });
 }
 
+/** One row of the visit beacon (see visit.ts): a page view, or what became of it. */
+export async function onVisit(row: VisitRecord) {
+    return insert('visits', row);
+}
+
 // Host and start kind, the same on opened_games and closed_games.
 function origin(game: GameScheme) {
     return {
@@ -192,6 +215,8 @@ function origin(game: GameScheme) {
         pack: game.pack || null,
         campaign: game.campaign || null,
         coach: !!game.coach,
+        // The About questions' half (see about.ts): null outside the test.
+        about_us: typeof game.aboutUs === 'boolean' ? game.aboutUs : null,
     };
 }
 

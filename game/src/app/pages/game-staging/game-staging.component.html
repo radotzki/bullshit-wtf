@@ -1,4 +1,4 @@
-<section class="game-container game-staging" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+<section class="game-container game-staging" [appFitScreen]="presenter" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header *ngIf="showStartButton && !lobby?.alone" [button]="t.start" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
     <app-game-header *ngIf="!showStartButton || lobby?.alone"></app-game-header>
 
@@ -42,8 +42,8 @@
 
         <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone || help?.show" [class.with-guest]="help?.show && !lobby?.alone">
             <div class="columns is-mobile is-multiline">
-                <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
-                    <img [src]="'/assets/avatar' + i + '.png'" class="picture">
+                <div *ngFor="let player of players; let i = index" class="player column is-one-third-tablet is-one-quarter-desktop" [ngClass]="players.length > 8 ? 'is-one-third-mobile' : 'is-half-mobile'">
+                    <img [src]="'/assets/avatar' + (i % 12) + '.png'" class="picture">
                     <span> {{player.nickname}} </span>
                 </div>
             </div>

@@ -4,8 +4,20 @@
     "cleanUrls": true,
     "rewrites": [
       {
+        "source": "/_daily",
+        "function": "daily"
+      },
+      {
         "source": "/_v",
         "function": "visit"
+      },
+      {
+        "source": "/join-game/*",
+        "function": "joinPreview"
+      },
+      {
+        "source": "/he/join-game/*",
+        "function": "joinPreview"
       },
       {
         "source": "/he",

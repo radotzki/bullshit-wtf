@@ -36,6 +36,28 @@ export interface CrewStrings {
     weeklyHint: string;
     weeklyGoogle: string;
     weeklySent: (day: string) => string;
+    // WHO'S IN? The game night block at the top of the page (see crew-night.ts).
+    gameNight: string;
+    whosIn: string;
+    imIn: string;
+    namePrompt: string;
+    /** "You're in. See you Friday." With no weekday (the night is today): "See you tonight." */
+    youreIn: (day: string) => string;
+    cantMakeIt: string;
+    addToCalendar: string;
+    nudge: string;
+    /** The WhatsApp text of ASK WHO ELSE IS IN; the crew link follows on its own line. */
+    nudgeText: (count: number, when: string, names: string[]) => string;
+    /** One line for a visitor who has never played. */
+    whatIsIt: string;
+    itsGameNight: string;
+    openLobby: string;
+    /** "3 in: Omer, Noa, Dana" */
+    inCount: (names: string[]) => string;
+    nightPassed: string;
+    pickNight: string;
+    /** Shown when I'M IN fails for a reason the server gave no words for in this language. */
+    inFailed: string;
 }
 
 const en: CrewStrings = {
@@ -68,6 +90,23 @@ const en: CrewStrings = {
     weeklyHint: 'Same night every week, with the crew link in it. Skip a week whenever you like.',
     weeklyGoogle: 'or every week in Google Calendar',
     weeklySent: day => `In your calendar: every ${day}.`,
+    gameNight: 'GAME NIGHT',
+    whosIn: 'WHO\'S IN?',
+    imIn: 'I\'M IN',
+    namePrompt: 'Your name in the game',
+    youreIn: day => day ? `You're in. See you ${day}.` : 'You\'re in. See you tonight.',
+    cantMakeIt: 'Can\'t make it',
+    addToCalendar: 'ADD TO MY CALENDAR',
+    nudge: 'ASK WHO ELSE IS IN',
+    nudgeText: (n, when, names) => `${n} of us are in for Bullshit on ${when}: ${names.join(', ')}. Who's missing?`,
+    whatIsIt: 'Bullshit is a party game on your phones: everyone invents a fake answer, then tries to spot the real one. '
+        + 'Free, nothing to install.',
+    itsGameNight: 'IT\'S GAME NIGHT',
+    openLobby: 'OPEN THE LOBBY',
+    inCount: names => `${names.length} in: ${names.join(', ')}`,
+    nightPassed: 'That night has passed. Pick a new one?',
+    pickNight: 'PICK A NIGHT',
+    inFailed: 'That did not go through. Try again.',
 };
 
 const he: CrewStrings = {
@@ -100,6 +139,22 @@ const he: CrewStrings = {
     weeklyHint: 'אותו ערב בכל שבוע, עם הקישור לחבורה. אפשר לדלג על שבוע מתי שרוצים.',
     weeklyGoogle: 'או כל שבוע ביומן Google',
     weeklySent: day => `ביומן: כל ${day}.`,
+    gameNight: 'ערב המשחק',
+    whosIn: 'מי בפנים?',
+    imIn: 'אני בפנים',
+    namePrompt: 'השם שלך במשחק',
+    youreIn: day => day ? `נרשמת. נתראה ב${day}.` : 'נרשמת. נתראה הערב.',
+    cantMakeIt: 'לא יוצא לי',
+    addToCalendar: 'הוספה ליומן שלי',
+    nudge: 'לשאול מי עוד בא',
+    nudgeText: (n, when, names) => `${n} כבר בפנים לבולשיט ב${when}: ${names.join(', ')}. מי חסר?`,
+    whatIsIt: 'בולשיט הוא משחק חברתי בטלפונים: כולם ממציאים תשובה שקרית ומנסים לזהות את האמיתית. בחינם, בלי להתקין כלום.',
+    itsGameNight: 'ערב המשחק התחיל',
+    openLobby: 'פותחים משחק',
+    inCount: names => `${names.length} בפנים: ${names.join(', ')}`,
+    nightPassed: 'הערב הזה עבר. קובעים חדש?',
+    pickNight: 'קביעת ערב',
+    inFailed: 'זה לא עבר. נסו שוב.',
 };
 
 export function crewStrings(locale: string): CrewStrings {
