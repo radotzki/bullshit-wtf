@@ -3,6 +3,8 @@
         <h1 class="title">{{ t.name }}</h1>
         <h3 class="sub-title">{{ t.subTitle }}</h3>
         <div class="separator">♦</div>
+        <!-- The daily puzzle: a plain link, the page is outside the app. -->
+        <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a>
         <a class="lang-switch" *ngIf="t.lang === 'he'" [attr.lang]="t.switchTo" (click)="switchLanguage()">{{ t.switchLabel }}</a>
     </div>
 

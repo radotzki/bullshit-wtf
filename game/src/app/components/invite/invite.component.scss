@@ -98,11 +98,116 @@
         margin-top: 0.4rem;
     }
 
+    // The lone-host help with a guest in: a friend on the same couch scans it, the players stay in view.
+    .qr.small {
+        display: none;
+        width: 120px;
+        height: 120px;
+        margin-top: 0.7rem;
+
+        @media (min-height: 640px) {
+            display: block;
+        }
+    }
+
     .pin {
         margin-top: 0.4rem;
         font-size: 1.25rem;
         letter-spacing: 2px;
     }
+}
+
+// The lone-host help on a computer: the QR code beside the words, big enough to scan across a room.
+// Sizes are in px: the page's rem grows with the window (styles/font-size.scss), and the card must
+// stay on the first screen of a 1280x720 laptop.
+.invite-computer {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    max-width: 820px;
+    margin: 12px auto 0;
+    padding: 20px 32px;
+    font-size: 16px;
+
+    .qr {
+        flex: 0 0 auto;
+        width: clamp(200px, 34vh, 340px);
+        height: clamp(200px, 34vh, 340px);
+    }
+
+    .words {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: start;
+    }
+
+    .headline {
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 8px;
+    }
+
+    .how {
+        font-size: 18px;
+        color: #4a4a4a;
+    }
+
+    .url {
+        font-size: 24px;
+        font-weight: 700;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        letter-spacing: 0.5px;
+        overflow-wrap: anywhere;
+        margin-bottom: 14px;
+    }
+
+    .send {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+
+        .button {
+            font-size: 18px;
+            margin: 0;
+        }
+    }
+
+    .whatsapp {
+        background-color: #25d366;
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .tip {
+        color: #7a7a7a;
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    // A guest is in: the card gives the players room.
+    &.compact {
+        padding: 14px 28px;
+
+        .qr {
+            width: clamp(150px, 24vh, 240px);
+            height: clamp(150px, 24vh, 240px);
+        }
+
+        .headline {
+            font-size: 24px;
+        }
+
+        .url {
+            font-size: 20px;
+        }
+    }
+}
+
+// The short link reads left to right in a Hebrew game too, at the start of its line (the right).
+.invite-computer[dir="rtl"] .url {
+    text-align: right;
 }
 
 // A Hebrew game: Bulma's icon spacing assumes left to right, so mirror it inside the buttons.

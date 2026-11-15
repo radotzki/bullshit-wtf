@@ -96,9 +96,21 @@ export function hostOf(game: PreviewGame): string | undefined {
     return own ? players[own].nickname : undefined;
 }
 
+/**
+ * The name's first letter that has a direction is a right-to-left one (Hebrew, Arabic). A line that
+ * starts with such a name is laid out right to left by chat apps, so an English title must not.
+ */
+export function startsRightToLeft(name: string): boolean {
+    const m = /[A-Za-z\u00c0-\u024f\u0370-\u03ff\u0400-\u04ff\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufefc]/.exec(name || '');
+    return !!m && /[\u0590-\u08ff\ufb1d-\ufdff\ufe70-\ufefc]/.test(m[0]);
+}
+
 const TEXT = {
     en: {
-        named: (host: string) => `${host} invited you to play Bullshit`,
+        // A Hebrew or Arabic name goes after English words, so the line still reads left to right.
+        named: (host: string) => startsRightToLeft(host)
+            ? `You're invited by ${host} to play Bullshit`
+            : `${host} invited you to play Bullshit`,
         nameless: 'You\'re invited to a game of Bullshit',
         description: (pin: string) =>
             `Tap to join game ${pin}. The party game of lies: write a fake answer, fool your friends, find the truth. Everyone plays on their own phone. Free, no download.`,
@@ -199,12 +211,17 @@ export function personalize(shell: string, preview: Preview, url: string): strin
             return null;
         }
     }
-    block.html = block.html.replace('<!-- BS:META:START -->', '<!-- BS:META:START -->\n  <meta name="robots" content="noindex">');
+    // The page's rel=canonical (the home page) does not belong beside noindex: search engines advise
+    // against the pair, and this page is no copy of the home page.
+    block.html = block.html.replace(/\s*<link rel="canonical"[^>]*>/g, '');
+    // Replacer functions everywhere below: a nickname like "a$&" must stay literal ($&, $' and $`
+    // mean something in a replacement string).
+    block.html = block.html.replace('<!-- BS:META:START -->', () => '<!-- BS:META:START -->\n  <meta name="robots" content="noindex">');
     const page = shell.slice(0, match.index) + block.html + shell.slice(match.index + match[0].length);
     if (!/<title>[^<]*<\/title>/.test(page)) {
         return null;
     }
-    return page.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(preview.title)}</title>`);
+    return page.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(preview.title)}</title>`);
 }
 
 /**

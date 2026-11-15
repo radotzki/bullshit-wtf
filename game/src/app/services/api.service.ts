@@ -4,7 +4,7 @@ import {
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
-import { About, aboutOf, sentMark } from './../game-model';
+import { About, aboutOf, aboutMissedOf, sentMark } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
@@ -113,10 +113,29 @@ export class ApiService {
         return this.get<string>(this.gamesRef.child(pin).child('creator'));
     }
 
-    /** Whether the server marks this game's host by the creating phone's host key (see host-key.ts). */
+    /**
+     * Whether the server marks this game's host by the creating phone's host key (see host-key.ts):
+     * true, or 'screen' once the host made their computer the big screen (see hostToBigScreen).
+     */
     getGameHasHost(pin: string) {
         pin = pin.toUpperCase();
-        return this.get<boolean>(this.gamesRef.child(pin).child('hasHost'));
+        return this.get<boolean | 'screen'>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
+    /** The same, live: it changes in the lobby when the host makes their computer the big screen. */
+    getGameHasHostObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<boolean | 'screen'>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
+    /**
+     * The host's computer becomes the big screen: the server frees the host's seat and marks the game as
+     * hosted from its big screen. Only the browser with the game's host key may ask, in the lobby.
+     */
+    hostToBigScreen(pin: string) {
+        pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin) || null;
+        return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
     async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
@@ -446,15 +465,16 @@ export class ApiService {
      * players at once), so a phone shows the writing form and the "about you" badge in the same frame,
      * even on a slow network. A state or players read that fails leaves an ordinary question.
      */
-    async getQuestionWithAbout(pin: string): Promise<{ question: string; about: About; players: GamePlayers }> {
+    async getQuestionWithAbout(pin: string): Promise<{ question: string; about: About; missed: string; players: GamePlayers }> {
         pin = pin.toUpperCase();
         const game = this.gamesRef.child(pin);
-        const [question, about, players] = await Promise.all([
+        const [question, state, players] = await Promise.all([
             this.get<string>(game.child('currentQ')),
-            this.getAbout(pin),
+            this.get<any>(game.child('state')).catch(() => null),
             this.get<GamePlayers>(game.child('players')).catch(() => null),
         ]);
-        return { question, about, players };
+        // missed: the player whose About question this bank question replaces (aboutMissedOf), or null.
+        return { question, about: aboutOf(state), missed: aboutMissedOf(state), players };
     }
 
     answer(pin: string, answer: string) {
@@ -684,7 +704,7 @@ export class ApiService {
      * A crew's game night, through the `crewNight` function (a phone may not write a crew):
      * `{ time, by }` sets the date, `{ nickname, in }` says "I'm in" or takes the name off.
      */
-    crewNight(crew: string, body: { time: number; by?: string } | { nickname: string; in: boolean }) {
+    crewNight(crew: string, body: { time: number; by?: string; prev?: number | null } | { nickname: string; in: boolean }) {
         return this.post<{ in?: boolean; nickname?: string; isNew?: boolean; count?: number }>(
             `crewNight`, { crew: crew.toLowerCase(), ...body });
     }

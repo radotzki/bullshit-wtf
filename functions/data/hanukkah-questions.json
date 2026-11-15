@@ -132,7 +132,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-12": {
-    "questionText": "In the 1920s, jelly doughnuts became Israel's Hanukkah food partly thanks to the $blank$",
+    "questionText": "In the 1920s, jelly doughnuts became the Land of Israel's Hanukkah food partly thanks to the $blank$",
     "realAnswer": "labor union",
     "fakeAnswers": [
       "army",
@@ -147,7 +147,7 @@
     "questionText": "The word dreidel comes from a Yiddish word meaning $blank$",
     "realAnswer": "to turn",
     "fakeAnswers": [
-      "little top",
+      "to cheat",
       "to bet",
       "sleepy"
     ],

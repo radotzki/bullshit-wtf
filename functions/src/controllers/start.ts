@@ -28,6 +28,9 @@ export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'not
  *   start it, so a host whose phone died cannot leave the group stuck either. Only the server writes
  *   hostSeen, and only for the phone that brings the host key: a guest cannot make the host look gone.
  *   Only games from clients that report (serverStart) have it; without it the host must start;
+ * - when the host made their computer the big screen (hasHost 'screen', see hostToBigScreen), no player
+ *   row is the host and none is waited for: the big screen brings the host key and starts the game.
+ *   It reports in like a host's phone, so only a big screen gone 5 minutes lets anyone start;
  * - games with no host key (made before host keys, or by an old client) keep the old rule: anyone
  *   may start them, and the lobby leaves that to the big screen if there is one.
  */
@@ -39,7 +42,7 @@ export function startVerdict(game: GameScheme, hostKey: string | undefined, now:
         return 'host';
     }
     const players = game.players || {};
-    const hostIn = Object.keys(players).some(k => players[k] && players[k].host);
+    const hostIn = game.hasHost === 'screen' || Object.keys(players).some(k => players[k] && players[k].host);
     const openedAt = game.state && game.state.timestamp || 0;
     if (!hostIn && now - openedAt >= HOST_GRACE_MS) {
         return 'host-missing';
@@ -96,4 +99,43 @@ export async function hostHere(pin: string, hostKey: string | undefined, now = D
 
     await gamesRef.child(pin).child('hostSeen').set(now);
     return { seen: true };
+}
+
+/**
+ * The host's computer becomes the big screen. A host who makes a game on a computer is seated there as
+ * a player, so that screen cannot be the one the room looks at: it would show the host's own lies.
+ * This frees the host's seat and marks the game as hosted from its big screen (hasHost 'screen'), in
+ * one write. The host then joins from a phone like everyone else, and presses START on the big screen.
+ *
+ * Only the browser that brings the game's host key may do this, and only in the lobby. The only seats
+ * removed are the ones marked as the host, which only that key can mark (see join.ts): no phone can
+ * free another player's seat with it. The host key stays where it is, in the browser that is now the
+ * big screen, and no phone is handed it: giving up the seat gives nobody else the host's powers.
+ * Asking twice changes nothing.
+ */
+export async function hostToBigScreen(pin: string, hostKey: string | undefined, now = Date.now())
+    : Promise<{ screen: boolean }> {
+    pin = typeof pin === 'string' ? pin.toUpperCase() : '';
+    const game = pin ? await get<GameScheme>(gamesRef.child(pin)) : null;
+
+    if (!game || !game.state) {
+        return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
+    }
+    if (!game.hostKey || !hostKey || hostKey !== game.hostKey) {
+        return Promise.reject({ message: 'Only the host can make this the big screen', code: 'NOT_HOST' });
+    }
+    if (game.state.id !== GameState.GameStaging) {
+        return Promise.reject({ message: 'The game has already started', code: 'GAME_STARTED' });
+    }
+
+    const update: { [path: string]: any } = { hasHost: 'screen', presenter: true };
+    const players = game.players || {};
+    Object.keys(players).filter(k => players[k] && players[k].host).forEach(k => update[`players/${k}`] = null);
+    if (game.serverStart) {
+        // The big screen's lobby page reports in from now on (see hostHere).
+        update.hostSeen = now;
+    }
+    await gamesRef.child(pin).update(update);
+    console.log(`[PIN: ${pin}] the host's computer is the big screen now`);
+    return { screen: true };
 }

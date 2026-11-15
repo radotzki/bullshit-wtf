@@ -4,6 +4,8 @@
 // 5, 7 or 9 questions, three rounds where points grow, English and Hebrew questions.
 // A page may stand in one language only: leave `twin` out. A page with a `tag` sends it on its
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
+// The weekly-group and home-together pages (marketing drafts 6 and 7), in a file of their own.
+const groupsHome = require('./pages-groups-home');
 const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
 const jackbox = require('./pages-jackbox');
@@ -25,6 +27,9 @@ const en = {
         { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
         { href: '/office-holiday-party-game', label: 'Office holiday party game' },
         { href: '/free-jackbox-alternative', label: 'A free Jackbox alternative' },
+        { href: '/family-game-night', label: 'Family game night' },
+        { href: '/video-call-party-game', label: 'A party game for a video call' },
+        { href: '/snow-day-games', label: 'Snow day games' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -48,6 +53,12 @@ const he = {
         { href: '/he/classroom', label: 'משחק לכיתה' },
         { href: '/he/team-building', label: 'משחק לגיבוש צוות' },
         { href: '/he/game-like-jackbox', label: 'משחק כמו ג\'קבוקס' },
+        { href: '/he/youth-group', label: 'פעולה מוכנה לתנועת נוער' },
+        { href: '/he/gibush', label: 'משחק לערב גיבוש' },
+        { href: '/he/home-together', label: 'משחק קבוצתי לבית' },
+        { href: '/he/days-at-home', label: 'ימים בבית עם הילדים' },
+        { href: '/he/video-call', label: 'משחק בשיחת וידאו' },
+        { href: '/he/school-break', label: 'משחקים לחופש' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -63,6 +74,7 @@ const howEn = `
   <li><strong>Everyone picks the answer they believe.</strong> Find the truth and you score. Every friend who picks your lie scores for you too. Fall for one of the house lies and you lose points.</li>
   <li><strong>The truth is revealed</strong>, and you see who fooled whom.</li>
 </ol>
+<p><a href="/daily?via=daily-seo">Try today's question</a></p>
 <h2>Rounds and points</h2>
 <p>A game has 5, 7 or 9 questions over three rounds, and points grow each round, so nobody is out of it until the end.</p>
 <table>
@@ -94,6 +106,7 @@ const howHe = `
   <li><strong>כל אחד בוחר את התשובה שהוא מאמין לה.</strong> מצאתם את האמת? קיבלתם נקודות. כל חבר שבחר בשקר שלכם מביא לכם נקודות. נפלתם בשקר של הבית? מפסידים נקודות.</li>
   <li><strong>האמת נחשפת</strong>, ורואים מי עבד על מי.</li>
 </ol>
+<p><a href="/he/daily?via=daily-seo">נסו את השאלה של היום</a></p>
 <h2>סבבים ונקודות</h2>
 <p>במשחק יש 5, 7 או 9 שאלות בשלושה סבבים, והנקודות גדלות בכל סבב, כך שאף אחד לא בחוץ עד הסוף.</p>
 <table>
@@ -116,6 +129,7 @@ const howHe = `
 </ul>`;
 
 module.exports = [
+    ...groupsHome.pages(en, he),
     {
         path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',

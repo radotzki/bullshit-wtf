@@ -10,6 +10,7 @@
     <div *ngIf="banner" class="next-week-banner">
         <p class="banner-when" dir="auto">{{ t.next(bannerWhen) }}</p>
         <p *ngIf="bannerBy" class="banner-by" dir="auto">{{ bannerBy }}</p>
+        <button *ngIf="mineNight" class="button is-small is-text banner-change" type="button" (click)="changeNight()">{{ t.change }}</button>
         <button *ngIf="!imIn" class="button is-info is-fullwidth banner-in" type="button" (click)="sayIn()">{{ t.imIn }}</button>
         <p *ngIf="imIn" class="banner-done">
             <span class="banner-youre-in"><i class="fa fa-check"></i> {{ t.youreIn }}</span>
@@ -27,6 +28,15 @@
             <section class="modal-card-body next-week-sheet">
                 <h2 class="sheet-title">{{ t.title }}</h2>
 
+                <!-- Another phone set the date while this sheet was open: that date, and I'M IN. -->
+                <div *ngIf="taken" class="sheet-taken">
+                    <p class="banner-when" dir="auto">{{ t.next(bannerWhen) }}</p>
+                    <p *ngIf="bannerBy" class="banner-by" dir="auto">{{ bannerBy }}</p>
+                    <button *ngIf="!imIn" class="button is-info is-fullwidth sheet-in" type="button" (click)="sayIn()">{{ t.imIn }}</button>
+                    <p *ngIf="imIn" class="banner-youre-in"><i class="fa fa-check"></i> {{ t.youreIn }}</p>
+                </div>
+
+                <ng-container *ngIf="!taken">
                 <p class="sheet-when">
                     <span class="when" dir="auto">{{ when }}</span>
                     <button class="button is-small is-text sheet-change" type="button" (click)="changing = !changing">{{ t.change }}</button>
@@ -63,6 +73,7 @@
                     <a class="google" [href]="calendarUrl" target="_blank" rel="noopener">{{ crewWords.google }}</a>
                 </p>
                 <p *ngIf="sent" class="sheet-set"><i class="fa fa-check"></i> <span dir="auto">{{ t.set(when) }}</span></p>
+                </ng-container>
             </section>
             <footer class="modal-card-foot">
                 <button class="button is-primary sheet-done" type="button" (click)="close()">{{ t.done }}</button>
