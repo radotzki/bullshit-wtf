@@ -540,18 +540,21 @@ export function watched<T extends (...args: any[]) => any>(fn: string, handler: 
  *
  * `works` says what the function works on, as the site calls it: 'game' (the request names a
  * game by its PIN), 'crew' (it names a crew), 'new' (it makes a game, whose test mark is in the
- * request and not yet in the database) or nothing. A request the site never sends (not a POST,
+ * request and not yet in the database) or nothing. `methods` are the methods the site calls it
+ * with: a POST only, unless the function says otherwise (the site reads the daily puzzle with a
+ * GET). A request the site never sends (another method,
  * without the PIN or crew the function works on, a new game with no language) is answered exactly as before, and whatever
  * it runs into is not reported.
  */
-export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, works: 'game' | 'crew' | 'new' | '' = ''): T {
+export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, works: 'game' | 'crew' | 'new' | '' = '', methods: string[] = ['POST']): T {
     const newGame = works === 'new';
+    const asked = methods.map(m => m.toUpperCase());
     return (function (this: any, req: any, res: any) {
         const body = req && req.body;
         const field = (name: string) => body && typeof body === 'object' ? body[name] : undefined;
         const ctx: ReportContext = { pin: field('pin'), crew: field('crew'), body, handled: true };
         const method = req && req.method;
-        ctx.unasked = (typeof method === 'string' && method.toUpperCase() !== 'POST')
+        ctx.unasked = (typeof method === 'string' && asked.indexOf(method.toUpperCase()) < 0)
             || (works === 'game' && !cleanPin(ctx.pin))
             || (works === 'crew' && !cleanCrew(ctx.crew))
             || (newGame && !(typeof field('locale') === 'string' && /^[A-Za-z-]{2,10}$/.test(field('locale'))));

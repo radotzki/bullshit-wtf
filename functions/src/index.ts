@@ -90,6 +90,7 @@ function dailyQuestions(): daily.DailyBank {
 // The tallies' reads and writes, loaded at the first request (it opens the database).
 const dailyStore = (): typeof import('./controllers/daily-store') => require('./controllers/daily-store');
 
+// The site reads the puzzle with a GET and sends picks with a POST: a fault in either is a report.
 exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
     const bank = dailyQuestions();
     const now = Date.now();
@@ -150,7 +151,7 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
         body.round = round;
     }
     return res.status(200).send(body);
-}));
+}, '', ['GET', 'POST']));
 
 // Erasing a chat group's rounds past keeping (nine days and more after their day): once a day per
 // running copy, from any call of the daily function: a question asked, a pick, a press, on the

@@ -312,6 +312,29 @@ test('anything but a POST is no report', async () => {
     assert.strictEqual(sent.length, 2);
 });
 
+test('the daily puzzle is read with a GET: a fault there is a report, another method still is none', async () => {
+    fresh();
+    const ask = (method, query) => new Promise((resolve) => {
+        const res = { code: 200, status(c) { this.code = c; return this; }, send(b) { resolve({ code: this.code, body: b }); return this; }, set() { return this; } };
+        api.daily.__handler({ body: {}, query, headers: {}, method }, res);
+    });
+    // No database here: the tallies do not load, and the question still goes out.
+    const got = await ask('GET', { lang: 'en' });
+    assert.strictEqual(got.code, 200);
+    await reporter.settled();
+    assert.ok(sent.length >= 1, 'a GET of the puzzle that runs into a fault is reported');
+    sent.forEach(e => {
+        assert.strictEqual(e.tags.function, 'daily');
+        assert.strictEqual(e.tags.side, 'server');
+        assert.match(e.exception.values[0].value, /the database is not for this test/);
+    });
+    // A method the site never sends to the puzzle is answered as before, and is no report.
+    fresh();
+    assert.strictEqual((await ask('PUT', { lang: 'en' })).code, 405);
+    await reporter.settled();
+    assert.strictEqual(sent.length, 0);
+});
+
 test('a fault about a game that does not exist is no report, and does not use up the cap', async () => {
     const there = { ABCD: true };
     const lookups = [];
