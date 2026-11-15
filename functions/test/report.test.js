@@ -335,6 +335,30 @@ test('the daily puzzle is read with a GET: a fault there is a report, another me
     assert.strictEqual(sent.length, 0);
 });
 
+test('a GET cuts its query values out of the message: a round id, a list of ids, and a short value is kept', async () => {
+    fresh();
+    const round = 'r0und_Zq8XkP3m';
+    const handler = reporter.http('daily', (req) => {
+        throw new Error(`no round at /daily/en/rounds/${req.query.g} for ${req.query.u.join(' and ')}, lang ${req.query.lang}, f=${req.query.f}`);
+    }, '', ['GET']);
+    const res = { status() { return this; }, send() { return this; }, set() { return this; } };
+    const query = { g: round, u: ['brw_A1b2C3d4', 'brw_e5F6g7H8'], lang: 'en', f: '' };
+    assert.throws(() => handler({ body: {}, query, headers: {}, method: 'GET' }, res));
+    await reporter.settled();
+    assert.strictEqual(sent.length, 1);
+    const all = JSON.stringify(sent[0]);
+    const message = sent[0].exception.values[0].value;
+    assert.ok(!/r0und_Zq8XkP3m|r0und_zq8xkp3m|brw_A1b2C3d4|brw_e5F6g7H8/i.test(all), message);
+    assert.match(message, /\/daily\/en\/rounds\/\[cut\] for \[cut\] and \[cut\], lang en, f=$/);
+    // A request with no query, or a query that is not an object, still reports.
+    fresh();
+    const bare = reporter.http('daily', () => { throw new Error('plain fault'); }, '', ['GET']);
+    assert.throws(() => bare({ body: {}, headers: {}, method: 'GET' }, res));
+    await reporter.settled();
+    assert.strictEqual(sent.length, 1);
+    assert.strictEqual(sent[0].exception.values[0].value, 'plain fault');
+});
+
 test('a fault about a game that does not exist is no report, and does not use up the cap', async () => {
     const there = { ABCD: true };
     const lookups = [];
