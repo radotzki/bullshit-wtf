@@ -99,7 +99,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     in-new             the same, by a name the crew did not have: a friend who comes along
 //     out                pressed "Can't make it"
 //     nudge              pressed ASK WHO ELSE IS IN (opens WhatsApp)
-//     open-lobby         pressed OPEN THE LOBBY on the night
+//     open-lobby         pressed OPEN THE LOBBY on the night, and that press opened the lobby (one row a lobby)
+//     join-lobby         pressed it when another phone had already opened the lobby: this phone joined it
 //   crew-save   a crew saved on the final screen (a save, not a send; the crew id comes with it):
 //     repeat-offer       from the offer above SHARE RESULTS, shown when the same group plays again
 //     bottom             from SAVE THIS CREW at the bottom of the screen
@@ -113,7 +114,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     native             sent the date through the phone's share sheet (Share another way)
 //     copy               Share another way on a phone with no share sheet: the text and link were copied
 //     calendar           tapped ADD TO MY CALENDAR, on the sheet or the banner
-//     in                 tapped I'M IN on the banner
+//     in                 tapped I'M IN on the banner (or on a sheet another phone's date reached)
+//     change             tapped CHANGE on the banner of the phone that set the date: the sheet opened again
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
@@ -146,9 +148,10 @@ export const LOBBY_HELP = 'lobby-help';
 
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
-        'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby'],
+        'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby',
+        'join-lobby'],
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
-    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in'],
+    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',

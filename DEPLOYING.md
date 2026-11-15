@@ -1673,8 +1673,9 @@ phones on the final screen show it as a banner with I'M IN. The big screen gets 
 The spec is "Change 1" of the game night loop spec (the project's reports); the code is
 `game/src/app/components/next-week` and `functions/src/controllers/next-week.ts`.
 
-- Functions and site. One new function, `crewNight` (HTTP). No rule change, no BigQuery change: the
-  new rows use the `shares` columns that are there. A merge sends all functions and the site.
+- Functions and site. No new function: `crewNight` (HTTP) came with "Who's in?", and this uses it
+  as it is. No rule change, no BigQuery change: the new rows use the `shares` columns that are
+  there. A merge sends all functions and the site.
 - Which games. A Replay, or a crew's game, with two players or more. Not a taste, and not the Replay
   of a taste (that is the group's first game). A group that opens a fresh game by hand keeps the
   phone-memory rule of `repeat-group.ts`, as before.
@@ -1714,3 +1715,30 @@ Then, by half: groups back together within 7 days, and the share of second games
 (the `forks` table), which must not fall: the button sits beside REMATCH.
 
 To play it on the emulators, both halves and both languages: `node .github/smoke/next-week-game.js`.
+
+## Game night fixes after the reviews of "Who's in?" and "Same time next week?"
+
+Small fixes from the two reviews (the project's reports `review-113.md` and `review-114.md`).
+
+- Functions and site. No new function, none removed or renamed, no rule change, no BigQuery change.
+  A merge sends all functions and the site.
+- **Two sheets, two dates.** `crewNight` takes an optional `prev` with `{ crew, time, by }`: the night
+  the sender's screen showed when the sheet opened (null for none). "Same time next week?" sends it.
+  If the crew has another night that is still ahead and is not `prev`, the crew keeps it and the
+  answer says `kept: true`. A sheet that is open when another phone's date arrives shows that date
+  with I'M IN in place of the send buttons. The phone that set the date has CHANGE on its banner,
+  and sends its own night as `prev`, so it can still move it. The crew page's NEXT GAME NIGHT sends
+  no `prev` and moves the night as before.
+- **The message.** A date other than the one the sheet offered reads "Bullshit game night: ..." /
+  "ערב בולשיט: ..." in place of "same time next week". In Hebrew the leader reads "יוסי בראש, 2–0".
+- **The big screen** shows the date ("Next game night: ...") once a phone has set it.
+- **Names on a night's list.** Invisible characters (zero-width, text-direction marks) are taken out
+  before the cut; a name that is nothing else, or is not text, is refused like an empty one.
+- **The crew page.** A full list says "This night is full." / "הערב הזה מלא."; a night set for the
+  small hours (before 05:00) belongs to the evening before, for "tonight", "See you Friday" and the
+  home page's TONIGHT line. Hebrew: "הערב משחקים!", "קובעים ערב", "משהו השתבש. נסו שוב.".
+- **What it counts.** `crew-night` / `open-lobby` is now one row a lobby: only the press that opened
+  it. A press that joined a lobby another phone opened is the new `join-lobby`. Rows before the
+  release counted every press. `next-week` gains `change` (CHANGE on the sender's banner).
+- Old and new together. An old site sends no `prev` and works as before. The new site on old
+  functions: `prev` is ignored, so two sheets can still move each other's date, as today.

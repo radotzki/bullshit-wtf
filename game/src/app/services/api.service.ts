@@ -703,7 +703,7 @@ export class ApiService {
      * A crew's game night, through the `crewNight` function (a phone may not write a crew):
      * `{ time, by }` sets the date, `{ nickname, in }` says "I'm in" or takes the name off.
      */
-    crewNight(crew: string, body: { time: number; by?: string } | { nickname: string; in: boolean }) {
+    crewNight(crew: string, body: { time: number; by?: string; prev?: number | null } | { nickname: string; in: boolean }) {
         return this.post<{ in?: boolean; nickname?: string; isNew?: boolean; count?: number }>(
             `crewNight`, { crew: crew.toLowerCase(), ...body });
     }

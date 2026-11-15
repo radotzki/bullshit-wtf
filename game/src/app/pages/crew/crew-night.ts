@@ -58,10 +58,22 @@ export function nightState(time: number | undefined | null, now: number, lastPla
     return played || now >= end + PASSED_OFFER_MS ? 'over' : 'passed';
 }
 
-/** Whole calendar days (local) from today to the night: 0 today, 1 tomorrow. */
+/**
+ * The evening a night belongs to (local): a night set for the small hours, before 05:00, is the
+ * evening before. Saturday 00:30 is Friday night, as the players say it.
+ */
+export function nightEvening(time: number): Date {
+    const d = new Date(time);
+    return d.getHours() < NIGHT_ENDS_HOUR ? new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, 12) : d;
+}
+
+/**
+ * Whole calendar days (local) from today to the night's evening: 0 tonight, 1 tomorrow. A night at
+ * Saturday 00:30 is "tonight" on Friday evening, not "tomorrow".
+ */
 export function daysUntil(time: number, now: number): number {
     const a = new Date(now);
-    const b = new Date(time);
+    const b = nightEvening(time);
     const from = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
     const to = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
     return Math.round((to - from) / DAY_MS);

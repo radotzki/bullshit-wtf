@@ -145,9 +145,44 @@ test('the words of the night block, in Hebrew', () => {
     assert.strictEqual(t.nudgeText(3, 'יום שישי, 20 בנובמבר, 21:00', ['עומר', 'נועה', 'דנה']),
         '3 כבר בפנים לבולשיט ביום שישי, 20 בנובמבר, 21:00: עומר, נועה, דנה. מי חסר?');
     assert.match(t.whatIsIt, /^בולשיט הוא משחק חברתי בטלפונים: .* בחינם, בלי להתקין כלום\.$/);
-    assert.strictEqual(t.itsGameNight, 'ערב המשחק התחיל');
+    assert.strictEqual(t.itsGameNight, 'הערב משחקים!');
     assert.strictEqual(t.openLobby, 'פותחים משחק');
     assert.strictEqual(t.inCount(['עומר', 'נועה', 'דנה']), '3 בפנים: עומר, נועה, דנה');
     assert.strictEqual(t.nightPassed, 'הערב הזה עבר. קובעים חדש?');
-    assert.strictEqual(t.pickNight, 'קביעת ערב');
+    assert.strictEqual(t.pickNight, 'קובעים ערב');
+});
+
+test('a night set after midnight belongs to the evening before', () => {
+    // Saturday 21 November, 00:30: Friday night, as the players say it.
+    const late = at(2026, 11, 21, 0, 30);
+    assert.strictEqual(n.nightEvening(late).getDay(), 5);
+    assert.strictEqual(n.nightEvening(night).getDay(), 5);
+    // On Friday evening it is tonight, not tomorrow; on Thursday it is tomorrow.
+    assert.strictEqual(n.daysUntil(late, at(2026, 11, 20, 20)), 0);
+    assert.strictEqual(n.countdown(late, at(2026, 11, 20, 20), 'en'), 'tonight');
+    assert.strictEqual(n.countdown(late, at(2026, 11, 20, 20), 'he'), 'הערב');
+    assert.strictEqual(n.countdown(late, at(2026, 11, 19, 23, 59), 'en'), 'tomorrow');
+    assert.strictEqual(n.countdown(late, at(2026, 11, 21, 0, 10), 'en'), 'tonight');
+    // The home page's TONIGHT line shows from Friday morning, not from 22:30.
+    assert.strictEqual(n.tonightTime(late, at(2026, 11, 20, 20)), '00:30');
+    assert.strictEqual(n.tonightTime(late, at(2026, 11, 20, 8)), '00:30');
+    assert.strictEqual(n.tonightTime(late, at(2026, 11, 19, 23)), null);
+    // A night at 05:00 or later is that day's own.
+    assert.strictEqual(n.daysUntil(at(2026, 11, 21, 5), at(2026, 11, 20, 20)), 1);
+    // The usual night is unchanged: Friday 00:01 is already "tonight" for Friday 21:00.
+    assert.strictEqual(n.countdown(night, at(2026, 11, 20, 0, 1), 'en'), 'tonight');
+    assert.strictEqual(n.countdown(night, at(2026, 11, 19, 23, 59), 'en'), 'tomorrow');
+});
+
+test('a full night says so, in both languages; other failures keep their words', () => {
+    const { inErrorText } = load('pages', 'crew', 'crew-strings.ts');
+    const en = crewStrings('en');
+    const he = crewStrings('he');
+    assert.strictEqual(en.nightFull, 'This night is full.');
+    assert.strictEqual(he.nightFull, 'הערב הזה מלא.');
+    assert.strictEqual(inErrorText({ code: 'NIGHT_FULL', message: 'This night is full' }, he), 'הערב הזה מלא.');
+    assert.strictEqual(inErrorText({ code: 'NIGHT_FULL' }, en), 'This night is full.');
+    assert.strictEqual(inErrorText({ code: 'BAD_NAME', message: 'השם הזה לא עובר אצלנו' }, he), 'השם הזה לא עובר אצלנו');
+    assert.strictEqual(inErrorText({ code: 'NO_NIGHT' }, he), 'משהו השתבש. נסו שוב.');
+    assert.strictEqual(inErrorText(undefined, en), 'That did not go through. Try again.');
 });

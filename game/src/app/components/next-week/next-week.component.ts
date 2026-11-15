@@ -13,7 +13,8 @@ import {
 import { crewStrings } from './../../pages/crew/crew-strings';
 import { askStrings } from './../host-ask/host-ask';
 import {
-    NextWeekStrings, defaultCrewName, isIn, nextWeekText, nextWeekView, nextWeekWords, sameTimeNextWeek,
+    NextWeekStrings, defaultCrewName, isIn, memberKey, messageLeader, nextWeekText, nextWeekView, nextWeekWords,
+    nightTaken, sameTimeNextWeek,
 } from './next-week';
 
 /**
@@ -61,8 +62,14 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
     copied: boolean;
     /** ADD TO MY CALENDAR was pressed: offer Google Calendar for phones that ignore the file. */
     calendarUrl: string;
-    /** I'M IN was pressed (the crew's list follows a moment later). */
-    private saidIn: boolean;
+    /** I'M IN was pressed for the night at this time (the crew's list follows a moment later). */
+    private saidIn: number;
+    /** The date the sheet offered first: same time next week. */
+    private offered: Date;
+    /** The night the crew had when this sheet opened (null for none): the one this phone may replace. */
+    private seenNight: number | null = null;
+    /** The night this phone sent. */
+    private sentNight: number | null = null;
     private id: string;
     private crewSub: Subscription;
 
@@ -150,17 +157,32 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
         return this.setNight && this.setNight.by ? this.t.call(this.setNight.by) : '';
     }
 
+    /** In for the night the crew has now: said here, sent from here, or on its list. */
     get imIn(): boolean {
-        return !!this.saidIn || !!this.sent || isIn(this.setNight, this.myNickname);
+        const time = this.setNight ? this.setNight.time : undefined;
+        return (!!time && (this.saidIn === time || this.sentNight === time)) || isIn(this.setNight, this.myNickname);
+    }
+
+    /** This phone set the night the crew has: its banner may change it. */
+    get mineNight(): boolean {
+        const night = this.setNight;
+        return !!night && (this.sentNight === night.time
+            || (!!night.by && !!this.myNickname && memberKey(night.by) === memberKey(this.myNickname)));
+    }
+
+    /** Another phone set a night while this sheet was open: the sheet shows it, with I'M IN. */
+    get taken(): boolean {
+        return this.open && nightTaken(this.setNight && this.setNight.time, this.seenNight, this.sentNight, new Date());
     }
 
     sayIn() {
-        if (!this.id || !this.myNickname || this.saidIn) {
+        const time = this.setNight ? this.setNight.time : undefined;
+        if (!this.id || !this.myNickname || !time || this.saidIn === time) {
             return;
         }
-        this.saidIn = true;
+        this.saidIn = time;
         this.apiService.crewNight(this.id, { nickname: this.myNickname, in: true }).catch(err => {
-            this.saidIn = false;
+            this.saidIn = undefined;
             reportError(err, 'crewNight', { crew: this.id });
         });
         this.count('in');
@@ -173,19 +195,41 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
         }
     }
 
+    /** CHANGE on the banner of the phone that set the date: the sheet again, on that date, to pick another. */
+    changeNight() {
+        const night = this.setNight;
+        if (!night || !this.mineNight) {
+            return;
+        }
+        const d = new Date(night.time);
+        this.nightDate = dateValue(d);
+        this.nightTime = timeValue(d);
+        this.seenNight = night.time;
+        this.sent = false;
+        this.calendarUrl = '';
+        this.changing = true;
+        this.openSheet(true);
+    }
+
     // ---- the sheet ----
 
-    async openSheet() {
+    async openSheet(change = false) {
         this.open = true;
         this.sheet.emit(true);
         this.copied = false;
         this.failed = false;
-        if (!this.nightDate) {
-            const d = sameTimeNextWeek(new Date());
-            this.nightDate = dateValue(d);
-            this.nightTime = timeValue(d);
+        if (!this.offered) {
+            this.offered = sameTimeNextWeek(new Date());
         }
-        this.count('open');
+        if (!this.nightDate) {
+            this.nightDate = dateValue(this.offered);
+            this.nightTime = timeValue(this.offered);
+        }
+        if (!change) {
+            // The night the crew has as the sheet opens: the only one this phone's date may replace.
+            this.seenNight = this.setNight ? this.setNight.time : null;
+        }
+        this.count(change ? 'change' : 'open');
         if (this.id || this.making) {
             return;
         }
@@ -251,7 +295,7 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
 
     /** The crew is there and the date is good: the send buttons work. */
     get ready(): boolean {
-        return !!this.id && !!this.crew && !!this.night && !this.nightInPast && !this.nameError;
+        return !!this.id && !!this.crew && !!this.night && !this.nightInPast && !this.nameError && !this.taken;
     }
 
     get crewUrl() {
@@ -260,12 +304,13 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
 
     /** "Dana leads 2 to 1", tonight's games counted; nothing while nobody has won a game. */
     private get leader() {
-        const first = this.crew ? crewStandings(this.crew)[0] : undefined;
-        return first && first.wins > 0 ? crewLeaderLine(this.crew, this.lang) : '';
+        return this.crew ? messageLeader(crewStandings(this.crew), crewLeaderLine(this.crew, this.lang), this.lang) : '';
     }
 
     get text() {
-        return this.night ? nextWeekText({ winner: !!this.winner, when: this.night, leader: this.leader, locale: this.lang }) : '';
+        return this.night ? nextWeekText({
+            winner: !!this.winner, when: this.night, leader: this.leader, locale: this.lang, offered: this.offered,
+        }) : '';
     }
 
     get whatsappUrl() {
@@ -281,9 +326,12 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
         const night = this.night;
         this.saveName();
         this.sent = true;
+        this.sentNight = night.getTime();
         this.count(method);
-        // Fire and forget, like the count: the send itself never waits on it.
-        this.apiService.crewNight(this.id, { time: night.getTime(), by: this.myNickname || '' })
+        // Fire and forget, like the count: the send itself never waits on it. `prev` is the night this
+        // sheet opened on: if another phone set a different one meanwhile, the crew keeps theirs, and
+        // this sheet shows it (see `taken`).
+        this.apiService.crewNight(this.id, { time: night.getTime(), by: this.myNickname || '', prev: this.seenNight })
             .catch(err => reportError(err, 'crewNight', { crew: this.id }));
         try {
             // The crew page offers the same night to this phone.
