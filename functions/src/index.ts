@@ -36,6 +36,10 @@ function errorBody(e: any) {
         if (e.justEnded === true) {
             body.justEnded = true;
         }
+        // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
+        if (e.nightAfter && typeof e.nightAfter === 'object') {
+            body.nightAfter = e.nightAfter;
+        }
         return body;
     }
     return { message: String(e), code: 'INTERNAL' };
@@ -318,7 +322,8 @@ exports.validateGameName = functions.https.onRequest(http('validateGameName', (r
         const pin = req.body.pin;
 
         try {
-            return res.status(200).send(await validateGameName(pin));
+            // uid and pid: the join page's sign-in and last seat, so a finished game's recap knows a player.
+            return res.status(200).send(await validateGameName(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));
