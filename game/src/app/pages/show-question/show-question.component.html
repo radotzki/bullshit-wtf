@@ -11,6 +11,7 @@
         <div *ngIf="question && presenter" class="screen-center on-big-screen">
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
             <p *ngIf="aboutName" class="about-line" [class.rtl]="rtl">{{ aboutWords.bigScreen(aboutName) }}</p>
+            <p *ngIf="missedLine" class="about-line about-missed" [class.rtl]="rtl">{{ missedLine }}</p>
             <app-waiting-row [pin]="pin" [t]="t" [presenter]="true"></app-waiting-row>
         </div>
 
@@ -18,6 +19,7 @@
             <p *ngIf="aboutMe" class="about-title" [class.rtl]="rtl">{{ aboutWords.youTitle }}</p>
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
+            <p *ngIf="missedLine" class="lie-hint about-hint about-missed" [class.rtl]="rtl">{{ missedLine }}</p>
             <p *ngIf="aboutMe" class="lie-hint about-hint" [class.rtl]="rtl">{{ aboutWords.youHint }}</p>
             <p *ngIf="aboutName && !aboutMe" class="lie-hint about-hint" [class.rtl]="rtl">{{ aboutWords.lieHint(aboutName) }}</p>
             <p *ngIf="helper.hint && !aboutName" class="lie-hint" [class.rtl]="rtl">{{ helper.hint }}</p>
