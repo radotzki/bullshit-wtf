@@ -91,7 +91,7 @@ const classroomHe = `
   <li><strong>שיחה קצרה על אמת.</strong> המסך האחרון מראה את השקר הכי טוב של כל צוות וכמה נפלו בו. שואלים את הכיתה למה דווקא השקר הזה נשמע אמיתי. זו דרך קצרה להתחיל לדבר על איך בונים טענה שקרית שנראית אמינה.</li>
   <li><strong>שיעור אנגלית.</strong> יש שאלות בעברית ובאנגלית. בוחרים אנגלית בשפת המשחק, והצוותים קוראים, כותבים ומתווכחים באנגלית.</li>
   <li><strong>עבודת צוות.</strong> לשלושה או ארבעה תלמידים יש 25 שניות להסכים על שקר אחד, ו-20 שניות להסכים על תשובה אחת.</li>
-  <li><strong>גם בתנועת הנוער.</strong> אותו מבנה מתאים לפעולה: צוותים, מקרן או טלוויזיה, ורבע שעה בפתיחה או בסיום.</li>
+  <li><strong>גם בתנועת הנוער.</strong> אותו מבנה מתאים לפעולה: צוותים, מקרן או טלוויזיה, ורבע שעה בפתיחה או בסיום. למדריכים יש <a href="/he/youth-group">פעולה מוכנה עם מערך של 40 דקות</a>.</li>
 </ul>
 <p>כל החוקים והניקוד נמצאים ב<a href="/he/how-to-play">איך משחקים</a>. המשחק מתאים גם ל<a href="/he/team-building">גיבוש של צוות בעבודה</a>.</p>`;
 
@@ -180,7 +180,7 @@ module.exports = {
             path: '/classroom-game', twin: '/he/classroom', site: en, tag: 'kit-en-teachers',
             start: { href: '/create-game?lang=en', label: 'Start a class game' },
             image: '/assets/og-classroom-en.png',
-            title: 'A 15-minute classroom game on the projector: Bullshit, free bluffing trivia',
+            title: 'A 15-minute classroom game on the projector · Bullshit',
             description: 'For teachers and youth leaders: run Bullshit on a projector, split a class of up to 30 into teams, and fit a game into 15 minutes. Free, in the browser, no sign-up.',
             h1: 'A 15-minute game for the whole class',
             body: classroomEn,
@@ -198,7 +198,7 @@ module.exports = {
             path: '/team-building-game', twin: '/he/team-building', site: en, tag: 'kit-en-teams',
             start: { href: '/create-game?lang=en', label: 'Start a team game' },
             image: '/assets/og-team-en.png',
-            title: 'A 15-minute team-building game on the big screen: Bullshit, free bluffing trivia',
+            title: 'A 15-minute team-building game, free · Bullshit',
             description: 'For team leads: run Bullshit on the meeting-room screen or a video call, split a team of up to 30, and fit a game into 15 minutes. Free, in the browser, no sign-up.',
             h1: 'A 15-minute team game for the meeting room',
             body: teamEn,
@@ -207,7 +207,7 @@ module.exports = {
             path: '/he/team-building', twin: '/team-building-game', site: he, tag: 'kit-he-teams',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לצוות' },
             image: '/assets/og-team-he.png',
-            title: 'משחק לגיבוש צוות, לרבע שעה על המסך: בולשיט, בלוף וטריוויה בחינם',
+            title: 'משחק לגיבוש צוות, לרבע שעה על המסך: בולשיט, בחינם',
             description: 'לראשי צוותים: איך מציגים את בולשיט על המסך בחדר הישיבות או בשיחת וידאו, איך מחלקים צוות של עד 30, ואיך משחק נכנס ברבע שעה. חינם, בלי הרשמה.',
             h1: 'משחק של רבע שעה לגיבוש הצוות',
             body: teamHe,

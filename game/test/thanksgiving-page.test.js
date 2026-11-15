@@ -44,8 +44,8 @@ test('the page is there: English only, its own tag, title and share picture, and
     assert.match(page.title, /Thanksgiving party game/);
     assert.match(page.title + ' ' + page.h1, /family/);
     assert.match(page.title + ' ' + page.h1, /TV/);
-    assert.ok(page.title.length <= 70, `${page.title.length} characters`);
-    assert.ok(page.description.length <= 200, `${page.description.length} characters`);
+    assert.ok(page.title.length <= 60, `${page.title.length} characters`);
+    assert.ok(page.description.length <= 155, `${page.description.length} characters`);
     assert.ok(words(page.body) >= 400, `${words(page.body)} words`);
     assert.ok(page.body.indexOf('<!--start-->') > 0);
     const file = fs.readFileSync(path.join(root, 'game', 'src', 'assets', page.image.replace('/assets/', '')));

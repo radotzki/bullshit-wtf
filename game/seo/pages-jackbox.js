@@ -8,7 +8,7 @@
 //   on a shared screen (a console, a computer or a streaming device), and players join from their phones
 //   with a room code; Fibbage is its game where players write lies to a trivia question. Name where Jackbox
 //   is the better choice too: many more games, and a big audience can watch and vote.
-// - Of Bullshit, only what the game does (November 2026): free, in the phone's browser, up to 8 players,
+// - Of Bullshit, only what the game does (November 2026): free, in the phone's browser, up to 12 players,
 //   no big screen needed (an optional one through Present), 5, 7 or 9 questions, English and Hebrew questions.
 
 const example = (q, story) => `<div class="example">
@@ -29,7 +29,7 @@ ${example('In 1932, the Australian army went to war against ____, and lost',
   <tr><td>Price</td><td>Free. No paid packs, no ads in the game.</td><td>Paid. One person buys a pack, and each pack is sold on its own.</td></tr>
   <tr><td>What you need</td><td>Phones with a browser. That's all.</td><td>A copy of the game, and a TV, computer or console that runs it on a screen everyone can see. Players join from their phones.</td></tr>
   <tr><td>Who sets it up</td><td>Anyone: open bullshit.wtf on a phone and tap "Create Game".</td><td>The person who owns the game and the screen.</td></tr>
-  <tr><td>Players</td><td>Up to 8 phones a game.</td><td>Depends on the game; many take up to 8, and a large audience can watch and vote.</td></tr>
+  <tr><td>Players</td><td>Up to 12 phones a game.</td><td>Depends on the game; many take up to 8, and a large audience can watch and vote.</td></tr>
   <tr><td>Games</td><td>One game: bluffing trivia.</td><td>Several different games in each pack.</td></tr>
   <tr><td>Languages</td><td>Questions in English and in Hebrew.</td><td>Mostly English, with some games in other languages.</td></tr>
 </table>
@@ -58,7 +58,7 @@ ${example('ב-1932 הצבא האוסטרלי יצא למלחמה נגד ____, ו
   <tr><td>מחיר</td><td>חינם. בלי חבילות בתשלום ובלי פרסומות במשחק.</td><td>בתשלום. מישהו אחד קונה חבילה, וכל חבילה נמכרת בנפרד.</td></tr>
   <tr><td>מה צריך</td><td>טלפונים עם דפדפן, וזהו.</td><td>עותק של המשחק, וטלוויזיה, מחשב או קונסולה שמריצים אותו על מסך שכולם רואים. השחקנים מצטרפים מהטלפון.</td></tr>
   <tr><td>מי פותח</td><td>כל אחד: נכנסים ל-<bdi dir="ltr">bullshit.wtf/he</bdi> בטלפון ולוחצים על "פתיחת משחק".</td><td>מי שקנה את המשחק ומחזיק את המסך.</td></tr>
-  <tr><td>שחקנים</td><td>עד 8 טלפונים במשחק.</td><td>תלוי במשחק; ברבים מהם עד 8, וקהל גדול יכול לצפות ולהצביע.</td></tr>
+  <tr><td>שחקנים</td><td>עד 12 טלפונים במשחק.</td><td>תלוי במשחק; ברבים מהם עד 8, וקהל גדול יכול לצפות ולהצביע.</td></tr>
   <tr><td>משחקים</td><td>משחק אחד: בלוף וטריוויה.</td><td>כמה משחקים שונים בכל חבילה.</td></tr>
   <tr><td>שפה</td><td>שאלות בעברית ובאנגלית.</td><td>בעיקר אנגלית, וחלק מהמשחקים גם בשפות אחרות. עברית, למיטב ידיעתנו, אין.</td></tr>
 </table>
@@ -80,8 +80,8 @@ module.exports = {
             path: '/free-jackbox-alternative', twin: '/he/game-like-jackbox', site: en, tag: 'seo-en-jackbox',
             start: { href: '/create-game?lang=en', label: 'Start a free game' },
             image: '/assets/og-jackbox-en.png',
-            title: 'A free Jackbox and Fibbage alternative: Bullshit, bluffing trivia on your phones',
-            description: 'Like Fibbage, but free and with no TV needed: write a lie, find the truth, fool your friends. Bullshit runs in the phone browser, up to 8 players, English and Hebrew.',
+            title: 'Free Jackbox and Fibbage alternative game · Bullshit',
+            description: 'Like Fibbage, but free and with no TV needed: write a lie, find the truth, fool your friends. Bullshit runs in the phone browser, up to 12 players, English and Hebrew.',
             h1: 'A free alternative to Jackbox\'s Fibbage',
             body: jackboxEn,
         },
@@ -90,7 +90,7 @@ module.exports = {
             start: { href: '/create-game?lang=he', label: 'פותחים משחק בחינם' },
             image: '/assets/og-jackbox-he.png',
             title: 'משחק כמו ג\'קבוקס בעברית, בחינם: בולשיט, בלוף וטריוויה בטלפון',
-            description: 'כמו פיבאג\' של ג\'קבוקס, אבל בעברית, בחינם ובלי טלוויזיה: ממציאים שקר, מחפשים את האמת ועובדים על החברים. בדפדפן של הטלפון, עד 8 שחקנים.',
+            description: 'כמו פיבאג\' של ג\'קבוקס, אבל בעברית, בחינם ובלי טלוויזיה: ממציאים שקר, מחפשים את האמת ועובדים על החברים. בדפדפן של הטלפון, עד 12 שחקנים.',
             h1: 'משחק כמו ג\'קבוקס, בעברית ובחינם',
             body: jackboxHe,
         },

@@ -3,6 +3,7 @@ import { CrewService, RememberedCrew, TonightCrew } from '../../../services/crew
 import { ApiService } from '../../../services/api.service';
 import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
+import { PictureStrings, createQuery, pictureStrings } from '../front-door';
 import { SearchLink, searchLinks, seasonLink } from '../search-links';
 
 @Component({
@@ -19,6 +20,10 @@ export class DesktopLandingComponent {
     tonight: TonightCrew;
     // The menu's words: Hebrew, right to left, for visitors who came on /he or whose browser is in Hebrew.
     t: HomeStrings;
+    // The words of the picture of one round, as on the phone home.
+    p: PictureStrings;
+    // The query the big Host button carries: the post's ?via= tag, if the visit came with one.
+    createQuery: { via?: string };
     // Links to the search pages: a row under the menu, and in Hanukkah season a line above it.
     links: SearchLink[];
     season: SearchLink | null;
@@ -27,6 +32,7 @@ export class DesktopLandingComponent {
     constructor(crewService: CrewService, injector: Injector) {
         this.crews = crewService.list().slice(0, 3);
         this.tag = arrivalCampaign();
+        this.createQuery = createQuery(this.tag);
         // Only a browser that remembers a crew reads one (and opens the database for it).
         if (this.crews.length) {
             crewService.tonight(id => injector.get(ApiService).getCrew(id)).then(tonight => this.tonight = tonight);
@@ -41,6 +47,7 @@ export class DesktopLandingComponent {
 
     private setLocale(locale: string) {
         this.t = homeStrings(locale);
+        this.p = pictureStrings(locale);
         this.links = searchLinks(locale, this.tag);
         this.season = seasonLink(locale, new Date(), this.tag);
     }

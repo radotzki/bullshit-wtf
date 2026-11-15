@@ -99,7 +99,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     in-new             the same, by a name the crew did not have: a friend who comes along
 //     out                pressed "Can't make it"
 //     nudge              pressed ASK WHO ELSE IS IN (opens WhatsApp)
-//     open-lobby         pressed OPEN THE LOBBY on the night
+//     open-lobby         pressed OPEN THE LOBBY on the night, and that press opened the lobby (one row a lobby)
+//     join-lobby         pressed it when another phone had already opened the lobby: this phone joined it
 //   crew-save   a crew saved on the final screen (a save, not a send; the crew id comes with it):
 //     repeat-offer       from the offer above SHARE RESULTS, shown when the same group plays again
 //     bottom             from SAVE THIS CREW at the bottom of the screen
@@ -113,12 +114,21 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     native             sent the date through the phone's share sheet (Share another way)
 //     copy               Share another way on a phone with no share sheet: the text and link were copied
 //     calendar           tapped ADD TO MY CALENDAR, on the sheet or the banner
-//     in                 tapped I'M IN on the banner
+//     in                 tapped I'M IN on the banner (or on a sheet another phone's date reached)
+//     change             tapped CHANGE on the banner of the phone that set the date: the sheet opened again
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
 //     copy               copied the link (COPY LINK, or SHARE LINK on a phone with no share sheet)
 //     solo-start         a lone host tapped "Start alone anyway" (not a send: counts who insists)
+//   lobby-help  the lone-host help, a 50/50 test in the host's lobby (game/: pages/game-staging/lone-host.ts).
+//               Every row carries the lobby's PIN, in capitals, in crew_id (shares has no PIN column), and
+//               a lobby's half follows from its PIN. A test game's lobby sends no row:
+//     seen-new-phone, seen-new-computer          the lobby first held one or two players, and showed the
+//                                                new help on a phone or a computer (once per lobby and browser)
+//     seen-classic-phone, seen-classic-computer  the same moment in the other half, which showed today's lobby
+//     whatsapp, native, copy                     the host's invite sends from this lobby, in either half and
+//                                                with any number of players in (each is an "invite" row too)
 //   results     the final screen's SHARE RESULTS sheet (the results card):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE)
@@ -144,12 +154,20 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
 //     mute               tapped it to silence the game
 //     unmute             tapped it again
+/** The lone-host help's rows: their crew_id is the lobby's PIN. */
+export const LOBBY_HELP = 'lobby-help';
+
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
-        'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby'],
+        'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby',
+        'join-lobby'],
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
-    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in'],
+    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
+    'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
+        'whatsapp', 'native', 'copy',
+        // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
+        'big-screen'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],
@@ -176,13 +194,24 @@ export function cleanShare(body: any): ShareRow | null {
     if (!methods || methods.indexOf(method) < 0) {
         return null;
     }
-    const crew = typeof body.crew === 'string' && /^[a-z0-9]{1,32}$/i.test(body.crew) ? body.crew.toLowerCase() : null;
+    let crew = typeof body.crew === 'string' && /^[a-z0-9]{1,32}$/i.test(body.crew) ? body.crew.toLowerCase() : null;
+    if (contentType === LOBBY_HELP) {
+        // The lobby's PIN travels in the crew field: letters only, kept in capitals. No PIN, no row.
+        if (typeof body.crew !== 'string' || !/^[A-Za-z]{1,12}$/.test(body.crew)) {
+            return null;
+        }
+        crew = body.crew.toUpperCase();
+    }
     const locale = body.locale === 'he' || body.locale === 'en' ? body.locale : null;
     const uid = typeof body.uid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(body.uid) ? body.uid : null;
     return { content_type: contentType, method, crew_id: crew, locale, uid };
 }
 
-export async function onShare(row: ShareRow) {
+/** A test game's lobby leaves no lobby-help row: shares has no campaign column to leave it out by later. */
+export async function onShare(row: ShareRow, testGame: (pin: string) => Promise<boolean> = isTestGame) {
+    if (row.content_type === LOBBY_HELP && await testGame(row.crew_id)) {
+        return;
+    }
     return insert('shares', { ...row, time: new Date() });
 }
 

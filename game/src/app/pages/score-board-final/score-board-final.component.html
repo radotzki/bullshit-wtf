@@ -22,7 +22,7 @@
     </form>
 </ng-template>
 
-<section class="game-container score-board-final" [class.presenter]="presenter">
+<section class="game-container score-board-final" [appFitScreen]="presenter" [class.presenter]="presenter">
     <app-game-header></app-game-header>
 
     <div class="game-main" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="locale" [class.is-rtl]="rtl">
@@ -58,6 +58,8 @@
                         {{ tasteWords.invite }}
                     </button>
                     <p class="hint">{{ tasteWords.inviteHint }}</p>
+                    <!-- The daily puzzle: a plain link, the page is outside the app. -->
+                    <a class="taste-daily" [href]="locale === 'he' ? '/he/daily?via=daily-game' : '/daily?via=daily-game'">{{ tasteWords.daily }}</a>
                 </div>
                 <button *ngIf="!rematchPin && !soloTaste" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
                     [class.is-loading]="loading">

@@ -58,6 +58,8 @@ export interface CrewStrings {
     pickNight: string;
     /** Shown when I'M IN fails for a reason the server gave no words for in this language. */
     inFailed: string;
+    /** I'M IN when the night's list is full: trying again cannot work. */
+    nightFull: string;
 }
 
 const en: CrewStrings = {
@@ -107,6 +109,7 @@ const en: CrewStrings = {
     nightPassed: 'That night has passed. Pick a new one?',
     pickNight: 'PICK A NIGHT',
     inFailed: 'That did not go through. Try again.',
+    nightFull: 'This night is full.',
 };
 
 const he: CrewStrings = {
@@ -149,13 +152,25 @@ const he: CrewStrings = {
     nudge: 'לשאול מי עוד בא',
     nudgeText: (n, when, names) => `${n} כבר בפנים לבולשיט ב${when}: ${names.join(', ')}. מי חסר?`,
     whatIsIt: 'בולשיט הוא משחק חברתי בטלפונים: כולם ממציאים תשובה שקרית ומנסים לזהות את האמיתית. בחינם, בלי להתקין כלום.',
-    itsGameNight: 'ערב המשחק התחיל',
+    itsGameNight: 'הערב משחקים!',
     openLobby: 'פותחים משחק',
     inCount: names => `${names.length} בפנים: ${names.join(', ')}`,
     nightPassed: 'הערב הזה עבר. קובעים חדש?',
-    pickNight: 'קביעת ערב',
-    inFailed: 'זה לא עבר. נסו שוב.',
+    pickNight: 'קובעים ערב',
+    inFailed: 'משהו השתבש. נסו שוב.',
+    nightFull: 'הערב הזה מלא.',
 };
+
+/**
+ * What I'M IN says when it fails: a refused name in the server's own words (already in the crew's
+ * language), a full night as it is, anything else as a try-again.
+ */
+export function inErrorText(err: any, t: CrewStrings): string {
+    if (err && err.code === 'NIGHT_FULL') {
+        return t.nightFull;
+    }
+    return err && err.code === 'BAD_NAME' && err.message ? err.message : t.inFailed;
+}
 
 export function crewStrings(locale: string): CrewStrings {
     return locale === 'he' ? he : en;

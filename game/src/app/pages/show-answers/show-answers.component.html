@@ -1,4 +1,4 @@
-<section class="game-container show-answers" [class.many]="answers && answers.length > 9" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+<section class="game-container show-answers" [appFitScreen]="presenter" [class.many]="answers && answers.length > 9" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
     <progress *ngIf="answers && past && duration" class="progress" [class.is-primary]="!panic" [class.is-danger]="panic"
         [value]="past" [max]="duration"></progress>

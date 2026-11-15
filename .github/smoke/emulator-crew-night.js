@@ -38,8 +38,8 @@ const NAMES = he ? { a: 'דנה', b: 'אבי', c: 'נועה', friend: 'מאיה'
 const WORDS = he
     ? {
         gameNight: 'ערב המשחק', whosIn: 'מי בפנים?', imIn: 'אני בפנים', youreIn: 'נרשמת. נתראה ב', holds: `התואר אצל ${NAMES.a}`,
-        whatIsIt: 'בולשיט הוא משחק חברתי בטלפונים', itsGameNight: 'ערב המשחק התחיל', openLobby: 'פותחים משחק', join: 'הצטרפו למשחק החוזר',
-        inCount: (n) => `${n} בפנים:`, passed: 'הערב הזה עבר. קובעים חדש?', pick: 'קביעת ערב', nudge: 'כבר בפנים לבולשיט', missing: 'מי חסר?',
+        whatIsIt: 'בולשיט הוא משחק חברתי בטלפונים', itsGameNight: 'הערב משחקים!', openLobby: 'פותחים משחק', join: 'הצטרפו למשחק החוזר',
+        inCount: (n) => `${n} בפנים:`, passed: 'הערב הזה עבר. קובעים חדש?', pick: 'קובעים ערב', nudge: 'כבר בפנים לבולשיט', missing: 'מי חסר?',
         refused: 'השם הזה לא עובר אצלנו', days: (d) => (d === 1 ? 'מחר' : d === 2 ? 'בעוד יומיים' : `בעוד ${d} ימים`),
     }
     : {
@@ -278,7 +278,7 @@ async function main() {
         await until('after a played night the block is gone', async () => !(await visible(stranger.page.locator('.game-night'))));
 
         // 8. Counting. The test crew sent no row for the night block's presses.
-        const mine = ['in', 'in-new', 'out', 'nudge', 'open-lobby'];
+        const mine = ['in', 'in-new', 'out', 'nudge', 'open-lobby', 'join-lobby'];
         const fromTest = shares.filter((s) => s.crew === crew.id && mine.includes(s.method));
         check(fromTest.length === 0, `a test crew's presses are not counted: ${JSON.stringify(fromTest)}`);
         // A crew that is not a test: a new name's I'M IN is one `in-new` row.

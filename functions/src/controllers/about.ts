@@ -192,6 +192,15 @@ export function withAbout(state: GameStateInfo, about: About): GameStateInfo {
 }
 
 /**
+ * The state of the bank question played in place of an About question that got no truth: it names the
+ * player who sent none, so phones and the big screen can say why the question changed. Only that writing
+ * step carries it: carryAbout does not, so the answers and the reveal look like any bank question's.
+ */
+export function withAboutMissed(state: GameStateInfo, pid: string): GameStateInfo {
+    return Object.assign({}, state, { aboutMissed: { pid } });
+}
+
+/**
  * The state the game moves to keeps the question's `about` while it stays on the same question: from the
  * writing to the answers, the reveal and the scoreboard. A new question, or a round card, starts without it.
  */

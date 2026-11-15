@@ -13,6 +13,12 @@ export interface HomeStrings {
     subTitle: string;
     /** What the game is, in one line, above the phone menu. */
     pitch: string;
+    /** The line under the pitch that opens the daily puzzle (/daily, a page outside the app). */
+    daily: string;
+    /** The computer home's one big button: host a game on this screen (the create flow). */
+    host: string;
+    /** The few words before the daily line on the computer home, for someone on their own. */
+    alone: string;
     join: string;
     joinHint: string;
     joinShort: string;
@@ -42,6 +48,9 @@ const en: HomeStrings = {
     name: 'Bullshit',
     subTitle: 'Because the truth is overrated',
     pitch: 'Everyone writes a lie. One answer is true. Fool your friends.',
+    daily: 'Today\'s question: can you spot the truth?',
+    host: 'Host a game on this screen',
+    alone: 'On your own?',
     join: 'Join Game',
     joinHint: 'Join a game by entering its PIN',
     joinShort: 'Join',
@@ -69,6 +78,9 @@ const he: HomeStrings = {
     name: 'בולשיט',
     subTitle: 'כי האמת מוערכת יותר מדי',
     pitch: 'כולם ממציאים שקר. רק תשובה אחת נכונה. תעבדו על החברים.',
+    daily: 'השאלה של היום: תמצאו את האמת?',
+    host: 'מארחים משחק על המסך הזה',
+    alone: 'לבד?',
     join: 'הצטרפות למשחק',
     joinHint: 'הקלידו את קוד המשחק כדי להצטרף',
     joinShort: 'הצטרפות',

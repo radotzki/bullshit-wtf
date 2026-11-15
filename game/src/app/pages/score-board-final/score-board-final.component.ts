@@ -19,7 +19,7 @@ import { biggestBullshitters } from './biggest';
 import { INVITE_CONTENT, INVITE_HALF_KEY, candleEvening, inviteHalf } from './../../components/invite-group/invite-group';
 import { SIGN_IN_WAIT_MS } from './../../services/api.service';
 import {
-    SEEN_KEY, SWAP_AFTER_MS, addSeen, buttonsSwap, nextWeekWords, parseSeen, seenMethod,
+    SEEN_KEY, SWAP_AFTER_MS, addSeen, bigScreenLine, buttonsSwap, parseSeen, seenMethod,
 } from './../../components/next-week/next-week';
 
 export interface FinalPlayer {
@@ -67,6 +67,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     savingCrew: boolean;
     crewError: string;
     crewSubscription: Subscription;
+    /** The big screen's watch on the crew's night, and the night's time. */
+    private screenNightSubscription: Subscription;
+    private screenNight: number;
     /**
      * This phone saw the same group finish an earlier game (see repeat-group.ts): "Save this crew"
      * moves up, above SHARE RESULTS, with a line that says why.
@@ -235,10 +238,10 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             && !!this.displayPlayers && this.displayPlayers.length > 1;
     }
 
-    /** The big screen's line under the winner, in the new half. */
+    /** The big screen's line under the winner, in the new half: the ask, then the date once a phone sets it. */
     get nextWeekScreenLine(): string {
         return this.presenter && this.nextWeek === true && !!this.displayPlayers && this.displayPlayers.length > 1
-            ? nextWeekWords(this.locale).bigScreen : '';
+            ? bigScreenLine(this.screenNight, new Date(), this.locale) : '';
     }
 
     /** The sheet's maker renamed the crew: the crew link at the bottom follows. */
@@ -340,6 +343,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.forkGameSubscription.unsubscribe();
         this.crewSubscription.unsubscribe();
+        if (this.screenNightSubscription) {
+            this.screenNightSubscription.unsubscribe();
+        }
         if (this.rematchSubscription) {
             this.rematchSubscription.unsubscribe();
         }
@@ -518,6 +524,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             return;
         }
         this.naming = false;
+        if (this.presenter && !this.screenNightSubscription) {
+            // The big screen follows the crew's night, so its line turns into the date the phones set.
+            this.screenNightSubscription = this.apiService.getCrewObservable(id).subscribe(c => {
+                this.screenNight = c && c.night ? c.night.time : undefined;
+            }, () => null);
+        }
         const crew = await this.apiService.getCrew(id);
         this.crewName = crew ? crew.name : '';
         this.crewService.remember(id, this.crewName, this.myNickname);
