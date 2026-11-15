@@ -1,0 +1,386 @@
+{
+  "thanksgiving-26-en-01": {
+    "questionText": "A Swanson executive said a huge surplus of unsold Thanksgiving turkeys gave him the idea for the $blank$",
+    "realAnswer": "tv dinner",
+    "fakeAnswers": [
+      "chicken nugget",
+      "microwave oven",
+      "school lunch tray"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/TV_dinner",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-02": {
+    "questionText": "Sarah Josepha Hale, who campaigned 17 years for a national Thanksgiving, also wrote the nursery rhyme $blank$",
+    "realAnswer": "mary had a little lamb",
+    "fakeAnswers": [
+      "humpty dumpty",
+      "three blind mice",
+      "twinkle twinkle little star"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sarah_Josepha_Hale",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-03": {
+    "questionText": "The first Macy's Thanksgiving parade, in 1924, had no balloons: it had live animals borrowed from the $blank$",
+    "realAnswer": "central park zoo",
+    "fakeAnswers": [
+      "bronx zoo",
+      "coney island boardwalk",
+      "a new jersey dairy farm"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Macy%27s_Thanksgiving_Day_Parade",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-04": {
+    "questionText": "The Macy's parade's first balloon, in 1927, was the cartoon star $blank$",
+    "realAnswer": "felix the cat",
+    "fakeAnswers": [
+      "mickey mouse",
+      "popeye",
+      "betty boop"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Macy%27s_Thanksgiving_Day_Parade",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-05": {
+    "questionText": "In 1928 Macy's let its parade balloons float away, with a reward of $blank$ for whoever found one",
+    "realAnswer": "100 dollars",
+    "fakeAnswers": [
+      "5 dollars",
+      "a free winter coat",
+      "1,000 dollars"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Macy%27s_Thanksgiving_Day_Parade",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-06": {
+    "questionText": "The Macy's parade stopped from 1942 to 1944 because the war effort needed helium and $blank$",
+    "realAnswer": "rubber",
+    "fakeAnswers": [
+      "silk",
+      "marching bands",
+      "paint"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Macy%27s_Thanksgiving_Day_Parade",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-07": {
+    "questionText": "The White House turkey pardon became a permanent yearly tradition in 1989, under President $blank$",
+    "realAnswer": "george h. w. bush",
+    "fakeAnswers": [
+      "jimmy carter",
+      "richard nixon",
+      "bill clinton"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/National_Thanksgiving_Turkey_Presentation",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-08": {
+    "questionText": "In 1963 President Kennedy spared his Thanksgiving turkey with the words \"we'll let this one $blank$\"",
+    "realAnswer": "grow",
+    "fakeAnswers": [
+      "run",
+      "vote",
+      "retire"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/National_Thanksgiving_Turkey_Presentation",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-09": {
+    "questionText": "The Pilgrims' harvest feast at Plymouth in 1621 lasted $blank$",
+    "realAnswer": "three days",
+    "fakeAnswers": [
+      "one afternoon",
+      "nine days",
+      "a single breakfast"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgiving_(United_States)",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-10": {
+    "questionText": "In 1939 President Roosevelt moved Thanksgiving a week earlier, and annoyed Americans nicknamed it $blank$",
+    "realAnswer": "franksgiving",
+    "fakeAnswers": [
+      "rooseveltmas",
+      "the new deal dinner",
+      "thanksgiving lite"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgiving_(United_States)",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-11": {
+    "questionText": "On Thanksgiving Day 2019 alone, Americans ate about $blank$ turkeys",
+    "realAnswer": "40 million",
+    "fakeAnswers": [
+      "4 million",
+      "120 million",
+      "900,000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgiving_(United_States)",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-12": {
+    "questionText": "In 1934 the $blank$ began their Thanksgiving tradition by hosting the Chicago Bears",
+    "realAnswer": "detroit lions",
+    "fakeAnswers": [
+      "green bay packers",
+      "new york giants",
+      "pittsburgh steelers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/NFL_on_Thanksgiving_Day",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-13": {
+    "questionText": "From 1989, announcer John Madden handed the best player of the Thanksgiving football game a $blank$",
+    "realAnswer": "turkey leg",
+    "fakeAnswers": [
+      "golden wishbone",
+      "whole pumpkin pie",
+      "can of cranberry sauce"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/NFL_on_Thanksgiving_Day",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-14": {
+    "questionText": "Police in Rochester and $blank$ gave \"Black Friday\" its name, for the crowds and traffic jams of the shopping rush",
+    "realAnswer": "philadelphia",
+    "fakeAnswers": [
+      "chicago",
+      "boston",
+      "las vegas"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Black_Friday_(shopping)",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-15": {
+    "questionText": "Green bean casserole was invented in 1955 by Dorcas Reilly, in the kitchens of $blank$",
+    "realAnswer": "campbell's soup",
+    "fakeAnswers": [
+      "heinz ketchup",
+      "kraft cheese",
+      "betty crocker"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Green_bean_casserole",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-16": {
+    "questionText": "In a famous 1978 Thanksgiving episode of the sitcom \"WKRP in Cincinnati\", live turkeys are dropped from a $blank$",
+    "realAnswer": "helicopter",
+    "fakeAnswers": [
+      "hot-air balloon",
+      "church tower",
+      "fire truck ladder"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Turkeys_Away",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-17": {
+    "questionText": "The fleshy flap that hangs over a turkey's beak is called a $blank$",
+    "realAnswer": "snood",
+    "fakeAnswers": [
+      "gobbler",
+      "dewbeak",
+      "flapjack"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Turkey_(bird)",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-18": {
+    "questionText": "A turkey chick is called a $blank$",
+    "realAnswer": "poult",
+    "fakeAnswers": [
+      "turklet",
+      "gobblet",
+      "squab"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Domestic_turkey",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-19": {
+    "questionText": "Benjamin Franklin wrote that the turkey was \"a much more respectable bird\" than the $blank$",
+    "realAnswer": "bald eagle",
+    "fakeAnswers": [
+      "pigeon",
+      "peacock",
+      "english rooster"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wild_turkey",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-20": {
+    "questionText": "At twilight most wild turkeys head off to sleep $blank$",
+    "realAnswer": "in trees",
+    "fakeAnswers": [
+      "in burrows",
+      "standing in ponds",
+      "under piles of leaves"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wild_turkey",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-21": {
+    "questionText": "The oldest known turkey trot, a Thanksgiving footrace still run today, began in 1896 in $blank$",
+    "realAnswer": "buffalo",
+    "fakeAnswers": [
+      "boston",
+      "denver",
+      "plymouth"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Turkey_trot",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-22": {
+    "questionText": "The world's largest pumpkin pie, baked in Ohio in 2010, weighed $blank$",
+    "realAnswer": "3,699 pounds",
+    "fakeAnswers": [
+      "412 pounds",
+      "950 pounds",
+      "12 tons"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pumpkin_pie",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-23": {
+    "questionText": "The Mayflower was meant to sail with a second ship, which proved unseaworthy and stayed in England: the $blank$",
+    "realAnswer": "speedwell",
+    "fakeAnswers": [
+      "sea rose",
+      "plymouth star",
+      "little mercy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mayflower",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-24": {
+    "questionText": "The Mayflower never reached the place its passengers planned to settle: the Colony of $blank$",
+    "realAnswer": "virginia",
+    "fakeAnswers": [
+      "florida",
+      "bermuda",
+      "newfoundland"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mayflower",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-25": {
+    "questionText": "Arlo Guthrie's 18-minute Thanksgiving song \"Alice's Restaurant\" tells how he was arrested for $blank$",
+    "realAnswer": "dumping trash",
+    "fakeAnswers": [
+      "stealing a turkey",
+      "singing too loudly",
+      "parking on a lawn"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Alice%27s_Restaurant",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-26": {
+    "questionText": "In \"A Charlie Brown Thanksgiving\" the feast is toast, pretzel sticks, jelly beans, sundaes and $blank$",
+    "realAnswer": "popcorn",
+    "fakeAnswers": [
+      "cold pizza",
+      "dog biscuits",
+      "peanut butter"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/A_Charlie_Brown_Thanksgiving",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-27": {
+    "questionText": "Big Bird's yellow costume on \"Sesame Street\" is made with the tail feathers of $blank$",
+    "realAnswer": "turkeys",
+    "fakeAnswers": [
+      "ostriches",
+      "geese",
+      "swans"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Big_Bird",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-28": {
+    "questionText": "Canada has a Thanksgiving of its own, on the second Monday of $blank$",
+    "realAnswer": "october",
+    "fakeAnswers": [
+      "september",
+      "august",
+      "january"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgiving_(Canada)",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-29": {
+    "questionText": "In 1981, its first year, Butterball's turkey help line took calls from $blank$ people",
+    "realAnswer": "11,000",
+    "fakeAnswers": [
+      "40",
+      "600",
+      "2 million"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Butterball",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-30": {
+    "questionText": "In the 1600s the wishbone had another name: the $blank$",
+    "realAnswer": "merrythought",
+    "fakeAnswers": [
+      "luckfork",
+      "wishing spur",
+      "bride's bone"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Furcula",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-31": {
+    "questionText": "At harvest, cranberry beds are flooded, and the berries are easy to gather because they $blank$",
+    "realAnswer": "float",
+    "fakeAnswers": [
+      "sink",
+      "turn blue",
+      "pop open"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cranberry",
+    "lang": "en",
+    "pack": "thanksgiving"
+  },
+  "thanksgiving-26-en-32": {
+    "questionText": "The Wampanoag leader Massasoit's hunters brought the 1621 feast $blank$",
+    "realAnswer": "five deer",
+    "fakeAnswers": [
+      "forty lobsters",
+      "a black bear",
+      "nine wild pigs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thanksgiving_dinner",
+    "lang": "en",
+    "pack": "thanksgiving"
+  }
+}

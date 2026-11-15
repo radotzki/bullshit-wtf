@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset="utf-8">
 <!-- Link previews (1200x630) for the Hebrew occasion pages, the kit pages (teachers, teams), the
-     Jackbox-alternative pages and the English holiday pages. No other company's logo or artwork.
+     Jackbox-alternative pages and the English holiday pages (Thanksgiving, Christmas, New Year). No other company's logo or artwork.
      Render: node graphics/render-more-pages.js game/src/assets -->
 <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
 <style>
@@ -28,6 +28,7 @@ p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
 .green{background:#1f5b3e}
 .plum{background:#3b1f5c}
 .teal{background:#1d5560}
+.autumn{background:#6b3a16}
 .stars{background:
  radial-gradient(circle at 10% 16%,rgba(243,212,103,.4) 0 3px,transparent 4px),
  radial-gradient(circle at 84% 12%,rgba(243,212,103,.35) 0 2px,transparent 3px),
@@ -133,6 +134,27 @@ p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
   <g><circle cx="170" cy="170" r="12" fill="#db7151"/><circle cx="235" cy="200" r="12" fill="#fff"/><circle cx="140" cy="270" r="12" fill="#f3d467"/><circle cx="260" cy="280" r="12" fill="#db7151"/><circle cx="200" cy="255" r="12" fill="#7fd1c7"/></g>
 </svg></template>
 
+<template id="turkey"><!-- a turkey with a fan of tail feathers -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(36 20) scale(0.82)">
+  <g stroke="#2b2523" stroke-width="6">
+    <ellipse cx="200" cy="130" rx="34" ry="110" fill="#db7151" transform="rotate(-66 200 250)"/>
+    <ellipse cx="200" cy="130" rx="34" ry="110" fill="#f3d467" transform="rotate(-40 200 250)"/>
+    <ellipse cx="200" cy="130" rx="34" ry="110" fill="#7fd1c7" transform="rotate(-13 200 250)"/>
+    <ellipse cx="200" cy="130" rx="34" ry="110" fill="#fff" transform="rotate(13 200 250)"/>
+    <ellipse cx="200" cy="130" rx="34" ry="110" fill="#f3d467" transform="rotate(40 200 250)"/>
+    <ellipse cx="200" cy="130" rx="34" ry="110" fill="#db7151" transform="rotate(66 200 250)"/>
+  </g>
+  <g stroke="#f3d467" stroke-width="10" stroke-linecap="round"><path d="M176 340 v40 m-18 0 h36"/><path d="M224 340 v40 m-18 0 h36"/></g>
+  <ellipse cx="200" cy="280" rx="92" ry="76" fill="#a8672d" stroke="#2b2523" stroke-width="7"/>
+  <circle cx="200" cy="186" r="46" fill="#a8672d" stroke="#2b2523" stroke-width="7"/>
+  <g fill="#fff" stroke="#2b2523" stroke-width="4"><circle cx="184" cy="176" r="11"/><circle cx="216" cy="176" r="11"/></g>
+  <g fill="#2b2523"><circle cx="186" cy="178" r="5"/><circle cx="214" cy="178" r="5"/></g>
+  <path d="M186 194 h28 l-14 22z" fill="#f3d467" stroke="#2b2523" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M210 196 q16 22 4 40 q-10 -14 -8 -38z" fill="#d6453d" stroke="#2b2523" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+</svg></template>
+
 <template id="clock"><!-- a clock at five to midnight, with fireworks -->
 <svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
   <g stroke="#f3d467" stroke-width="6" stroke-linecap="round"><path d="M70 60 v-36 M70 60 l26 -26 M70 60 h36 M70 60 l-26 -26 M70 60 h-36"/></g>
@@ -198,6 +220,10 @@ p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
 <div class="card white" id="jackbox-he"><span data-art="phones"></span>
   <div class="text"><h1>בולשיט</h1><div class="kicker">ממציאים שקר, מחפשים את האמת</div><p>בלוף וטריוויה בעברית, בטלפון. בלי לקנות ובלי טלוויזיה.</p></div>
   <div class="band">חינם · בדפדפן · עד 8 שחקנים · BULLSHIT.WTF</div></div>
+
+<div class="card autumn" id="thanksgiving-en"><div class="dots confetti"></div><span data-art="turkey"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The Thanksgiving family game</div><p>Fool the whole family with fake answers to strange true facts</p></div>
+  <div class="band">FREE PARTY GAME · PHONES + THE TV · BULLSHIT.WTF</div></div>
 
 <div class="card green" id="christmas-en"><div class="dots snow"></div><span data-art="tree"></span>
   <div class="text"><h1>BULLSHIT</h1><div class="kicker">The Christmas party game</div><p>Fool the whole family with fake answers to strange true facts</p></div>

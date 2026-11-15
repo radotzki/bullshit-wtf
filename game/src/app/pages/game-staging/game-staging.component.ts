@@ -9,6 +9,7 @@ import { GameService } from './../../services/game.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { swapToast } from './../../name-flag';
+import { packIcon } from './../../game-model';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
     hostAwayMs, shouldAskClock } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
@@ -63,6 +64,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     locale = 'en';
     t: GameStrings = gameStrings('en');
     packBanner: string = null;
+    packIcon = '🕎';
     /** Only on the phone whose nickname the server swapped, once: why it has a sweet name now. */
     nameToast: string = null;
     private toastTimer: any;
@@ -195,6 +197,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.t = gameStrings(this.locale);
             this.b = bigScreenStrings(this.locale);
             this.packBanner = packBanner(pack, this.locale);
+            this.packIcon = packIcon(pack);
             this.showNameToast();
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
             this.hostLoaded = true;
