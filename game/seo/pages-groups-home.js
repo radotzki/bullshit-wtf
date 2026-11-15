@@ -38,6 +38,16 @@ const startEn = (button) => `<h2>How to start</h2>
   <li>Everyone picks a nickname. When everyone is in, the person who opened the game taps "Start".</li>
 </ol>`;
 
+// The counselor-to-counselor share (draft 6, message C): short on purpose so it survives forwarding,
+// and tagged wa-he-madrichim so games that come from it can be told apart from the page's own Start button.
+const waMadrichimText = [
+    'מדריכים, יש לי פעולה מוכנה לשבוע הבא 👇',
+    'בולשיט: משחק בטלפונים. מופיעה עובדה מוזרה עם מילה חסרה, כל חניך ממציא תשובה, וכולם מחפשים את האמת בין השקרים. החניכים מתים על החלק של "מי הצליח לעבוד על המדריך".',
+    'חינם, בלי הורדה, עד 12 במשחק, מקרינים על הקיר. יש גם מערך של 40 דקות עם שיחה על אמון ופייק ניוז:',
+    'https://bullshit.wtf/he/youth-group?via=wa-he-madrichim',
+].join('\n');
+const waMadrichim = 'https://wa.me/?text=' + encodeURIComponent(waMadrichimText);
+
 const youth = `
 <p>צריכים פעולה לשבוע הבא ואין זמן להכין? בולשיט הוא משחק קבוצתי בטלפונים שעובד גם על השכבה הכי קשה: מופיעה עובדה אמיתית ומוזרה עם מילה חסרה, כל חניך כותב תשובה מומצאת שנשמעת אמינה, ואז כל התשובות עולות ביחד וכולם מחפשים את האמת. נקודות על מציאת האמת, ועוד נקודות על כל מי שנפל בשקר שלך. החלק שחניכים הכי אוהבים: לגלות מי הצליח לעבוד על המדריך.</p>
 <!--start-->
@@ -71,13 +81,14 @@ ${example('ב-1932 הצבא האוסטרלי יצא למלחמה נגד ____, ו
 <h2>שאלות של מדריכים</h2>
 <ul>
   <li><strong>בעברית או באנגלית?</strong> בשתיהן. בוחרים את שפת השאלות כשפותחים משחק.</li>
-  <li><strong>מאיזה גיל?</strong> מכיתה ז' בערך. השאלות הן עובדות כלליות ומשונות, ולא נכתבו במיוחד לילדים, אז כדאי לשחק משחק אחד לבד או עם חברים לפני הפעולה ולהתרשם.</li>
+  <li><strong>מאיזה גיל?</strong> מכיתה ז' בערך. השאלות הן עובדות כלליות ומשונות, ולא נכתבו במיוחד לילדים, אז כדאי לשחק משחק אחד עם חברים או בבית לפני הפעולה ולהתרשם. אפשר גם לפתוח משחק וללחוץ בלובי הריק על "לנסות לבד 5 שאלות מהירות".</li>
   <li><strong>יש צ'אט או פרסומות?</strong> לא. אין צ'אט, אין פרסומות ואין איסוף פרטים: רק כינוי. כינויים פוגעניים מוחלפים אוטומטית בכינוי תמים. התשובות עצמן עולות כמו שנכתבו, אז שווה לסכם מראש מה מותר לכתוב.</li>
   <li><strong>והשם?</strong> "בולשיט" זה שם המשחק, והוא מופיע על המסכים. רוב החניכים יצחקו. אתם מכירים את השכבה שלכם.</li>
 </ul>
 ${startHe('פותחים משחק לקבוצה')}
 <h2>הפעלתם? ספרו למדריכים אחרים</h2>
-<p>אם זה עבד, שלחו את העמוד הזה בקבוצת המדריכים. רוצים להפעיל את זה בכיתה? יש גם <a href="/he/classroom">עמוד למורים</a>, ולערב של כל המחזור יש <a href="/he/gibush">משחק לערב גיבוש</a>. החוקים המלאים נמצאים ב<a href="/he/how-to-play">איך משחקים</a>.</p>`;
+<p>אם זה עבד, שלחו את העמוד הזה בקבוצת המדריכים. רוצים להפעיל את זה בכיתה? יש גם <a href="/he/classroom">עמוד למורים</a>, ולערב של כל המחזור יש <a href="/he/gibush">משחק לערב גיבוש</a>. החוקים המלאים נמצאים ב<a href="/he/how-to-play">איך משחקים</a>.</p>
+<p class="cta"><a class="btn secondary" href="${waMadrichim}">שליחה למדריכים בוואטסאפ</a></p>`;
 
 const gibush = `
 <p>ערב גיבוש צריך משהו שכולם משחקים, לא רק החמישה שתמיד מדברים. בולשיט הוא משחק כזה: כל אחד מהטלפון שלו, בלי קופסה, בלי הכנה ובלי מישהו שצריך להקריא שאלות. מופיעה עובדה אמיתית ומוזרה עם חלק חסר, כל אחד ממציא תשובה שתעבוד על האחרים, וכולם מחפשים את האמת. תוך כמה דקות כולם יודעים מי השקרן הכי טוב בקבוצה, ומי מאמין לכל דבר.</p>
@@ -193,7 +204,7 @@ ${startHe('פותחים משחק מרחוק')}
 <p>עוד רעיונות: <a href="/he/home-together">משחק קבוצתי לבית</a> ו<a href="/he/family-evening">משחק לערב משפחתי</a>.</p>`;
 
 const schoolBreak = `
-<p><strong>חנוכה מגיע:</strong> בימי חנוכה המשחק מציע גם שאלות חנוכה. עוד על זה ב<a href="/he/hanukkah">משחק לחנוכה</a>.</p>
+<p><strong>בחופש חנוכה:</strong> בימי חנוכה המשחק מציע גם שאלות חנוכה. עוד על זה ב<a href="/he/hanukkah">משחק לחנוכה</a>.</p>
 <p>חופש. הילדים בבית, ההורים לפעמים גם, והמתבגרים לא יוצאים מהטלפון. בולשיט הוא משחק שמנצל בדיוק את זה: כל אחד משחק מהטלפון שלו, אבל כולם ביחד, סביב שולחן אחד או על ספה אחת. הוא חינמי, בעברית, רץ בדפדפן ולא דורש הכנה.</p>
 <!--start-->
 <h2>איך משחקים</h2>
@@ -301,7 +312,7 @@ module.exports = {
             path: '/he/youth-group', site: he, tag: 'seo-he-youth',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לקבוצה' },
             image: '/assets/og-youth-he.png',
-            title: 'פעולה מוכנה לשבט ולסניף: משחק בולשיט בטלפונים | 20–45 דקות, בלי הכנה',
+            title: 'פעולה מוכנה לשבט ולסניף: משחק בולשיט בטלפונים, בלי הכנה',
             description: 'פעולה מוכנה לחניכים מכיתה ז\' ומעלה: כל אחד ממציא תשובה מהטלפון, כולם מחפשים את האמת. חינם, בדפדפן, עד 12 משתתפים במשחק, מוקרן על הקיר.',
             h1: 'פעולה מוכנה: בולשיט, משחק השקרים',
             body: youth,
@@ -310,7 +321,7 @@ module.exports = {
             path: '/he/gibush', site: he, tag: 'seo-he-gibush',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לגיבוש' },
             image: '/assets/og-gibush-he.png',
-            title: 'משחק לערב גיבוש: בולשיט בטלפונים | חינם, בלי הכנה, עד 12 שחקנים',
+            title: 'משחק לערב גיבוש: בולשיט בטלפונים | חינם, עד 12 שחקנים',
             description: 'משחק לערב גיבוש של מכינה, צוות, כיתה או קורס. כל אחד ממציא תשובה, כולם מחפשים את האמת, ומגלים מי השקרן הכי טוב בקבוצה.',
             h1: 'משחק לערב גיבוש שכולם משחקים מהטלפון',
             body: gibush,
@@ -328,7 +339,7 @@ module.exports = {
             path: '/he/days-at-home', site: he, tag: 'seo-he-days-home',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק' },
             image: '/assets/og-days-home-he.png',
-            title: 'ימים בבית עם הילדים? משחק קבוצתי בטלפון, חינם ובלי הכנה',
+            title: 'ימים בבית עם הילדים? בולשיט, משחק קבוצתי בטלפון, חינם',
             description: 'כשכולם בבית: משחק של רבע שעה שכולם משחקים מהטלפון, גם בחדר קטן, גם עם המשפחה שבבית אחר. חינם, בעברית, בלי הורדה.',
             h1: 'כשכולם בבית: רבע שעה של צחוק ביחד',
             body: daysAtHome,
@@ -346,7 +357,7 @@ module.exports = {
             path: '/he/school-break', site: he, tag: 'seo-he-break',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לחופש' },
             image: '/assets/og-break-he.png',
-            title: 'משחקים לחופש: משחק קבוצתי בטלפון לכל המשפחה | חינם',
+            title: 'משחקים לחופש: בולשיט, משחק קבוצתי בטלפון לכל המשפחה',
             description: 'חופש חנוכה, פסח או החופש הגדול: משחק שכל המשפחה משחקת מהטלפון, בעברית, בחינם ובלי הורדה. ממציאים תשובות לעובדות מוזרות ומחפשים את האמת.',
             h1: 'משחק לחופש שכל המשפחה משחקת',
             body: schoolBreak,
@@ -364,7 +375,7 @@ module.exports = {
             path: '/video-call-party-game', twin: '/he/video-call', site: en, tag: 'seo-en-video',
             start: { href: '/create-game?lang=en&pack=none', label: 'Start a video call game' },
             image: '/assets/og-video-en.png',
-            title: 'A party game to play on a video call (free, no download)',
+            title: 'Bullshit: a party game to play on a video call, free',
             description: 'Play together on Zoom, FaceTime or WhatsApp: everyone joins on their own phone, writes a lie and hunts for the truth. Free, in the browser, up to 12 players.',
             h1: 'A party game for a video call',
             body: videoCallEn,
@@ -373,7 +384,7 @@ module.exports = {
             path: '/snow-day-games', site: en, tag: 'seo-en-snow',
             start: { href: '/create-game?lang=en&pack=none', label: 'Start a snow day game' },
             image: '/assets/og-snow-en.png',
-            title: 'Snow day? A game the whole house plays on their phones',
+            title: 'Snow day? A game the whole house plays on phones · Bullshit',
             description: 'Stuck inside on a snow day: a free game everyone plays on their own phone. Write a lie to a strange true fact, find the truth, fool the family. No app, no sign-up.',
             h1: 'Snow day games for the whole house',
             body: snowDay,

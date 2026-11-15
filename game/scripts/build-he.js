@@ -78,7 +78,11 @@ const about = `
       <a href="/he/hanukkah">משחק לחנוכה</a> · <a href="/he/friday-dinner">משחק לארוחת שישי</a> ·
       <a href="/he/family-evening">משחק לערב משפחתי</a> · <a href="/he/friends-evening">משחק לערב חברים</a> ·
       <a href="/he/classroom">משחק לכיתה</a> · <a href="/he/team-building">משחק לגיבוש צוות</a> ·
-      <a href="/he/game-like-jackbox">משחק כמו ג'קבוקס</a> ·
+      <a href="/he/game-like-jackbox">משחק כמו ג'קבוקס</a> · <a href="/he/youth-group">פעולה מוכנה לתנועת נוער</a> ·
+      <a href="/he/gibush">משחק לערב גיבוש</a> · <a href="/he/home-together">משחק קבוצתי לבית</a> ·
+      <a href="/he/days-at-home">ימים בבית</a> · <a href="/he/video-call">משחק לשיחת וידאו</a> ·
+      <a href="/he/school-break">משחקים לחופש</a> · <a href="/he/purim">משחק לפורים</a> ·
+      <a href="/he/seder">משחק לליל הסדר</a> · <a href="/he/made-up-answers">משחק שממציאים בו תשובות</a> ·
       <a href="/" hreflang="en" lang="en">Bullshit in English</a></p>
     <noscript><p>המשחק עצמו צריך JavaScript פעיל בדפדפן.</p></noscript>
   </main>
