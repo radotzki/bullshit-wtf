@@ -6,13 +6,14 @@ import { fadeOutAndUnload } from './../fade-out';
 import { ApiService, SIGN_IN_WAIT_MS } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { swapToast } from './../../name-flag';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
     hostAwayMs, shouldAskClock } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
 import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY } from './lone-host';
+import { offerBigScreen, bigScreenStrings, BigScreenStrings } from './big-screen-host';
 
 /** A value from the browser's storage, or null where storage is closed (private mode). */
 function stored(storage: () => Storage, key: string): string | null {
@@ -44,10 +45,19 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     /** "Best with 4 or more": the light line under the help. */
     bestLine: string = null;
     sound: Howl;
+    /** A host on a computer can make it the big screen (big-screen-host.ts): the offer, its words, the press. */
+    bigScreenOffer = false;
+    b: BigScreenStrings = bigScreenStrings('en');
+    switching = false;
+    /** This page is the big screen the host made of their computer. */
+    hostScreenHere = false;
 
     private hasPresenter: boolean;
     private creator: string = null;
     private hasHost = false;
+    /** The game is hosted from its big screen (`hasHost` is 'screen'): read live, it changes in the lobby. */
+    private hostScreen = false;
+    private hasHostSubscriber: Subscription;
     private myUid: string = null;
     private myPid: string = null;
     locale = 'en';
@@ -83,6 +93,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         private gameService: GameService,
         private sessionService: SessionService,
         private apiService: ApiService,
+        private router: Router,
     ) { }
 
     ngOnInit() {
@@ -107,6 +118,16 @@ export class GameStagingComponent implements OnInit, OnDestroy {
      * get START once the host has been gone HOST_GONE_MS. The server checks the same.
      */
     private watchHost() {
+        // The host can make their computer the big screen while friends are already in the lobby:
+        // their phones learn it here, and wait for the big screen instead of a host who never joins.
+        this.hasHostSubscriber = this.apiService.getGameHasHostObservable(this.pin).subscribe(hasHost => {
+            if (hasHost === 'screen' && !this.hostScreen) {
+                this.hostScreen = true;
+                this.hasHost = true;
+                this.hasPresenter = true;
+                this.updateLobby();
+            }
+        }, () => null);
         if (this.apiService.holdsHostKey(this.pin)) {
             this.reportIn();
             this.pingTimer = setInterval(() => this.reportIn(), HOST_PING_MS);
@@ -165,12 +186,14 @@ export class GameStagingComponent implements OnInit, OnDestroy {
                 : this.apiService.uidWithin(SIGN_IN_WAIT_MS).then(r => r.uid),
         ]).then((found: any[]) => {
             const [hasPresenter, creator, hasHost, locale, pack, myUid] = found;
-            this.hasPresenter = !!hasPresenter;
+            this.hostScreen = this.hostScreen || hasHost === 'screen';
+            this.hasPresenter = !!hasPresenter || this.hostScreen;
             this.creator = typeof creator === 'string' && creator ? creator : null;
-            this.hasHost = hasHost === true;
+            this.hasHost = hasHost === true || this.hostScreen;
             this.myPid = !this.presenter && user && user.pid ? user.pid : null;
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = gameStrings(this.locale);
+            this.b = bigScreenStrings(this.locale);
             this.packBanner = packBanner(pack, this.locale);
             this.showNameToast();
             this.myUid = typeof myUid === 'string' && myUid ? myUid : null;
@@ -210,6 +233,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             holdsHostKey: this.apiService.holdsHostKey(this.pin),
             creator: this.creator,
             hasHost: this.hasHost,
+            hostScreen: this.hostScreen,
             myUid: this.myUid,
             myPid: this.myPid,
             players: this.players || [],
@@ -223,7 +247,37 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         const friend = firstFriend(view, this.players || [], this.myUid, this.wasAlone, this.myPid);
         this.showStartButton = view.canStart;
         this.lobby = lobbyText(view, (this.players || []).length, this.locale, friend);
+        this.hostScreenHere = !!view.hostScreen;
         this.updateHelp(!!view.isHost);
+        this.bigScreenOffer = offerBigScreen({
+            isHost: !!view.isHost,
+            holdsHostKey: this.apiService.holdsHostKey(this.pin),
+            isPresenter: this.presenter,
+            hasPresenter: this.hasPresenter,
+            device: this.help.device,
+        });
+    }
+
+    /**
+     * "Use as the big screen": the server frees this host's seat, and this browser becomes the big
+     * screen through the present page, as if it had been opened there. It keeps the host key, so START
+     * is here. Counted as a "lobby-help" share, with the PIN.
+     */
+    useAsBigScreen() {
+        if (this.switching || this.loading) {
+            return;
+        }
+        this.switching = true;
+        this.errorMsg = '';
+        this.apiService.logShare('lobby-help', 'big-screen', { crew: this.pin, locale: this.locale });
+        this.apiService.hostToBigScreen(this.pin).then(() => {
+            this.sessionService.presenter = true;
+            return this.router.navigate(['present-game', this.pin]);
+        }).catch(err => {
+            this.switching = false;
+            reportError(err, 'hostToBigScreen', { pin: this.pin });
+            this.errorMsg = this.t.oops;
+        });
     }
 
     private updateHelp(isHost: boolean) {
@@ -260,6 +314,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         document.removeEventListener('visibilitychange', this.onVisible);
         if (this.hostSeenSubscriber) {
             this.hostSeenSubscriber.unsubscribe();
+        }
+        if (this.hasHostSubscriber) {
+            this.hasHostSubscriber.unsubscribe();
         }
 
         if (this.sound) {

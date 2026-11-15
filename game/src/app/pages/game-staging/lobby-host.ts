@@ -21,6 +21,10 @@ import { GamePlayer } from '../../game-model';
  *   so it starts the game like the host's phone would.
  * - A phone that holds the host key starts it too: when two phones press Replay at once, both get the
  *   new game's key, so the one that pressed second is not left without START.
+ * - A host on a computer can make that computer the big screen (big-screen-host.ts). The host's seat is
+ *   freed and the game is marked as hosted from its big screen (`hasHost` is 'screen'). That big screen
+ *   holds the host key and starts the game; phones are told the game starts from the big screen, and
+ *   the grace period below does not apply: the host is there, on the big screen.
  * - If the host has not joined the lobby after HOST_GRACE_MS, everyone may start,
  *   so a host who closed the tab cannot leave the group stuck.
  * - The host's lobby page reports in every HOST_PING_MS; the server keeps the time (`hostSeen`).
@@ -69,6 +73,8 @@ export interface LobbyHostInput {
     creator: string | null;
     /** The server marks this game's host by host key (a player row with `host: true`, once it joins). */
     hasHost?: boolean;
+    /** The host made their computer the big screen and has no seat (`hasHost` is 'screen'). */
+    hostScreen?: boolean;
     myUid: string | null;
     /** This phone's player id in this game. */
     myPid?: string | null;
@@ -94,6 +100,10 @@ export interface LobbyHostView {
     hostGone?: string | null;
     /** This page is the known host's own phone or computer (never the big screen): see lone-host.ts. */
     isHost?: boolean;
+    /** The game is hosted from its big screen, which has not been seen for HOST_GONE_MS: anyone may start. */
+    screenGone?: boolean;
+    /** This page is the big screen the host made of their computer: it starts the game. */
+    hostScreen?: boolean;
 }
 
 export function lobbyHost(input: LobbyHostInput): LobbyHostView {
@@ -111,12 +121,21 @@ export function lobbyHost(input: LobbyHostInput): LobbyHostView {
 
     // A game with a host: only the host starts it, big screen or not.
     if (input.isPresenter && input.holdsHostKey) {
-        return none;
+        return input.hostScreen ? { canStart: true, wait: 'none', hostName: null, alone: false, hostScreen: true } : none;
     }
     // A phone with the host key may start: it created the game, or pressed Replay (when two phones press
     // Replay at once, both get the key, and the lobby names the first as the host).
     if (!input.isPresenter && input.holdsHostKey) {
         return { canStart: true, wait: 'none', hostName: null, alone: !input.hasPresenter && players.length === 1, isHost: true };
+    }
+
+    // The host's computer is the big screen and no seat is the host: the big screen starts the game.
+    // It reports in like a host's phone; if it has been gone HOST_GONE_MS, anyone may start.
+    if (input.hostScreen && !marked) {
+        if (typeof input.hostAwayMs === 'number' && input.hostAwayMs >= HOST_GONE_MS) {
+            return { canStart: true, wait: 'none', hostName: null, alone: false, screenGone: true };
+        }
+        return { canStart: false, wait: 'big-screen', hostName: null, alone: false };
     }
 
     // A marked host row wins; the creator's uid is for games made before host keys.
@@ -167,6 +186,7 @@ const strings = {
         bigScreen: () => 'The game starts from the big screen',
         startHint: () => 'Press START when everyone is in',
         hostGone: (name: string) => `${name} seems to be gone. Anyone can press START`,
+        screenGone: () => 'The big screen seems to be gone. Anyone can press START',
         friendIn: (name: string) => `${name} is in! Press START when everyone is in`,
         alone: () => 'Bullshit needs friends: you score by fooling them',
         aloneSub: () => 'Send them the link. It takes them 10 seconds to join.',
@@ -181,6 +201,7 @@ const strings = {
         // "מתחילים" is the START button's word in a Hebrew game: gameStrings('he').start.
         startHint: () => 'לחצו על "מתחילים" כשכולם בפנים',
         hostGone: (name: string) => `נראה ש־${name} יצא. כל אחד יכול ללחוץ על "מתחילים"`,
+        screenGone: () => 'נראה שהמסך הגדול נסגר. כל אחד יכול ללחוץ על "מתחילים"',
         friendIn: (name: string) => `${name} בפנים! לחצו על "מתחילים" כשכולם בפנים`,
         alone: () => 'בולשיט צריך חברים: מקבלים נקודות על כל מי שעובדים עליו',
         aloneSub: () => 'שלחו להם את הקישור. לוקח להם 10 שניות להצטרף.',
@@ -212,6 +233,8 @@ export function lobbyText(view: LobbyHostView, playerCount: number, locale: stri
         sub = t.aloneSub();
     } else if (view.canStart && view.hostGone) {
         message = t.hostGone(view.hostGone);
+    } else if (view.canStart && view.screenGone) {
+        message = t.screenGone();
     } else if (view.canStart && friendName) {
         message = t.friendIn(friendName);
     } else if (view.canStart) {
