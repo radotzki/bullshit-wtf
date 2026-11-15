@@ -221,12 +221,55 @@ test('a sweep looks at no more than its batch, and the next goes on', async () =
     const games = {};
     for (let c = 1; c <= 30; c++) games[generateGameName(c)] = finished(30 * H);
     seed(games, 30);
-    const r = await og.sweepOldGames(NOW, 12);
+    const r = await og.sweepOldGames(NOW, 12, 12);
     assert.deepStrictEqual({ next: r.next, moved: r.moved }, { next: 13, moved: 12 });
     og.forgetSweep();
-    const r2 = await og.sweepOldGames(NOW + 2 * 60 * 1000, 100);
+    const r2 = await og.sweepOldGames(NOW + 2 * 60 * 1000, 100, 100);
     assert.strictEqual(r2.next, 31);
     for (let c = 1; c <= 30; c++) assert.ok(db.games[generateGameName(c)].kept);
+});
+
+test('far behind, a sweep looks at up to 1,000 games; caught up, at 200', async () => {
+    // 1,500 games that ended 30 hours ago: far behind, so 1,000, then the other 500.
+    const games = {};
+    for (let c = 1; c <= 1500; c++) games[generateGameName(c)] = finished(30 * H);
+    seed(games, 1500);
+    const r = await og.sweepOldGames(NOW);
+    assert.deepStrictEqual({ next: r.next, moved: r.moved, looked: r.looked, far: r.far }, { next: 1001, moved: 1000, looked: 1000, far: true });
+    og.forgetSweep();
+    const r2 = await og.sweepOldGames(NOW + 2 * 60 * 1000);
+    assert.deepStrictEqual({ next: r2.next, moved: r2.moved }, { next: 1501, moved: 500 });
+    for (let c = 1; c <= 1500; c++) assert.ok(db.games[generateGameName(c)].kept);
+
+    // 300 games that ended 7 hours ago (made 8 hours ago): caught up, so 200 a sweep, as before.
+    const recent = {};
+    for (let c = 1; c <= 300; c++) recent[generateGameName(c)] = finished(7 * H);
+    seed(recent, 300);
+    const r3 = await og.sweepOldGames(NOW);
+    assert.deepStrictEqual({ next: r3.next, moved: r3.moved, far: r3.far }, { next: 201, moved: 200, far: false });
+});
+
+test('the bigger batch ends where the games stop being far behind', async () => {
+    // 210 games from 30 hours ago, then 300 made 8 hours ago: past 200 while far behind, then back to
+    // 200 at the end of the group of 25 that reaches the newer games.
+    const games = {};
+    for (let c = 1; c <= 210; c++) games[generateGameName(c)] = finished(30 * H);
+    for (let c = 211; c <= 510; c++) games[generateGameName(c)] = finished(7 * H);
+    seed(games, 510);
+    const r = await og.sweepOldGames(NOW);
+    assert.deepStrictEqual({ next: r.next, moved: r.moved, far: r.far }, { next: 226, moved: 225, far: true });
+});
+
+test('a sweep stops walking after its time budget by the real clock, and the next goes on', async () => {
+    const games = {};
+    for (let c = 1; c <= 1500; c++) games[generateGameName(c)] = finished(30 * H);
+    seed(games, 1500);
+    // Each look at the clock is 10 seconds on: two groups of 25 fit in the 30-second budget.
+    let t = 0;
+    const r = await og.sweepOldGames(NOW, og.SWEEP_BATCH, og.CATCHUP_BATCH, () => (t += 10000) - 10000);
+    assert.deepStrictEqual({ next: r.next, moved: r.moved }, { next: 51, moved: 50 });
+    assert.strictEqual(db.gameSweep.next, 51);
+    assert.strictEqual(db.gameSweep.lease, 0);
 });
 
 test('the sweep passes over an older game that is not old yet, notes it, and carries on to the old games after it', async () => {
@@ -289,24 +332,24 @@ test('the whole project sweeps at most once a minute, however many copies run', 
     const games = {};
     for (let c = 1; c <= 30; c++) games[generateGameName(c)] = finished(30 * H);
     seed(games, 60);
-    const r = await og.sweepOldGames(NOW, 10);
+    const r = await og.sweepOldGames(NOW, 10, 10);
     assert.strictEqual(r.moved, 10);
     assert.strictEqual(db.gameSweep.at, NOW);
     // Another running copy (its own minute is free), half a minute later: refused, nothing read.
     og.forgetSweep();
-    const r2 = await og.sweepOldGames(NOW + 30 * 1000, 10);
+    const r2 = await og.sweepOldGames(NOW + 30 * 1000, 10, 10);
     assert.strictEqual(r2.skipped, 'soon');
     assert.strictEqual(db.gameSweep.next, 11);
     assert.ok(!db.games[generateGameName(11)].kept);
     // A third copy, a minute after the first sweep started: it sweeps.
     og.forgetSweep();
-    const r3 = await og.sweepOldGames(NOW + 61 * 1000, 10);
+    const r3 = await og.sweepOldGames(NOW + 61 * 1000, 10, 10);
     assert.strictEqual(r3.moved, 10);
     assert.strictEqual(db.gameSweep.at, NOW + 61 * 1000);
     // A start time far ahead (a clock gone wrong) doesn't hold the sweep back.
     db.gameSweep.at = NOW + 24 * H;
     og.forgetSweep();
-    const r4 = await og.sweepOldGames(NOW + 2 * 60 * 1000, 10);
+    const r4 = await og.sweepOldGames(NOW + 2 * 60 * 1000, 10, 10);
     assert.strictEqual(r4.moved, 10);
     assert.strictEqual(db.gameSweep.lease, 0);
 });
@@ -323,7 +366,7 @@ test('a copy whose lease ran out, and another took the sweep, keeps nothing of i
         return realOnce();
     };
     try {
-        const r = await og.sweepOldGames(NOW, 10);
+        const r = await og.sweepOldGames(NOW, 10, 10);
         assert.strictEqual(r.moved, 10);
     } finally {
         counter.once = realOnce;

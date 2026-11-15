@@ -361,4 +361,9 @@ async function main() {
     process.exit(failed.length ? 1 : 0);
 }
 
-main();
+if (require.main === module) {
+    main();
+} else {
+    // The batch-time check (old-games-batch-emulator.js) starts the emulators and makes games the same way.
+    module.exports = { startEmulators, stopEmulators, db, call, game, log, sleep, H, PROJECT, DB, ROOT };
+}

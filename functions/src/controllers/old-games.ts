@@ -131,8 +131,23 @@ export async function moveGame(pin: string, now: number): Promise<boolean> {
 
 // ---- the sweep ----
 
-/** How many games one sweep looks at, at most. The first runs work through every game ever played. */
+/** How many games one sweep looks at, at most, once it has caught up. */
 export const SWEEP_BATCH = 200;
+/**
+ * How many games one sweep looks at, at most, while it is far behind (see FAR_BEHIND_MS). The first
+ * runs work through every game ever played, about 340,000, and the sweep only runs in minutes when some
+ * game changes phase (about 130 a day): at 200 a sweep that is about two weeks, at 1,000 about three days.
+ * The reads in all are the same; only how soon they come changes.
+ */
+export const CATCHUP_BATCH = 1000;
+/** The walk is far behind while the games it is looking at were made more than this long ago. */
+export const FAR_BEHIND_MS = 24 * 60 * 60 * 1000;
+/**
+ * A sweep stops walking after this long by the real clock, at the end of a group of reads, and the next
+ * one goes on from there: half the gameState function's 60-second limit, and well inside the 3-minute lease,
+ * however slow the database is that minute.
+ */
+export const SWEEP_BUDGET_MS = 30 * 1000;
 /** Games read at once. */
 const SWEEP_CHUNK = 25;
 /**
@@ -174,6 +189,10 @@ export interface SweepResult {
     looked: number;
     /** Older games passed over, noted to be looked at again. */
     waiting?: number;
+    /** The walk was far behind (see FAR_BEHIND_MS), so it could look at up to CATCHUP_BATCH games. */
+    far?: boolean;
+    /** How long the walk took, by the real clock. */
+    ms?: number;
     /** busy: another copy is sweeping. soon: a sweep started somewhere less than SWEEP_EVERY_MS ago. */
     skipped?: 'busy' | 'soon';
 }
@@ -207,11 +226,11 @@ export function dueAt(game: GameStamp, now: number): number {
  * through the games in the order they were made, from where the last sweep stopped, and moves each
  * old one's private parts (see moveGame). An older game that isn't old yet is passed over and noted
  * (see WAIT_MAX); the walk stops at the first young game (see YOUNG_MS), since those after it are
- * younger, or after SWEEP_BATCH games in all; the next sweep goes on from there. A PIN with no game is
+ * younger, or after SWEEP_BATCH games in all (CATCHUP_BATCH while far behind, and never past SWEEP_BUDGET_MS); the next sweep goes on from there. A PIN with no game is
  * passed over. Runs at most once a SWEEP_EVERY_MS for the whole project, and in one copy at a time.
  * Never rejects.
  */
-export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH): Promise<SweepResult | null> {
+export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH, catchup = CATCHUP_BATCH, clock: () => number = Date.now): Promise<SweepResult | null> {
     if (now - lastSweep < SWEEP_EVERY_MS) {
         return null;
     }
@@ -226,7 +245,7 @@ export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH): Prom
         }
         let result: SweepResult & { wait: SweepWait };
         try {
-            result = await walk(lease.next, lease.wait, now, batch);
+            result = await walk(lease.next, lease.wait, now, batch, Math.max(batch, catchup), clock);
         } catch (e) {
             await saveSweep(lease.until, null).catch(() => null);
             throw e;
@@ -235,7 +254,7 @@ export async function sweepOldGames(now = Date.now(), batch = SWEEP_BATCH): Prom
         // later never takes the cursor back to where it started.
         await saveSweep(lease.until, { next: result.next, wait: result.wait, at: now });
         if (result.moved) {
-            console.log('oldGames ' + JSON.stringify({ moved: result.moved, looked: result.looked, waiting: result.waiting, next: generateGameName(result.next) }));
+            console.log('oldGames ' + JSON.stringify({ moved: result.moved, looked: result.looked, waiting: result.waiting, far: result.far, ms: result.ms, next: generateGameName(result.next) }));
         }
         delete result.wait;
         return result;
@@ -356,7 +375,19 @@ async function moveAll(pins: string[], now: number, wait: SweepWait): Promise<nu
     return moved;
 }
 
-async function walk(start: number, wait: SweepWait, now: number, batch: number): Promise<SweepResult & { wait: SweepWait }> {
+/** The game was made more than FAR_BEHIND_MS ago (the oldest games carry no time at all). */
+export function isFarBehind(game: GameStamp, now: number): boolean {
+    const made = Number(game.timestamp) || Number(game.state && game.state.timestamp) || 0;
+    return !made || now - made > FAR_BEHIND_MS;
+}
+
+/**
+ * The wait list is looked at with the normal batch. The walk on from the cursor looks at up to `batch`
+ * games, or up to `catchup` while the last game it read was made more than FAR_BEHIND_MS ago, and stops
+ * after SWEEP_BUDGET_MS by `clock` in any case.
+ */
+async function walk(start: number, wait: SweepWait, now: number, batch: number, catchup: number, clock: () => number): Promise<SweepResult & { wait: SweepWait }> {
+    const began = clock();
     const keep: SweepWait = {};
     let moved = 0;
     let looked = 0;
@@ -392,8 +423,11 @@ async function walk(start: number, wait: SweepWait, now: number, batch: number):
     // Then on from the cursor.
     const counter = Number(await get<number>(gameCounterRef)) || 0;
     let next = start;
-    while (looked < batch && next <= counter) {
-        const size = Math.min(SWEEP_CHUNK, batch - looked, counter - next + 1);
+    let far = false;
+    let wasFar = false;
+    const limit = () => far ? catchup : batch;
+    while (looked < limit() && next <= counter && clock() - began < SWEEP_BUDGET_MS) {
+        const size = Math.min(SWEEP_CHUNK, limit() - looked, counter - next + 1);
         const pins: string[] = [];
         for (let i = 0; i < size; i++) {
             pins.push(generateGameName(next + i));
@@ -403,6 +437,10 @@ async function walk(start: number, wait: SweepWait, now: number, batch: number):
         const old: string[] = [];
         for (; done < pins.length; done++) {
             const stamp = stamps[done];
+            if (stamp) {
+                far = isFarBehind(stamp, now);
+                wasFar = wasFar || far;
+            }
             if (!stamp) {
                 // No game at this PIN. Passed over, unless it may still be being made.
                 if (counter - (next + done) < FRESH_PINS) {
@@ -428,7 +466,7 @@ async function walk(start: number, wait: SweepWait, now: number, batch: number):
             break;
         }
     }
-    return { next, moved, looked, waiting: Object.keys(keep).length, wait: keep };
+    return { next, moved, looked, waiting: Object.keys(keep).length, far: wasFar, ms: clock() - began, wait: keep };
 }
 
 async function readStamp(pin: string): Promise<GameStamp | null> {
