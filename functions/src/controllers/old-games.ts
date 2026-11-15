@@ -15,8 +15,10 @@ import { STALE_MS } from './game-over';
  *
  * When: 6 hours after the final scoreboard, or, for a game never finished, 24 hours after it was made
  * and once nothing has moved it for STALE_MS (so a slow lobby is never moved under its players).
- * Who moves them: sweepOldGames, run from calls that already come in (a game's phase changes and the
- * daily puzzle), the way the daily function erases old chat rounds. No timer of its own.
+ * Who moves them: sweepOldGames, run from calls that already come in: the gameState trigger, on every
+ * game's phase change, which keeps no phone waiting and runs until its promise is done. No timer of its
+ * own. Not from the daily puzzle: there it would hold a player's answer, or run after the answer, where
+ * the function may be frozen.
  */
 
 /** The parts a stranger could read, and that name or quote players. */

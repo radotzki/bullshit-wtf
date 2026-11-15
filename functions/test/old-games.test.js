@@ -409,3 +409,15 @@ test('readPart reads a part from its own place, then from kept', async () => {
     seed({ LIVE: finished(H) });
     assert.strictEqual((await og.readPart('LIVE', 'players')).p3.nickname, 'Noa');
 });
+
+// The sweep runs from the gameState trigger alone, which keeps no phone waiting. The daily puzzle's
+// answer neither waits for it nor starts it (work after an answer may be frozen).
+test('the daily puzzle never runs the sweep; a game\'s phase change does', () => {
+    const fs = require('fs');
+    const index = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.ts'), 'utf8');
+    const block = (from, to) => index.slice(index.indexOf(from), index.indexOf(to, index.indexOf(from)));
+    const dailyBlock = block('exports.daily = ', 'exports.newGame = ');
+    assert.ok(dailyBlock.length > 100);
+    assert.doesNotMatch(dailyBlock.replace(/\/\/.*$/gm, ''), /sweepOldGames|holdAnswerFor/);
+    assert.match(block('exports.gameState = ', 'exports.onFork = '), /sweepOldGames\(\)/);
+});

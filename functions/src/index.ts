@@ -95,10 +95,8 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
     const bank = dailyQuestions();
     const now = Date.now();
     eraseOldRounds(now);
-    // Old games' private parts move out of phones' reach (see controllers/old-games.ts), at most once
-    // a minute for the whole project. It runs alongside the answer, which waits for it before it goes:
-    // a function's work after its answer may be frozen, and a sweep frozen halfway is read again.
-    holdAnswerFor(res, sweepOldGames(now));
+    // Old games' private parts are moved by the gameState trigger alone (see controllers/old-games.ts),
+    // not here: the daily answer waits for nothing, and a function's work after its answer may be frozen.
     if (req.method === 'POST') {
         const raw = req.rawBody ? req.rawBody.toString('utf8') : req.body;
         let parsed: any = raw;
@@ -156,20 +154,6 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
     }
     return res.status(200).send(body);
 }));
-
-/** The answer leaves only once `work` is done (it never rejects). Most calls run no sweep and wait for nothing. */
-function holdAnswerFor(res: any, work: Promise<any>) {
-    let over = false;
-    work.then(() => over = true, () => over = true);
-    const send = res.send;
-    res.send = function (this: any, ...args: any[]) {
-        if (over) {
-            return send.apply(this, args);
-        }
-        work.then(() => send.apply(this, args), () => send.apply(this, args));
-        return this;
-    };
-}
 
 // Erasing a chat group's rounds past keeping (nine days and more after their day): once a day per
 // running copy, from any call of the daily function: a question asked, a pick, a press, on the

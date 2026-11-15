@@ -6,7 +6,7 @@
 // 1. Five games are written: a live one, one that ended an hour ago, one that ended 7 hours ago (with
 //    its crew), an earlier game of that same night, and a lobby made 48 hours ago and never played.
 // 2. A signed-out stranger reads every one's players, lies and picks: all readable, as on master.
-// 3. A call of the daily puzzle runs the sweep, as it does in production.
+// 3. The daily puzzle answers without sweeping; a game's phase change runs the sweep, as in production.
 // 4. The stranger again: the old game's and the old lobby's private parts read as nothing, and
 //    their new home (kept) and the whole game are refused. The live game and the one that ended an
 //    hour ago read as before.
@@ -252,12 +252,17 @@ async function main() {
             check(`before: a stranger reads the ${which} game's players`, r.status === 200 && r.value && r.value.p1, `${r.status}`);
         }
 
-        // 3. A call of the daily puzzle runs the sweep, and answers once it is done. The project sweeps at
-        // most once a minute, and the games' own writes above may have just run it: call again until it has.
+        // 3. The daily puzzle answers without running the sweep: it runs from a game's phase change alone.
+        const asked = Date.now();
+        const daily = await fetch(`${FUNCTIONS}/daily?lang=en`);
+        log(`daily answered ${daily.status} in ${Date.now() - asked} ms`);
+        check('the daily puzzle answers', daily.status === 200 || daily.status === 503, `${daily.status}`);
+        // A phase change runs the sweep. The project sweeps at most once a minute, and the games' own
+        // writes above may have just run it: change the live game's phase time again until it has.
         const until = Date.now() + 150000;
         while (Date.now() < until && ((await db('GET', 'qHistory/gameSweep')) || {}).next !== 5) {
-            const daily = await fetch(`${FUNCTIONS}/daily?lang=en`);
-            log(`daily answered ${daily.status}`);
+            await db('PUT', `games/${pins.live}/state/timestamp`, Date.now());
+            log('the live game\'s phase time changed');
             await sleep(10000);
         }
         const sweep = await db('GET', 'qHistory/gameSweep');
