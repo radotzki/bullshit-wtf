@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { warmInviteLink } from './invite-warm';
 
 export type Locale = 'en' | 'he';
 
@@ -69,6 +70,22 @@ export class ShareService {
     inviteUrl(pin: string, locale: string, via: 'link' | 'qr') {
         const prefix = locale === 'he' ? '/he' : '';
         return `${SITE}${prefix}/join-game/${pin.toUpperCase()}?via=${via}`;
+    }
+
+    /**
+     * Fetch this game's invite link (the exact address the host shares) once in the background, so its
+     * named preview is ready in the CDN before the host presses share. Counts as no visit or join
+     * (see invite-warm.ts).
+     */
+    warmInvite(pin: string, locale: string) {
+        if (!pin) {
+            return;
+        }
+        let fetcher: any = null;
+        try {
+            fetcher = typeof window !== 'undefined' && typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+        } catch (e) { }
+        warmInviteLink(this.inviteUrl(pin, locale, 'link'), fetcher);
     }
 
     /** Home page link, in the game's language, tagged with where it was shared from. */
