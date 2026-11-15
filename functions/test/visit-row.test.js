@@ -68,7 +68,7 @@ const html = fs.readFileSync(path.join(__dirname, '..', '..', 'game', 'src', 'in
 const beacon = /<!-- BS:VISIT:START -->\s*<script>([\s\S]*?)<\/script>\s*<!-- BS:VISIT:END -->/.exec(html)[1];
 
 /** A fake browser tab on one address. Returns what the page can do and what the beacon posted. */
-function openPage({ href, referrer = '', ua, language = 'en-US', stored = {}, sessionStored = {}, plain = false, webdriver = false }) {
+function openPage({ href, referrer = '', ua, language = 'en-US', stored = {}, sessionStored = {}, plain = false, webdriver = false, modern = false, sinceTap = 0 }) {
     const url = new URL(href);
     const posts = [];
     const listeners = {};
@@ -80,7 +80,12 @@ function openPage({ href, referrer = '', ua, language = 'en-US', stored = {}, se
         setItem: (k, v) => { writes.push(k); data[k] = String(v); },
         removeItem: (k) => { writes.push(k); delete data[k]; },
     });
-    const appRoot = { children: [{ className: 'l' }], firstElementChild: { className: 'l' } };
+    // Until the app draws, <app-root> holds the page's own loading card.
+    const card = { id: 'bs-load', className: '' };
+    const appRoot = { children: [card], firstElementChild: card };
+    // modern: the browser has performance.now (sinceTap ms passed before the beacon ran) and
+    // MutationObserver, as every phone the game supports does; the bare fake has neither.
+    const observers = [];
     const document = {
         referrer,
         visibilityState: 'visible',
@@ -100,11 +105,22 @@ function openPage({ href, referrer = '', ua, language = 'en-US', stored = {}, se
         setTimeout: (fn, ms) => { timers.push({ fn, ms }); },
         Math, Date, JSON, String, decodeURIComponent,
     };
+    if (modern) {
+        window.performance = { now: () => sinceTap };
+        window.MutationObserver = class {
+            constructor(fn) { this.fn = fn; this.on = false; observers.push(this); }
+            observe(target, opts) { assert.ok(target === document.documentElement && opts.childList && opts.subtree); this.on = true; }
+            disconnect() { this.on = false; }
+        };
+    }
     window.window = window;
     vm.runInNewContext(beacon, Object.assign(window, { location: window.location, navigator: window.navigator }));
     return {
-        posts, writes, window, timers,
+        posts, writes, window, timers, observers,
+        // The page changed (the parser or the app added nodes): every live observer hears it.
+        mutate() { observers.filter(o => o.on).forEach(o => o.fn([])); },
         // The app drew: <app-root> holds the game instead of the spinner.
+        parsed() { document.bodyParsed = true; },
         boot() { document.bodyParsed = true; appRoot.children = [{ className: 'page' }]; appRoot.firstElementChild = appRoot.children[0]; },
         go(pathname) { window.location.pathname = pathname; },
         hide() { document.visibilityState = 'hidden'; (listeners.visibilitychange || []).forEach(fn => fn()); },
@@ -293,4 +309,71 @@ test('the function always answers 204: junk, a missing table, another method', a
     failInserts = false;
     loud();
     assert.strictEqual(visits().length, 0);
+});
+
+test('a modern phone sends the page trip and the moment the app drew; the loading card is not drawn', async () => {
+    rows.length = 0;
+    quiet();
+    const page = openPage({ href: 'https://bullshit.wtf/he/join-game/ABCD?via=link', ua: IPHONE, language: 'he-IL', modern: true, sinceTap: 1834.6 });
+    assert.strictEqual(page.observers.length, 1);
+    page.parsed();                        // the body is in: <app-root> shows the loading card
+    page.mutate();
+    page.mutate();
+    assert.ok(page.observers[0].on, 'the card alone is not the app');
+    page.boot();                          // Angular replaced the card with the game
+    page.mutate();
+    page.mutate();                        // more of the app drawing sends nothing more
+    assert.ok(!page.observers[0].on, 'the observer stops once the app drew');
+    page.window.bsVisit('join');
+    page.hide();
+    await page.deliver();
+    loud();
+    const got = visits();
+    assert.deepStrictEqual(got.map(r => [r.kind, r.page, r.locale, r.tag, r.booted]), [
+        ['view', '/join-game/:pin', 'he', 'link', null],
+        ['page', '/join-game/:pin', 'he', 'link', null],
+        ['drawn', '/join-game/:pin', 'he', 'link', true],
+        ['join', '/join-game/:pin', 'he', 'link', true],
+        ['end', '/join-game/:pin', 'he', 'link', true],
+    ]);
+    assert.strictEqual(got[1].ms, 1835);  // the tap to the beacon, rounded
+    assert.ok(got[2].ms >= 0 && got[2].ms < 5000, String(got[2].ms));
+    assert.ok(got.every(r => r.view === got[0].view));
+    // The same columns as every other row: the new kinds need no new column.
+    got.forEach(r => assert.deepStrictEqual(Object.keys(r).sort(), Object.keys(got[0]).sort()));
+});
+
+test('a slow load sends stuck at 12 s and drawn when it finally draws; a plain page sends no drawn', async () => {
+    rows.length = 0;
+    quiet();
+    const slow = openPage({ href: 'https://bullshit.wtf/join-game/ABCD?via=link', ua: IPHONE, modern: true, sinceTap: 420 });
+    slow.parsed();
+    slow.mutate();
+    slow.timers[0].fn();                  // 12 s: the loading card is still all there is
+    slow.boot();
+    slow.mutate();
+    await slow.deliver();
+    const plain = openPage({ href: 'https://bullshit.wtf/how-to-play', ua: IPHONE, plain: true, modern: true, sinceTap: 300 });
+    assert.strictEqual(plain.observers.length, 0);
+    await plain.deliver();
+    loud();
+    const got = visits();
+    assert.deepStrictEqual(got.map(r => [r.kind, r.booted]), [
+        ['view', null], ['page', null], ['stuck', false], ['drawn', true],
+        ['view', null], ['page', null],
+    ]);
+    assert.deepStrictEqual([got[1].ms, got[5].ms], [420, 300]);
+});
+
+test('the function keeps page and drawn rows, and still drops unknown kinds', async () => {
+    rows.length = 0;
+    quiet();
+    await post(JSON.stringify({ k: 'drawn', v: 'abc', first: '/join-game/ABCD', booted: true, ms: 2310 }), { 'user-agent': IPHONE });
+    await post(JSON.stringify({ k: 'page', v: 'abc', first: '/join-game/ABCD', booted: false, ms: 912.4 }), { 'user-agent': IPHONE });
+    await post(JSON.stringify({ k: 'paint', v: 'abc', first: '/', ms: 1 }), { 'user-agent': IPHONE });
+    loud();
+    assert.deepStrictEqual(visits().map(r => [r.kind, r.page, r.ms, r.booted]), [
+        ['drawn', '/join-game/:pin', 2310, true],
+        ['page', '/join-game/:pin', 912, null],
+    ]);
 });
