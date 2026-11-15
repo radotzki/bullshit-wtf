@@ -29,7 +29,7 @@ Module._load = realLoad;
 
 test('every lobby-help value is counted, with the PIN in capitals in crew_id', () => {
     assert.deepStrictEqual(SHARE_METHODS['lobby-help'], ['seen-new-phone', 'seen-new-computer',
-        'seen-classic-phone', 'seen-classic-computer', 'whatsapp', 'native', 'copy']);
+        'seen-classic-phone', 'seen-classic-computer', 'whatsapp', 'native', 'copy', 'big-screen']);
     for (const method of SHARE_METHODS['lobby-help']) {
         assert.deepStrictEqual(cleanShare({ content_type: 'lobby-help', method, crew: 'abcd', locale: 'he', uid: 'u1' }),
             { content_type: 'lobby-help', method, crew_id: 'ABCD', locale: 'he', uid: 'u1' });

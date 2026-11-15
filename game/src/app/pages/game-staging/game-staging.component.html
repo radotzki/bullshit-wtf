@@ -19,6 +19,16 @@
             <div class="loader"> </div>
         </div>
 
+        <!-- A host on a computer: one button makes this computer the big screen (big-screen-host.ts).
+             Above the invite, so it is on the first screen whatever the invite's size. -->
+        <div *ngIf="bigScreenOffer" class="big-screen-offer" [attr.dir]="lobby?.rtl ? 'rtl' : null">
+            <p class="words"> <strong> {{b.ask}} </strong> {{b.how}} </p>
+            <button class="button is-primary is-outlined" [class.is-loading]="switching" [disabled]="loading" (click)="useAsBigScreen()">
+                <span class="icon"><i class="fa fa-television"></i></span>
+                <span> {{b.button}} </span>
+            </button>
+        </div>
+
         <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false" [inline]="!!lobby?.alone || !!help?.show"
             [help]="help?.show ? help.device : null" [compact]="!!help?.show && !lobby?.alone" [counted]="!!help?.inTest"></app-invite>
 
@@ -41,8 +51,8 @@
             <app-invite *ngIf="presenter" class="lobby-invite" [pin]="pin" [presenter]="true"></app-invite>
         </div>
 
-        <div *ngIf="players && !players.length" class="screen-center waiting-for-players">
-            {{t.waitingForPlayers}}
+        <div *ngIf="players && !players.length" class="screen-center waiting-for-players" [class.join-now]="hostScreenHere">
+            {{hostScreenHere ? b.joinNow : t.waitingForPlayers}}
         </div>
     </div>
 
