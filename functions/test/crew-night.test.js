@@ -30,7 +30,14 @@ function ref(parts) {
         set: async (v) => put(parts, v),
         update: async (v) => Object.keys(v).forEach(k => put(parts.concat(k.split('/')), v[k])),
         push: () => ({ key: 'p' + (++pushId) }),
-        transaction: (fn, done) => { const v = fn(at(parts)); put(parts, v); done(null, true, { val: () => v }); },
+        transaction: (fn, done) => {
+            const current = at(parts);
+            const v = fn(current === null ? null : JSON.parse(JSON.stringify(current)));
+            // Like Firebase: undefined aborts, and the snapshot is the value as it stands.
+            if (v === undefined) return done(null, false, { val: () => current });
+            put(parts, v);
+            done(null, true, { val: () => v });
+        },
         orderByChild: () => ({ equalTo: (lang) => ({ once: async () => ({
             val: () => Object.fromEntries(Object.entries(at(parts) || {}).filter(([, q]) => q.lang === lang)),
         }) }) }),
@@ -237,10 +244,83 @@ test('the list reads `true` as the member\'s name and leaves out a name the filt
 });
 
 test('the presses of the night block are counted as crew-night shares, and nothing else is', () => {
-    for (const method of ['in', 'in-new', 'out', 'nudge', 'open-lobby']) {
+    for (const method of ['in', 'in-new', 'out', 'nudge', 'open-lobby', 'join-lobby']) {
         const row = analytics.cleanShare({ content_type: 'crew-night', method, crew: 'k7m2qx', locale: 'he', uid: 'u1' });
         assert.deepStrictEqual(row, { content_type: 'crew-night', method, crew_id: 'k7m2qx', locale: 'he', uid: 'u1' });
     }
     assert.strictEqual(analytics.cleanShare({ content_type: 'crew-night', method: 'maybe' }), null);
     assert.strictEqual(analytics.cleanShare({ content_type: 'results', method: 'in' }), null);
+});
+
+test('two sheets open at once: the second date does not move the first one', async () => {
+    const id = await savedCrew();
+    const first = nextWeek() + 2 * 24 * HOUR;
+    const second = nextWeek();
+    // Both sheets opened with no night on the crew (prev: null). The first sends a changed date.
+    const a = await call('crewNight', { crew: id, time: first, by: 'Dana', prev: null });
+    assert.strictEqual(a.code, 200);
+    assert.strictEqual(a.body.kept, undefined);
+    // The second still showed the default, and sends it after: the crew keeps the first night.
+    const b = await call('crewNight', { crew: id, time: second, by: 'Avi', prev: null });
+    assert.strictEqual(b.code, 200);
+    assert.strictEqual(b.body.kept, true);
+    assert.deepStrictEqual(db.crews[id].night, { time: first, by: 'Dana', in: { dana: 'Dana' } });
+    assert.deepStrictEqual(b.body.night, db.crews[id].night);
+});
+
+test('the sender who set a night can change it, by sending the night they saw', async () => {
+    const id = await savedCrew();
+    const first = nextWeek();
+    const later = first + 24 * HOUR;
+    await call('crewNight', { crew: id, time: first, by: 'Dana', prev: null });
+    await call('crewNight', { crew: id, nickname: 'Avi', in: true });
+    const r = await call('crewNight', { crew: id, time: later, by: 'Dana', prev: first });
+    assert.strictEqual(r.body.kept, undefined);
+    // A new time starts a new list, as on the crew page.
+    assert.deepStrictEqual(db.crews[id].night, { time: later, by: 'Dana', in: { dana: 'Dana' } });
+    // The same time again, by anyone, keeps the night and adds the name.
+    const again = await call('crewNight', { crew: id, time: later, by: 'Noa', prev: null });
+    assert.strictEqual(again.body.kept, undefined);
+    assert.deepStrictEqual(Object.keys(db.crews[id].night.in).sort(), ['dana', 'noa']);
+});
+
+test('a night that has passed, or a request without prev, can be replaced', async () => {
+    const id = await savedCrew();
+    db.crews[id].night = { time: Date.now() - 3 * 24 * HOUR, by: 'Dana', in: { dana: 'Dana' } };
+    const time = nextWeek();
+    const r = await call('crewNight', { crew: id, time, by: 'Avi', prev: null });
+    assert.strictEqual(r.body.kept, undefined);
+    assert.strictEqual(db.crews[id].night.time, time);
+    // The crew page's NEXT GAME NIGHT sends no prev: it moves a night that is still ahead, as before.
+    const moved = time + 24 * HOUR;
+    await call('crewNight', { crew: id, time: moved, by: 'Noa' });
+    assert.strictEqual(db.crews[id].night.time, moved);
+});
+
+test('an invisible name, or one that is not text, is no name', async () => {
+    const id = await savedCrew();
+    await call('crewNight', { crew: id, time: nextWeek(), by: 'Dana' });
+    for (const nickname of ['\u200B\u200B', '\u200E\u200F\u202B', '\uFEFF \u2066\u2069', '\u00AD']) {
+        const r = await call('crewNight', { crew: id, nickname, in: true });
+        assert.strictEqual(r.body.code, 'BAD_NAME', JSON.stringify(nickname));
+        assert.strictEqual(r.body.message, 'Type your name.');
+    }
+    // A Hebrew crew is told in Hebrew: the page shows these words as they are.
+    db.crews[id].locale = 'he';
+    assert.strictEqual((await call('crewNight', { crew: id, nickname: '\u200B', in: true })).body.message, 'כתבו את השם שלכם.');
+    db.crews[id].locale = 'en';
+    for (const nickname of [{ a: 1 }, ['Avi'], 12]) {
+        const r = await call('crewNight', { crew: id, nickname, in: true });
+        assert.strictEqual(r.body.code, 'BAD_NAME', JSON.stringify(nickname));
+    }
+    assert.deepStrictEqual(Object.keys(db.crews[id].night.in), ['dana']);
+    // Invisible characters are taken out before the cut, so the visible name keeps its length.
+    const r = await call('crewNight', { crew: id, nickname: '\u200BAvi\u200F\u200B Cohen', in: true });
+    assert.strictEqual(r.body.nickname, 'Avi Cohen');
+    assert.strictEqual(db.crews[id].night.in['avi cohen'], 'Avi Cohen');
+    // A name that is not text never becomes the night's "by".
+    const id2 = await savedCrew('Others');
+    const time = nextWeek();
+    await call('crewNight', { crew: id2, time, by: { x: 1 } });
+    assert.deepStrictEqual(db.crews[id2].night, { time });
 });

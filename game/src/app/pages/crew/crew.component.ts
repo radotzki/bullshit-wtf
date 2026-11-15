@@ -10,8 +10,8 @@ import {
     NightInfo, buildIcs, buildWeeklyCrewIcs, dateValue, defaultNight, googleCalendarUrl, googleWeeklyUrl, icsFileName,
     nightLabel, nightText, nightTitle, parseNight, timeValue, weekdayName, weeklyFileName, weeklyShareText,
 } from './next-night';
-import { CrewStrings, crewStrings, localeFromPath } from './crew-strings';
-import { NightState, countdown, daysUntil, isIn, nightState, titleLine } from './crew-night';
+import { CrewStrings, crewStrings, inErrorText, localeFromPath } from './crew-strings';
+import { NightState, countdown, daysUntil, isIn, nightEvening, nightState, titleLine } from './crew-night';
 import { readVisitor } from '../landing/front-door';
 import { markHosted } from '../../services/join-source';
 import { Crew, CrewMember, GameState, crewStandings, crewLeaderLine, crewNightNames } from './../../game-model';
@@ -168,9 +168,6 @@ export class CrewComponent implements OnInit, OnDestroy {
     }
 
     async rematch(fromNight = false) {
-        if (fromNight) {
-            this.count('open-lobby');
-        }
         this.loading = true;
         this.errorMsg = '';
 
@@ -178,6 +175,10 @@ export class CrewComponent implements OnInit, OnDestroy {
             const { pin, created } = await this.apiService.crewRematch(this.id);
             if (created) {
                 markHosted(pin);
+            }
+            // One open-lobby row a lobby: the phones that press after the first one join it.
+            if (fromNight) {
+                this.count(created ? 'open-lobby' : 'join-lobby');
             }
             const prefix = this.locale === 'he' ? ['he'] : [];
             this.router.navigate(prefix.concat(['join-game', pin]), { queryParams: { via: 'crew' } });
@@ -251,7 +252,7 @@ export class CrewComponent implements OnInit, OnDestroy {
     /** "You're in. See you Friday." (or "tonight", when the night is today). */
     get youreIn() {
         const today = daysUntil(this.storedNight, this.now) <= 0;
-        return this.t.youreIn(today ? '' : weekdayName(new Date(this.storedNight), this.locale));
+        return this.t.youreIn(today ? '' : weekdayName(nightEvening(this.storedNight), this.locale));
     }
 
     /** Presses on the night block, counted in BigQuery `shares`. A test crew's presses are not counted. */
@@ -277,7 +278,7 @@ export class CrewComponent implements OnInit, OnDestroy {
             this.count(resp.isNew ? 'in-new' : 'in');
         } catch (err) {
             // A refused name comes with the server's own words, in the crew's language.
-            this.inError = err && err.code === 'BAD_NAME' && err.message ? err.message : this.t.inFailed;
+            this.inError = inErrorText(err, this.t);
             if (!err || ['BAD_NAME', 'NIGHT_FULL', 'NO_NIGHT'].indexOf(err.code) < 0) {
                 reportError(err, 'crewNight', { crew: this.id });
             }

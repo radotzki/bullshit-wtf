@@ -110,7 +110,7 @@ async function shot(page, name) {
 }
 
 /** One sitting: two games (three when `third`), in the language and the half asked for. */
-async function sitting(base, emulators, { locale, wantNew, rename, swap, third, senderWins }) {
+async function sitting(base, emulators, { locale, wantNew, rename, swap, third, senderWins, change }) {
     const tag = `${locale}-${wantNew ? 'new' : 'old'}`;
     const problems = [];
     const check = (ok, what) => { if (!ok) problems.push(what); return ok; };
@@ -258,10 +258,10 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
         const when = words.sameTimeNextWeek(opened);
         const label = night.nightLabel(when, locale);
         check((await sender.page.locator('.sheet-when .when').first().innerText()).trim() === label, `${tag}: the sheet's date is not "${label}"`);
-        const firstStanding = model.crewStandings(crew)[0];
-        const leader = firstStanding && firstStanding.wins > 0 ? model.crewLeaderLine(crew, locale) : '';
+        const leader = words.messageLeader(model.crewStandings(crew), model.crewLeaderLine(crew, locale), locale);
+        check(!/\//.test(leader), `${tag}: the message's leader line has a slash: "${leader}"`);
         const crewUrl = `https://bullshit.wtf${he ? '/he' : ''}/c/${crewId}?via=crew`;
-        const expected = `${words.nextWeekText({ winner: won(sender), when, leader, locale })}\n${crewUrl}`;
+        const expected = `${words.nextWeekText({ winner: won(sender), when, leader, locale, offered: when })}\n${crewUrl}`;
         const sentText = new URL(href).searchParams.get('text');
         check(new URL(href).origin === 'https://wa.me', `${tag}: the link does not open WhatsApp (${href.slice(0, 40)})`);
         check(sentText === expected, `${tag}: the WhatsApp text is\n${sentText}\nnot\n${expected}`);
@@ -280,6 +280,12 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
             }
         }
 
+        // A second player has the sheet open too, before the sender taps.
+        const racer = phones.find((p) => p !== sender);
+        await racer.page.locator('.next-week-button').first().click();
+        await waitFor(`${tag}: ${racer.name}'s sheet never got ready`,
+            () => racer.page.locator('a.sheet-whatsapp').first().getAttribute('href'), problems);
+
         // The tap: WhatsApp opens at once, and the date goes on the crew.
         await sender.page.locator('a.sheet-whatsapp').first().click();
         const set = await waitFor(`${tag}: the date never reached the crew`, async () => (await db('GET', `crews/${crewId}/night`)), problems);
@@ -296,17 +302,36 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
         await shot(sender.page, `${tag}-4-sheet-sent`);
         await sender.page.locator('.sheet-done').first().click();
 
+        // The second sheet now shows the sender's date, with I'M IN in place of the send buttons.
+        const taken = racer.page.locator('.sheet-taken');
+        await waitFor(`${tag}: ${racer.name}'s open sheet never showed the date that was set`, () => visible(taken), problems);
+        const takenText = (await taken.first().innerText().catch(() => '')).replace(/\s+/g, ' ');
+        check(takenText.includes(t.next(label)) && takenText.includes(t.call(sender.name)), `${tag}: ${racer.name}'s sheet reads "${takenText}"`);
+        check(!(await visible(racer.page.locator('a.sheet-whatsapp'))), `${tag}: ${racer.name}'s sheet can still send another date`);
+        await shot(racer.page, `${tag}-4-second-sheet`);
+        await racer.page.locator('.sheet-in').first().click();
+        await waitFor(`${tag}: ${racer.name}'s I'M IN on the sheet did not land`, async () => {
+            const n = await db('GET', `crews/${crewId}/night/in`);
+            return n && Object.values(n).includes(racer.name);
+        }, problems);
+        await racer.page.locator('.sheet-done').first().click();
+
+        // The big screen shows the date now, not the ask.
+        await waitFor(`${tag}: the big screen does not show the date`,
+            async () => (await screen.page.locator('.next-week-screen').first().innerText().catch(() => '')).trim() === t.next(label), problems);
+
         // Every other phone swaps the button for the banner, and says I'M IN.
         const others = phones.filter((p) => p !== sender);
         for (const p of others) {
             const banner = p.page.locator('.next-week-banner');
             await waitFor(`${tag}: ${p.name} got no banner`, () => visible(banner), problems);
             const text = (await banner.first().innerText().catch(() => '')).replace(/\s+/g, ' ');
-            check(text.includes(t.next(label)) && text.includes(t.call(sender.name)) && text.includes(t.imIn), `${tag}: ${p.name}'s banner reads "${text}"`);
+            check(text.includes(t.next(label)) && text.includes(t.call(sender.name)) && text.includes(p === racer ? t.youreIn : t.imIn), `${tag}: ${p.name}'s banner reads "${text}"`);
             check(!(await visible(p.page.locator('.next-week-button'))), `${tag}: ${p.name} still has the button beside the banner`);
+            check(!(await visible(p.page.locator('.banner-change'))), `${tag}: ${p.name} may change a date another phone set`);
         }
         await shot(others[0].page, `${tag}-5-banner`);
-        for (const p of others) await p.page.locator('.banner-in').first().click();
+        for (const p of others.filter((x) => x !== racer)) await p.page.locator('.banner-in').first().click();
         const list = await waitFor(`${tag}: not everyone who tapped I'M IN is on the list`, async () => {
             const n = await db('GET', `crews/${crewId}/night/in`);
             return n && Object.keys(n).length === phones.length ? n : null;
@@ -329,6 +354,42 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
             const utc = when.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
             check(ics.includes(`DTSTART:${utc}`) && ics.includes(`URL:${crewUrl}`) && !/RRULE/.test(ics), `${tag}: the calendar file is not one entry for the night:\n${ics}`);
             result.calendar = { file: got.download.suggestedFilename(), summary: (/SUMMARY:(.*)/.exec(ics) || [])[1] };
+        }
+
+        if (change) {
+            // The sender picked the wrong day: CHANGE on their banner, a day later, sent again.
+            await sender.page.locator('.banner-change').first().click();
+            await waitFor(`${tag}: CHANGE did not open the date inputs`, () => visible(sender.page.locator('input[name="nextWeekDate"]')), problems);
+            const later = new Date(when.getFullYear(), when.getMonth(), when.getDate() + 1, 20, 30);
+            await sender.page.locator('input[name="nextWeekDate"]').first().fill(night.dateValue(later));
+            await sender.page.locator('input[name="nextWeekTime"]').first().fill(night.timeValue(later));
+            const laterLabel = night.nightLabel(later, locale);
+            const href2 = await waitFor(`${tag}: the changed date's link never got ready`, async () => {
+                const h = await sender.page.locator('a.sheet-whatsapp').first().getAttribute('href');
+                return h && new URL(h).searchParams.get('text').includes(laterLabel) ? h : null;
+            }, problems);
+            const changedText = href2 ? new URL(href2).searchParams.get('text') : '';
+            const want = `${words.nextWeekText({ winner: won(sender), when: later, leader, locale, offered: when })}\n${crewUrl}`;
+            check(changedText === want, `${tag}: the changed date's text is\n${changedText}\nnot\n${want}`);
+            check(!changedText.includes(he ? 'אותה שעה בשבוע הבא' : 'same time next week'), `${tag}: a changed date still says "same time next week"`);
+            result.changed = changedText;
+            await shot(sender.page, `${tag}-6-change`);
+            await sender.page.locator('a.sheet-whatsapp').first().click();
+            const moved = await waitFor(`${tag}: the changed date never reached the crew`, async () => {
+                const n = await db('GET', `crews/${crewId}/night`);
+                return n && n.time === later.getTime() ? n : null;
+            }, problems);
+            check(!!moved && moved.by === sender.name && Object.keys(moved.in || {}).length === 1, `${tag}: after the change the night is ${JSON.stringify(moved)}`);
+            await sender.page.locator('.sheet-done').first().click();
+            for (const p of others) {
+                await waitFor(`${tag}: ${p.name}'s banner did not move to the new date`, async () => {
+                    const text = (await p.page.locator('.next-week-banner').first().innerText().catch(() => '')).replace(/\s+/g, ' ');
+                    return text.includes(t.next(laterLabel)) && text.includes(t.imIn);
+                }, problems);
+            }
+            await waitFor(`${tag}: the big screen did not move to the new date`,
+                async () => (await screen.page.locator('.next-week-screen').first().innerText().catch(() => '')).trim() === t.next(laterLabel), problems);
+            await shot(others[0].page, `${tag}-6-banner-moved`);
         }
 
         if (third) {
@@ -366,7 +427,8 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
         check(!third || result.shares.filter((r) => r.method === 'seen-card' && r.crew_id === crewId).length === phones.length,
             `${tag}: the third game's seen-card rows lack the crew id`);
         check(count('next-week', 'seen-control') === 0, `${tag}: a seen-control row in the new half`);
-        check(count('next-week', 'open') === 1 && count('next-week', 'whatsapp') === 1 && count('crew-save', 'next-week') === 1,
+        check(count('next-week', 'open') === 2 && count('next-week', 'whatsapp') === (change ? 2 : 1) && count('crew-save', 'next-week') === 1
+            && count('next-week', 'change') === (change ? 1 : 0),
             `${tag}: open ${count('next-week', 'open')}, whatsapp ${count('next-week', 'whatsapp')}, crew-save ${count('crew-save', 'next-week')}`);
         check(count('next-week', 'in') === others.length && count('next-week', 'calendar') === 1,
             `${tag}: in ${count('next-week', 'in')}, calendar ${count('next-week', 'calendar')}`);
@@ -489,7 +551,7 @@ async function main() {
         const base = `http://${HOST}:${server.address().port}`;
         const plan = [
             { key: 'en-new', locale: 'en', wantNew: true, rename: true, third: true, senderWins: false },
-            { key: 'he-new', locale: 'he', wantNew: true, swap: true, senderWins: true },
+            { key: 'he-new', locale: 'he', wantNew: true, swap: true, senderWins: true, change: true },
             { key: 'en-old', locale: 'en', wantNew: false },
             { key: 'he-old', locale: 'he', wantNew: false },
         ].filter((s) => !only || only.includes(s.key));
