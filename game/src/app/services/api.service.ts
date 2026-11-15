@@ -590,6 +590,12 @@ export class ApiService {
         return this.observe<number>(this.gamesRef.child(pin).child('hostAwaySince'));
     }
 
+    /** Server time the lobby reached 5 players (`fullSince`), live; null while it has fewer. */
+    getFullSinceObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<number>(this.gamesRef.child(pin).child('fullSince'));
+    }
+
     /** Server time the host last reported in, live. Errors until the rules that expose it are deployed. */
     getHostSeenObservable(pin: string) {
         pin = pin.toUpperCase();

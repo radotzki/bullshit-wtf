@@ -27,6 +27,8 @@ function guestView(n, over) {
     return lobbyHost(Object.assign({
         hasPresenter: false, isPresenter: false, creator: 'uid-h', hasHost: true,
         myUid: 'uid-0', myPid: 'p0', players: room(n), waitedMs: 0, hostAwayMs: 1000,
+        // Full long ago, unless a test says when the lobby reached 5 (fullSince).
+        fullMs: n >= 5 ? HOST_AWAY_MS * 10 : null,
     }, over));
 }
 
@@ -53,6 +55,21 @@ test('away 45 s in a lobby of 5 or more: everyone gets START, and the line says 
     assert.strictEqual(v.hostAwayOpen, 'Aviv');
     assert.strictEqual(lobbyText(v, 5, 'en').message, 'Aviv stepped away. Anyone can press START');
     assert.strictEqual(lobbyText(v, 5, 'he').message, 'Aviv יצא לרגע. כל אחד יכול ללחוץ על "מתחילים"');
+});
+
+test('the 45 s count from the later of the host hiding and the lobby reaching 5', () => {
+    // The host went to WhatsApp to send the link long ago; the fifth friend just came in.
+    const fifthJustIn = guestView(5, { hostStepped: true, hostSteppedMs: HOST_AWAY_MS * 4, fullMs: 1000 });
+    assert.strictEqual(fifthJustIn.canStart, false, 'no START the moment the room fills');
+    assert.strictEqual(fifthJustIn.hostAway, 'Aviv', 'the hang-on line');
+    assert.strictEqual(guestView(5, { hostStepped: true, hostSteppedMs: HOST_AWAY_MS * 4, fullMs: HOST_AWAY_MS - 1 }).canStart, false);
+    assert.strictEqual(guestView(5, { hostStepped: true, hostSteppedMs: HOST_AWAY_MS * 4, fullMs: HOST_AWAY_MS }).canStart, true,
+        '45 s after the fifth');
+    // Full long ago, the host just hid: from the hiding, as before.
+    assert.strictEqual(guestView(9, { hostStepped: true, hostSteppedMs: 1000, fullMs: HOST_AWAY_MS * 9 }).canStart, false);
+    assert.strictEqual(guestView(9, { hostStepped: true, hostSteppedMs: HOST_AWAY_MS, fullMs: HOST_AWAY_MS * 9 }).canStart, true);
+    // Not known when the lobby filled (no fullSince, or no clock): START stays the host's.
+    assert.strictEqual(guestView(9, { hostStepped: true, hostSteppedMs: HOST_AWAY_MS * 4, fullMs: null }).canStart, false);
 });
 
 test('a lobby of 2 to 4 gets the line, never START, while the host is away (short of 5 minutes)', () => {
@@ -82,6 +99,14 @@ test('the host\'s own hint in a lobby of 5 or more, both languages', () => {
     assert.strictEqual(lobbyText(mine, 9, 'en').message, '9 players in. Start when you\'re ready');
     assert.strictEqual(lobbyText(mine, 9, 'he').message, '9 שחקנים בפנים. מתחילים כשמוכנים');
     assert.strictEqual(lobbyText(mine, 4, 'en').message, 'Press START when everyone is in');
+    // The hint says the count, so the small count line under it is gone; under 5 it stays.
+    assert.strictEqual(lobbyText(mine, 9, 'en').count, null);
+    assert.strictEqual(lobbyText(mine, 9, 'he').count, null);
+    assert.strictEqual(lobbyText(mine, 5, 'en').count, null);
+    assert.strictEqual(lobbyText(mine, 4, 'en').count, '4 players in');
+    assert.strictEqual(lobbyText(mine, 4, 'he').count, '4 שחקנים במשחק');
+    // A guest in a lobby of 9 has no hint with the count: the line stays.
+    assert.strictEqual(lobbyText(guestView(9, {}), 9, 'en').count, '9 players in');
 });
 
 test('the big START for the host back on screen: 5 or more in, or 2 or more joined while away', () => {
@@ -92,6 +117,11 @@ test('the big START for the host back on screen: 5 or more in, or 2 or more join
     assert.strictEqual(startPanelDue(true, true, 1, 1), false, 'not for the lone host');
     assert.deepStrictEqual(startPanel(9, 'en'), { line: '8 friends are waiting for you', button: 'START' });
     assert.deepStrictEqual(startPanel(9, 'he'), { line: '8 חברים מחכים לך', button: 'מתחילים' });
+    // One friend left (the others went): singular, in both languages.
+    assert.deepStrictEqual(startPanel(2, 'en'), { line: '1 friend is waiting for you', button: 'START' });
+    assert.deepStrictEqual(startPanel(2, 'he'), { line: 'חבר אחד מחכה לך', button: 'מתחילים' });
+    assert.strictEqual(startPanel(3, 'en').line, '2 friends are waiting for you');
+    assert.strictEqual(startPanel(3, 'he').line, '2 חברים מחכים לך');
 });
 
 test('the tab title while the host is away', () => {

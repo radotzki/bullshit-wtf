@@ -38,9 +38,10 @@ export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'hos
  *   start it, so a host whose phone died cannot leave the group stuck either. Only the server writes
  *   hostSeen, and only for the phone that brings the host key: a guest cannot make the host look gone.
  *   Only games from clients that report (serverStart) have it; without it the host must start;
- * - if the seated host's lobby page has been hidden (hostAwaySince, see hostHere) for 45 s and the
- *   lobby has 5 or more players, anyone may start: a big room gives up within a minute of a host who
- *   went to WhatsApp. Smaller lobbies keep waiting for the host (or the 5 minutes above);
+ * - if the seated host's lobby page has been hidden (hostAwaySince, see hostHere) and the lobby has had
+ *   5 or more players (fullSince, see keepFullSince), both for 45 s, anyone may start: a big room gives
+ *   up within a minute of a host who went to WhatsApp, counted from the later of the two. Smaller
+ *   lobbies keep waiting for the host (or the 5 minutes above);
  * - when the host made their computer the big screen (hasHost 'screen', see hostToBigScreen), no player
  *   row is the host and none is waited for: the big screen brings the host key and starts the game.
  *   It reports in like a host's phone, so only a big screen gone 5 minutes lets anyone start;
@@ -65,10 +66,13 @@ export function startVerdict(game: GameScheme, hostKey: string | undefined, now:
     }
     // A joined host whose lobby page has been hidden HOST_AWAY_MS, in a lobby of 5 or more. Only a seated
     // host's phone reports away (a big screen never does), and only the server writes hostAwaySince.
+    // The 45 s count from the later of the host hiding and the lobby reaching 5 (fullSince): a host who
+    // went to WhatsApp to send the link is away from the first second, and the fifth friend in must not
+    // find START at once. A lobby without fullSince (filled before it was kept) is not full yet.
     const seated = Object.keys(players).filter(k => !!players[k]).length;
     const hostSeated = Object.keys(players).some(k => players[k] && players[k].host);
-    if (hostSeated && game.serverStart && typeof game.hostAwaySince === 'number' && now - game.hostAwaySince >= HOST_AWAY_MS
-        && seated >= HOST_AWAY_MIN_PLAYERS) {
+    if (hostSeated && game.serverStart && typeof game.hostAwaySince === 'number' && typeof game.fullSince === 'number'
+        && seated >= HOST_AWAY_MIN_PLAYERS && now - Math.max(game.hostAwaySince, game.fullSince) >= HOST_AWAY_MS) {
         return 'host-away';
     }
     return 'not-host';
@@ -178,7 +182,12 @@ export async function hostToBigScreen(pin: string, hostKey: string | undefined, 
 
     const update: { [path: string]: any } = { hasHost: 'screen', presenter: true };
     const players = game.players || {};
-    Object.keys(players).filter(k => players[k] && players[k].host).forEach(k => update[`players/${k}`] = null);
+    const freed = Object.keys(players).filter(k => players[k] && players[k].host);
+    freed.forEach(k => update[`players/${k}`] = null);
+    // One seat fewer: a lobby that drops below 5 is not full any more, and fills again with a new clock.
+    if (Object.keys(players).filter(k => !!players[k]).length - freed.length < HOST_AWAY_MIN_PLAYERS) {
+        update.fullSince = null;
+    }
     if (game.serverStart) {
         // The big screen's lobby page reports in from now on (see hostHere).
         update.hostSeen = now;
@@ -186,4 +195,25 @@ export async function hostToBigScreen(pin: string, hostKey: string | undefined, 
     await gamesRef.child(pin).update(update);
     console.log(`[PIN: ${pin}] the host's computer is the big screen now`);
     return { screen: true };
+}
+
+/**
+ * Keeps the server time the lobby first reached HOST_AWAY_MIN_PLAYERS players (fullSince), for the
+ * host-away clock (startVerdict). Called after a join has written its seat, so it counts the seats as
+ * they are now: two friends joining at the same moment can't both count 4. Only the first moment is
+ * kept; a lobby that drops below 5 has it cleared (hostToBigScreen), so it fills again with a new clock.
+ */
+export async function keepFullSince(pin: string, now = Date.now()): Promise<void> {
+    const players = await get<GameScheme['players']>(gamesRef.child(pin).child('players'));
+    const seated = Object.keys(players || {}).filter(k => !!players[k]).length;
+    if (seated < HOST_AWAY_MIN_PLAYERS) {
+        return;
+    }
+    await new Promise<void>((resolve, reject) => {
+        gamesRef.child(pin).child('fullSince').transaction(
+            (current: any) => typeof current === 'number' ? undefined : now,
+            (error: any) => error ? reject(error) : resolve(),
+            false,
+        );
+    });
 }

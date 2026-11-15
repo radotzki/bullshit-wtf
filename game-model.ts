@@ -88,6 +88,11 @@ export interface GameScheme {
     // host key (see hostHere in functions: start.ts). Readable: guests are told the host stepped away,
     // and in a lobby of HOST_AWAY_MIN_PLAYERS or more anyone may start once it is HOST_AWAY_MS old.
     hostAwaySince?: number | null;
+    // Server time the lobby first had HOST_AWAY_MIN_PLAYERS (5) players, or null once it drops below
+    // (serverStart games only, written only by the server: join, Replay, hostToBigScreen). Readable: the
+    // host-away 45 s count from the later of this and hostAwaySince, so a room that fills while the host
+    // is away still waits 45 s from the fifth friend.
+    fullSince?: number | null;
     // How the game left the lobby, from startVerdict: 'host', 'host-away', 'host-gone', 'host-missing'
     // or 'open'. Server only; copied to opened_games.start_by. Absent on a game started by an old tick.
     startBy?: string;

@@ -192,7 +192,7 @@ test('startVerdict host-away: a seated host hidden 45 s, 5 or more players, serv
         return p;
     };
     const g = (extra) => Object.assign({ hostKey: KEY, hasHost: true, serverStart: true, hostSeen: now - 1000,
-        state: { id: S.GameStaging, timestamp: now - 60000 }, players: players(5) }, extra);
+        fullSince: now - HOST_AWAY_MS * 20, state: { id: S.GameStaging, timestamp: now - 60000 }, players: players(5) }, extra);
     assert.strictEqual(HOST_AWAY_MS, 45 * 1000);
     assert.strictEqual(HOST_AWAY_MIN_PLAYERS, 5);
     assert.strictEqual(startVerdict(g({ hostAwaySince: now - HOST_AWAY_MS }), undefined, now), 'host-away');
@@ -214,6 +214,7 @@ test('a guest of a lobby of 9 starts once the host has been away 45 s, once, and
     assert.strictEqual(game(pin).state.id, S.GameStaging);
 
     game(pin).hostAwaySince = Date.now() - HOST_AWAY_MS - 500;
+    game(pin).fullSince = Date.now() - HOST_AWAY_MS - 500;
     const [a, b] = await Promise.all([call('startGame', { pin }), call('startGame', { pin })]);
     assert.deepStrictEqual([a.code, b.code], [200, 200]);
     // Two guests at the same moment: the lobby is left once (advance takes the phase), not twice.
@@ -251,6 +252,7 @@ test('the host back on screen takes START back from the room', async () => {
     const { pin } = await lobby(6);
     await call('hostHere', { pin, hostKey: KEY, away: true });
     game(pin).hostAwaySince = Date.now() - HOST_AWAY_MS * 2;
+    game(pin).fullSince = Date.now() - HOST_AWAY_MS * 2;
     await call('hostHere', { pin, hostKey: KEY });
     assert.strictEqual((await call('startGame', { pin })).code, 403);
     const r = await call('startGame', { pin, hostKey: KEY });
@@ -265,6 +267,7 @@ test('a test game (?via=test) started by the room is still a test game in every 
     for (let i = 0; i < 4; i++) await call('join', { pin, nickname: 'g' + i, uid: 0, via: 'test' });
     await call('hostHere', { pin, hostKey: KEY, away: true });
     game(pin).hostAwaySince = Date.now() - HOST_AWAY_MS - 1;
+    game(pin).fullSince = Date.now() - HOST_AWAY_MS - 1;
     assert.strictEqual((await call('startGame', { pin })).code, 200);
     rows.length = 0;
     await onStateChange(pin);
@@ -272,6 +275,87 @@ test('a test game (?via=test) started by the room is still a test game in every 
     assert.strictEqual(opened.start_by, 'host-away');
     assert.strictEqual(game(pin).campaign, 'test');
     assert.strictEqual(opened.campaign, 'test', 'the test mark rides along as before');
+});
+
+// ---- the 45 s count from a full room (the later of the host hiding and the lobby reaching 5) ----
+
+test('startVerdict host-away counts from the later of hostAwaySince and fullSince', () => {
+    const now = 50000000;
+    const p = { h: { nickname: 'aviv', uid: 0, score: 0, host: true } };
+    for (let i = 1; i < 5; i++) p['g' + i] = { nickname: 'g' + i, uid: 0, score: 0 };
+    const g = (extra) => Object.assign({ hostKey: KEY, hasHost: true, serverStart: true, hostSeen: now - 1000,
+        state: { id: S.GameStaging, timestamp: now - 600000 }, players: p, hostAwaySince: now - HOST_AWAY_MS * 4 }, extra);
+    assert.strictEqual(startVerdict(g({ fullSince: now - 1000 }), undefined, now), 'not-host', 'the fifth just came in');
+    assert.strictEqual(startVerdict(g({ fullSince: now - HOST_AWAY_MS + 1 }), undefined, now), 'not-host');
+    assert.strictEqual(startVerdict(g({ fullSince: now - HOST_AWAY_MS }), undefined, now), 'host-away', '45 s after the fifth');
+    assert.strictEqual(startVerdict(g({ fullSince: now - HOST_AWAY_MS * 9, hostAwaySince: now - 1000 }), undefined, now), 'not-host',
+        'full long ago, the host just hid');
+    assert.strictEqual(startVerdict(g({ fullSince: undefined }), undefined, now), 'not-host', 'never known full: not full');
+    assert.strictEqual(startVerdict(g({ fullSince: String(now - HOST_AWAY_MS * 9) }), undefined, now), 'not-host');
+});
+
+test('join keeps fullSince: the moment the fifth player is in, once, not before', async () => {
+    const { pin } = await lobby(3);
+    assert.strictEqual('fullSince' in game(pin), false, 'four players: not full');
+    const before = Date.now();
+    await call('join', { pin, nickname: 'fifth', uid: 0 });
+    const since = game(pin).fullSince;
+    assert.ok(typeof since === 'number' && since >= before && since - before < 1000, 'set when the fifth joined');
+    game(pin).fullSince = since - 5000;
+    await call('join', { pin, nickname: 'sixth', uid: 0 });
+    assert.strictEqual(game(pin).fullSince, since - 5000, 'a sixth keeps the first moment');
+    // A phone joining again (its seat back) changes nothing either.
+    await call('join', { pin, nickname: 'aviv', uid: 0, hostKey: KEY });
+    assert.strictEqual(game(pin).fullSince, since - 5000);
+});
+
+test('the host hides before the room fills: the fifth friend finds no START, 45 s after the fifth it opens', async () => {
+    const { pin } = await lobby(2);
+    // The host goes to WhatsApp to send the link, and stays there.
+    await call('hostHere', { pin, hostKey: KEY, away: true });
+    game(pin).hostAwaySince = Date.now() - HOST_AWAY_MS * 3;
+    await call('join', { pin, nickname: 'g3', uid: 0 });
+    await call('join', { pin, nickname: 'g4', uid: 0 });
+    assert.strictEqual(Object.keys(game(pin).players).length, 5);
+    assert.strictEqual((await call('startGame', { pin })).code, 403, 'the fifth friend presses START at once');
+    assert.strictEqual(game(pin).state.id, S.GameStaging);
+    game(pin).fullSince = Date.now() - HOST_AWAY_MS + 2000;
+    assert.strictEqual((await call('startGame', { pin })).code, 403, 'at 43 s from the fifth');
+    game(pin).fullSince = Date.now() - HOST_AWAY_MS - 500;
+    assert.strictEqual((await call('startGame', { pin })).code, 200, 'at 45 s from the fifth');
+    assert.strictEqual(game(pin).startBy, 'host-away');
+});
+
+test('a lobby that drops below 5 carries no old clock: it fills again with a new one', async () => {
+    // In the lobby only one thing frees a seat: the host making their computer the big screen.
+    const { pin } = await lobby(4);
+    assert.strictEqual(typeof game(pin).fullSince, 'number');
+    game(pin).fullSince = Date.now() - HOST_AWAY_MS * 10;
+    await call('hostToBigScreen', { pin, hostKey: KEY });
+    assert.strictEqual(Object.keys(game(pin).players).length, 4);
+    assert.strictEqual('fullSince' in game(pin), false, 'four seats: not full any more');
+    const before = Date.now();
+    await call('join', { pin, nickname: 'again', uid: 0 });
+    assert.ok(game(pin).fullSince >= before, 'full again from now');
+    // A lobby of 9 that gives up the host's seat is still full: its clock stays.
+    const big = await lobby(8);
+    game(big.pin).fullSince = 123;
+    await call('hostToBigScreen', { pin: big.pin, hostKey: KEY });
+    assert.strictEqual(game(big.pin).fullSince, 123);
+});
+
+test('a Replay of 5 or more is full from its first second, a smaller one is not', () => {
+    const { createFork } = require(path.join(dist, 'fork'));
+    const seats = n => {
+        const p = {};
+        for (let i = 0; i < n; i++) p['p' + i] = { nickname: 'n' + i, uid: 'u' + i, score: 3 };
+        return p;
+    };
+    const old = n => ({ locale: 'en', totalQ: 5, players: seats(n), state: { id: S.ScoreBoardFinal, timestamp: 1 } });
+    const before = Date.now();
+    const five = createFork('OLD', old(5), ['q1'], 'u0', 'p0', KEY);
+    assert.ok(typeof five.fullSince === 'number' && five.fullSince >= before);
+    assert.strictEqual('fullSince' in createFork('OLD', old(4), ['q1'], 'u0', 'p0', KEY), false);
 });
 
 // ---- a game nobody plays ends after question 1 ----

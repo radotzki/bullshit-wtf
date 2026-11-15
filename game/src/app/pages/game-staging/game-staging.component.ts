@@ -91,6 +91,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private titleBefore: string = null;
     /** Server time the host's page was hidden (`hostAwaySince`), or null while it is on screen. */
     private hostAwaySince: number = null;
+    /** Server time the lobby reached 5 players (`fullSince`), or null: the host-away clock starts at the later. */
+    private fullSince: number = null;
+    private fullSinceSubscriber: Subscription;
     private hostAwaySubscriber: Subscription;
     private isHostView = false;
     private onVisible = () => {
@@ -160,6 +163,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.askClock();
         this.hostAwaySubscriber = this.apiService.getHostAwayObservable(this.pin).subscribe(since => {
             this.hostAwaySince = typeof since === 'number' ? since : null;
+            this.updateLobby();
+        }, () => null);
+        this.fullSinceSubscriber = this.apiService.getFullSinceObservable(this.pin).subscribe(since => {
+            this.fullSince = typeof since === 'number' ? since : null;
             this.updateLobby();
         }, () => null);
         // Unreadable until the database rules that expose `hostSeen` are deployed: then nobody is gone.
@@ -308,6 +315,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             hostAwayMs: hostAwayMs(Date.now(), this.clockAhead, this.hostSeen),
             hostStepped: this.hostAwaySince !== null,
             hostSteppedMs: hostAwayMs(Date.now(), this.clockAhead, this.hostAwaySince),
+            fullMs: hostAwayMs(Date.now(), this.clockAhead, this.fullSince),
         });
         this.isHostView = !!view.isHost;
         this.hiddenTitle();
@@ -392,6 +400,9 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         }
         if (this.hostAwaySubscriber) {
             this.hostAwaySubscriber.unsubscribe();
+        }
+        if (this.fullSinceSubscriber) {
+            this.fullSinceSubscriber.unsubscribe();
         }
         if (this.hostSeenSubscriber) {
             this.hostSeenSubscriber.unsubscribe();

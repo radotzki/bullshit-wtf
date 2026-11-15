@@ -13,7 +13,7 @@
     <div *ngIf="lobby && players?.length" class="lobby-status" [class.presenter]="presenter" [attr.dir]="lobby.rtl ? 'rtl' : null">
         <span class="lobby-message" [class.alone]="lobby.alone"> {{lobby.message}} </span>
         <span *ngIf="lobby.sub" class="lobby-sub"> {{lobby.sub}} </span>
-        <span class="lobby-count"> {{lobby.count}} </span>
+        <span *ngIf="lobby.count" class="lobby-count"> {{lobby.count}} </span>
     </div>
 
     <div *ngIf="packBanner" class="pack-banner" [class.presenter]="presenter" [attr.dir]="locale === 'he' ? 'rtl' : null">

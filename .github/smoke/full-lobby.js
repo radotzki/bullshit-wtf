@@ -10,6 +10,9 @@
 // starts the game, all 9 phones leave the lobby, and the game says it was started by 'host-away'.
 // A lobby of 3: the guests get the line and never START, however long the host is away, and the host
 // who comes back gets no big panel and starts as before.
+// A lobby of 5 that fills while the host is away (en-5-late, he-5-late): the host hides before anyone
+// joins (gone to WhatsApp to send the link), three friends join, 50 s pass, and the fifth joins. The
+// fifth must find no START: it shows only 45 s after the fifth joined, as the server counts (fullSince).
 //
 // The page is "hidden" by overriding document.hidden and firing visibilitychange: the page's timers
 // keep running, as on an Android phone (an iPhone stops them; the away report is sent at once either way).
@@ -17,7 +20,7 @@
 // Nothing reaches production: see emulator-game.js, whose emulators and phones this run uses.
 // From the repository root, with game/ and functions/ built and the root's npm ci done:
 //   node .github/smoke/full-lobby.js [path to dist]
-// ONLY=en-9,he-9,en-3 runs only those lobbies. SHOTS=<dir> saves screenshots.
+// ONLY=en-9,he-9,en-3,en-5-late,he-5-late runs only those lobbies. SHOTS=<dir> saves screenshots.
 // Prints a JSON summary; exits non-zero when a check fails.
 
 'use strict';
@@ -147,6 +150,8 @@ async function lobby(browser, base, { locale, size }, problems) {
             check(box && box.width >= 340, `the big START is ${box && box.width} px wide`);
             check((await lineOf(host.page)) === lobbyHost.lobbyText({ canStart: true, wait: 'none', isHost: true }, size, locale).message,
                 `the host's line is "${await lineOf(host.page)}"`);
+            // The hint says the count: no second count line under it.
+            check(!(await visible(host.page.locator('.lobby-count'))), 'the host sees the count twice');
             await shot(host.page, `${tag}-2-host-back-big-start`);
         } else {
             await sleep(1500);
@@ -201,6 +206,74 @@ async function lobby(browser, base, { locale, size }, problems) {
     return result;
 }
 
+/** The host hides before the room is full; the fifth friend comes in long after: 45 s from the fifth. */
+async function lateFifth(browser, base, { locale }, problems) {
+    const he = locale === 'he';
+    const tag = `${locale}-5-late`;
+    const check = (ok, text) => { if (!ok) problems.push(`${tag}: ${text}`); return ok; };
+    const strings = (view, n) => lobbyHost.lobbyText(view, n, locale).message;
+    const names = NAMES[locale].slice(0, 5);
+    const hostName = names[0];
+    const host = await newPhone(browser, base, hostName, 'host');
+    const guests = [];
+    for (const name of names.slice(1)) guests.push(await newPhone(browser, base, name, 'player'));
+    const result = { tag };
+    const away = strings({ canStart: false, wait: 'host', hostName, hostAway: hostName }, 5);
+    const open = strings({ canStart: true, wait: 'none', hostName: null, hostAwayOpen: hostName }, 5);
+    try {
+        await host.page.goto(`${base}/create-game`);
+        await host.page.locator('input[name="locale"]').nth(he ? 1 : 0).check();
+        await host.page.locator('input[name="length"]').first().check();
+        await host.page.locator('form button[type="submit"]').first().click();
+        await host.page.waitForURL(/\/join-game\/[A-Za-z0-9]+/, { timeout: 30000 });
+        const pin = new URL(host.page.url()).pathname.split('/').pop().toUpperCase();
+        result.pin = pin;
+        const input = host.page.locator('input[name="nickname"]');
+        await input.waitFor({ timeout: 30000 });
+        await input.fill(hostName);
+        await host.page.locator('form button[type="submit"]').first().click();
+        await host.page.waitForURL(/\/game-staging\//, { timeout: 30000 });
+        // Straight to WhatsApp to send the link, before anyone is in.
+        await setHidden(host.page, true);
+        const hiddenAt = Date.now();
+        check(await until(async () => (await db('GET', `games/${pin}/hostAwaySince`)) !== null, 5000), 'the server never heard the host was away');
+        for (const g of guests.slice(0, 3)) await join(g, base, pin, he);
+        check((await db('GET', `games/${pin}/fullSince`)) === null, 'four players, and the lobby is called full');
+        // Long past 45 s since the host hid.
+        await sleep(Math.max(0, HOST_AWAY_MS + 5000 - (Date.now() - hiddenAt)));
+        check(!(await visible(startOf(guests[0].page))), 'START in a lobby of 4');
+        const fifth = guests[3];
+        await join(fifth, base, pin, he);
+        const fifthAt = Date.now();
+        result.hostAwayBeforeFifthMs = fifthAt - hiddenAt;
+        check(await until(async () => typeof (await db('GET', `games/${pin}/fullSince`)) === 'number', 5000), 'no fullSince after the fifth joined');
+        // Guests' lobbies look again every 5 s: give them two looks, then START must still be the host's.
+        await sleep(11000);
+        for (const g of guests) check(!(await visible(startOf(g.page))), `${g.name} has START right after the fifth came in`);
+        check((await lineOf(fifth.page)) === away, `the fifth friend's line: "${await lineOf(fifth.page)}"`);
+        await shot(fifth.page, `${tag}-1-fifth-in-hang-on`);
+        const opened = await until(async () => visible(startOf(fifth.page)), HOST_AWAY_MS + 15000);
+        const after = Date.now() - fifthAt;
+        result.startShownAfterFifthMs = after;
+        check(opened, 'no START 60 s after the fifth came in');
+        check(after >= HOST_AWAY_MS - 1000, `START showed ${after} ms after the fifth came in`);
+        check((await lineOf(fifth.page)) === open, `the line once START is theirs: "${await lineOf(fifth.page)}"`);
+        await shot(fifth.page, `${tag}-2-fifth-anyone-can-start`);
+        await startOf(fifth.page).click();
+        const left = await until(async () => (await Promise.all([host].concat(guests).map((p) => p.page.url()))).every((u) => !/game-staging/.test(u)), 20000);
+        check(left, 'not every phone left the lobby after the fifth pressed START');
+        result.startBy = await db('GET', `games/${pin}/startBy`);
+        check(result.startBy === 'host-away', `startBy is ${result.startBy}`);
+    } catch (e) {
+        problems.push(`${tag}: ${e.stack || e.message || e}`);
+    }
+    for (const p of [host].concat(guests)) {
+        p.problems.forEach((x) => problems.push(`${tag} ${p.name}: ${x}`));
+        await p.context.close().catch(() => { });
+    }
+    return result;
+}
+
 async function main() {
     if (!fileIn(DIST, '/index.html')) throw new Error(`No built game at ${DIST}`);
     if (!fs.existsSync(path.join(ROOT, 'functions', 'dist', 'index.js'))) throw new Error('Build functions/ first: npm run build there');
@@ -219,6 +292,9 @@ async function main() {
         const runs = [{ locale: 'en', size: 9 }, { locale: 'he', size: 9 }, { locale: 'en', size: 3 }]
             .filter((r) => !only || only.includes(`${r.locale}-${r.size}`));
         for (const run of runs) results.push(await lobby(browser, base, run, problems));
+        for (const locale of ['en', 'he'].filter((l) => !only || only.includes(`${l}-5-late`))) {
+            results.push(await lateFifth(browser, base, { locale }, problems));
+        }
     } catch (e) {
         problems.push(e.stack || e.message || String(e));
     } finally {
