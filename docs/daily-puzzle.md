@@ -44,6 +44,71 @@ link for friends. One button starts a real game, tagged so it can be counted.
   `daily`. On a Hanukkah day (`"pack": "hanukkah"`, `"candle": 1`–`8` on the question) the kicker
   names the candle and the button adds `pack=hanukkah`.
 
+## A chat group's round (the puzzle's group mode)
+
+A whole chat group plays one round of the question from one link, with no need to gather: each
+person taps once, picks among the truth and the lies of everyone before them, sees whose lie got
+them, adds a lie of their own, and their own message to the chat is the reveal ("I fell for Dana's
+lie"). There are no stages and no host. Spec: Product's "a round the whole chat group plays".
+
+| What | Where |
+|---|---|
+| The rules, pure and tested | `functions/src/controllers/daily-round.ts` (`functions/test/daily-round.test.js`) |
+| Reads and writes | `functions/src/controllers/daily-store.ts`, routed by the same `daily` function |
+| The page's rules and messages | `game/seo/daily-round-core.js` (`game/test/daily-round-core.test.js`), words in `daily-strings.js` |
+| The page script | `game/seo/daily-round-client.js`, called by `daily-client.js` |
+| Emulator run | `node .github/smoke/emulator-round.js` (four browsers per language; `SHOTS=<dir>` saves screenshots) |
+
+- **The 50/50 test.** Half of browsers, by the page's random id (ids starting `a` to `r`; in SQL
+  `REGEXP_CONTAINS(uid, r'^[a-r]')`), get one card on the reveal, "Now fool your group", in place of
+  SEND TO YOUR GROUP and "Now fool your friends". A browser that arrives by a round link always gets
+  the round. A play-test can choose its half with `&round=on` or `&round=off`.
+- **The link** is `/daily?n=<puzzle number>&g=<round id>` (`/he/daily` in Hebrew): the number tells
+  the server the round's day, the id is ten random letters and digits made in the starter's browser.
+  A play-test's round link carries its `via=test` tag, so everyone who opens it is a tester too.
+- **Where a round lives:** `qHistory/daily/<lang>/<day>/rounds/<id>`, beside the day's tallies, so
+  no database rule changed. It keeps the browsers' names (9 letters), their lies (40), their picks,
+  and the answers each browser was dealt. Browser ids never leave the server: lies go out under ids
+  of their own.
+- **How long:** a round takes plays on its day and the next (the puzzle's "today or yesterday"),
+  shows its final board read-only for a week after that, and is erased nine days after its day: the
+  first call of the `daily` function each day (per running copy; any question asked, pick or press,
+  on the plain puzzle too, round or no round) erases every day's rounds from nine to four hundred
+  days back. So the board's line holds while anyone plays the daily puzzle, also after the round
+  test stops. If the puzzle itself is ever taken down, erase `qHistory/daily/*/*/rounds` by hand.
+- **`GET /_daily?lang=&n=&g=&u=<browser id>`** answers the puzzle as usual plus `round`, never cached:
+  the names on the lies, this browser's answers (the truth, up to three of the group's lies, four once
+  there are four or more, fewest-seen first, and the house's lies to make four; kept for the browser),
+  and, once it took part or the round is over, the board.
+- **`POST /_daily` with `a`** (a fetch, answered with the round): `start`, `pick`, `lie` (a name, a
+  lie, or both), `remove` (one's own lie) and `flag` ("Not OK"; two browsers take a lie down). Each
+  runs in a transaction: one pick and one lie per browser, 30 browsers a round, one browser per name,
+  and the same screen as the page (no truth, no lie already there, no slur or sex word, no link, `@`
+  or five digits).
+- **Rows.** `shares`, with the round's id in `crew_id` and `content_type` `daily-round` for those who
+  came by a round link: `round-start`, `round-other` (a round in another group), `round-lie`,
+  `round-flag`, `truth`/`house`/`friend` for a pick in a round, and from the page `round-tell-whatsapp`,
+  `round-tell-native`, `round-tell-copy`, `round-score`, `round-back`, `open` and `create`. A pick in
+  a round also adds to the day's tallies. A test round writes neither.
+- **Chat-round players are not weekly players.** They are reported as a line of their own:
+
+```sql
+-- Chat-round players a week, and rounds by size (a round of one is a puzzle play, not a round)
+WITH part AS (
+  SELECT crew_id AS round, uid, DATE_TRUNC(DATE(time, 'Asia/Jerusalem'), ISOWEEK) AS week
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE STARTS_WITH(content_type, 'daily') AND crew_id IS NOT NULL
+    AND method IN ('truth', 'house', 'friend', 'round-start', 'round-other', 'round-lie')
+), size AS (SELECT round, COUNT(DISTINCT uid) AS players FROM part GROUP BY round)
+SELECT week, COUNT(DISTINCT IF(players >= 2, uid, NULL)) AS chat_round_players,
+       COUNT(DISTINCT IF(players >= 2, round, NULL)) AS rounds_2plus,
+       COUNT(DISTINCT IF(players >= 3, round, NULL)) AS rounds_3plus,
+       COUNT(DISTINCT round) AS rounds_started
+FROM part JOIN size USING (round) GROUP BY week ORDER BY week;
+```
+
+Live games that came from a round carry the tag `daily-round` (`opened_games.campaign`).
+
 ## Play-testing
 
 Open `/daily?via=test` (or `/he/daily?via=test`). The page works as usual, but the server drops

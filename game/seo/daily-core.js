@@ -87,6 +87,8 @@
     function carriesContact(text) {
         return /@/.test(text)
             || /\d{5,}/.test(text)
+            // A phone number written with dashes, dots or spaces: seven digits or more in a run.
+            || /\d(?:[\s.-]*\d){6,}/.test(text)
             || /(https?:|www\.|:\/\/)/i.test(text)
             || /[a-z0-9-]\.[a-z]{2,}(\/|$|[^a-z])/i.test(text + ' ');
     }
@@ -335,7 +337,7 @@
         pickKind: pickKind, percent: percent, fooledPct: fooledPct, sentence: sentence, halves: halves, noTag: noTag,
         kicker: kicker, shareText: shareText, cleanTag: cleanTag, readArrival: readArrival, resultUrl: resultUrl,
         foolUrl: foolUrl, createUrl: createUrl, clock: clock, yesterdayLine: yesterdayLine, validPuzzle: validPuzzle,
-        safeCite: safeCite,
+        safeCite: safeCite, param: param,
     };
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;
