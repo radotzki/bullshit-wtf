@@ -128,6 +128,16 @@ test('firebase.json: every screen of the game has its page, and nothing else doe
         assert.strictEqual(rewriteOf(u), undefined, u));
 });
 
+// A shared link can gain a slash on the way (/thanksgiving-party-game/). Hosting has no file there, so
+// without trailingSlash: false it answers "Page not found"; with it, a 301 to the page. The game's
+// screens keep their own rewrites, which accept the slash. .github/smoke/emulator-trailing-slash.js
+// checks every sitemap page on the Hosting emulator.
+test('firebase.json: a page address with a trailing slash goes to the page', () => {
+    assert.strictEqual(hosting.cleanUrls, true);
+    assert.strictEqual(hosting.trailingSlash, false);
+    ['/he/', '/create-game/', '/c/k3j9/', '/he/c/k3j9/', '/game-staging/ABCD/'].forEach(u => assert.ok(rewriteOf(u), u));
+});
+
 test('firebase.json: the game screens are kept out of search, the homes and search pages are not', () => {
     ['/m', '/d', '/create-game', '/join-game', '/join-game/ABCD', '/he/join-game/ABCD', '/present-game/ABCD', '/learn',
         '/c/k3j9', '/he/c/k3j9', '/game-staging/ABCD', '/score-board-final/ABCD', '/step/ABCD'].forEach(u =>

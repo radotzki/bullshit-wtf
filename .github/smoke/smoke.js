@@ -47,6 +47,14 @@ const APP_PAGES = [
     '/he/c/smoke-test',
 ];
 
+// A page's address with a slash on the end, as a link can gain one on the way: it must reach the
+// page (firebase.json's "trailingSlash": false sends it there with a 301).
+const SLASHED_PAGES = [
+    '/how-to-play/',
+    '/he/how-to-play/',
+    '/he/',
+];
+
 // Addresses that are no page of the site: Hosting answers 404.html with a 404 status (firebase.json
 // has no catch-all), and that page must load cleanly.
 const NOT_FOUND_PAGES = [
@@ -100,7 +108,11 @@ function fileIn(dist, urlPath) {
 // firebase.json in order, read from the file itself. "/_v" is a Cloud Function there; here it answers
 // 204 and does nothing. The join links' function (joinPreview) answers with the home page's own copy,
 // as it does for a PIN it can't find. An address no rewrite takes gets 404.html with a 404 status.
-const REWRITES = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'firebase.json'), 'utf8')).hosting.rewrites;
+// With "trailingSlash": false, a page's address with a slash on the end (/how-to-play/) answers 301
+// to the address without it, as the Hosting emulator does when that address is a file; without the
+// setting it is no page (404). The game's screens with a slash still go to their rewrite.
+const HOSTING = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'firebase.json'), 'utf8')).hosting;
+const REWRITES = HOSTING.rewrites;
 const globRe = (glob) => new RegExp('^' + glob.split(/(\*\*|\*)/).map((part) =>
     part === '**' ? '.*' : part === '*' ? '[^/]*' : part.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('') + '$');
 const RULES = REWRITES.map((r) => ({ test: r.regex ? new RegExp(r.regex) : globRe(r.source), rule: r }));
@@ -108,7 +120,7 @@ const RULES = REWRITES.map((r) => ({ test: r.regex ? new RegExp(r.regex) : globR
 function resolve(dist, urlPath) {
     const exact = urlPath.endsWith('/') ? null : fileIn(dist, urlPath);
     if (exact && !exact.endsWith('.html')) return { file: exact };
-    const clean = fileIn(dist, urlPath.replace(/\/$/, '') + '.html') || (exact && exact.endsWith('.html') ? exact : null);
+    const clean = (urlPath.endsWith('/') ? null : fileIn(dist, urlPath + '.html')) || (exact && exact.endsWith('.html') ? exact : null);
     if (clean) return { file: clean };
     const index = fileIn(dist, path.join(urlPath, 'index.html'));
     if (index) return { file: index };
@@ -126,6 +138,11 @@ function serve(dist) {
             urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
         } catch (e) {
             res.writeHead(400).end();
+            return;
+        }
+        const bare = urlPath.replace(/\/+$/, '');
+        if (HOSTING.trailingSlash === false && bare && bare !== urlPath && (fileIn(dist, bare) || fileIn(dist, bare + '.html'))) {
+            res.writeHead(301, { Location: bare + new URL(req.url, 'http://x').search }).end();
             return;
         }
         const hit = resolve(dist, urlPath);
@@ -219,7 +236,7 @@ async function main() {
     }
     const server = await serve(DIST);
     const base = `http://${HOST}:${server.address().port}`;
-    const pages = [...new Set([...APP_PAGES, ...sitemapPages(DIST)])].map((p) => [p, 200])
+    const pages = [...new Set([...APP_PAGES, ...sitemapPages(DIST), ...SLASHED_PAGES])].map((p) => [p, 200])
         .concat(NOT_FOUND_PAGES.map((p) => [p, 404]));
 
     const browser = await chromium.launch({

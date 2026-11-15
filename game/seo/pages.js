@@ -10,6 +10,7 @@ const occasions = require('./pages-he-occasions');
 const kit = require('./pages-kit');
 const jackbox = require('./pages-jackbox');
 const holidays = require('./pages-en-holidays');
+const thanksgiving = require('./pages-en-thanksgiving');
 
 const en = {
     lang: 'en',
@@ -23,6 +24,7 @@ const en = {
         { href: '/purim-party-game', label: 'Purim party game' },
         { href: '/classroom-game', label: 'A game for the classroom' },
         { href: '/team-building-game', label: 'A team-building game' },
+        { href: '/thanksgiving-party-game', label: 'Thanksgiving party game' },
         { href: '/christmas-party-game', label: 'Christmas party game' },
         { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
         { href: '/office-holiday-party-game', label: 'Office holiday party game' },
@@ -74,6 +76,7 @@ const howEn = `
   <li><strong>Everyone picks the answer they believe.</strong> Find the truth and you score. Every friend who picks your lie scores for you too. Fall for one of the house lies and you lose points.</li>
   <li><strong>The truth is revealed</strong>, and you see who fooled whom.</li>
 </ol>
+<p><a href="/daily?via=daily-seo">Try today's question</a></p>
 <h2>Rounds and points</h2>
 <p>A game has 5, 7 or 9 questions over three rounds, and points grow each round, so nobody is out of it until the end.</p>
 <table>
@@ -105,6 +108,7 @@ const howHe = `
   <li><strong>כל אחד בוחר את התשובה שהוא מאמין לה.</strong> מצאתם את האמת? קיבלתם נקודות. כל חבר שבחר בשקר שלכם מביא לכם נקודות. נפלתם בשקר של הבית? מפסידים נקודות.</li>
   <li><strong>האמת נחשפת</strong>, ורואים מי עבד על מי.</li>
 </ol>
+<p><a href="/he/daily?via=daily-seo">נסו את השאלה של היום</a></p>
 <h2>סבבים ונקודות</h2>
 <p>במשחק יש 5, 7 או 9 שאלות בשלושה סבבים, והנקודות גדלות בכל סבב, כך שאף אחד לא בחוץ עד הסוף.</p>
 <table>
@@ -281,4 +285,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en));

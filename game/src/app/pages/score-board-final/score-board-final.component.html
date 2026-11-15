@@ -22,7 +22,7 @@
     </form>
 </ng-template>
 
-<section class="game-container score-board-final" [class.presenter]="presenter">
+<section class="game-container score-board-final" [appFitScreen]="presenter" [class.presenter]="presenter">
     <app-game-header></app-game-header>
 
     <div class="game-main" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="locale" [class.is-rtl]="rtl">
@@ -58,6 +58,8 @@
                         {{ tasteWords.invite }}
                     </button>
                     <p class="hint">{{ tasteWords.inviteHint }}</p>
+                    <!-- The daily puzzle: a plain link, the page is outside the app. -->
+                    <a class="taste-daily" [href]="locale === 'he' ? '/he/daily?via=daily-game' : '/daily?via=daily-game'">{{ tasteWords.daily }}</a>
                 </div>
                 <button *ngIf="!rematchPin && !soloTaste" class="button is-primary is-medium is-fullwidth rematch" (click)="replay()"
                     [class.is-loading]="loading">
@@ -81,6 +83,9 @@
                 </div>
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
             </div>
+            <!-- Half of guests: INVITE ANOTHER GROUP in place of the ask below (a 50/50 test, see invite-group.ts). -->
+            <app-invite-group *ngIf="inviteAsk" [pin]="pin" [locale]="locale" [nickname]="myNickname" [best]="mine ? mine.best : null"
+                (sheet)="onSheet($event)"></app-invite-group>
 
             <app-host-ask *ngIf="hostAsk" [locale]="locale" [pack]="pack" place="after-game"></app-host-ask>
 
@@ -97,14 +102,14 @@
                         <span *ngIf="player.funniest" class="badge funny">{{ t.funniest }}</span>
                     </div>
                     <div class="lie" *ngIf="player.best">
-                        <span class="lie-label">{{ t.bestLie }}:</span>
+                        <span class="lie-label">{{ t.bestLie }}: </span>
                         <span class="lie-text" dir="auto">"{{ player.best.text }}"</span>
                         <span class="lie-fooled">{{ t.fooled(player.best.fooled) }}</span>
                         <!-- Big screen, 9 to 12: when the funniest lie is the best one, its laughs join this line. -->
                         <span *ngIf="player.funniest && player.funniest.text === player.best.text" class="lie-laughs also">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>
                     <div class="lie funny" *ngIf="player.funniest" [class.same]="player.best && player.funniest.text === player.best.text">
-                        <span class="lie-label">{{ t.funniestLie }}:</span>
+                        <span class="lie-label">{{ t.funniestLie }}: </span>
                         <span class="lie-text" dir="auto">"{{ player.funniest.text }}"</span>
                         <span class="lie-laughs">{{ t.laughs(player.funniest.laughs) }}</span>
                     </div>

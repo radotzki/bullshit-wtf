@@ -19,8 +19,8 @@ function load(file) {
 
 const root = path.join(__dirname, '..', '..');
 const pages = path.join(root, 'game', 'src', 'app', 'pages');
-const { aboutStrings, aboutResultLine } = load(path.join(pages, 'about-strings.ts'));
-const { aboutOf, aboutView, revealScoreChanges } = load(path.join(root, 'game-model.ts'));
+const { aboutStrings, aboutResultLine, aboutMissedLine } = load(path.join(pages, 'about-strings.ts'));
+const { aboutOf, aboutView, aboutMissedOf, aboutMissedView, revealScoreChanges } = load(path.join(root, 'game-model.ts'));
 const { gameStrings } = load(path.join(pages, 'game-strings.ts'));
 
 const en = aboutStrings('en');
@@ -115,4 +115,27 @@ test('the writing form and the answers wait for whom the question is about', () 
     assert.ok(!/getQuestion\(this\.pin\)/.test(q));
     const a = src('show-answers/show-answers.component.ts');
     assert.ok(/Promise\.all\(\[this\.apiService\.getAnswers\(this\.pin\), this\.apiService\.getAbout\(this\.pin\)\]\)/.test(a));
+});
+
+test('a bank question in place of an About question with no truth: the line says why, on every screen', () => {
+    const players = { p1: { nickname: 'Dana' }, p2: { nickname: 'Ben' } };
+    assert.strictEqual(aboutMissedOf({ id: 3, timestamp: 1, aboutMissed: { pid: 'p2' } }), 'p2');
+    [null, undefined, {}, { id: 3 }, { aboutMissed: 'p2' }, { aboutMissed: { pid: '' } }, { about: { pid: 'p2' } }]
+        .forEach(s => assert.strictEqual(aboutMissedOf(s), null, JSON.stringify(s)));
+
+    assert.strictEqual(aboutMissedView(null, players, 'p1', false), null, 'any other question: no line');
+    assert.strictEqual(aboutMissedLine(en, aboutMissedView(null, players, 'p1', false)), null);
+    assert.strictEqual(aboutMissedLine(en, aboutMissedView('p2', players, 'p1', false)), 'Ben didn\'t send the truth, so here\'s a regular question.');
+    assert.strictEqual(aboutMissedLine(en, aboutMissedView('p2', players, 'p2', false)), en.missedMe, 'their own phone says "your truth"');
+    assert.strictEqual(aboutMissedLine(en, aboutMissedView('p2', players, 'p2', true)), en.missed('Ben'), 'the big screen is nobody');
+    assert.strictEqual(aboutMissedLine(en, aboutMissedView('p2', null, 'p1', false)), en.missedNoName, 'players unread: no empty name');
+    assert.strictEqual(aboutMissedLine(he, aboutMissedView('p2', players, 'p1', true)), 'האמת של Ben לא הגיעה בזמן, אז הנה שאלה רגילה.');
+    assert.strictEqual(aboutMissedLine(he, aboutMissedView('p2', players, 'p2', false)), he.missedMe);
+});
+
+test('the writing screen shows the line on the phones and on the big screen', () => {
+    const html = fs.readFileSync(path.join(pages, 'show-question/show-question.component.html'), 'utf8');
+    assert.strictEqual(html.split('{{ missedLine }}').length - 1, 2);
+    const ts = fs.readFileSync(path.join(pages, 'show-question/show-question.component.ts'), 'utf8');
+    assert.ok(/aboutMissedView\(missed, players/.test(ts));
 });

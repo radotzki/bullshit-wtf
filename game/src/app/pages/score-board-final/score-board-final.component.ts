@@ -16,8 +16,10 @@ import { GameState, seatPicture } from './../../game-model';
 import { StorageService } from './../../services/storage.service';
 import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
 import { biggestBullshitters } from './biggest';
+import { INVITE_CONTENT, INVITE_HALF_KEY, candleEvening, inviteHalf } from './../../components/invite-group/invite-group';
+import { SIGN_IN_WAIT_MS } from './../../services/api.service';
 import {
-    SEEN_KEY, SWAP_AFTER_MS, addSeen, buttonsSwap, nextWeekWords, parseSeen, seenMethod,
+    SEEN_KEY, SWAP_AFTER_MS, addSeen, bigScreenLine, buttonsSwap, parseSeen, seenMethod,
 } from './../../components/next-week/next-week';
 
 export interface FinalPlayer {
@@ -65,6 +67,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     savingCrew: boolean;
     crewError: string;
     crewSubscription: Subscription;
+    /** The big screen's watch on the crew's night, and the night's time. */
+    private screenNightSubscription: Subscription;
+    private screenNight: number;
     /**
      * This phone saw the same group finish an earlier game (see repeat-group.ts): "Save this crew"
      * moves up, above SHARE RESULTS, with a line that says why.
@@ -106,6 +111,11 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     private shownAt = Date.now();
     /** This phone is on its way to the rematch. */
     private leaving: boolean;
+    /**
+     * This guest is in the new half of the INVITE ANOTHER GROUP test: that ask shows in place of
+     * "start your own game" (see invite-group.ts, and splitAsk below).
+     */
+    inviteAsk: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -228,10 +238,10 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             && !!this.displayPlayers && this.displayPlayers.length > 1;
     }
 
-    /** The big screen's line under the winner, in the new half. */
+    /** The big screen's line under the winner, in the new half: the ask, then the date once a phone sets it. */
     get nextWeekScreenLine(): string {
         return this.presenter && this.nextWeek === true && !!this.displayPlayers && this.displayPlayers.length > 1
-            ? nextWeekWords(this.locale).bigScreen : '';
+            ? bigScreenLine(this.screenNight, new Date(), this.locale) : '';
     }
 
     /** The sheet's maker renamed the crew: the crew link at the bottom follows. */
@@ -333,6 +343,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.forkGameSubscription.unsubscribe();
         this.crewSubscription.unsubscribe();
+        if (this.screenNightSubscription) {
+            this.screenNightSubscription.unsubscribe();
+        }
         if (this.rematchSubscription) {
             this.rematchSubscription.unsubscribe();
         }
@@ -347,7 +360,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     private async setHostAsk(resp, user) {
         this.pack = await this.apiService.getGamePack(this.pin).catch(() => null);
         const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
-        this.hostAsk = showHostAsk({
+        const guest = showHostAsk({
             presenter: this.presenter,
             myPid: user ? user.pid : null,
             myUid: user ? user.uid : null,
@@ -356,6 +369,42 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             holdsHostKey: this.apiService.holdsHostKey(this.pin),
             players,
         });
+        await this.splitAsk(guest, user);
+    }
+
+    /**
+     * Which ask a guest gets: INVITE ANOTHER GROUP for half of guest browsers, today's "start your own
+     * game" for the other half, and each phone says which it showed (shares: host-invite, seen-new or
+     * seen-classic). After a Hanukkah game on a candle evening every guest keeps today's ask, which
+     * speaks of Hanukkah then, and none is in the test: no row. Both asks appear together, once the
+     * half is known, so neither flashes before the other.
+     */
+    private async splitAsk(guest: boolean, user) {
+        if (!guest) {
+            this.hostAsk = false;
+            return;
+        }
+        try {
+            // The pack was read in setHostAsk, just before.
+            if (!candleEvening(new Date(), this.pack)) {
+                let forced: string = null;
+                try {
+                    forced = this.storageService.getItem(INVITE_HALF_KEY);
+                } catch (e) { }
+                // The browser's id is known from the join; a phone whose sign-in was slow then gets a short wait.
+                const uid = user && typeof user.uid === 'string' && user.uid
+                    ? user.uid : (await this.apiService.uidWithin(SIGN_IN_WAIT_MS)).uid;
+                const half = inviteHalf(uid, forced);
+                if (half) {
+                    this.apiService.logShare(INVITE_CONTENT, half === 'new' ? 'seen-new' : 'seen-classic', { locale: this.locale });
+                }
+                if (half === 'new') {
+                    this.inviteAsk = true;
+                    return;
+                }
+            }
+        } catch (e) { }
+        this.hostAsk = true;
     }
 
     /** Compares this game with the ones this phone saw end, then adds it to them. */
@@ -475,6 +524,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             return;
         }
         this.naming = false;
+        if (this.presenter && !this.screenNightSubscription) {
+            // The big screen follows the crew's night, so its line turns into the date the phones set.
+            this.screenNightSubscription = this.apiService.getCrewObservable(id).subscribe(c => {
+                this.screenNight = c && c.night ? c.night.time : undefined;
+            }, () => null);
+        }
         const crew = await this.apiService.getCrew(id);
         this.crewName = crew ? crew.name : '';
         this.crewService.remember(id, this.crewName, this.myNickname);

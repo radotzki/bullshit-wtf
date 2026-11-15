@@ -28,11 +28,13 @@ import { ScoreBoardComponent } from './pages/score-board/score-board.component';
 import { ScoreBoardFinalComponent } from './pages/score-board-final/score-board-final.component';
 import { BsPointsPipe } from './pipes/bs-points.pipe';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { FitScreenDirective } from './directives/fit-screen.directive';
 import { LearnComponent } from './pages/learn/learn.component';
 import { QrCodeComponent } from './components/qr-code/qr-code.component';
 import { InviteComponent } from './components/invite/invite.component';
 import { ShareResultsComponent } from './components/share-results/share-results.component';
 import { HostAskComponent } from './components/host-ask/host-ask.component';
+import { InviteGroupComponent } from './components/invite-group/invite-group.component';
 import { NextWeekComponent } from './components/next-week/next-week.component';
 import { WaitingRowComponent } from './components/waiting-row/waiting-row.component';
 import { ShareService } from './services/share.service';
@@ -63,11 +65,13 @@ import { StepComponent } from './pages/step/step.component';
         ScoreBoardFinalComponent,
         BsPointsPipe,
         AutofocusDirective,
+        FitScreenDirective,
         LearnComponent,
         QrCodeComponent,
         InviteComponent,
         ShareResultsComponent,
         HostAskComponent,
+        InviteGroupComponent,
         NextWeekComponent,
         WaitingRowComponent,
         CrewComponent,
