@@ -412,20 +412,6 @@ function playersScore(pin: string, game: GameScheme) {
     }
 }
 
-/**
- * The scoreboard of question 1 of a game nobody plays: no seat sent a lie or a pick (`played`, kept when
- * the picks closed, see seats.ts). Not a taste (one player, five pick-only questions of its own), and
- * not a game of one question, which ends here anyway. A game that was running at this release has no
- * playedFrom and plays on as before.
- */
-export function nobodyPlayed(game: GameScheme): boolean {
-    if (!game || (game.questionIndex || 0) !== 0 || game.playedFrom !== 0 || (game.totalQ || 0) <= 1 || gameTaste(game)) {
-        return false;
-    }
-    const played = game.played || {};
-    return !Object.keys(played).some(pid => played[pid] === true);
-}
-
 async function handleScoreBoardState(game: GameScheme, pin: string) {
     const gameOver = game.questionIndex === game.totalQ - 1;
     const lastRound = game.questionIndex === game.totalQ - 2;
@@ -440,22 +426,7 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             aboutColumns(game))).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
     ]);
 
-    if (nobodyPlayed(game)) {
-        // Nobody sent a lie or a pick in question 1: the phones were put down (or never picked up).
-        // The game ends here, with Replay, and is not counted as played (analytics.ts onStateChange).
-        console.log(`[PIN: ${pin}] Nobody played question 1: the game ends`);
-        res = {
-            state: withNextWeek(updateState(GameState.ScoreBoardFinal), pin, game),
-            idle: true,
-            lastSent: lastSentSeats(game),
-            currentQ: {},
-            answers: {},
-            answerSelections: {},
-            revealAnswers: null,
-            ideas: null,
-            aboutTruth: null,
-        };
-    } else if (secondRound || lastRound) {
+    if (secondRound || lastRound) {
         res = {
             state: updateState(GameState.RoundIntro),
             roundIndex: game.roundIndex + 1,

@@ -21,11 +21,6 @@ export async function onStateChange(pin: string) {
     if (game.state.id === GameState.RoundIntro && game.questionIndex === 0) {
         return openGame(pin, game);
     } else if (game.state.id === GameState.ScoreBoardFinal) {
-        if (game.idle) {
-            // Nobody played question 1, so the game ended there (tick.ts): it was not played, and is
-            // counted nowhere. Its opened_games row and question 1's question_results row stay.
-            return;
-        }
         // The crew's standings must not wait on (or fail with) BigQuery.
         await Promise.all([
             closeGame(pin, game),
@@ -253,9 +248,6 @@ async function openGame(pin: string, game: GameScheme) {
         locale: game.locale,
         presenter: game.presenter,
         ...origin(game),
-        // How it left the lobby (startVerdict in start.ts). Needs the start_by column: until it is
-        // added, ignoreUnknownValues drops it and the row still lands.
-        start_by: game.startBy || null,
         time: new Date(game.timestamp),
     });
 }
