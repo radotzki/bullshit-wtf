@@ -335,7 +335,7 @@
         pickKind: pickKind, percent: percent, fooledPct: fooledPct, sentence: sentence, halves: halves, noTag: noTag,
         kicker: kicker, shareText: shareText, cleanTag: cleanTag, readArrival: readArrival, resultUrl: resultUrl,
         foolUrl: foolUrl, createUrl: createUrl, clock: clock, yesterdayLine: yesterdayLine, validPuzzle: validPuzzle,
-        safeCite: safeCite,
+        safeCite: safeCite, param: param,
     };
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api;

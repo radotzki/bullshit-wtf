@@ -71,8 +71,11 @@ function visitBeacon() {
     return m ? m[1] : '';
 }
 
-const coreScript = () => read(__dirname, 'daily-core.js');
-const clientScript = () => read(__dirname, 'daily-client.js');
+// The page's scripts, in the order the page runs them: the rules, the round's rules (which use the
+// rules), the round's page script (a function the page script calls), and the page script. A later
+// script of the page (such as a note of where visitors arrive from) goes into this list.
+const SCRIPTS = ['daily-core.js', 'daily-round-core.js', 'daily-round-client.js', 'daily-client.js'];
+const pageScripts = () => SCRIPTS.map(file => read(__dirname, file));
 
 function render(lang) {
     const s = strings[lang];
@@ -172,6 +175,22 @@ function render(lang) {
     .next { margin: 24px 0 0; text-align: center; font-variant-numeric: tabular-nums; }
     .yesterday { margin: 10px 0 0; text-align: center; font-size: 15px; color: #5d524c; overflow-wrap: anywhere; }
     #d-error { margin-top: 8px; }
+    .sub .source { font-weight: normal; font-size: 15px; }
+    .board { margin: 18px 0 0; }
+    .board-title { font: 700 14px/1.3 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; letter-spacing: ${s.lang === 'he' ? '0' : '1.2px'}; color: var(--wine); margin: 0 0 8px; }
+    .rows { display: grid; gap: 8px; }
+    .row { border: 2px solid var(--line); border-radius: 10px; background: #fff; padding: 8px 12px; }
+    .row.truth { border-color: var(--good); }
+    .row.mine { box-shadow: 0 0 0 2px var(--gold); }
+    .row.house { background: #f7ece0; border-color: #f7ece0; }
+    .row p { margin: 0; overflow-wrap: anywhere; }
+    .row .who .text { text-transform: uppercase; font-weight: 600; }
+    .row .fell { font-size: 15px; color: #5d524c; }
+    .lie-action { margin-top: 2px !important; font-size: 13px; color: #6b5f59; }
+    button.link { background: none; border: 0; padding: 0; color: #7a5a4a; font: inherit; text-decoration: underline; cursor: pointer; }
+    .see-board, .other-group { margin: 12px 0 0; text-align: center; font-size: 15px; }
+    .erased { margin: 18px 0 0; text-align: center; font-size: 13px; color: #6b5f59; }
+    .send.score { margin-top: 18px; }
     body.hanukkah header { background: #24407e; }
     body.hanukkah h1.kicker, body.hanukkah h2 { color: #24407e; }
     body.hanukkah .answer { border-color: #24407e; }
@@ -200,12 +219,9 @@ function render(lang) {
   <script>
 ${inScript(sharedScript())}
   </script>
-  <script>
-${inScript(coreScript())}
-  </script>
-  <script>
-${inScript(clientScript())}
-  </script>
+${pageScripts().map(js => `  <script>
+${inScript(js)}
+  </script>`).join('\n')}
 </body>
 </html>
 `;
