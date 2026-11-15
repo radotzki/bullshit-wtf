@@ -45,6 +45,8 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    and nothing else. It runs last, after the functions that know pack questions are live; if it is
    refused, the release before it stands, and the run fails and says why. The summary's verdict
    then starts "WARNING: the game was released whole, but the new questions were NOT added".
+8. Tells the search engines that use **IndexNow** about every page of the new sitemap (see
+   "IndexNow" below). It runs when the site step passed and can never fail the run.
 
 Things to know:
 
@@ -307,8 +309,8 @@ prints less, never more.
   exception is the listed question files, which every release adds itself ("Question files the
   release adds", below). A file that is not on that list is still loaded by hand.
 - **Deleting a function**, as above.
-- **Google Search Console** (submitting the sitemap) and anything in the Firebase or Google Cloud
-  consoles.
+- **Google Search Console** and **Bing Webmaster Tools** (verifying the site and submitting the
+  sitemap), and anything in the Firebase or Google Cloud consoles. IndexNow (step 8) needs neither.
 - The dev project (`bullshit-wtf-dev`) is not deployed by any workflow.
 
 ## Build
@@ -2101,3 +2103,32 @@ false. To change the 7 days, `NIGHT_AFTER_MS`.
   in Hebrew, then its link reopened by a player, by a browser that didn't play (whose button opens the
   Create page tagged `night-after`), in the control half, with no switch, and, with the test mark taken
   off, the rows that land in `shares`.
+
+## IndexNow: telling search engines about the pages
+
+[IndexNow](https://www.indexnow.org) is a free protocol used by Bing and the engines that share its
+index (Yandex, Seznam, Naver and others; Bing's index also feeds DuckDuckGo and Yahoo). It needs no
+account and no sign-in: the site proves it is ours with a key file at its root.
+
+- **The key file** is `game/src/e432234c1f11fa1e0e7d54760e33db98.txt`, with the key as its only
+  text. `game/angular.json` lists it in `assets`, so the build copies it to `game/dist/`, and
+  Firebase Hosting serves it at `https://bullshit.wtf/e432234c1f11fa1e0e7d54760e33db98.txt` as
+  `text/plain` (a real file is served before any rewrite). The key is public by design; it is not a
+  secret. To change it, rename the file, change `angular.json`, and change `KEY` in the script.
+- **The ping** is the release's last step before the summary, "5. Tell search engines about the
+  pages (IndexNow)" (`.github/scripts/indexnow.js`). It reads `game/dist/sitemap.xml`, the sitemap
+  this release just deployed, keeps only the `https://bullshit.wtf/...` pages, checks that the live
+  site serves the key file (200, `text/plain`, the key), then sends one POST to
+  `https://api.indexnow.org/indexnow` with the host, the key, the key file's address and the URLs.
+  One request per release, nothing else.
+- **It never fails a release.** It runs when the site step passed (also when the questions step
+  failed), never on a cancelled run, and exits 0 whatever happens: a missing file, a key file that
+  is not live, a refusal (400, 403, 422, 429) or a timeout (15 s a request, 60 s in all) is a
+  warning in the run's log, titled "IndexNow". 200 and 202 are a yes.
+- **Every release sends every page**, also the unchanged ones; the sitemap has no dates to tell
+  which changed. If IndexNow starts answering 429, send only on releases that change `game/`.
+- **Try it without sending:** after a site build, `node .github/scripts/indexnow.js --dry-run`
+  prints the URLs it would send. Tests: `node --test .github/scripts/indexnow.test.js`.
+- **To see it worked:** the deploy run's log for that step says "IndexNow: sent N URLs". Bing
+  Webmaster Tools (the owner's sign-in) shows the received URLs under IndexNow once the site is
+  verified there.
