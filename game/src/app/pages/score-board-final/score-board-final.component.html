@@ -22,7 +22,7 @@
     </form>
 </ng-template>
 
-<section class="game-container score-board-final" [class.presenter]="presenter">
+<section class="game-container score-board-final" [appFitScreen]="presenter" [class.presenter]="presenter">
     <app-game-header></app-game-header>
 
     <div class="game-main" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="locale" [class.is-rtl]="rtl">
