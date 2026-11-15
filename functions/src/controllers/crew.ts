@@ -2,6 +2,7 @@ import {
     Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign, crewMemberKey, TABLE_CAMPAIGN, tasteOf,
 } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
+import { readGame } from './old-games';
 import { newGame } from './new-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
 import { setCrewNight } from './crew-night';
@@ -67,7 +68,7 @@ export async function earlierGames(game: GameScheme): Promise<{ pin: string; gam
     let parent = game && game.parent;
     while (typeof parent === 'string' && /^[A-Za-z]{1,12}$/.test(parent) && !seen[parent] && out.length < SITTING_GAMES_MAX) {
         seen[parent] = true;
-        const earlier = await get<GameScheme>(gamesRef.child(parent.toUpperCase()));
+        const earlier = await readGame(parent.toUpperCase());
         if (!earlier || !earlier.state || earlier.state.id !== GameState.ScoreBoardFinal || tasteOf(earlier.state)
             || Object.keys(earlier.players || {}).length < 2) {
             break;
@@ -97,7 +98,7 @@ export async function createCrew(pin: string, name: string, uid?: string, auto =
         return fail('Give your crew a name', 'BAD_NAME');
     }
 
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return fail('Game does not exist', 'GAME_NOT_EXIST');
@@ -186,7 +187,7 @@ export function tableName(nickname: string, locale: string): string {
 export async function createTable(pin: any, pid: any, time: any, uid?: string)
     : Promise<{ id: string; name: string; time: number; again?: boolean }> {
     pin = String(pin || '').toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return fail('Game does not exist', 'GAME_NOT_EXIST');

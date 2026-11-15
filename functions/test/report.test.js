@@ -27,6 +27,8 @@ const stand = {
     'crew-night': controller(['crewNight']),
     'laugh': controller(['laugh']),
     'join-preview': controller(['joinPreviewPage', 'readPreviewGame']),
+    // The old games' sweep runs beside the gameState trigger (see old-games.ts); it never rejects.
+    'old-games': { sweepOldGames: async () => null },
     'analytics': Object.assign(controller(['onJoinGame', 'onShare', 'onStateChange', 'onFork']),
         { cleanVia: () => null, cleanShare: (b) => b && b.content_type ? b : null }),
 };

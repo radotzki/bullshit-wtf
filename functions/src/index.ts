@@ -19,6 +19,7 @@ import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visi
 import { laugh } from './controllers/laugh';
 import { joinPreviewPage, readPreviewGame } from './controllers/join-preview';
 import { caught, http, watched } from './report';
+import { sweepOldGames } from './controllers/old-games';
 
 // Error bodies always carry a readable message and a code, so the client
 // (and Sentry) never sees an empty object.
@@ -94,6 +95,9 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
     const bank = dailyQuestions();
     const now = Date.now();
     eraseOldRounds(now);
+    // Old games' private parts move out of phones' reach (see controllers/old-games.ts). Not waited
+    // for, like the erasing above; a game's phase changes run it too, and wait for it.
+    sweepOldGames(now);
     if (req.method === 'POST') {
         const raw = req.rawBody ? req.rawBody.toString('utf8') : req.body;
         let parsed: any = raw;
@@ -537,7 +541,9 @@ exports.onRevealDone = functions.database.ref('games/{pin}/revealDone').onWrite(
 
 exports.gameState = functions.database.ref('games/{pin}/state').onWrite(watched('gameState', (change, event) => {
     const pin = event.params.pin;
-    return analytics.onStateChange(pin);
+    // Also moves old games' private parts out of phones' reach, at most once a minute per running
+    // copy (see controllers/old-games.ts): this trigger keeps no phone waiting. sweepOldGames never rejects.
+    return Promise.all([analytics.onStateChange(pin), sweepOldGames()]).then(([done]) => done);
 }));
 
 exports.onFork = functions.database.ref('games/{pin}/fork').onWrite(watched('onFork', (change, event) => {
