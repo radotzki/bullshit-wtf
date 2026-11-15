@@ -17,6 +17,7 @@ const rows: { [lang: string]: SearchLink[] } = {
         { href: '/party-games-on-your-phone', label: 'Party games on your phone' },
         { href: '/classroom-game', label: 'Classroom' },
         { href: '/team-building-game', label: 'Team building' },
+        { href: '/family-game-night', label: 'Family game night' },
     ],
     he: [
         { href: '/he/how-to-play', label: 'איך משחקים' },
@@ -24,6 +25,9 @@ const rows: { [lang: string]: SearchLink[] } = {
         { href: '/he/friday-dinner', label: 'ארוחת שישי' },
         { href: '/he/classroom', label: 'בכיתה' },
         { href: '/he/team-building', label: 'גיבוש' },
+        { href: '/he/youth-group', label: 'פעולה מוכנה' },
+        { href: '/he/home-together', label: 'משחק לבית' },
+        { href: '/he/school-break', label: 'חופש' },
     ],
 };
 
@@ -35,6 +39,7 @@ const holidays: SearchLink[] = [
     { href: '/christmas-party-game', label: 'Christmas' },
     { href: '/new-years-eve-party-game', label: 'New Year\'s Eve' },
     { href: '/office-holiday-party-game', label: 'Office party' },
+    { href: '/snow-day-games', label: 'Snow day' },
 ];
 
 export const holidaySeasons: { from: string; to: string }[] = [
