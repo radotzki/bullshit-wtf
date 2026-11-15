@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CrewService, RememberedCrew } from '../../../services/crew.service';
+import { Component, ChangeDetectionStrategy, Injector } from '@angular/core';
+import { CrewService, RememberedCrew, TonightCrew } from '../../../services/crew.service';
+import { ApiService } from '../../../services/api.service';
 import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
 import { PictureStrings, createQuery, firstButton, pictureStrings, readVisitor, showPicture } from '../front-door';
@@ -30,6 +31,8 @@ function readStored(key: string): string | null {
 export class MobileLandingComponent {
     // Crews this browser played in, newest first: one tap back to their scoreboard and rematch.
     crews: RememberedCrew[];
+    // The newest of them, when its game night is today: it leads the menu ("TONIGHT 21:00: Dana's crew").
+    tonight: TonightCrew;
     // The menu's words: Hebrew, right to left, for visitors who came on /he or whose browser is in Hebrew.
     t: HomeStrings;
     // The words of the picture of the game, in the same language.
@@ -44,9 +47,13 @@ export class MobileLandingComponent {
     season: SearchLink | null;
     private tag: string | null;
 
-    constructor(crewService: CrewService) {
+    constructor(crewService: CrewService, injector: Injector) {
         this.crews = crewService.list().slice(0, 3);
         const tag = this.tag = arrivalCampaign();
+        // Only a browser that remembers a crew reads one (and opens the database for it).
+        if (this.crews.length) {
+            crewService.tonight(id => injector.get(ApiService).getCrew(id)).then(tonight => this.tonight = tonight);
+        }
         this.setLocale(preferredLocale());
 
         const visitor = readVisitor(readStored, tag);

@@ -32,14 +32,21 @@ test('every Hanukkah question is a playable question of the pack', () => {
     }
 });
 
-test('each language has enough for five games without a repeat', () => {
-    // A game takes up to 3 pack questions nobody in the room has seen.
+test('each language lasts the eight candles: three games a night, no pack question twice', () => {
+    // A game takes up to 3 pack questions nobody in the room has seen (questionPacks.hanukkah.perGame),
+    // and a pack question is never repeated. A room that plays three games on each of the eight
+    // nights needs 8 x 3 x 3 = 72 in its language before its games run out of Hanukkah questions.
     for (const lang of ['en', 'he']) {
         const n = ids.filter(id => pack[id].lang === lang).length;
-        assert.ok(n >= 15, `${lang}: ${n}`);
+        assert.ok(n >= 72, `${lang}: ${n}`);
     }
     const texts = ids.map(id => pack[id].questionText);
     assert.strictEqual(new Set(texts).size, texts.length);
+    // Ids run without gaps from 01 in each language, as the release load expects (hanukkah-26-<lang>-NN).
+    for (const lang of ['en', 'he']) {
+        const nums = ids.filter(id => pack[id].lang === lang).map(id => +id.split('-')[3]).sort((a, b) => a - b);
+        nums.forEach((n, i) => assert.strictEqual(n, i + 1, `${lang}-${n}`));
+    }
 });
 
 test('the questions the Hanukkah pages promise are in the pack', () => {
@@ -53,5 +60,5 @@ test('the questions the Hanukkah pages promise are in the pack', () => {
     // "האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג"
     assert.ok(pages.includes('האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג'));
     assert.match(he, /האסטרונאוט .* סובב סביבון בחלל/);
-    assert.match(he, /הסופגנייה להיות מאכל החנוכה/);
+    assert.match(he, /הפכה את הסופגנייה למאכל החנוכה/);
 });

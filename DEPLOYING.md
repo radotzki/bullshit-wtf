@@ -355,7 +355,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 20 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + onShare + startGame + hostHere + visit + laugh), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 22 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh + hostToBigScreen), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -374,6 +374,18 @@ shows the lobby; it starts only games with no host key). Games made by this
 client carry `serverStart`, and for them the server ignores START ticks and the rules refuse writing
 `tick` in the lobby. Games made by an older client keep starting by tick.
 
+The host's computer as the big screen: a host who made the game on a computer has a button in the lobby
+that calls `hostToBigScreen` with the host key. In one write the server removes the seat marked as the
+host, sets `presenter`, and sets `games/$pin/hasHost` to `'screen'` (it is `true` in every other hosted
+game). The browser keeps the host key and is the big screen from then on: it shows START and reports in
+with `hostHere`. The host joins from a phone as an ordinary player; no phone is handed the key. While
+`hasHost` is `'screen'`, startGame waits for no host row, so the 90 s "host never joined" rule does not
+open START to everyone; only a big screen that has not reported in for 5 minutes does. Phones read
+`hasHost` live and show "The game starts from the big screen". No rules change: `hasHost` and
+`presenter` were readable already. A page from before this release reads `'screen'` as "no host key" and
+shows "Waiting for the host to join"; the server still refuses its START. Each press is one row in
+`shares`: content_type `lobby-help`, method `big-screen`, the PIN in `crew_id`.
+
 Host gone: in a `serverStart` game the host's lobby page calls `hostHere` every 20 s with its key, and
 the server stores its own time in `games/$pin/hostSeen` (the host's join and Replay set it too). Once a
 joined host has not reported in for 5 minutes, startGame lets anyone start, and the other phones show START
@@ -386,16 +398,56 @@ Deploy functions first, then the game: the new client reads the error `message` 
 
 ## Visit beacon
 
-`game/src/index.html` runs a tiny script before everything else. When a page is hidden or closed
-(up to 3 times), and once at 12 s if the app has still not drawn, it posts one line to `/_v` on the
-game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to another site is
-dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon still reports success).
-Deploy hosting for the rewrite; the `visit` function itself is unchanged. It posts: first and last path, whether the app started, the first script error, browser language,
-referrer host, and a random id per page load (`view`, never stored on the phone) that groups the
-rows of one page view. The function logs it as `visit {...}` with device and browser from the user agent;
-no IP, no player data. Count visits (distinct `view`), stuck loads and how far people got (the last row of each view) from the function log
-(filter `textPayload:"visit "`). Test phones say `HeadlessChrome` nowhere, so tell them apart by
-time or by the scripted paths.
+`game/src/index.html` runs a tiny script before everything else (between the `BS:VISIT` markers),
+and `game/seo/build-pages.js` copies the same script into every plain page. It posts small rows to
+`/_v` on the game's own site, which `firebase.json` rewrites to the `visit` function (a beacon to
+another site is dropped by blockers such as Samsung Internet's ad-block add-ons, and sendBeacon
+still reports success):
+
+- `view` once, as the page opens;
+- `create` when that page view creates a game and `join` when it joins one (the app calls
+  `window.bsVisit`, through `markVisit` in `join-source.ts`);
+- `end` when the page is hidden or closed (up to 3 times);
+- `stuck` once at 12 s if the app has still not drawn (never on a plain page).
+
+Each row carries a random id per page load (`view`, never stored on the phone) that groups the rows
+of one page view, the first and last path, the referring site's host, the `?via=` tag of the link
+(else the post tag the tab arrived with), the browser language, whether the browser held nothing of
+the game yet (a first visit, read from what the game already keeps), whether the app started, and
+the first script error.
+
+The function writes each row to BigQuery `analytics.visits` and also logs it as `visit {...}`. It
+adds device, kind of device and browser from the user agent, and replaces every PIN and crew id in
+the paths (`/join-game/:pin`). A row holds no IP address, no user agent, no uid, no nickname and no
+PIN, and the beacon sets no cookie and stores nothing, so nothing in the table names a person.
+The retired Google Analytics tag is gone from the page.
+
+- **BigQuery: run `functions/bigquery/2026-11-visits.sql` once** (creates the table), before the
+  merge. Until then the function logs "Bigquery Insert failed" for each row and visits are not
+  counted; the site is unaffected. The same file holds the read-only queries, first of all home
+  views that become created games, by referring site and tag.
+- Deploy functions and hosting together (a merge does both). An old page still open in a tab keeps
+  sending the old `end` and `stuck` rows, which land with the new columns empty.
+- Count page views as `COUNT(DISTINCT view)`; a view made a game when any of its rows has `created`.
+- Tests and bots: a play-test link (`?via=test`, `?via=test-<name>`) sets `test` on every row of the
+  tab from then on, also when the tab later opens an invite link or a lobby code with its own tag
+  (`?via=link`, `?via=qr`): the test tag stays the row's `tag`. A scripted browser or a crawler
+  sets `bot`. The saved queries leave both out. Not marked: a test in a tab that arrived without
+  the tag, another tab or another phone (a code scanned with a camera opens a new tab), and a
+  browser that blocks session storage once it leaves the address that carries the tag. So open
+  every play-test tab, guests too, from a `?via=test` link first.
+- Post tags on the plain pages: every link of a plain page that stays on the site (the buttons,
+  the logo, the links in the text, the other pages, the other language) carries the page's
+  `?via=` tag on, so a game created after any of them is credited to the post.
+- The visit function runs at most 3 copies at once (`VISIT_MAX_INSTANCES` in
+  `functions/src/controllers/visit.ts`, with the reason). The endpoint is still public, with no
+  rate limit and no check that a row came from the site: the cap bounds what a flood can cost,
+  not whether rows can be forged, so a number from this table can be inflated by someone who
+  wants to. A merge deploys the cap with the function; there is nothing to set by hand.
+- First visit means the browser held nothing of the game when the page opened. A visitor who only
+  looked at the English home page and left stores nothing, so a second look counts as first again.
+- Check locally: `cd functions && npm test` prints the rows of one visit (`# visits {...}`, from
+  `test/visit-row.test.js`, which runs the shipped beacon against the function and a fake BigQuery).
 
 ## What a deploy changes compared with what is live (checked 2026-11-05)
 
@@ -513,7 +565,8 @@ games (wins, then points) and a REMATCH button that opens one shared lobby for t
 - Next game night (client only, hosting deploy is enough): the crew page has a day and time picker,
   next Friday 21:00 by default. It sends the date with the crew link as a WhatsApp text, a calendar
   file (shared into the chat on phones that can share files, downloaded elsewhere) and a Google
-  Calendar link. Nothing is stored on the server; the browser remembers its own last pick.
+  Calendar link. Since "Who's in?" (below) a send also stores the date on the crew; the browser
+  still remembers its own last pick.
   Analytics: gtag `share` events with `content_type: crew-night` (Universal Analytics records nothing,
   so the count that matters is in BigQuery, below).
 
@@ -529,6 +582,80 @@ language and the browser's anonymous uid. A calendar share now counts once (it u
   function logs an insert failure and nothing is counted), then functions (all 16), then hosting.
   Rules are unchanged.
 - The same file holds the query for sends per method per day.
+
+## Who's in? The crew page as the door to game night
+
+A crew link (`bullshit.wtf/c/<id>`) used to open on the standings. When the crew has a night stored,
+it now opens on that night:
+
+- **Before the night:** GAME NIGHT, the date with "in 6 days / tomorrow / tonight", who holds the
+  title, and WHO'S IN? with the names. I'M IN is one tap on a phone that played with the crew (it
+  remembers its nickname); a new phone types a name first, so a friend who never played can come.
+  After the tap: "You're in. See you Friday.", ADD TO MY CALENDAR, ASK WHO ELSE IS IN (a WhatsApp
+  text naming who is in, offered once two are in) and "Can't make it". A browser that has never
+  played gets one line on what the game is.
+- **On the night,** from two hours before the time until 05:00 the next morning (the phone's
+  clock): IT'S GAME NIGHT and one button, OPEN THE LOBBY, with "3 in: ...". It is the crew's
+  REMATCH: one shared lobby, and JOIN THE REMATCH once it is open.
+- **After a night nobody played** (for a week): "That night has passed. Pick a new one?" and PICK A
+  NIGHT, which goes to the date inputs the page already had. After a night that was played, the
+  plain page.
+- **Home page:** a browser whose newest remembered crew has its night today sees it first:
+  "TONIGHT 21:00: Dana's crew". That is one crew read, and only for a browser that remembers a crew.
+
+For everyone, no test. Every word follows the crew's language (`crew-strings.ts`).
+
+- **Functions and site. No rule change, no BigQuery change, nothing to run before the merge.** One
+  new HTTP function, `crewNight`; none removed or renamed. A merge sends all functions and the site.
+- **Where it is stored:** `crews/<id>/night = { time, by, in: { <member key>: <nickname> } }`
+  (`CrewNight` in `game-model.ts`). Crews were already readable by link and written only by the
+  functions, and that is unchanged: a phone cannot write there, so both writes go through
+  `crewNight` (`functions/src/controllers/crew-night.ts`):
+  - `{ crew, time, by }` sets the night (a time from now to a year ahead, to the minute). Whoever
+    sets it is in. The same time again keeps the list; a new time starts a new one.
+  - `{ crew, nickname, in: true | false }` adds or removes a name. The name goes through the
+    nickname filter (checked whole, then cut to 9 letters): one the filter flags is refused, in the
+    crew's language. Saying it twice is one name. A list holds at most 30 names.
+  Like everything on a crew, this needs only the link: no accounts. Anyone with the link can set a
+  night or add a name, as anyone with it can already open a rematch.
+- **When a night gets stored:** a send from the page's NEXT GAME NIGHT section (WhatsApp, calendar
+  invite, Google Calendar) now also stores that date, fire and forget. The weekly entry does not.
+- **What it counts** (`shares`, `content_type = 'crew-night'`, new methods; no new column): `in`,
+  `in-new` (a name the crew did not have), `out`, `nudge`, `open-lobby`. ADD TO MY CALENDAR counts
+  as the existing `calendar-download` and `google-calendar`. A test crew's presses in this block
+  send no row. Joins from the lobby arrive with `via=crew`, and the game carries `crew_id`, as before.
+- **Old and new together.** An old site on the new functions shows the old page and ignores
+  `night`. The new site on old functions (the few minutes between the two deploy steps do not
+  happen in this order, but a rollback could): the page shows no night block, since none is stored,
+  and a send still goes out; storing its date fails quietly and is reported to Sentry.
+- **Clocks.** "On the night" and the countdown come from the stored time and the phone's clock. A
+  phone whose clock is far off sees the button early or late; the lobby itself does not depend on it.
+
+Play it on the emulators, in both languages (a test crew, opened from a `?via=test` link):
+`node .github/smoke/emulator-crew-night.js [--locale he]`, after building `functions/` and `game/`.
+
+How to read it (read-only; replace `<release time>`):
+
+```sql
+-- Per crew and day: who tapped in, how many of them were new names, and whether the lobby was opened.
+SELECT crew_id, DATE(time) AS day, locale,
+  COUNTIF(method IN ('in', 'in-new')) AS in_taps,
+  COUNT(DISTINCT IF(method IN ('in', 'in-new'), uid, NULL)) AS phones_in,
+  COUNTIF(method = 'in-new') AS new_names,
+  COUNTIF(method = 'out') AS cant_make_it,
+  COUNTIF(method = 'nudge') AS nudges,
+  COUNTIF(method = 'open-lobby') AS lobby_taps
+FROM `bullshit-wtf-prod.analytics.shares`
+WHERE content_type = 'crew-night' AND time >= TIMESTAMP('<release time>')
+  AND method IN ('in', 'in-new', 'out', 'nudge', 'open-lobby')
+GROUP BY crew_id, day, locale
+ORDER BY day DESC, in_taps DESC;
+```
+
+Nights kept (a crew with a date that played a game of two or more from 12 hours before it to 24
+hours after) needs the date itself, which is in the Realtime Database (`crews/<id>/night/time`),
+not in BigQuery: `opened_games.crew_id` gives the crew's games, and an `open-lobby` row on the day
+is the nearest sign in BigQuery alone.
 
 ## Opening questions
 
@@ -654,8 +781,9 @@ games with `pack = 'thanksgiving'` for the pack (test games out).
   (`tick`) keeps the pack, so deploy all functions.
 - The pack's questions live in `questions/hanukkah-*` in the database. Load them only **after** the
   new functions are live: old functions would mix them into every game.
-- The repository's set is `functions/data/hanukkah-questions.json`: 18 English and 16 Hebrew questions,
-  ids `hanukkah-26-en-01..18` and `hanukkah-26-he-01..16`, with the ones the two Hanukkah pages name (the
+- The repository's set is `functions/data/hanukkah-questions.json`: 77 English and 72 Hebrew questions,
+  ids `hanukkah-26-en-01..77` and `hanukkah-26-he-01..72` (a room that plays three games on each of the
+  eight nights uses 72 in its language; a pack question never repeats in a room), with the ones the two Hanukkah pages name (the
   astronaut's dreidel, Thanksgivukkah, who made the sufganiyah the holiday food). The pack turns on
   by itself on 1 December.
 - **Every release adds this file to the live question bank by itself**, in the last step, "4. Add
@@ -669,7 +797,7 @@ games with `pack = 'thanksgiving'` for the pack (test games out).
   which would replace the whole bank. Sending the same file again changes nothing, so the step
   runs on every release. A question edited in the file is changed live by the next release; one
   removed from the file stays live (retire it in `retired-questions.ts`).
-  **Edit these 34 questions in the file, never in the Firebase console:** each release rewrites every
+  **Edit these 149 questions in the file, never in the Firebase console:** each release rewrites every
   pack question in full from the file, so a fix made in the console is undone by the next release
   unless the same fix is in the file.
   The run's summary says how the step went. Its verdict starts "A whole release ... and the new
@@ -853,8 +981,8 @@ best lie.
 ## Staged reveal (a 50/50 test)
 
 Half of new games get a staged reveal; the other half keep the reveal as it was. Which half a game is
-in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it is
-independent of the round-1 lie helper's draw. Timing in `game-model.ts` (`revealSchedule`,
+in follows from its PIN (`stagedHalf` in `functions/src/controllers/big-reveal.ts`), and it does
+not depend on the round-1 lie helper, which every game has had since 13 November 2026. Timing in `game-model.ts` (`revealSchedule`,
 `stagedRevealTiming`), the page in `game/src/app/pages/reveal-the-truth`, its words in
 `game/src/app/pages/game-strings.ts`.
 
@@ -980,6 +1108,27 @@ helper's saved measure in `functions/bigquery/2026-11-round1-coach.sql` changed 
 of the players picked an answer on a round-2 question".
 
 Checks: `functions/test/test-mark.test.js` (in `npm test`).
+
+## Round-1 lie helper for every game (the 50/50 test ended)
+
+From about 5 November 2026 half of new games had the round-1 lie helper ("coach": the hint line and
+"STUCK? GIVE ME A LIE" with up to two ready-made lies per player). On 13 November 2026 it was given to
+every new game, every Replay and every crew rematch: `pickCoach` in
+`functions/src/controllers/lie-helper.ts` now returns `true`.
+
+- Logging is unchanged. `opened_games.coach` and `question_results.coach` are still written for every
+  game, and `question_results.idea_lies` still counts the lies a player took from the helper. Games
+  made after the deploy all log `coach = true`; the no-helper half before it logs `false`, so the
+  switch date is plain in the data.
+- The staged reveal's own 50/50 (by PIN, `functions/bigquery/2026-11-big-reveal.sql`) is untouched.
+- Guardrail for two weeks after the deploy: the share of real games (tests left out) with 2+
+  players where half or more of the players picked on a round-2 question. The no-helper half's 74%
+  is the bar; below about 65%, read Hebrew and English apart and consider turning it back off.
+- Deploy: functions only. No rules, BigQuery or hosting change; the client already shows the helper
+  whenever `games/$pin/coach` is true. A game already in play at the deploy keeps what it had.
+- To turn it back off: make `pickCoach` return `false` and deploy the functions.
+
+Checks: `functions/test/lie-helper.test.js` and `functions/test/big-reveal.test.js` (in `npm test`).
 
 ## Final question card
 
@@ -1181,6 +1330,95 @@ the same `creator_uid`, and `parent_pin` the taste when it came from INVITE FRIE
 end per day (a pick on the fifth question), against 2 of 10 games alone in the week before; and
 the browsers that created a game of two or more within 7 days of their taste, against 1 of 8.
 
+## Lone-host help (a 50/50 test in the lobby)
+
+Why: from 6 to 13 November 2026, 21 of 69 browsers that opened a lobby stayed alone and left, 13 of
+them on a computer. A computer host got a table 36% of the time, a phone host 74%, and none of the
+lone computer hosts pressed an invite button. Each lobby that fills is a new group.
+
+**What the new half shows**, on the host's own page, while the lobby holds one or two players:
+
+- **On a phone** the invite stays on the page with one guest in (today it folds into INVITE FRIENDS),
+  with COPY LINK beside WhatsApp and the share sheet. With a guest in, the QR code is small (120 px),
+  and left out on a screen under 640 px high, so the players show.
+- **On a computer** the invite is a card: a big QR code, "Friends join on their phones", the short
+  link to read out (`bullshit.wtf/join-game/<PIN>`), COPY LINK first, then WhatsApp, and two lines:
+  "On a call? Paste the link in the chat." and "In one room? Turn this screen so everyone can scan it."
+  With a guest in the card shrinks, and the two players are drawn with the picture beside the name.
+- One light line: "Best with 4 or more players." (with one guest: "Two can play, but it's best with
+  4 or more. Invite one or two more."). START is never held back: it is in the header from the
+  second player on, as before, and a host alone keeps "Try 5 quick questions alone".
+
+From the third player on, both halves show the lobby as it was. Guests and the big screen never see
+the help, and a lobby with a big screen is not in the test. The other half is today's lobby.
+The host's page asks about the big screen once, as it loads: a big screen opened after that leaves
+the lobby in the test, and the help on the page, until the host reloads. It is the same in both halves.
+
+**Which half.** One bit of a hash of the PIN, worked out on the page
+(`game/src/app/pages/game-staging/lone-host.ts`, `loneHostHalf`), the way the staged reveal's half
+follows the PIN. In BigQuery, with the PIN in column `pin`:
+`MOD(TO_CODE_POINTS(SHA256(CONCAT('lone-host:', UPPER(pin))))[OFFSET(0)], 2) = 1` is the new half.
+A phone or a computer: a phone or tablet by its user agent, or any window under 700 px, is a phone.
+
+**A tester's switch.** In the browser console, `localStorage.BS_LONE_HOST = 'new'` (or `'classic'`)
+puts that browser's lobbies in a half. A test game (`?via=test`) shows its half but sends no row.
+
+**What is counted.** Rows in `shares` with `content_type = 'lobby-help'`. `shares` has no PIN column,
+so these rows carry the lobby's PIN, in capitals, in `crew_id`. No new column and no database rule.
+
+| `method` | When |
+|---|---|
+| `seen-new-phone`, `seen-new-computer` | the lobby first held one or two players and showed the help (once per lobby and browser) |
+| `seen-classic-phone`, `seen-classic-computer` | the same moment in the other half |
+| `whatsapp`, `native`, `copy` | the host's invite sends from this lobby, in either half, with any number of players in (each is an `invite` row too, as before) |
+
+**How to read it.** Lobbies that reached 3 players, and hosts who pressed an invite, by half and device:
+
+```sql
+WITH seen AS (
+  SELECT crew_id AS pin, MIN(time) AS seen_at, ANY_VALUE(uid) AS host_uid,
+    ANY_VALUE(REGEXP_EXTRACT(method, r'^seen-(new|classic)-')) AS half,
+    ANY_VALUE(REGEXP_EXTRACT(method, r'-(phone|computer)$')) AS device
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'lobby-help' AND method LIKE 'seen-%' AND time >= TIMESTAMP('2026-11-14')
+  GROUP BY crew_id),
+seats AS (
+  SELECT UPPER(TRIM(pin)) AS pin, COUNT(DISTINCT uid) AS players,
+    COUNTIF(via IN ('replay', 'crew')) AS carried, COUNTIF(via = 'test') AS test_joins
+  FROM `bullshit-wtf-prod.analytics.users`
+  WHERE time >= TIMESTAMP('2026-11-14') AND pin IS NOT NULL
+  GROUP BY 1),
+sent AS (
+  SELECT crew_id AS pin, COUNT(*) AS sends
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'lobby-help' AND method IN ('whatsapp', 'native', 'copy') AND time >= TIMESTAMP('2026-11-14')
+  GROUP BY 1)
+SELECT half, device, COUNT(*) AS lobbies,
+  COUNTIF(IFNULL(sends, 0) > 0) AS pressed_invite,
+  COUNTIF(players >= 2) AS got_a_guest,
+  COUNTIF(players >= 3) AS reached_3,
+  ROUND(SAFE_DIVIDE(COUNTIF(players >= 3), COUNT(*)), 2) AS share_reached_3,
+  -- A tester's switch can put a lobby in the other half than its PIN: these should be 0.
+  COUNTIF((MOD(TO_CODE_POINTS(SHA256(CONCAT('lone-host:', seen.pin)))[OFFSET(0)], 2) = 1) != (half = 'new')) AS half_set_by_hand
+FROM seen LEFT JOIN seats USING (pin) LEFT JOIN sent USING (pin)
+-- Not a Replay's or a crew's lobby (its players are carried in), and no test game.
+WHERE IFNULL(carried, 0) = 0 AND IFNULL(test_joins, 0) = 0
+GROUP BY half, device
+ORDER BY device, half
+```
+
+The new half wins if `share_reached_3` is higher, on computers above all (today about one computer
+host in three gets a table at all). With about 11 lobbies a day the first read worth making is after
+two weeks. A Replay's lobby and a crew's lobby also send a seen row (their host is alone for a
+moment); the query leaves them out by the joins they carry. A lobby whose big screen was opened
+after the host has rows in both halves alike; the query keeps it. For a stricter read, leave out the
+PINs whose `opened_games.presenter` is true (only a lobby that started has that row). To keep the help for everyone, make
+`loneHostHelp` return `half: 'new'`; to drop it, `'classic'`.
+
+**Checked** with `game/test/lone-host.test.js`, `functions/test/lobby-help.test.js` and a run on the
+Firebase emulators, `.github/smoke/lone-host-lobby.js`: a phone and a computer, English and Hebrew,
+both halves, one to four players, and a test game.
+
 ## Who the room is waiting for
 
 After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.
@@ -1248,6 +1486,28 @@ pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
 
+## Lies sent at the same moment end the question at once
+
+When the last lies of a question reached the server at the same moment, each `answer` call checked
+"has everyone sent?" on the game it had read before the others wrote their lies. None of them saw
+every lie, so none ended the question, and the room waited out the whole 25 seconds with nothing on
+screen to do. In an emulator game of three phones answering together it happened on 2 of 5 questions.
+
+- `answer.ts` now reads the game's lies again after writing its own, and decides on those. Each call
+  writes before it reads, so the call whose lie lands last sees them all and ends the question.
+- Two or three calls can now end the same question. `advance()` already takes a phase once (see
+  `step-once.test.js`), so the game moves on once.
+- Picks were not affected: their database trigger reads the game after each pick is written.
+- One more database read per lie sent. Nothing else changes: no new field, table or rule.
+- Deploy: functions only (the site and the rules are unchanged). Old and new together are fine.
+
+Tests: `functions/test/step-once.test.js`, "lies that arrive at the same moment" (two and three
+lies at once). Both fail on the code before this change and pass after it.
+
+How to read it: no table holds when a question's lies came in or how long the question ran (that
+waits on the wait columns of pull request 47), so this change has no number of its own yet. Until
+then it is checked by the test above and by a whole emulator game (`.github/smoke/emulator-game.js`).
+
 ## Search pages: a tag on every page, and links from home
 
 Client only. No new function, rule, table or column; nothing to run before the merge.
@@ -1287,3 +1547,238 @@ Client only. No new function, rule, table or column; nothing to run before the m
 - Tested by `game/test/more-search-pages.test.js`.
 
 How to read it: games by `campaign` in `opened_games` (test games out) for the tags above.
+
+## Room for the ninth player: 12 seats a game
+
+A game takes 12 players; it took 8. The thirteenth is told "Sorry, game is full", as the ninth was.
+
+- Functions and site. No rule change, no BigQuery change, no new function, none removed or renamed.
+  A merge sends all functions and the site.
+- One number: `MAX_PLAYERS` in `game-model.ts`. `join` and `validateGameName` refuse a seat at it
+  (`>=`, where it was `=== 8`), and a late friend is offered a rematch lobby only below it
+  (`game-over.ts`). The server timer's longest phase (`maxPhaseDuration`, `phase.ts`) is worked out
+  from it: a big-screen reveal of 13 rows, about 70 seconds, under the 120-second limit of
+  `phaseTimer`.
+- House lies: a table of 9 to 12 sees every lie its players wrote and the truth, but house lies
+  fill the list only up to 9 answers (`MAX_HOUSE_FILL`), as many as an 8-seat game ever had.
+  Tables of 2 to 8 get exactly what they got.
+- Pictures: four new seat pictures, `assets/avatar8.png` to `avatar11.png` (sources in
+  `graphics/avatars/`). Every screen that shows players asks for the seat's picture by its place,
+  wrapped at 12, so a thirteenth seat made by two joins in the same instant reuses one.
+- Screens with nine or more: the lobby shows three pictures a line on a phone; the waiting row is
+  three lines of four; the answer buttons sit closer together, and four a line on the big screen;
+  the scoreboard rows are shorter so twelve fit; the big screen's final scores go in three columns.
+- Words: "up to 12 players" on the how-to-play page, the home page's description, the search pages
+  and the Hebrew occasion pages. The pictures made from `graphics/` say 12 too: the search pages'
+  link previews (`og-phone-en.png`, `og-phone-he.png`) are drawn again, and the Hanukkah square
+  posts (not in the repository) say 12 when `render-hanukkah.js` is run again.
+- Big screen's final at 9 to 12: in three columns the lie gets a line of its own (only it gives
+  way with "…") and "fooled N players" the line under it, whole, with the laughs beside it when the
+  funniest lie is the same lie, and the badges at that line's end; a different funniest lie takes
+  one line. Wider columns on a TV, a shorter hero (no trophy) and smaller badges keep all twelve
+  on a 1920x1080 screen. Tables of 2 to 8 are unchanged.
+- Old and new together. The functions go first, so for a minute or two a game can take a ninth
+  player while the site is the old one: an old phone's waiting row reuses the first pictures for
+  seats 9 to 12, and its lobby and scoreboards show no picture for them until the site's release
+  brings the new files (after it, an old phone that has not reloaded gets them too). Nothing stored
+  changes shape.
+
+How to read it: `functions/bigquery/2026-11-ninth-player.sql` (share of games above 8, seats per
+game on Fridays and by language, whether big tables still play to the last question, and refusals
+once pull request 47's table exists).
+
+## About us questions (a 50/50 test)
+
+A second kind of question: one player is named ("The thing Ben would save from a fire is ___"), writes
+the truth privately while everyone else writes a lie about them, and then all but that player pick.
+Finding the truth scores as finding any truth; the named player scores, for each friend who finds it,
+what a lie scores for each friend it fools (500, 750, 1000). Server in
+`functions/src/controllers/about.ts`, the prompts in `about-prompts.ts` (22, English and Hebrew), the
+words of the screens in `game/src/app/pages/about-strings.ts`, how phones read it in `aboutOf`
+(`game-model.ts`). Tests: `functions/test/about.test.js`, `game/test/about-strings.test.js`.
+
+- Who gets it: half of the games made by a client that asks for it (`aboutUs: true` on `newGame`,
+  `fork`, `crewRematch`), by the PIN, or by the crew's id for a game that counts for a crew, so a
+  crew plays all its games in one half. Independent of the staged reveal's half (another hash) and
+  the lie helper's draw. A game plays the questions only when it leaves the lobby with three or more
+  players; never alone (the taste).
+- Where: two questions in a game of 5 or 7, three in a game of 9, at 1 and 3, 2 and 4, or 2, 4 and 6
+  (counting from 0). Never the first (the opener) or the last (the final question). The bank question
+  picked for that place stays in the game as the fallback.
+- Who is named: a seat that has sent a lie or a pick in this game (so never an empty seat), not named
+  before while another is left. With fewer than three seats playing, the question is skipped and the
+  bank question played.
+- The truth is kept at `games/$pin/aboutTruth`, which no phone can read, until the answers are on the
+  table; then it is the `truth` answer, in lower case like every lie. A friend's lie is never refused
+  as too close (that would give the truth away); a lie that is the truth is dropped, and its writer
+  can still pick it. Up to 5 answers are filled with the prompt's own house answers, which cost points
+  like any house lie; an 8-seat table gets none.
+- If the named player sends nothing in the 25 seconds, the bank question is played in its place, with
+  a fresh 25 seconds (the lies about them are dropped). Phones get a new writing step with the same id
+  and rebuild the page, as after any phone comes back to a step.
+- How phones learn it: every state of an About question (writing, answers, reveal, scoreboard) carries
+  `about: { pid, prompt }`. The truth's reveal row carries `about` and `aboutPoints`. The named
+  player is marked as done on the answers' waiting row and is not waited for there; their pick, if an
+  older site sends one, is ignored.
+- Sends at the same moment: when the last sends of an About question (the truth and a lie, or two
+  lies) reach the server together, each `answer` call reads `answers` and `aboutTruth` again after
+  writing its own send, and decides "has everyone sent?" on that. Without it no call saw every send
+  and the room sat out the 25 seconds. It is the same re-read as "Lies sent at the same moment end the
+  question at once" (pull request 108) for a normal question; the two are in different functions of
+  `answer.ts` and merge cleanly. Tests: `about.test.js`, "About question: ... sent at the same moment".
+- Deploy: **run `functions/bigquery/2026-11-about-us.sql` (three ALTERs) first**, then functions,
+  then hosting. **No rules change.** Until the site is live no phone asks, so no game is in the test.
+  A phone still on the old site inside an About game sees the question about the named player and a
+  plain lie box: if it is the named player's phone, what it sends is taken as the truth; on the answers
+  page it shows the list and its pick is ignored. Nothing is held up.
+- In the usage data: `opened_games.about_us` and `closed_games.about_us` (the half, null outside the
+  test); `question_results.about` (`played`, `fallback`, `skipped`) and `about_prompt`. No answer
+  anybody typed goes to BigQuery; the question history (`qHistory`) keeps only the prompt's id for an
+  About question. The read queries are in the SQL file: rematches per finished game and games per crew
+  per week, by half, and the share of About questions that fell back, by prompt.
+- To end the test: make `drawAboutUs` return `true` (everyone) or `undefined` (nobody) and deploy the
+  functions. To change a prompt, edit `about-prompts.ts`: never reuse an id.
+
+## Join link previews
+
+A lobby's invite link (`/join-game/<PIN>?via=link`, `/he/join-game/<PIN>?via=link` for a Hebrew game)
+now previews in WhatsApp, Telegram, Facebook, iMessage, Slack and X as that game's own invite, in the
+game's language: "Dana invited you to play Bullshit" / "הזמנה לבולשיט: Dana מחכה לך", with "Tap to
+join game QBCD…" under it and the language's picture (the Hanukkah picture for a Hanukkah game).
+Before, every join link showed the site's generic card. The Hebrew words are the same for a man and
+a woman ("מחכה לך", "הוזמנת").
+
+- **Functions and site. New HTTP function `joinPreview`; no rule change, no BigQuery change.** The
+  site's `firebase.json` sends `/join-game/*` and `/he/join-game/*` to it (two rewrites, ahead of
+  `/he/**` and `**`). A merge deploys all functions first, so the function exists before Hosting
+  points at it; the normal order is all this needs. Earlier releases added new HTTP functions the same
+  way (`laugh`, for one); if the functions step ever fails on it with a permission or
+  IAM error, nothing else is released, and the owner gives the deploy account the missing role.
+- **How it works** (`functions/src/controllers/join-preview.ts`). The function answers with the
+  site's own page: it fetches `/` (or `/he`) from the site, through Hosting's CDN, keeps it in
+  memory and checks it again with its ETag every 15 s, so it always names the site's current
+  scripts. It rewrites only the tags between the `BS:META` markers and the `<title>`: title,
+  description, picture, `og:url` (the link itself, so Facebook doesn't fold it into the home page),
+  `og:locale`, and `robots: noindex` (a page with a player's nickname is no page for search).
+  Everything else in the page is the same bytes. Every visitor gets the same page: a preview fetcher
+  reads the tags, a browser runs the app, which shows the join page for the PIN in the address as
+  before. No user-agent sniffing; the address, the PIN and `?via=` stay as they were.
+- **What it reads.** Seven small paths of the game: `locale`, `state`, `timestamp`, `hostSeen`,
+  `pack`, `creator`, `players` (nicknames and the host mark; phones can already read all of them).
+  Never the questions, answers or host key, and it never writes. One log line per answer,
+  `joinPreview {"kind":…,"ms":…}`, with no PIN or nickname.
+- **Whose name.** The seat the server marked as host (the newest mark), else the seat of the
+  browser that created the game. Shown only when it passes the nickname filter (`name-flag.ts`)
+  and is not one of the swap names a flagged player gets, so a swapped host is never "Grandma
+  invited you". Cut to `NICKNAME_MAX` (9), invisible and direction-changing characters removed,
+  HTML-escaped. No usable name: a nameless invite ("You're invited to a game of Bullshit").
+- **When it shows the generic card.** An unknown PIN, a finished game, one nobody moved on for six
+  hours (`isGameOver`, the join page's own test), a database read slower than 1.5 s or failing, or
+  a page that lacks one of the tags: the page exactly as Hosting serves it. If the site's own page
+  can't be fetched twice in a row, a small page with the generic tags reloads the same address after
+  2 s (never cached) and the fault goes to Sentry; it should never happen.
+- **Caching.** Named and generic answers: `public, max-age=300, s-maxage=600`, so the CDN answers most
+  taps on a link the sender's WhatsApp just previewed without running the function. A nameless invite
+  (the host hasn't joined yet) and a slow read: 60 s, so the name shows soon. Hosting empties its CDN
+  on every release.
+- **Speed.** A person's first load of a join link now runs a function when the CDN has no copy: on
+  the emulators the function took 11 to 17 ms; in production add a cold start when no copy of the
+  functions is running (they share one code bundle, about a second or two). The `ms` in the log
+  line measures the warm part. Keeping one copy warm (minimum instances) would cost money: the
+  owner's call, not done here.
+- **Old and new together.** The site isn't changed, so an old site works with the new rewrites and
+  the new function works with any site that keeps the `BS:META` block. Roll back by reverting the
+  pull request: Hosting then serves the join links as before; the function stays deployed but
+  unused (the CLI never deletes a function by itself) and can be deleted by the owner.
+- **Tests.** `functions/test/join-preview.test.js` (in `npm test`). On the emulators, with Hosting:
+  `node .github/smoke/emulator-join-preview.js` (needs Java, functions and game built, the root's
+  `npm ci`): two hosts make an English and a Hebrew game, six preview fetchers fetch both links, an
+  unknown PIN and the other pages are checked unchanged, and an iPhone opens the English link, joins
+  and lands in the lobby with its join counted as `via = link`.
+
+How to read it (read-only queries in `functions/bigquery/2026-11-join-preview.sql`): link joins per
+lobby, the share of lobbies with at least one link join, and players per started game, per week,
+tests out, before and after the release. Before (6 to 12 November 2026, tests out): 207 lobbies and
+571 joins; 211 joins (37%) came by the invite link, in 66 lobbies (32%), about 1.0 per lobby.
+
+## "Same time next week?" on the final screen (a 50/50 test)
+
+126 of 132 groups that played a second game never sat down together again. Leaving with a date took
+seven steps and a crew name (SAVE THIS CREW, then the crew page's NEXT GAME NIGHT), and had one real
+press. Now the final screen of a group's second or later game of a sitting offers one button under
+REMATCH: REVENGE NEXT WEEK (DEFEND MY TITLE NEXT WEEK for the winner). Its sheet shows tonight plus
+seven days and a crew name nobody has to type, and SEND TO THE GROUP ON WHATSAPP puts the date and
+the crew link in the group's chat in one tap. Once one player has sent or saved the date, the other
+phones on the final screen show it as a banner with I'M IN. The big screen gets one line.
+The spec is "Change 1" of the game night loop spec (the project's reports); the code is
+`game/src/app/components/next-week` and `functions/src/controllers/next-week.ts`.
+
+- Functions and site. No new function: `crewNight` (HTTP) came with "Who's in?", and this uses it
+  as it is. No rule change, no BigQuery change: the new rows use the `shares` columns that are
+  there. A merge sends all functions and the site.
+- Which games. A Replay, or a crew's game, with two players or more. Not a taste, and not the Replay
+  of a taste (that is the group's first game). A group that opens a fresh game by hand keeps the
+  phone-memory rule of `repeat-group.ts`, as before.
+- Which half. It follows the sitting, not the game: one bit of SHA-256 of `'next-week:' + root`,
+  where root is the PIN of the sitting's first game. Replay copies `root` from game to game
+  (`games/<pin>/root`, server only); a crew game that is no Replay is its own root. The server
+  writes the result on the game's final state, `state.nextWeek` (true: the new screen; false: in the
+  test, today's screen; absent: not in the test), where phones already read `state.staged`.
+- What is new on a crew: `auto` (made by the sheet under a default name: the browser that made it
+  may rename it from the sheet, nobody else) and `night: { time, by, in: { <member key>: <nickname> } }`,
+  written only by `crewNight`: `{ crew, time, by }` sets the date (a new time clears the list and
+  puts the sender in), `{ crew, nickname, in }` adds a name or takes it off. A crew made on a second
+  game now counts the sitting's earlier games too (`earlierGames` in `crew.ts`), so its first message
+  says "Dana leads 2 to 1"; this holds for SAVE THIS CREW in the other half as well.
+- Old and new together. Functions first: an old site ignores `state.nextWeek` and shows today's
+  screen, and counts no `seen-` row. A game replayed before the release has no `root` and is not in
+  the test; its next Replay is. The new site on old functions reads no `state.nextWeek` and shows
+  today's screen.
+- What it records, in `shares` (`SHARE_METHODS` in `analytics.ts`): `next-week` with `seen-card`
+  (a phone showed the new button or its banner, once per phone per game), `seen-control` (a phone of
+  the other half showed today's screen), `open`, `whatsapp`, `native`, `copy`, `calendar`, `in`; and
+  `crew-save` with `next-week` for a crew the sheet made. Rows carry the crew id (once there is one),
+  the language and the browser id. Test games (`?via=test`) make test crews, as before; their
+  `shares` rows carry no mark of their own, so leave them out by browser id, as for other shares.
+
+How to read it (read-only). The half of a sitting, from the PIN of its first game:
+
+```sql
+-- root: the top of the parent_pin chain in opened_games, stopping below a taste (players = 1).
+SELECT MOD(TO_CODE_POINTS(SHA256(CONCAT('next-week:', UPPER(root))))[OFFSET(0)], 2) = 1 AS new_half
+```
+
+First read, one week after the release: of the sittings in each half that reached a second final
+screen, the share that set a date (`next-week` with `whatsapp`, `native`, `copy` or `calendar`),
+against the share of the other half that saved a crew or sent a night the old way (about 2% before).
+Then, by half: groups back together within 7 days, and the share of second games followed by a third
+(the `forks` table), which must not fall: the button sits beside REMATCH.
+
+To play it on the emulators, both halves and both languages: `node .github/smoke/next-week-game.js`.
+
+## Game night fixes after the reviews of "Who's in?" and "Same time next week?"
+
+Small fixes from the two reviews (the project's reports `review-113.md` and `review-114.md`).
+
+- Functions and site. No new function, none removed or renamed, no rule change, no BigQuery change.
+  A merge sends all functions and the site.
+- **Two sheets, two dates.** `crewNight` takes an optional `prev` with `{ crew, time, by }`: the night
+  the sender's screen showed when the sheet opened (null for none). "Same time next week?" sends it.
+  If the crew has another night that is still ahead and is not `prev`, the crew keeps it and the
+  answer says `kept: true`. A sheet that is open when another phone's date arrives shows that date
+  with I'M IN in place of the send buttons. The phone that set the date has CHANGE on its banner,
+  and sends its own night as `prev`, so it can still move it. The crew page's NEXT GAME NIGHT sends
+  no `prev` and moves the night as before.
+- **The message.** A date other than the one the sheet offered reads "Bullshit game night: ..." /
+  "ערב בולשיט: ..." in place of "same time next week". In Hebrew the leader reads "יוסי בראש, 2–0".
+- **The big screen** shows the date ("Next game night: ...") once a phone has set it.
+- **Names on a night's list.** Invisible characters (zero-width, text-direction marks) are taken out
+  before the cut; a name that is nothing else, or is not text, is refused like an empty one.
+- **The crew page.** A full list says "This night is full." / "הערב הזה מלא."; a night set for the
+  small hours (before 05:00) belongs to the evening before, for "tonight", "See you Friday" and the
+  home page's TONIGHT line. Hebrew: "הערב משחקים!", "קובעים ערב", "משהו השתבש. נסו שוב.".
+- **What it counts.** `crew-night` / `open-lobby` is now one row a lobby: only the press that opened
+  it. A press that joined a lobby another phone opened is the new `join-lobby`. Rows before the
+  release counted every press. `next-week` gains `change` (CHANGE on the sender's banner).
+- Old and new together. An old site sends no `prev` and works as before. The new site on old
+  functions: `prev` is ignored, so two sheets can still move each other's date, as today.

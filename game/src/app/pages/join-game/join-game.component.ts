@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { takeJoinSource, preferredLocale } from '../../services/join-source';
+import { takeJoinSource, markVisit, preferredLocale } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale } from './join-strings';
@@ -194,6 +194,7 @@ export class JoinGameComponent implements OnInit {
                 // Keep the name the server stored, so Replay and the crew never send the typed one back.
                 this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };
                 this.sessionService.nameSwap = swapped ? { pin: this.pin.toUpperCase(), nickname } : null;
+                markVisit('join');
                 if (this.crewId) {
                     this.crewService.remember(this.crewId, this.crewName, nickname);
                 }

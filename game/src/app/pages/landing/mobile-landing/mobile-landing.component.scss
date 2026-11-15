@@ -130,6 +130,17 @@
         font-size: .8em;
         color: #f3d467;
     }
+
+    // A crew whose game night is today leads the menu.
+    .crew.tonight {
+        background-color: #db7151;
+        color: #fff;
+        font-weight: 700;
+
+        i {
+            color: #fff;
+        }
+    }
 }
 
 
@@ -146,6 +157,15 @@
         font-size: 1.15rem;
         line-height: 1.35;
         text-wrap: balance;
+    }
+
+    .daily-link {
+        display: inline-block;
+        margin-top: 6px;
+        color: #f3d467;
+        font-size: 1rem;
+        line-height: 1.35;
+        text-decoration: underline;
     }
 
     &.has-picture {

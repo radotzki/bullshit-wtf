@@ -1,4 +1,4 @@
-<section class="game-container game-staging" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+<section class="game-container game-staging" [appFitScreen]="presenter" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header *ngIf="showStartButton && !lobby?.alone" [button]="t.start" [buttonLoading]="loading" (onClick)="startGame()"></app-game-header>
     <app-game-header *ngIf="!showStartButton || lobby?.alone"></app-game-header>
 
@@ -19,18 +19,31 @@
             <div class="loader"> </div>
         </div>
 
-        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false" [inline]="!!lobby?.alone"></app-invite>
+        <!-- A host on a computer: one button makes this computer the big screen (big-screen-host.ts).
+             Above the invite, so it is on the first screen whatever the invite's size. -->
+        <div *ngIf="bigScreenOffer" class="big-screen-offer" [attr.dir]="lobby?.rtl ? 'rtl' : null">
+            <p class="words"> <strong> {{b.ask}} </strong> {{b.how}} </p>
+            <button class="button is-primary is-outlined" [class.is-loading]="switching" [disabled]="loading" (click)="useAsBigScreen()">
+                <span class="icon"><i class="fa fa-television"></i></span>
+                <span> {{b.button}} </span>
+            </button>
+        </div>
+
+        <app-invite *ngIf="!presenter" [pin]="pin" [presenter]="false" [inline]="!!lobby?.alone || !!help?.show"
+            [help]="help?.show ? help.device : null" [compact]="!!help?.show && !lobby?.alone" [counted]="!!help?.inTest"></app-invite>
+
+        <p *ngIf="bestLine" class="best-with" [attr.dir]="lobby?.rtl ? 'rtl' : null"> {{bestLine}} </p>
 
         <div *ngIf="lobby?.alone" class="start-alone" [attr.dir]="lobby.rtl ? 'rtl' : null">
             <a class="start-alone-link" [class.is-disabled]="loading" (click)="startAlone()"> {{lobby.startAlone}} </a>
         </div>
 
-        <div class="spacer is-hidden-mobile"> </div>
+        <div *ngIf="!help?.show" class="spacer is-hidden-mobile"> </div>
 
-        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone">
+        <div class="lobby" [class.with-invite]="presenter" [class.alone]="lobby?.alone || help?.show" [class.with-guest]="help?.show && !lobby?.alone">
             <div class="columns is-mobile is-multiline">
-                <div *ngFor="let player of players; let i = index" class="player column is-half-mobile is-one-third-tablet is-one-quarter-desktop">
-                    <img [src]="'/assets/avatar' + i + '.png'" class="picture">
+                <div *ngFor="let player of players; let i = index" class="player column is-one-third-tablet is-one-quarter-desktop" [ngClass]="players.length > 8 ? 'is-one-third-mobile' : 'is-half-mobile'">
+                    <img [src]="'/assets/avatar' + (i % 12) + '.png'" class="picture">
                     <span> {{player.nickname}} </span>
                 </div>
             </div>
@@ -38,8 +51,8 @@
             <app-invite *ngIf="presenter" class="lobby-invite" [pin]="pin" [presenter]="true"></app-invite>
         </div>
 
-        <div *ngIf="players && !players.length" class="screen-center waiting-for-players">
-            {{t.waitingForPlayers}}
+        <div *ngIf="players && !players.length" class="screen-center waiting-for-players" [class.join-now]="hostScreenHere">
+            {{hostScreenHere ? b.joinNow : t.waitingForPlayers}}
         </div>
     </div>
 

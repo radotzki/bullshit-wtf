@@ -359,6 +359,20 @@ test('a request built with headers is never sent, by either sign-in', async () =
     }
 });
 
+test('the reviewed text fixes ride the release\'s update under their old ids, each question whole', async () => {
+    const w = writer();
+    const r = await load(PROJECT, ROOT, api().request, w.request, noAnswer);
+    assert.strictEqual(r.ok, true, r.lines.join('\n'));
+    const body = w.sent[0].data;
+    // An update replaces each named child whole, so an old lie cannot linger beside the new ones.
+    assert.deepStrictEqual(body['hanukkah-26-en-13'].fakeAnswers, ['to cheat', 'to bet', 'sleepy']);
+    assert.match(body['hanukkah-26-en-12'].questionText, /the Land of Israel's Hanukkah food/);
+    assert.deepStrictEqual(body['fact-26-en-03'].fakeAnswers, ['inside of a volcano', 'pizza oven', 'candle flame']);
+    for (const id of ['hanukkah-26-en-12', 'hanukkah-26-en-13', 'fact-26-en-03']) {
+        assert.deepStrictEqual(Object.keys(body[id]).sort(), Object.keys(QUESTIONS[id]).sort());
+    }
+});
+
 test('the Thanksgiving pack is English only: a Hebrew id, a question without its pack or one of another pack is not written', () => {
     const turkey = () => JSON.parse(JSON.stringify(THANKS['thanksgiving-26-en-01']));
     assert.doesNotThrow(() => check({ 'thanksgiving-26-en-01': turkey() }));

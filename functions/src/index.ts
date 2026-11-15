@@ -10,12 +10,14 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
-import { startGame, hostHere } from './controllers/start';
+import { startGame, hostHere, hostToBigScreen } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
+import { crewNight } from './controllers/crew-night';
 import * as analytics from './controllers/analytics';
-import { cleanVisit } from './controllers/visit';
+import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visit';
 import { laugh } from './controllers/laugh';
+import { joinPreviewPage, readPreviewGame } from './controllers/join-preview';
 import { caught, http, watched } from './report';
 
 // Error bodies always carry a readable message and a code, so the client
@@ -59,6 +61,75 @@ exports.time = functions.https.onRequest(http('time', (req, res) => {
     });
 }));
 
+// The daily puzzle (/daily, /he/daily), reached on the site's own address as /_daily (a Hosting
+// rewrite, like the visit beacon). See controllers/daily.ts for what it answers and keeps.
+//   GET  ?lang=he               today's question and its tallies; Hosting's cache answers most visitors
+//   GET  ?lang=he&d=<day>&f=<id>  the same, with how many friends a sender's lie fooled
+//   POST {lang, day, m, k, f, src, uid}  (sendBeacon, text/plain): one pick or one press. Answers 204.
+import * as daily from './controllers/daily';
+
+let dailyBank: daily.DailyBank = null;
+const dailyWarned: { [lang: string]: string } = {};
+function dailyQuestions(): daily.DailyBank {
+    if (!dailyBank) {
+        try {
+            // On the emulators only, a play-test brings a file of its own (.github/smoke/emulator-daily.js).
+            const own = process.env.FUNCTIONS_EMULATOR === 'true' && process.env.DAILY_QUESTIONS_FILE;
+            dailyBank = daily.loadDaily(require(own || '../data/daily-questions.json'));
+        } catch (e) {
+            console.error('daily: the question file did not load', e);
+            return { en: [], he: [] };
+        }
+    }
+    return dailyBank;
+}
+// The tallies' reads and writes, loaded at the first request (it opens the database).
+const dailyStore = (): typeof import('./controllers/daily-store') => require('./controllers/daily-store');
+
+exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
+    const bank = dailyQuestions();
+    const now = Date.now();
+    if (req.method === 'POST') {
+        const raw = req.rawBody ? req.rawBody.toString('utf8') : req.body;
+        const post = typeof raw === 'string' && raw.length > 600 ? null : daily.cleanPost(raw, bank, now);
+        if (post) {
+            try {
+                await dailyStore().addPicks(post);
+                await analytics.onShare(post.row);
+            } catch (e) {
+                console.error('daily: a post was not kept', e);
+            }
+        }
+        return res.status(204).send('');
+    }
+    if (req.method !== 'GET') {
+        return res.status(405).send('');
+    }
+    const lang = daily.cleanLang(req.query.lang);
+    const list = bank[lang];
+    const today = daily.israelDay(now);
+    if (!daily.questionFor(list, today)) {
+        res.set('Cache-Control', 'no-store');
+        return res.status(503).send({ error: 'no-question' });
+    }
+    // Sentry hears once a day (per running copy) that the questions are running out.
+    const left = daily.daysLeft(list, today);
+    if (left < daily.WARN_DAYS_LEFT && dailyWarned[lang] !== today) {
+        dailyWarned[lang] = today;
+        console.error(`daily: ${left < 0 ? 'no' : left} days of new ${lang} questions left after today; `
+            + 'the page repeats the file from its first question when they run out');
+    }
+    let tallies: { picks: daily.Picks, before: daily.Picks, friend: daily.FriendCount | null } = null;
+    try {
+        tallies = await dailyStore().readTallies(lang, list, today, daily.cleanCountDay(req.query.d, now), daily.cleanLinkId(req.query.f));
+    } catch (e) {
+        // The question still goes out, without numbers, and is not kept by the cache.
+        console.error('daily: the tallies did not load', e);
+    }
+    res.set('Cache-Control', tallies ? `public, max-age=0, s-maxage=${daily.cacheSeconds(now, !!tallies.friend)}` : 'no-store');
+    return res.status(200).send(daily.puzzleBody(list, now, tallies && tallies.picks, tallies && tallies.before, tallies && tallies.friend));
+}));
+
 exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
     cors(req, res, async () => {
         const locale = req.body.locale;
@@ -72,8 +143,10 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const serverStart = req.body.serverStart === true;
             // The phone can show the staged reveal: the game is in that 50/50 test (see big-reveal.ts).
             const stagedReveal = req.body.stagedReveal === true;
+            // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
+            const aboutUs = req.body.aboutUs === true;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal,
+                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
             });
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
@@ -92,7 +165,7 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
 
         try {
             const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
-                req.body.stagedReveal === true);
+                req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(forked);
         } catch (e) {
             caught(e);
@@ -105,7 +178,7 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
 exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => {
     cors(req, res, async () => {
         try {
-            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid));
+            const crew = await createCrew(req.body.pin, req.body.name, cleanUid(req.body.uid), req.body.auto === true);
             return res.status(200).send(crew);
         } catch (e) {
             caught(e);
@@ -119,8 +192,21 @@ exports.crewRematch = functions.https.onRequest(http('crewRematch', (req, res) =
     cors(req, res, async () => {
         try {
             const result = await crewRematch(req.body.crew, cleanUid(req.body.uid), cleanHostKey(req.body.hostKey),
-                req.body.serverStart === true, req.body.stagedReveal === true);
+                req.body.serverStart === true, req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(result);
+        } catch (e) {
+            caught(e);
+            return res.status(400).send(errorBody(e));
+        }
+    });
+}, 'crew'));
+
+// A crew's game night: set its date, or say "I'm in" (or "Can't make it") by nickname.
+// Written here because phones may not write a crew (see controllers/crew-night.ts).
+exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await crewNight(req.body));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));
@@ -146,6 +232,19 @@ exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
     cors(req, res, async () => {
         try {
             return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
+        } catch (e) {
+            caught(e);
+            return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
+        }
+    });
+}, 'game'));
+
+// The host's computer becomes the big screen: frees the host's seat there, so the host joins from a
+// phone. Only for the browser with the game's host key, in the lobby: see hostToBigScreen in start.ts.
+exports.hostToBigScreen = functions.https.onRequest(http('hostToBigScreen', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await hostToBigScreen(req.body.pin, cleanHostKey(req.body.hostKey)));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
@@ -230,18 +329,58 @@ exports.onJoinGame = functions.https.onRequest(http('onJoinGame', (req, res) => 
     });
 }, 'game'));
 
-// One page view from the visit beacon (game/src/index.html), sent to /_v on the game's own site
+// One row from the visit beacon (game/src/index.html), sent to /_v on the game's own site
 // (a Hosting rewrite, so blockers of third-party beacons let it through) with sendBeacon as text/plain,
-// so no CORS preflight. Logged as one line starting "visit "; always answers 204.
-exports.visit = functions.https.onRequest(http('visit', (req, res) => {
+// so no CORS preflight. Written to BigQuery `visits` and logged as one line starting "visit ".
+// Reads no IP and stores no user agent. Always answers 204, whatever BigQuery says.
+// At most VISIT_MAX_INSTANCES copies run at once (controllers/visit.ts says why).
+exports.visit = functions.runWith({ maxInstances: VISIT_MAX_INSTANCES }).https.onRequest(http('visit', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.method === 'POST') {
-        const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
-        if (row) {
-            console.log('visit ' + JSON.stringify(row));
+        try {
+            const row = cleanVisit(req.rawBody ? req.rawBody.toString('utf8') : req.body, req.headers['user-agent']);
+            if (row) {
+                console.log('visit ' + JSON.stringify(row));
+                await analytics.onVisit(visitRecord(row));
+            }
+        } catch (e) {
+            console.error('visit failed', e && e.message);
         }
     }
     res.status(204).send('');
+}));
+
+// A join link, /join-game/<PIN> or /he/join-game/<PIN> (a Hosting rewrite in firebase.json): the site's
+// own page, with link-preview tags for this game ("Dana invited you to play Bullshit", in the game's
+// language). Every visitor gets the same page, so a browser runs the app as on any other path and the
+// CDN may cache it. See controllers/join-preview.ts and DEPLOYING.md, "Join link previews".
+exports.joinPreview = functions.runWith({ timeoutSeconds: 15 }).https.onRequest(http('joinPreview', async (req, res) => {
+    const started = Date.now();
+    const project = process.env.GCLOUD_PROJECT || (process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG).projectId : '') || '';
+    const url = String(req.originalUrl || req.url || '/');
+    const q = url.indexOf('?');
+    const path = q >= 0 ? url.slice(0, q) : url;
+    const query = q >= 0 ? url.slice(q) : '';
+    const answer = await joinPreviewPage(path, query, req.headers, {
+        readGame: readPreviewGame,
+        fetcher: (u, init) => fetch(u, init) as any,
+        project,
+        emulator: process.env.FUNCTIONS_EMULATOR === 'true',
+        // A GET is no request the site sends, so http() reports nothing by itself: report the faults
+        // here. A slow database read is only logged (the link got the generic preview).
+        fault: (e) => {
+            if (e && e.code === 'SLOW') {
+                console.log('joinPreview slow read');
+                return;
+            }
+            console.warn('joinPreview fault', e && e.message ? e.message : String(e));
+            caught(e, { unasked: false });
+        },
+    });
+    // One short line per answer, no nickname: how often a link got a named preview, and how long it took.
+    console.log('joinPreview ' + JSON.stringify({ kind: answer.kind, ms: Date.now() - started }));
+    Object.keys(answer.headers).forEach(h => res.set(h, answer.headers[h]));
+    res.status(answer.status).send(answer.body);
 }));
 
 // One game night send from a crew page (or another counted share): a row in BigQuery `shares`.
@@ -267,7 +406,7 @@ exports.tick = functions.database.ref('games/{pin}/tick').onWrite(watched('tick'
 }));
 
 // Ends each timed phase on the server at its deadline, so a game keeps going when every phone sleeps.
-// The longest phase (a big-screen reveal with 8 players) is under 50 seconds, hence the longer timeout.
+// The longest phase (a big-screen reveal with 12 players) is about 70 seconds, hence the longer timeout.
 exports.phaseTimer = functions
     .runWith({ timeoutSeconds: 120, memory: '128MB' })
     .database.ref('games/{pin}/state').onWrite(watched('phaseTimer', (change, context) => {

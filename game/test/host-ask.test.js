@@ -242,6 +242,45 @@ test('a candle tomorrow: the reminder is tomorrow evening, and opens a Hanukkah 
     assert.strictEqual(h.reminderEvent(start, 'after-game', 'en').url, 'https://bullshit.wtf/create-game?via=after-game-remind&lang=en');
 });
 
+test('after midnight it is still the same candle evening, until five in the morning', () => {
+    // 00:40 on 7 December is the night of 6 December for the family: another candle tomorrow,
+    // saved for the evening of 7 December, not 8 December.
+    const now = new Date(2026, 11, 7, 0, 40);
+    assert.strictEqual(h.hanukkahEvening(now, 'hanukkah'), 'next');
+    const start = h.reminderNight(now, 'en', 'next');
+    assert.strictEqual(n.dateValue(start), '2026-12-07');
+    assert.strictEqual(n.timeValue(start), '21:00');
+    // 01:30 after the eve: still the eve, and the first candle is tonight's evening.
+    const eve = new Date(2026, 11, 4, 1, 30);
+    assert.strictEqual(h.hanukkahEvening(eve, 'hanukkah'), 'first');
+    assert.strictEqual(n.dateValue(h.reminderNight(eve, 'he', 'first')), '2026-12-04');
+    // 02:00 after the seventh candle: tomorrow (the 11th) is the eighth.
+    const seventh = new Date(2026, 11, 11, 2, 0);
+    assert.strictEqual(h.hanukkahEvening(seventh, 'hanukkah'), 'next');
+    assert.strictEqual(n.dateValue(h.reminderNight(seventh, 'en', 'next')), '2026-12-11');
+    // 03:00 after the eighth candle: still the eighth evening.
+    assert.strictEqual(h.hanukkahEvening(new Date(2026, 11, 12, 3, 0), 'hanukkah'), 'last');
+    // From five in the morning the day is the new one.
+    assert.strictEqual(h.hanukkahEvening(new Date(2026, 11, 12, 5, 0), 'hanukkah'), null);
+    assert.strictEqual(h.hanukkahEvening(new Date(2026, 11, 3, 4, 59), 'hanukkah'), null);
+    assert.strictEqual(h.hanukkahEvening(new Date(2026, 11, 3, 5, 0), 'hanukkah'), 'first');
+});
+
+test('the eighth candle: the reminder is the coming Friday, a plain game, not a Hanukkah one', () => {
+    for (const now of [at('2026-12-11', 22), new Date(2026, 11, 12, 0, 40)]) {
+        const evening = h.hanukkahEvening(now, 'hanukkah');
+        assert.strictEqual(evening, 'last');
+        const start = h.reminderNight(now, 'he', evening);
+        assert.strictEqual(n.dateValue(start), '2026-12-18');
+        const ev = h.reminderEvent(start, 'after-game', 'he', 'hanukkah', evening);
+        assert.strictEqual(ev.url, 'https://bullshit.wtf/create-game?via=after-game-remind&lang=he');
+        assert.strictEqual(ev.title, h.hostAskStrings.he.eventTitle);
+    }
+    // Inside Hanukkah the reminder keeps the pack, up to the eighth candle itself.
+    const ok = h.reminderEvent(new Date(2026, 11, 11, 21), 'after-game', 'en', 'hanukkah', 'next');
+    assert.ok(ok.url.endsWith('&pack=hanukkah'));
+});
+
 test('the candle dates fall inside the pack season, first and eighth candles on Fridays', () => {
     const model = fs.readFileSync(path.join(__dirname, '..', '..', 'game-model.ts'), 'utf8');
     const m = /hanukkah:[\s\S]*?season: \{ from: '([\d-]+)', to: '([\d-]+)' \}/.exec(model);

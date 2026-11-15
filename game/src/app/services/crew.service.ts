@@ -1,9 +1,25 @@
 import { Injectable } from '@angular/core';
 import { StorageService } from './storage.service';
+import { tonightTime } from '../pages/crew/crew-night';
 
 const crewsKey = 'BS_CREWS';
 const SITE = 'https://bullshit.wtf';
 const MAX_REMEMBERED = 12;
+
+/** A remembered crew whose game night is today: the home page shows it first. */
+export interface TonightCrew {
+    id: string;
+    name: string;
+    /** "21:00" */
+    time: string;
+}
+
+/** As much of a stored crew as the home page's line needs. */
+interface CrewWithNight {
+    name?: string;
+    lastPlayed?: number;
+    night?: { time: number };
+}
 
 /** A crew this browser played in: shown under "Your crews" on the home page. */
 export interface RememberedCrew {
@@ -65,6 +81,24 @@ export class CrewService {
         try {
             this.storageService.setItem(crewsKey, JSON.stringify(crews));
         } catch (e) { }
+    }
+
+    /**
+     * The newest remembered crew, when its game night is today (or on right now). One crew read, and
+     * only for a browser that remembers a crew; a read that fails is no night.
+     */
+    async tonight(read: (id: string) => Promise<CrewWithNight>, now = Date.now()): Promise<TonightCrew> {
+        const newest = this.list()[0];
+        if (!newest) {
+            return null;
+        }
+        try {
+            const crew = await read(newest.id);
+            const time = crew && crew.night ? tonightTime(crew.night.time, now, crew.lastPlayed) : null;
+            return time ? { id: newest.id, name: crew.name || newest.name, time } : null;
+        } catch (e) {
+            return null;
+        }
     }
 
     crewUrl(id: string, locale: string) {
