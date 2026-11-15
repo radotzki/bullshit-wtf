@@ -20,16 +20,31 @@
         "function": "joinPreview"
       },
       {
-        "source": "/he",
+        "regex": "^/he/?$",
         "destination": "/he.html"
       },
       {
-        "source": "/he/**",
+        "regex": "^/he/(join-game/?|c/[^/]+/?)$",
         "destination": "/he.html"
       },
       {
-        "source": "**",
+        "regex": "^/(m|d|create-game|join-game|present-game|learn)/?$",
         "destination": "/index.html"
+      },
+      {
+        "regex": "^/(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/]+/?$",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "regex": "^/(m|d|create-game|join-game|present-game|learn|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step|he/join-game|he/c)(/.*)?$",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
       }
     ]
   },
