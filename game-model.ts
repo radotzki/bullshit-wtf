@@ -106,6 +106,9 @@ export interface GameScheme {
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
     // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
+    // INVITE ANOTHER GROUP: the table each seat of this finished game made, so a second call from the
+    // same seat (a reload, a second tap) gets the same table and link. Server only (createTable).
+    tables?: { [pid: string]: string };
     // The round-1 lie helper is on for this game. Set when the game is made: every game since
     // 13 November 2026, half of them in the 50/50 test before that.
     coach?: boolean;
@@ -559,7 +562,16 @@ export interface Crew {
     test?: string;
     // The crew's next game night and who said "I'm in" (see CrewNight). Written by the crewNight function.
     night?: CrewNight;
+    // The campaign tag every game of this crew carries (opened_games.campaign). 'table' for a crew a
+    // guest made to invite another group (createTable in controllers/crew.ts); a test tag wins over it.
+    campaign?: string;
+    // A guest's table: the pin of the finished game it was made from, so a table that brought new
+    // people can be told from one where the same group played again.
+    from?: string;
 }
+
+/** The campaign tag of a guest's table (see Crew.campaign), and of the games its lobby button opens. */
+export const TABLE_CAMPAIGN = 'table';
 
 /**
  * A crew's next game night: when it is, who called it, and who said "I'm in".
@@ -621,7 +633,14 @@ export function applyCrewGame(crew: Crew, pin: string, players: CrewGamePlayer[]
 
     const memberCount = Object.keys(crew.members).length;
     const matched = players.filter(p => !!crew.members[crewMemberKey(p.nickname)]).length;
-    const counted = players.length >= 2 && matched >= Math.ceil(memberCount / 2);
+    // A guest's table (one member, nothing played yet: see createTable) counts its first game whoever
+    // sits down: that game is the other group showing up. A saved crew always has two members or more.
+    const firstOfTable = memberCount === 1 && !crew.gameCount;
+    const counted = players.length >= 2 && (firstOfTable || matched >= Math.ceil(memberCount / 2));
+    if (counted && firstOfTable && !matched) {
+        // The guest played under another name: the name the table was made with has no game, so it goes.
+        crew.members = {};
+    }
     const record: CrewGameRecord = { time, players: players.length, counted };
 
     if (counted) {
@@ -710,11 +729,15 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
  * the room has seen) into the normal questions. Pack questions never appear in other games.
  * `season` (dates in Israel, inclusive) is when the create page offers the pack switched on by
  * default and crew rematches use it; outside it the pack is still playable by link (?pack=<id>).
+ * `locales`, when set, are the only game languages the pack has questions in: a game in another
+ * language is never offered the pack and never gets it. `icon` stands before its name (default 🕎).
  */
 export interface QuestionPack {
     perGame: number;
     season: { from: string; to: string };
     label: { en: string; he: string };
+    locales?: string[];
+    icon?: string;
 }
 
 export const questionPacks: { [id: string]: QuestionPack } = {
@@ -723,19 +746,47 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         season: { from: '2026-12-01', to: '2026-12-13' },
         label: { en: 'Hanukkah questions', he: 'שאלות חנוכה' },
     },
+    // US Thanksgiving is Thursday 26 November 2026. English questions only
+    // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
+    // The last day is a day late on purpose: the season goes by the date in Israel, which is ahead
+    // of every American evening. Next year's days go here (2027: Thursday 25 November).
+    thanksgiving: {
+        perGame: 3,
+        season: { from: '2026-11-20', to: '2026-11-30' },
+        label: { en: 'Thanksgiving questions', he: 'שאלות חג ההודיה (באנגלית)' },
+        locales: ['en'],
+        icon: '🦃',
+    },
 };
 
 export function isPack(id: any): boolean {
     return typeof id === 'string' && Object.prototype.hasOwnProperty.call(questionPacks, id);
 }
 
-/** The pack whose season includes `now` (by the date in Israel), if any. */
-export function seasonalPack(now: number = Date.now()): string | undefined {
+/** Whether `id` is a pack that a game in `locale` can use (a pack without `locales` fits every game). */
+export function packFits(id: any, locale: any): boolean {
+    if (!isPack(id)) {
+        return false;
+    }
+    const locales = questionPacks[id].locales;
+    return !locales || locales.indexOf(locale) >= 0;
+}
+
+/** The pack's icon, shown before its name on the create page and in the lobby. */
+export function packIcon(id: any): string {
+    return (isPack(id) && questionPacks[id].icon) || '🕎';
+}
+
+/**
+ * The pack whose season includes `now` (by the date in Israel), if any. With a `locale`, only a
+ * pack that a game in that language can use.
+ */
+export function seasonalPack(now: number = Date.now(), locale?: string): string | undefined {
     // Israel is UTC+2 in winter; close enough for a day-level season.
     const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
     return Object.keys(questionPacks).find(id => {
         const s = questionPacks[id].season;
-        return day >= s.from && day <= s.to;
+        return day >= s.from && day <= s.to && (locale === undefined || packFits(id, locale));
     });
 }
 

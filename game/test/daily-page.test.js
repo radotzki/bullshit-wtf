@@ -55,7 +55,7 @@ test('before the script runs the page already says what it is, and says so witho
 test('the page\'s scripts are whole and cannot be cut short by what they hold', () => {
     for (const page of [html.en, html.he]) {
         const scripts = [...page.slice(page.indexOf('<body')).matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-        assert.strictEqual(scripts.length, 4, 'the words, the shared checks, the rules, the page script');
+        assert.strictEqual(scripts.length, 6, 'the words, the shared checks, the rules, the round\'s rules, the round\'s page script, the page script');
         scripts.forEach(js => assert.doesNotThrow(() => new vm.Script(js), 'each parses'));
         assert.ok(!/<\/script/i.test(scripts.join('')) && !scripts.join('').includes('<!--'));
     }
@@ -64,11 +64,13 @@ test('the page\'s scripts are whole and cannot be cut short by what they hold', 
     sandbox.window = sandbox;
     sandbox.globalThis = sandbox;
     vm.createContext(sandbox);
-    [...html.he.slice(html.he.indexOf('<body')).matchAll(/<script>([\s\S]*?)<\/script>/g)].slice(0, 3).forEach(m => vm.runInContext(m[1], sandbox));
+    [...html.he.slice(html.he.indexOf('<body')).matchAll(/<script>([\s\S]*?)<\/script>/g)].slice(0, 5).forEach(m => vm.runInContext(m[1], sandbox));
     assert.strictEqual(sandbox.BSDaily.s.lang, 'he');
     assert.strictEqual(sandbox.BSDaily.s.foolSend, he.foolSend);
     assert.strictEqual(typeof sandbox.BSDailyShared.isSameAnswer, 'function');
     assert.strictEqual(sandbox.BSDailyShared.nameFlag('שלום'), null);
+    assert.strictEqual(typeof sandbox.BSDailyRound, 'function', 'the round\'s page script waits for the page script');
+    assert.strictEqual(sandbox.BSDailyRoundCore.roundUrl('https://bullshit.wtf', he, 12, 'k3x9q2ab7m', ''), 'https://bullshit.wtf/he/daily?n=12&g=k3x9q2ab7m');
     assert.strictEqual(JSON.stringify(sandbox.BSDailyCore.decodeLie(sandbox.BSDailyCore.encodeLie('דנה', 'לשיר'))), JSON.stringify({ name: 'דנה', lie: 'לשיר' }));
 });
 
