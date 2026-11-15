@@ -348,7 +348,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-30": {
-    "questionText": "The Maccabees rededicated the Temple in about $blank$",
+    "questionText": "The Maccabees took back and purified the Temple in about $blank$",
     "realAnswer": "164 bce",
     "fakeAnswers": [
       "70 ce",
@@ -528,7 +528,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-en-45": {
-    "questionText": "King Antiochus IV dedicated the Temple in Jerusalem to the Greek god $blank$",
+    "questionText": "King Antiochus IV made the Temple in Jerusalem into a shrine to the Greek god $blank$",
     "realAnswer": "zeus",
     "fakeAnswers": [
       "poseidon",
