@@ -10,7 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
-import { startGame, hostHere } from './controllers/start';
+import { startGame, hostHere, hostToBigScreen } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, crewRematch } from './controllers/crew';
 import { crewNight } from './controllers/crew-night';
@@ -59,6 +59,75 @@ exports.time = functions.https.onRequest(http('time', (req, res) => {
     cors(req, res, () => {
         res.send({ now: Date.now() });
     });
+}));
+
+// The daily puzzle (/daily, /he/daily), reached on the site's own address as /_daily (a Hosting
+// rewrite, like the visit beacon). See controllers/daily.ts for what it answers and keeps.
+//   GET  ?lang=he               today's question and its tallies; Hosting's cache answers most visitors
+//   GET  ?lang=he&d=<day>&f=<id>  the same, with how many friends a sender's lie fooled
+//   POST {lang, day, m, k, f, src, uid}  (sendBeacon, text/plain): one pick or one press. Answers 204.
+import * as daily from './controllers/daily';
+
+let dailyBank: daily.DailyBank = null;
+const dailyWarned: { [lang: string]: string } = {};
+function dailyQuestions(): daily.DailyBank {
+    if (!dailyBank) {
+        try {
+            // On the emulators only, a play-test brings a file of its own (.github/smoke/emulator-daily.js).
+            const own = process.env.FUNCTIONS_EMULATOR === 'true' && process.env.DAILY_QUESTIONS_FILE;
+            dailyBank = daily.loadDaily(require(own || '../data/daily-questions.json'));
+        } catch (e) {
+            console.error('daily: the question file did not load', e);
+            return { en: [], he: [] };
+        }
+    }
+    return dailyBank;
+}
+// The tallies' reads and writes, loaded at the first request (it opens the database).
+const dailyStore = (): typeof import('./controllers/daily-store') => require('./controllers/daily-store');
+
+exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
+    const bank = dailyQuestions();
+    const now = Date.now();
+    if (req.method === 'POST') {
+        const raw = req.rawBody ? req.rawBody.toString('utf8') : req.body;
+        const post = typeof raw === 'string' && raw.length > 600 ? null : daily.cleanPost(raw, bank, now);
+        if (post) {
+            try {
+                await dailyStore().addPicks(post);
+                await analytics.onShare(post.row);
+            } catch (e) {
+                console.error('daily: a post was not kept', e);
+            }
+        }
+        return res.status(204).send('');
+    }
+    if (req.method !== 'GET') {
+        return res.status(405).send('');
+    }
+    const lang = daily.cleanLang(req.query.lang);
+    const list = bank[lang];
+    const today = daily.israelDay(now);
+    if (!daily.questionFor(list, today)) {
+        res.set('Cache-Control', 'no-store');
+        return res.status(503).send({ error: 'no-question' });
+    }
+    // Sentry hears once a day (per running copy) that the questions are running out.
+    const left = daily.daysLeft(list, today);
+    if (left < daily.WARN_DAYS_LEFT && dailyWarned[lang] !== today) {
+        dailyWarned[lang] = today;
+        console.error(`daily: ${left < 0 ? 'no' : left} days of new ${lang} questions left after today; `
+            + 'the page repeats the file from its first question when they run out');
+    }
+    let tallies: { picks: daily.Picks, before: daily.Picks, friend: daily.FriendCount | null } = null;
+    try {
+        tallies = await dailyStore().readTallies(lang, list, today, daily.cleanCountDay(req.query.d, now), daily.cleanLinkId(req.query.f));
+    } catch (e) {
+        // The question still goes out, without numbers, and is not kept by the cache.
+        console.error('daily: the tallies did not load', e);
+    }
+    res.set('Cache-Control', tallies ? `public, max-age=0, s-maxage=${daily.cacheSeconds(now, !!tallies.friend)}` : 'no-store');
+    return res.status(200).send(daily.puzzleBody(list, now, tallies && tallies.picks, tallies && tallies.before, tallies && tallies.friend));
 }));
 
 exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
@@ -163,6 +232,19 @@ exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
     cors(req, res, async () => {
         try {
             return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
+        } catch (e) {
+            caught(e);
+            return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
+        }
+    });
+}, 'game'));
+
+// The host's computer becomes the big screen: frees the host's seat there, so the host joins from a
+// phone. Only for the browser with the game's host key, in the lobby: see hostToBigScreen in start.ts.
+exports.hostToBigScreen = functions.https.onRequest(http('hostToBigScreen', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            return res.status(200).send(await hostToBigScreen(req.body.pin, cleanHostKey(req.body.hostKey)));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));

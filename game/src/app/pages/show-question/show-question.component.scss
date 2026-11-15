@@ -37,6 +37,16 @@
         opacity: 0.9;
     }
 
+    // A bank question in place of an About question whose named player sent no truth: why it changed.
+    .about-missed {
+        font-weight: 600;
+        opacity: 1;
+    }
+
+    .lie-hint.about-missed + .lie-hint {
+        margin-top: 0;
+    }
+
     .give-me-a-lie {
         text-decoration: none;
         font-size: 0.9rem;

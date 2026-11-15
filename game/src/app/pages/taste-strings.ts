@@ -18,6 +18,8 @@ export interface TasteStrings {
     askText: string;
     invite: string;
     inviteHint: string;
+    /** Under the invitation: the link to the daily puzzle (/daily, a page outside the app). */
+    daily: string;
 }
 
 const en: TasteStrings = {
@@ -29,6 +31,7 @@ const en: TasteStrings = {
     askText: 'That was half the game. With friends, everyone writes a lie, and you score each time someone falls for yours.',
     invite: 'INVITE FRIENDS',
     inviteHint: 'Opens a new game with a link to send',
+    daily: 'One question a day: today\'s Bullshit',
 };
 
 const he: TasteStrings = {
@@ -40,6 +43,7 @@ const he: TasteStrings = {
     askText: 'זה היה רק חצי מהמשחק. עם חברים כל אחד כותב שקר, ומקבלים נקודות על כל מי שנופל בו.',
     invite: 'הזמנת חברים',
     inviteHint: 'נפתח משחק חדש עם קישור לשליחה',
+    daily: 'שאלה אחת ביום: הבולשיט היומי',
 };
 
 export function tasteStrings(locale: string): TasteStrings {

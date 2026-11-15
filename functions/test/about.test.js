@@ -360,6 +360,23 @@ test('the named player sends nothing: the bank question is played in its place, 
     assert.strictEqual(g.answers, undefined, 'the lies about the player are dropped');
     assert.strictEqual(g.aboutQs.q1.result, 'fallback');
     assert.strictEqual(g.questionIndex, 1, 'the same place in the game');
+    assert.deepStrictEqual(g.state.aboutMissed, { pid: named }, 'every screen can say whose truth did not come');
+    assert.strictEqual(model.aboutMissedOf(g.state), named);
+    for (const p of pids(pin)) await answer(pin, p, `${p} bank lie`);
+    assert.strictEqual(state(pin), S.ShowAnswers);
+    assert.strictEqual(model.aboutMissedOf(game(pin).state), null, 'only the writing step of that question says it');
+    await playToEnd(pin);
+});
+
+test('a played About question and a bank question carry no missed truth', async () => {
+    const pin = newGame(3);
+    await next(pin);
+    assert.strictEqual(model.aboutMissedOf(game(pin).state), null);
+    await toQuestion(pin, 1);
+    const named = model.aboutOf(game(pin).state).pid;
+    for (const p of pids(pin)) await answer(pin, p, p === named ? 'the truth' : `${p} lie`);
+    assert.strictEqual(state(pin), S.ShowAnswers);
+    assert.strictEqual(model.aboutMissedOf(game(pin).state), null);
     await playToEnd(pin);
 });
 

@@ -44,9 +44,12 @@ export const nextWeekStrings = {
         done: 'DONE',
         failed: 'Could not set it up. Close this and try again.',
         calendarTitle: (crew: string) => `Bullshit game night: ${crew}`,
-        text: (winner: boolean, when: string, leader: string) =>
-            `${winner ? 'Come and take my title.' : 'I want a rematch.'} Bullshit, same time next week: `
+        text: (winner: boolean, when: string, leader: string, changed?: boolean) =>
+            `${winner ? 'Come and take my title.' : 'I want a rematch.'} `
+            + `${changed ? 'Bullshit game night' : 'Bullshit, same time next week'}: `
             + `${when}.${leader} Who's in? Tap here:`,
+        /** The leader line of the message: the crew page's own line in English. */
+        leads: null as ((name: string, wins: number, next: number | null) => string) | null,
     },
     he: {
         revenge: 'נקמה בשבוע הבא',
@@ -68,9 +71,14 @@ export const nextWeekStrings = {
         done: 'סיום',
         failed: 'משהו השתבש. סגרו ונסו שוב.',
         calendarTitle: (crew: string) => `ערב בולשיט: ${crew}`,
-        text: (winner: boolean, when: string, leader: string) =>
-            `${winner ? 'בואו לקחת לי את התואר.' : 'מגיע לי משחק חוזר.'} בולשיט, אותה שעה בשבוע הבא: `
+        text: (winner: boolean, when: string, leader: string, changed?: boolean) =>
+            `${winner ? 'בואו לקחת לי את התואר.' : 'מגיע לי משחק חוזר.'} `
+            + `${changed ? 'ערב בולשיט' : 'בולשיט, אותה שעה בשבוע הבא'}: `
             + `${when}.${leader} מי בפנים? לוחצים כאן:`,
+        /** "יוסי בראש, 2–0": nobody types "מוביל/ה" in a message to friends. */
+        leads: ((name: string, wins: number, next: number | null) =>
+            next === null ? `${name} בראש עם ${wins}` : `${name} בראש, ${wins}–${next}`) as
+            ((name: string, wins: number, next: number | null) => string) | null,
     },
 };
 
@@ -129,11 +137,55 @@ export interface NextWeekMessage {
     /** The crew's leader line with tonight's games counted, or '' when nobody has won yet. */
     leader: string;
     locale: string;
+    /**
+     * The date the sheet offered first ("same time next week"). Another date gets "Bullshit game
+     * night: ..." in place of "same time next week", which it is not.
+     */
+    offered?: Date;
 }
 
 /** The text that goes into the group's chat; the crew link follows on its own line. */
 export function nextWeekText(m: NextWeekMessage): string {
-    return nextWeekWords(m.locale).text(!!m.winner, nightLabel(m.when, m.locale), leaderSentence(m.leader));
+    const changed = !!m.offered && m.offered.getTime() !== m.when.getTime();
+    return nextWeekWords(m.locale).text(!!m.winner, nightLabel(m.when, m.locale), leaderSentence(m.leader), changed);
+}
+
+/** A standings row, as much of it as the leader line needs. */
+export interface LeaderRow {
+    nickname: string;
+    wins: number;
+}
+
+/**
+ * The leader line for the message, or '' while nobody has won. A tie, and every English line, is the
+ * crew page's own line (`crewLine`); a Hebrew leader reads "יוסי בראש, 2–0" or "יוסי בראש עם 2".
+ */
+export function messageLeader(standings: LeaderRow[], crewLine: string, locale: string): string {
+    const first = standings && standings[0];
+    const second = standings && standings[1];
+    if (!first || !(first.wins > 0)) {
+        return '';
+    }
+    const leads = nextWeekWords(locale).leads;
+    if (!leads || (second && second.wins === first.wins)) {
+        return crewLine || '';
+    }
+    return leads(first.nickname, first.wins, second ? second.wins : null);
+}
+
+/** The big screen's line: the date, once a phone has set one that is still ahead; until then, the ask. */
+export function bigScreenLine(nightTime: any, now: Date, locale: string): string {
+    const t = nextWeekWords(locale);
+    return nightAhead(nightTime, now) ? t.next(nightLabel(new Date(nightTime), locale)) : t.bigScreen;
+}
+
+/**
+ * While a sheet is open, did another phone set a night? Then this sheet shows that night and I'M IN
+ * in place of the send buttons. `seen` is the night the crew had when the sheet opened (the one
+ * this phone may change), `sent` the night this phone sent itself.
+ */
+export function nightTaken(nightTime: any, seen: number | null, sent: number | null, now: Date): boolean {
+    return nightAhead(nightTime, now) && nightTime !== seen && nightTime !== sent;
 }
 
 /** What a phone on the final screen shows in place of the save-crew offer. */

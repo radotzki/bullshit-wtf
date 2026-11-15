@@ -355,7 +355,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 21 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 22 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh + hostToBigScreen), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -373,6 +373,18 @@ made with a host key only for the phone that brings that key, big screen or not 
 shows the lobby; it starts only games with no host key). Games made by this
 client carry `serverStart`, and for them the server ignores START ticks and the rules refuse writing
 `tick` in the lobby. Games made by an older client keep starting by tick.
+
+The host's computer as the big screen: a host who made the game on a computer has a button in the lobby
+that calls `hostToBigScreen` with the host key. In one write the server removes the seat marked as the
+host, sets `presenter`, and sets `games/$pin/hasHost` to `'screen'` (it is `true` in every other hosted
+game). The browser keeps the host key and is the big screen from then on: it shows START and reports in
+with `hostHere`. The host joins from a phone as an ordinary player; no phone is handed the key. While
+`hasHost` is `'screen'`, startGame waits for no host row, so the 90 s "host never joined" rule does not
+open START to everyone; only a big screen that has not reported in for 5 minutes does. Phones read
+`hasHost` live and show "The game starts from the big screen". No rules change: `hasHost` and
+`presenter` were readable already. A page from before this release reads `'screen'` as "no host key" and
+shows "Waiting for the host to join"; the server still refuses its START. Each press is one row in
+`shares`: content_type `lobby-help`, method `big-screen`, the PIN in `crew_id`.
 
 Host gone: in a `serverStart` game the host's lobby page calls `hostHere` every 20 s with its key, and
 the server stores its own time in `games/$pin/hostSeen` (the host's join and Replay set it too). Once a
@@ -745,7 +757,7 @@ puts the questions of the repository's reviewed question files there itself, in 
   which would replace the whole bank. Sending the same file again changes nothing, so the step
   runs on every release. A question edited in the file is changed live by the next release; one
   removed from the file stays live (retire it in `retired-questions.ts`).
-  **Edit these 34 questions in the file, never in the Firebase console:** each release rewrites every
+  **Edit these 149 questions in the file, never in the Firebase console:** each release rewrites every
   pack question in full from the file, so a fix made in the console is undone by the next release
   unless the same fix is in the file.
   The run's summary says how the step went. Its verdict starts "A whole release ... and the new
@@ -1278,6 +1290,95 @@ the same `creator_uid`, and `parent_pin` the taste when it came from INVITE FRIE
 end per day (a pick on the fifth question), against 2 of 10 games alone in the week before; and
 the browsers that created a game of two or more within 7 days of their taste, against 1 of 8.
 
+## Lone-host help (a 50/50 test in the lobby)
+
+Why: from 6 to 13 November 2026, 21 of 69 browsers that opened a lobby stayed alone and left, 13 of
+them on a computer. A computer host got a table 36% of the time, a phone host 74%, and none of the
+lone computer hosts pressed an invite button. Each lobby that fills is a new group.
+
+**What the new half shows**, on the host's own page, while the lobby holds one or two players:
+
+- **On a phone** the invite stays on the page with one guest in (today it folds into INVITE FRIENDS),
+  with COPY LINK beside WhatsApp and the share sheet. With a guest in, the QR code is small (120 px),
+  and left out on a screen under 640 px high, so the players show.
+- **On a computer** the invite is a card: a big QR code, "Friends join on their phones", the short
+  link to read out (`bullshit.wtf/join-game/<PIN>`), COPY LINK first, then WhatsApp, and two lines:
+  "On a call? Paste the link in the chat." and "In one room? Turn this screen so everyone can scan it."
+  With a guest in the card shrinks, and the two players are drawn with the picture beside the name.
+- One light line: "Best with 4 or more players." (with one guest: "Two can play, but it's best with
+  4 or more. Invite one or two more."). START is never held back: it is in the header from the
+  second player on, as before, and a host alone keeps "Try 5 quick questions alone".
+
+From the third player on, both halves show the lobby as it was. Guests and the big screen never see
+the help, and a lobby with a big screen is not in the test. The other half is today's lobby.
+The host's page asks about the big screen once, as it loads: a big screen opened after that leaves
+the lobby in the test, and the help on the page, until the host reloads. It is the same in both halves.
+
+**Which half.** One bit of a hash of the PIN, worked out on the page
+(`game/src/app/pages/game-staging/lone-host.ts`, `loneHostHalf`), the way the staged reveal's half
+follows the PIN. In BigQuery, with the PIN in column `pin`:
+`MOD(TO_CODE_POINTS(SHA256(CONCAT('lone-host:', UPPER(pin))))[OFFSET(0)], 2) = 1` is the new half.
+A phone or a computer: a phone or tablet by its user agent, or any window under 700 px, is a phone.
+
+**A tester's switch.** In the browser console, `localStorage.BS_LONE_HOST = 'new'` (or `'classic'`)
+puts that browser's lobbies in a half. A test game (`?via=test`) shows its half but sends no row.
+
+**What is counted.** Rows in `shares` with `content_type = 'lobby-help'`. `shares` has no PIN column,
+so these rows carry the lobby's PIN, in capitals, in `crew_id`. No new column and no database rule.
+
+| `method` | When |
+|---|---|
+| `seen-new-phone`, `seen-new-computer` | the lobby first held one or two players and showed the help (once per lobby and browser) |
+| `seen-classic-phone`, `seen-classic-computer` | the same moment in the other half |
+| `whatsapp`, `native`, `copy` | the host's invite sends from this lobby, in either half, with any number of players in (each is an `invite` row too, as before) |
+
+**How to read it.** Lobbies that reached 3 players, and hosts who pressed an invite, by half and device:
+
+```sql
+WITH seen AS (
+  SELECT crew_id AS pin, MIN(time) AS seen_at, ANY_VALUE(uid) AS host_uid,
+    ANY_VALUE(REGEXP_EXTRACT(method, r'^seen-(new|classic)-')) AS half,
+    ANY_VALUE(REGEXP_EXTRACT(method, r'-(phone|computer)$')) AS device
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'lobby-help' AND method LIKE 'seen-%' AND time >= TIMESTAMP('2026-11-14')
+  GROUP BY crew_id),
+seats AS (
+  SELECT UPPER(TRIM(pin)) AS pin, COUNT(DISTINCT uid) AS players,
+    COUNTIF(via IN ('replay', 'crew')) AS carried, COUNTIF(via = 'test') AS test_joins
+  FROM `bullshit-wtf-prod.analytics.users`
+  WHERE time >= TIMESTAMP('2026-11-14') AND pin IS NOT NULL
+  GROUP BY 1),
+sent AS (
+  SELECT crew_id AS pin, COUNT(*) AS sends
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'lobby-help' AND method IN ('whatsapp', 'native', 'copy') AND time >= TIMESTAMP('2026-11-14')
+  GROUP BY 1)
+SELECT half, device, COUNT(*) AS lobbies,
+  COUNTIF(IFNULL(sends, 0) > 0) AS pressed_invite,
+  COUNTIF(players >= 2) AS got_a_guest,
+  COUNTIF(players >= 3) AS reached_3,
+  ROUND(SAFE_DIVIDE(COUNTIF(players >= 3), COUNT(*)), 2) AS share_reached_3,
+  -- A tester's switch can put a lobby in the other half than its PIN: these should be 0.
+  COUNTIF((MOD(TO_CODE_POINTS(SHA256(CONCAT('lone-host:', seen.pin)))[OFFSET(0)], 2) = 1) != (half = 'new')) AS half_set_by_hand
+FROM seen LEFT JOIN seats USING (pin) LEFT JOIN sent USING (pin)
+-- Not a Replay's or a crew's lobby (its players are carried in), and no test game.
+WHERE IFNULL(carried, 0) = 0 AND IFNULL(test_joins, 0) = 0
+GROUP BY half, device
+ORDER BY device, half
+```
+
+The new half wins if `share_reached_3` is higher, on computers above all (today about one computer
+host in three gets a table at all). With about 11 lobbies a day the first read worth making is after
+two weeks. A Replay's lobby and a crew's lobby also send a seen row (their host is alone for a
+moment); the query leaves them out by the joins they carry. A lobby whose big screen was opened
+after the host has rows in both halves alike; the query keeps it. For a stricter read, leave out the
+PINs whose `opened_games.presenter` is true (only a lobby that started has that row). To keep the help for everyone, make
+`loneHostHelp` return `half: 'new'`; to drop it, `'classic'`.
+
+**Checked** with `game/test/lone-host.test.js`, `functions/test/lobby-help.test.js` and a run on the
+Firebase emulators, `.github/smoke/lone-host-lobby.js`: a phone and a computer, English and Hebrew,
+both halves, one to four players, and a test game.
+
 ## Who the room is waiting for
 
 After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.
@@ -1572,8 +1673,9 @@ phones on the final screen show it as a banner with I'M IN. The big screen gets 
 The spec is "Change 1" of the game night loop spec (the project's reports); the code is
 `game/src/app/components/next-week` and `functions/src/controllers/next-week.ts`.
 
-- Functions and site. One new function, `crewNight` (HTTP). No rule change, no BigQuery change: the
-  new rows use the `shares` columns that are there. A merge sends all functions and the site.
+- Functions and site. No new function: `crewNight` (HTTP) came with "Who's in?", and this uses it
+  as it is. No rule change, no BigQuery change: the new rows use the `shares` columns that are
+  there. A merge sends all functions and the site.
 - Which games. A Replay, or a crew's game, with two players or more. Not a taste, and not the Replay
   of a taste (that is the group's first game). A group that opens a fresh game by hand keeps the
   phone-memory rule of `repeat-group.ts`, as before.
@@ -1613,3 +1715,30 @@ Then, by half: groups back together within 7 days, and the share of second games
 (the `forks` table), which must not fall: the button sits beside REMATCH.
 
 To play it on the emulators, both halves and both languages: `node .github/smoke/next-week-game.js`.
+
+## Game night fixes after the reviews of "Who's in?" and "Same time next week?"
+
+Small fixes from the two reviews (the project's reports `review-113.md` and `review-114.md`).
+
+- Functions and site. No new function, none removed or renamed, no rule change, no BigQuery change.
+  A merge sends all functions and the site.
+- **Two sheets, two dates.** `crewNight` takes an optional `prev` with `{ crew, time, by }`: the night
+  the sender's screen showed when the sheet opened (null for none). "Same time next week?" sends it.
+  If the crew has another night that is still ahead and is not `prev`, the crew keeps it and the
+  answer says `kept: true`. A sheet that is open when another phone's date arrives shows that date
+  with I'M IN in place of the send buttons. The phone that set the date has CHANGE on its banner,
+  and sends its own night as `prev`, so it can still move it. The crew page's NEXT GAME NIGHT sends
+  no `prev` and moves the night as before.
+- **The message.** A date other than the one the sheet offered reads "Bullshit game night: ..." /
+  "ערב בולשיט: ..." in place of "same time next week". In Hebrew the leader reads "יוסי בראש, 2–0".
+- **The big screen** shows the date ("Next game night: ...") once a phone has set it.
+- **Names on a night's list.** Invisible characters (zero-width, text-direction marks) are taken out
+  before the cut; a name that is nothing else, or is not text, is refused like an empty one.
+- **The crew page.** A full list says "This night is full." / "הערב הזה מלא."; a night set for the
+  small hours (before 05:00) belongs to the evening before, for "tonight", "See you Friday" and the
+  home page's TONIGHT line. Hebrew: "הערב משחקים!", "קובעים ערב", "משהו השתבש. נסו שוב.".
+- **What it counts.** `crew-night` / `open-lobby` is now one row a lobby: only the press that opened
+  it. A press that joined a lobby another phone opened is the new `join-lobby`. Rows before the
+  release counted every press. `next-week` gains `change` (CHANGE on the sender's banner).
+- Old and new together. An old site sends no `prev` and works as before. The new site on old
+  functions: `prev` is ignored, so two sheets can still move each other's date, as today.
