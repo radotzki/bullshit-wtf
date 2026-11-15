@@ -102,7 +102,7 @@ test('the text shows on the home screens only', () => {
 test('404.html: both languages, no index, links home', () => {
     assert.match(html.notFound, /<meta name="robots" content="noindex">/);
     assert.match(html.notFound, /lang="he" dir="rtl"/);
-    assert.ok(links(html.notFound).includes('/') && links(html.notFound).includes('/he'));
+    assert.ok(links(html.notFound).includes('/?via=notfound-en') && links(html.notFound).includes('/he?via=notfound-he'));
     assert.match(html.notFound, /data-page="plain"/);
     assert.match(html.notFound, /BS_CAMPAIGN/, 'counted by the visit beacon');
 });

@@ -46,12 +46,12 @@ const page = `<!doctype html>
     <section>
       <h1>This page doesn't exist</h1>
       <p>The address may be mistyped, or the page has moved. To join a game, ask the host for the four-letter PIN.</p>
-      <a class="btn" href="/">Go to the game</a> <a href="/how-to-play">How to play</a>
+      <a class="btn" href="/?via=notfound-en">Go to the game</a> <a href="/how-to-play">How to play</a>
     </section>
     <section lang="he" dir="rtl">
       <h1>הדף הזה לא קיים</h1>
       <p>אולי יש טעות בכתובת, או שהדף עבר. כדי להצטרף למשחק, בקשו מהמארח את הקוד בן ארבע האותיות.</p>
-      <a class="btn" href="/he">למשחק</a> <a href="/he/how-to-play">איך משחקים</a>
+      <a class="btn" href="/he?via=notfound-he">למשחק</a> <a href="/he/how-to-play">איך משחקים</a>
     </section>
   </main>
 </body>
