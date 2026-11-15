@@ -122,7 +122,8 @@ async function lobby(browser, base, { locale, size }, problems) {
         await setHidden(host.page, true);
         const last = guests[guests.length - 1];
         await join(last, base, pin, he);
-        check(await until(async () => (await db('GET', `games/${pin}/hostAwaySince`)) !== null, 5000), 'the server never heard the host was away');
+        // 15 s: the emulator's first call of hostHere starts a cold worker, which once took over 5 s.
+        check(await until(async () => (await db('GET', `games/${pin}/hostAwaySince`)) !== null, 15000), 'the server never heard the host was away');
         const seats = Object.keys((await db('GET', `games/${pin}/players`)) || {}).length;
         check(seats === size, `${seats} seats, not ${size}`);
         const told = await until(async () => (await Promise.all(guests.map((g) => lineOf(g.page)))).every((l) => l === away), 8000);
