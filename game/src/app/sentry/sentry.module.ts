@@ -2,9 +2,12 @@ import { environment } from './../../environments/environment';
 import Raven from 'raven-js';
 import { NgModule, ErrorHandler } from '@angular/core';
 import { isAutomatedBrowser } from './automated';
+import { readRelease } from './release';
 
 Raven.config(environment.sentry, {
     environment: environment.production ? 'production' : 'development',
+    // The commit this page was built from, so an error names the release that was live.
+    release: readRelease(typeof document === 'undefined' ? null : document),
     // Automated browser runs are not players: keep them out of Sentry's error and user counts.
     shouldSendCallback: () => !isAutomatedBrowser(typeof navigator === 'undefined' ? null : navigator as any),
 }).install();
