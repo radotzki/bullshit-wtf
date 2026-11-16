@@ -34,34 +34,55 @@ export function offerBigScreen(input: BigScreenOfferInput): boolean {
 /**
  * The big screen keeps "scan the code to join" up until the host's own phone is in.
  *
- * The host gives up their seat with the press and joins again from a phone, as a new player. Guests
- * who were in before the press are not the host, so the line stays while every player is one of
- * them: a host who presses with a friend already in still reads where to join. The page notes those
- * players at the press (pressedWith), in this tab's storage, so a reload of the big screen keeps it.
- * Without that note (the address opened in another tab) any player ends the line, as before.
+ * The host gives up their seat with the press and joins again from a phone, as a new player. The page
+ * can't tell that phone from any other new one, so at the press it notes who was in (the guests' ids)
+ * and the name on the host's seat (pressedWith), in this tab's storage, so a reload of the big screen
+ * keeps it. The line stays until a player who was not in at the press joins under the host's name
+ * (spaces and case aside). Guests who join first, before or after the press, don't end it: with only
+ * the guests' ids, a second guest who joined before the host took the line away, and the host had no
+ * word on where to join (found in Product's review of #144, in English and Hebrew). A host who types another name on the phone keeps the
+ * line up for the whole lobby, which is right for anyone still in the room.
+ *
+ * Without the host's name in the note (the address opened in another tab, or a note from before this
+ * change) any new player ends the line, as before.
  */
 export const PRESSED_WITH_KEY = 'BS_BIG_SCREEN_PRESSED_WITH_';
 
 export interface BigScreenPlayer {
     pid?: string;
     host?: boolean;
+    nickname?: string;
 }
 
-/** The note to keep at the press: the ids of the players in the lobby, without the host's own seat. */
+/** A name as the line compares it: one space between words, trimmed, any case. */
+export function sameName(name: any): string {
+    return String(name == null ? '' : name).replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** The note to keep at the press: the ids of the players in the lobby without the host's own seat, and that seat's name. */
 export function pressedWith(players: BigScreenPlayer[]): string {
-    return JSON.stringify((players || []).filter(p => p && p.pid && !p.host).map(p => p.pid));
+    const list = (players || []).filter(p => p && p.pid);
+    const host = list.filter(p => p.host).map(p => sameName(p.nickname)).filter(n => !!n)[0] || null;
+    return JSON.stringify({ with: list.filter(p => !p.host).map(p => p.pid), host });
 }
 
-/** Show "scan the code to join" on the big screen: no player is in yet who was not in at the press. */
+/** Show "scan the code to join" on the big screen: the host has not joined from a phone yet. */
 export function hostStillToJoin(note: string | null, players: BigScreenPlayer[]): boolean {
     let before: string[] = [];
+    let hostName: string = null;
     try {
         const parsed = note ? JSON.parse(note) : [];
-        before = Array.isArray(parsed) ? parsed.filter(id => typeof id === 'string') : [];
+        // A note from before the host's name was kept is a plain list of ids.
+        const ids = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.with) ? parsed.with : []);
+        before = ids.filter(id => typeof id === 'string');
+        hostName = parsed && !Array.isArray(parsed) && typeof parsed.host === 'string' && sameName(parsed.host) || null;
     } catch (e) {
         before = [];
     }
-    return !(players || []).some(p => p && p.pid && before.indexOf(p.pid) < 0);
+    const newcomers = (players || []).filter(p => p && p.pid && before.indexOf(p.pid) < 0);
+    return hostName
+        ? !newcomers.some(p => sameName(p.nickname) === hostName)
+        : !newcomers.length;
 }
 
 const strings = {
@@ -69,7 +90,7 @@ const strings = {
         ask: 'Everyone in one room?',
         how: 'Put the game on this screen. You join from your phone like everyone else, and press START here.',
         button: 'USE AS THE BIG SCREEN',
-        // On the big screen, until a phone joins that was not in the lobby at the press (the host's).
+        // On the big screen, until the host joins from a phone under their name (hostStillToJoin).
         joinNow: 'This is the big screen now. Scan the code with your phone to join.',
     },
     he: {
