@@ -128,10 +128,14 @@
         }
     }
 
-    // "They're playing again": above the recap, set apart from it.
-    .recap-playing {
+    // "They're playing again" and "They started without you": above the recap, set apart from it.
+    .recap-playing, .recap-late {
         padding-bottom: 1rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .recap-new-table {
+        margin-top: 0.75rem;
     }
 }
 

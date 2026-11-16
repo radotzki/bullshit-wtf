@@ -243,3 +243,70 @@ test('a game the old-games sweep moved still reopens, with its players known', a
     assert.ok(staging(a.pin));
     assert.strictEqual(db.games[g.pin].players, undefined, 'nothing put back where strangers read');
 });
+
+// ---- A player who comes late (Product's review of #160, section 2) ----
+
+test('a late player while the table plays: the recap says so, and CATCH THE NEXT ROUND opens nothing', async () => {
+    const g = await finishedGame(20 * H);
+    const first = await again(g, 1);
+    db.games[first.pin].state = { id: RoundIntro, timestamp: Date.now() };
+    // Player 4 opens the link: the recap carries tablePlaying; a stranger's doesn't, nor does it change.
+    const seen = await validateGameName(g.pin, 'u4', g.pids.u4).catch(e => e);
+    assert.strictEqual(seen.code, 'GAME_OVER');
+    assert.strictEqual(seen.rematch, undefined);
+    assert.strictEqual(seen.nightAfter.player, true);
+    assert.strictEqual(seen.nightAfter.tablePlaying, true);
+    const stranger = await validateGameName(g.pin, 'friend').catch(e => e);
+    assert.strictEqual(stranger.nightAfter.player, false);
+    assert.strictEqual(stranger.nightAfter.tablePlaying, undefined, 'non-players\' lines stay as they were');
+    // CATCH THE NEXT ROUND: told the table plays; the link still points at their game.
+    await assert.rejects(sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true), e => e.code === 'TABLE_PLAYING');
+    assert.strictEqual(db.games[g.pin].fork, first.pin);
+    assert.strictEqual(db.games[g.pin].forking, first.pin);
+    // START A NEW TABLE NOW (no wait): a new lobby, as #160 does.
+    const own = await again(g, 4);
+    assert.notStrictEqual(own.pin, first.pin);
+    assert.ok(staging(own.pin));
+    assert.strictEqual(own.host, true);
+});
+
+test('a late player after the table\'s game: its Replay\'s lobby, as a guest; with none, the table opens again', async () => {
+    const g = await finishedGame(20 * H);
+    const first = await again(g, 1);
+    db.games[first.pin].state = { id: RoundIntro, timestamp: Date.now() };
+    // Their game ends, and one of them presses Replay on its final screen.
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    const pid1 = Object.keys(db.games[first.pin].players)[0];
+    const next = await fork(first.pin, 'u1', pid1, KEYS[0]);
+    assert.ok(staging(next.pin));
+    // The recap no longer says they play; both buttons land in that lobby, without its key.
+    const seen = await validateGameName(g.pin, 'u4', g.pids.u4).catch(e => e);
+    assert.strictEqual(seen.nightAfter.tablePlaying, undefined);
+    const [a, b] = await Promise.all([
+        sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true),
+        again(g, 3),
+    ]);
+    assert.deepStrictEqual([a.pin, b.pin], [next.pin, next.pin]);
+    assert.strictEqual(a.host, false, 'the next lobby\'s key stays with who opened it');
+    assert.strictEqual(a.hostKey, undefined);
+    assert.strictEqual(db.games[g.pin].fork, first.pin, 'nothing replaced');
+
+    // Another table whose game ended with no Replay: CATCH THE NEXT ROUND opens the table again.
+    const h = await finishedGame(20 * H);
+    const lobby = await again(h, 1);
+    db.games[lobby.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    const reopened = await sameTable(h.pin, 'u2', h.pids.u2, KEYS[1], false, false, true);
+    assert.notStrictEqual(reopened.pin, lobby.pin);
+    assert.ok(staging(reopened.pin));
+    assert.strictEqual(reopened.host, true);
+    assert.strictEqual(db.games[h.pin].fork, reopened.pin);
+});
+
+test('wait changes nothing while the table\'s lobby is open, or when there is none', async () => {
+    const g = await finishedGame(20 * H);
+    const a = await sameTable(g.pin, 'u1', g.pids.u1, KEYS[0], false, false, true);
+    assert.ok(staging(a.pin));
+    const b = await sameTable(g.pin, 'u2', g.pids.u2, KEYS[1], false, false, true);
+    assert.strictEqual(b.pin, a.pin);
+    assert.strictEqual(b.hostKey, db.games[a.pin].hostKey);
+});

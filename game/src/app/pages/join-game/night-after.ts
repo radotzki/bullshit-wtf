@@ -20,6 +20,8 @@ export interface NightAfterRecap {
     lie: { text: string; fooled: number; by: string } | null;
     crew?: string;
     test?: boolean;
+    /** This browser played, and the table's next game started without it and isn't over. */
+    tablePlaying?: boolean;
 }
 
 /** A tester's switch, in the browser console: localStorage.BS_NIGHT_AFTER = 'new' or 'control'. */
@@ -29,10 +31,16 @@ export const NIGHT_AFTER_CONTENT = 'night-after';
  * "Same table tomorrow": which ask the recap shows. A lobby of this game is open: everyone sees "They're
  * playing again", a player with PLAY AGAIN, SAME TABLE (it joins that lobby, with its host key), anyone
  * else with JOIN THEM. No lobby: a player opens one with PLAY AGAIN, SAME TABLE; anyone else starts their own.
+ * A player whose table's next game started without them ('late-player'): "They started without you",
+ * CATCH THE NEXT ROUND, or START A NEW TABLE NOW. Anyone else sees what they saw before.
  */
-export function recapAsk(player: boolean, rematch: string | undefined): 'again-player' | 'again-other' | 'player' | 'other' {
+export function recapAsk(player: boolean, rematch: string | undefined, tablePlaying?: boolean)
+    : 'again-player' | 'again-other' | 'player' | 'other' | 'late-player' {
     if (rematch) {
         return player ? 'again-player' : 'again-other';
+    }
+    if (player && tablePlaying) {
+        return 'late-player';
     }
     return player ? 'player' : 'other';
 }
@@ -139,6 +147,12 @@ export const nightAfterStrings = {
         againText: 'Same table, new game. It hasn\'t started yet.',
         joinThem: 'JOIN THEM',
         againError: 'That didn\'t work. Try again.',
+        lateTitle: 'They started without you.',
+        lateText: 'Your table is mid-game right now. When it ends, tap CATCH THE NEXT ROUND: '
+            + 'you\'ll sit down in their next game, or open the table again if nobody has yet.',
+        catchNext: 'CATCH THE NEXT ROUND',
+        lateStill: 'They\'re still playing. Try again when their game ends.',
+        newTable: 'START A NEW TABLE NOW',
         createPlayer: 'HOST THE NEXT ONE',
         crew: 'See who\'s in next time',
         tryAnother: 'JOIN ANOTHER GAME',
@@ -176,6 +190,12 @@ export const nightAfterStrings = {
         againText: 'החבר\'ה פתחו משחק חדש, והוא עוד לא התחיל.',
         joinThem: 'להצטרף אליהם',
         againError: 'זה לא עבד. אפשר לנסות שוב.',
+        lateTitle: 'התחילו בלעדיכם.',
+        lateText: 'השולחן שלכם באמצע משחק. כשהוא ייגמר, לחצו על "לתפוס את הסיבוב הבא": '
+            + 'תשבו איתם במשחק הבא, או תפתחו את השולחן מחדש אם עוד אף אחד לא פתח.',
+        catchNext: 'לתפוס את הסיבוב הבא',
+        lateStill: 'הם עדיין באמצע. נסו שוב כשהמשחק שלהם ייגמר.',
+        newTable: 'לפתוח שולחן חדש עכשיו',
         createPlayer: 'לארח את המשחק הבא',
         crew: 'מי בא בפעם הבאה',
         tryAnother: 'להצטרף למשחק אחר',

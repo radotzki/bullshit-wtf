@@ -666,14 +666,15 @@ export class ApiService {
      * PLAY AGAIN, SAME TABLE on a finished game's recap (functions' same-table.ts, through `fork`): the
      * game's one open lobby, or a new one this phone hosts. Like Replay, with a new host key.
      */
-    async sameTable(pin: string) {
+    /** `wait`: CATCH THE NEXT ROUND; while the table still plays the server answers TABLE_PLAYING. */
+    async sameTable(pin: string, wait = false) {
         pin = pin.toUpperCase();
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const user = this.sessionService.user;
         const pid = user && typeof user.pid === 'string' ? user.pid : null;
         const hostKey = newHostKey();
         const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
-            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true });
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, ...(wait ? { wait: true } : {}) });
         if (resp && resp.pin && resp.host !== false) {
             rememberHostKey(resp.pin, resp.hostKey || hostKey);
         }

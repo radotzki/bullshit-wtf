@@ -168,23 +168,28 @@ export class JoinGameComponent implements OnInit {
 
     /** Which ask the recap shows (see recapAsk). */
     get ask() {
-        return recapAsk(!!(this.recap && this.recap.player), this.gameOver && this.gameOver.rematch);
+        return recapAsk(!!(this.recap && this.recap.player), this.gameOver && this.gameOver.rematch,
+            !!(this.recap && this.recap.tablePlaying));
     }
 
     /**
      * PLAY AGAIN, SAME TABLE: the game's open lobby, or a new one this phone hosts; then into it, under
      * this browser's last nickname when it has one (its seat comes along), else at the nickname box.
+     * `wait`: CATCH THE NEXT ROUND under "They started without you": while the table still plays, the
+     * server says TABLE_PLAYING and the page says so; START A NEW TABLE NOW presses without it.
      */
-    async playAgain() {
+    async playAgain(wait = false) {
         const pin = this.recapPin;
         if (!pin || this.againBusy) {
             return;
         }
         this.againBusy = true;
         this.againError = '';
-        this.countRecap(this.gameOver && this.gameOver.rematch ? 'same-table-open' : 'same-table');
+        const late = this.ask === 'late-player';
+        this.countRecap(late ? (wait ? 'catch-next' : 'new-table')
+            : this.gameOver && this.gameOver.rematch ? 'same-table-open' : 'same-table');
         try {
-            const r = await this.apiService.sameTable(pin);
+            const r = await this.apiService.sameTable(pin, late && wait);
             if (!r || !r.pin) {
                 throw new Error('no table');
             }
@@ -198,8 +203,9 @@ export class JoinGameComponent implements OnInit {
                 this.join();
             }
         } catch (err) {
-            this.againError = this.n.againError;
-            if (!(err && err.code === 'NOT_A_PLAYER')) {
+            const playing = !!(err && err.code === 'TABLE_PLAYING');
+            this.againError = playing ? this.n.lateStill : this.n.againError;
+            if (!(err && (err.code === 'NOT_A_PLAYER' || playing))) {
                 reportError(err, 'sameTable', { pin });
             }
         }

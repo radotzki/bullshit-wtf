@@ -23,6 +23,16 @@
                         [disabled]="againBusy" [class.is-loading]="againBusy" (click)="playAgain()">{{ n.playAgain }}</button>
                     <p class="recap-again-error" *ngIf="againError">{{ againError }}</p>
                 </div>
+                <!-- A player came late: the table's next game started without them (same-table.ts). -->
+                <div class="recap-ask recap-late" *ngIf="ask === 'late-player'">
+                    <p class="recap-ask-title">{{ n.lateTitle }}</p>
+                    <p class="recap-ask-text">{{ n.lateText }}</p>
+                    <button class="button is-primary is-medium is-fullwidth recap-catch-next" type="button" [disabled]="againBusy"
+                        [class.is-loading]="againBusy" (click)="playAgain(true)">{{ n.catchNext }}</button>
+                    <p class="recap-again-error" *ngIf="againError">{{ againError }}</p>
+                    <button class="button is-fullwidth recap-new-table" type="button" [disabled]="againBusy"
+                        (click)="playAgain(false)">{{ n.newTable }}</button>
+                </div>
                 <p class="recap-heading" dir="auto">{{ recapHeading }}</p>
                 <p class="recap-line recap-winner">
                     <span class="recap-label">{{ recapWinnerCount > 1 ? n.winners : n.winner }}:</span>

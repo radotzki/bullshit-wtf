@@ -13,6 +13,10 @@
 //   game's `forking` and `fork` point to it, as after any Replay. Each new lobby writes a `forks` row.
 // - Only a player of the game may open it (the recap's `player`), within the recap's week, and only for a
 //   game that has a recap. The lobby starts with that player's seat alone: the others come by the link.
+// - A player who comes late (Product's review of #160): while the table's lobby is mid-game, the recap
+//   says so (`tablePlaying`, see lateTable) and CATCH THE NEXT ROUND asks with `wait`, so it is told
+//   TABLE_PLAYING instead of opening a lobby alone. Once that game is over and its Replay opened the next
+//   lobby, any press of a player of this game joins that lobby (one hop), as a guest: the key stays theirs.
 import { GameScheme, GameState, GamePlayers, MAX_PLAYERS } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
@@ -55,6 +59,33 @@ export async function tableOpen(pin: string, now = Date.now): Promise<boolean> {
     }
 }
 
+/** What became of the table's last lobby, for a player who comes late (see the header). */
+export type LateTable = { playing: true } | { next: string } | null;
+
+/**
+ * `held` is the table's last lobby (the finished game's `forking` or `fork`). `playing`: it started and
+ * isn't over. `next`: it is over, and its own Replay opened a lobby that a group can still sit down in.
+ * Otherwise null. One hop only: the table's own next game, never a chain.
+ */
+export async function lateTable(held: string, now = Date.now()): Promise<LateTable> {
+    const table = held ? await readGame(held) : null;
+    if (!table || !table.state) {
+        return null;
+    }
+    const over = isGameOver(table, now);
+    if (!over && table.state.id !== GameState.GameStaging) {
+        return { playing: true };
+    }
+    if (over && typeof table.fork === 'string' && table.fork && table.fork !== held) {
+        const next = await readGame(table.fork);
+        if (next && next.state && next.state.id === GameState.GameStaging && !isGameOver(next, now)
+            && Object.keys(next.players || {}).length < MAX_PLAYERS) {
+            return { next: table.fork };
+        }
+    }
+    return null;
+}
+
 /**
  * Takes the finished game's claim for `fresh`, when nobody holds it or it still holds `gone` (a lobby
  * this tap found closed). Resolves to the pin that holds the claim afterwards.
@@ -81,9 +112,11 @@ function seatOfPresser(game: GameScheme, uid?: string, pid?: string): string | u
  * PLAY AGAIN, SAME TABLE on a finished game's recap. `creator` and `hostPid` are the sign-in and last
  * seat of the browser that pressed, `hostKey` its new one-game secret (as for Replay). Resolves to the
  * game's open lobby, or a new one; the presser hosts a new one, and gets the key of one that was there.
+ * The table's lobby is over and its Replay opened the next one: that one, as a guest. `wait` (CATCH THE
+ * NEXT ROUND): while the table's lobby is mid-game, TABLE_PLAYING instead of a new lobby.
  */
 export async function sameTable(pin: string, creator?: string, hostPid?: string, hostKey?: string,
-    stagedReveal = false, aboutUs = false): Promise<SameTableResult> {
+    stagedReveal = false, aboutUs = false, wait = false): Promise<SameTableResult> {
     pin = String(pin || '').toUpperCase();
     const game = await readGame(pin);
     if (!game) {
@@ -100,6 +133,14 @@ export async function sameTable(pin: string, creator?: string, hostPid?: string,
         const held = await get<string>(gamesRef.child(pin).child('forking'));
         if (held && await tableOpen(held)) {
             return await joinNext(game, held, seat, hostKey);
+        }
+        // A late player: the table is mid-game, or has moved on to its next lobby.
+        const late = held ? await lateTable(held) : null;
+        if (late && 'next' in late) {
+            return { pin: late.next, host: false };
+        }
+        if (late && 'playing' in late && wait) {
+            return Promise.reject({ message: 'The table is playing, try again when it ends', code: 'TABLE_PLAYING' });
         }
         const fresh = generateGameName(await incGameCounter());
         const claimed = await reclaimFork(pin, held || null, fresh);

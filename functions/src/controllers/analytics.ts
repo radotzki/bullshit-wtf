@@ -201,7 +201,9 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'game-over': ['create', 'remind', 'remind-google'],
     'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],
     'sound': ['mute', 'unmute'],
-    'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew', 'same-table', 'same-table-open', 'join-them'],
+    'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew', 'same-table', 'same-table-open', 'join-them',
+        // A player came late, the table mid-game: CATCH THE NEXT ROUND, or START A NEW TABLE NOW.
+        'catch-next', 'new-table'],
 };
 
 export interface ShareRow {

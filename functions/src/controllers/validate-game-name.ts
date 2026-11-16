@@ -3,6 +3,7 @@ import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { gameOverError } from './game-over';
 import { nightAfter } from './night-after';
+import { lateTable } from './same-table';
 
 /**
  * Whether a phone may join the game by this PIN. A finished game answers GAME_OVER; within a week of its
@@ -24,6 +25,14 @@ export async function validateGameName(pin: string, uid?: any, pid?: any) {
         const recap = nightAfter(pin, game, Date.now(), uid, pid);
         if (recap && over.rematch && recap.half !== 'new') {
             return Promise.reject(over);
+        }
+        // A player who comes late while the table's lobby is mid-game: the page says so (same-table.ts).
+        // Only on the recap, which the other half doesn't show, so its rows stay as they were.
+        if (recap && recap.player && !over.rematch && game.fork) {
+            const late = await lateTable(game.fork).catch(() => null);
+            if (late && 'playing' in late) {
+                recap.tablePlaying = true;
+            }
         }
         return Promise.reject(recap ? { ...over, nightAfter: recap } : over);
     }
