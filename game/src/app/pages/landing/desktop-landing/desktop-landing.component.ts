@@ -4,7 +4,7 @@ import { CrewService, RememberedCrew, TonightCrew } from '../../../services/crew
 import { ApiService } from '../../../services/api.service';
 import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
-import { PictureStrings, createQuery, pictureStrings } from '../front-door';
+import { PictureStrings, createQuery, factParts, pictureStrings } from '../front-door';
 import { SearchLink, searchLinks, seasonLink } from '../search-links';
 import { CodeBox } from '../code-box';
 import { joinStrings } from '../../join-game/join-strings';
@@ -23,6 +23,8 @@ export class DesktopLandingComponent {
     tonight: TonightCrew;
     // The menu's words: Hebrew, right to left, for visitors who came on /he or whose browser is in Hebrew.
     t: HomeStrings;
+    /** The facts line in its parts (front-door.ts), each kept whole on the screen. */
+    facts: string[] = [];
     // The words of the picture of one round, as on the phone home.
     p: PictureStrings;
     // The query the big Host button carries: the post's ?via= tag, if the visit came with one.
@@ -60,6 +62,7 @@ export class DesktopLandingComponent {
 
     private setLocale(locale: string) {
         this.t = homeStrings(locale);
+        this.facts = factParts(this.t.facts);
         this.p = pictureStrings(locale);
         this.links = searchLinks(locale, this.tag);
         this.season = seasonLink(locale, new Date(), this.tag);

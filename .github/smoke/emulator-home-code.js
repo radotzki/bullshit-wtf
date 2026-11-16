@@ -13,7 +13,9 @@
 //      (under /he for the Hebrew home), the guest joins, and the join is sent with via "home".
 //   5. A 390 x 844 phone: the same first screen, for the screenshots.
 //   6. The computer home, 1280 x 720 and 1920 x 1080: the box above the pitch, the facts line, the big
-//      Host button still on the first screen; the PIN typed with Enter joins the same way.
+//      Host button still on the first screen; the PIN typed with Enter joins the same way, and the PIN
+//      typed on a Hebrew keyboard (in Hebrew letters) opens the same join page, from the home's box
+//      and from the PIN page.
 //
 // Nothing reaches production (see emulator-game.js). From the repository root, with functions/ and
 // game/ built:
@@ -31,6 +33,9 @@ const he = LOCALE === 'he';
 const WORDS = he
     ? { ask: 'יש לכם קוד?', facts: 'חינם · בלי אפליקציה · 2 עד 12 שחקנים, כל אחד מהטלפון שלו', wrong: 'קוד המשחק שגוי', empty: 'הקלידו את קוד המשחק', guest: 'נועה', computer: 'גיל' }
     : { ask: 'Got a code?', facts: 'Free · no app · 2 to 12 players, each on their own phone', wrong: 'Wrong game PIN', empty: 'Type the game PIN', guest: 'Noa', computer: 'Gil' };
+// What each English letter key types on the standard Israeli keyboard.
+const ISRAELI_KEYS = { Q: '/', W: '\'', E: 'ק', R: 'ר', T: 'א', Y: 'ט', U: 'ו', I: 'ן', O: 'ם', P: 'פ', A: 'ש', S: 'ד', D: 'ג', F: 'כ', G: 'ע', H: 'י', J: 'ח', K: 'ל', L: 'ך', Z: 'ז', X: 'ס', C: 'ב', V: 'ה', B: 'נ', N: 'מ', M: 'צ' };
+const hebrewKeys = (pin) => pin.split('').map((ch) => ISRAELI_KEYS[ch]).join('');
 const PHONE_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36';
 
 async function main() {
@@ -168,7 +173,11 @@ async function main() {
             await pc.page.goto(home);
             await until(`the computer home (${size.width} x ${size.height}) opens with the code box`, () => visible(box(pc)));
             check(/\/d$/.test(new URL(pc.page.url()).pathname), `the computer lands on the computer home (${new URL(pc.page.url()).pathname})`);
-            check((await text(pc, '.facts')).replace(/\u00a0/g, ' ').trim() === WORDS.facts, 'the computer home has the facts line');
+            // The computer home shows the facts line in parts, each with its dot drawn in front (the dot that would start a line is hidden).
+            const parts = await pc.page.$$eval('.facts .fact', (els) => els.map((el) => el.textContent.replace(/\u00a0/g, ' ').trim()));
+            check(parts.join(' · ') === WORDS.facts, `the computer home has the facts line (${parts.join(' · ')})`);
+            const factLines = await pc.page.$eval('.facts', (el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
+            summary[`computerFactsLines${size.width}`] = factLines;
             const look = await pc.page.evaluate(() => {
                 const r = (sel) => { const el = document.querySelector(sel); if (!el) return null; const b = el.getBoundingClientRect(); return { top: b.top, bottom: b.bottom }; };
                 return { box: r('form.code-box'), pitch: r('.pitch'), host: r('.host-button'), height: window.innerHeight };
@@ -178,6 +187,22 @@ async function main() {
             check(look.host && look.host.bottom <= look.height, `the Host button is on the first screen (its foot at ${look.host && Math.round(look.host.bottom)} px)`);
             await sleep(600);
             await shot(pc, `computer-${size.width}x${size.height}`);
+            if (size.width === 1920) {
+                // A guest with a Hebrew keyboard up types the PIN in Hebrew letters: the same keys find the game.
+                await pc.page.locator('.code-input').fill(hebrewKeys(pin));
+                await pc.page.locator('.code-input').press('Enter');
+                await pc.page.waitForURL(/\/join-game\/[A-Z]+\?via=home$/, { timeout: 30000 }).catch(() => { });
+                check(new URL(pc.page.url()).pathname === `${lang}/join-game/${pin}`, `the PIN typed in Hebrew (${hebrewKeys(pin)}) opens the join page of ${pin}`);
+                // The PIN page itself: the same code typed in Hebrew is shown in English letters and goes on to the nickname.
+                await pc.page.goto(`${base}${lang}/join-game?via=test`);
+                const pinBox = pc.page.locator('input[name="pin"]');
+                await until('the PIN page opens', () => visible(pinBox));
+                await pinBox.fill(hebrewKeys(pin));
+                await pinBox.press('Enter');
+                if (await until('the PIN page takes the PIN typed in Hebrew and asks for the nickname', () => visible(pc.page.locator('input[name="nickname"]')))) {
+                    check(true, `the PIN page reads ${hebrewKeys(pin)} as ${pin}`);
+                }
+            }
             if (size.width === 1280) {
                 await pc.page.locator('.code-input').fill(` ${pin.slice(0, 2).toLowerCase()}${pin.slice(2)} `);
                 await pc.page.locator('.code-input').press('Enter');
