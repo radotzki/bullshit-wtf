@@ -175,6 +175,52 @@ test('a started crew lobby is not reused', async () => {
     assert.ok(staging(again));
 });
 
+// A crew lobby the crew page opened before the last game ended, that nobody ever started (the old
+// bug made such lobbies: JVAY, JVAZ). The crew page used to reuse it for 3 hours while Replay made a
+// new game, so a rematch split the group (review of #147, EDGE 1 and 2).
+async function withOldCrewLobby() {
+    const g = await finishedGame(true);
+    const old = await newGame('en', 5, 'u9', { crew: g.crew });
+    db.crews[g.crew].rematch = { pin: old, time: Date.now() - 60 * 60 * 1000 };
+    db.games[g.pin].state.timestamp = Date.now();
+    return { g, old };
+}
+
+test('the crew page, while a crew lobby from before the game still waits, opens a new one, and Replay follows', async () => {
+    const { g, old } = await withOldCrewLobby();
+    const c = await crewPage(g, 1);
+    const r = await replay(g, 2);
+    assert.notStrictEqual(c, old, 'not the lobby opened before the game ended');
+    assert.strictEqual(r, c, `crew page ${c} and Replay ${r} in one lobby`);
+    assert.ok(staging(c));
+    assert.strictEqual(db.games[g.pin].fork, c, 'the final screen offers it');
+    assert.strictEqual(db.crews[g.crew].rematch.pin, c, 'and the crew page shows it');
+    // A second crew page tap goes there too.
+    assert.strictEqual(await crewPage(g, 3), c);
+});
+
+test('the same, with the crew page and Replays pressed at once', async () => {
+    const { g, old } = await withOldCrewLobby();
+    const pins = await Promise.all([crewPage(g, 1), replay(g, 2), replay(g, 3)]);
+    assert.strictEqual(new Set(pins).size, 1, `one lobby, got ${pins.join(', ')}`);
+    assert.notStrictEqual(pins[0], old);
+    assert.ok(staging(pins[0]));
+});
+
+test('the same, with every way mixed at once', async () => {
+    const { g, old } = await withOldCrewLobby();
+    const pins = await Promise.all([crewPage(g, 1), replay(g, 2), crewPage(g, 3), replay(g, 4), crewPage(g, 2)]);
+    assert.strictEqual(new Set(pins).size, 1, `one lobby, got ${pins.join(', ')}`);
+    assert.notStrictEqual(pins[0], old);
+});
+
+test('with no recent crew game, the crew page still reuses its waiting lobby', async () => {
+    const { g, old } = await withOldCrewLobby();
+    // The crew's last game ended over half an hour ago: no game to follow, so the waiting lobby is it.
+    Object.keys(db.crews[g.crew].games).forEach(p => { db.crews[g.crew].games[p].time = Date.now() - 2 * 60 * 60 * 1000; });
+    assert.strictEqual(await crewPage(g, 1), old);
+});
+
 test('a game with no crew: Replays pressed at once still make one game', async () => {
     const g = await finishedGame(false);
     const pins = await Promise.all([replay(g, 1), replay(g, 2), replay(g, 3)]);

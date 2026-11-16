@@ -296,20 +296,25 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
         return fail('Crew does not exist', 'CREW_NOT_EXIST');
     }
 
+    // The crew's last game, if it ended within LINK_LAST_GAME_MS: a lobby opened before that end
+    // is gone, as on the Replay side (crewLobbyFor's `since`), so this tap and a Replay of that game
+    // land in the same new lobby, not one in an old lobby nobody started and one in the Replay.
+    const last = lastGameOf(crew);
+    const lastState = last ? await get<{ id: number; timestamp?: number }>(gamesRef.child(last).child('state')) : null;
+    const lastEnded = !!lastState && lastState.id === GameState.ScoreBoardFinal;
+    const endedAt = lastEnded ? Number(lastState.timestamp) || Number(crew.games[last].time) || 0 : 0;
+
     // A lobby is waiting (or being made by another phone this moment): everyone goes there.
     const current = crew.rematch;
     let gone: string = null;
     if (current && current.pin && Date.now() - (current.time || 0) < REMATCH_REUSE_MS) {
-        if (await lobbyOpen(current.pin, current.time)) {
+        if ((current.time || 0) >= endedAt && await lobbyOpen(current.pin, current.time)) {
             return { pin: current.pin, created: false };
         }
         gone = current.pin;
     }
 
     // The crew's last game just ended and someone pressed Replay there: that is the crew's lobby.
-    const last = lastGameOf(crew);
-    const lastState = last ? await get<{ id: number }>(gamesRef.child(last).child('state')) : null;
-    const lastEnded = !!lastState && lastState.id === GameState.ScoreBoardFinal;
     if (lastEnded) {
         const replay = await get<string>(gamesRef.child(last).child('fork'));
         if (replay && await lobbyOpen(replay)) {
@@ -319,7 +324,7 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
 
     // Claim the crew's lobby before making it, so a second tap (or a Replay) a moment later comes here.
     const pin = generateGameName(await incGameCounter());
-    const holder = await claimCrewLobby(id, pin, gone, 0, REMATCH_REUSE_MS);
+    const holder = await claimCrewLobby(id, pin, gone, endedAt, REMATCH_REUSE_MS);
     if (holder !== pin && await lobbyOpen(holder, Date.now())) {
         return { pin: holder, created: false };
     }
