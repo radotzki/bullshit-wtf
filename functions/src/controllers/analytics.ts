@@ -1,5 +1,6 @@
 import { GameScheme, GameState, isTestCampaign } from "../game-model";
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
 import { nameFlag } from '../name-flag';
@@ -10,13 +11,13 @@ const bigquery = new BigQuery();
 
 export async function onFork(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
     return forks(pin, game);
 }
 
 export async function onStateChange(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (game.state.id === GameState.RoundIntro && game.questionIndex === 0) {
         return openGame(pin, game);

@@ -181,3 +181,57 @@ test('a game with no crew: Replays pressed at once still make one game', async (
     assert.strictEqual(new Set(pins).size, 1, `one Replay, got ${pins.join(', ')}`);
     assert.strictEqual(db.games[g.pin].fork, pins[0]);
 });
+
+// ---- a next game from a game the old-games sweep already moved (#150) ----
+// The sweep moves a finished game's players, answers and the like under `kept` six hours after it
+// ends. The next-game code reads the finished game's `state`, `fork`, `forking`, `crew`, `tables` and
+// `hostKey` straight from the game, and everything else through readGame: so those must stay where
+// they are, and a Replay or crew REMATCH from a moved game must still find its way.
+const oldGames = require(path.join(dist, 'old-games'));
+const SEVEN_HOURS = 7 * 60 * 60 * 1000;
+
+/** Moves the game's private parts as the sweep would, seven hours on. */
+async function sweepMoved(g) {
+    assert.strictEqual(await oldGames.moveGame(g.pin, Date.now() + SEVEN_HOURS), true, 'the sweep moves it');
+    assert.ok(db.games[g.pin].kept, 'its private parts are under kept');
+    assert.strictEqual(db.games[g.pin].players, undefined, 'and gone from where strangers read');
+}
+
+test('the parts the next-game code reads straight from a game are never moved', () => {
+    for (const part of ['state', 'fork', 'forking', 'crew', 'tables', 'hostKey', 'timestamp', 'locale']) {
+        assert.ok(!oldGames.KEPT_PARTS.includes(part), `${part} stays in place`);
+    }
+});
+
+test('a Replay from a moved game makes the next game, with its seats, and a second Replay goes there', async () => {
+    const g = await finishedGame(false);
+    await sweepMoved(g);
+    const r = await fork(g.pin, 'u1', g.pids.u1, KEYS[0]);
+    assert.ok(staging(r.pin));
+    assert.strictEqual(db.games[r.pin].parent, g.pin);
+    assert.strictEqual(db.games[g.pin].fork, r.pin, 'the moved game points to it');
+    // The second phone is a player of the moved game (read back through readGame): it may start it too.
+    const second = await fork(g.pin, 'u2', g.pids.u2, KEYS[1]);
+    assert.strictEqual(second.pin, r.pin);
+    assert.strictEqual(second.host, true);
+    assert.strictEqual(second.hostKey, db.games[r.pin].hostKey);
+    assert.strictEqual(db.games[g.pin].players, undefined, 'nothing put back where strangers read');
+});
+
+test('Replay and the crew page pressed at once on a moved crew game make one game', async () => {
+    const g = await finishedGame(true);
+    await sweepMoved(g);
+    const pins = await Promise.all([crewPage(g, 1), replay(g, 2), crewPage(g, 3)]);
+    assert.strictEqual(new Set(pins).size, 1, `every phone in one lobby, got ${pins.join(', ')}`);
+    assert.ok(staging(pins[0]));
+    assert.strictEqual(db.games[g.pin].fork, pins[0]);
+    assert.strictEqual(db.crews[g.crew].rematch.pin, pins[0]);
+});
+
+test('the crew page, after a Replay of a moved game, goes to that Replay (lastGameOf path)', async () => {
+    const g = await finishedGame(true);
+    await sweepMoved(g);
+    const r = await replay(g, 2);
+    assert.strictEqual(db.games[r].parent, g.pin);
+    assert.strictEqual(await crewPage(g, 1), r);
+});

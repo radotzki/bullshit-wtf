@@ -1,5 +1,6 @@
 import { playerPicks } from './scoring';
 import { get, gamesRef } from '../firebase';
+import { readGame, isMoved } from './old-games';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { GameScheme, GameState } from '../game-model';
 import { advance } from './tick';
@@ -8,7 +9,12 @@ import { writeMarks } from './mark-sent';
 
 export async function onAnswerSelection(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
+
+    // An old game (see old-games.ts): a pick written now, or the move itself, changes nothing.
+    if (isMoved(game)) {
+        return;
+    }
 
     // The seats whose pick is in are marked as done for the waiting screens (see sent.ts): that
     // they picked, not what. Alongside the step below, so the phase ends no later for it.

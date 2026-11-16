@@ -1,6 +1,7 @@
 import { replayLength, gameTaste } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
@@ -28,7 +29,7 @@ export const FORK_WAIT_MS = NEXT_GAME_WAIT_MS;
 export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string,
     stagedReveal = false, aboutUs = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
     const gameCounter = await incGameCounter();
     const forkedGamePin = generateGameName(gameCounter);
 

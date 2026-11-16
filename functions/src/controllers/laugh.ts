@@ -1,5 +1,6 @@
 import { GameState, GameStateInfo, GamePlayers, RevealAnswer, canLaugh, laughCount } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readPart } from './old-games';
 import { isPlayer } from './scoring';
 
 /**
@@ -24,8 +25,8 @@ export async function laugh(pin: any, pid: any, text: any): Promise<{ laughs?: n
     const game = gamesRef.child(pin);
     const [state, players, rows] = await Promise.all([
         get<GameStateInfo>(game.child('state')),
-        get<GamePlayers>(game.child('players')),
-        get<RevealAnswer[]>(game.child('revealAnswers')),
+        readPart<GamePlayers>(pin, 'players'),
+        readPart<RevealAnswer[]>(pin, 'revealAnswers'),
     ]);
 
     if (!state && !players) {

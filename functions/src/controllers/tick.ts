@@ -1,6 +1,7 @@
 import { getQuestion, randomQuestions, markQuestionSeen, seenRecordsFor } from './questions';
 import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart, aboutOf, sentMark } from '../game-model';
 import { get, gamesRef, qHistoryRef, questionsRef } from '../firebase';
+import { readGame, isMoved } from './old-games';
 import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
 import { pickHouseLies } from './answer-options';
 import { cleanHouseLies } from './house-lie-cleanup';
@@ -24,7 +25,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 /** A client wrote games/{pin}/tick: move on if that tick is valid for the current phase. */
 export async function tick(pin) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!tickAllowed(game, game && game.tick, Date.now())) {
         console.log(`[PIN: ${pin}] Ignoring tick ${game && game.tick} in state ${game && game.state && game.state.id}`);
@@ -43,7 +44,13 @@ export async function tick(pin) {
  */
 export async function advance(pin: string, from: GameStateInfo, retryAfter = leaveRetryDelay) {
     pin = pin.toUpperCase();
-    let game = await get<GameScheme>(gamesRef.child(pin));
+    let game = await readGame(pin);
+
+    if (isMoved(game)) {
+        // An old game whose private parts were moved (see old-games.ts) plays no more.
+        console.log(`[PIN: ${pin}] Old game, not moved on`);
+        return;
+    }
 
     if (!onPhase(game, from)) {
         console.log(`[PIN: ${pin}] State already moved on from ${stateKey(from)}`);
@@ -65,7 +72,7 @@ export async function advance(pin: string, from: GameStateInfo, retryAfter = lea
 
     // The step works on the game as it is now that the phase is this run's, not as it was read before:
     // if the game has left the phase meanwhile, there is nothing to do, and the phase stays taken.
-    game = await get<GameScheme>(gamesRef.child(pin));
+    game = await readGame(pin);
 
     if (!onPhase(game, from)) {
         console.log(`[PIN: ${pin}] State moved on from ${stateKey(from)} before this run took it`);

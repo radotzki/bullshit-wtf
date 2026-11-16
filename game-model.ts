@@ -126,6 +126,11 @@ export interface GameScheme {
     // The question index highlights were first kept from. 0 means the whole game counts, so a player
     // with no highlight really fooled nobody (games already running at a deploy start later).
     highlightsFrom?: number;
+    // An old game's private parts (players, highlights, answers, ...), moved here by the server 6 hours
+    // after its final scoreboard (24 hours after it was made, for a game never finished): this path has
+    // no database rule of its own, so only the server reads it. Nothing is erased. Server only: see
+    // old-games.ts in the functions, whose readGame puts them back for every server reader.
+    kept?: { [part: string]: any };
     // The "About us" questions, a 50/50 test set when the game is made, and only for a game made by a
     // client that can show them (see about.ts in the functions). true: two or three questions of the game
     // are about one of its players, when it starts with three or more. false: in the test, plays as

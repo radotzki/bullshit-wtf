@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
+import { gameGone, joinPageFor } from './game-gone';
 import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
 import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
@@ -133,13 +134,19 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.playMusic();
         Promise.all([
-            this.apiService.getPlayers(this.pin),
+            // Refused or empty once the game is old (see game-gone.ts): handled below.
+            this.apiService.getPlayers(this.pin).catch(() => null),
             // The final screen still works for games that ended before highlights were kept.
             this.apiService.getHighlights(this.pin).catch(() => null),
             this.apiService.getHighlightsFrom(this.pin).catch(() => null),
             this.apiService.getGameLocale(this.pin).catch(() => 'en'),
             this.apiService.getTaste(this.pin),
         ]).then(([resp, highlights, from, locale, taste]: any[]) => {
+            if (gameGone(resp)) {
+                // An old game: its players are no longer readable. The join page says "Game over".
+                this.leaveForJoinPage(locale);
+                return undefined;
+            }
             // The words are in the game's language from the first paint.
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];
@@ -160,12 +167,22 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.setRepeatGroup(resp);
             const host = Object.keys(resp).map(pid => resp[pid]).filter(p => p && p.host)[0];
             this.hostName = host ? host.nickname : '';
-            return this.apiService.getNextWeek(this.pin);
-        }).then(nextWeek => this.setNextWeek(nextWeek));
+            return this.apiService.getNextWeek(this.pin).then(nextWeek => this.setNextWeek(nextWeek));
+        });
 
         this.crewSubscription = this.apiService.getGameCrewObservable(this.pin).subscribe(id => this.onCrew(id));
 
         this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(fork => this.onFork(fork));
+    }
+
+    /** This game is gone (see game-gone.ts): on to its join page, which says the game is over. */
+    private leaveForJoinPage(locale: string) {
+        if (this.leaving) {
+            return;
+        }
+        this.leaving = true;
+        this.gameService.unregister();
+        this.router.navigate(joinPageFor(this.pin, locale), { replaceUrl: true });
     }
 
     /** A rematch of this game exists: go to it, or stay here with a button that goes. */

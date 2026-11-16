@@ -2,6 +2,7 @@ import { isPlayer } from './scoring';
 import { getQuestion } from './questions';
 import { Answer, Answers, GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame, isMoved } from './old-games';
 import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
@@ -13,7 +14,7 @@ import { writingSent } from './about';
 
 export async function answer(pin: string, pid: string, playerAnswer: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     // A lie is taken from a player of this game, and only while the question is open.
     if (!game || !isPlayer(game, pid)) {
@@ -22,7 +23,8 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
 
     // Too late (the phone's clock, a slow network): the answers are on the table, so the lie is not
     // taken. The phone is already moving to the next screen; there is nothing for it to retry.
-    if (!game.state || game.state.id !== GameState.ShowQuestion) {
+    // An old game (see old-games.ts) whose question was left open takes no lie either.
+    if (!game.state || game.state.id !== GameState.ShowQuestion || isMoved(game)) {
         console.log(`[PIN: ${pin}] Lie not taken: the question is closed (state ${game.state && game.state.id})`);
         return;
     }
