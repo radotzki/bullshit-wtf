@@ -4,7 +4,7 @@ import {
 import { get, gamesRef, crewsRef } from '../firebase';
 import { readGame } from './old-games';
 import { newGame, incGameCounter, generateGameName } from './new-game';
-import { claimCrewLobby, claimFork, lastGameOf, lobbyOpen } from './next-game';
+import { claimCrewLobby, claimFork, lastGameOf, latestCrewGame, lobbyOpen } from './next-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
 import { setCrewNight } from './crew-night';
 
@@ -296,13 +296,20 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
         return fail('Crew does not exist', 'CREW_NOT_EXIST');
     }
 
-    // The crew's last game, if it ended within LINK_LAST_GAME_MS: a lobby opened before that end
-    // is gone, as on the Replay side (crewLobbyFor's `since`), so this tap and a Replay of that game
-    // land in the same new lobby, not one in an old lobby nobody started and one in the Replay.
+    // A lobby opened before the crew's latest game ended is gone, as on the Replay side
+    // (crewLobbyFor's `since`), so this tap and a Replay of that game land in the same new lobby, not
+    // one in an old lobby nobody started and one in the Replay. That holds however long ago the game
+    // ended, since Replay uses its end time at any age (past half an hour, an old lobby still waiting
+    // took the crew page while a Replay made a new one).
+    // Within LINK_LAST_GAME_MS the end is the game's final state's time, and its final screen follows
+    // this lobby. Past it, the end is the crew's record of the game, written when it reached its final
+    // scoreboard: it needs no read of the game, and stays when the old-games sweep moves the game.
     const last = lastGameOf(crew);
     const lastState = last ? await get<{ id: number; timestamp?: number }>(gamesRef.child(last).child('state')) : null;
     const lastEnded = !!lastState && lastState.id === GameState.ScoreBoardFinal;
-    const endedAt = lastEnded ? Number(lastState.timestamp) || Number(crew.games[last].time) || 0 : 0;
+    const latest = latestCrewGame(crew);
+    const endedAt = lastEnded ? Number(lastState.timestamp) || Number(crew.games[last].time) || 0
+        : latest && !last ? Number(crew.games[latest].time) || 0 : 0;
 
     // A lobby is waiting (or being made by another phone this moment): everyone goes there.
     const current = crew.rematch;
