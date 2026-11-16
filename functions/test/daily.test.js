@@ -197,6 +197,7 @@ test('a post: an open and a press become one row, and change no tally', () => {
     assert.deepStrictEqual(post({}), {
         lang: 'en', day: '2026-11-28', add: [],
         row: { content_type: 'daily-home', method: 'open', crew_id: null, locale: 'en', uid: 'abcdefgh12345678' },
+        via: null,
     });
     ['whatsapp', 'native', 'copy', 'fool-whatsapp', 'fool-native', 'fool-copy', 'create'].forEach(m => {
         const p = post({ m, k: 2, f: 'k3x9q2ab' });
@@ -223,6 +224,23 @@ test('a post: how the visitor arrived becomes the content type', () => {
     assert.deepStrictEqual(daily.DAILY_METHODS, ['open', 'truth', 'house', 'friend', 'whatsapp', 'native', 'copy',
         'fool-whatsapp', 'fool-native', 'fool-copy', 'create', 'round-forced',
         'round-tell-whatsapp', 'round-tell-native', 'round-tell-copy', 'round-score', 'round-back']);
+});
+
+test('a post: an open from a post\'s own tag leaves one more row with the tag, so posts can be compared', () => {
+    assert.deepStrictEqual(post({ src: 'FB-he-Hanukkah' }).via,
+        { content_type: 'post-via', method: 'fb-he-hanukkah', crew_id: null, locale: 'en', uid: 'abcdefgh12345678' });
+    assert.strictEqual(post({ src: 'fb-he-hanukkah' }).row.content_type, 'daily-post', 'the open row reads as before');
+    assert.strictEqual(post({ src: 'fb-he-hanukkah', uid: undefined }).via.uid, null, 'a browser with no id still counts for its post');
+    assert.ok(!daily.POST_VIA.startsWith('daily'), 'the daily queries, which read STARTS_WITH(content_type, \'daily\'), leave it out');
+    // Only the open: a pick or a send from the same post is joined on uid, not written twice.
+    ['whatsapp', 'create'].forEach(m => assert.strictEqual(post({ src: 'fb-he-hanukkah', m }).via, null, m));
+    assert.strictEqual(post({ src: 'fb-he-hanukkah', m: 'truth', k: 0 }).via, null);
+    // The puzzle's fixed arrivals and a typed address have their own content type already.
+    ['', 'daily', 'daily-home', 'daily-seo', 'daily-share', 'daily-round', '<script>'].forEach(src => assert.strictEqual(post({ src }).via, null, src));
+    // A round's open carries the round's id; its tag has the round-via row (daily-round.ts).
+    assert.strictEqual(post({ src: 'fb-he-hanukkah', m: 'round-back', g: 'abcdefghij' }).via, null);
+    // A play-test writes nothing at all.
+    assert.strictEqual(post({ src: 'test-fb-he' }), null);
 });
 
 test('a post: a pick adds one to its answer, only for an answer the question has', () => {
