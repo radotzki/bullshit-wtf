@@ -31,6 +31,9 @@
                 <span>{{ t.host }}</span>
             </a>
             <p class="host-hint">{{ t.createHint }}</p>
+            <!-- For a visitor on their own (most strangers from a search, alone at a desk): today's
+                 question, right under Create, once the puzzle is live (daily-line.ts). -->
+            <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
 
             <!-- Everything else the old menu offered, quieter. -->
             <nav class="other-ways">
@@ -39,8 +42,11 @@
                 <a routerLink="/learn"><i class="fa fa-graduation-cap" aria-hidden="true"></i> {{ t.learn }}</a>
             </nav>
 
-            <!-- The daily puzzle, for someone on their own: a plain link, the page is outside the app. -->
+            <!-- The daily puzzle, for someone on their own: a plain link, the page is outside the app.
+                 Once the puzzle is live, the line under Create takes its place. -->
+            <ng-container *ngIf="!dailyLive">
             <p class="alone">{{ t.alone }} <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a></p>
+            </ng-container>
         </div>
 
         <div class="picture" role="img" [attr.aria-label]="p.alt">

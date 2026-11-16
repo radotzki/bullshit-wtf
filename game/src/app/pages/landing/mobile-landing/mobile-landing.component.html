@@ -33,8 +33,11 @@
         <p class="pitch">{{ t.pitch }}</p>
         <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
         <p class="facts">{{ t.facts }}</p>
-        <!-- The daily puzzle: a plain link, the page is outside the app. -->
+        <!-- The daily puzzle: a plain link, the page is outside the app. Once the puzzle is live,
+             the line under Create takes its place. -->
+        <ng-container *ngIf="!dailyLive">
         <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a>
+        </ng-container>
 
         <div class="picture" *ngIf="picture" role="img" [attr.aria-label]="p.alt">
             <div class="screen" aria-hidden="true">
@@ -99,6 +102,9 @@
                 <p class="menu-button-text-second"> {{ t.createHint }} </p>
             </div>
         </div>
+        <!-- For a visitor on their own: today's question, right under Create, once the puzzle is
+             live (daily-line.ts). -->
+        <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
     </ng-template>
 
     <div class="menu-button present-game" routerLink="/present-game">

@@ -67,6 +67,20 @@
         background-color: #97374e;
     }
 
+    // Right under Create, for a visitor on their own: today's question (daily-line.ts). A thin strip
+    // in Create's darker shade, so it reads as part of Create and never pushes Create down.
+    .alone-line {
+        flex: none;
+        display: block;
+        padding: 9px 15px 10px;
+        background-color: #6f2839;
+        color: #f3d467;
+        font-size: 1rem;
+        line-height: 1.35;
+        text-align: center;
+        text-decoration: underline;
+    }
+
     .menu-button.present-game {
         background-color: #db7151;
     }
