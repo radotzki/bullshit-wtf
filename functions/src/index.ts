@@ -222,6 +222,10 @@ async function roundAct(body: any, bank: daily.DailyBank, now: number, res) {
             if (row) {
                 await analytics.onShare(row);
             }
+            const via = dailyRound.roundViaRow(post, done.method, testRound);
+            if (via) {
+                await analytics.onShare(via);
+            }
         }
         const view = dailyRound.roundView(done.round, post.g, post.day, found.q, no, post.uid, now);
         return res.status(200).send(done.error ? { error: done.error, round: view } : { ok: true, round: view });

@@ -21,10 +21,50 @@ test('the 50/50 split is by the browser id, and a play-test can choose its half'
     assert.strictEqual(rc.groupHalf(null, '', ''), false, 'no id: the puzzle as built');
     assert.strictEqual(rc.groupHalf('s123456789abcdef', 'test', '?via=test&round=on'), true);
     assert.strictEqual(rc.groupHalf('a123456789abcdef', 'test-he', '?via=test-he&round=off'), false);
-    assert.strictEqual(rc.groupHalf('s123456789abcdef', 'daily-home', '?round=on'), false, 'only a play-test chooses');
+    assert.strictEqual(rc.groupHalf('s123456789abcdef', 'daily-home', '?round=on'), true, 'the switch works with any tag');
+    assert.strictEqual(rc.groupHalf('s123456789abcdef', 'daily-round-wa-he-family', '?via=daily-round-wa-he-family&round=on'), true);
+    assert.strictEqual(rc.groupHalf('s123456789abcdef', '', '?round=on'), true, 'and with none');
+    assert.strictEqual(rc.groupHalf(null, '', '?round=on'), true, 'and with storage blocked');
+    assert.strictEqual(rc.groupHalf('a123456789abcdef', 'fb-he', '?round=off'), false);
+    assert.strictEqual(rc.groupHalf('s123456789abcdef', '', '?round=onx'), false, 'only on or off');
+    assert.strictEqual(rc.groupHalf('s123456789abcdef', '', '?around=on'), false);
     // Of 36 first letters, 18 are in the group half.
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'.split('');
     assert.strictEqual(chars.filter(c => rc.groupHalf(c + '123456789abcdef', '', '')).length, 18);
+});
+
+test('forced: only a browser the switch moved out of its own half, and never a play-test', () => {
+    assert.strictEqual(rc.forcedHalf('s123456789abcdef', 'daily-round-wa-he-family', '?via=daily-round-wa-he-family&round=on'), true);
+    assert.strictEqual(rc.forcedHalf('s123456789abcdef', '', '?round=on'), true);
+    assert.strictEqual(rc.forcedHalf(null, '', '?round=on'), true, 'no id is the puzzle half');
+    assert.strictEqual(rc.forcedHalf('a123456789abcdef', 'daily-home', '?round=off'), true);
+    assert.strictEqual(rc.forcedHalf('a123456789abcdef', 'fb-he', '?round=on'), false, 'already in the group half');
+    assert.strictEqual(rc.forcedHalf('s123456789abcdef', 'fb-he', '?round=off'), false, 'already in the puzzle half');
+    assert.strictEqual(rc.forcedHalf('s123456789abcdef', 'fb-he', ''), false, 'no switch');
+    assert.strictEqual(rc.forcedHalf('s123456789abcdef', 'test', '?via=test&round=on'), false, 'a play-test is not counted anyway');
+});
+
+test('a post\'s tag rides on the round link and on the game, the puzzle\'s fixed arrivals do not', () => {
+    assert.strictEqual(rc.roundUrl('https://bullshit.wtf', he, 12, 'k3x9q2ab7m', 'daily-round-wa-he-family'), HE_URL + '&via=daily-round-wa-he-family');
+    assert.strictEqual(rc.roundUrl('https://bullshit.wtf', en, 12, 'k3x9q2ab7m', 'wa-en-hanukkah'), URL + '&via=wa-en-hanukkah');
+    ['', 'daily', 'daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool', 'daily-round', '<b>'].forEach(t =>
+        assert.strictEqual(rc.roundUrl('https://bullshit.wtf', en, 12, 'k3x9q2ab7m', t), URL, t));
+    assert.strictEqual(rc.isPostTag('daily-round-kit-he-wa-202612'), true);
+    assert.strictEqual(rc.isPostTag('test-he'), false);
+    assert.strictEqual(rc.roundCampaign(''), 'daily-round');
+    assert.strictEqual(rc.roundCampaign('daily-round'), 'daily-round');
+    assert.strictEqual(rc.roundCampaign('daily-home'), 'daily-round');
+    assert.strictEqual(rc.roundCampaign('test'), 'test');
+    assert.strictEqual(rc.roundCampaign('test-he'), 'test-he');
+    assert.strictEqual(rc.roundCampaign('daily-round-wa-he-family'), 'daily-round-wa-he-family', 'no second daily-round-');
+    assert.strictEqual(rc.roundCampaign('wa-he-hanukkah'), 'daily-round-wa-he-hanukkah');
+    const long = rc.roundCampaign('a-very-long-tag-of-thirty-nine-letters1');
+    assert.ok(long.length <= 40 && /^daily-round-/.test(long) && !/-$/.test(long), long);
+    assert.strictEqual(rc.roundCampaign('abcdefghijklmnopqrstuvwxyz0-12'), 'daily-round-abcdefghijklmnopqrstuvwxyz0', 'cut to 40, no dash at the end');
+    // Every Marketer tag of a group round passes the game's tag check whole.
+    ['daily-round-wa-he-family', 'daily-round-wa-he-friends-2', 'daily-round-wa-en-friends', 'daily-round-wa-he-hk-family',
+        'daily-round-wa-he-hk-friends', 'daily-round-wa-en-hk', 'daily-round-kit-he-wa-202612'].forEach(t =>
+        assert.strictEqual(rc.roundCampaign(t), t));
 });
 
 test('the round link carries the number and the id, and a play-test\'s tag', () => {

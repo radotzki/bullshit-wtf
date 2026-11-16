@@ -221,7 +221,7 @@ test('a post: how the visitor arrived becomes the content type', () => {
     assert.strictEqual(type('daily-other'), 'daily-post');
     assert.strictEqual(type('<script>'), 'daily', 'a tag the game would not keep is no tag');
     assert.deepStrictEqual(daily.DAILY_METHODS, ['open', 'truth', 'house', 'friend', 'whatsapp', 'native', 'copy',
-        'fool-whatsapp', 'fool-native', 'fool-copy', 'create',
+        'fool-whatsapp', 'fool-native', 'fool-copy', 'create', 'round-forced',
         'round-tell-whatsapp', 'round-tell-native', 'round-tell-copy', 'round-score', 'round-back']);
 });
 

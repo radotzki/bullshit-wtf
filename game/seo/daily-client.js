@@ -372,6 +372,13 @@
             box.appendChild(el('p', 'source-line')).appendChild(source);
         }
 
+        if (rc.forcedHalf(uid, state.src, location.search) && state.forced !== puzzle.day) {
+            // ?round=on or off moved this browser out of its half: one row a day, so the test's
+            // comparison can leave this browser id out (shares.method round-forced).
+            state.forced = puzzle.day;
+            save(KEY, state);
+            post('round-forced');
+        }
         if (rc.groupHalf(uid, state.src, location.search) && !guest) {
             // The group half of the 50/50 test: one card, and one button, that starts a chat group's round.
             box.appendChild(round.starterCard(puzzle, kind, pct));

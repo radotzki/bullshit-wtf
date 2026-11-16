@@ -236,6 +236,30 @@ test('rows: the round id in crew_id, the arrival as content type, nothing from a
     assert.strictEqual(act(started(), 'lie', B, { n: 'Yossi' }).method, undefined, 'a name alone leaves no row');
 });
 
+test('a post\'s round: one round-via row with the tag, beside its start; every other row as before', () => {
+    const TAG = 'daily-round-wa-he-family';
+    const start = (src, m) => round.cleanRoundPost({ a: 'start', lang: 'he', no: 2, g: G, uid: A, src, n: 'דנה', l: 'לשיר', m: m || 'round-start' }, bank, NOW);
+    const p = start(TAG);
+    assert.deepStrictEqual(round.roundViaRow(p, 'round-start', false), { content_type: 'round-via', method: TAG, crew_id: G, locale: 'he', uid: A });
+    assert.strictEqual(round.roundViaRow(start('wa-he-hanukkah', 'round-other'), 'round-other', false).method, 'wa-he-hanukkah', 'any post tag, also on a round in another group');
+    assert.strictEqual(round.roundRow(p, 'round-start', false).content_type, 'daily-post', 'the start row keeps the content type queries read today');
+    assert.strictEqual(round.roundViaRow(p, undefined, false), null, 'the same round started again: no second row');
+    assert.strictEqual(round.roundViaRow(p, 'round-start', true), null, 'nothing from a test round');
+    ['', 'daily', 'daily-home', 'daily-share', 'daily-round', 'test', 'test-he', '<b>'].forEach(src =>
+        assert.strictEqual(round.roundViaRow(start(src), 'round-start', false), null, `no row for "${src}"`));
+    const lie = round.cleanRoundPost({ a: 'lie', lang: 'he', no: 2, g: G, uid: B, src: TAG, n: 'יוסי', l: 'לשרוק' }, bank, NOW);
+    assert.strictEqual(round.roundViaRow(lie, 'round-lie', false), null, 'only a start says the tag');
+    assert.strictEqual(round.roundRow(lie, 'round-lie', false).content_type, 'daily-post');
+});
+
+test('round-forced: a browser the switch moved out of its half, once a day, with no round id', () => {
+    const post = (more) => daily.cleanPost(Object.assign({ lang: 'he', day: '2026-11-28', m: 'round-forced', src: 'daily-round-wa-he-family', uid: 's' + B.slice(1) }, more), bank, NOW);
+    assert.deepStrictEqual(post().row, { content_type: 'daily-post', method: 'round-forced', crew_id: null, locale: 'he', uid: 's' + B.slice(1) });
+    assert.strictEqual(post({ src: '' }).row.content_type, 'daily');
+    assert.strictEqual(post({ src: 'test' }), null, 'a play-test is not counted');
+    assert.deepStrictEqual(post().add, [], 'it changes no tally');
+});
+
 test('the round\'s beacons: tell, score and back need a round id, and pass it as crew_id', () => {
     const post = (more) => daily.cleanPost(Object.assign({ lang: 'en', day: '2026-11-28', m: 'round-tell-whatsapp', src: 'daily-round', uid: B, g: G }, more), bank, NOW);
     assert.deepStrictEqual(post().row, { content_type: 'daily-round', method: 'round-tell-whatsapp', crew_id: G, locale: 'en', uid: B });

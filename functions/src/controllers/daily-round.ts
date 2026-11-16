@@ -591,6 +591,21 @@ export function dealFor(current: Round | null, uid: string, houseLies: number, r
     return r;
 }
 
+/**
+ * The post's tag of a round, when its starter came by one (?via=daily-round-wa-he-family on the
+ * page, so the round's link carries it too): one more row beside round-start or round-other,
+ * content_type 'round-via', the tag in method and the round's id in crew_id. Every other row keeps
+ * its content_type as before (daily-post for a post's tag), so today's queries read the same; this
+ * row tells the post's rounds apart: join on crew_id. Null for anything else, and for a test round.
+ */
+export const ROUND_VIA = 'round-via';
+export function roundViaRow(post: RoundPost, method: string | undefined, testRound: boolean) {
+    if ((method !== 'round-start' && method !== 'round-other') || post.test || testRound || contentTypeOf(post.src) !== 'daily-post') {
+        return null;
+    }
+    return { content_type: ROUND_VIA, method: post.src, crew_id: post.g, locale: post.lang, uid: post.uid };
+}
+
 /** The row an act leaves in BigQuery `shares`: the round's id in crew_id. Null for a test round. */
 export function roundRow(post: RoundPost, method: string | undefined, testRound: boolean) {
     if (!method || post.test || testRound) {
