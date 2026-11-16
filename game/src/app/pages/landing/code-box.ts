@@ -15,8 +15,11 @@ export interface CodeBoxDeps {
     navigate: (path: string[], query: { [key: string]: string }) => any;
     /** The page's language now ('he' or 'en'). */
     locale: () => string;
-    /** The words for a failed PIN (joinStrings(locale).error), and for an empty box. */
-    errorText: (code: string, message: string) => string;
+    /**
+     * The words for a failed PIN (pinError in join-strings.ts), given what was typed before cleaning,
+     * and for an empty box.
+     */
+    errorText: (code: string, message: string, typed: string) => string;
     emptyText: () => string;
 }
 
@@ -34,7 +37,8 @@ export class CodeBox {
         if (this.busy) {
             return;
         }
-        const pin = cleanCode(this.code);
+        const typed = this.code;
+        const pin = cleanCode(typed);
         if (!pin) {
             this.error = this.deps.emptyText();
             return;
@@ -49,7 +53,7 @@ export class CodeBox {
         }
         if (failure && codeBoxOutcome(failure.code) === 'stay') {
             this.busy = false;
-            this.error = this.deps.errorText(failure.code, failure.message);
+            this.error = this.deps.errorText(failure.code, failure.message, typed);
             return;
         }
         const route = codeJoinRoute(pin, this.deps.locale());

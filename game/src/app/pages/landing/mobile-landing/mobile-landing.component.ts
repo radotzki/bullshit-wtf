@@ -9,7 +9,7 @@ import { SearchLink, searchLinks, seasonLink } from '../search-links';
 import { CodeBox } from '../code-box';
 import { dailyHref, dailyLive } from '../daily-line';
 import { DAILY_FIRST_DAY } from '../../../daily-launch';
-import { joinStrings } from '../../join-game/join-strings';
+import { pinError } from '../../join-game/join-strings';
 
 /** Reads a key the game keeps in this browser: localStorage, else the tab's storage, else nothing. */
 function readStored(key: string): string | null {
@@ -64,7 +64,7 @@ export class MobileLandingComponent {
             validate: pin => injector.get(ApiService).validateGameName(pin),
             navigate: (path, query) => router.navigate(path, { queryParams: query }),
             locale: () => this.t.lang,
-            errorText: (code, message) => joinStrings(this.t.lang).error(code, message),
+            errorText: (code, message, typed) => pinError(this.t.lang, code, message, typed),
             emptyText: () => this.t.codeEmpty,
         });
         const tag = this.tag = arrivalCampaign();

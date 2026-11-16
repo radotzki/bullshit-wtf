@@ -49,3 +49,12 @@ export function cleanCode(typed: string | null | undefined): string | null {
     const pin = fromHebrewKeys(typed).replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, CODE_MAX);
     return pin || null;
 }
+
+/**
+ * Whether what was typed held a Hebrew letter. A code typed in Hebrew that still names no game was
+ * most likely typed on a phone's Hebrew keyboard, where the letters don't sit on the English keys:
+ * the boxes then add that game codes are English letters (pinError in pages/join-game/join-strings.ts).
+ */
+export function typedHebrew(typed: string | null | undefined): boolean {
+    return /[א-ת]/.test(String(typed || ''));
+}
