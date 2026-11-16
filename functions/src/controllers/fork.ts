@@ -10,6 +10,7 @@ import { withStaged } from './phase';
 import { drawAboutUs } from './about';
 import { claimFork, forkOf, crewLobbyFor, NEXT_GAME_WAIT_MS } from './next-game';
 import { REMATCH_REUSE_MS } from './crew';
+import { HOST_AWAY_MIN_PLAYERS } from './start';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = NEXT_GAME_WAIT_MS;
@@ -123,6 +124,10 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
             forked.serverStart = true;
             // The player who pressed Replay is in the new lobby now (see hostHere).
             forked.hostSeen = Date.now();
+            // A Replay of 5 or more is a full lobby from its first second (see fullSince).
+            if (Object.keys(players).filter(k => !!players[k]).length >= HOST_AWAY_MIN_PLAYERS) {
+                forked.fullSince = Date.now();
+            }
         }
     }
     if (Object.keys(players).some(k => players[k] && players[k].host)) {

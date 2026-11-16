@@ -43,7 +43,8 @@
                 <h1 class="headline" dir="auto">{{ headline }}</h1>
                 <p *ngIf="winners.length > 1" class="tied" [attr.dir]="rtl ? 'rtl' : 'auto'">{{ tiedNames }}</p>
                 <p class="winner-score" *ngIf="winners.length">{{ t.points(winners[0].score) }}</p>
-                <p *ngIf="myLine" class="my-line">{{ myLine }}</p>
+                <p *ngIf="idle" class="idle-line">{{ t.idle }}</p>
+                <p *ngIf="myLine && !idle" class="my-line">{{ myLine }}</p>
                 <p *ngIf="nextWeekScreenLine" class="next-week-screen">{{ nextWeekScreenLine }}</p>
             </div>
 
