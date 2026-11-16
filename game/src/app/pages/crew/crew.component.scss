@@ -208,6 +208,106 @@
         }
     }
 
+    // WHO'S IN? The game night block above the standings.
+    .what-is-it {
+        text-align: center;
+        color: #4a4a4a;
+        font-size: .95em;
+        margin-bottom: 12px;
+    }
+
+    .game-night {
+        margin-bottom: 18px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+
+        .night-when {
+            margin-bottom: 4px;
+        }
+
+        .button + .button,
+        .input + .button {
+            margin-top: 8px;
+        }
+
+        .notification {
+            margin-top: 10px;
+        }
+    }
+
+    .title-holder {
+        font-family: "Luckiest Guy", "Suez One", sans-serif;
+        font-size: 1.25em;
+        color: #db7151;
+        line-height: 1.3;
+    }
+
+    .whos-in-title {
+        margin-top: 12px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        color: #4a4a4a;
+    }
+
+    .whos-in {
+        margin: 4px 0 10px;
+        line-height: 1.7;
+
+        .in-name {
+            display: inline-block;
+            margin: 0 7px;
+            font-weight: 600;
+            word-break: break-word;
+
+            .tick {
+                color: #25a35a;
+            }
+        }
+    }
+
+    .youre-in {
+        font-weight: 700;
+        margin: 6px 0 10px;
+
+        .tick {
+            color: #25a35a;
+        }
+    }
+
+    .nudge {
+        margin-top: 8px;
+        white-space: normal;
+        height: auto;
+        min-height: 2.25em;
+    }
+
+    .cant-make-it {
+        margin-top: 10px;
+        font-size: .9em;
+    }
+
+    .link-button {
+        background: none;
+        border: 0;
+        padding: 4px 8px;
+        font: inherit;
+        color: #7a7a7a;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .in-count {
+        margin-top: 8px;
+        font-weight: 600;
+        word-break: break-word;
+    }
+
+    .night-passed {
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
     .crew-box.is-rtl .standings .name {
         text-align: right;
     }

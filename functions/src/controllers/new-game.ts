@@ -2,7 +2,8 @@ import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
 import { withStaged } from './phase';
-import { GameScheme, GameState, isPack, cleanCampaign } from '../game-model';
+import { drawAboutUs } from './about';
+import { GameScheme, GameState, packFits, cleanCampaign } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export interface NewGameOptions {
@@ -19,12 +20,18 @@ export interface NewGameOptions {
     serverStart?: boolean;
     // The creating phone can show the staged reveal, so this game is in its 50/50 test (see big-reveal.ts).
     stagedReveal?: boolean;
+    // The creating phone can show the About questions, so this game is in their 50/50 test (see about.ts).
+    aboutUs?: boolean;
+    // A pin claimed already (a crew's lobby, see next-game.ts): the game is made under it.
+    pin?: string;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
-    return incGameCounter().then(async gameCounter => {
-        const gamePin = generateGameName(gameCounter);
-        const pack = isPack(options.pack) ? options.pack : undefined;
+    const counter = options.pin ? Promise.resolve(null) : incGameCounter();
+    return counter.then(async gameCounter => {
+        const gamePin = options.pin || generateGameName(gameCounter);
+        // A pack with questions in one language only (Thanksgiving: English) is dropped from any other game.
+        const pack = packFits(options.pack, locale) ? options.pack : undefined;
         const questions = await randomQuestions(locale, count, options.uids || [], pack);
         const game = emptyGame(locale, count, questions, creator);
 
@@ -37,7 +44,7 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
             game.campaign = campaign;
         }
 
-        // The round-1 lie helper, on for half of all games (crew rematches included).
+        // The round-1 lie helper, on for every game (crew rematches included). Logged as coach.
         if (pickCoach()) {
             game.coach = true;
         }
@@ -60,6 +67,13 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         if (options.crew) {
             game.crew = options.crew;
             game.origin = 'crew';
+        }
+
+        // The About questions, for half of the games made by a client that can show them: by the crew's
+        // half for a crew's game, else by the PIN's.
+        const aboutUs = drawAboutUs(options.aboutUs === true, gamePin, options.crew);
+        if (aboutUs !== undefined) {
+            game.aboutUs = aboutUs;
         }
 
         return gamesRef.child(gamePin).set(game).then(() => gamePin);

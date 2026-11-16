@@ -257,3 +257,24 @@ test('many callers at once for every phase of a staged game: each phase once', {
     const question = [S.ShowQuestion, S.ShowAnswers, S.RevealTheTruth, S.ScoreBoard];
     assert.deepStrictEqual(states[pin], [S.GameStaging, S.RoundIntro].concat(question, question, S.RoundIntro, question, question, S.RoundIntro, question, S.ScoreBoardFinal));
 });
+
+// The last lies of a question sent at the same moment: each call read the game before the others had
+// written, so none saw them all, and the room sat out the whole timer. The call whose lie lands last
+// now sees every lie, and the question ends at once, and once.
+for (const together of [2, 3]) {
+    test(`${together} lies that arrive at the same moment end the question at once, and once`, { timeout: 10000 }, async () => {
+        const pin = newGame(false);
+        for (let i = 0; state(pin) !== S.ShowQuestion; i++) {
+            assert.ok(i < 6, `the game is stuck in state ${state(pin)}`);
+            await next(pin);
+        }
+        const pids = ['p1', 'p2', 'p3'];
+        for (const pid of pids.slice(0, pids.length - together)) await answer(pin, pid, `${pid} lie`);
+        assert.strictEqual(state(pin), S.ShowQuestion, 'still waiting for the others');
+        const before = states[pin].length;
+        await Promise.all(pids.slice(pids.length - together).map(pid => answer(pin, pid, `${pid} lie`)));
+        assert.deepStrictEqual(states[pin].slice(before), [S.ShowAnswers], 'the answers are shown, once');
+        const texts = Object.values(game(pin).answers).map(a => a.text);
+        pids.forEach(pid => assert.ok(texts.includes(`${pid} lie`), `${pid}'s lie is on the table`));
+    });
+}

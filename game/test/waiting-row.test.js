@@ -17,10 +17,10 @@ function load(file) {
 }
 
 const app = path.join(__dirname, '..', 'src', 'app');
-const { rowView } = load(path.join(app, 'components', 'waiting-row', 'waiting-row.ts'));
+const { rowView, PICTURES } = load(path.join(app, 'components', 'waiting-row', 'waiting-row.ts'));
 const { gameStrings } = load(path.join(app, 'pages', 'game-strings.ts'));
 // The shared model, from the repository's root (npm run copy-model copies it into the app).
-const { waitingRow, sentMark } = load(path.join(__dirname, '..', '..', 'game-model.ts'));
+const { waitingRow, sentMark, MAX_PLAYERS, seatPicture } = load(path.join(__dirname, '..', '..', 'game-model.ts'));
 
 const en = gameStrings('en');
 const he = gameStrings('he');
@@ -139,6 +139,20 @@ test('eight players: eight pictures, and the row holds only names and marks', ()
     assert.deepStrictEqual(view.seats.map(s => s.picture), [0, 1, 2, 3, 4, 5, 6, 7].map(i => `avatar${i}.png`));
     view.seats.forEach(s => assert.deepStrictEqual(Object.keys(s).sort(),
         ['away', 'done', 'index', 'label', 'mark', 'nickname', 'picture', 'pid']));
+});
+
+test('twelve players: twelve pictures, three even lines of four, and each seat its own picture', () => {
+    assert.strictEqual(PICTURES, MAX_PLAYERS);
+    const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+    const view = rowView(waitingRow(room(names, { A: sentMark(lies) }), lies, 0, MADE), '', en);
+    const pictures = view.seats.map(s => s.picture);
+    assert.deepStrictEqual(pictures, names.map((n, i) => `avatar${i}.png`));
+    // The pages that list players (scoreboards, reveal) name the same files.
+    assert.deepStrictEqual(names.map((n, i) => seatPicture(i)), pictures);
+    // Every picture exists in the app's assets.
+    pictures.forEach(p => assert.ok(fs.existsSync(path.join(__dirname, '..', 'src', 'assets', p)), p));
+    // A thirteenth seat (two joins in the same instant) reuses a picture instead of a missing file.
+    assert.strictEqual(seatPicture(12), 'avatar0.png');
 });
 
 test('both waiting screens, on phones and on the big screen, show the row', () => {

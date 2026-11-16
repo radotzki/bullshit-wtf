@@ -4,6 +4,7 @@ import {
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
+import { About, CrewNight, aboutOf, aboutMissedOf, sentMark } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
@@ -112,10 +113,29 @@ export class ApiService {
         return this.get<string>(this.gamesRef.child(pin).child('creator'));
     }
 
-    /** Whether the server marks this game's host by the creating phone's host key (see host-key.ts). */
+    /**
+     * Whether the server marks this game's host by the creating phone's host key (see host-key.ts):
+     * true, or 'screen' once the host made their computer the big screen (see hostToBigScreen).
+     */
     getGameHasHost(pin: string) {
         pin = pin.toUpperCase();
-        return this.get<boolean>(this.gamesRef.child(pin).child('hasHost'));
+        return this.get<boolean | 'screen'>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
+    /** The same, live: it changes in the lobby when the host makes their computer the big screen. */
+    getGameHasHostObservable(pin: string) {
+        pin = pin.toUpperCase();
+        return this.observe<boolean | 'screen'>(this.gamesRef.child(pin).child('hasHost'));
+    }
+
+    /**
+     * The host's computer becomes the big screen: the server frees the host's seat and marks the game as
+     * hosted from its big screen. Only the browser with the game's host key may ask, in the lobby.
+     */
+    hostToBigScreen(pin: string) {
+        pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin) || null;
+        return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
     async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
@@ -131,6 +151,8 @@ export class ApiService {
             serverStart: true,
             // This client can show the staged reveal, so the server may draw this game into its 50/50 test.
             stagedReveal: true,
+            // This client can show the About questions, so the server may draw this game into their test.
+            aboutUs: true,
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -413,8 +435,46 @@ export class ApiService {
         if (!pid) {
             return false;
         }
-        const userAnswer = await this.get<unknown>(this.gamesRef.child(pin).child('answers').child(pid));
-        return !!userAnswer;
+        const [userAnswer, state] = await Promise.all([
+            this.get<unknown>(this.gamesRef.child(pin).child('answers').child(pid)),
+            this.get<GameStateInfo>(this.gamesRef.child(pin).child('state')),
+        ]);
+        if (userAnswer) {
+            return true;
+        }
+        // An About question's truth is kept where no phone can read it: the seat's mark says it is in.
+        const about = aboutOf(state);
+        if (about && about.pid === pid) {
+            const sent = await this.get<string>(this.gamesRef.child(pin).child('players').child(pid).child('sent')).catch(() => null);
+            return !!state && sent === sentMark(state);
+        }
+        return false;
+    }
+
+    /**
+     * The About question the game is on (see aboutOf in game-model): whom it is about, or null for a bank
+     * question. The server says so on the game's state; a state that cannot be read is no About question.
+     */
+    getAbout(pin: string): Promise<About> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => aboutOf(state), () => null);
+    }
+
+    /**
+     * The question being written, with whom it is about, read together (the question, the state and the
+     * players at once), so a phone shows the writing form and the "about you" badge in the same frame,
+     * even on a slow network. A state or players read that fails leaves an ordinary question.
+     */
+    async getQuestionWithAbout(pin: string): Promise<{ question: string; about: About; missed: string; players: GamePlayers }> {
+        pin = pin.toUpperCase();
+        const game = this.gamesRef.child(pin);
+        const [question, state, players] = await Promise.all([
+            this.get<string>(game.child('currentQ')),
+            this.get<any>(game.child('state')).catch(() => null),
+            this.get<GamePlayers>(game.child('players')).catch(() => null),
+        ]);
+        // missed: the player whose About question this bank question replaces (aboutMissedOf), or null.
+        return { question, about: aboutOf(state), missed: aboutMissedOf(state), players };
     }
 
     answer(pin: string, answer: string) {
@@ -573,7 +633,7 @@ export class ApiService {
         const hostKey = pid ? newHostKey() : null;
         // stagedReveal: this client can show the staged reveal (each Replay is a new draw of that test).
         const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
-            `fork`, { pin, uid, pid, hostKey, stagedReveal: true });
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true });
         // Another phone pressed Replay first: the server hands this phone that game's key (it may start it
         // too), or says it is a guest there (host: false) and keeps no key.
         if (hostKey && resp && resp.pin && resp.host !== false) {
@@ -606,21 +666,61 @@ export class ApiService {
         return this.observe<Crew>(this.crewsRef.child(id.toLowerCase()));
     }
 
-    async createCrew(pin: string, name: string) {
+    /**
+     * Saves the game's players as a crew. `auto`: made by "Same time next week?" under a name nobody
+     * typed; the browser that made it may call again with another name to rename it. `created` says
+     * whether this call made the crew (older functions do not send it).
+     */
+    async createCrew(pin: string, name: string, auto = false) {
         pin = pin.toUpperCase();
         const uid = await this.currentUid();
-        return this.post<{ id: string; name: string }>(`createCrew`, { pin, name, uid });
+        return this.post<{ id: string; name: string; created?: boolean }>(
+            `createCrew`, auto ? { pin, name, uid, auto } : { pin, name, uid });
+    }
+
+    /**
+     * "Same time next week?", a 50/50 test: true when this finished game's final screen offers it,
+     * false when the game is in the other half, null when it is not in the test (or cannot be read).
+     * The server says so on the game's final state (see functions: controllers/next-week.ts).
+     */
+    getNextWeek(pin: string): Promise<boolean | null> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state').child('nextWeek'))
+            .then(v => v === true ? true : v === false ? false : null, () => null);
+    }
+
+    /**
+     * INVITE ANOTHER GROUP: makes this guest's table, a crew of one with its night set, from the
+     * finished game the guest played in. The server takes the nickname from that game.
+     */
+    async createTable(pin: string, time: number) {
+        pin = pin.toUpperCase();
+        const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
+        const user = this.sessionService.user;
+        const pid = user && user.pid ? user.pid : null;
+        return this.post<{ id: string; name: string; time: number; again?: boolean }>(`createTable`, { pin, pid, time, uid });
     }
 
     async crewRematch(crew: string) {
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
         const resp = await this.post<{ pin: string; created: boolean }>(
-            `crewRematch`, { crew, uid, hostKey, serverStart: true, stagedReveal: true });
+            `crewRematch`, { crew, uid, hostKey, serverStart: true, stagedReveal: true, aboutUs: true });
         if (resp && resp.created) {
             rememberHostKey(resp.pin, hostKey);
         }
         return resp;
+    }
+
+    /**
+     * A crew's game night, through the `crewNight` function (a phone may not write a crew):
+     * `{ time, by }` sets the date, `{ nickname, in }` says "I'm in" or takes the name off.
+     */
+    crewNight(crew: string, body: { time: number; by?: string; prev?: number | null; tz?: number } | { nickname: string; in: boolean }) {
+        return this.post<{
+            in?: boolean; nickname?: string; isNew?: boolean; count?: number; night?: CrewNight; kept?: boolean;
+        }>(
+            `crewNight`, { crew: crew.toLowerCase(), ...body });
     }
 
     /**

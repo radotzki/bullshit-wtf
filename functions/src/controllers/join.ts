@@ -1,5 +1,6 @@
-import { GameScheme, GamePlayer } from '../game-model';
+import { MAX_PLAYERS, GameScheme, GamePlayer } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
 import { onRefusedJoin, refusedJoin } from './analytics';
@@ -61,7 +62,7 @@ export function seatOf(players: GameScheme['players'], uid: any, pid?: any): str
  */
 export async function join(pin: string, typed: string, uid: string, hostKey?: string, myPid?: string): Promise<JoinResult> {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
@@ -79,8 +80,8 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
         return Promise.reject(over);
     }
 
-    if (Object.keys(game.players || {}).length === 8) {
-        // Counted, to size the audience for a ninth player. Awaited (a function may stop once it
+    if (Object.keys(game.players || {}).length >= MAX_PLAYERS) {
+        // Counted, to size the audience for a seat past the limit. Awaited (a function may stop once it
         // answers); a BigQuery failure is logged and never changes the answer.
         await onRefusedJoin(refusedJoin(pin, game)).catch(e => console.error('onRefusedJoin failed', pin, e && e.message));
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });

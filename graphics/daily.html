@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link previews (1200x630) for the daily puzzle, /daily and /he/daily: a sentence with a blank and
+     four answer chips, one glowing. No real question or answer, so the picture never spoils a day.
+     Render: node graphics/render-daily.js game/src/assets -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;position:relative;overflow:hidden;box-sizing:border-box;padding:44px 70px 0;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fffaf3;margin-bottom:20px}
+.kicker{font-size:44px;letter-spacing:3px;color:#97374e}
+.q{margin:18px 0 0;font-size:66px;line-height:1.15;color:#2b2523}
+.q .blank{display:inline-block;width:230px;border-bottom:10px solid #db7151;margin:0 10px;height:50px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:20px 26px;margin-top:38px}
+.chip{border:5px solid #97374e;border-radius:18px;background:#fff;color:#97374e;font-size:44px;line-height:1;padding:24px 0 18px;text-align:center}
+.chip.glow{border-color:#f3d467;background:#fff7d6;color:#2b2523;box-shadow:0 0 0 6px rgba(243,212,103,.45),0 0 46px 10px rgba(243,183,51,.75)}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#97374e;color:#f3d467;display:flex;align-items:center;justify-content:center;font-size:38px;letter-spacing:1px;text-align:center}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .kicker{letter-spacing:0;font-size:48px}
+.he .chip{padding:20px 0}
+</style></head><body>
+
+<div class="card" id="daily-en">
+  <div class="kicker">TODAY'S BULLSHIT</div>
+  <div class="q">One strange fact, with a <span class="blank"></span></div>
+  <div class="chips"><div class="chip">A LIE?</div><div class="chip glow">THE TRUTH?</div><div class="chip">A LIE?</div><div class="chip">A LIE?</div></div>
+  <div class="band">ONE TRUTH, THREE LIES · SPOT IT · BULLSHIT.WTF</div></div>
+
+<div class="card he" id="daily-he">
+  <div class="kicker">הבולשיט היומי</div>
+  <div class="q">כל יום עובדה מוזרה אחת, עם <span class="blank"></span></div>
+  <div class="chips"><div class="chip">שקר?</div><div class="chip glow">אמת?</div><div class="chip">שקר?</div><div class="chip">שקר?</div></div>
+  <div class="band">אמת אחת, שלושה שקרים · תמצאו? · BULLSHIT.WTF</div></div>
+</body></html>

@@ -1,0 +1,71 @@
+-- Join links that say who invited you. NO SCHEMA CHANGE: there is nothing to run in this file.
+-- It holds only read-only queries (in comments, like the other files here). See DEPLOYING.md,
+-- "Join link previews".
+--
+-- What changed: a lobby's invite link (/join-game/<PIN>?via=link, /he/join-game/<PIN>?via=link)
+-- previews as "Dana invited you to play Bullshit" (Hebrew: "הזמנה לבולשיט: נועה מחכה לך"), in the
+-- game's language, where it was the site's generic card. The hope: more of the friends who see the
+-- link in a chat tap it and join. A join through that link is counted in users.via = 'link'; one
+-- through the QR is 'qr', a typed PIN 'pin'. Replace <release> with the day the change went live
+-- (the deploy run of its merge), and compare the weeks before and after.
+--
+-- Read it with care: about 50 games a week, so a week's numbers move by chance; Friday is the
+-- busiest day, so compare whole weeks; and the Hanukkah season (from 1 December) brings its own
+-- traffic. A lift of a few tenths of a guest per game over three or four weeks is the signal.
+-- Join sources are recorded from 5 November 2026, so start no window before 6 November.
+--
+-- Before (6 to 12 November 2026, tests out, read 2026-11-13): 207 lobbies, 571 joins. By source:
+-- link 211 (37%, in 66 lobbies: 32% of lobbies), replay 176 (31%), host 116 (20%), pin 60 (11%),
+-- qr 7, crew 1. So about 1.0 link join per lobby.
+
+-- ---------------------------------------------------------------------------
+-- Per week, tests out: lobbies, guests who came by the invite link, and players per started game.
+-- WITH test_pins AS (
+--   SELECT DISTINCT pin FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('2026-11-06') AND via = 'test' AND pin IS NOT NULL
+--   UNION DISTINCT
+--   SELECT id FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= TIMESTAMP('2026-11-06') AND REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- ),
+-- joins AS (
+--   SELECT pin, via, uid, time FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('2026-11-06') AND pin IS NOT NULL AND IFNULL(via, '') != 'test'
+--     AND pin NOT IN (SELECT pin FROM test_pins)
+-- ),
+-- lobbies AS (
+--   SELECT pin, DATE_TRUNC(DATE(MIN(time)), WEEK(MONDAY)) AS week,
+--     COUNTIF(via = 'link') AS link_joins,
+--     COUNT(*) AS joins
+--   FROM joins GROUP BY pin
+-- ),
+-- games AS (
+--   SELECT id, players FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= TIMESTAMP('2026-11-06') AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- )
+-- SELECT l.week,
+--   l.week >= DATE_TRUNC(DATE('<release>'), WEEK(MONDAY)) AS after_release,
+--   COUNT(*) AS lobbies,
+--   ROUND(AVG(l.link_joins), 2) AS link_joins_per_lobby,
+--   ROUND(COUNTIF(l.link_joins > 0) / COUNT(*), 3) AS share_of_lobbies_with_a_link_join,
+--   COUNT(g.id) AS started_games,
+--   ROUND(AVG(g.players), 2) AS players_per_started_game,
+--   ROUND(COUNTIF(g.players >= 2) / COUNT(*), 3) AS share_of_lobbies_started_with_2_plus
+-- FROM lobbies l LEFT JOIN games g ON g.id = l.pin
+-- GROUP BY week ORDER BY week;
+
+-- ---------------------------------------------------------------------------
+-- Where guests came from, per week: the link's share of all guest joins (the host's own join is
+-- 'host' or a typed PIN, so 'link' is almost all guests who tapped an invite).
+-- SELECT DATE_TRUNC(DATE(time), WEEK(MONDAY)) AS week, via, COUNT(*) AS joins,
+--   ROUND(COUNT(*) / SUM(COUNT(*)) OVER (PARTITION BY DATE_TRUNC(DATE(time), WEEK(MONDAY))), 3) AS share
+-- FROM `bullshit-wtf-prod.analytics.users`
+-- WHERE time >= TIMESTAMP('2026-11-06') AND IFNULL(via, '') != 'test'
+-- GROUP BY week, via ORDER BY week, joins DESC;
+
+-- ---------------------------------------------------------------------------
+-- Not in BigQuery: how many link fetches got a named preview. The joinPreview function writes one
+-- log line per answer, `joinPreview {"kind":"named"|"nameless"|"generic"|"fallback","ms":<n>}`,
+-- with no PIN or nickname. Count them in the Logs Explorer (project bullshit-wtf-prod, filter
+-- textPayload:"joinPreview {"). A CDN hit writes no line, so these count the fetches the CDN
+-- passed on, not every tap. "fallback" should stay at zero: it means the function could not fetch
+-- the site's own page (each one is also a Sentry report).
