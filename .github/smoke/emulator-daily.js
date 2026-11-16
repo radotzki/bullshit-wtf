@@ -219,6 +219,14 @@ async function newVisitor(browser, base, name, options = {}) {
         await context.addInitScript(() => {
             Object.defineProperty(window, 'localStorage', { get() { throw new Error('storage is blocked'); } });
         });
+    } else {
+        // The browser id decides the half of the chat group round's 50/50 test (daily-round-core.js):
+        // this run is the puzzle as built, so its browsers are in that half (ids from s on).
+        // emulator-round.js passes its own.
+        const id = options.id || ('s' + Math.random().toString(36).slice(2) + '000000000000000').slice(0, 16);
+        await context.addInitScript((value) => {
+            try { if (!localStorage.getItem('bs-daily-id')) localStorage.setItem('bs-daily-id', value); } catch (e) { /* blocked */ }
+        }, id);
     }
     const ours = (u) => new URL(u).host === new URL(base).host;
     // The Hosting rewrite: /_daily on the site's own address is the `daily` function.
@@ -624,7 +632,9 @@ async function run(browser, base, lang) {
 
     // 19. The ways in: the home page, the search pages.
     const home = await newVisitor(browser, base, `${L} home`);
-    for (const [where, url] of [['phone home', lang === 'he' ? '/he' : '/m'], ['desktop home', lang === 'he' ? '/he/d' : '/d']]) {
+    // Hebrew has no /he/d address (it answers 404): /he is the Hebrew home, and the app itself opens the
+    // phone or the computer page there, as it does for every Hebrew visitor.
+    for (const [where, url] of [['phone home', lang === 'he' ? '/he' : '/m'], ['desktop home', lang === 'he' ? '/he' : '/d']]) {
         await home.page.goto(base + url);
         const line = home.page.locator('a.daily-link');
         const found = await line.waitFor({ timeout: 15000 }).then(() => true, () => false);
@@ -702,7 +712,16 @@ async function main() {
     }
 }
 
-main().catch((e) => {
-    console.error('FAIL', e.stack || e);
-    process.exit(1);
-});
+// emulator-round.js runs a chat group's rounds with the same emulators, browsers and checks.
+module.exports = {
+    ROOT, PROJECT, FUNCTIONS, TODAY, YESTERDAY, WORDS, strings, fill, log, sleep, addDays,
+    startEmulators, stopEmulators, seed, db, shareRows, newVisitor, shot, fits320, text, raw, answers, waMessage,
+    open, pickAnswer, waitFor, createGame, check, problems, checks,
+};
+
+if (require.main === module) {
+    main().catch((e) => {
+        console.error('FAIL', e.stack || e);
+        process.exit(1);
+    });
+}

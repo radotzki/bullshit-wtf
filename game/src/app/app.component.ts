@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { rememberArrivalSource } from './services/join-source';
-import { aboutPlace } from './services/home-about';
 import { rememberArrival } from './services/arrival';
+import { aboutPlace } from './services/home-about';
 
 @Component({
     standalone: false,

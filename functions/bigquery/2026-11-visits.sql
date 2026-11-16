@@ -9,6 +9,11 @@
 --   up to 3 rows of kind 'end'      when the page is hidden or closed (they carry created, joined,
 --                                   last_page, booted and ms as they stood then)
 --   one row of kind 'stuck'   if the app had not drawn after 12 s
+--   one row of kind 'page'    as the page opens (from Nov 2026): ms is the page's own trip, from the
+--                             tap to the beacon starting (Hosting or the joinPreview function)
+--   one row of kind 'drawn'   when the app first drew (from Nov 2026): ms on the beacon's clock, as
+--                             every other row; page.ms + drawn.ms is the whole wait from the tap.
+--   Both kinds use the existing columns: no column was added for them.
 -- So: page views = COUNT(DISTINCT view); a view made a game when any of its rows has created.
 -- A row holds no IP address, no user agent, no uid, no nickname, no PIN and no crew id, and the
 -- beacon sets no cookie and stores nothing on the device.
@@ -106,6 +111,19 @@ OPTIONS (description = 'Page views from the visit beacon, several rows per view 
 -- WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND kind = 'stuck'
 --   AND NOT IFNULL(test, FALSE) AND NOT IFNULL(bot, FALSE)
 -- GROUP BY day, device, browser ORDER BY day DESC, stuck_views DESC;
+
+-- How long the game takes to draw, by page and device (the 'page' and 'drawn' rows of one view).
+-- WITH v AS (SELECT view, ANY_VALUE(page) AS page, ANY_VALUE(device_kind) AS device_kind,
+--     MAX(IF(kind = 'page', ms, NULL)) AS page_ms, MAX(IF(kind = 'drawn', ms, NULL)) AS drawn_ms
+--   FROM `bullshit-wtf-prod.analytics.visits`
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND view IS NOT NULL
+--     AND NOT IFNULL(test, FALSE) AND NOT IFNULL(bot, FALSE)
+--   GROUP BY view HAVING drawn_ms IS NOT NULL)
+-- SELECT page, device_kind, COUNT(*) AS drawn_views,
+--   APPROX_QUANTILES(IFNULL(page_ms, 0) + drawn_ms, 100)[OFFSET(50)] AS median_total_ms,
+--   APPROX_QUANTILES(IFNULL(page_ms, 0) + drawn_ms, 100)[OFFSET(90)] AS p90_total_ms,
+--   APPROX_QUANTILES(page_ms, 100)[OFFSET(90)] AS p90_page_ms
+-- FROM v GROUP BY page, device_kind ORDER BY drawn_views DESC;
 
 -- Is the beacon alive, and how much of it is tests and bots (to check after a deploy).
 -- SELECT DATE(time) AS day, COUNT(DISTINCT view) AS views,

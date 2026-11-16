@@ -1,69 +1,107 @@
-<div class="arcade-form create-game" [attr.dir]="t.dir" [attr.lang]="t.lang">
+<div class="arcade-form create-game computer-home" [attr.dir]="t.dir" [attr.lang]="t.lang">
     <div class="title-area">
         <h1 class="title">{{ t.name }}</h1>
         <h3 class="sub-title">{{ t.subTitle }}</h3>
-        <div class="separator">♦</div>
-        <!-- The daily puzzle: a plain link, the page is outside the app. -->
-        <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a>
-        <a class="lang-switch" *ngIf="t.lang === 'he'" [attr.lang]="t.switchTo" (click)="switchLanguage()">{{ t.switchLabel }}</a>
+        <a class="lang-switch" [attr.lang]="t.switchTo" role="button" tabindex="0" (click)="switchLanguage()" (keydown.enter)="switchLanguage()">{{ t.switchLabel }}</a>
     </div>
 
-    <div class="columns main-columns">
-        <div class="column is-half">
+    <!-- The front door, as on the phone home: what the game is in one line, a picture of one round,
+         and one thing to do. A first-time visitor on a computer used to meet four equal buttons
+         and no word about the game, and most left without pressing anything. -->
+    <div class="front-door">
+        <div class="pitch-side">
+            <!-- The code box (code-box.ts): a guest with a friend's PIN joins from here, one tap to the
+                 nickname. A visitor with no code goes past it to Create, which still leads the menu. -->
+            <form class="code-box" (ngSubmit)="box.submit()" novalidate>
+                <label class="code-ask" for="home-code">{{ t.codeAsk }}</label>
+                <input id="home-code" class="code-input" type="text" name="code" [(ngModel)]="box.code"
+                    [placeholder]="t.codePlaceholder" autocomplete="off" autocapitalize="characters" autocorrect="off"
+                    spellcheck="false" maxlength="12" enterkeyhint="go" dir="ltr">
+                <button class="code-join" type="submit" [disabled]="box.busy" [class.is-busy]="box.busy">{{ t.codeJoin }}</button>
+                <p class="code-error" *ngIf="box.error" role="alert">{{ box.error }}</p>
+            </form>
 
-            <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
-            <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
+            <p class="pitch">{{ t.pitch }}</p>
+            <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
+            <p class="facts"><span class="facts-row"><span class="fact" *ngFor="let fact of facts">{{ fact }}</span></span></p>
 
-            <div class="columns">
-                <div class="column">
-                    <div class="menu-button" routerLink="/join-game">
-                        <i class="fa fa-gamepad"></i>
-                        <p>{{ t.joinShort }}</p>
-                    </div>
-                </div>
+            <!-- The one big button: the create flow, carrying the post's ?via= tag (front-door.ts). -->
+            <a class="host-button" routerLink="/create-game" [queryParams]="createQuery">
+                <i class="fa fa-television" aria-hidden="true"></i>
+                <span>{{ t.host }}</span>
+            </a>
+            <p class="host-hint">{{ t.createHint }}</p>
+            <!-- For a visitor on their own (most strangers from a search, alone at a desk): today's
+                 question, right under Create, once the puzzle is live (daily-line.ts). -->
+            <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
 
-                <div class="column">
-                    <div class="menu-button" routerLink="/create-game">
-                        <i class="fa fa-plus-square"></i>
-                        <p>{{ t.createShort }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="columns">
-                <div class="column">
-                    <div class="menu-button" routerLink="/present-game">
-                        <i class="fa fa-share-square-o"></i>
-                        <p>{{ t.presentShort }}</p>
-                    </div>
-                </div>
-
-                <div class="column">
-                    <div class="menu-button" routerLink="/learn">
-                        <i class="fa fa-graduation-cap"></i>
-                        <p>{{ t.learnShort }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="your-crews" *ngIf="crews.length">
-                <p class="your-crews-title">{{ t.yourCrews }}</p>
-                <a class="button is-primary is-fullwidth tonight" *ngIf="tonight" [routerLink]="['/c', tonight.id]">
-                    <span class="icon"><i class="fa fa-calendar-check-o"></i></span>
-                    <span dir="auto">{{ t.tonight(tonight.time, tonight.name) }}</span>
-                </a>
-                <a class="button is-info is-fullwidth" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
-                    <span class="icon"><i class="fa fa-trophy"></i></span>
-                    <span><span dir="auto">{{ crew.name }}</span>: {{ t.crewActionShort }}</span>
-                </a>
-            </div>
-
-            <!-- The search pages, linked from home so search engines (and players) find them. -->
-            <nav class="search-links">
-                <a *ngFor="let link of links" [href]="link.href">{{ link.label }}</a>
+            <!-- Everything else the old menu offered, quieter. -->
+            <nav class="other-ways">
+                <a routerLink="/join-game"><i class="fa fa-gamepad" aria-hidden="true"></i> {{ t.join }}</a>
+                <a routerLink="/present-game"><i class="fa fa-share-square-o" aria-hidden="true"></i> {{ t.present }}</a>
+                <a routerLink="/learn"><i class="fa fa-graduation-cap" aria-hidden="true"></i> {{ t.learn }}</a>
             </nav>
 
+            <!-- The daily puzzle, for someone on their own: a plain link, the page is outside the app.
+                 Once the puzzle is live, the line under Create takes its place. -->
+            <ng-container *ngIf="!dailyLive">
+            <p class="alone">{{ t.alone }} <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a></p>
+            </ng-container>
         </div>
+
+        <div class="picture" role="img" [attr.aria-label]="p.alt">
+            <div class="screen" aria-hidden="true">
+                <p class="question">{{ p.before }} <span class="blank"></span> {{ p.after }}</p>
+
+                <div class="frame frame-write">
+                    <p class="step">{{ p.steps[0] }}</p>
+                    <p class="typed">{{ p.lie }}</p>
+                    <p class="send">{{ p.send }}</p>
+                </div>
+
+                <div class="frame frame-pick">
+                    <p class="step">{{ p.steps[1] }}</p>
+                    <p class="answer">{{ p.otherLie }}</p>
+                    <p class="answer">{{ p.truth }}</p>
+                    <p class="answer">{{ p.lie }}</p>
+                </div>
+
+                <div class="frame frame-reveal">
+                    <p class="step">{{ p.steps[2] }}</p>
+                    <div class="row">
+                        <p class="text">{{ p.lie }}</p>
+                        <p class="who"><span>{{ p.fooled }}</span> <span class="points">{{ p.yourLie }} <span dir="ltr">+500</span></span></p>
+                    </div>
+                    <div class="row truth">
+                        <p class="text">{{ p.truth }}</p>
+                        <p class="who"><span></span> <span class="points">{{ p.theTruth }} <span dir="ltr">+1000</span></span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+    </div>
+
+    <div class="below">
+        <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
+        <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
+
+        <div class="your-crews" *ngIf="crews.length">
+            <p class="your-crews-title">{{ t.yourCrews }}</p>
+            <a class="button is-primary is-fullwidth tonight" *ngIf="tonight" [routerLink]="['/c', tonight.id]">
+                <span class="icon"><i class="fa fa-calendar-check-o"></i></span>
+                <span dir="auto">{{ t.tonight(tonight.time, tonight.name) }}</span>
+            </a>
+            <a class="button is-info is-fullwidth" *ngFor="let crew of crews" [routerLink]="['/c', crew.id]">
+                <span class="icon"><i class="fa fa-trophy"></i></span>
+                <span><span dir="auto">{{ crew.name }}</span>: {{ t.crewActionShort }}</span>
+            </a>
+        </div>
+
+        <!-- The search pages, linked from home so search engines (and players) find them. -->
+        <nav class="search-links">
+            <a *ngFor="let link of links" [href]="link.href">{{ link.label }}</a>
+        </nav>
     </div>
 
 </div>

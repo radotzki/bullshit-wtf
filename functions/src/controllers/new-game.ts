@@ -22,11 +22,14 @@ export interface NewGameOptions {
     stagedReveal?: boolean;
     // The creating phone can show the About questions, so this game is in their 50/50 test (see about.ts).
     aboutUs?: boolean;
+    // A pin claimed already (a crew's lobby, see next-game.ts): the game is made under it.
+    pin?: string;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
-    return incGameCounter().then(async gameCounter => {
-        const gamePin = generateGameName(gameCounter);
+    const counter = options.pin ? Promise.resolve(null) : incGameCounter();
+    return counter.then(async gameCounter => {
+        const gamePin = options.pin || generateGameName(gameCounter);
         // A pack with questions in one language only (Thanksgiving: English) is dropped from any other game.
         const pack = packFits(options.pack, locale) ? options.pack : undefined;
         const questions = await randomQuestions(locale, count, options.uids || [], pack);

@@ -78,7 +78,7 @@ test('the screen: slurs and sex words are refused in the lie and in the name, by
 
 test('the screen: no link, address, handle or phone number', () => {
     ['see bit.ly/abc', 'http://x', 'HTTPS://EVIL.EXAMPLE', 'www.evil', 'evil.example.com', 'go to x.io now', 'javascript://x', 'me@home', '@dana',
-        '0541234567', 'call 12345', 'x'.repeat(41)].forEach(l => assert.strictEqual(screen(l), 'refused', l));
+        '0541234567', 'call 12345', 'tel 052-123-4567', '0 5 2 1 2 3 4 5 6 7', 'x'.repeat(41)].forEach(l => assert.strictEqual(screen(l), 'refused', l));
     assert.strictEqual(screen('fine', 'x'.repeat(10)), 'refused', 'a name over 9 letters');
     assert.strictEqual(screen('fine', 'a@b'), 'refused');
     // Ordinary answers pass: numbers, years, initials, sentences.

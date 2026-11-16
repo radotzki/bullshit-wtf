@@ -1,5 +1,6 @@
 import { MAX_PLAYERS, GameScheme, GamePlayer } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
 import { onRefusedJoin, refusedJoin } from './analytics';
@@ -61,7 +62,7 @@ export function seatOf(players: GameScheme['players'], uid: any, pid?: any): str
  */
 export async function join(pin: string, typed: string, uid: string, hostKey?: string, myPid?: string): Promise<JoinResult> {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });

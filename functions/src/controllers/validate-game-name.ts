@@ -1,5 +1,6 @@
 import { MAX_PLAYERS, GameScheme } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { gameOverError } from './game-over';
 import { nightAfter } from './night-after';
 
@@ -10,7 +11,7 @@ import { nightAfter } from './night-after';
  */
 export async function validateGameName(pin: string, uid?: any, pid?: any) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });

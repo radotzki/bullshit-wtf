@@ -63,7 +63,7 @@ export interface ReportContext {
     campaign?: any;
     /** The request's body: used only to cut its words out of the error's message. Never sent. */
     body?: any;
-    /** More words to cut out of the message: the caller's address and browser. Never sent. */
+    /** More words to cut out of the message: the caller's address and browser, and the query's values. Never sent. */
     cut?: string[];
     /** True when the report comes from an error line in the log, not from a catch at the function's edge. */
     logged?: boolean;
@@ -534,24 +534,49 @@ export function watched<T extends (...args: any[]) => any>(fn: string, handler: 
 }
 
 /**
+ * The words of a request's query string, to cut out of the message: on a GET the ids are there
+ * (the daily puzzle's round id, link id and browser id). Each string value, or each string of a
+ * list (?g=a&g=b), as written and in lower and upper case. A value under 4 characters is kept,
+ * so a language code ("en") or a round number doesn't cut letters out of every word.
+ */
+function queryWords(query: any): string[] {
+    const words: string[] = [];
+    if (!query || typeof query !== 'object') {
+        return words;
+    }
+    Object.keys(query).slice(0, 40).forEach(k => {
+        const v = query[k];
+        (Array.isArray(v) ? v.slice(0, 40) : [v]).forEach(w => {
+            if (typeof w === 'string' && w.length >= 4) {
+                words.push(w, w.toLowerCase(), w.toUpperCase());
+            }
+        });
+    });
+    return words;
+}
+
+/**
  * Wraps an HTTP function's handler. It names the request for the reports, and holds the answer
  * back until a report that is on its way is out: only then, so an answer with no fault behind
  * it leaves exactly as before.
  *
  * `works` says what the function works on, as the site calls it: 'game' (the request names a
  * game by its PIN), 'crew' (it names a crew), 'new' (it makes a game, whose test mark is in the
- * request and not yet in the database) or nothing. A request the site never sends (not a POST,
+ * request and not yet in the database) or nothing. `methods` are the methods the site calls it
+ * with: a POST only, unless the function says otherwise (the site reads the daily puzzle with a
+ * GET). A request the site never sends (another method,
  * without the PIN or crew the function works on, a new game with no language) is answered exactly as before, and whatever
  * it runs into is not reported.
  */
-export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, works: 'game' | 'crew' | 'new' | '' = ''): T {
+export function http<T extends (req: any, res: any) => any>(fn: string, handler: T, works: 'game' | 'crew' | 'new' | '' = '', methods: string[] = ['POST']): T {
     const newGame = works === 'new';
+    const asked = methods.map(m => m.toUpperCase());
     return (function (this: any, req: any, res: any) {
         const body = req && req.body;
         const field = (name: string) => body && typeof body === 'object' ? body[name] : undefined;
         const ctx: ReportContext = { pin: field('pin'), crew: field('crew'), body, handled: true };
         const method = req && req.method;
-        ctx.unasked = (typeof method === 'string' && method.toUpperCase() !== 'POST')
+        ctx.unasked = (typeof method === 'string' && asked.indexOf(method.toUpperCase()) < 0)
             || (works === 'game' && !cleanPin(ctx.pin))
             || (works === 'crew' && !cleanCrew(ctx.crew))
             || (newGame && !(typeof field('locale') === 'string' && /^[A-Za-z-]{2,10}$/.test(field('locale'))));
@@ -559,7 +584,7 @@ export function http<T extends (req: any, res: any) => any>(fn: string, handler:
         quiet(() => {
             const from = String((req.headers && req.headers['x-forwarded-for']) || '');
             const browser = String((req.headers && req.headers['user-agent']) || '');
-            ctx.cut = [from, browser].concat(from.split(',').map(part => part.trim()));
+            ctx.cut = [from, browser].concat(from.split(',').map(part => part.trim()), queryWords(req.query));
         });
         if (newGame) {
             ctx.campaign = typeof field('campaign') === 'string' ? field('campaign') : '';

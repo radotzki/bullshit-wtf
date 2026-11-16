@@ -15,10 +15,9 @@
  * Kept free of Angular so it can be tested in Node.
  */
 import { nightLabel } from '../../pages/crew/next-night';
+import { NIGHT_ENDS_HOUR, nightStillAhead, tonightEndsAt } from '../../game-model';
 
 const DEFAULT_HOUR = 21;
-/** A night runs past midnight: until this hour it is still the evening before. */
-const NIGHT_ENDS_HOUR = 5;
 /** If nobody pressed REMATCH after this long, the two buttons swap places: the group is leaving. */
 export const SWAP_AFTER_MS = 40 * 1000;
 
@@ -41,6 +40,11 @@ export const nextWeekStrings = {
         call: (name: string) => `${name}'s call`,
         imIn: 'I\'M IN',
         youreIn: 'You\'re in.',
+        /** This phone sent another date, but another phone had set this one first. */
+        lost: (name: string, when: string) =>
+            `${name || 'Another phone'} set ${when} first. Tell the group?`,
+        tell: 'TELL THE GROUP ON WHATSAPP',
+        tellText: (when: string) => `Change of plan: Bullshit game night is ${when}. Who's in? Tap here:`,
         done: 'DONE',
         failed: 'Could not set it up. Close this and try again.',
         calendarTitle: (crew: string) => `Bullshit game night: ${crew}`,
@@ -68,6 +72,10 @@ export const nextWeekStrings = {
         call: (name: string) => `הצעה של ${name}`,
         imIn: 'אני בפנים',
         youreIn: 'נרשמת.',
+        lost: (name: string, when: string) =>
+            `קודם נקבע ${when}${name ? ` (הצעה של ${name})` : ''}. לעדכן את הקבוצה?`,
+        tell: 'עדכון הקבוצה בוואטסאפ',
+        tellText: (when: string) => `שינוי בתוכנית: ערב בולשיט נקבע ל${when}. מי בפנים? לוחצים כאן:`,
         done: 'סיום',
         failed: 'משהו השתבש. סגרו ונסו שוב.',
         calendarTitle: (crew: string) => `ערב בולשיט: ${crew}`,
@@ -102,21 +110,18 @@ export function sameTimeNextWeek(now: Date): Date {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate() - (afterMidnight ? 1 : 0) + 7, hour, minute, 0, 0);
 }
 
-/** The end of tonight: the next 05:00 on this phone's clock. */
+/** The end of tonight: the next 05:00 on this phone's clock (the server's rule too, see game-model.ts). */
 export function tonightEnds(now: Date): Date {
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), NIGHT_ENDS_HOUR, 0, 0, 0);
-    if (end.getTime() <= now.getTime()) {
-        end.setDate(end.getDate() + 1);
-    }
-    return end;
+    return new Date(tonightEndsAt(now.getTime(), now.getTimezoneOffset()));
 }
 
 /**
  * Is this night still to come? A night that is tonight (or has passed) is the one being played, so the
- * screen offers the next one; a later night is set, and the screen shows it.
+ * screen offers the next one; a later night is set, and the screen shows it. crewNight keeps a night
+ * by the same rule, from the `tz` the sheet sends.
  */
 export function nightAhead(time: any, now: Date): boolean {
-    return typeof time === 'number' && isFinite(time) && time >= tonightEnds(now).getTime();
+    return nightStillAhead(time, now.getTime(), now.getTimezoneOffset());
 }
 
 /** "Dana's crew" / "החבורה של דנה": the host's nickname, which the name filter has already cleaned. */
@@ -186,6 +191,14 @@ export function bigScreenLine(nightTime: any, now: Date, locale: string): string
  */
 export function nightTaken(nightTime: any, seen: number | null, sent: number | null, now: Date): boolean {
     return nightAhead(nightTime, now) && nightTime !== seen && nightTime !== sent;
+}
+
+/**
+ * Did this phone's date lose? It sent `lost`, the server kept another night (its answer said `kept`),
+ * and the crew still has that other night ahead: a message with the wrong day may be in the chat.
+ */
+export function nightLost(nightTime: any, lost: number | null, now: Date): boolean {
+    return !!lost && nightAhead(nightTime, now) && nightTime !== lost;
 }
 
 /** What a phone on the final screen shows in place of the save-crew offer. */

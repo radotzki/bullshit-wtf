@@ -2,7 +2,9 @@ import {
     Crew, GameScheme, GameState, CrewGamePlayer, applyCrewGame, seasonalPack, isTestCampaign, crewMemberKey, TABLE_CAMPAIGN, tasteOf,
 } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
-import { newGame } from './new-game';
+import { readGame } from './old-games';
+import { newGame, incGameCounter, generateGameName } from './new-game';
+import { claimCrewLobby, claimFork, lastGameOf, latestCrewGame, lobbyOpen } from './next-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
 import { setCrewNight } from './crew-night';
 
@@ -67,7 +69,7 @@ export async function earlierGames(game: GameScheme): Promise<{ pin: string; gam
     let parent = game && game.parent;
     while (typeof parent === 'string' && /^[A-Za-z]{1,12}$/.test(parent) && !seen[parent] && out.length < SITTING_GAMES_MAX) {
         seen[parent] = true;
-        const earlier = await get<GameScheme>(gamesRef.child(parent.toUpperCase()));
+        const earlier = await readGame(parent.toUpperCase());
         if (!earlier || !earlier.state || earlier.state.id !== GameState.ScoreBoardFinal || tasteOf(earlier.state)
             || Object.keys(earlier.players || {}).length < 2) {
             break;
@@ -97,7 +99,7 @@ export async function createCrew(pin: string, name: string, uid?: string, auto =
         return fail('Give your crew a name', 'BAD_NAME');
     }
 
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return fail('Game does not exist', 'GAME_NOT_EXIST');
@@ -186,7 +188,7 @@ export function tableName(nickname: string, locale: string): string {
 export async function createTable(pin: any, pid: any, time: any, uid?: string)
     : Promise<{ id: string; name: string; time: number; again?: boolean }> {
     pin = String(pin || '').toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return fail('Game does not exist', 'GAME_NOT_EXIST');
@@ -294,22 +296,62 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
         return fail('Crew does not exist', 'CREW_NOT_EXIST');
     }
 
-    if (crew.rematch && crew.rematch.pin && Date.now() - (crew.rematch.time || 0) < REMATCH_REUSE_MS) {
-        const state = await get<{ id: number }>(gamesRef.child(crew.rematch.pin).child('state'));
-        if (state && state.id === GameState.GameStaging) {
-            return { pin: crew.rematch.pin, created: false };
+    // A lobby opened before the crew's latest game ended is gone, as on the Replay side
+    // (crewLobbyFor's `since`), so this tap and a Replay of that game land in the same new lobby, not
+    // one in an old lobby nobody started and one in the Replay. That holds however long ago the game
+    // ended, since Replay uses its end time at any age (past half an hour, an old lobby still waiting
+    // took the crew page while a Replay made a new one).
+    // Within LINK_LAST_GAME_MS the end is the game's final state's time, and its final screen follows
+    // this lobby. Past it, the end is the crew's record of the game, written when it reached its final
+    // scoreboard: it needs no read of the game, and stays when the old-games sweep moves the game.
+    const last = lastGameOf(crew);
+    const lastState = last ? await get<{ id: number; timestamp?: number }>(gamesRef.child(last).child('state')) : null;
+    const lastEnded = !!lastState && lastState.id === GameState.ScoreBoardFinal;
+    const latest = latestCrewGame(crew);
+    const endedAt = lastEnded ? Number(lastState.timestamp) || Number(crew.games[last].time) || 0
+        : latest && !last ? Number(crew.games[latest].time) || 0 : 0;
+
+    // A lobby is waiting (or being made by another phone this moment): everyone goes there.
+    const current = crew.rematch;
+    let gone: string = null;
+    if (current && current.pin && Date.now() - (current.time || 0) < REMATCH_REUSE_MS) {
+        if ((current.time || 0) >= endedAt && await lobbyOpen(current.pin, current.time)) {
+            return { pin: current.pin, created: false };
+        }
+        gone = current.pin;
+    }
+
+    // The crew's last game just ended and someone pressed Replay there: that is the crew's lobby.
+    if (lastEnded) {
+        const replay = await get<string>(gamesRef.child(last).child('fork'));
+        if (replay && await lobbyOpen(replay)) {
+            return { pin: replay, created: false };
         }
     }
+
+    // Claim the crew's lobby before making it, so a second tap (or a Replay) a moment later comes here.
+    const pin = generateGameName(await incGameCounter());
+    const holder = await claimCrewLobby(id, pin, gone, endedAt, REMATCH_REUSE_MS);
+    if (holder !== pin && await lobbyOpen(holder, Date.now())) {
+        return { pin: holder, created: false };
+    }
+    // The phones still on the last game's final screen follow this lobby, as they follow a Replay
+    // (unless a Replay claimed that game first: it then finds this lobby and comes here, see fork.ts).
+    const linked = lastEnded && (await claimFork(last, pin).catch(() => null)) === pin;
 
     const uids: string[] = [];
     Object.keys(crew.members || {}).forEach(k => Object.keys(crew.members[k].uids || {}).forEach(u => uids.push(u)));
 
-    const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
+    await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
         crew: id, uids, pack: seasonalPack(Date.now(), crew.locale || 'en'), hostKey, serverStart, stagedReveal, aboutUs,
         // A test crew's games are test games; a guest's table marks its games `table`.
         campaign: isTestCampaign(crew.test) ? crew.test : crew.campaign,
+        pin,
     });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });
+    if (linked) {
+        await gamesRef.child(last).child('fork').set(pin);
+    }
     return { pin, created: true };
 }
 

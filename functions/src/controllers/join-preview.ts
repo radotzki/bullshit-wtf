@@ -20,7 +20,7 @@
 import { GameScheme, GameState, isPack } from '../game-model';
 import { nameFlag, NICKNAME_MAX, SWAP_NAMES } from '../name-flag';
 import { isGameOver } from './game-over';
-import { get, gamesRef } from '../firebase';
+import { readPart } from './old-games';
 
 export type PreviewLocale = 'en' | 'he';
 
@@ -318,8 +318,8 @@ export const PREVIEW_PARTS = ['locale', 'state', 'timestamp', 'hostSeen', 'pack'
 
 /** The game's parts the preview needs, read one by one (a whole game holds its questions and answers), or null. */
 export async function readPreviewGame(pin: string): Promise<PreviewGame | null> {
-    const game = gamesRef.child(pin);
-    const values = await Promise.all(PREVIEW_PARTS.map(part => get<any>(game.child(part))));
+    // An old game's creator and players are under `kept` (see old-games.ts): readPart looks there too.
+    const values = await Promise.all(PREVIEW_PARTS.map(part => readPart<any>(pin, part)));
     if (values.every(v => v === null || v === undefined)) {
         return null;
     }

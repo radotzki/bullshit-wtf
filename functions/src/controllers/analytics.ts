@@ -1,5 +1,6 @@
 import { GameScheme, GameState, isTestCampaign } from "../game-model";
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { recordCrewGame } from './crew';
 import { QuestionResultRow } from './lie-helper';
 import { nameFlag } from '../name-flag';
@@ -15,13 +16,13 @@ export { recordArrival } from './arrival';
 
 export async function onFork(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
     return forks(pin, game);
 }
 
 export async function onStateChange(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (game.state.id === GameState.RoundIntro && game.questionIndex === 0) {
         return openGame(pin, game);
@@ -45,8 +46,9 @@ export async function onStateChange(pin: string) {
 //   host    the player who just created the game
 //   replay  carried into the next game by Replay
 //   crew    tapped Rematch on a crew page, or opened a crew link
+//   home    typed the PIN into the code box at the top of the home page ("Got a code?")
 // The server alone writes one more value, 'test', for every join of a test game (see onJoinGame).
-export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
+export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home'];
 
 export function cleanVia(via: any): string | null {
     if (via === undefined || via === null || via === '') {
@@ -124,6 +126,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     calendar           tapped ADD TO MY CALENDAR, on the sheet or the banner
 //     in                 tapped I'M IN on the banner (or on a sheet another phone's date reached)
 //     change             tapped CHANGE on the banner of the phone that set the date: the sheet opened again
+//     tell               tapped TELL THE GROUP ON WHATSAPP: this phone's date lost to one set first, and it
+//                        sent the night that stands to the group
 //   invite      the lobby's invite (inline while the host is alone, or the INVITE FRIENDS sheet):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE LINK)
@@ -182,7 +186,8 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
         'weekly-share', 'weekly-download', 'weekly-google', 'in', 'in-new', 'out', 'nudge', 'open-lobby',
         'join-lobby'],
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
-    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change'],
+    'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change',
+        'tell'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',

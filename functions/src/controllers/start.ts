@@ -1,5 +1,6 @@
 import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { advance } from './tick';
 
 /**
@@ -56,7 +57,7 @@ export function startVerdict(game: GameScheme, hostKey: string | undefined, now:
 /** START in the lobby: move the game into its first round, if this phone may start it. */
 export async function startGame(pin: string, hostKey: string | undefined, now = Date.now()): Promise<{ started: boolean }> {
     pin = typeof pin === 'string' ? pin.toUpperCase() : '';
-    const game = pin ? await get<GameScheme>(gamesRef.child(pin)) : null;
+    const game = pin ? await readGame(pin) : null;
 
     if (!game || !game.state) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
@@ -85,7 +86,7 @@ export async function startGame(pin: string, hostKey: string | undefined, now = 
  */
 export async function hostHere(pin: string, hostKey: string | undefined, now = Date.now()): Promise<{ seen: boolean }> {
     pin = typeof pin === 'string' ? pin.toUpperCase() : '';
-    const game = pin ? await get<GameScheme>(gamesRef.child(pin)) : null;
+    const game = pin ? await readGame(pin) : null;
 
     if (!game || !game.state) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
@@ -116,7 +117,7 @@ export async function hostHere(pin: string, hostKey: string | undefined, now = D
 export async function hostToBigScreen(pin: string, hostKey: string | undefined, now = Date.now())
     : Promise<{ screen: boolean }> {
     pin = typeof pin === 'string' ? pin.toUpperCase() : '';
-    const game = pin ? await get<GameScheme>(gamesRef.child(pin)) : null;
+    const game = pin ? await readGame(pin) : null;
 
     if (!game || !game.state) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });

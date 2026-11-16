@@ -4,7 +4,7 @@
 // day; from 20 to 30 November every English game is offered the pack anyway (questionPacks in
 // game-model.ts).
 //
-// Say only what the game really does (November 2026): free, in the phone's browser, up to 8 players a
+// Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
 // game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen (Present), Rematch.
 // A game of the pack has up to 3 Thanksgiving questions among the usual ones. The example and the
 // facts named below are questions of the pack (functions/data/thanksgiving-questions.json); a test
@@ -25,7 +25,7 @@ const thanksgiving = `
 <ul>
   <li><strong>Nobody needs to know trivia.</strong> Nobody knows these facts. The game is about writing a believable lie and knowing which uncle will fall for it.</li>
   <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, that's all.</li>
-  <li><strong>Up to 8 phones a game.</strong> A bigger family plays in pairs, one phone per pair, which is also the easy way to include the youngest and the oldest.</li>
+  <li><strong>Up to 12 phones a game.</strong> A bigger family plays in pairs, one phone per pair, which is also the easy way to include the youngest and the oldest.</li>
   <li><strong>Short.</strong> A game of 5 questions takes about ten minutes, so it fits between dinner and pie, or at halftime. "Rematch" at the end starts another with the same players and new questions.</li>
   <li><strong>Free, no app, no sign-up.</strong> A cousin who arrives late joins with the PIN in seconds.</li>
 </ul>
@@ -47,8 +47,8 @@ module.exports = {
             path: '/thanksgiving-party-game', site: en, tag: 'seo-en-thanksgiving',
             start: { href: '/create-game?lang=en&pack=thanksgiving', label: 'Start a Thanksgiving game' },
             image: '/assets/og-thanksgiving-en.png',
-            title: 'A Thanksgiving party game for the family, on your phones and the TV',
-            description: 'After the turkey: Bullshit is a free bluffing trivia game with Thanksgiving questions. Everyone writes a lie on their phone, the TV shows who fell for it. No app, up to 8 players.',
+            title: 'Thanksgiving party game for the family on TV · Bullshit',
+            description: 'After the turkey: Bullshit is a free bluffing trivia game with Thanksgiving questions. Everyone writes a lie on their phone, the TV shows who fell for it.',
             h1: 'A Thanksgiving game for the whole family, on the TV',
             body: thanksgiving,
         },
