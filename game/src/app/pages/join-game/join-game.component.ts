@@ -117,7 +117,11 @@ export class JoinGameComponent implements OnInit {
         this.recapShown = half === 'new';
         if (this.recapCounted !== pin) {
             this.recapCounted = pin;
-            this.countRecap(seenMethod(half, recap.player));
+            // None beside an open rematch, in either half (seenMethod).
+            const seen = seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
+            if (seen) {
+                this.countRecap(seen);
+            }
         }
     }
 

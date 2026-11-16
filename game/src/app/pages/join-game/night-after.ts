@@ -57,8 +57,16 @@ export function shownHalf(recap: NightAfterRecap, forced?: string | null): 'new'
     return recap.half === 'new' ? 'new' : 'control';
 }
 
-/** The `seen-` row's method for this page load. */
-export function seenMethod(half: 'new' | 'control', player: boolean): string {
+/**
+ * The `seen-` row's method for this page load, or null for none. Beside an open rematch lobby only the new
+ * half shows a recap ("They're playing again"); the other half shows none there, as before "Same table
+ * tomorrow". So neither half sends a `seen-` row then, and the test's read (seen-other against
+ * seen-control-other) compares the same visits; `same-table-open` and `join-them` count those.
+ */
+export function seenMethod(half: 'new' | 'control', player: boolean, rematch?: string | null): string | null {
+    if (rematch) {
+        return null;
+    }
     return (half === 'new' ? 'seen-' : 'seen-control-') + (player ? 'player' : 'other');
 }
 
@@ -128,7 +136,7 @@ export const nightAfterStrings = {
         playerText: 'Same people, another night? Open the table again: this link in your chat brings everyone to the same game.',
         playAgain: 'PLAY AGAIN, SAME TABLE',
         againTitle: 'They\'re playing again.',
-        againText: 'The same table opened another game, and it hasn\'t started yet.',
+        againText: 'Same table, new game. It hasn\'t started yet.',
         joinThem: 'JOIN THEM',
         againError: 'That didn\'t work. Try again.',
         createPlayer: 'HOST THE NEXT ONE',
@@ -165,7 +173,7 @@ export const nightAfterStrings = {
         playerText: 'אותם אנשים, עוד ערב? פותחים את השולחן מחדש: הקישור הזה בצ\'אט יביא את כולם לאותו משחק.',
         playAgain: 'לשחק שוב, אותו שולחן',
         againTitle: 'משחקים שוב.',
-        againText: 'אותו שולחן פתח משחק נוסף, והוא עוד לא התחיל.',
+        againText: 'החבר\'ה פתחו משחק חדש, והוא עוד לא התחיל.',
         joinThem: 'להצטרף אליהם',
         againError: 'זה לא עבד. אפשר לנסות שוב.',
         createPlayer: 'לארח את המשחק הבא',
