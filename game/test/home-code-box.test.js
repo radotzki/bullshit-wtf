@@ -158,7 +158,7 @@ test('both homes put the box above the pitch and the facts line right under it',
         const html = read(...file);
         const boxAt = html.indexOf('<form class="code-box"');
         const pitchAt = html.indexOf('<p class="pitch">{{ t.pitch }}</p>');
-        const factsAt = html.indexOf('<p class="facts">{{ t.facts }}</p>');
+        const factsAt = html.indexOf('<p class="facts"');
         assert.ok(boxAt > 0 && boxAt < pitchAt && pitchAt < factsAt, file[1]);
         assert.ok(html.includes('(ngSubmit)="box.submit()"'), file[1]);
         assert.ok(html.includes('[(ngModel)]="box.code"'), file[1]);

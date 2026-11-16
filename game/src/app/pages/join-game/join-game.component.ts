@@ -7,6 +7,7 @@ import { takeJoinSource, markVisit, preferredLocale } from '../../services/join-
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale } from './join-strings';
+import { cleanCode } from '../../services/game-code';
 
 @Component({
     standalone: false,
@@ -155,6 +156,11 @@ export class JoinGameComponent implements OnInit {
     }
 
     validateGameName() {
+        // The code as the server knows it: capitals, letters only, and a code typed on a Hebrew
+        // keyboard read as the English letters on the same keys (the home's code box does the same).
+        // Shown back in the box, so the guest sees the code they joined. Nothing left of it: sent
+        // as typed, and the server says the PIN is wrong.
+        this.pin = cleanCode(this.pin) || this.pin;
         this.loading = true;
         this.errorMsg = '';
         this.gameOver = null;

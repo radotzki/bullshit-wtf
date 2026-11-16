@@ -128,12 +128,19 @@ export function pictureStrings(locale: string): PictureStrings {
  * Hebrew phones from search that pressed anything were guests typing a friend's PIN, and the PIN
  * box was a page away, behind Join Game. The box takes them straight to the nickname.
  *
- * A PIN is letters only (the server makes it from a counter). What was typed is kept to its
- * letters, upper-cased, so "abcd", " AbCd " and "ab-cd" all reach game ABCD. Nothing left: null.
+ * What was typed is made into a PIN by cleanCode (services/game-code.ts), shared with the PIN page:
+ * letters only, upper-cased, and a code typed on a Hebrew keyboard read as the English letters on
+ * the same keys. So "abcd", " AbCd ", "ab-cd" and "שנבג" all reach game ABCD. Nothing left: null.
  */
-export function cleanCode(typed: string | null | undefined): string | null {
-    const pin = String(typed || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 12);
-    return pin || null;
+export { cleanCode } from '../../services/game-code';
+
+/**
+ * The facts line ("Free · no app · 2 to 12 players, …") in its parts, for the computer home, which
+ * shows each part whole and hides the dot that would start or end a line when the line wraps (at
+ * 1280 px the Hebrew line broke after "אפליקציה ·" and left the dot hanging).
+ */
+export function factParts(facts: string): string[] {
+    return String(facts || '').split(' · ').map(part => part.trim()).filter(part => !!part);
 }
 
 /**

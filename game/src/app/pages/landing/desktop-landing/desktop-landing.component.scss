@@ -156,7 +156,28 @@
     font-size: 18px;
     line-height: 1.35;
     opacity: .9;
-    text-wrap: balance;
+    // Each part is kept whole, and each carries its dot in front. The row starts one dot to the
+    // start of the line, outside the clipped edge, so the dot of a part that starts a line is
+    // never seen: a wrapped line neither ends nor starts with a stray dot.
+    overflow: hidden;
+
+    .facts-row {
+        display: block;
+        margin-inline-start: -1.1em;
+        text-wrap: balance;
+    }
+
+    // A box of its own: a line may break between two parts, never inside one that fits.
+    .fact {
+        display: inline-block;
+
+        &::before {
+            content: '·';
+            display: inline-block;
+            width: 1.1em;
+            text-align: center;
+        }
+    }
 }
 
 .pitch {

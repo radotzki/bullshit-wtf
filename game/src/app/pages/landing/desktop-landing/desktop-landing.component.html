@@ -23,7 +23,7 @@
 
             <p class="pitch">{{ t.pitch }}</p>
             <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
-            <p class="facts">{{ t.facts }}</p>
+            <p class="facts"><span class="facts-row"><span class="fact" *ngFor="let fact of facts">{{ fact }}</span></span></p>
 
             <!-- The one big button: the create flow, carrying the post's ?via= tag (front-door.ts). -->
             <a class="host-button" routerLink="/create-game" [queryParams]="createQuery">
