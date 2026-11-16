@@ -21,10 +21,14 @@ const stand = {
     'on-reveal-done': controller(['onRevealDone']),
     'join': controller(['join']),
     'fork': controller(['fork']),
-    'start': controller(['startGame', 'hostHere']),
+    'start': controller(['startGame', 'hostHere', 'hostToBigScreen']),
     'validate-game-name': controller(['validateGameName']),
     'crew': controller(['createCrew', 'crewRematch']),
+    'crew-night': controller(['crewNight']),
     'laugh': controller(['laugh']),
+    'join-preview': controller(['joinPreviewPage', 'readPreviewGame']),
+    // The old games' sweep runs beside the gameState trigger (see old-games.ts); it never rejects.
+    'old-games': { sweepOldGames: async () => null },
     'analytics': Object.assign(controller(['onJoinGame', 'onShare', 'onStateChange', 'onFork']),
         { cleanVia: () => null, cleanShare: (b) => b && b.content_type ? b : null }),
 };
@@ -131,7 +135,7 @@ test('a fault in an HTTP function: the same answer as before, and one report', a
 test('every HTTP function with a catch reports its fault under its own name', async () => {
     const bodies = { newGame: { locale: 'en', count: 5 }, crewRematch: { crew: 'c1' } };
     for (const [name, step] of [['newGame', 'newGame'], ['fork', 'fork'], ['createCrew', 'createCrew'], ['crewRematch', 'crewRematch'],
-        ['startGame', 'startGame'], ['hostHere', 'hostHere'], ['answer', 'answer'], ['join', 'join'], ['validateGameName', 'validateGameName'],
+        ['startGame', 'startGame'], ['hostHere', 'hostHere'], ['hostToBigScreen', 'hostToBigScreen'], ['answer', 'answer'], ['join', 'join'], ['validateGameName', 'validateGameName'],
         ['onJoinGame', 'onJoinGame'], ['onShare', 'onShare'], ['laugh', 'laugh']]) {
         fresh();
         steps[step] = async () => { throw boom(); };
@@ -269,7 +273,7 @@ test('a request the site never sends is answered as before and is no report', as
     const lookups = [];
     fresh({ gameLookup: async (pin) => { lookups.push(pin); return false; } });
     const fault = () => { throw boom("Cannot read properties of undefined (reading 'toUpperCase')"); };
-    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'validateGameName', 'createCrew', 'laugh']) {
+    for (const name of ['join', 'answer', 'fork', 'startGame', 'hostHere', 'hostToBigScreen', 'validateGameName', 'createCrew', 'laugh']) {
         const step = name === 'validateGameName' ? 'validateGameName' : name;
         steps[step] = async () => fault();
         for (const body of [{}, { nickname: 'Dana' }, { pin: 1234 }, { pin: 'AB.CD' }, { pin: 'ABCD/../x' }, { pin: '' }, { pin: null }, { pin: ['ABCD'] }]) {
@@ -308,6 +312,53 @@ test('anything but a POST is no report', async () => {
     await call('join', { pin: 'abcd' });
     await call('newGame', { locale: 'en' });
     assert.strictEqual(sent.length, 2);
+});
+
+test('the daily puzzle is read with a GET: a fault there is a report, another method still is none', async () => {
+    fresh();
+    const ask = (method, query) => new Promise((resolve) => {
+        const res = { code: 200, status(c) { this.code = c; return this; }, send(b) { resolve({ code: this.code, body: b }); return this; }, set() { return this; } };
+        api.daily.__handler({ body: {}, query, headers: {}, method }, res);
+    });
+    // No database here: the tallies do not load, and the question still goes out.
+    const got = await ask('GET', { lang: 'en' });
+    assert.strictEqual(got.code, 200);
+    await reporter.settled();
+    assert.ok(sent.length >= 1, 'a GET of the puzzle that runs into a fault is reported');
+    sent.forEach(e => {
+        assert.strictEqual(e.tags.function, 'daily');
+        assert.strictEqual(e.tags.side, 'server');
+        assert.match(e.exception.values[0].value, /the database is not for this test/);
+    });
+    // A method the site never sends to the puzzle is answered as before, and is no report.
+    fresh();
+    assert.strictEqual((await ask('PUT', { lang: 'en' })).code, 405);
+    await reporter.settled();
+    assert.strictEqual(sent.length, 0);
+});
+
+test('a GET cuts its query values out of the message: a round id, a list of ids, and a short value is kept', async () => {
+    fresh();
+    const round = 'r0und_Zq8XkP3m';
+    const handler = reporter.http('daily', (req) => {
+        throw new Error(`no round at /daily/en/rounds/${req.query.g} for ${req.query.u.join(' and ')}, lang ${req.query.lang}, f=${req.query.f}`);
+    }, '', ['GET']);
+    const res = { status() { return this; }, send() { return this; }, set() { return this; } };
+    const query = { g: round, u: ['brw_A1b2C3d4', 'brw_e5F6g7H8'], lang: 'en', f: '' };
+    assert.throws(() => handler({ body: {}, query, headers: {}, method: 'GET' }, res));
+    await reporter.settled();
+    assert.strictEqual(sent.length, 1);
+    const all = JSON.stringify(sent[0]);
+    const message = sent[0].exception.values[0].value;
+    assert.ok(!/r0und_Zq8XkP3m|r0und_zq8xkp3m|brw_A1b2C3d4|brw_e5F6g7H8/i.test(all), message);
+    assert.match(message, /\/daily\/en\/rounds\/\[cut\] for \[cut\] and \[cut\], lang en, f=$/);
+    // A request with no query, or a query that is not an object, still reports.
+    fresh();
+    const bare = reporter.http('daily', () => { throw new Error('plain fault'); }, '', ['GET']);
+    assert.throws(() => bare({ body: {}, headers: {}, method: 'GET' }, res));
+    await reporter.settled();
+    assert.strictEqual(sent.length, 1);
+    assert.strictEqual(sent[0].exception.values[0].value, 'plain fault');
 });
 
 test('a fault about a game that does not exist is no report, and does not use up the cap', async () => {

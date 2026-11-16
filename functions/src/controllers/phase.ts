@@ -1,5 +1,5 @@
 import {
-    GameScheme, GameState, GameStateInfo, revealSchedule, revealTiming, stagedRevealTiming, scoreBoardDuration, LAUGH_HOLD_MS,
+    GameScheme, GameState, GameStateInfo, MAX_PLAYERS, revealSchedule, revealTiming, stagedRevealTiming, scoreBoardDuration, LAUGH_HOLD_MS,
 } from '../game-model';
 
 // How long each timed phase lasts. Must match game/src/app/services/game.service.ts.
@@ -13,11 +13,12 @@ export const durations = {
 // A client tick may arrive a little before the server's deadline because of clock skew.
 export const clockSkewTolerance = 1500;
 
-// The longest a single phase can last (a big-screen reveal of 9 rows: 8 players' lies and the truth,
-// in today's reveal or the staged one), plus a margin; used to guard the server timer.
+// The longest a single phase can last (a big-screen reveal of MAX_PLAYERS + 1 rows: every player picked
+// a different answer that is not the truth, then the truth; in today's reveal or the staged one), plus a
+// margin; used to guard the server timer. With 12 seats that is about 70 seconds.
 export const maxPhaseDuration = Math.max(
-    9 * revealTiming.presenter.step + revealTiming.presenter.hold,
-    8 * stagedRevealTiming.presenter.step + stagedRevealTiming.presenter.truthIntro
+    (MAX_PLAYERS + 1) * revealTiming.presenter.step + revealTiming.presenter.hold,
+    MAX_PLAYERS * stagedRevealTiming.presenter.step + stagedRevealTiming.presenter.truthIntro
         + stagedRevealTiming.presenter.writerAt + stagedRevealTiming.presenter.hold,
 ) + LAUGH_HOLD_MS + 5000;
 

@@ -1,5 +1,6 @@
-import { GameScheme, GameState } from '../game-model';
+import { MAX_PLAYERS, GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 
 /** A game nobody has moved on for this long is dead, whatever phase it stopped in. */
 export const STALE_MS = 6 * 60 * 60 * 1000;
@@ -44,9 +45,9 @@ export async function gameOverError(game: GameScheme, now: number): Promise<Game
     }
     const error: GameOverError = { message: 'That game is over', code: 'GAME_OVER' };
     if (game.fork) {
-        const rematch = await get<GameScheme>(gamesRef.child(game.fork));
+        const rematch = await readGame(game.fork);
         if (rematch && !isGameOver(rematch, now) && rematch.state && rematch.state.id === GameState.GameStaging
-            && Object.keys(rematch.players || {}).length < 8) {
+            && Object.keys(rematch.players || {}).length < MAX_PLAYERS) {
             error.rematch = game.fork;
         }
     }

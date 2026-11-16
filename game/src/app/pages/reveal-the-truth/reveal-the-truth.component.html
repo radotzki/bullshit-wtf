@@ -31,8 +31,9 @@
 
                             <div class="writer" [class.shown]="i < writersShown">
                                 <ng-container *ngIf="row.realAnswer">
-                                    <span class="tag-truth">{{t.theTruth}}</span>
+                                    <span class="tag-truth">{{ row.aboutName ? aboutWords.theirTruth(row.aboutName) : t.theTruth }}</span>
                                     <span class="points" dir="ltr" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                    <ng-container [ngTemplateOutlet]="aboutScore" [ngTemplateOutletContext]="{ row: row }"></ng-container>
                                 </ng-container>
                                 <ng-container *ngIf="row.houseLie">
                                     <span class="tag-house">{{t.houseLie}}</span>
@@ -78,7 +79,7 @@
                     <ng-container *ngFor="let row of rows; let i = index">
                         <div *ngIf="i < visibleRows" class="srow box" [class.past]="i < visibleRows - 1 || truthIntro"
                             [class.truth]="row.realAnswer" [class.house]="row.houseLie && i < writersShown">
-                            <p class="truth-label" *ngIf="row.realAnswer"> {{ t.theTruth }} </p>
+                            <p class="truth-label" *ngIf="row.realAnswer"> {{ row.aboutName ? aboutWords.theirTruth(row.aboutName) : t.theTruth }} </p>
                             <div class="text-line">
                                 <p class="text"> {{ row.text | uppercase }} </p>
                                 <ng-container [ngTemplateOutlet]="laughButton" [ngTemplateOutletContext]="{ row: row, counted: i < writersShown }"></ng-container>
@@ -96,6 +97,7 @@
                                 <div class="writer" [class.shown]="i < writersShown">
                                     <ng-container *ngIf="row.realAnswer">
                                         <span class="points" dir="ltr" *ngIf="row.pickers.length && row.points"> {{ row.points | bsPoints }} </span>
+                                        <ng-container [ngTemplateOutlet]="aboutScore" [ngTemplateOutletContext]="{ row: row }"></ng-container>
                                     </ng-container>
                                     <ng-container *ngIf="row.houseLie">
                                         <span class="tag-house">{{ t.houseLie }}</span>
@@ -129,7 +131,7 @@
                             [class.climbed]="scoresMoved && p.rowAfter < p.rowBefore"
                             [style.transform]="'translateY(' + ((scoresMoved ? p.rowAfter : p.rowBefore) * 2.7) + 'em)'">
                             <span class="place">{{ scoresMoved ? p.placeAfter : p.placeBefore }}</span>
-                            <img class="picture" [src]="'/assets/avatar' + p.seat + '.png'">
+                            <img class="picture" [src]="'/assets/avatar' + (p.seat % 12) + '.png'">
                             <span class="name">{{ p.nickname }}</span>
                             <span class="change" *ngIf="p.change" [class.negative]="p.change < 0" dir="ltr">{{ p.change | bsPoints }}</span>
                             <span class="total" dir="ltr">{{ scoresMoved ? p.after : p.before }}</span>
@@ -160,6 +162,14 @@
         <span *ngIf="!row.laughable && row.lie && counted && row.laughs" class="laugh only-count" [attr.aria-label]="t.laughs(row.laughs)">
             <ng-container [ngTemplateOutlet]="laughFace"></ng-container>
             <span class="laugh-count" dir="ltr">{{ row.laughs }}</span>
+        </span>
+    </ng-template>
+
+    <!-- An About question's truth: the player it is about, with what their friends' finds gave them. -->
+    <ng-template #aboutScore let-row="row">
+        <span *ngIf="row.aboutPlayer && row.aboutPoints" class="about-score">
+            <span class="player"><img [src]="'/assets/' + row.aboutPlayer.picture" alt=""> <span class="name">{{ row.aboutName }}</span></span>
+            <span class="points" dir="ltr"> {{ row.aboutPoints | bsPoints }} </span>
         </span>
     </ng-template>
 

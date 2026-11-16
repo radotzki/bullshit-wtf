@@ -39,9 +39,11 @@ test('English crews keep the English page', () => {
 test('Hebrew crews get every string in Hebrew, right to left', () => {
     assert.strictEqual(he.dir, 'rtl');
     assert.deepStrictEqual(Object.keys(he).sort(), Object.keys(en).sort());
+    // The night block's functions take a weekday or a list of names.
+    const args = { youreIn: ['יום שישי'], nudgeText: [3, 'יום שישי, 20 בנובמבר, 21:00', ['דנה', 'נועה']], inCount: [['דנה', 'נועה']] };
     for (const key of Object.keys(he)) {
         const v = he[key];
-        const s = typeof v === 'function' ? v(3, '4321') : v;
+        const s = typeof v === 'function' ? v.apply(null, args[key] || [3, '4321']) : v;
         if (key === 'dir') {
             continue;
         }

@@ -417,6 +417,8 @@ async function main() {
     }
 }
 
+// Run as a script it plays the game; required, it lends its emulators and phones to the other
+// local runs (emulator-crew-night.js, emulator-invite-group.js, emulator-rejoin.js).
 if (require.main === module) {
     main().catch((e) => {
         console.error('FAIL', e.stack || e);
@@ -424,5 +426,4 @@ if (require.main === module) {
     });
 }
 
-// For the other emulator runs (emulator-rejoin.js).
-module.exports = { startEmulators, stopEmulators, db, seed, newPhone, visible, log, sleep, HOST, PROJECT, DB, ROOT, DIST };
+module.exports = { ROOT, DIST, LOCALE, HOST, DB, PROJECT, log, sleep, flag, up, startEmulators, stopEmulators, db, seed, newPhone, visible, act };

@@ -8,14 +8,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
+import { gameGone, joinPageFor } from './game-gone';
 import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
 import { tasteStrings, TasteStrings } from './../taste-strings';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
-import { GameState } from './../../game-model';
+import { GameState, seatPicture } from './../../game-model';
 import { StorageService } from './../../services/storage.service';
 import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
 import { biggestBullshitters } from './biggest';
+import { INVITE_CONTENT, INVITE_HALF_KEY, candleEvening, inviteHalf } from './../../components/invite-group/invite-group';
+import { SIGN_IN_WAIT_MS } from './../../services/api.service';
+import {
+    SEEN_KEY, SWAP_AFTER_MS, addSeen, bigScreenLine, buttonsSwap, parseSeen, seenMethod,
+} from './../../components/next-week/next-week';
 
 export interface FinalPlayer {
     nickname: string;
@@ -62,6 +68,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     savingCrew: boolean;
     crewError: string;
     crewSubscription: Subscription;
+    /** The big screen's watch on the crew's night, and the night's time. */
+    private screenNightSubscription: Subscription;
+    private screenNight: number;
     /**
      * This phone saw the same group finish an earlier game (see repeat-group.ts): "Save this crew"
      * moves up, above SHARE RESULTS, with a line that says why.
@@ -78,6 +87,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
+    /** The game's seasonal pack (the ask speaks of Hanukkah after a Hanukkah game). */
+    pack: string = null;
     /**
      * Someone else pressed REMATCH: the new game's pin. This phone stays on the final screen and its
      * REMATCH button becomes JOIN THE REMATCH (see rematchMove).
@@ -87,8 +98,25 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     rematchStarted: boolean;
     private rematchSubscription: Subscription;
     private sheetOpen: boolean;
+    /**
+     * "Same time next week?", a 50/50 test (see components/next-week): true when the server put this
+     * game in the half that gets the new button, false in the half that keeps this screen as it was,
+     * null when the game is not in the test.
+     */
+    nextWeek: boolean | null = null;
+    /** Nobody pressed REMATCH for 40 seconds: the next-week button moves above it. */
+    nextWeekFirst: boolean;
+    hostName: string;
+    private nextWeekSheet: boolean;
+    private swapTimer: any;
+    private shownAt = Date.now();
     /** This phone is on its way to the rematch. */
     private leaving: boolean;
+    /**
+     * This guest is in the new half of the INVITE ANOTHER GROUP test: that ask shows in place of
+     * "start your own game" (see invite-group.ts, and splitAsk below).
+     */
+    inviteAsk: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -106,13 +134,19 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         this.gameService.register(this.pin);
         this.playMusic();
         Promise.all([
-            this.apiService.getPlayers(this.pin),
+            // Refused or empty once the game is old (see game-gone.ts): handled below.
+            this.apiService.getPlayers(this.pin).catch(() => null),
             // The final screen still works for games that ended before highlights were kept.
             this.apiService.getHighlights(this.pin).catch(() => null),
             this.apiService.getHighlightsFrom(this.pin).catch(() => null),
             this.apiService.getGameLocale(this.pin).catch(() => 'en'),
             this.apiService.getTaste(this.pin),
         ]).then(([resp, highlights, from, locale, taste]: any[]) => {
+            if (gameGone(resp)) {
+                // An old game: its players are no longer readable. The join page says "Game over".
+                this.leaveForJoinPage(locale);
+                return undefined;
+            }
             // The words are in the game's language from the first paint.
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];
@@ -131,11 +165,24 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.setPlayers(resp, highlights || {}, user ? user.pid : undefined);
             this.setHostAsk(resp, user);
             this.setRepeatGroup(resp);
+            const host = Object.keys(resp).map(pid => resp[pid]).filter(p => p && p.host)[0];
+            this.hostName = host ? host.nickname : '';
+            return this.apiService.getNextWeek(this.pin).then(nextWeek => this.setNextWeek(nextWeek));
         });
 
         this.crewSubscription = this.apiService.getGameCrewObservable(this.pin).subscribe(id => this.onCrew(id));
 
         this.forkGameSubscription = this.apiService.getForkGame(this.pin).subscribe(fork => this.onFork(fork));
+    }
+
+    /** This game is gone (see game-gone.ts): on to its join page, which says the game is over. */
+    private leaveForJoinPage(locale: string) {
+        if (this.leaving) {
+            return;
+        }
+        this.leaving = true;
+        this.gameService.unregister();
+        this.router.navigate(joinPageFor(this.pin, locale), { replaceUrl: true });
     }
 
     /** A rematch of this game exists: go to it, or stay here with a button that goes. */
@@ -170,7 +217,63 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     /** Sharing or saving: a started rematch waits for this player until the sheet or form closes. */
     private get busy() {
-        return !!this.sheetOpen || !!this.naming || !!this.savingCrew;
+        return !!this.sheetOpen || !!this.nextWeekSheet || !!this.naming || !!this.savingCrew;
+    }
+
+    /**
+     * The game is in the "Same time next week?" test. A phone of one of its players counts itself
+     * once (shares: next-week / seen-card or seen-control), and in the new half the two buttons swap
+     * places when nobody has pressed REMATCH after 40 seconds.
+     */
+    private setNextWeek(nextWeek: boolean | null) {
+        this.nextWeek = nextWeek;
+        const method = seenMethod(nextWeek);
+        if (!method || this.presenter || !this.mine || this.soloTaste || this.displayPlayers.length < 2) {
+            return;
+        }
+        try {
+            const seen = addSeen(parseSeen(this.storageService.getItem(SEEN_KEY)), this.pin);
+            if (seen) {
+                this.storageService.setItem(SEEN_KEY, JSON.stringify(seen));
+                // The row carries the crew's id when the game has a crew already.
+                this.apiService.getGameCrew(this.pin).catch(() => null)
+                    .then(crew => this.apiService.logShare('next-week', method, { crew: crew || undefined, locale: this.locale }));
+            }
+        } catch (e) { }
+        if (nextWeek) {
+            const wait = Math.max(0, SWAP_AFTER_MS - (Date.now() - this.shownAt));
+            this.swapTimer = setTimeout(() => {
+                // Not under a finger that is on its way to the sheet, and not once a rematch exists.
+                this.nextWeekFirst = !this.nextWeekSheet && buttonsSwap(Date.now() - this.shownAt, !!this.rematchPin || !!this.forkCall);
+            }, wait);
+        }
+    }
+
+    /** This phone shows the new button (or its banner) in place of the save-crew offer. */
+    get nextWeekOn(): boolean {
+        return this.nextWeek === true && !this.presenter && !!this.mine && !this.soloTaste
+            && !!this.displayPlayers && this.displayPlayers.length > 1;
+    }
+
+    /** The big screen's line under the winner, in the new half: the ask, then the date once a phone sets it. */
+    get nextWeekScreenLine(): string {
+        return this.presenter && this.nextWeek === true && !!this.displayPlayers && this.displayPlayers.length > 1
+            ? bigScreenLine(this.screenNight, new Date(), this.locale) : '';
+    }
+
+    /** The sheet's maker renamed the crew: the crew link at the bottom follows. */
+    onCrewNamed(name: string) {
+        if (name) {
+            this.crewName = name;
+        }
+    }
+
+    /** The next-week sheet opened or closed. */
+    onNextWeekSheet(open: boolean) {
+        this.nextWeekSheet = open;
+        if (!open) {
+            this.followRematch();
+        }
     }
 
     /** Goes to the rematch when rematchMove says so. Resolves to whether it went. */
@@ -257,6 +360,9 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.forkGameSubscription.unsubscribe();
         this.crewSubscription.unsubscribe();
+        if (this.screenNightSubscription) {
+            this.screenNightSubscription.unsubscribe();
+        }
         if (this.rematchSubscription) {
             this.rematchSubscription.unsubscribe();
         }
@@ -264,12 +370,14 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         if (this.sound) {
             fadeOutAndUnload(this.sound);
         }
+        clearTimeout(this.swapTimer);
     }
 
     /** The ask is for a player of this game who did not host it. */
     private async setHostAsk(resp, user) {
+        this.pack = await this.apiService.getGamePack(this.pin).catch(() => null);
         const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
-        this.hostAsk = showHostAsk({
+        const guest = showHostAsk({
             presenter: this.presenter,
             myPid: user ? user.pid : null,
             myUid: user ? user.uid : null,
@@ -278,6 +386,42 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             holdsHostKey: this.apiService.holdsHostKey(this.pin),
             players,
         });
+        await this.splitAsk(guest, user);
+    }
+
+    /**
+     * Which ask a guest gets: INVITE ANOTHER GROUP for half of guest browsers, today's "start your own
+     * game" for the other half, and each phone says which it showed (shares: host-invite, seen-new or
+     * seen-classic). After a Hanukkah game on a candle evening every guest keeps today's ask, which
+     * speaks of Hanukkah then, and none is in the test: no row. Both asks appear together, once the
+     * half is known, so neither flashes before the other.
+     */
+    private async splitAsk(guest: boolean, user) {
+        if (!guest) {
+            this.hostAsk = false;
+            return;
+        }
+        try {
+            // The pack was read in setHostAsk, just before.
+            if (!candleEvening(new Date(), this.pack)) {
+                let forced: string = null;
+                try {
+                    forced = this.storageService.getItem(INVITE_HALF_KEY);
+                } catch (e) { }
+                // The browser's id is known from the join; a phone whose sign-in was slow then gets a short wait.
+                const uid = user && typeof user.uid === 'string' && user.uid
+                    ? user.uid : (await this.apiService.uidWithin(SIGN_IN_WAIT_MS)).uid;
+                const half = inviteHalf(uid, forced);
+                if (half) {
+                    this.apiService.logShare(INVITE_CONTENT, half === 'new' ? 'seen-new' : 'seen-classic', { locale: this.locale });
+                }
+                if (half === 'new') {
+                    this.inviteAsk = true;
+                    return;
+                }
+            }
+        } catch (e) { }
+        this.hostAsk = true;
     }
 
     /** Compares this game with the ones this phone saw end, then adds it to them. */
@@ -299,7 +443,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
      * crew yet, at the bottom otherwise (an existing crew's link included).
      */
     get crewFirst() {
-        return !!this.repeatGroup && this.hadCrew === false && !this.presenter && !this.soloTaste;
+        return !!this.repeatGroup && this.hadCrew === false && !this.presenter && !this.soloTaste && !this.nextWeekOn;
     }
 
     private setPlayers(resp, highlights: Highlights, myPid: string) {
@@ -308,7 +452,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
                 pid,
                 nickname: resp[pid].nickname,
                 score: resp[pid].score || 0,
-                picture: `avatar${i}.png`,
+                picture: seatPicture(i),
                 best: highlights[pid] && highlights[pid].text ? highlights[pid] : undefined,
             }))
             .sort((a, b) => b.score - a.score);
@@ -397,6 +541,12 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             return;
         }
         this.naming = false;
+        if (this.presenter && !this.screenNightSubscription) {
+            // The big screen follows the crew's night, so its line turns into the date the phones set.
+            this.screenNightSubscription = this.apiService.getCrewObservable(id).subscribe(c => {
+                this.screenNight = c && c.night ? c.night.time : undefined;
+            }, () => null);
+        }
         const crew = await this.apiService.getCrew(id);
         this.crewName = crew ? crew.name : '';
         this.crewService.remember(id, this.crewName, this.myNickname);
