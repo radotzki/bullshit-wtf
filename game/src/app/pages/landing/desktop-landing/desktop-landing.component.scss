@@ -342,6 +342,79 @@
     }
 }
 
+// A window as narrow as a phone (a phone the home didn't recognise as one, or a narrow window):
+// at 320 x 568 the code box took three rows and the pitch five, and Host started below the first
+// screen. Tighter here, so the code box, the pitch and Host all fit on the first screen.
+@media (max-width: 480px) {
+    // The title a little smaller, so the language switch in the corner no longer sits on it.
+    .title-area .title {
+        font-size: 2.3em;
+    }
+
+    .lang-switch {
+        top: 8px;
+        right: 10px;
+        font-size: 14px;
+
+        [dir="rtl"] & {
+            right: auto;
+            left: 10px;
+        }
+    }
+
+    .front-door {
+        width: calc(100% - 16px);
+        margin-top: 12px;
+        padding: 16px;
+    }
+
+    .code-box {
+        margin-bottom: 14px;
+
+        .code-ask {
+            flex: 1 0 100%;
+        }
+
+        .code-input {
+            flex: 1 1 0;
+        }
+    }
+
+    .pitch {
+        margin-bottom: 18px;
+        font-size: 22px;
+    }
+
+    // One fact a line, with no dots: a fact too long for the line broke inside its own box, and the
+    // clipped edge cut the first letter of its second line ("n their own phone").
+    .facts {
+        margin: -10px 0 18px;
+        font-size: 16px;
+
+        .facts-row {
+            margin-inline-start: 0;
+        }
+
+        .fact {
+            display: block;
+
+            &::before {
+                display: none;
+            }
+        }
+    }
+
+    .host-button {
+        gap: 12px;
+        padding: 14px 18px;
+        font-size: 22px;
+
+        i {
+            font-size: 26px;
+        }
+    }
+}
+
 @include rp.round-picture-keyframes;
 
 // Less motion asked for: one still frame, the reveal, as on the phone.
