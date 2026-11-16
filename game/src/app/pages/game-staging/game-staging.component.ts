@@ -14,7 +14,7 @@ import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_
     hostAwayMs, shouldAskClock } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
 import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY } from './lone-host';
-import { offerBigScreen, bigScreenStrings, BigScreenStrings } from './big-screen-host';
+import { offerBigScreen, bigScreenStrings, BigScreenStrings, hostStillToJoin, pressedWith, PRESSED_WITH_KEY } from './big-screen-host';
 
 /** A value from the browser's storage, or null where storage is closed (private mode). */
 function stored(storage: () => Storage, key: string): string | null {
@@ -251,6 +251,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.showStartButton = view.canStart;
         this.lobby = lobbyText(view, (this.players || []).length, this.locale, friend);
         this.hostScreenHere = !!view.hostScreen;
+        // The host's phone is not in yet: keep the line with the code up, also with guests in.
+        if (this.hostScreenHere && hostStillToJoin(stored(() => sessionStorage, PRESSED_WITH_KEY + this.pinKey()), this.players || [])) {
+            this.lobby.sub = this.b.joinNow;
+        }
         this.updateHelp(!!view.isHost);
         this.bigScreenOffer = offerBigScreen({
             isHost: !!view.isHost,
@@ -273,6 +277,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.switching = true;
         this.errorMsg = '';
         this.apiService.logShare('lobby-help', 'big-screen', { crew: this.pin, locale: this.locale });
+        try {
+            // Who was in at the press: the big screen keeps "scan the code" up until someone else joins.
+            sessionStorage.setItem(PRESSED_WITH_KEY + this.pinKey(), pressedWith(this.players || []));
+        } catch (e) { }
         this.apiService.hostToBigScreen(this.pin).then(() => {
             this.sessionService.presenter = true;
             return this.router.navigate(['present-game', this.pin]);
@@ -281,6 +289,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             reportError(err, 'hostToBigScreen', { pin: this.pin });
             this.errorMsg = this.t.oops;
         });
+    }
+
+    private pinKey(): string {
+        return String(this.pin || '').toUpperCase();
     }
 
     private updateHelp(isHost: boolean) {

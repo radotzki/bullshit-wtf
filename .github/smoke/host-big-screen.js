@@ -258,6 +258,15 @@ async function run(browser, base, { locale, alone, whole, half }, problems) {
             check(!(await visible(guest.page.locator('.game-header > button'))), 'the guest has START');
             check((await guest.page.locator('.lobby .player').count()) === 1, 'the guest still sees the host\'s old seat');
             await shot(guest.page, `${tag}-3-guest-after-the-press`);
+            // The big screen still tells the host where to join, though a guest is in (task 43kTp).
+            const sub = page.locator('.lobby-status .lobby-sub');
+            check(await until(async () => (await sub.innerText().catch(() => '')).trim() === words.joinNow),
+                `with a guest in, the big screen says "${await sub.innerText().catch(() => '')}", not "${words.joinNow}"`);
+            const subBox = await sub.boundingBox();
+            const cardBox = await page.locator('.invite-presenter').boundingBox();
+            check(subBox && cardBox && (subBox.y + subBox.height <= cardBox.y || subBox.x + subBox.width <= cardBox.x || subBox.x >= cardBox.x + cardBox.width),
+                'the join line runs over the QR card');
+            await shot(page, `${tag}-3-big-screen-one-guest`);
         }
 
         // ---- the host joins from a phone, like everyone else ----
@@ -270,6 +279,9 @@ async function run(browser, base, { locale, alone, whole, half }, problems) {
         const players = await db('GET', `games/${pin}/players`);
         check(Object.values(players).every((p) => !p.host), 'a seat is marked as the host after the press');
         await shot(hostPhone.page, `${tag}-4-host-phone`);
+        // The host's phone is in: the join line on the big screen has done its work.
+        check(await until(async () => !(await visible(page.locator('.lobby-status .lobby-sub')))), 'the big screen still says to scan the code with the host in');
+        await shot(page, `${tag}-4-big-screen-host-in`);
         await join(third, base, pin, he);
         if (alone) await join(guest, base, pin, he);
         check(await until(async () => (await page.locator('.lobby .player').count()) === 3), 'the big screen does not show three players');

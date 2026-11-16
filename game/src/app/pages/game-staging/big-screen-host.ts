@@ -31,12 +31,45 @@ export function offerBigScreen(input: BigScreenOfferInput): boolean {
         && input.device === 'computer';
 }
 
+/**
+ * The big screen keeps "scan the code to join" up until the host's own phone is in.
+ *
+ * The host gives up their seat with the press and joins again from a phone, as a new player. Guests
+ * who were in before the press are not the host, so the line stays while every player is one of
+ * them: a host who presses with a friend already in still reads where to join. The page notes those
+ * players at the press (pressedWith), in this tab's storage, so a reload of the big screen keeps it.
+ * Without that note (the address opened in another tab) any player ends the line, as before.
+ */
+export const PRESSED_WITH_KEY = 'BS_BIG_SCREEN_PRESSED_WITH_';
+
+export interface BigScreenPlayer {
+    pid?: string;
+    host?: boolean;
+}
+
+/** The note to keep at the press: the ids of the players in the lobby, without the host's own seat. */
+export function pressedWith(players: BigScreenPlayer[]): string {
+    return JSON.stringify((players || []).filter(p => p && p.pid && !p.host).map(p => p.pid));
+}
+
+/** Show "scan the code to join" on the big screen: no player is in yet who was not in at the press. */
+export function hostStillToJoin(note: string | null, players: BigScreenPlayer[]): boolean {
+    let before: string[] = [];
+    try {
+        const parsed = note ? JSON.parse(note) : [];
+        before = Array.isArray(parsed) ? parsed.filter(id => typeof id === 'string') : [];
+    } catch (e) {
+        before = [];
+    }
+    return !(players || []).some(p => p && p.pid && before.indexOf(p.pid) < 0);
+}
+
 const strings = {
     en: {
         ask: 'Everyone in one room?',
         how: 'Put the game on this screen. You join from your phone like everyone else, and press START here.',
         button: 'USE AS THE BIG SCREEN',
-        // On the big screen, until the first player is in.
+        // On the big screen, until a phone joins that was not in the lobby at the press (the host's).
         joinNow: 'This is the big screen now. Scan the code with your phone to join.',
     },
     he: {
