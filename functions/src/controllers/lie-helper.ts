@@ -1,21 +1,29 @@
 /**
  * The round-1 lie helper ("coach"), and the per-question numbers that measure it.
  *
- * In half of all games (coach: true), round 1's writing screen tells players to make up a fake answer
+ * In every game (coach: true), round 1's writing screen tells players to make up a fake answer
  * and offers each player up to two ready-made lies ("STUCK? GIVE ME A LIE"). The lies come from the
  * question's own fake answers, after cleanHouseLies, never the real answer.
+ *
+ * It began as a 50/50 test (from about 5 November 2026) and was given to every new game and every
+ * Replay on 13 November 2026. The coach column is still written on every game and question row, so
+ * the switch shows in the data: games made before it have coach false for the no-helper half.
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
 import { shuffle, Random } from './question-picker';
 import { normalize } from './answer-options';
 import { GameScheme } from '../game-model';
+import { spanSeconds } from './answer-times';
 
 export const IDEAS_PER_PLAYER = 2;
 
-/** Half of all new games get the helper. */
-export function pickCoach(random: Random = Math.random): boolean {
-    return random() < 0.5;
+/**
+ * Every new game and every Replay gets the helper (the 50/50 test ended on 13 November 2026).
+ * To turn it back off, return false here and deploy the functions: no client change is needed.
+ */
+export function pickCoach(): boolean {
+    return true;
 }
 
 /**
@@ -80,6 +88,9 @@ export interface QuestionResultRow {
     friend_fooled: number;
     coach: boolean;
     locale: string | null;
+    lie_span_s: number | null;
+    pick_span_s: number | null;
+    unpicked_lies: number;
 }
 
 /**
@@ -88,6 +99,9 @@ export interface QuestionResultRow {
  *   idea_lies      of those, lies the helper offered them
  *   picks          players who picked an answer
  *   friend_fooled  picks of a lie another player wrote
+ *   lie_span_s     seconds from the first lie to the last (null with fewer than two, or no times)
+ *   pick_span_s    the same for picks
+ *   unpicked_lies  players' lies that nobody picked
  */
 export function questionResult(pin: string, game: GameScheme): QuestionResultRow {
     const answers = game.answers || {};
@@ -95,16 +109,20 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
     const playerLies = Object.keys(answers).filter(k => answers[k] && !answers[k].houseLie && !answers[k].realAnswer);
 
     let friendFooled = 0;
+    const pickedTexts: string[] = [];
     Object.keys(selections).forEach(pid => {
         const picked = normalize(selections[pid] && selections[pid].text);
+        pickedTexts.push(picked);
         if (picked && playerLies.some(k => k !== pid && normalize(answers[k].text) === picked)) {
             friendFooled++;
         }
     });
+    const q = game.questionIndex || 0;
+    const times = game.answerTimes || {};
 
     return {
         id: pin,
-        q_index: game.questionIndex || 0,
+        q_index: q,
         round: (game.roundIndex || 0) + 1,
         total_q: game.totalQ || 0,
         players: Object.keys(game.players || {}).length,
@@ -114,5 +132,8 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
         friend_fooled: friendFooled,
         coach: !!game.coach,
         locale: game.locale || null,
+        lie_span_s: spanSeconds(playerLies, times.lies, q),
+        pick_span_s: spanSeconds(Object.keys(selections), times.picks, q),
+        unpicked_lies: playerLies.filter(k => pickedTexts.indexOf(normalize(answers[k].text)) < 0).length,
     };
 }

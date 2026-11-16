@@ -4,6 +4,7 @@
  * is the visitor's, decided the way the Create page decides it, so the two never disagree.
  * Kept free of Angular so it can be tested in Node.
  */
+import { typedHebrew } from '../../services/game-code';
 
 export interface JoinStrings {
     lang: 'he' | 'en';
@@ -28,6 +29,8 @@ export interface JoinStrings {
     seatTakenText: string;
     /** What to show for a failed PIN or join: the server's code, and its (English) message. */
     error: (code: string, message: string) => string;
+    /** Added to a wrong PIN that was typed with Hebrew letters: codes are English letters. */
+    englishLetters: string;
 }
 
 const en: JoinStrings = {
@@ -51,6 +54,7 @@ const en: JoinStrings = {
     seatTakenText: 'Another phone joined under the same name. Pick a new name to join again.',
     // The English pages show the server's own words, as before.
     error: (code, message) => message,
+    englishLetters: 'Game codes are English letters.',
 };
 
 const heErrors: { [code: string]: string } = {
@@ -78,10 +82,28 @@ const he: JoinStrings = {
     seatTakenTitle: 'מישהו אחר תפס את המקום הזה',
     seatTakenText: 'טלפון אחר הצטרף עם אותו כינוי. בחרו כינוי חדש כדי להצטרף שוב.',
     error: code => heErrors[code] || 'אופס, משהו השתבש. נסו שוב',
+    englishLetters: 'הקוד באותיות באנגלית.',
 };
 
 export function joinStrings(locale: string): JoinStrings {
     return locale === 'he' ? he : en;
+}
+
+/**
+ * What to say for a failed PIN, on the PIN page and on the home's code box: the page's words for
+ * the server's code and, when no game has that PIN and the guest typed Hebrew letters, that game
+ * codes are English letters. Hebrew typed on a computer keyboard already reaches the right game
+ * (cleanCode); on a phone's Hebrew keyboard it can't, so the guest is told what to switch to.
+ * `typed` is the text as the guest typed it, before cleanCode.
+ */
+export function pinError(locale: string, code: string, message: string, typed: string | null | undefined): string {
+    const t = joinStrings(locale);
+    const said = t.error(code, message);
+    if (code !== 'GAME_NOT_EXIST' || !typedHebrew(typed)) {
+        return said;
+    }
+    const stop = /[.!?]$/.test(said) ? '' : '.';
+    return `${said}${stop} ${t.englishLetters}`;
 }
 
 /**

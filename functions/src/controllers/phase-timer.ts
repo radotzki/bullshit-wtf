@@ -1,5 +1,6 @@
 import { GameScheme, GameStateInfo } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { advance } from './tick';
 import { maxPhaseDuration, stateKey } from './phase';
 import { leftOutGuardMs, endsAfterGuard, guardedPhase } from './seats';
@@ -40,7 +41,7 @@ export async function onPhaseStart(pin: string, state: GameStateInfo, now = Date
             await sleep(guardWait);
         }
 
-        const game = await get<GameScheme>(gamesRef.child(pin.toUpperCase()));
+        const game = await readGame(pin.toUpperCase());
 
         if (!game || !game.state || stateKey(game.state) !== stateKey(state)) {
             // The phase is over already: everyone answered.

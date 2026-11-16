@@ -5,12 +5,28 @@
 const fs = require('fs');
 const path = require('path');
 const pages = require('./pages');
+// The daily puzzle (/daily, /he/daily) is written by build-daily.js; every page here links to it.
+const dailyWords = require('./daily-strings');
 
 const SITE = 'https://bullshit.wtf';
 const IMAGE = 'https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/logo_y0uyd5.png';
 const out = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist'));
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// The visit beacon: the same inline script as the game's own page (src/index.html, between the
+// BS:VISIT markers), so a view of a plain page is counted like any other. data-page="plain" on
+// <html> tells it there is no app to wait for.
+function visitBeacon() {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.html'), 'utf8');
+    const m = /<!-- BS:VISIT:START -->\s*(<script>[\s\S]*?<\/script>)\s*<!-- BS:VISIT:END -->/.exec(html);
+    if (!m) {
+        throw new Error('The visit beacon (BS:VISIT markers) is missing from src/index.html');
+    }
+    return m[1];
+}
+const beacon = visitBeacon();
+
 const byPath = {};
 pages.forEach(p => byPath[p.path] = p);
 
@@ -28,6 +44,11 @@ const startButton = (p) => `<a class="btn primary" href="${esc(startOf(p).href)}
 
 // A page in one language only (no `twin`) names just itself, and its language link goes to the other home page.
 const otherHome = (p) => p.site.lang === 'he' ? '/' : '/he';
+// The logo and the language link to the other home carry the page's tag, like its Start button, so a
+// visitor who goes home first and then taps Create still says which page they came from. The homes'
+// canonical address has no tag, so search sees no new address.
+const viaOf = (p) => p.tag ? '?via=' + p.tag : '';
+const ownHome = (p) => (p.site.lang === 'he' ? '/he' : '/') + viaOf(p);
 
 function hreflang(p) {
     if (!p.twin) {
@@ -41,6 +62,25 @@ function hreflang(p) {
         `<link rel="alternate" hreflang="x-default" href="${SITE}${en.path}">`,
     ].join('\n  ');
 }
+
+// Where a visit started, for a game the visitor goes on to create: the same note, under the same key
+// and in the same shape, as the app keeps at start-up (src/app/services/arrival.ts). A plain page is
+// often the first page of a visit, and only that page sees the site the visitor came from. It keeps
+// the page's path and the referring site's host name for this tab: never a full address or a query.
+const ARRIVAL_NOTE = `<script>
+    (function () {
+      try {
+        var s = window.sessionStorage;
+        if (s.getItem('BS_ARRIVAL')) return;
+        var m = /^[a-z][a-z0-9+.-]*:\\/\\/([^\\/?#]*)/i.exec(document.referrer || '');
+        var h = m ? m[1].replace(/^[^@]*@/, '').replace(/:\\d*$/, '').toLowerCase() : '';
+        if (h && h === location.hostname) return;
+        s.setItem('BS_ARRIVAL', JSON.stringify({
+          page: location.pathname.slice(0, 80), ref: /^[a-z0-9.-]{1,60}$/.test(h) ? h : null, at: new Date().getTime()
+        }));
+      } catch (e) { }
+    })();
+  </script>`;
 
 function render(p) {
     const s = p.site;
@@ -58,7 +98,7 @@ function render(p) {
             genre: ['Party game', 'Trivia', 'Bluffing'],
             gamePlatform: 'Web browser',
             playMode: 'MultiPlayer',
-            numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 8 },
+            numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 12 },
             offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
         },
     };
@@ -67,9 +107,10 @@ function render(p) {
         : `<a href="${n.href}">${esc(n.label)}</a>`).join('\n      ');
 
     return `<!doctype html>
-<html lang="${s.lang}" dir="${s.dir}">
+<html lang="${s.lang}" dir="${s.dir}" data-page="plain">
 <head>
   <meta charset="utf-8">
+  ${beacon}
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${esc(p.title)}</title>
   <meta name="description" content="${esc(p.description)}">
@@ -86,6 +127,7 @@ function render(p) {
   <meta property="og:image:alt" content="${esc(p.h1)}">` : ''}
   <meta property="og:locale" content="${s.lang === 'he' ? 'he_IL' : 'en_US'}">
   <meta name="twitter:card" content="${p.image ? 'summary_large_image' : 'summary'}">
+  ${ARRIVAL_NOTE}
   <link rel="icon" type="image/png" href="/assets/favicon-32x32.png" sizes="32x32">
   <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
   <script type="application/ld+json">${JSON.stringify(ld)}</script>
@@ -124,8 +166,8 @@ function render(p) {
 <body>
   <header>
     <div class="bar">
-      <a class="logo" href="/">${s.lang === 'he' ? 'בולשיט' : 'Bullshit'}</a>
-      <a class="lang" href="${p.twin || otherHome(p)}" hreflang="${s.lang === 'he' ? 'en' : 'he'}" lang="${s.lang === 'he' ? 'en' : 'he'}">${esc(s.other)}</a>
+      <a class="logo" href="${ownHome(p)}">${s.lang === 'he' ? 'בולשיט' : 'Bullshit'}</a>
+      <a class="lang" href="${p.twin || otherHome(p) + viaOf(p)}" hreflang="${s.lang === 'he' ? 'en' : 'he'}" lang="${s.lang === 'he' ? 'en' : 'he'}">${esc(s.other)}</a>
     </div>
   </header>
   <main>
@@ -137,19 +179,26 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
     </div>
     <nav class="more">
       ${nav}
+      <a href="${dailyWords[s.lang].path}?via=daily-seo">${esc(dailyWords[s.lang].seoLink)}</a>
     </nav>
   </main>
   <footer>${esc(s.footer)}</footer>
   <script>
-    // Keep a post's ?via= tag on the way into the game, so the game records which post it came from.
-    // A post's tag takes the place of the page's own tag on the Start button: one tag reaches the game.
+    // Keep a post's ?via= tag on every link of this page that stays on the site (the two buttons,
+    // the logo, the links in the text, the other pages and the other language), so the game
+    // records which post a visitor came from whichever link they tap. A post's tag takes the place
+    // of a link's own tag (the Start button's): one tag reaches the game.
     (function () {
-      var m = /[?&]via=([a-z0-9-]{1,40})/i.exec(location.search);
+      var m = /[?&]via=([a-z0-9-]{1,40})(?=[&#]|$)/i.exec(location.search);
       if (!m) return;
-      var links = document.querySelectorAll('a.btn');
+      var links = document.querySelectorAll('a[href]');
       for (var i = 0; i < links.length; i++) {
-        var h = links[i].getAttribute('href').replace(/([?&])via=[^&#]*&?/, '$1').replace(/[?&]$/, '');
-        links[i].setAttribute('href', h + (h.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1]);
+        var h = links[i].getAttribute('href');
+        // Only a path of this site ("/create-game"), never another site ("//x", "https://x").
+        if (h.charAt(0) !== '/' || h.charAt(1) === '/') continue;
+        var at = h.indexOf('#'), hash = at < 0 ? '' : h.slice(at), path = at < 0 ? h : h.slice(0, at);
+        path = path.replace(/([?&])via=[^&#]*&?/, '$1').replace(/[?&]$/, '');
+        links[i].setAttribute('href', path + (path.indexOf('?') < 0 ? '?' : '&') + 'via=' + m[1] + hash);
       }
     })();
   </script>
@@ -159,11 +208,11 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
 }
 
 function sitemap() {
-    const today = new Date().toISOString().slice(0, 10);
+    // No <lastmod>: the build day on every page tells search engines nothing, and a wrong date makes
+    // them trust the field less. Leave it out until pages carry the day they really changed.
     // The two home pages: / and /he (dist/he.html, written by scripts/build-he.js).
     const homes = ['/', '/he'].map(loc => `  <url>
     <loc>${SITE}${loc}</loc>
-    <lastmod>${today}</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}/"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}/he"/>
   </url>`);
@@ -171,7 +220,6 @@ function sitemap() {
         if (!p.twin) {
             return `  <url>
     <loc>${SITE}${p.path}</loc>
-    <lastmod>${today}</lastmod>
     <xhtml:link rel="alternate" hreflang="${p.site.lang}" href="${SITE}${p.path}"/>
   </url>`;
         }
@@ -179,7 +227,6 @@ function sitemap() {
         const he = p.site.lang === 'he' ? p : byPath[p.twin];
         return `  <url>
     <loc>${SITE}${p.path}</loc>
-    <lastmod>${today}</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}${en.path}"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}${he.path}"/>
   </url>`;

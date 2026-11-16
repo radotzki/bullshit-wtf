@@ -193,11 +193,12 @@ test('a finished game takes nobody back by name', async () => {
 test('a seat given back by name is given back at a full table', async () => {
     const pin = lobby();
     const pids = [];
-    for (let i = 1; i <= 8; i++) pids.push((await join(pin, 'p' + i, 'u' + i, undefined, undefined, IPHONE)).pid);
+    const { MAX_PLAYERS } = require(path.join(__dirname, '..', 'dist', 'game-model'));
+    for (let i = 1; i <= MAX_PLAYERS; i++) pids.push((await join(pin, 'p' + i, 'u' + i, undefined, undefined, IPHONE)).pid);
     gone(pin, pids[4]);
     const back = await join(pin, 'p5', 'u5-new', undefined, undefined, IPHONE);
     assert.strictEqual(back.pid, pids[4]);
-    await assert.rejects(join(pin, 'p9', 'u9', undefined, undefined, IPHONE), e => e.code === 'GAME_IS_FULL');
+    await assert.rejects(join(pin, 'p' + (MAX_PLAYERS + 1), 'u' + (MAX_PLAYERS + 1), undefined, undefined, IPHONE), e => e.code === 'GAME_IS_FULL');
 });
 
 test('seatByName and cleanAgent on their own', () => {

@@ -1,10 +1,11 @@
-import { GameScheme } from '../game-model';
+import { MAX_PLAYERS, GameScheme } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { gameOverError } from './game-over';
 
 export async function validateGameName(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
@@ -15,7 +16,7 @@ export async function validateGameName(pin: string) {
         return Promise.reject(over);
     }
 
-    if (Object.keys(game.players || {}).length === 8) {
+    if (Object.keys(game.players || {}).length >= MAX_PLAYERS) {
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });
     }
 

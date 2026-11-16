@@ -11,7 +11,8 @@ function load(file) {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES5 },
     }).outputText;
     const mod = { exports: {} };
-    new Function('module', 'exports', 'require', out)(mod, mod.exports, require);
+    const req = (name) => name.startsWith('.') ? load(path.join(path.dirname(file), name + '.ts')) : require(name);
+    new Function('module', 'exports', 'require', out)(mod, mod.exports, req);
     return mod.exports;
 }
 
@@ -55,6 +56,8 @@ test('English visitors keep the English pages word for word', () => {
         seatTakenText: 'Another phone joined under the same name. Pick a new name to join again.',
         // The server's own message, untouched.
         error: ['Wrong game PIN', 'Sorry, game is full', 'boom'],
+        // Added to a wrong PIN typed with Hebrew letters (english-letters-hint.test.js).
+        englishLetters: 'Game codes are English letters.',
     });
 });
 
