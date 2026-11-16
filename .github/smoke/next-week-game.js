@@ -110,7 +110,7 @@ async function shot(page, name) {
 }
 
 /** One sitting: two games (three when `third`), in the language and the half asked for. */
-async function sitting(base, emulators, { locale, wantNew, rename, swap, third, senderWins, change }) {
+async function sitting(base, emulators, { locale, wantNew, rename, swap, third, senderWins, change, lost }) {
     const tag = `${locale}-${wantNew ? 'new' : 'old'}`;
     const problems = [];
     const check = (ok, what) => { if (!ok) problems.push(what); return ok; };
@@ -286,6 +286,33 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
         await waitFor(`${tag}: ${racer.name}'s sheet never got ready`,
             () => racer.page.locator('a.sheet-whatsapp').first().getAttribute('href'), problems);
 
+        // The day after next week's, at 20:30: the racer's date when it loses, and the sender's CHANGE.
+        const later = new Date(when.getFullYear(), when.getMonth(), when.getDate() + 1, 20, 30);
+        let release = null;
+        if (lost) {
+            // The race no web page can stop: the racer picks another day and taps WhatsApp, and the
+            // sender's date reaches the server first. The racer's request is held until it has.
+            await racer.page.locator('.sheet-change').first().click();
+            await racer.page.locator('input[name="nextWeekDate"]').first().fill(night.dateValue(later));
+            await racer.page.locator('input[name="nextWeekTime"]').first().fill(night.timeValue(later));
+            await waitFor(`${tag}: ${racer.name}'s other date never got a link`, async () => {
+                const h = await racer.page.locator('a.sheet-whatsapp').first().getAttribute('href');
+                return h && new URL(h).searchParams.get('text').includes(night.nightLabel(later, locale));
+            }, problems);
+            let held = false;
+            await racer.page.route(/crewNight/, async (route) => {
+                const body = route.request().postData() || '';
+                // fallback(), not continue(): the phone's own route (emulator-game.js) sends it to the emulators.
+                if (!/"time"/.test(body) || held) return route.fallback().catch(() => { });
+                check(/"tz":-?\d+/.test(body), `${tag}: ${racer.name}'s send carries no clock: ${body}`);
+                held = true;
+                await new Promise((resolve) => { release = resolve; });
+                return route.fallback().catch(() => { });
+            });
+            await racer.page.locator('a.sheet-whatsapp').first().click();
+            await waitFor(`${tag}: ${racer.name}'s send never left the phone`, () => held, problems, 8000);
+        }
+
         // The tap: WhatsApp opens at once, and the date goes on the crew.
         await sender.page.locator('a.sheet-whatsapp').first().click();
         const set = await waitFor(`${tag}: the date never reached the crew`, async () => (await db('GET', `crews/${crewId}/night`)), problems);
@@ -301,6 +328,28 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
         }
         await shot(sender.page, `${tag}-4-sheet-sent`);
         await sender.page.locator('.sheet-done').first().click();
+
+        if (lost) {
+            // The racer's date reaches the server after the sender's: the crew keeps the sender's night,
+            // and the racer's sheet says which night stands, with a WhatsApp message of it for the group.
+            if (release) release();
+            const lostBox = racer.page.locator('.sheet-lost');
+            await waitFor(`${tag}: ${racer.name}'s sheet never said their date lost`, () => visible(lostBox), problems);
+            const lostText = (await lostBox.first().innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+            check(lostText.includes(t.lost(sender.name, label)) && lostText.includes(t.tell), `${tag}: ${racer.name}'s lost line reads "${lostText}"`);
+            const tellHref = await racer.page.locator('.sheet-lost a.lost-tell').first().getAttribute('href');
+            const tellText = tellHref ? new URL(tellHref).searchParams.get('text') : '';
+            check(tellText === `${t.tellText(label)}\n${crewUrl}`, `${tag}: the tell message is\n${tellText}`);
+            const kept = await db('GET', `crews/${crewId}/night`);
+            check(kept && kept.time === when.getTime() && !Object.values(kept.in || {}).includes(racer.name),
+                `${tag}: after the racer's send the night is ${JSON.stringify(kept)}`);
+            result.lost = lostText;
+            result.tell = tellText;
+            await shot(racer.page, `${tag}-4-lost-sheet`);
+            const popups = (racer.popups || []).length;
+            await racer.page.locator('.sheet-lost a.lost-tell').first().click();
+            await waitFor(`${tag}: the tell button did not open WhatsApp`, () => (racer.popups || []).length > popups, problems, 5000);
+        }
 
         // The second sheet now shows the sender's date, with I'M IN in place of the send buttons.
         const taken = racer.page.locator('.sheet-taken');
@@ -360,7 +409,6 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
             // The sender picked the wrong day: CHANGE on their banner, a day later, sent again.
             await sender.page.locator('.banner-change').first().click();
             await waitFor(`${tag}: CHANGE did not open the date inputs`, () => visible(sender.page.locator('input[name="nextWeekDate"]')), problems);
-            const later = new Date(when.getFullYear(), when.getMonth(), when.getDate() + 1, 20, 30);
             await sender.page.locator('input[name="nextWeekDate"]').first().fill(night.dateValue(later));
             await sender.page.locator('input[name="nextWeekTime"]').first().fill(night.timeValue(later));
             const laterLabel = night.nightLabel(later, locale);
@@ -389,6 +437,13 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
             }
             await waitFor(`${tag}: the big screen did not move to the new date`,
                 async () => (await screen.page.locator('.next-week-screen').first().innerText().catch(() => '')).trim() === t.next(laterLabel), problems);
+            if (lost) {
+                // The crew moved to the racer's own losing date: the racer is not on the new list, so the
+                // banner asks I'M IN, offers no CHANGE, and the lost line is gone.
+                check(!(await visible(racer.page.locator('.banner-youre-in'))), `${tag}: ${racer.name} is told "${t.youreIn}" without being on the list`);
+                check(!(await visible(racer.page.locator('.banner-change'))), `${tag}: ${racer.name} may change a date the sender set`);
+                check(!(await visible(racer.page.locator('.banner-lost'))), `${tag}: ${racer.name} still says their date lost`);
+            }
             await shot(others[0].page, `${tag}-6-banner-moved`);
         }
 
@@ -427,9 +482,10 @@ async function sitting(base, emulators, { locale, wantNew, rename, swap, third, 
         check(!third || result.shares.filter((r) => r.method === 'seen-card' && r.crew_id === crewId).length === phones.length,
             `${tag}: the third game's seen-card rows lack the crew id`);
         check(count('next-week', 'seen-control') === 0, `${tag}: a seen-control row in the new half`);
-        check(count('next-week', 'open') === 2 && count('next-week', 'whatsapp') === (change ? 2 : 1) && count('crew-save', 'next-week') === 1
-            && count('next-week', 'change') === (change ? 1 : 0),
-            `${tag}: open ${count('next-week', 'open')}, whatsapp ${count('next-week', 'whatsapp')}, crew-save ${count('crew-save', 'next-week')}`);
+        check(count('next-week', 'open') === 2 && count('next-week', 'whatsapp') === 1 + (change ? 1 : 0) + (lost ? 1 : 0)
+            && count('crew-save', 'next-week') === 1 && count('next-week', 'change') === (change ? 1 : 0)
+            && count('next-week', 'tell') === (lost ? 1 : 0),
+            `${tag}: open ${count('next-week', 'open')}, whatsapp ${count('next-week', 'whatsapp')}, crew-save ${count('crew-save', 'next-week')}, tell ${count('next-week', 'tell')}`);
         check(count('next-week', 'in') === others.length && count('next-week', 'calendar') === 1,
             `${tag}: in ${count('next-week', 'in')}, calendar ${count('next-week', 'calendar')}`);
         check(result.shares.filter((r) => !['seen-card', 'open'].includes(r.method)).every((r) => r.crew_id === crewId && r.locale === locale),
@@ -550,8 +606,8 @@ async function main() {
         server = await serve(DIST);
         const base = `http://${HOST}:${server.address().port}`;
         const plan = [
-            { key: 'en-new', locale: 'en', wantNew: true, rename: true, third: true, senderWins: false },
-            { key: 'he-new', locale: 'he', wantNew: true, swap: true, senderWins: true, change: true },
+            { key: 'en-new', locale: 'en', wantNew: true, rename: true, third: true, senderWins: false, lost: true },
+            { key: 'he-new', locale: 'he', wantNew: true, swap: true, senderWins: true, change: true, lost: true },
             { key: 'en-old', locale: 'en', wantNew: false },
             { key: 'he-old', locale: 'he', wantNew: false },
         ].filter((s) => !only || only.includes(s.key));

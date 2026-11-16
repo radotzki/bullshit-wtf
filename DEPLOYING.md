@@ -1942,3 +1942,25 @@ Small fixes from the two reviews (the project's reports `review-113.md` and `rev
   release counted every press. `next-week` gains `change` (CHANGE on the sender's banner).
 - Old and new together. An old site sends no `prev` and works as before. The new site on old
   functions: `prev` is ignored, so two sheets can still move each other's date, as today.
+
+## Game night: a date that lost, and one rule for "still ahead"
+
+No new function, rule or setting. The three small findings from the review of the game night fixes.
+
+- **A date that lost.** Two players send different dates within a second or two: the crew keeps the
+  first, and the second phone's WhatsApp may already have the other day. When the server answers that
+  phone's send with `kept: true`, its sheet (and then its banner) says which night stands: "Ana set
+  Saturday 21 November, 16:30 first. Tell the group?" / "קודם נקבע יום שבת, 21 בנובמבר, 16:30 (הצעה
+  של מיכל). לעדכן את הקבוצה?", with TELL THE GROUP ON WHATSAPP / "עדכון הקבוצה בוואטסאפ", a message of
+  the night that stands. `next-week` gains `tell` (that press).
+- **"You're in" and CHANGE go by the server's answer.** They used to trust the date the phone sent,
+  so a phone whose date lost, and which the crew later moved to by chance, read "You're in" without
+  being on the list, and got CHANGE. Now they follow the night the server set for that send, or the
+  list and the night's `by`, as before.
+- **One rule for "still ahead".** `nightStillAhead` in game-model.ts: after the next 05:00 on the
+  sender's clock. The sheet sends `tz` (its `getTimezoneOffset`) with the date, and crewNight uses
+  the server's own time with it, so a night later tonight (the one being played) no longer stops next
+  week's on the server while the phone treats it as tonight's.
+- Old and new together. An old site sends no `tz`: the server keeps the old rule, later than now. The
+  new site on old functions: `tz` is ignored and the answer still carries `kept`, so all three work
+  except the shared rule on the server.

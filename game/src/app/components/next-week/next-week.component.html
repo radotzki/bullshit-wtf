@@ -10,6 +10,14 @@
     <div *ngIf="banner" class="next-week-banner">
         <p class="banner-when" dir="auto">{{ t.next(bannerWhen) }}</p>
         <p *ngIf="bannerBy" class="banner-by" dir="auto">{{ bannerBy }}</p>
+        <!-- This phone sent another date, but another phone set this one first: the chat may have the wrong day. -->
+        <div *ngIf="lost" class="banner-lost">
+            <p class="lost-line" dir="auto">{{ lostLine }}</p>
+            <a class="button is-small is-fullwidth whatsapp lost-tell" [attr.href]="tellUrl || null" target="_blank" rel="noopener" (click)="tell()">
+                <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                <span> {{ t.tell }} </span>
+            </a>
+        </div>
         <button *ngIf="mineNight" class="button is-small is-text banner-change" type="button" (click)="changeNight()">{{ t.change }}</button>
         <button *ngIf="!imIn" class="button is-info is-fullwidth banner-in" type="button" (click)="sayIn()">{{ t.imIn }}</button>
         <p *ngIf="imIn" class="banner-done">
@@ -32,6 +40,14 @@
                 <div *ngIf="taken" class="sheet-taken">
                     <p class="banner-when" dir="auto">{{ t.next(bannerWhen) }}</p>
                     <p *ngIf="bannerBy" class="banner-by" dir="auto">{{ bannerBy }}</p>
+                    <!-- This phone sent another date, but another phone set this one first: the chat may have the wrong day. -->
+                    <div *ngIf="lost" class="sheet-lost">
+                        <p class="lost-line" dir="auto">{{ lostLine }}</p>
+                        <a class="button is-small is-fullwidth whatsapp lost-tell" [attr.href]="tellUrl || null" target="_blank" rel="noopener" (click)="tell()">
+                            <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                            <span> {{ t.tell }} </span>
+                        </a>
+                    </div>
                     <button *ngIf="!imIn" class="button is-info is-fullwidth sheet-in" type="button" (click)="sayIn()">{{ t.imIn }}</button>
                     <p *ngIf="imIn" class="banner-youre-in"><i class="fa fa-check"></i> {{ t.youreIn }}</p>
                 </div>

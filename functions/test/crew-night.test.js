@@ -324,3 +324,42 @@ test('an invisible name, or one that is not text, is no name', async () => {
     await call('crewNight', { crew: id2, time, by: { x: 1 } });
     assert.deepStrictEqual(db.crews[id2].night, { time });
 });
+
+test('"still ahead" is the final screen\'s rule when the sheet sends its clock: a night later tonight does not stop next week\'s', async () => {
+    const id = await savedCrew();
+    // The phone's clock is UTC (offset 0), so tonight ends at the next 05:00Z.
+    const now = Date.now();
+    const endsZ = (() => {
+        const d = new Date(now);
+        let end = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 5);
+        return end <= now ? end + 24 * HOUR : end;
+    })();
+    // The crew has a night later tonight (before 05:00): the one being played, on the phone and here.
+    const tonight = Math.floor((now + Math.min(HOUR, (endsZ - now) / 2)) / 60000) * 60000;
+    const next = nextWeek();
+    db.crews[id].night = { time: tonight, by: 'Dana', in: { dana: 'Dana' } };
+    const r = await call('crewNight', { crew: id, time: next, by: 'Avi', prev: null, tz: 0 });
+    assert.strictEqual(r.body.kept, undefined);
+    assert.deepStrictEqual(db.crews[id].night, { time: next, by: 'Avi', in: { avi: 'Avi' } });
+
+    // A night after tonight is still ahead by both rules, and is kept.
+    const tomorrow = endsZ + 12 * HOUR;
+    db.crews[id].night = { time: tomorrow, by: 'Dana', in: { dana: 'Dana' } };
+    const k = await call('crewNight', { crew: id, time: next, by: 'Avi', prev: null, tz: 0 });
+    assert.strictEqual(k.body.kept, true);
+    assert.strictEqual(db.crews[id].night.time, tomorrow);
+});
+
+test('a sheet without a clock (an old site), or with one that is not a clock, keeps the old rule: later than now', async () => {
+    const id = await savedCrew();
+    const soon = Math.floor((Date.now() + 30 * 60000) / 60000) * 60000;
+    const next = nextWeek();
+    for (const tz of [undefined, 'x', 9999, 1.5]) {
+        db.crews[id].night = { time: soon, by: 'Dana', in: { dana: 'Dana' } };
+        const body = { crew: id, time: next, by: 'Avi', prev: null };
+        if (tz !== undefined) body.tz = tz;
+        const r = await call('crewNight', body);
+        assert.strictEqual(r.body.kept, true, String(tz));
+        assert.strictEqual(db.crews[id].night.time, soon);
+    }
+});
