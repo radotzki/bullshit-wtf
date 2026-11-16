@@ -114,7 +114,7 @@
   "daily-26-en-010": {
     "day": "2026-12-06",
     "lang": "en",
-    "questionText": "The Talmud says it is forbidden to $blank$ by the light of the Hanukkah candles",
+    "questionText": "By ancient Jewish law, it is forbidden to $blank$ by the light of the Hanukkah candles",
     "realAnswer": "count money",
     "fakeAnswers": [
       "eat soup",
@@ -692,7 +692,7 @@
   "daily-26-he-009": {
     "day": "2026-12-05",
     "lang": "he",
-    "questionText": "לפי התלמוד, לאור נרות החנוכה אסור $blank$",
+    "questionText": "לפי ההלכה, לאור נרות החנוכה אסור $blank$",
     "realAnswer": "לספור כסף",
     "fakeAnswers": [
       "לאכול מרק",
