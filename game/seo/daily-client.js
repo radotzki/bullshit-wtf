@@ -14,12 +14,17 @@
     var KEY = 'bs-daily-' + s.lang;
     var LIE_KEY = 'bs-daily-lie-' + s.lang;
     var ID_KEY = 'bs-daily-id';
+    var NAME_KEY = 'bs-daily-name';
+    var rc = window.BSDailyRoundCore;
 
     var arrival = core.readArrival(location.search);
     var puzzle = null;
     var state = null;
     var uid = null;
     var timer = null;
+    var round = null;
+    // A round link (?n=12&g=k3x9q2ab7m): the page opens the round, see daily-round-client.js.
+    var roundId = rc.cleanRoundId(core.param(location.search, 'g'));
 
     function $(id) { return document.getElementById(id); }
 
@@ -166,7 +171,12 @@
     function start() {
         show($('d-error'), false);
         $('d-q').textContent = s.loading;
-        getJson('/_daily?lang=' + s.lang, function (body) {
+        var url = '/_daily?lang=' + s.lang;
+        if (roundId && arrival.no !== null) {
+            uid = browserId() || memoryId();
+            url += '&n=' + arrival.no + '&g=' + roundId + '&u=' + uid;
+        }
+        getJson(url, function (body) {
             if (!core.validPuzzle(body)) {
                 return failed();
             }
@@ -181,14 +191,38 @@
         show($('d-how'), false);
     }
 
+    // With storage blocked a round still needs an id for this visit: one pick per browser.
+    var spareId = null;
+    function memoryId() {
+        if (!spareId) { spareId = core.newId(16); }
+        return spareId;
+    }
+
     function begin() {
-        uid = browserId();
+        uid = uid || browserId();
         state = load(KEY);
         if (!state || state.day !== puzzle.day) {
             state = { day: puzzle.day, src: '', opened: false, order: null, pick: null, friend: null };
         }
         if (arrival.tag) { state.src = arrival.tag; }
+        // A round link carries no tag: its visitors arrived by a chat group's round.
+        if (roundId && !arrival.tag && !rc.isTestTag(state.src)) { state.src = 'daily-round'; }
         state.src = core.cleanTag(state.src);
+        round = window.BSDailyRound(helpers);
+        if (roundId && puzzle.round) {
+            var r = puzzle.round;
+            if (!state.opened && r.state === 'open' && !r.me) {
+                state.opened = true;
+                post('open', { g: roundId, day: r.day || puzzle.day });
+            }
+            save(KEY, state);
+            return round.open(r, plain);
+        }
+        plain('');
+    }
+
+    /** Today's question as the puzzle shows it, with a note on top (from a round that didn't open). */
+    function plain(top) {
 
         // A lie link: for today's question only, and never this browser's own.
         var otherDay = false;
@@ -206,6 +240,11 @@
 
         state.friend = screened(state.friend);
         var lies = puzzle.options.length - 1;
+        // Played today's in a chat group's round: the page opens that round's board.
+        if (state.pick === 'r' && state.round && rc.cleanRoundId(state.round.g) && !top) {
+            location.replace(rc.roundUrl('', s, state.round.no, state.round.g, state.src));
+            return;
+        }
         var picked = state.pick === 0 || state.pick === 'f' || (typeof state.pick === 'number' && state.pick >= 1 && state.pick <= lies);
         if (!picked) { state.pick = null; }
         if (state.pick === null && fromLink && (!state.friend || state.friend.f !== fromLink.f)) {
@@ -229,17 +268,17 @@
         if (state.pick !== null) {
             // Already played: a friend's lie that arrives now is shown beside the answers, not played.
             var guest = fromLink && (!state.friend || state.friend.f !== fromLink.f) ? fromLink : null;
-            reveal(true, guest);
+            reveal(true, guest, top);
         } else {
-            ask(otherDay);
+            ask(otherDay, top);
         }
     }
 
     // ---------- 1. the question ----------
 
-    function ask(otherDay) {
+    function ask(otherDay, top) {
         var friend = state.friend;
-        note(otherDay ? s.otherDay : '');
+        note(top || (otherDay ? s.otherDay : ''));
         var how = $('d-how');
         how.textContent = friend
             ? (friend.name ? core.fill(s.friendNamed, { name: friend.name }) : s.friendUnnamed)
@@ -268,7 +307,7 @@
 
     // ---------- 2. the reveal ----------
 
-    function reveal(already, guest) {
+    function reveal(already, guest, top) {
         var friend = state.friend;
         var kind = core.pickKind(state.pick);
         var total = puzzle.total || 0;
@@ -276,7 +315,7 @@
         var counted = total >= core.MIN_PICKS;
         var pct = core.fooledPct(picks, total);
 
-        note(already ? s.played : '');
+        note(top || (already ? s.played : ''));
         show($('d-how'), false);
         show($('d-answers'), false);
         show($('d-foot'), false);
@@ -333,11 +372,22 @@
             box.appendChild(el('p', 'source-line')).appendChild(source);
         }
 
-        // Send the result. The message carries the question and never an answer.
-        var message = core.shareText(s, kind === 'truth' ? 'truth' : 'lie', puzzle, pct, core.resultUrl(location.origin, s));
-        box.appendChild(sendButtons(message, s.send, ''));
-
-        box.appendChild(foolSection());
+        if (rc.forcedHalf(uid, state.src, location.search) && state.forced !== puzzle.day) {
+            // ?round=on or off moved this browser out of its half: one row a day, so the test's
+            // comparison can leave this browser id out (shares.method round-forced).
+            state.forced = puzzle.day;
+            save(KEY, state);
+            post('round-forced');
+        }
+        if (rc.groupHalf(uid, state.src, location.search) && !guest) {
+            // The group half of the 50/50 test: one card, and one button, that starts a chat group's round.
+            box.appendChild(round.starterCard(puzzle, kind, pct));
+        } else {
+            // Send the result. The message carries the question and never an answer.
+            var message = core.shareText(s, kind === 'truth' ? 'truth' : 'lie', puzzle, pct, core.resultUrl(location.origin, s));
+            box.appendChild(sendButtons(message, s.send, ''));
+            box.appendChild(foolSection());
+        }
         box.appendChild(gameSection());
 
         var next = el('p', 'next');
@@ -347,8 +397,16 @@
         if (y) { box.appendChild(el('p', 'yesterday', y)); }
     }
 
-    /** The WhatsApp button and the smaller SHARE (the phone's share sheet) or COPY (where there is none). */
-    function sendButtons(message, label, prefix, before) {
+    /**
+     * The WhatsApp button and the smaller SHARE (the phone's share sheet) or COPY (where there is none).
+     * Each send posts prefix + whatsapp, native or copy; a prefix with no dash at its end is the
+     * whole method for all three, and null posts nothing. `extra` (a function) adds to each post.
+     */
+    function sendButtons(message, label, prefix, before, extra) {
+        var sent = function (way) {
+            if (prefix === null) { return; }
+            post(/-$/.test(prefix) || prefix === '' ? prefix + way : prefix, extra ? extra() : undefined);
+        };
         var wrap = el('div', 'send');
         var wa = el('a', 'btn primary', label);
         var other = el('button', 'btn secondary', navigator.share ? s.share : s.copy);
@@ -361,7 +419,7 @@
             var t = text();
             if (!t) { e.preventDefault(); return; }
             wa.href = 'https://wa.me/?text=' + encodeURIComponent(t);
-            post(prefix + 'whatsapp');
+            sent('whatsapp');
             if (before) { before(); }
         };
         other.onclick = function () {
@@ -369,11 +427,11 @@
             if (!t) { return; }
             if (before) { before(); }
             if (navigator.share) {
-                navigator.share({ text: t }).then(function () { post(prefix + 'native'); }, function () { /* closed the sheet */ });
+                navigator.share({ text: t }).then(function () { sent('native'); }, function () { /* closed the sheet */ });
                 return;
             }
             copy(t, function () {
-                post(prefix + 'copy');
+                sent('copy');
                 other.textContent = s.copied;
                 setTimeout(function () { other.textContent = s.copy; }, 2000);
             });
@@ -517,6 +575,47 @@
         tick();
         timer = setInterval(tick, 1000);
     }
+
+    // ---------- what the round's script uses (daily-round-client.js) ----------
+
+    function postJson(body, done) {
+        var x = new XMLHttpRequest();
+        x.open('POST', '/_daily');
+        x.timeout = 12000;
+        x.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+        x.onload = function () {
+            var res = null;
+            try { res = JSON.parse(x.responseText); } catch (e) { res = null; }
+            done(res);
+        };
+        x.onerror = x.ontimeout = function () { done(null); };
+        x.send(JSON.stringify(body));
+    }
+
+    var helpers = {
+        s: s, core: core, shared: shared, $: $, el: el, clear: clear, show: show, note: note,
+        load: load, save: save, field: field, sendButtons: sendButtons, post: post, postJson: postJson,
+        uid: function () { return uid; },
+        src: function () { return state ? state.src : ''; },
+        state: function () { return state; },
+        today: function () { return puzzle ? puzzle.day : ''; },
+        truth: truth,
+        houseLies: houseLies,
+        lastName: function () {
+            var kept = load(NAME_KEY);
+            var lie = load(LIE_KEY);
+            return kept && typeof kept.n === 'string' ? kept.n : lie && typeof lie.name === 'string' ? lie.name : '';
+        },
+        rememberName: function (n) { save(NAME_KEY, { n: n }); },
+        /** A pick in a round is today's play: the plain page then opens that round's board. */
+        playedInRound: function (day, no, g) {
+            if (state && day === puzzle.day && state.pick === null) {
+                state.pick = 'r';
+                state.round = { no: no, g: g };
+                save(KEY, state);
+            }
+        },
+    };
 
     $('d-retry').onclick = start;
     start();

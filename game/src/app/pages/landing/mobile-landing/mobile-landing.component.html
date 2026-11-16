@@ -1,6 +1,6 @@
 <div class="top-frame" [attr.dir]="t.dir" [attr.lang]="t.lang">
     <span class="title"> {{ t.title }} </span>
-    <a class="lang-switch" *ngIf="t.lang === 'he'" [attr.lang]="t.switchTo" (click)="switchLanguage()">{{ t.switchLabel }}</a>
+    <a class="lang-switch" [attr.lang]="t.switchTo" role="button" tabindex="0" (click)="switchLanguage()" (keydown.enter)="switchLanguage()">{{ t.switchLabel }}</a>
 </div>
 <section class="home" [attr.dir]="t.dir" [attr.lang]="t.lang" [class.is-rtl]="t.dir === 'rtl'">
 
@@ -16,12 +16,28 @@
         </a>
     </div>
 
+    <!-- The code box (code-box.ts): a guest with a friend's PIN joins from here, one tap to the
+         nickname. A visitor with no code goes past it to Create, which still leads the menu. -->
+    <form class="code-box" (ngSubmit)="box.submit()" novalidate>
+        <label class="code-ask" for="home-code">{{ t.codeAsk }}</label>
+        <input id="home-code" class="code-input" type="text" name="code" [(ngModel)]="box.code"
+            [placeholder]="t.codePlaceholder" autocomplete="off" autocapitalize="characters" autocorrect="off"
+            spellcheck="false" maxlength="12" enterkeyhint="go" dir="ltr">
+        <button class="code-join" type="submit" [disabled]="box.busy" [class.is-busy]="box.busy">{{ t.codeJoin }}</button>
+        <p class="code-error" *ngIf="box.error" role="alert">{{ box.error }}</p>
+    </form>
+
     <!-- The front door: what the game is, in one line, and for someone who never played, a small
          looping picture of one round. Text and CSS only: no image to download. -->
     <div class="front-door" [class.has-picture]="picture">
         <p class="pitch">{{ t.pitch }}</p>
-        <!-- The daily puzzle: a plain link, the page is outside the app. -->
+        <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
+        <p class="facts">{{ t.facts }}</p>
+        <!-- The daily puzzle: a plain link, the page is outside the app. Once the puzzle is live,
+             the line under Create takes its place. -->
+        <ng-container *ngIf="!dailyLive">
         <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a>
+        </ng-container>
 
         <div class="picture" *ngIf="picture" role="img" [attr.aria-label]="p.alt">
             <div class="screen" aria-hidden="true">
@@ -86,6 +102,9 @@
                 <p class="menu-button-text-second"> {{ t.createHint }} </p>
             </div>
         </div>
+        <!-- For a visitor on their own: today's question, right under Create, once the puzzle is
+             live (daily-line.ts). -->
+        <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
     </ng-template>
 
     <div class="menu-button present-game" routerLink="/present-game">

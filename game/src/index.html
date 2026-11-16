@@ -9,7 +9,13 @@
       view    once, as the page opens
       create  when this page view creates a game; join when it joins one (the app calls bsVisit)
       end     when the page is hidden or closed (up to 3 times)
-      stuck   once at 12 s if the app has still not drawn (stuck spinner)
+      stuck   once at 12 s if the app has still not drawn (the loading card is still there)
+      page    once, as the page opens: ms is the time from the tap to this script running (the page's
+              own trip: Hosting or the joinPreview function, a cold start included), which every other
+              row's ms leaves out; only where the browser has performance.now
+      drawn   once, when the app has first drawn (booted() turns true): ms is from this script, like
+              every other row, so page.ms + drawn.ms is the whole wait from the tap; only where the
+              browser has MutationObserver, and never on a plain page
     v is a random id made new on every page load and stored nowhere; it groups the rows of one
     page view. It runs before every other script, so it also sees a phone where the app never
     starts (a script that fails to load or parse, before Sentry is up).
@@ -18,7 +24,7 @@
   <!-- BS:VISIT:START -->
   <script>
   (function () {
-    var w = window, d = document, max = { view: 1, stuck: 1, end: 3, create: 3, join: 3 }, sent = {}, did = {};
+    var w = window, d = document, max = { view: 1, page: 1, drawn: 1, stuck: 1, end: 3, create: 3, join: 3 }, sent = {}, did = {};
     var v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
     // A plain page (how to play and the other search pages) has no app to wait for.
     var plain = d.documentElement.getAttribute('data-page') === 'plain';
@@ -52,16 +58,18 @@
         err = String((e && e.message) || 'error').slice(0, 200);
       }
     }, true);
+    // Drawn: <app-root> holds the app, not the loading card (id bs-load) the page shows until the app
+    // replaces it. Showing the card is not drawing.
     function booted() {
       var r = d.querySelector('app-root');
-      return !!(r && r.children.length && !(r.children.length === 1 && r.firstElementChild && r.firstElementChild.className === 'l'));
+      return !!(r && r.children.length && !(r.children.length === 1 && r.firstElementChild && r.firstElementChild.id === 'bs-load'));
     }
-    function send(kind) {
+    function send(kind, at) {
       if ((sent[kind] || 0) >= max[kind]) { return; }
       sent[kind] = (sent[kind] || 0) + 1;
       var body = JSON.stringify({
         k: kind, v: v, first: first.slice(0, 80), last: location.pathname.slice(0, 80), booted: booted(),
-        ms: new Date().getTime() - t0, err: err || res, lang: (navigator.language || '').slice(0, 10),
+        ms: at >= 0 ? at : new Date().getTime() - t0, err: err || res, lang: (navigator.language || '').slice(0, 10),
         ref: (d.referrer || '').replace(/^https?:\/\/([^\/?#]+).*$/, '$1').slice(0, 60),
         tag: tag.slice(0, 40), fv: fresh, cr: !!did.create, jn: !!did.join, pl: plain, wd: navigator.webdriver === true
       });
@@ -75,7 +83,17 @@
       if (what === 'create' || what === 'join') { did[what] = true; send(what); }
     };
     send('view');
+    try { if (w.performance && typeof w.performance.now === 'function') { send('page', Math.round(w.performance.now())); } } catch (e) { }
     if (!plain) { setTimeout(function () { if (!booted()) { send('stuck'); } }, 12000); }
+    // The moment the app first draws, also after a stuck row. The observer stops once it has.
+    if (!plain && w.MutationObserver) {
+      try {
+        var mo = new w.MutationObserver(function () {
+          if (booted()) { mo.disconnect(); send('drawn'); }
+        });
+        mo.observe(d.documentElement, { childList: true, subtree: true });
+      } catch (e) { }
+    }
     d.addEventListener('visibilitychange', function () { if (d.visibilityState === 'hidden') { send('end'); } });
     w.addEventListener('pagehide', function () { send('end'); });
   })();
@@ -125,7 +143,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="format-detection" content="telephone=no">
   <meta name="msapplication-tap-highlight" content="no">
-  <style>.l{-webkit-animation:spinAround .5s infinite linear;animation:spinAround .5s infinite linear;border:2px solid #dbdbdb;border-radius:290486px;border-right-color:transparent;border-top-color:transparent;content:"";display:block;height:1rem;width:1rem;position:absolute;top:0;bottom:0;left:0;right:0;margin:auto}</style>
+  <!--
+    The loading card: drawn by the page itself, before the game file has arrived, so an invited guest
+    sees the game is coming instead of a white screen. The app replaces it as it starts (booted() in the
+    beacon reads #bs-load as "not drawn yet"). scripts/build-he.js puts the Hebrew words between the
+    BS:LOAD markers in he.html.
+  -->
+  <style>#bs-load{position:fixed;top:0;bottom:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#fffaf3;color:#2b2523;font:17px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;text-align:center;padding:16px}#bs-load b{color:#db7151;font:400 44px/1 "Luckiest Guy","Suez One",Impact,"Arial Black",sans-serif;letter-spacing:1px}#bs-load i{display:block;width:28px;height:28px;border:3px solid #f0c8b8;border-top-color:#db7151;border-radius:50%;-webkit-animation:bsSpin .7s linear infinite;animation:bsSpin .7s linear infinite}@-webkit-keyframes bsSpin{to{-webkit-transform:rotate(360deg)}}@keyframes bsSpin{to{transform:rotate(360deg)}}</style>
   <style>
     /* The text under the app (BS:ABOUT). Hidden until the app has drawn, so it never flashes above the
        menu while the game loads; the app hides it on every screen but home (app.component.ts). */
@@ -135,7 +159,7 @@
     .bs-about p { margin: 0 0 10px; }
     .bs-about ol { padding-inline-start: 22px; margin: 0 0 10px; }
     .bs-about a { color: #97374e; }
-    .bs-about[hidden], body:has(app-root > .l:only-child) .bs-about { display: none; }
+    .bs-about[hidden], body:has(app-root > #bs-load:only-child) .bs-about { display: none; }
     /* The desktop menu covers the first screen (position: absolute): start the text below it. */
     .bs-about[data-at="d"] { margin-top: 100vh; }
   </style>
@@ -143,11 +167,15 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" href="assets/favicon-32x32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="assets/favicon-16x16.png" sizes="16x16" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- The icons (Font Awesome, from another site) load without holding up the page: the browser draws
+       and starts the app without waiting for them, and the icons appear once the file is in. -->
+  <link rel="preconnect" href="https://maxcdn.bootstrapcdn.com" crossorigin>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"></noscript>
   <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
 </head>
 <body>
-  <app-root><div class="l"></div></app-root>
+  <app-root><!-- BS:LOAD:START --><div id="bs-load" role="status" lang="en" dir="ltr"><b>BULLSHIT</b><i></i><span>Loading the game…</span></div><!-- BS:LOAD:END --></app-root>
   <!--
     What the game is, as plain page text that search engines read without running anything. It sits
     under the app: the phone menu fills the first screen, and this follows below it. The app shows it
@@ -170,9 +198,12 @@
     <p>For a bigger group, put the questions and the scores on a TV or laptop with Present Game.</p>
     <h2>More about the game</h2>
     <p class="bs-links"><a href="/how-to-play">How to play</a> · <a href="/party-games-on-your-phone">Party games on your phone</a> ·
-      <a href="/hanukkah-party-game">Hanukkah party game</a> · <a href="/christmas-party-game">Christmas party game</a> ·
+      <a href="/thanksgiving-party-game">Thanksgiving party game</a> · <a href="/hanukkah-party-game">Hanukkah party game</a> · <a href="/christmas-party-game">Christmas party game</a> ·
       <a href="/classroom-game">A game for the classroom</a> · <a href="/team-building-game">A team-building game</a> ·
       <a href="/free-jackbox-alternative">A free Jackbox alternative</a> ·
+      <a href="/family-game-night">Family game night</a> · <a href="/video-call-party-game">A game for a video call</a> ·
+      <a href="/snow-day-games">Snow day games</a> · <a href="/new-years-eve-party-game">New Year's Eve party game</a> ·
+      <a href="/office-holiday-party-game">Office holiday party game</a> · <a href="/purim-party-game">Purim party game</a> ·
       <a href="/he" hreflang="he" lang="he">בולשיט בעברית</a></p>
     <noscript><p>The game itself needs JavaScript turned on.</p></noscript>
   </main>

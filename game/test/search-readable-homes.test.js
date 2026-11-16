@@ -102,7 +102,7 @@ test('the text shows on the home screens only', () => {
 test('404.html: both languages, no index, links home', () => {
     assert.match(html.notFound, /<meta name="robots" content="noindex">/);
     assert.match(html.notFound, /lang="he" dir="rtl"/);
-    assert.ok(links(html.notFound).includes('/') && links(html.notFound).includes('/he'));
+    assert.ok(links(html.notFound).includes('/?via=notfound-en') && links(html.notFound).includes('/he?via=notfound-he'));
     assert.match(html.notFound, /data-page="plain"/);
     assert.match(html.notFound, /BS_CAMPAIGN/, 'counted by the visit beacon');
 });
@@ -126,6 +126,16 @@ test('firebase.json: every screen of the game has its page, and nothing else doe
     // Not found: a mistyped page, an old path, a Hebrew page that doesn't exist, a screen with two parts.
     ['/no-such-page', '/how-to-plya', '/he/no-such-page', '/he/m', '/c', '/game-staging/ABCD/x', '/index.php'].forEach(u =>
         assert.strictEqual(rewriteOf(u), undefined, u));
+});
+
+// A shared link can gain a slash on the way (/thanksgiving-party-game/). Hosting has no file there, so
+// without trailingSlash: false it answers "Page not found"; with it, a 301 to the page. The game's
+// screens keep their own rewrites, which accept the slash. .github/smoke/emulator-trailing-slash.js
+// checks every sitemap page on the Hosting emulator.
+test('firebase.json: a page address with a trailing slash goes to the page', () => {
+    assert.strictEqual(hosting.cleanUrls, true);
+    assert.strictEqual(hosting.trailingSlash, false);
+    ['/he/', '/create-game/', '/c/k3j9/', '/he/c/k3j9/', '/game-staging/ABCD/'].forEach(u => assert.ok(rewriteOf(u), u));
 });
 
 test('firebase.json: the game screens are kept out of search, the homes and search pages are not', () => {

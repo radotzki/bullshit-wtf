@@ -1,4 +1,4 @@
-import { Crew, CrewNight, NIGHT_IN_MAX, crewMemberKey } from '../game-model';
+import { Crew, CrewNight, NIGHT_IN_MAX, cleanTzOffset, crewMemberKey, nightStillAhead } from '../game-model';
 import { get, crewsRef } from '../firebase';
 import { nameFlag, crewNameRefused, NICKNAME_MAX } from '../name-flag';
 import { cleanCrewId } from './crew';
@@ -63,8 +63,13 @@ function transact<T>(ref: any, update: (current: T) => T | undefined): Promise<T
  * the crew keeps it and the answer says `kept`: two players with the sheet open at once cannot move
  * each other's date. The sender who set a night can still change it, since they send that night as
  * `prev`. The crew page's NEXT GAME NIGHT sends no `prev`, and moves the night as before.
+ *
+ * "Still ahead" is the final screen's own rule (nightStillAhead in game-model.ts): after tonight's
+ * 05:00 on the sender's clock, `tz` being that clock's Date.getTimezoneOffset, with the server's time.
+ * A night later tonight is the one being played, here as on the phone, so it does not stop next
+ * week's. A sender with no `tz` (an old site) gets the old rule, later than now.
  */
-export async function setCrewNight(crewId: any, time: any, by?: any, prev?: any)
+export async function setCrewNight(crewId: any, time: any, by?: any, prev?: any, tz?: any)
     : Promise<{ night: CrewNight; kept?: boolean }> {
     const crew = await crewOf(crewId);
     const now = Date.now();
@@ -77,11 +82,13 @@ export async function setCrewNight(crewId: any, time: any, by?: any, prev?: any)
     const name = refused(by) ? '' : cleanNightName(by);
     const checked = prev !== undefined;
     const seen = prev === null ? null : Math.floor(Number(prev) / MINUTE_MS) * MINUTE_MS;
+    const offset = cleanTzOffset(tz);
+    const ahead = (t: number) => offset === null ? t > Date.now() : nightStillAhead(t, Date.now(), offset);
     let kept = false;
     const night = await transact<CrewNight>(crewsRef.child(crew.id).child('night'), (current) => {
         kept = false;
         if (checked && current && current.time && current.time !== at && current.time !== seen
-            && current.time > Date.now()) {
+            && ahead(current.time)) {
             kept = true;
             return undefined;
         }
@@ -147,13 +154,13 @@ export async function crewNightIn(crewId: any, nickname: any, coming: boolean)
 }
 
 /**
- * The crewNight function's body: `{ crew, time, by, prev? }` sets the night, `{ crew, nickname, in }`
+ * The crewNight function's body: `{ crew, time, by, prev?, tz? }` sets the night, `{ crew, nickname, in }`
  * answers it.
  */
 export function crewNight(body: any) {
     body = body && typeof body === 'object' ? body : {};
     if (body.time !== undefined && body.time !== null) {
-        return setCrewNight(body.crew, body.time, body.by, 'prev' in body ? body.prev : undefined);
+        return setCrewNight(body.crew, body.time, body.by, 'prev' in body ? body.prev : undefined, body.tz);
     }
     return crewNightIn(body.crew, body.nickname, body.in !== false);
 }

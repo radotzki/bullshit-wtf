@@ -4,7 +4,7 @@ import {
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
-import { About, aboutOf, aboutMissedOf, sentMark } from './../game-model';
+import { About, CrewNight, aboutOf, aboutMissedOf, sentMark } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
@@ -736,8 +736,10 @@ export class ApiService {
      * A crew's game night, through the `crewNight` function (a phone may not write a crew):
      * `{ time, by }` sets the date, `{ nickname, in }` says "I'm in" or takes the name off.
      */
-    crewNight(crew: string, body: { time: number; by?: string; prev?: number | null } | { nickname: string; in: boolean }) {
-        return this.post<{ in?: boolean; nickname?: string; isNew?: boolean; count?: number }>(
+    crewNight(crew: string, body: { time: number; by?: string; prev?: number | null; tz?: number } | { nickname: string; in: boolean }) {
+        return this.post<{
+            in?: boolean; nickname?: string; isNew?: boolean; count?: number; night?: CrewNight; kept?: boolean;
+        }>(
             `crewNight`, { crew: crew.toLowerCase(), ...body });
     }
 

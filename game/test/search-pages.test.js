@@ -68,7 +68,8 @@ test('a post\'s tag rides on the links, so the page keeps it on its Start button
 test('the Hanukkah line shows from 1 to 13 December 2026, and not around it', () => {
     const at = (y, m, d) => new Date(y, m - 1, d, 12);
     assert.strictEqual(seasonLink('en', at(2026, 11, 30), null), null);
-    assert.strictEqual(seasonLink('en', at(2026, 12, 1), null).href, '/hanukkah-party-game');
+    // English homes show the Christmas and New Year line in December (christmas-pack.test.js).
+    assert.strictEqual(seasonLink('he', at(2026, 12, 1), null).href, '/he/hanukkah');
     assert.strictEqual(seasonLink('he', at(2026, 12, 11), null).href, '/he/hanukkah');
     assert.strictEqual(seasonLink('he', at(2026, 12, 13), 'wa-x').href, '/he/hanukkah?via=wa-x');
     assert.strictEqual(seasonLink('he', at(2026, 12, 14), null), null);

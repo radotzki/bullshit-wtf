@@ -288,9 +288,10 @@ export function cacheSeconds(now: number, friend: boolean): number {
  *   daily-game   the taste's final screen
  *   daily-share  a friend's result
  *   daily-fool   a friend's lie
+ *   daily-round  a chat group's round link (the puzzle's group mode, see daily-round.ts)
  *   daily-post   any other tag, such as a post's
  */
-export const DAILY_ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool'];
+export const DAILY_ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool', 'daily-round'];
 
 /**
  * What they did (shares.method):
@@ -299,10 +300,21 @@ export const DAILY_ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game',
  *   whatsapp, native, copy            sent the result
  *   fool-whatsapp, fool-native, fool-copy   sent a lie
  *   create                            tapped START A GAME
+ * and in a chat group's round (the row carries the round's id in crew_id; see daily-round.ts):
+ *   round-tell-whatsapp, round-tell-native, round-tell-copy   sent "I fell for Dana's lie" to the group
+ *   round-score                       sent the score so far
+ *   round-back                        came back to the board (once per browser per round per day)
+ * and once a day from a browser that ?round=on or ?round=off moved out of its half of the round's
+ * 50/50 test (no round id; leave its uid out of the test's comparison):
+ *   round-forced
+ * The round's own acts leave their rows from the act itself (daily-round.ts): round-start,
+ * round-other, round-lie, round-flag, and truth, house or friend for a pick in a round.
  */
 export const DAILY_PICKS = ['truth', 'house', 'friend'];
+export const ROUND_BEACONS = ['round-tell-whatsapp', 'round-tell-native', 'round-tell-copy', 'round-score', 'round-back'];
 export const DAILY_METHODS = ['open'].concat(DAILY_PICKS,
-    ['whatsapp', 'native', 'copy', 'fool-whatsapp', 'fool-native', 'fool-copy', 'create']);
+    ['whatsapp', 'native', 'copy', 'fool-whatsapp', 'fool-native', 'fool-copy', 'create', 'round-forced'], ROUND_BEACONS);
+const ROUND_ID = /^[a-z0-9]{10}$/;
 
 export function contentTypeOf(src: any): string {
     const tag = cleanCampaign(src);
@@ -318,7 +330,7 @@ export interface DailyPost {
     /** Database paths under qHistory/daily/<lang>/<day> to add one to. Empty for anything but a pick. */
     add: string[];
     /** The row for BigQuery `shares`: existing columns only. */
-    row: { content_type: string, method: string, crew_id: null, locale: DailyLang, uid: string | null };
+    row: { content_type: string, method: string, crew_id: string | null, locale: DailyLang, uid: string | null };
 }
 
 /**
@@ -341,6 +353,12 @@ export function cleanPost(body: any, bank: DailyBank, now: number): DailyPost | 
     }
     const method = typeof body.m === 'string' ? body.m : '';
     if (DAILY_METHODS.indexOf(method) < 0 || isTestCampaign(body.src)) {
+        return null;
+    }
+    // A round's id (its rows carry it in crew_id). The round's beacons need one; a pick in a round
+    // is an act of its own (POST with `a`), never a beacon.
+    const g = typeof body.g === 'string' && ROUND_ID.test(body.g) ? body.g : null;
+    if ((ROUND_BEACONS.indexOf(method) >= 0 && !g) || (g && DAILY_PICKS.indexOf(method) >= 0)) {
         return null;
     }
     const add: string[] = [];
@@ -372,5 +390,5 @@ export function cleanPost(body: any, bank: DailyBank, now: number): DailyPost | 
         }
     }
     const uid = typeof body.uid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(body.uid) ? body.uid : null;
-    return { lang, day: body.day, add, row: { content_type: contentTypeOf(body.src), method, crew_id: null, locale: lang, uid } };
+    return { lang, day: body.day, add, row: { content_type: contentTypeOf(body.src), method, crew_id: g, locale: lang, uid } };
 }

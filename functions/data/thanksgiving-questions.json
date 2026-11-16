@@ -36,7 +36,7 @@
     "pack": "thanksgiving"
   },
   "thanksgiving-26-en-04": {
-    "questionText": "The Macy's parade's first balloon, in 1927, was the cartoon star $blank$",
+    "questionText": "Macy's says its parade's first character balloon, in 1927, was the cartoon star $blank$",
     "realAnswer": "felix the cat",
     "fakeAnswers": [
       "mickey mouse",
@@ -120,14 +120,14 @@
     "pack": "thanksgiving"
   },
   "thanksgiving-26-en-11": {
-    "questionText": "On Thanksgiving Day 2019 alone, Americans ate about $blank$ turkeys",
-    "realAnswer": "40 million",
+    "questionText": "Of all the turkeys raised in the US in a year, Americans eat about one in every $blank$ at Thanksgiving",
+    "realAnswer": "five",
     "fakeAnswers": [
-      "4 million",
-      "120 million",
-      "900,000"
+      "two",
+      "twenty",
+      "hundred"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Thanksgiving_(United_States)",
+    "citation": "https://thepoultrysite.com/news/2016/11/americans-ready-to-celebrate-thanksgiving-with-46-million-respectable-birds",
     "lang": "en",
     "pack": "thanksgiving"
   },

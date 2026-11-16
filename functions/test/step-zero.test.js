@@ -184,6 +184,16 @@ test('joins record their source; unknown tags become "other", missing ones null'
     assert.deepStrictEqual(Object.keys(row).sort(), ['ip', 'name_flag', 'nickname', 'pin', 'time', 'uid', 'useragent', 'via']);
 });
 
+test('a join typed into the home page\'s code box is counted as "home", in the same column', async () => {
+    rows.length = 0;
+    assert.strictEqual(analytics.cleanVia('home'), 'home');
+    assert.strictEqual(analytics.cleanVia('HOME'), 'home');
+    await analytics.onJoinGame('u', '1.2.3.4', 'ua', 'ABCD', 'n', analytics.cleanVia('home'));
+    const [row] = take('users');
+    assert.strictEqual(row.via, 'home');
+    assert.deepStrictEqual(Object.keys(row).sort(), ['ip', 'name_flag', 'nickname', 'pin', 'time', 'uid', 'useragent', 'via']);
+});
+
 test('HTTP endpoints pass the uid and join source through, and drop bad uids', async () => {
     seedQuestions();
     rows.length = 0;

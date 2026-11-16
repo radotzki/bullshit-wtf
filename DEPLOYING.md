@@ -829,7 +829,9 @@ puts the questions of the repository's reviewed question files there itself, in 
     of the normal bank: exactly `questionText`, `realAnswer`, `fakeAnswers`, `citation` and `lang`,
     and no `pack` field;
   - `functions/data/thanksgiving-questions.json`, ids `thanksgiving-26-en-NN` (English only: the id
-    rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below).
+    rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below);
+  - `functions/data/christmas-questions.json`, ids `christmas-26-en-NN` (English only), every
+    question with `pack: "christmas"` (see "Christmas and New Year pack" below).
 - **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
   body is exactly those files. Every key must be an id of the file it stands in, and every value a
   whole question in that id's language with that file's fields and no other, or nothing is sent for
@@ -894,6 +896,41 @@ release adds the questions itself (see "Question files the release adds").
 
 How to read it: games by `campaign = 'seo-en-thanksgiving'` in `opened_games` for the page, and
 games with `pack = 'thanksgiving'` for the pack (test games out).
+
+## Christmas and New Year pack
+
+For office parties, Christmas and New Year's Eve, English games only. Nothing to run before or
+after the merge: the release adds the questions itself (see "Question files the release adds").
+It must merge by Friday 27 November to be live on 1 December.
+
+- **The pack:** 34 English questions in `functions/data/christmas-questions.json`, ids
+  `christmas-26-en-01..34`, each with `pack: "christmas"`: Christmas customs around the world,
+  winter, and New Year's Eve. Nothing about any faith's beliefs. Each `citation` is the page the
+  truth was checked against on 14 November 2026; the Marketer's sources and Product's review sit
+  with the project's notes, not in the repository.
+- **English only,** as Thanksgiving: `locales: ['en']` in `questionPacks`.
+- **The default depends on the game's language.** A pack can now name the languages that get it by
+  default in its season (`seasonIn`; without it, every language it fits). Hanukkah has
+  `seasonIn: ['he']`. So from 1 December to 2 January (by the date in Israel, which is New Year's
+  Eve until midnight on the US West Coast) the Create page ticks "🎄 Christmas and New Year
+  questions" for an English game, and from 1 to 13 December "🕎 Hanukkah questions" for a Hebrew
+  one. A crew rematch takes the same pack by the crew's language. Hanukkah stays one tap away for an
+  English game: the Hanukkah page's Start button (`?pack=hanukkah`). Seasons may overlap only
+  between packs that no one language gets by default (a test checks each language).
+- **The lobby** of a pack game says "🎄 Holiday edition: new Christmas and New Year questions in this game".
+- **The pages:** the Christmas, New Year's Eve and office party pages' Start buttons now open
+  `/create-game?lang=en&pack=christmas` (before: `pack=none`), in season and out of it.
+- **Home (English only):** from 1 December to 1 January, by the visitor's own calendar, the line
+  above the buttons says "The holidays are here: play with Christmas and New Year questions" and
+  links the Christmas page, in place of the Hanukkah line. The Hebrew home keeps the Hanukkah line.
+- **Until the first release after the merge has added the questions,** a Christmas game is a normal
+  game, as with every pack.
+- Tested by `functions/test/christmas-questions.test.js`, `game/test/christmas-pack.test.js` and
+  `.github/scripts/load-pack-questions.test.js`. Next year: new days in `questionPacks` and in
+  `christmasSeasons` (`search-links.ts`).
+
+How to read it: games with `pack = 'christmas'` in `opened_games` (test games out), and the three
+pages' tags as before.
 
 ## Hanukkah pack and campaign tags
 
@@ -1045,6 +1082,35 @@ How to read it (compare the two weeks before the release with the two after, tes
 - The share of new lobbies that reach 2 players, and "start alone" presses in `shares`.
 - Games by `campaign` in `opened_games`, once posts go out.
 - Once the visits table exists: created games per first home page view.
+
+## The home for visitors from search: a code box and a facts line
+
+Client and one value in the functions. No new function, rule, table or column; nothing to run before
+the merge.
+
+- At the top of the phone home (`/m`) and of the computer home (`/d`), in English and Hebrew: "Got a
+  code? [ ____ ] Join". Join checks the PIN with `validateGameName` (the PIN page's own check), then
+  opens `/join-game/<PIN>?via=home` (`/he/join-game/...` from the Hebrew home) on the nickname. What
+  was typed keeps its letters, in capitals, so `abcd` finds game ABCD. A wrong PIN or a full game is
+  said under the box, in the PIN page's words; a game that is over goes on to its join page, which
+  says so and offers its rematch. The database and sign-in start only on that press.
+- Under the pitch, one line: "Free · no app · 2 to 12 players, each on their own phone" and its
+  Hebrew (`facts` in `home-strings.ts`).
+- Create still leads the phone menu for a visitor with no code, and stays whole on a 360 x 640
+  screen (its foot at about 500 px); the big Host button stays on the first screen of a computer.
+- A join from the box is counted in `users.via` as `home`, a new value in the column that exists
+  (`JOIN_SOURCES` in `functions/src/controllers/analytics.ts`, `known` in `join-source.ts`). A join
+  of a test game is still `test`. An old functions release counts it as `other`.
+- Rules in `game/src/app/pages/landing/front-door.ts` and `code-box.ts`, tested by
+  `game/test/home-code-box.test.js` and `functions/test/step-zero.test.js`. Play it on the
+  emulators, in both languages: `node .github/smoke/emulator-home-code.js [--locale he]`, after
+  building `functions/` and `game/` (SHOTS=<dir> saves the screens).
+
+How to read it (first visits from a search engine to `/`, Thursday to Sunday after the release,
+against 24 of 35 Hebrew phones, 8 of 19 other phones and 5 of 13 computers before):
+
+- Visits that press anything, by device and browser language, in `analytics.visits`.
+- Code-box joins: `SELECT DATE(time) AS day, COUNT(*) FROM analytics.users WHERE via = 'home' GROUP BY day`.
 
 ## Friday crews: Friday by default, every Friday in the calendar, and the save-crew offer
 
@@ -1372,7 +1438,8 @@ at the end of `npm run build`, and the build prints it. It is a fingerprint of t
   that a library under `node_modules` writes is no report.
 - Not reported: an answer a function gives on purpose. The controllers reject with a plain
   `{ message, code }` for those ("Sorry, game is full"); keep to that form for a new one.
-- Not reported: the answer to a request the site never sends. That is anything but a POST; a
+- Not reported: the answer to a request the site never sends. That is anything but a POST (for
+  `daily`, anything but a GET or a POST: the site reads the puzzle with a GET); a
   call to a function that works on a game without a PIN, or with a PIN that is not 2 to 12
   letters and digits (a number, a PIN with a dot); a call to `crewRematch` without a crew id; a
   `newGame` without a language; and a call about a PIN that no game has (a Replay of an unknown PIN, say). Such a request gets
@@ -1927,6 +1994,29 @@ Small fixes from the two reviews (the project's reports `review-113.md` and `rev
   release counted every press. `next-week` gains `change` (CHANGE on the sender's banner).
 - Old and new together. An old site sends no `prev` and works as before. The new site on old
   functions: `prev` is ignored, so two sheets can still move each other's date, as today.
+
+## Game night: a date that lost, and one rule for "still ahead"
+
+No new function, rule or setting. The three small findings from the review of the game night fixes.
+
+- **A date that lost.** Two players send different dates within a second or two: the crew keeps the
+  first, and the second phone's WhatsApp may already have the other day. When the server answers that
+  phone's send with `kept: true`, its sheet (and then its banner) says which night stands: "Ana set
+  Saturday 21 November, 16:30 first. Tell the group?" / "קודם נקבע יום שבת, 21 בנובמבר, 16:30 (הצעה
+  של מיכל). לעדכן את הקבוצה?", with TELL THE GROUP ON WHATSAPP / "עדכון הקבוצה בוואטסאפ", a message of
+  the night that stands. `next-week` gains `tell` (that press).
+- **"You're in" and CHANGE go by the server's answer.** They used to trust the date the phone sent,
+  so a phone whose date lost, and which the crew later moved to by chance, read "You're in" without
+  being on the list, and got CHANGE. Now they follow the night the server set for that send, or the
+  list and the night's `by`, as before.
+- **One rule for "still ahead".** `nightStillAhead` in game-model.ts: after the next 05:00 on the
+  sender's clock. The sheet sends `tz` (its `getTimezoneOffset`) with the date, and crewNight uses
+  the server's own time with it, so a night later tonight (the one being played) no longer stops next
+  week's on the server while the phone treats it as tonight's.
+- Old and new together. An old site sends no `tz`: the server keeps the old rule, later than now. The
+  new site on old functions: `tz` is ignored and the answer still carries `kept`, so all three work
+  except the shared rule on the server.
+
 ## Where a host came from
 
 Every game made on the Create page carries where its host's visit started, so the usage data can

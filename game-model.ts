@@ -128,6 +128,11 @@ export interface GameScheme {
     // The question index highlights were first kept from. 0 means the whole game counts, so a player
     // with no highlight really fooled nobody (games already running at a deploy start later).
     highlightsFrom?: number;
+    // An old game's private parts (players, highlights, answers, ...), moved here by the server 6 hours
+    // after its final scoreboard (24 hours after it was made, for a game never finished): this path has
+    // no database rule of its own, so only the server reads it. Nothing is erased. Server only: see
+    // old-games.ts in the functions, whose readGame puts them back for every server reader.
+    kept?: { [part: string]: any };
     // The "About us" questions, a 50/50 test set when the game is made, and only for a game made by a
     // client that can show them (see about.ts in the functions). true: two or three questions of the game
     // are about one of its players, when it starts with three or more. false: in the test, plays as
@@ -603,6 +608,43 @@ export interface CrewNight {
 /** The most names one night's list holds. */
 export const NIGHT_IN_MAX = 30;
 
+/** A night runs past midnight: until this hour it is still the evening before. */
+export const NIGHT_ENDS_HOUR = 5;
+
+const NIGHT_DAY_MS = 24 * 60 * 60 * 1000;
+const NIGHT_MINUTE_MS = 60 * 1000;
+
+/**
+ * A phone's clock, as Date.getTimezoneOffset gives it (minutes behind UTC: Israel is -120 in winter),
+ * or null when it is not one (an old site sends none). Offsets run from -14:00 to +12:00.
+ */
+export function cleanTzOffset(offset: any): number | null {
+    return typeof offset === 'number' && isFinite(offset) && Math.floor(offset) === offset
+        && offset >= -840 && offset <= 720 ? offset : null;
+}
+
+/**
+ * The end of tonight: the next 05:00 on a clock `offset` minutes behind UTC, at the moment `now`.
+ * One rule for the phones and the server: the server takes `now` from its own clock and `offset`
+ * from the phone, so "still ahead" means the same on both sides.
+ */
+export function tonightEndsAt(now: number, offset: number): number {
+    const local = new Date(now - offset * NIGHT_MINUTE_MS);
+    let end = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), NIGHT_ENDS_HOUR) + offset * NIGHT_MINUTE_MS;
+    if (end <= now) {
+        end += NIGHT_DAY_MS;
+    }
+    return end;
+}
+
+/**
+ * Is this night still to come? A night that is tonight (before the next 05:00), or has passed, is the
+ * one being played; a later night is set. The same test on the final screen and in crewNight.
+ */
+export function nightStillAhead(time: any, now: number, offset: number): boolean {
+    return typeof time === 'number' && isFinite(time) && time >= tonightEndsAt(now, offset);
+}
+
 export interface CrewMember {
     nickname: string;
     games: number;
@@ -747,12 +789,16 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
  * default and crew rematches use it; outside it the pack is still playable by link (?pack=<id>).
  * `locales`, when set, are the only game languages the pack has questions in: a game in another
  * language is never offered the pack and never gets it. `icon` stands before its name (default 🕎).
+ * `seasonIn`, when set, are the only game languages that get the pack by default in its season
+ * (default: every language it fits). In other languages it is still playable by link. Seasons may
+ * overlap only for packs that no one language gets by default, so a game has one pack a day.
  */
 export interface QuestionPack {
     perGame: number;
     season: { from: string; to: string };
     label: { en: string; he: string };
     locales?: string[];
+    seasonIn?: string[];
     icon?: string;
 }
 
@@ -761,6 +807,9 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         perGame: 3,
         season: { from: '2026-12-01', to: '2026-12-13' },
         label: { en: 'Hanukkah questions', he: 'שאלות חנוכה' },
+        // English games get the Christmas pack by default in December; Hanukkah stays one tap
+        // away for them with ?pack=hanukkah (the Hanukkah page's Start button).
+        seasonIn: ['he'],
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
@@ -772,6 +821,17 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Thanksgiving questions', he: 'שאלות חג ההודיה (באנגלית)' },
         locales: ['en'],
         icon: '🦃',
+    },
+    // Christmas and New Year's Eve, English questions only (functions/data/christmas-questions.json).
+    // By default in English games from 1 December, office party season, to 2 January: by the date
+    // in Israel that is New Year's Eve until midnight on the US West Coast. Hebrew games keep
+    // Hanukkah. Next year's days go here.
+    christmas: {
+        perGame: 3,
+        season: { from: '2026-12-01', to: '2027-01-02' },
+        label: { en: 'Christmas and New Year questions', he: 'שאלות חג המולד והשנה החדשה (באנגלית)' },
+        locales: ['en'],
+        icon: '🎄',
     },
 };
 
@@ -793,16 +853,22 @@ export function packIcon(id: any): string {
     return (isPack(id) && questionPacks[id].icon) || '🕎';
 }
 
+/** Whether a game in `locale` gets pack `id` by default in its season. */
+export function packInSeasonFor(id: any, locale: any): boolean {
+    const only = isPack(id) && questionPacks[id].seasonIn;
+    return packFits(id, locale) && (!only || only.indexOf(locale) >= 0);
+}
+
 /**
  * The pack whose season includes `now` (by the date in Israel), if any. With a `locale`, only a
- * pack that a game in that language can use.
+ * pack that a game in that language gets by default (see `seasonIn`).
  */
 export function seasonalPack(now: number = Date.now(), locale?: string): string | undefined {
     // Israel is UTC+2 in winter; close enough for a day-level season.
     const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
     return Object.keys(questionPacks).find(id => {
         const s = questionPacks[id].season;
-        return day >= s.from && day <= s.to && (locale === undefined || packFits(id, locale));
+        return day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
     });
 }
 

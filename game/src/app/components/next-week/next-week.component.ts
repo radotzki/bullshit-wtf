@@ -14,7 +14,7 @@ import { crewStrings } from './../../pages/crew/crew-strings';
 import { askStrings } from './../host-ask/host-ask';
 import {
     NextWeekStrings, defaultCrewName, isIn, memberKey, messageLeader, nextWeekText, nextWeekView, nextWeekWords,
-    nightTaken, sameTimeNextWeek,
+    nightLost, nightTaken, sameTimeNextWeek,
 } from './next-week';
 
 /**
@@ -68,8 +68,12 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
     private offered: Date;
     /** The night the crew had when this sheet opened (null for none): the one this phone may replace. */
     private seenNight: number | null = null;
-    /** The night this phone sent. */
+    /** The night this phone sent (the sheet's own date, until the server answers). */
     private sentNight: number | null = null;
+    /** The night the server set for this phone's send: what "You're in" and CHANGE go by. */
+    private setByMe: number | null = null;
+    /** The night this phone sent that the server did not take: another phone had set one first. */
+    private lostNight: number | null = null;
     private id: string;
     private crewSub: Subscription;
 
@@ -157,17 +161,42 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
         return this.setNight && this.setNight.by ? this.t.call(this.setNight.by) : '';
     }
 
-    /** In for the night the crew has now: said here, sent from here, or on its list. */
+    /**
+     * In for the night the crew has now: said here, set by this phone's send (the server's answer, not
+     * the date the sheet sent: a date that lost is not this phone's, even if the crew moves to it
+     * later), or on its list.
+     */
     get imIn(): boolean {
         const time = this.setNight ? this.setNight.time : undefined;
-        return (!!time && (this.saidIn === time || this.sentNight === time)) || isIn(this.setNight, this.myNickname);
+        return (!!time && (this.saidIn === time || this.setByMe === time)) || isIn(this.setNight, this.myNickname);
     }
 
-    /** This phone set the night the crew has: its banner may change it. */
+    /** This phone set the night the crew has, by the server's answer or its name: its banner may change it. */
     get mineNight(): boolean {
         const night = this.setNight;
-        return !!night && (this.sentNight === night.time
+        return !!night && (this.setByMe === night.time
             || (!!night.by && !!this.myNickname && memberKey(night.by) === memberKey(this.myNickname)));
+    }
+
+    /** This phone sent a date, but another phone had set a night first: say which night stands. */
+    get lost(): boolean {
+        return nightLost(this.setNight && this.setNight.time, this.lostNight, new Date());
+    }
+
+    get lostLine() {
+        return this.setNight ? this.t.lost(this.setNight.by || '', this.bannerWhen) : '';
+    }
+
+    /** The night that stands, for the group's chat, where this phone's other date may already be. */
+    get tellUrl() {
+        return this.lost && this.id
+            ? this.shareService.whatsappUrl(this.t.tellText(this.bannerWhen), this.crewUrl) : '';
+    }
+
+    tell() {
+        if (this.lost) {
+            this.count('tell');
+        }
     }
 
     /** Another phone set a night while this sheet was open: the sheet shows it, with I'M IN. */
@@ -327,12 +356,25 @@ export class NextWeekComponent implements OnChanges, OnDestroy {
         this.saveName();
         this.sent = true;
         this.sentNight = night.getTime();
+        this.lostNight = null;
         this.count(method);
         // Fire and forget, like the count: the send itself never waits on it. `prev` is the night this
         // sheet opened on: if another phone set a different one meanwhile, the crew keeps theirs, and
-        // this sheet shows it (see `taken`).
-        this.apiService.crewNight(this.id, { time: night.getTime(), by: this.myNickname || '', prev: this.seenNight })
-            .catch(err => reportError(err, 'crewNight', { crew: this.id }));
+        // this sheet shows it (see `taken`) and says so (see `lost`). `tz` is this phone's clock, so
+        // the server tells "still ahead" by the same rule as this screen.
+        const sentNight = this.sentNight;
+        this.apiService.crewNight(this.id, {
+            time: sentNight, by: this.myNickname || '', prev: this.seenNight, tz: new Date().getTimezoneOffset(),
+        }).then(answer => {
+            if (this.sentNight !== sentNight || !answer || !answer.night) {
+                return;
+            }
+            if (answer.kept) {
+                this.lostNight = sentNight;
+            } else {
+                this.setByMe = answer.night.time;
+            }
+        }).catch(err => reportError(err, 'crewNight', { crew: this.id }));
         try {
             // The crew page offers the same night to this phone.
             this.storageService.setItem(`BS_NIGHT_${this.id}`, String(night.getTime()));

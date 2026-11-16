@@ -29,6 +29,39 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         margin: 6px 0 8px;
     }
 
+    // A date this phone sent lost to one set first: which night stands, and a way to tell the group.
+    .banner-lost,
+    .sheet-lost {
+        margin: 8px 0;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 0 0 1px #e0c35a;
+
+        .lost-line {
+            font-family: $body-font;
+            font-size: .9rem;
+            line-height: 1.3;
+            color: $dark;
+            overflow-wrap: anywhere;
+        }
+
+        .lost-tell {
+            margin-top: 6px;
+            height: auto;
+            min-height: 2.5em;
+            white-space: normal;
+            background-color: #25d366;
+            border-color: transparent;
+            color: #fff;
+
+            &:not([href]) {
+                opacity: .5;
+                pointer-events: none;
+            }
+        }
+    }
+
     .next-week-banner {
         margin: 0 0 10px;
         padding: 10px 12px;

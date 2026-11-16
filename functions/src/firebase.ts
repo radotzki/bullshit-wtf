@@ -19,6 +19,10 @@ export const qHistoryRef = db.ref('qHistory');
 // Realtime Database Management API, which is off in the project. If that API is ever switched on,
 // move this to a path of its own.
 export const dailyRef = qHistoryRef.child('daily');
+// Where the sweep that moves old games' private parts stopped (controllers/old-games.ts). Under
+// qHistory, like the daily tallies and for the same reason: the functions read and write as
+// 'bl-service-worker', so a path of their own would need a new database rule.
+export const gameSweepRef = qHistoryRef.child('gameSweep');
 export const gameCounterRef = db.ref('gameCounter');
 export const questionsRef = db.ref('questions');
 export const seenQuestionsRef = db.ref('seenQuestions');
