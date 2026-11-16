@@ -45,7 +45,22 @@ const APP_PAGES = [
     '/he/join-game',
     '/he/join-game/ABCD',
     '/he/c/smoke-test',
+];
+
+// A page's address with a slash on the end, as a link can gain one on the way: it must reach the
+// page (firebase.json's "trailingSlash": false sends it there with a 301).
+const SLASHED_PAGES = [
+    '/how-to-play/',
+    '/he/how-to-play/',
+    '/he/',
+];
+
+// Addresses that are no page of the site: Hosting answers 404.html with a 404 status (firebase.json
+// has no catch-all), and that page must load cleanly.
+const NOT_FOUND_PAGES = [
     '/no-such-page',
+    '/he/no-such-page',
+    '/join-game/ABCD/extra',
 ];
 
 // Console errors that are expected here and say nothing about the code. Keep this list short:
@@ -90,17 +105,30 @@ function fileIn(dist, urlPath) {
 }
 
 // Firebase Hosting's order: an existing file (cleanUrls adds .html), then the rewrites in
-// firebase.json in order. "/_v" is a Cloud Function there; here it answers 204 and does nothing.
+// firebase.json in order, read from the file itself. "/_v" is a Cloud Function there; here it answers
+// 204 and does nothing. The join links' function (joinPreview) answers with the home page's own copy,
+// as it does for a PIN it can't find. An address no rewrite takes gets 404.html with a 404 status.
+// With "trailingSlash": false, a page's address with a slash on the end (/how-to-play/) answers 301
+// to the address without it, as the Hosting emulator does when that address is a file; without the
+// setting it is no page (404). The game's screens with a slash still go to their rewrite.
+const HOSTING = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'firebase.json'), 'utf8')).hosting;
+const REWRITES = HOSTING.rewrites;
+const globRe = (glob) => new RegExp('^' + glob.split(/(\*\*|\*)/).map((part) =>
+    part === '**' ? '.*' : part === '*' ? '[^/]*' : part.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('') + '$');
+const RULES = REWRITES.map((r) => ({ test: r.regex ? new RegExp(r.regex) : globRe(r.source), rule: r }));
+
 function resolve(dist, urlPath) {
-    if (urlPath === '/_v') return { status: 204 };
     const exact = urlPath.endsWith('/') ? null : fileIn(dist, urlPath);
     if (exact && !exact.endsWith('.html')) return { file: exact };
-    const clean = fileIn(dist, urlPath.replace(/\/$/, '') + '.html') || (exact && exact.endsWith('.html') ? exact : null);
+    const clean = (urlPath.endsWith('/') ? null : fileIn(dist, urlPath + '.html')) || (exact && exact.endsWith('.html') ? exact : null);
     if (clean) return { file: clean };
     const index = fileIn(dist, path.join(urlPath, 'index.html'));
-    if (index && urlPath !== '/') return { file: index };
-    if (urlPath === '/he' || urlPath.startsWith('/he/')) return { file: path.join(dist, 'he.html') };
-    return { file: path.join(dist, 'index.html') };
+    if (index) return { file: index };
+    const hit = RULES.find((r) => r.test.test(urlPath));
+    if (hit && hit.rule.function === 'visit') return { status: 204 };
+    if (hit && hit.rule.function) return { file: path.join(dist, /^\/he\//.test(urlPath) ? 'he.html' : 'index.html') };
+    if (hit) return { file: path.join(dist, hit.rule.destination) };
+    return { file: path.join(dist, '404.html'), code: 404 };
 }
 
 function serve(dist) {
@@ -112,12 +140,17 @@ function serve(dist) {
             res.writeHead(400).end();
             return;
         }
+        const bare = urlPath.replace(/\/+$/, '');
+        if (HOSTING.trailingSlash === false && bare && bare !== urlPath && (fileIn(dist, bare) || fileIn(dist, bare + '.html'))) {
+            res.writeHead(301, { Location: bare + new URL(req.url, 'http://x').search }).end();
+            return;
+        }
         const hit = resolve(dist, urlPath);
         if (hit.status) {
             res.writeHead(hit.status).end();
             return;
         }
-        res.writeHead(200, { 'Content-Type': MIME[path.extname(hit.file).toLowerCase()] || 'application/octet-stream' });
+        res.writeHead(hit.code || 200, { 'Content-Type': MIME[path.extname(hit.file).toLowerCase()] || 'application/octet-stream' });
         fs.createReadStream(hit.file).pipe(res);
     });
     return new Promise((ok) => server.listen(0, HOST, () => ok(server)));
@@ -141,7 +174,7 @@ function sitemapPages(dist) {
     return out;
 }
 
-async function checkPage(context, base, urlPath) {
+async function checkPage(context, base, urlPath, status = 200) {
     const problems = [];
     const page = await context.newPage();
     const isOurs = (u) => {
@@ -158,19 +191,21 @@ async function checkPage(context, base, urlPath) {
         if (msg.type() !== 'error') return;
         const text = msg.text();
         if (ALLOWED_CONSOLE_ERRORS.some((re) => re.test(text))) return;
+        // The 404 of a not-found page itself, which Chromium also logs; any other 404 still fails.
+        if (status === 404 && /status of 404/.test(text) && (msg.location() || {}).url === base + urlPath) return;
         problems.push(`console error: ${text}`);
     });
     page.on('requestfailed', (req) => {
         if (isOurs(req.url())) problems.push(`request failed: ${req.url()} (${req.failure() && req.failure().errorText})`);
     });
     page.on('response', (resp) => {
-        if (isOurs(resp.url()) && resp.status() >= 400) problems.push(`HTTP ${resp.status()} for ${resp.url()}`);
+        if (isOurs(resp.url()) && resp.status() >= 400 && !(status === 404 && resp.url() === base + urlPath)) problems.push(`HTTP ${resp.status()} for ${resp.url()}`);
     });
 
     const started = Date.now();
     try {
         const resp = await page.goto(base + urlPath, { waitUntil: 'load', timeout: PAGE_TIMEOUT_MS });
-        if (!resp || !resp.ok()) problems.push(`page answered HTTP ${resp ? resp.status() : 'nothing'}`);
+        if (!resp || resp.status() !== status) problems.push(`page answered HTTP ${resp ? resp.status() : 'nothing'}, not ${status}`);
         // The app pages render into <app-root>; the static pages are plain HTML.
         const hasApp = await page.$('app-root');
         const textOf = hasApp ? 'app-root' : 'body';
@@ -201,7 +236,8 @@ async function main() {
     }
     const server = await serve(DIST);
     const base = `http://${HOST}:${server.address().port}`;
-    const pages = [...new Set([...APP_PAGES, ...sitemapPages(DIST)])];
+    const pages = [...new Set([...APP_PAGES, ...sitemapPages(DIST), ...SLASHED_PAGES])].map((p) => [p, 200])
+        .concat(NOT_FOUND_PAGES.map((p) => [p, 404]));
 
     const browser = await chromium.launch({
         // Second lock on the network: no host but 127.0.0.1 resolves, WebSockets included.
@@ -224,7 +260,7 @@ async function main() {
     const worker = async () => {
         while (next < pages.length) {
             const i = next++;
-            results[i] = await checkPage(context, base, pages[i]);
+            results[i] = await checkPage(context, base, pages[i][0], pages[i][1]);
         }
     };
     await Promise.all(Array.from({ length: PARALLEL }, worker));

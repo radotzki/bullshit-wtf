@@ -124,7 +124,7 @@ test('the game is created with the arrival read before its own host key is kept'
     assert.ok(sent > 0, 'createGame sends the arrival');
     assert.ok(sent < create.indexOf('rememberHostKey('), 'before the host key of the new game is kept');
     const root = fs.readFileSync(path.join(app, 'app.component.ts'), 'utf8');
-    assert.ok(/constructor\(\) \{[^}]*rememberArrival\(\);/.test(root), 'noted once, at start-up, for every page of the app');
+    assert.ok(/constructor\([^)]*\) \{[^}]*rememberArrival\(\);/.test(root), 'noted once, at start-up, for every page of the app');
 });
 
 test('blocked storage: the page load keeps its own note and nothing throws', () => {

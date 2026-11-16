@@ -1,4 +1,4 @@
-import { GamePlayer } from './../../game-model';
+import { GamePlayer, seatPicture } from './../../game-model';
 import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
@@ -35,7 +35,7 @@ export class ScoreBoardComponent implements OnInit {
         this.apiService.getPlayers(this.pin).then(resp => {
             const players = Object.keys(resp).map(k => resp[k]);
             this.displayPlayers = players
-                .map((p, i) => Object.assign(p, { picture: `avatar${i}.png` }))
+                .map((p, i) => Object.assign(p, { picture: seatPicture(i) }))
                 .sort((a, b) => a.score < b.score ? 1 : -1);
         });
     }

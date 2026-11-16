@@ -6,7 +6,7 @@
 </div>
 
 <!-- Phone, host alone in the lobby: the invite is the screen. WhatsApp first, then share or copy, then the QR. -->
-<div *ngIf="!presenter && inline && ready" class="invite-inline" [attr.dir]="g.rtl ? 'rtl' : null">
+<div *ngIf="!presenter && inline && ready && help !== 'computer'" class="invite-inline" [attr.dir]="g.rtl ? 'rtl' : null">
     <a class="button is-success is-fullwidth is-medium whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
         <span class="icon"><i class="fa fa-whatsapp"></i></span>
         <span> {{g.whatsapp}} </span>
@@ -15,14 +15,38 @@
         <span class="icon"><i class="fa fa-share-alt"></i></span>
         <span> {{g.shareLink}} </span>
     </button>
-    <button *ngIf="!canShare" class="button is-fullwidth" (click)="copy()">
+    <!-- The lone-host help adds COPY LINK on a phone that has a share sheet too. -->
+    <button *ngIf="!canShare || help" class="button is-fullwidth" (click)="copy()">
         <span class="icon"><i class="fa" [class.fa-link]="!copied" [class.fa-check]="copied"></i></span>
         <span> {{copied ? g.linkCopied : g.copyLink}} </span>
     </button>
 
-    <p class="scan-hint" [attr.dir]="locale === 'he' ? 'rtl' : null"> {{t?.scanHint}} </p>
-    <app-qr-code class="qr" [data]="qrUrl" [label]="g.scanLabel(pinUpper)"></app-qr-code>
+    <p *ngIf="!compact" class="scan-hint" [attr.dir]="locale === 'he' ? 'rtl' : null"> {{t?.scanHint}} </p>
+    <!-- With a guest in, the code is small and only on a screen tall enough to keep the players in view. -->
+    <app-qr-code class="qr" [class.small]="compact" [data]="qrUrl" [label]="g.scanLabel(pinUpper)"></app-qr-code>
     <p class="pin"> {{g.pin(pinUpper)}} </p>
+</div>
+
+<!-- Computer, the lone-host help: a card for the room and the call. A big QR code, the short link to read out, COPY LINK first. -->
+<div *ngIf="!presenter && inline && ready && help === 'computer'" class="invite-computer box" [class.compact]="compact" [attr.dir]="g.rtl ? 'rtl' : null">
+    <app-qr-code class="qr" [data]="qrUrl" [label]="g.scanLabel(pinUpper)"></app-qr-code>
+    <div class="words">
+        <h3 class="headline"> {{h.title}} </h3>
+        <p class="how"> {{h.scanOrOpen}} </p>
+        <p class="url" dir="ltr"> {{displayUrl}} </p>
+        <div class="send">
+            <button class="button is-primary is-medium" (click)="copy()">
+                <span class="icon"><i class="fa" [class.fa-link]="!copied" [class.fa-check]="copied"></i></span>
+                <span> {{copied ? g.linkCopied : g.copyLink}} </span>
+            </button>
+            <a class="button is-medium whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
+                <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                <span> {{g.whatsapp}} </span>
+            </a>
+        </div>
+        <p class="tip"> {{h.call}} </p>
+        <p class="tip"> {{h.room}} </p>
+    </div>
 </div>
 
 <!-- Phone: invite button + sheet -->
