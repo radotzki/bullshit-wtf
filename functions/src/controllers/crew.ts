@@ -3,7 +3,8 @@ import {
 } from '../game-model';
 import { get, gamesRef, crewsRef } from '../firebase';
 import { readGame } from './old-games';
-import { newGame } from './new-game';
+import { newGame, incGameCounter, generateGameName } from './new-game';
+import { claimCrewLobby, claimFork, lastGameOf, lobbyOpen } from './next-game';
 import { nameFlag, crewNameRefused } from '../name-flag';
 import { setCrewNight } from './crew-night';
 
@@ -295,22 +296,50 @@ export async function crewRematch(crewId: string, uid?: string, hostKey?: string
         return fail('Crew does not exist', 'CREW_NOT_EXIST');
     }
 
-    if (crew.rematch && crew.rematch.pin && Date.now() - (crew.rematch.time || 0) < REMATCH_REUSE_MS) {
-        const state = await get<{ id: number }>(gamesRef.child(crew.rematch.pin).child('state'));
-        if (state && state.id === GameState.GameStaging) {
-            return { pin: crew.rematch.pin, created: false };
+    // A lobby is waiting (or being made by another phone this moment): everyone goes there.
+    const current = crew.rematch;
+    let gone: string = null;
+    if (current && current.pin && Date.now() - (current.time || 0) < REMATCH_REUSE_MS) {
+        if (await lobbyOpen(current.pin, current.time)) {
+            return { pin: current.pin, created: false };
+        }
+        gone = current.pin;
+    }
+
+    // The crew's last game just ended and someone pressed Replay there: that is the crew's lobby.
+    const last = lastGameOf(crew);
+    const lastState = last ? await get<{ id: number }>(gamesRef.child(last).child('state')) : null;
+    const lastEnded = !!lastState && lastState.id === GameState.ScoreBoardFinal;
+    if (lastEnded) {
+        const replay = await get<string>(gamesRef.child(last).child('fork'));
+        if (replay && await lobbyOpen(replay)) {
+            return { pin: replay, created: false };
         }
     }
+
+    // Claim the crew's lobby before making it, so a second tap (or a Replay) a moment later comes here.
+    const pin = generateGameName(await incGameCounter());
+    const holder = await claimCrewLobby(id, pin, gone, 0, REMATCH_REUSE_MS);
+    if (holder !== pin && await lobbyOpen(holder, Date.now())) {
+        return { pin: holder, created: false };
+    }
+    // The phones still on the last game's final screen follow this lobby, as they follow a Replay
+    // (unless a Replay claimed that game first: it then finds this lobby and comes here, see fork.ts).
+    const linked = lastEnded && (await claimFork(last, pin).catch(() => null)) === pin;
 
     const uids: string[] = [];
     Object.keys(crew.members || {}).forEach(k => Object.keys(crew.members[k].uids || {}).forEach(u => uids.push(u)));
 
-    const pin = await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
+    await newGame(crew.locale || 'en', crew.totalQ || 7, uid, {
         crew: id, uids, pack: seasonalPack(Date.now(), crew.locale || 'en'), hostKey, serverStart, stagedReveal, aboutUs,
         // A test crew's games are test games; a guest's table marks its games `table`.
         campaign: isTestCampaign(crew.test) ? crew.test : crew.campaign,
+        pin,
     });
     await crewsRef.child(id).child('rematch').set({ pin, time: Date.now() });
+    if (linked) {
+        await gamesRef.child(last).child('fork').set(pin);
+    }
     return { pin, created: true };
 }
 

@@ -2,7 +2,7 @@
 // Hebrew app addresses (/he/join-game, /he/c/<id>) from it, so a Hebrew invite link
 // (bullshit.wtf/he/join-game/ABCD) previews in Hebrew on WhatsApp and friends, and a search engine
 // reads /he as what it is: a Hebrew page (lang and dir, title, description, the schema.org block and
-// the text under the app, between the BS:ABOUT markers).
+// the text under the app, between the BS:ABOUT markers, and the loading card, between BS:LOAD).
 // Run after `ng build` (see the "build" script in package.json).
 const fs = require('fs');
 const path = require('path');
@@ -97,7 +97,11 @@ function swap(page, name, inner) {
     return page.replace(block, () => `<!-- BS:${name}:START -->${inner}<!-- BS:${name}:END -->`);
 }
 
+// The loading card inside <app-root>, shown until the app draws: in Hebrew, right to left.
+const loading = '<div id="bs-load" role="status" lang="he" dir="rtl"><b>בולשיט</b><i></i><span>המשחק נטען…</span></div>';
+
 let out = swap(html, 'META', hebrewMeta);
+out = swap(out, 'LOAD', loading);
 out = swap(out, 'LD', `\n  <script type="application/ld+json">${JSON.stringify(ld)}</script>\n  `);
 out = swap(out, 'ABOUT', about);
 // The build may add its own attributes to <html> (data-beasties-container): change only the language.
