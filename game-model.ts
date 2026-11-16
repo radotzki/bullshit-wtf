@@ -144,6 +144,20 @@ export interface GameScheme {
     // The named player's answer to the About question being played: the truth. Server only: no phone can
     // read it, so nobody learns it before the answers are on the table, where it is the truth row.
     aboutTruth?: { pid: string; text: string };
+    // Server time each player's lie and pick arrived, for measuring the wait (question_results).
+    // Server only: no rule opens it, so no phone can read or write it.
+    answerTimes?: AnswerTimes;
+}
+
+/** When one player's lie or pick arrived (server time, ms), and for which question. */
+export interface AnswerTime {
+    q: number;
+    at: number;
+}
+
+export interface AnswerTimes {
+    lies?: { [pid: string]: AnswerTime };
+    picks?: { [pid: string]: AnswerTime };
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';

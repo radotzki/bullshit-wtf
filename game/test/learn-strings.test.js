@@ -84,7 +84,7 @@ test('the lengths and the player limit are the game\'s', () => {
     assert.deepStrictEqual(GAME_LENGTHS, offered);
     const join = read(root, 'functions', 'src', 'controllers', 'join.ts');
     // The join function refuses a seat past the shared model's MAX_PLAYERS; the page says the same number.
-    assert.match(join, /length >= MAX_PLAYERS\) \{\s*return Promise\.reject\(\{ message: 'Sorry, game is full'/);
+    assert.match(join, /length >= MAX_PLAYERS\) \{[^}]*?return Promise\.reject\(\{ message: 'Sorry, game is full'/);
     const model = read(root, 'game-model.ts');
     assert.strictEqual(MAX_PLAYERS, +/export const MAX_PLAYERS = (\d+);/.exec(model)[1]);
     assert.ok(learnStrings('en').start[0].indexOf('5, 7 or 9 questions') >= 0);

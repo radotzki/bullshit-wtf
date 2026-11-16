@@ -7,6 +7,7 @@ import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
 import { isSameAnswer } from './same-answer';
+import { stamp } from './answer-times';
 import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
 import { aboutOf } from '../game-model';
@@ -55,6 +56,9 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
         }
 
         await gamesRef.child(pin).child('answers').child(pid).set(stored);
+        // When the lie arrived, to measure the wait. Never fails the answer.
+        await gamesRef.child(pin).child('answerTimes').child('lies').child(pid).set(stamp(game.questionIndex, Date.now()))
+            .catch(e => console.error('lie time not saved', pin, e && e.message));
 
         // The game as it is with this lie in it. The lies are read again after this one is written:
         // the game read above can miss lies that were sent at the same moment. When the last lies of
