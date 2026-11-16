@@ -11,7 +11,7 @@
 //    their new home (kept) and the whole game are refused. The live game and the one that ended an
 //    hour ago read as before.
 // 5. The server's readers on the old game: the PIN check says "game over", the join link preview still
-//    names its host, Replay seats its players, its crew saves and the crew's rematch makes a game.
+//    names its host, its crew saves, Replay seats its players and the crew's rematch joins that Replay.
 // 6. In headless Chromium: the old game's final screen goes to its join page, which says "Game over";
 //    the final screen of the game that ended an hour ago draws its players as before.
 //
@@ -338,13 +338,21 @@ async function main() {
             const saved = await db('GET', `crews/${crew.body.id}`);
             check('the crew holds the old game\'s players and its earlier game of the night', saved && JSON.stringify(saved.members || {}).includes('dana')
                 && JSON.stringify(saved).includes(pins.earlier), Object.keys((saved && saved.members) || {}).join(','));
-            const rematch = await call('crewRematch', { crew: crew.body.id, uid: 'uDana' });
-            check('the crew\'s rematch makes a new game', rematch.status === 200 && rematch.body && rematch.body.pin, JSON.stringify(rematch.body));
         }
+        // Since #147 a finished game has one next game, whichever REMATCH a phone pressed: the old game's
+        // Replay, then the crew page's REMATCH, both land in one game. The next-game code reads the old
+        // game's state and fork from their own place, which the sweep never moves.
         const replay = await call('fork', { pin: pins.old, uid: 'uDana', pid: 'p1' });
         const replayGame = replay.body && replay.body.pin ? await db('GET', `games/${replay.body.pin}`) : null;
         check('Replay of the old game seats its players', replayGame && Object.keys(replayGame.players || {}).length === 3 && replayGame.parent === pins.old,
             `${replay.status} ${replay.body && replay.body.pin} ${Object.keys((replayGame && replayGame.players) || {}).join(',')}`);
+        const oldFork = await db('GET', `games/${pins.old}/fork`);
+        check('the old game points to its Replay', !!replayGame && oldFork === replay.body.pin, String(oldFork));
+        if (crew.body && crew.body.id) {
+            const rematch = await call('crewRematch', { crew: crew.body.id, uid: 'uDana' });
+            check('the crew\'s rematch goes to the old game\'s Replay, one next game', rematch.status === 200 && rematch.body
+                && rematch.body.pin === (replay.body && replay.body.pin), JSON.stringify(rematch.body));
+        }
         const after = await stranger(`games/${pins.old}/players`);
         check('the old game stays closed after those calls', after.status === 200 && after.value === null, JSON.stringify(after.value));
 
