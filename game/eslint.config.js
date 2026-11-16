@@ -18,6 +18,7 @@ module.exports = tseslint.config(
             'src/app/game-model.ts',
             'src/app/name-flag.ts',
             'src/app/name-lists.ts',
+            'src/app/daily-launch.ts',
         ],
     },
     {

@@ -198,6 +198,20 @@
     opacity: .85;
 }
 
+// Right under Create, for a visitor on their own: today's question (daily-line.ts).
+.alone-line {
+    display: inline-block;
+    margin: 10px 2px 0;
+    color: #f3d467;
+    font-size: 18px;
+    text-decoration: underline;
+
+    &:hover,
+    &:focus-visible {
+        color: #fff1b0;
+    }
+}
+
 // Join, Present, How to play: still one click each, but quieter than the big button.
 .other-ways {
     display: flex;

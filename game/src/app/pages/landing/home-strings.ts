@@ -27,6 +27,8 @@ export interface HomeStrings {
     host: string;
     /** The few words before the daily line on the computer home, for someone on their own. */
     alone: string;
+    /** The line under Create on both homes, once the daily puzzle is live (daily-line.ts). */
+    aloneTry: string;
     join: string;
     joinHint: string;
     joinShort: string;
@@ -65,6 +67,7 @@ const en: HomeStrings = {
     daily: 'Today\'s question: can you spot the truth?',
     host: 'Host a game on this screen',
     alone: 'On your own?',
+    aloneTry: 'On your own? Try today\'s question',
     join: 'Join Game',
     joinHint: 'Join a game by entering its PIN',
     joinShort: 'Join',
@@ -100,6 +103,7 @@ const he: HomeStrings = {
     daily: 'השאלה של היום: תמצאו את האמת?',
     host: 'מארחים משחק על המסך הזה',
     alone: 'לבד?',
+    aloneTry: 'לבד? נסו את השאלה של היום',
     join: 'הצטרפות למשחק',
     joinHint: 'הקלידו את קוד המשחק כדי להצטרף',
     joinShort: 'הצטרפות',

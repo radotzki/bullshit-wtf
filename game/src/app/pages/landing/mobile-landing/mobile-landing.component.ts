@@ -7,6 +7,8 @@ import { HomeStrings, homeStrings } from '../home-strings';
 import { PictureStrings, createQuery, firstButton, pictureStrings, readVisitor, showPicture } from '../front-door';
 import { SearchLink, searchLinks, seasonLink } from '../search-links';
 import { CodeBox } from '../code-box';
+import { dailyHref, dailyLive } from '../daily-line';
+import { DAILY_FIRST_DAY } from '../../../daily-launch';
 import { joinStrings } from '../../join-game/join-strings';
 
 /** Reads a key the game keeps in this browser: localStorage, else the tab's storage, else nothing. */
@@ -50,6 +52,9 @@ export class MobileLandingComponent {
     season: SearchLink | null;
     // The code box at the top: "Got a code? [ ____ ] Join" (code-box.ts).
     box: CodeBox;
+    // The line under Create for a visitor on their own: shown once the daily puzzle is live.
+    dailyLive: boolean;
+    dailyHref: string;
     private tag: string | null;
 
     constructor(crewService: CrewService, injector: Injector, router: Router) {
@@ -85,5 +90,7 @@ export class MobileLandingComponent {
         this.p = pictureStrings(locale);
         this.links = searchLinks(locale, this.tag);
         this.season = seasonLink(locale, new Date(), this.tag);
+        this.dailyLive = dailyLive(DAILY_FIRST_DAY[this.t.lang], new Date());
+        this.dailyHref = dailyHref(this.t.lang);
     }
 }
