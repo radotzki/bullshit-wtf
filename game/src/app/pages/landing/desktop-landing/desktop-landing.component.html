@@ -10,7 +10,20 @@
          and no word about the game, and most left without pressing anything. -->
     <div class="front-door">
         <div class="pitch-side">
+            <!-- The code box (code-box.ts): a guest with a friend's PIN joins from here, one tap to the
+                 nickname. A visitor with no code goes past it to Create, which still leads the menu. -->
+            <form class="code-box" (ngSubmit)="box.submit()" novalidate>
+                <label class="code-ask" for="home-code">{{ t.codeAsk }}</label>
+                <input id="home-code" class="code-input" type="text" name="code" [(ngModel)]="box.code"
+                    [placeholder]="t.codePlaceholder" autocomplete="off" autocapitalize="characters" autocorrect="off"
+                    spellcheck="false" maxlength="12" enterkeyhint="go" dir="ltr">
+                <button class="code-join" type="submit" [disabled]="box.busy" [class.is-busy]="box.busy">{{ t.codeJoin }}</button>
+                <p class="code-error" *ngIf="box.error" role="alert">{{ box.error }}</p>
+            </form>
+
             <p class="pitch">{{ t.pitch }}</p>
+            <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
+            <p class="facts">{{ t.facts }}</p>
 
             <!-- The one big button: the create flow, carrying the post's ?via= tag (front-door.ts). -->
             <a class="host-button" routerLink="/create-game" [queryParams]="createQuery">

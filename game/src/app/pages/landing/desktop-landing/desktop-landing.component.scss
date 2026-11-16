@@ -79,6 +79,86 @@
     text-align: start;
 }
 
+// The code box, as on the phone home: a guest on a computer types a friend's PIN here.
+.code-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 20px;
+
+    .code-ask {
+        flex: none;
+        font-size: 17px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .code-input {
+        flex: 0 1 170px;
+        min-width: 0;
+        height: 40px;
+        padding: 0 12px;
+        border: 2px solid #f3d467;
+        border-radius: 6px;
+        background-color: #fff;
+        color: #2f1b2c;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-align: center;
+
+        &::placeholder {
+            color: #8a7a86;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+    }
+
+    [dir="rtl"] & .code-input::placeholder {
+        direction: rtl;
+    }
+
+    .code-join {
+        flex: none;
+        height: 40px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 6px;
+        background-color: #533159;
+        color: #f4fcca;
+        font-size: 17px;
+        font-weight: 700;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background-color: #6a3f72;
+        }
+
+        &.is-busy {
+            opacity: .6;
+        }
+    }
+
+    .code-error {
+        flex: 1 0 100%;
+        margin: 0;
+        color: #ffb3a7;
+        font-size: 16px;
+    }
+}
+
+// The facts line under the pitch: what it costs, no download, who plays.
+.facts {
+    margin: -12px 0 22px;
+    font-size: 18px;
+    line-height: 1.35;
+    opacity: .9;
+    text-wrap: balance;
+}
+
 .pitch {
     margin: 0 0 22px;
     font-size: 30px;

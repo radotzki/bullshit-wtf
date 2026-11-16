@@ -40,8 +40,9 @@ export async function onStateChange(pin: string) {
 //   host    the player who just created the game
 //   replay  carried into the next game by Replay
 //   crew    tapped Rematch on a crew page, or opened a crew link
+//   home    typed the PIN into the code box at the top of the home page ("Got a code?")
 // The server alone writes one more value, 'test', for every join of a test game (see onJoinGame).
-export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
+export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home'];
 
 export function cleanVia(via: any): string | null {
     if (via === undefined || via === null || via === '') {

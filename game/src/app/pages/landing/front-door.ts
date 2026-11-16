@@ -122,3 +122,41 @@ const picture: { en: PictureStrings; he: PictureStrings } = {
 export function pictureStrings(locale: string): PictureStrings {
     return locale === 'he' ? picture.he : picture.en;
 }
+
+/**
+ * The code box at the top of the home ("Got a code? [ ____ ] Join"). Last weekend a third of the
+ * Hebrew phones from search that pressed anything were guests typing a friend's PIN, and the PIN
+ * box was a page away, behind Join Game. The box takes them straight to the nickname.
+ *
+ * A PIN is letters only (the server makes it from a counter). What was typed is kept to its
+ * letters, upper-cased, so "abcd", " AbCd " and "ab-cd" all reach game ABCD. Nothing left: null.
+ */
+export function cleanCode(typed: string | null | undefined): string | null {
+    const pin = String(typed || '').replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 12);
+    return pin || null;
+}
+
+/**
+ * The join source of a join made from the code box, for BigQuery `users.via` (join-source.ts and
+ * JOIN_SOURCES in the functions): an existing column, a new value.
+ */
+export const CODE_BOX_VIA = 'home';
+
+/**
+ * Where the code box sends a guest: the PIN's own join page (the Hebrew one under /he), which opens
+ * on the nickname. The tag rides on the address, so the join is counted as a code-box join even
+ * where the tab's storage is blocked or the page is reloaded.
+ */
+export function codeJoinRoute(pin: string, locale: string): { path: string[]; query: { via: string } } {
+    return { path: [locale === 'he' ? '/he/join-game' : '/join-game', pin], query: { via: CODE_BOX_VIA } };
+}
+
+/**
+ * What the code box does with the server's answer to the PIN. A wrong PIN or a full game is said
+ * right under the box, so the guest can fix a typo where they typed it. A game that is over goes on
+ * to its join page, which says so and offers its rematch; any other failure goes on too, and the
+ * join page tries again there.
+ */
+export function codeBoxOutcome(errorCode: string | null | undefined): 'go' | 'stay' {
+    return errorCode === 'GAME_NOT_EXIST' || errorCode === 'GAME_IS_FULL' ? 'stay' : 'go';
+}

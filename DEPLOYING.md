@@ -1083,6 +1083,35 @@ How to read it (compare the two weeks before the release with the two after, tes
 - Games by `campaign` in `opened_games`, once posts go out.
 - Once the visits table exists: created games per first home page view.
 
+## The home for visitors from search: a code box and a facts line
+
+Client and one value in the functions. No new function, rule, table or column; nothing to run before
+the merge.
+
+- At the top of the phone home (`/m`) and of the computer home (`/d`), in English and Hebrew: "Got a
+  code? [ ____ ] Join". Join checks the PIN with `validateGameName` (the PIN page's own check), then
+  opens `/join-game/<PIN>?via=home` (`/he/join-game/...` from the Hebrew home) on the nickname. What
+  was typed keeps its letters, in capitals, so `abcd` finds game ABCD. A wrong PIN or a full game is
+  said under the box, in the PIN page's words; a game that is over goes on to its join page, which
+  says so and offers its rematch. The database and sign-in start only on that press.
+- Under the pitch, one line: "Free · no app · 2 to 12 players, each on their own phone" and its
+  Hebrew (`facts` in `home-strings.ts`).
+- Create still leads the phone menu for a visitor with no code, and stays whole on a 360 x 640
+  screen (its foot at about 500 px); the big Host button stays on the first screen of a computer.
+- A join from the box is counted in `users.via` as `home`, a new value in the column that exists
+  (`JOIN_SOURCES` in `functions/src/controllers/analytics.ts`, `known` in `join-source.ts`). A join
+  of a test game is still `test`. An old functions release counts it as `other`.
+- Rules in `game/src/app/pages/landing/front-door.ts` and `code-box.ts`, tested by
+  `game/test/home-code-box.test.js` and `functions/test/step-zero.test.js`. Play it on the
+  emulators, in both languages: `node .github/smoke/emulator-home-code.js [--locale he]`, after
+  building `functions/` and `game/` (SHOTS=<dir> saves the screens).
+
+How to read it (first visits from a search engine to `/`, Thursday to Sunday after the release,
+against 24 of 35 Hebrew phones, 8 of 19 other phones and 5 of 13 computers before):
+
+- Visits that press anything, by device and browser language, in `analytics.visits`.
+- Code-box joins: `SELECT DATE(time) AS day, COUNT(*) FROM analytics.users WHERE via = 'home' GROUP BY day`.
+
 ## Friday crews: Friday by default, every Friday in the calendar, and the save-crew offer
 
 Friday has 2.4 times the games of any other day, in Hebrew too, and a group that plays every week
