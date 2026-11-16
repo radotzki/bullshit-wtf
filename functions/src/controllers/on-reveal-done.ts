@@ -1,4 +1,5 @@
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { GameScheme } from '../game-model';
 import { advance } from './tick';
 import { revealEndWait } from './seats';
@@ -15,7 +16,7 @@ const maxWait = 5000;
  */
 export async function onRevealDone(pin: string) {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
     const wait = revealEndWait(game, Date.now());
 
     if (wait === undefined || wait > maxWait) {

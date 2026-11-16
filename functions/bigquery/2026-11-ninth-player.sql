@@ -1,0 +1,58 @@
+-- Room for the ninth player: a game takes 12 seats (it was 8).
+-- NO SCHEMA CHANGE: there is nothing to run in this file. It holds read-only queries (in comments,
+-- like the other files here). Tests are left out with the mark (see 2026-11-test-mark.sql).
+-- Days are Israel days. opened_games.players counts seats when the game left the lobby; count seats,
+-- not users rows (before 5 November 2026 the join log missed about 4 joins in 10).
+
+-- ---------------------------------------------------------------------------
+-- 1. How big the tables are: share of started games by seats, and of those above 8.
+-- Before the release (5 Nov 2025 to 5 Nov 2026, 6,675 started games of 2+): 8.2% at 8 (full),
+-- 15.6% at 7 or 8, none above 8 (the cap). The tail from 6 to 7 seats shrinks by about a quarter a
+-- step (672, 492), yet 8 seats had 548 games: about 190 more than the tail gives, groups that
+-- were bigger than 8 and played capped.
+-- SELECT
+--   COUNT(*) AS games,
+--   ROUND(AVG(players), 2) AS avg_seats,
+--   ROUND(COUNTIF(players = 8) / COUNT(*) * 100, 1) AS pct_at_8,
+--   ROUND(COUNTIF(players BETWEEN 9 AND 12) / COUNT(*) * 100, 1) AS pct_9_to_12,
+--   ROUND(COUNTIF(players = 12) / COUNT(*) * 100, 1) AS pct_full_at_12
+-- FROM `bullshit-wtf-prod.analytics.opened_games`
+-- WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND players >= 2
+--   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)');
+
+-- ---------------------------------------------------------------------------
+-- 2. Seats per game on Fridays against other days, and in each language.
+-- Before the release: Fridays 4.49 seats a game (9.2% at 8), other days 4.33 (7.9% at 8);
+-- Hebrew games 9.6% at 8, English 4.1%; Passover 2026 Hebrew 13.7% at 8.
+-- SELECT
+--   EXTRACT(DAYOFWEEK FROM DATETIME(time, 'Asia/Jerusalem')) = 6 AS friday, locale,
+--   COUNT(*) AS games, ROUND(AVG(players), 2) AS avg_seats,
+--   ROUND(COUNTIF(players >= 9) / COUNT(*) * 100, 1) AS pct_above_8
+-- FROM `bullshit-wtf-prod.analytics.opened_games`
+-- WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND players >= 2
+--   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- GROUP BY friday, locale ORDER BY friday, locale;
+
+-- ---------------------------------------------------------------------------
+-- 3. Does a big table still play to the end? The share of questions where at least half the
+-- seats picked, on the last question, by table size (question_results.players is seats).
+-- Compare 9 to 12 against 5 to 8: if big tables drop off more, the waits are too long.
+-- WITH test_pins AS (
+--   SELECT DISTINCT pin FROM `bullshit-wtf-prod.analytics.users`
+--   WHERE time >= TIMESTAMP('<from>') AND via = 'test' AND pin IS NOT NULL)
+-- SELECT CASE WHEN players <= 4 THEN '2-4' WHEN players <= 8 THEN '5-8' ELSE '9-12' END AS seats,
+--   COUNT(*) AS last_questions,
+--   ROUND(COUNTIF(picks * 2 >= players) / COUNT(*) * 100, 1) AS pct_still_played
+-- FROM `bullshit-wtf-prod.analytics.question_results`
+-- WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND q_index = total_q - 1
+--   AND id NOT IN (SELECT pin FROM test_pins)
+-- GROUP BY seats ORDER BY seats;
+
+-- ---------------------------------------------------------------------------
+-- 4. "Game is full" refusals. Not in the data today: a refused join writes no row. Pull request 47
+-- (refused_joins, open) writes one per refusal once it is merged and its table exists; with this
+-- change its players column reads 12 for a full game. Count games with a refusal, not rows.
+-- SELECT COUNT(DISTINCT pin) AS games_with_a_refusal, COUNT(*) AS refusals
+-- FROM `bullshit-wtf-prod.analytics.refused_joins`
+-- WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>')
+--   AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)');

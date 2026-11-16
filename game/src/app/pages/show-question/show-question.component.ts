@@ -6,10 +6,11 @@ import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { GameState } from '../../game-model';
+import { GameState, aboutView, aboutMissedView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
+import { aboutStrings, AboutStrings, aboutMissedLine } from './../about-strings';
 
 @Component({
     standalone: false,
@@ -40,6 +41,13 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     private ideas: string[] = [];
     private ideasUsed = 0;
     private helperInfo: { coach: boolean; roundIndex: number; questionIndex: number; locale: string };
+    // An About question (see aboutOf in game-model): whom it is about, and whether that is this phone's player.
+    aboutName: string = null;
+    aboutMe = false;
+    aboutWords: AboutStrings = aboutStrings('en');
+    // A bank question played in place of an About question that got no truth: the line saying why.
+    missedLine: string = null;
+    private missedView: { me: boolean; name: string } = null;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -51,7 +59,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.pin = this.activatedRoute.snapshot.params['pin'];
-        this.apiService.getQuestion(this.pin).then(q => this.question = q);
+        this.loadQuestion();
         this.useLocale(this.apiService.knownGameLocale(this.pin));
         this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
         this.gameService.register(this.pin);
@@ -68,6 +76,25 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     private useLocale(locale: string) {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
+        this.aboutWords = aboutStrings(locale);
+        this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
+    }
+
+    /**
+     * The question, and for an About question whom it is about, set in one go: the player it is about
+     * never sees the writing form before the "about you" badge, however slow the network (an empty
+     * answer typed there would be a lie where their truth belongs).
+     */
+    private loadQuestion() {
+        this.apiService.getQuestionWithAbout(this.pin).then(({ question, about, missed, players }) => {
+            const user = this.sessionService.user;
+            const view = aboutView(about, players, user && user.pid, this.presenter);
+            this.aboutMe = view.aboutMe;
+            this.aboutName = view.aboutName;
+            this.missedView = aboutMissedView(missed, players, user && user.pid, this.presenter);
+            this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
+            this.question = question;
+        });
     }
 
     /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */

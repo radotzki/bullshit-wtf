@@ -13,7 +13,7 @@
     justify-content: center;
     margin: 0 auto;
     padding: 0;
-    // Four to a line on a phone, so eight players make two even lines.
+    // Four to a line on a phone, so eight players make two even lines and twelve make three.
     max-width: 340px;
     list-style: none;
 }
@@ -140,6 +140,12 @@
 
     .name {
         font-size: 1.1rem;
+    }
+
+    // Nine to twelve seats: narrower, so twelve stay on one line of a 1280 px screen.
+    &:not(.in-top-bar) .seats.many .seat {
+        min-width: 92px;
+        padding: 8px 4px;
     }
 
     .mark {

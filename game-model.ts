@@ -10,6 +10,27 @@ export enum GameState {
     ScoreBoardFinal = 6,
 }
 
+/**
+ * The most seats one game takes. A join past it is refused as "game is full" (functions: join and
+ * validateGameName), and a rematch lobby that holds this many is not offered to a late friend.
+ * It was 8 until November 2026: 8% of games were full then, and the big days (Fridays, holidays)
+ * are the big tables. Twelve makes three even lines of four pictures on a phone.
+ * The game has one picture per seat (assets/avatar0.png to avatar11.png): add pictures with seats.
+ */
+export const MAX_PLAYERS = 12;
+
+/**
+ * The most answers that house lies fill the pick list up to: one per player and the truth, as many
+ * as an 8-seat game ever had. A bigger table still sees every lie its players wrote (one answer each,
+ * and the truth), but no more house lies than before, so the list stays one a phone can read.
+ */
+export const MAX_HOUSE_FILL = 9;
+
+/** A seat's picture file, from its place in the game (0 for the first player). */
+export function seatPicture(index: number): string {
+    return `avatar${Math.max(0, index) % MAX_PLAYERS}.png`;
+}
+
 export interface GameStateInfo {
     id: number;
     timestamp: number;
@@ -18,6 +39,11 @@ export interface GameStateInfo {
     // The game plays the staged reveal (its bigReveal is true). On every state of such a game, and
     // only there: this is where phones read it, since they cannot read bigReveal itself.
     staged?: boolean;
+    // "Same time next week?", a 50/50 test, on the final state only, of a game that is a group's
+    // second or later game of a sitting (a Replay, or a crew's game). true: the final screen offers the
+    // button that sets next week's date. false: in the test, and the screen stays as it was. Absent: not
+    // in the test. The half follows the sitting (see functions/src/controllers/next-week.ts).
+    nextWeek?: boolean;
 }
 
 export interface GameScheme {
@@ -50,12 +76,18 @@ export interface GameScheme {
     // can write) never starts it. Games from older clients lack it, so their START tick still works.
     serverStart?: boolean;
     // This game has a host marked by hostKey (readable): other phones wait for that host to join.
-    hasHost?: boolean;
+    // 'screen': the host turned the computer that made the game into the big screen and gave up the
+    // seat there (see hostToBigScreen in functions: start.ts). That big screen holds the host key and
+    // starts the game; no player row is the host. Only the server writes it.
+    hasHost?: boolean | 'screen';
     // Server time the host's lobby page last reported in (serverStart games only, written only by the
     // server for the phone with the host key). Readable: when it is 90 s old, anyone may start.
     hostSeen?: number;
     origin?: GameOrigin;
     parent?: string;         // PIN of the finished game this one was replayed from
+    // PIN of the first game of this sitting: copied from Replay to Replay. Absent on a sitting's first
+    // game, which is its own root. A Replay of a taste starts a sitting (the taste was played alone).
+    root?: string;
     // Players who tapped NEXT on the reveal. When every player has, the reveal ends early.
     revealDone?: { [pid: string]: boolean };
     // Seats that have sent a lie or a pick in this game, stored as each question's picks close.
@@ -71,10 +103,16 @@ export interface GameScheme {
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
     pack?: string;
+    // Where the host's visit started (see GameArrival). No phone can read it; not carried by Replay.
+    arrival?: GameArrival;
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
     // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
-    // The round-1 lie helper is on for this game (a 50/50 test, set when the game is made).
+    // INVITE ANOTHER GROUP: the table each seat of this finished game made, so a second call from the
+    // same seat (a reload, a second tap) gets the same table and link. Server only (createTable).
+    tables?: { [pid: string]: string };
+    // The round-1 lie helper is on for this game. Set when the game is made: every game since
+    // 13 November 2026, half of them in the 50/50 test before that.
     coach?: boolean;
     // Round 1 of a coach game only: up to two ready-made lies per player for the current question.
     // Each player can read only their own (games/$pin/ideas/$pid).
@@ -82,7 +120,7 @@ export interface GameScheme {
     // The staged reveal, a 50/50 test set when the game is made, and only for a game made by a client
     // that can show it. true: the staged reveal, with the scoreboard folded into it. false: in the
     // test, and the game keeps today's reveal. Absent: not in the test (an older client made it, or it
-    // was made before the test). It follows from the game's PIN and is independent of `coach`; each
+    // was made before the test). It follows from the game's PIN alone, whatever `coach` is; each
     // Replay is a new game with a half of its own. Phones cannot read it: see state.staged.
     bigReveal?: boolean;
     // Each player's best lie so far (the one that fooled the most players), for the final screen.
@@ -90,6 +128,36 @@ export interface GameScheme {
     // The question index highlights were first kept from. 0 means the whole game counts, so a player
     // with no highlight really fooled nobody (games already running at a deploy start later).
     highlightsFrom?: number;
+    // An old game's private parts (players, highlights, answers, ...), moved here by the server 6 hours
+    // after its final scoreboard (24 hours after it was made, for a game never finished): this path has
+    // no database rule of its own, so only the server reads it. Nothing is erased. Server only: see
+    // old-games.ts in the functions, whose readGame puts them back for every server reader.
+    kept?: { [part: string]: any };
+    // The "About us" questions, a 50/50 test set when the game is made, and only for a game made by a
+    // client that can show them (see about.ts in the functions). true: two or three questions of the game
+    // are about one of its players, when it starts with three or more. false: in the test, plays as
+    // before. Absent: not in the test. Phones cannot read it: an About question shows on state.about.
+    aboutUs?: boolean;
+    // Which questions of the game are About questions, written at START (keys "q<index>"): the prompt,
+    // the player it named and how it went. Server only: phones never read it.
+    aboutQs?: { [key: string]: AboutSlot };
+    // The named player's answer to the About question being played: the truth. Server only: no phone can
+    // read it, so nobody learns it before the answers are on the table, where it is the truth row.
+    aboutTruth?: { pid: string; text: string };
+    // Server time each player's lie and pick arrived, for measuring the wait (question_results).
+    // Server only: no rule opens it, so no phone can read or write it.
+    answerTimes?: AnswerTimes;
+}
+
+/** When one player's lie or pick arrived (server time, ms), and for which question. */
+export interface AnswerTime {
+    q: number;
+    at: number;
+}
+
+export interface AnswerTimes {
+    lies?: { [pid: string]: AnswerTime };
+    picks?: { [pid: string]: AnswerTime };
 }
 
 export type GameOrigin = 'create' | 'replay' | 'crew';
@@ -242,6 +310,10 @@ export function revealScoreChanges(revealAnswers: RevealAnswer[] | undefined | n
         const selectors = row.selectors || [];
         if (row.realAnswer) {
             selectors.forEach(pid => add(pid, row.points));
+            // An About question's truth: the player it is about scores for each friend who found it.
+            if (row.about) {
+                add(row.about, row.aboutPoints);
+            }
         } else if (row.houseLie) {
             selectors.forEach(pid => add(pid, row.pointsBy && pid in row.pointsBy ? row.pointsBy[pid] : row.points));
         } else {
@@ -430,6 +502,10 @@ export interface RevealAnswer {
     // Lies only (players' and house lies): the players who laughed at it during the reveal (see laugh.ts in
     // the functions). Written by the server, one key per player, while the reveal is on. Laughs give no points.
     laughs?: { [pid: string]: boolean };
+    // The truth of an About question only: the player it is about, and the points they score (one
+    // friend's worth of a fooled lie for each friend who found it). Written by the server.
+    about?: string;
+    aboutPoints?: number;
 }
 
 /**
@@ -493,6 +569,9 @@ export interface Crew {
     totalQ: number;
     createdAt: number;
     creator?: string;
+    // Made by "Same time next week?" under a name nobody typed ("Dana's crew"): the browser that made
+    // it (creator) may still rename it from that sheet.
+    auto?: boolean;
     members: { [key: string]: CrewMember };
     // Every finished game that was offered to the crew, counted or not (keeps updates idempotent).
     games?: { [pin: string]: CrewGameRecord };
@@ -502,6 +581,68 @@ export interface Crew {
     rematch?: { pin: string; time: number };
     // The test tag of the test game this crew was saved from: its rematches are test games too.
     test?: string;
+    // The crew's next game night and who said "I'm in" (see CrewNight). Written by the crewNight function.
+    night?: CrewNight;
+    // The campaign tag every game of this crew carries (opened_games.campaign). 'table' for a crew a
+    // guest made to invite another group (createTable in controllers/crew.ts); a test tag wins over it.
+    campaign?: string;
+    // A guest's table: the pin of the finished game it was made from, so a table that brought new
+    // people can be told from one where the same group played again.
+    from?: string;
+}
+
+/** The campaign tag of a guest's table (see Crew.campaign), and of the games its lobby button opens. */
+export const TABLE_CAMPAIGN = 'table';
+
+/**
+ * A crew's next game night: when it is, who called it, and who said "I'm in".
+ * `in` is keyed by crewMemberKey(nickname) and holds the nickname as it was typed, since a friend who
+ * never played with the crew has no member entry to read a name from (`true` reads as the member's name).
+ */
+export interface CrewNight {
+    time: number;
+    by?: string;
+    in?: { [key: string]: string | boolean };
+}
+
+/** The most names one night's list holds. */
+export const NIGHT_IN_MAX = 30;
+
+/** A night runs past midnight: until this hour it is still the evening before. */
+export const NIGHT_ENDS_HOUR = 5;
+
+const NIGHT_DAY_MS = 24 * 60 * 60 * 1000;
+const NIGHT_MINUTE_MS = 60 * 1000;
+
+/**
+ * A phone's clock, as Date.getTimezoneOffset gives it (minutes behind UTC: Israel is -120 in winter),
+ * or null when it is not one (an old site sends none). Offsets run from -14:00 to +12:00.
+ */
+export function cleanTzOffset(offset: any): number | null {
+    return typeof offset === 'number' && isFinite(offset) && Math.floor(offset) === offset
+        && offset >= -840 && offset <= 720 ? offset : null;
+}
+
+/**
+ * The end of tonight: the next 05:00 on a clock `offset` minutes behind UTC, at the moment `now`.
+ * One rule for the phones and the server: the server takes `now` from its own clock and `offset`
+ * from the phone, so "still ahead" means the same on both sides.
+ */
+export function tonightEndsAt(now: number, offset: number): number {
+    const local = new Date(now - offset * NIGHT_MINUTE_MS);
+    let end = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), NIGHT_ENDS_HOUR) + offset * NIGHT_MINUTE_MS;
+    if (end <= now) {
+        end += NIGHT_DAY_MS;
+    }
+    return end;
+}
+
+/**
+ * Is this night still to come? A night that is tonight (before the next 05:00), or has passed, is the
+ * one being played; a later night is set. The same test on the final screen and in crewNight.
+ */
+export function nightStillAhead(time: any, now: number, offset: number): boolean {
+    return typeof time === 'number' && isFinite(time) && time >= tonightEndsAt(now, offset);
 }
 
 export interface CrewMember {
@@ -550,7 +691,14 @@ export function applyCrewGame(crew: Crew, pin: string, players: CrewGamePlayer[]
 
     const memberCount = Object.keys(crew.members).length;
     const matched = players.filter(p => !!crew.members[crewMemberKey(p.nickname)]).length;
-    const counted = players.length >= 2 && matched >= Math.ceil(memberCount / 2);
+    // A guest's table (one member, nothing played yet: see createTable) counts its first game whoever
+    // sits down: that game is the other group showing up. A saved crew always has two members or more.
+    const firstOfTable = memberCount === 1 && !crew.gameCount;
+    const counted = players.length >= 2 && (firstOfTable || matched >= Math.ceil(memberCount / 2));
+    if (counted && firstOfTable && !matched) {
+        // The guest played under another name: the name the table was made with has no game, so it goes.
+        crew.members = {};
+    }
     const record: CrewGameRecord = { time, players: players.length, counted };
 
     if (counted) {
@@ -593,6 +741,19 @@ export function crewStandings(crew: Crew): CrewMember[] {
         (b.wins || 0) - (a.wins || 0) || (b.points || 0) - (a.points || 0) || (a.games || 0) - (b.games || 0));
 }
 
+/**
+ * The names that said "I'm in" for the crew's night, in the list's own (alphabetical) order.
+ * A name that is a slur or a sex word is left out, as in the standings.
+ */
+export function crewNightNames(crew: Crew): string[] {
+    const list = crew && crew.night && crew.night.in ? crew.night.in : {};
+    const members = (crew && crew.members) || {};
+    return Object.keys(list).sort()
+        .filter(k => !!list[k])
+        .map(k => typeof list[k] === 'string' ? String(list[k]) : (members[k] ? members[k].nickname : k))
+        .filter(n => !!n && !nameFlag(n));
+}
+
 /** One line for the top of the crew page, like "Dana leads 4 to 3". */
 export function crewLeaderLine(crew: Crew, locale: string): string {
     const he = locale === 'he';
@@ -626,11 +787,19 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
  * the room has seen) into the normal questions. Pack questions never appear in other games.
  * `season` (dates in Israel, inclusive) is when the create page offers the pack switched on by
  * default and crew rematches use it; outside it the pack is still playable by link (?pack=<id>).
+ * `locales`, when set, are the only game languages the pack has questions in: a game in another
+ * language is never offered the pack and never gets it. `icon` stands before its name (default 🕎).
+ * `seasonIn`, when set, are the only game languages that get the pack by default in its season
+ * (default: every language it fits). In other languages it is still playable by link. Seasons may
+ * overlap only for packs that no one language gets by default, so a game has one pack a day.
  */
 export interface QuestionPack {
     perGame: number;
     season: { from: string; to: string };
     label: { en: string; he: string };
+    locales?: string[];
+    seasonIn?: string[];
+    icon?: string;
 }
 
 export const questionPacks: { [id: string]: QuestionPack } = {
@@ -638,6 +807,31 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         perGame: 3,
         season: { from: '2026-12-01', to: '2026-12-13' },
         label: { en: 'Hanukkah questions', he: 'שאלות חנוכה' },
+        // English games get the Christmas pack by default in December; Hanukkah stays one tap
+        // away for them with ?pack=hanukkah (the Hanukkah page's Start button).
+        seasonIn: ['he'],
+    },
+    // US Thanksgiving is Thursday 26 November 2026. English questions only
+    // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
+    // The last day is a day late on purpose: the season goes by the date in Israel, which is ahead
+    // of every American evening. Next year's days go here (2027: Thursday 25 November).
+    thanksgiving: {
+        perGame: 3,
+        season: { from: '2026-11-20', to: '2026-11-30' },
+        label: { en: 'Thanksgiving questions', he: 'שאלות חג ההודיה (באנגלית)' },
+        locales: ['en'],
+        icon: '🦃',
+    },
+    // Christmas and New Year's Eve, English questions only (functions/data/christmas-questions.json).
+    // By default in English games from 1 December, office party season, to 2 January: by the date
+    // in Israel that is New Year's Eve until midnight on the US West Coast. Hebrew games keep
+    // Hanukkah. Next year's days go here.
+    christmas: {
+        perGame: 3,
+        season: { from: '2026-12-01', to: '2027-01-02' },
+        label: { en: 'Christmas and New Year questions', he: 'שאלות חג המולד והשנה החדשה (באנגלית)' },
+        locales: ['en'],
+        icon: '🎄',
     },
 };
 
@@ -645,13 +839,36 @@ export function isPack(id: any): boolean {
     return typeof id === 'string' && Object.prototype.hasOwnProperty.call(questionPacks, id);
 }
 
-/** The pack whose season includes `now` (by the date in Israel), if any. */
-export function seasonalPack(now: number = Date.now()): string | undefined {
+/** Whether `id` is a pack that a game in `locale` can use (a pack without `locales` fits every game). */
+export function packFits(id: any, locale: any): boolean {
+    if (!isPack(id)) {
+        return false;
+    }
+    const locales = questionPacks[id].locales;
+    return !locales || locales.indexOf(locale) >= 0;
+}
+
+/** The pack's icon, shown before its name on the create page and in the lobby. */
+export function packIcon(id: any): string {
+    return (isPack(id) && questionPacks[id].icon) || '🕎';
+}
+
+/** Whether a game in `locale` gets pack `id` by default in its season. */
+export function packInSeasonFor(id: any, locale: any): boolean {
+    const only = isPack(id) && questionPacks[id].seasonIn;
+    return packFits(id, locale) && (!only || only.indexOf(locale) >= 0);
+}
+
+/**
+ * The pack whose season includes `now` (by the date in Israel), if any. With a `locale`, only a
+ * pack that a game in that language gets by default (see `seasonIn`).
+ */
+export function seasonalPack(now: number = Date.now(), locale?: string): string | undefined {
     // Israel is UTC+2 in winter; close enough for a day-level season.
     const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
     return Object.keys(questionPacks).find(id => {
         const s = questionPacks[id].season;
-        return day >= s.from && day <= s.to;
+        return day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
     });
 }
 
@@ -674,6 +891,92 @@ export const TEST_CAMPAIGN = 'test';
 export function isTestCampaign(tag: any): boolean {
     const t = cleanCampaign(tag);
     return !!t && (t === TEST_CAMPAIGN || t.indexOf(TEST_CAMPAIGN + '-') === 0);
+}
+
+/**
+ * Where the visit of the browser that created a game started, so the usage data can tell which
+ * routes bring new hosts (opened_games.first_page and its neighbours; DEPLOYING.md, "Where a host
+ * came from"). The creating phone sends it with newGame; the server keeps only what cleanArrival
+ * lets through, at games/$pin/arrival, which no phone can read.
+ */
+export interface GameArrival {
+    /** The first page of the visit, as arrivalPage writes it: /, /how-to-play, /join-game/:pin. */
+    page?: string;
+    /** The host name of the site the visit came from (www.google.com); absent when the browser sent none. */
+    ref?: string;
+    /** The browser had sat in a game before it created this one. */
+    played?: boolean;
+    /** The browser had created a game before this one. */
+    hosted?: boolean;
+    /** Whole minutes from the first page of the visit to creating the game. */
+    minutes?: number;
+}
+
+/**
+ * A page of the site as the usage data names it: the path alone (never a query string), with every
+ * PIN and crew id replaced and the Hebrew twin of an app page folded into the page itself:
+ * /he/join-game/ABCD -> /join-game/:pin, /c/k3j9 -> /c/:id, /he -> /. A plain page keeps its own
+ * address (/he/hanukkah). The same form as `page` in the visits table (pull request 46).
+ */
+export function arrivalPage(path: any): string | undefined {
+    if (typeof path !== 'string') {
+        return undefined;
+    }
+    const p = path.split(/[?#]/)[0];
+    if (p.length > 80 || !/^\/[A-Za-z0-9\/_-]*$/.test(p)) {
+        return undefined;
+    }
+    let m = /^(\/he)?\/(join-game|present-game|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)\/[^\/]+\/?$/.exec(p);
+    if (m) {
+        return '/' + m[2] + '/:pin';
+    }
+    m = /^(\/he)?\/c\/[^\/]+\/?$/.exec(p);
+    if (m) {
+        return '/c/:id';
+    }
+    if (/^\/he\/join-game\/?$/.test(p)) {
+        return '/join-game';
+    }
+    if (/^\/he\/?$/.test(p)) {
+        return '/';
+    }
+    return p.length > 1 ? p.replace(/\/+$/, '') || '/' : p;
+}
+
+/** A referring site's host name, in lower case: letters, digits, dots and dashes, never an address. */
+export function arrivalRef(host: any): string | undefined {
+    if (typeof host !== 'string') {
+        return undefined;
+    }
+    const h = host.toLowerCase().trim();
+    return /^[a-z0-9.-]{1,60}$/.test(h) && /[a-z]/.test(h) ? h : undefined;
+}
+
+/** What the server keeps of the arrival a phone sends: only the five fields, each in its own form. */
+export function cleanArrival(raw: any): GameArrival | undefined {
+    if (!raw || typeof raw !== 'object') {
+        return undefined;
+    }
+    const arrival: GameArrival = {};
+    const page = arrivalPage(raw.page);
+    if (page) {
+        arrival.page = page;
+    }
+    const ref = arrivalRef(raw.ref);
+    if (ref) {
+        arrival.ref = ref;
+    }
+    if (typeof raw.played === 'boolean') {
+        arrival.played = raw.played;
+    }
+    if (typeof raw.hosted === 'boolean') {
+        arrival.hosted = raw.hosted;
+    }
+    if (typeof raw.minutes === 'number' && isFinite(raw.minutes) && raw.minutes >= 0) {
+        // Capped at 30 days: a tab left open longer says nothing more.
+        arrival.minutes = Math.min(Math.floor(raw.minutes), 43200);
+    }
+    return Object.keys(arrival).length ? arrival : undefined;
 }
 
 /** A player's best lie of the game, and how many players their lies fooled in all. */
@@ -837,4 +1140,80 @@ export function tasteOf(state: any): Taste | null {
     }
     const count = (n: any) => typeof n === 'number' && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
     return { found: count(taste.found), length: count(taste.length) };
+}
+
+/**
+ * "About us" questions (fun plan, move 6): a question about one of the players. "The thing Ben would
+ * save from a fire is ___". Ben writes the truth, privately, while everyone else writes a lie about
+ * Ben; then all but Ben pick. Finding Ben's truth scores as finding any truth, Ben scores for each friend
+ * who finds it, and lies score as lies. If Ben sends nothing in time, the table gets an ordinary
+ * question in its place.
+ *
+ * Phones learn that the question is one, and whom it is about, from the game's state, which every phone
+ * may read and only the server may write: each state of an About question (the writing, the answers, the
+ * reveal and its scoreboard) carries `about`. The truth itself is never readable before the answers.
+ */
+export interface AboutSlot {
+    prompt: string;
+    // The player the question was about, once it was asked.
+    pid?: string;
+    // asked: on the table now; played: the truth came in; fallback: it did not, and an ordinary question
+    // was played instead; skipped: too few players were playing to ask it.
+    result?: 'asked' | 'played' | 'fallback' | 'skipped';
+}
+
+export interface About {
+    pid: string;
+    prompt: string;
+}
+
+export interface AboutState extends GameStateInfo {
+    about?: About;
+    // On the writing step of the bank question played in place of an About question whose named player
+    // sent no truth in time: who that was, so every screen can say why the question changed.
+    aboutMissed?: { pid: string };
+}
+
+/** The About question a state is on, or null: for every other question, and for anything unreadable. */
+export function aboutOf(state: any): About | null {
+    const about = state && typeof state === 'object' ? state.about : null;
+    if (!about || typeof about !== 'object' || typeof about.pid !== 'string' || !about.pid) {
+        return null;
+    }
+    return { pid: about.pid, prompt: typeof about.prompt === 'string' ? about.prompt : '' };
+}
+
+/** The player whose About question was just replaced by a bank question (see AboutState), or null. */
+export function aboutMissedOf(state: any): string | null {
+    const missed = state && typeof state === 'object' ? state.aboutMissed : null;
+    return missed && typeof missed === 'object' && typeof missed.pid === 'string' && missed.pid ? missed.pid : null;
+}
+
+/**
+ * The line a writing screen shows when its bank question replaces an About question whose named player
+ * sent no truth: whose question it was (their nickname, '' when unknown) and whether this phone is theirs.
+ * Null on every other question.
+ */
+export function aboutMissedView(missed: string | null, players: any, pid: string | null | undefined, presenter: boolean): { me: boolean; name: string } | null {
+    if (!missed) {
+        return null;
+    }
+    const seat = players && typeof players === 'object' ? players[missed] : null;
+    return { me: !presenter && !!pid && pid === missed, name: seat && seat.nickname ? String(seat.nickname) : '' };
+}
+
+/**
+ * What a screen of an About question shows, from the About (aboutOf) and the game's players: the named
+ * player's nickname, and whether this phone is that player (the big screen never is). A screen sets
+ * both together with the question, so the form never shows without the "about you" badge.
+ */
+export function aboutView(about: About | null, players: any, pid: string | null | undefined, presenter: boolean): { aboutMe: boolean; aboutName: string } {
+    if (!about) {
+        return { aboutMe: false, aboutName: null };
+    }
+    const seat = players && typeof players === 'object' ? players[about.pid] : null;
+    return {
+        aboutMe: !presenter && !!pid && pid === about.pid,
+        aboutName: seat && seat.nickname ? String(seat.nickname) : '',
+    };
 }

@@ -13,7 +13,9 @@ function load(file) {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES5 },
     }).outputText;
     const mod = { exports: {} };
-    new Function('module', 'exports', 'require', out)(mod, mod.exports, require);
+    // Relative imports of other .ts files (front-door.ts takes cleanCode from services/game-code.ts) load the same way.
+    const req = (name) => name.startsWith('.') ? load(path.join(path.dirname(file), name + '.ts')) : require(name);
+    new Function('module', 'exports', 'require', out)(mod, mod.exports, req);
     return mod.exports;
 }
 

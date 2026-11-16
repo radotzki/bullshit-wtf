@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { takeJoinSource, preferredLocale } from '../../services/join-source';
+import { takeJoinSource, markVisit, preferredLocale } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
-import { JoinStrings, joinStrings, joinLocale } from './join-strings';
+import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
+import { cleanCode } from '../../services/game-code';
 
 @Component({
     standalone: false,
@@ -155,6 +156,12 @@ export class JoinGameComponent implements OnInit {
     }
 
     validateGameName() {
+        // The code as the server knows it: capitals, letters only, and a code typed on a Hebrew
+        // keyboard read as the English letters on the same keys (the home's code box does the same).
+        // Shown back in the box, so the guest sees the code they joined. Nothing left of it: sent
+        // as typed, and the server says the PIN is wrong.
+        const typed = this.pin;
+        this.pin = cleanCode(typed) || typed;
         this.loading = true;
         this.errorMsg = '';
         this.gameOver = null;
@@ -169,7 +176,8 @@ export class JoinGameComponent implements OnInit {
                     return this.showGameOver(err);
                 }
                 this.loading = false;
-                this.errorMsg = this.t.error(err && err.code, err && err.message);
+                // A wrong PIN typed in Hebrew letters also says that codes are English letters.
+                this.errorMsg = pinError(this.t.lang, err && err.code, err && err.message, typed);
                 if (!this.isExpected(err)) {
                     reportError(err, 'validateGameName', { pin: this.pin });
                 }
@@ -194,6 +202,7 @@ export class JoinGameComponent implements OnInit {
                 // Keep the name the server stored, so Replay and the crew never send the typed one back.
                 this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };
                 this.sessionService.nameSwap = swapped ? { pin: this.pin.toUpperCase(), nickname } : null;
+                markVisit('join');
                 if (this.crewId) {
                     this.crewService.remember(this.crewId, this.crewName, nickname);
                 }

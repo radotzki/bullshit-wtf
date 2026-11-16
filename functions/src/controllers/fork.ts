@@ -1,14 +1,18 @@
-import { replayLength } from './taste';
+import { replayLength, gameTaste } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
 import { incGameCounter, generateGameName } from './new-game';
 import { randomQuestions } from './questions';
 import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
 import { withStaged } from './phase';
+import { drawAboutUs } from './about';
+import { claimFork, forkOf, crewLobbyFor, NEXT_GAME_WAIT_MS } from './next-game';
+import { REMATCH_REUSE_MS } from './crew';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
-export const FORK_WAIT_MS = 10 * 1000;
+export const FORK_WAIT_MS = NEXT_GAME_WAIT_MS;
 
 /**
  * Replay: a new game with the same players. `creator` is the uid of the phone that pressed Replay,
@@ -23,9 +27,9 @@ export const FORK_WAIT_MS = 10 * 1000;
  * Replay could end up in the other phone's lobby without START (Friday 6 Nov: JVQP made JVRQ and JVRR).
  */
 export async function fork(pin: string, creator?: string, hostPid?: string, hostKey?: string,
-    stagedReveal = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
+    stagedReveal = false, aboutUs = false): Promise<{ pin: string; host: boolean; hostKey?: string }> {
     pin = pin.toUpperCase();
-    const game = await get<GameScheme>(gamesRef.child(pin));
+    const game = await readGame(pin);
     const gameCounter = await incGameCounter();
     const forkedGamePin = generateGameName(gameCounter);
 
@@ -36,21 +40,30 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
 
     const claimed = await claimFork(pin, forkedGamePin);
     if (claimed && claimed !== forkedGamePin) {
-        // Another phone pressed Replay first: everyone goes to its game.
-        if (await forkReady(pin, claimed)) {
-            // Whoever pressed Replay may start the new game, so this player gets its host key too.
-            // Only a player of the finished game, from a client that sends a key (and so reads this one).
-            const players = game.players || {};
-            const theirs = hostPid && hostKey && players[hostPid]
-                ? await get<string>(gamesRef.child(claimed).child('hostKey')) : null;
-            return theirs ? { pin: claimed, host: true, hostKey: theirs } : { pin: claimed, host: false };
+        // Another phone pressed Replay first, or opened the crew's lobby: everyone goes to its game.
+        const next = await forkOf(pin);
+        if (next) {
+            return await joinNext(game, next, hostPid, hostKey);
         }
         // That Replay never finished (its function failed): make the game here instead.
         console.log(`[PIN: ${pin}] Replay ${claimed} never finished; making ${forkedGamePin}`);
     }
 
+    // A crew game: a phone that went by the crew page may have opened the crew's lobby since this
+    // game ended. Then that lobby is the Replay too; else this Replay is the crew's lobby (see next-game.ts).
+    if (game && game.crew) {
+        const endedAt = game.state && game.state.id === GameState.ScoreBoardFinal ? game.state.timestamp || 0 : 0;
+        const lobby = await crewLobbyFor(game.crew, endedAt, forkedGamePin, REMATCH_REUSE_MS)
+            .catch(e => { console.error('crewLobbyFor failed', pin, e && e.message); return null; });
+        if (lobby) {
+            await gamesRef.child(pin).child('forking').set(lobby);
+            await gamesRef.child(pin).child('fork').set(lobby);
+            return await joinNext(game, lobby, hostPid, hostKey);
+        }
+    }
+
     const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
-    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin);
+    const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin, aboutUs);
 
     await gamesRef.child(forkedGamePin).set(forkedGame);
     await gamesRef.child(pin).child('forking').set(forkedGamePin);
@@ -58,33 +71,21 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
     return { pin: forkedGamePin, host: true };
 }
 
-/** The first Replay of `pin` claims its new game's pin; resolves to the pin that holds the claim. */
-function claimFork(pin: string, forkedGamePin: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        gamesRef.child(pin).child('forking').transaction(
-            (current) => current || forkedGamePin,
-            (error, committed, snapshot) => error ? reject(error) : resolve(snapshot.val()),
-        );
-    });
-}
-
-/** Waits (up to FORK_WAIT_MS) until the claimed Replay game is written and the old game points to it. */
-async function forkReady(pin: string, claimed: string): Promise<boolean> {
-    const until = Date.now() + FORK_WAIT_MS;
-    while (true) {
-        const current = await get<string>(gamesRef.child(pin).child('fork'));
-        if (current === claimed) {
-            return true;
-        }
-        if (Date.now() >= until) {
-            return false;
-        }
-        await new Promise(r => setTimeout(r, 250));
-    }
+/**
+ * This phone pressed Replay, but the next game is another phone's (a Replay, or the crew's lobby):
+ * whoever pressed Replay may start it, so a player of the finished game gets its host key too.
+ * Only a player of the finished game, from a client that sends a key (and so reads this one).
+ */
+async function joinNext(game: GameScheme, next: string, hostPid?: string, hostKey?: string)
+    : Promise<{ pin: string; host: boolean; hostKey?: string }> {
+    const players = (game && game.players) || {};
+    const theirs = hostPid && hostKey && players[hostPid]
+        ? await get<string>(gamesRef.child(next).child('hostKey')) : null;
+    return theirs ? { pin: next, host: true, hostKey: theirs } : { pin: next, host: false };
 }
 
 export function createFork(parent: string, game: GameScheme, qids: string[], creator?: string, hostPid?: string,
-    hostKey?: string, stagedReveal = false, forkedPin = ''): GameScheme {
+    hostKey?: string, stagedReveal = false, forkedPin = '', aboutUs = false): GameScheme {
     const forked: GameScheme = {
         state: {
             id: GameState.GameStaging,
@@ -128,12 +129,18 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.hasHost = true;
     }
 
+    // The sitting's first game, carried from Replay to Replay ("Same time next week?" draws its half
+    // from it, see next-week.ts). A taste was played alone: its Replay is the group's first game.
+    if (!gameTaste(game)) {
+        forked.root = game.root || parent;
+    }
+
     // Replay keeps counting for the same crew.
     if (game.crew) {
         forked.crew = game.crew;
     }
 
-    // The round-1 lie helper, on for half of all games: each Replay is a new draw.
+    // The round-1 lie helper, on for every game, Replay included. Logged as coach.
     if (pickCoach()) {
         forked.coach = true;
     }
@@ -144,6 +151,12 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
     if (bigReveal !== undefined) {
         forked.bigReveal = bigReveal;
         forked.state = withStaged(forked.state, forked);
+    }
+
+    // The About questions: a crew's Replay stays in the crew's half, any other is a new draw by its PIN.
+    const about = drawAboutUs(aboutUs === true && !!forkedPin, forkedPin, game.crew);
+    if (about !== undefined) {
+        forked.aboutUs = about;
     }
 
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).

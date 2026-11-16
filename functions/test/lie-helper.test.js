@@ -79,12 +79,8 @@ test('a sent lie counts as an idea whatever its case and spacing', () => {
     assert.strictEqual(isIdea(['a'], ''), false);
 });
 
-test('about half of all games get the helper', () => {
-    assert.strictEqual(pickCoach(() => 0.49), true);
-    assert.strictEqual(pickCoach(() => 0.5), false);
-    let on = 0;
-    for (let i = 0; i < 2000; i++) { if (pickCoach()) on++; }
-    assert.ok(on > 850 && on < 1150, `${on} of 2000`);
+test('every game gets the helper (the 50/50 test has ended)', () => {
+    for (let i = 0; i < 200; i++) { assert.strictEqual(pickCoach(), true); }
 });
 
 test('a question result counts lies, helper lies, picks and friends fooled', () => {
@@ -107,6 +103,7 @@ test('a question result counts lies, helper lies, picks and friends fooled', () 
     assert.deepStrictEqual(questionResult('JUPU', game), {
         id: 'JUPU', q_index: 0, round: 1, total_q: 7, players: 4,
         lies: 2, idea_lies: 1, picks: 4, friend_fooled: 2, coach: true, locale: 'he',
+        lie_span_s: null, pick_span_s: null, unpicked_lies: 0,
         qid: null, truth_picks: 1, house_picks: 1,
     });
 });
@@ -116,6 +113,7 @@ test('a question nobody wrote or picked on still gives a row', () => {
     assert.deepStrictEqual(r, {
         id: 'ABCD', q_index: 4, round: 2, total_q: 7, players: 1,
         lies: 0, idea_lies: 0, picks: 0, friend_fooled: 0, coach: false, locale: 'en',
+        lie_span_s: null, pick_span_s: null, unpicked_lies: 0,
         qid: null, truth_picks: 0, house_picks: 0,
     });
 });
