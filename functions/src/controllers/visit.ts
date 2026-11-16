@@ -5,7 +5,9 @@
 export interface VisitRow {
     // view: the page opened. create, join: this page view created or joined a game.
     // end: the page was hidden or closed. stuck: the app had not drawn after 12 s.
-    kind: 'view' | 'stuck' | 'end' | 'create' | 'join';
+    // page: ms is the page's own trip, from the tap to the beacon starting (before every other row's
+    // clock). drawn: the app first drew, at ms on the beacon's clock; page.ms + drawn.ms is the whole wait.
+    kind: 'view' | 'stuck' | 'end' | 'create' | 'join' | 'page' | 'drawn';
     // Random per page load, never stored on the phone: groups the rows of one page view.
     view: string;
     first: string;
@@ -32,7 +34,7 @@ export interface VisitRow {
     bot: boolean;
 }
 
-const KINDS = ['view', 'stuck', 'end', 'create', 'join'];
+const KINDS = ['view', 'stuck', 'end', 'create', 'join', 'page', 'drawn'];
 
 function text(v: any, max: number): string {
     return typeof v === 'string' ? v.replace(/[\u0000-\u001f]/g, ' ').slice(0, max) : '';
@@ -207,7 +209,7 @@ export function visitRecord(row: VisitRow, now: Date = new Date()): VisitRecord 
         browser: row.browser,
         bot: row.bot,
         // Not known yet as the page opens, and a plain page has no app to start.
-        booted: row.kind === 'view' || row.plain ? null : row.booted,
+        booted: row.kind === 'view' || row.kind === 'page' || row.plain ? null : row.booted,
         ms: row.ms >= 0 ? row.ms : null,
         err: row.err || null,
     };
