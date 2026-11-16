@@ -123,8 +123,12 @@ export async function crewLobbyFor(crewId: string, endedAt: number, forkedGamePi
     return await lobbyOpen(holder, claimed && claimed.pin === holder ? claimed.time : Date.now()) ? holder : null;
 }
 
-/** The crew's latest game, when it ended within LINK_LAST_GAME_MS: a crew REMATCH is its next game. */
-export function lastGameOf(crew: Crew, now = Date.now()): string | null {
+/**
+ * The crew's latest recorded game, however long ago it ended (null if it has none). Its record's
+ * `time` is when it reached its final scoreboard; the record stays on the crew when the old-games
+ * sweep moves the game's private parts.
+ */
+export function latestCrewGame(crew: Crew): string | null {
     const games = crew.games || {};
     let last: string = null;
     Object.keys(games).forEach(p => {
@@ -132,5 +136,11 @@ export function lastGameOf(crew: Crew, now = Date.now()): string | null {
             last = p;
         }
     });
-    return last && now - (games[last].time || 0) < LINK_LAST_GAME_MS ? last : null;
+    return last;
+}
+
+/** The crew's latest game, when it ended within LINK_LAST_GAME_MS: a crew REMATCH is its next game. */
+export function lastGameOf(crew: Crew, now = Date.now()): string | null {
+    const last = latestCrewGame(crew);
+    return last && now - (crew.games[last].time || 0) < LINK_LAST_GAME_MS ? last : null;
 }

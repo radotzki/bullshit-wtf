@@ -221,6 +221,70 @@ test('with no recent crew game, the crew page still reuses its waiting lobby', a
     assert.strictEqual(await crewPage(g, 1), old);
 });
 
+// ---- past the half hour that links a final screen to the crew page ----
+// The crew page counted a lobby opened before the last game ended as gone only within 30 minutes of
+// that end, while Replay does so at any age: 40 minutes on, with an old lobby still waiting, the crew
+// page joined it and a Replay made a new one (Product's R6 on #156).
+
+/** A crew game that ended `minutes` ago, with a crew lobby opened an hour before that end still waiting. */
+async function withOldLobbyEndedAgo(minutes) {
+    const g = await finishedGame(true);
+    const old = await newGame('en', 5, 'u9', { crew: g.crew });
+    const end = Date.now() - minutes * 60 * 1000;
+    db.crews[g.crew].rematch = { pin: old, time: end - 60 * 60 * 1000 };
+    db.games[g.pin].state.timestamp = end;
+    Object.keys(db.crews[g.crew].games).forEach(p => { db.crews[g.crew].games[p].time = end; });
+    return { g, old };
+}
+
+test('40 minutes after the game, with an old lobby waiting: crew page, then Replay, one new lobby (R6)', async () => {
+    const { g, old } = await withOldLobbyEndedAgo(40);
+    const c = await crewPage(g, 1);
+    const r = await replay(g, 2);
+    assert.notStrictEqual(c, old, 'not the lobby opened before the game ended');
+    assert.strictEqual(r, c, `crew page ${c} and Replay ${r} in one lobby`);
+    assert.ok(staging(c));
+    assert.strictEqual(db.crews[g.crew].rematch.pin, c);
+    assert.strictEqual(await crewPage(g, 3), c, 'a second crew page tap goes there too');
+});
+
+test('40 minutes after the game, with an old lobby waiting: Replay, then crew page, one new lobby', async () => {
+    const { g, old } = await withOldLobbyEndedAgo(40);
+    const r = await replay(g, 2);
+    const c = await crewPage(g, 1);
+    assert.notStrictEqual(r, old);
+    assert.strictEqual(c, r, `Replay ${r} and crew page ${c} in one lobby`);
+});
+
+test('40 minutes after the game, with an old lobby waiting: every way pressed at once, one new lobby', async () => {
+    const { g, old } = await withOldLobbyEndedAgo(40);
+    const pins = await Promise.all([crewPage(g, 1), replay(g, 2), crewPage(g, 3), replay(g, 4)]);
+    assert.strictEqual(new Set(pins).size, 1, `one lobby, got ${pins.join(', ')}`);
+    assert.notStrictEqual(pins[0], old);
+    assert.ok(staging(pins[0]));
+});
+
+test('90 minutes after the game, the old lobby is still gone for the crew page, even with no end time on the game', async () => {
+    const { g, old } = await withOldLobbyEndedAgo(90);
+    delete db.games[g.pin].state.timestamp;
+    const c = await crewPage(g, 1);
+    assert.notStrictEqual(c, old, 'the crew\'s record of the game gives its end');
+    assert.strictEqual(await replay(g, 2), c);
+});
+
+test('past the half hour, a lobby opened after the game ended is still reused, and the final screen is not relinked', async () => {
+    const g = await finishedGame(true);
+    const end = Date.now() - 50 * 60 * 1000;
+    db.games[g.pin].state.timestamp = end;
+    Object.keys(db.crews[g.crew].games).forEach(p => { db.crews[g.crew].games[p].time = end; });
+    const fresh = await newGame('en', 5, 'u9', { crew: g.crew });
+    db.crews[g.crew].rematch = { pin: fresh, time: end + 10 * 60 * 1000 };
+    assert.strictEqual(await crewPage(g, 1), fresh);
+    const made = await crewPage(g, 2);
+    assert.strictEqual(made, fresh);
+    assert.strictEqual(db.games[g.pin].fork, undefined, 'a crew page tap past half an hour does not point the old game anywhere');
+});
+
 test('a game with no crew: Replays pressed at once still make one game', async () => {
     const g = await finishedGame(false);
     const pins = await Promise.all([replay(g, 1), replay(g, 2), replay(g, 3)]);
@@ -280,4 +344,20 @@ test('the crew page, after a Replay of a moved game, goes to that Replay (lastGa
     const r = await replay(g, 2);
     assert.strictEqual(db.games[r].parent, g.pin);
     assert.strictEqual(await crewPage(g, 1), r);
+});
+
+
+test('the crew page reads the latest game\'s end after the sweep moved it: a lobby opened since is reused, one from before is not', async () => {
+    const g = await finishedGame(true);
+    await sweepMoved(g);
+    const end = Date.now() - SEVEN_HOURS;
+    db.games[g.pin].state.timestamp = end;
+    Object.keys(db.crews[g.crew].games).forEach(p => { db.crews[g.crew].games[p].time = end; });
+    const fresh = await newGame('en', 5, 'u9', { crew: g.crew });
+    db.crews[g.crew].rematch = { pin: fresh, time: Date.now() - 60 * 60 * 1000 };
+    assert.strictEqual(await crewPage(g, 1), fresh);
+    // An older lobby, from before that end, is not (here it is also past the 3-hour reuse window).
+    const older = await newGame('en', 5, 'u9', { crew: g.crew });
+    db.crews[g.crew].rematch = { pin: older, time: end - 60 * 1000 };
+    assert.notStrictEqual(await crewPage(g, 2), older);
 });
