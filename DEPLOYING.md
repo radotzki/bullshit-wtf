@@ -1386,7 +1386,8 @@ at the end of `npm run build`, and the build prints it. It is a fingerprint of t
   that a library under `node_modules` writes is no report.
 - Not reported: an answer a function gives on purpose. The controllers reject with a plain
   `{ message, code }` for those ("Sorry, game is full"); keep to that form for a new one.
-- Not reported: the answer to a request the site never sends. That is anything but a POST; a
+- Not reported: the answer to a request the site never sends. That is anything but a POST (for
+  `daily`, anything but a GET or a POST: the site reads the puzzle with a GET); a
   call to a function that works on a game without a PIN, or with a PIN that is not 2 to 12
   letters and digits (a number, a PIN with a dot); a call to `crewRematch` without a crew id; a
   `newGame` without a language; and a call about a PIN that no game has (a Replay of an unknown PIN, say). Such a request gets
