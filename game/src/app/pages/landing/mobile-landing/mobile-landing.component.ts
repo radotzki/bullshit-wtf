@@ -1,10 +1,13 @@
 import { Component, ChangeDetectionStrategy, Injector } from '@angular/core';
+import { Router } from '@angular/router';
 import { CrewService, RememberedCrew, TonightCrew } from '../../../services/crew.service';
 import { ApiService } from '../../../services/api.service';
 import { arrivalCampaign, preferredLocale, setPreferredLocale } from '../../../services/join-source';
 import { HomeStrings, homeStrings } from '../home-strings';
 import { PictureStrings, createQuery, firstButton, pictureStrings, readVisitor, showPicture } from '../front-door';
 import { SearchLink, searchLinks, seasonLink } from '../search-links';
+import { CodeBox } from '../code-box';
+import { joinStrings } from '../../join-game/join-strings';
 
 /** Reads a key the game keeps in this browser: localStorage, else the tab's storage, else nothing. */
 function readStored(key: string): string | null {
@@ -45,10 +48,20 @@ export class MobileLandingComponent {
     // Links to the search pages: a row under the menu, and in Hanukkah season a line above it.
     links: SearchLink[];
     season: SearchLink | null;
+    // The code box at the top: "Got a code? [ ____ ] Join" (code-box.ts).
+    box: CodeBox;
     private tag: string | null;
 
-    constructor(crewService: CrewService, injector: Injector) {
+    constructor(crewService: CrewService, injector: Injector, router: Router) {
         this.crews = crewService.list().slice(0, 3);
+        // The database and sign-in start only when someone presses Join in the box.
+        this.box = new CodeBox({
+            validate: pin => injector.get(ApiService).validateGameName(pin),
+            navigate: (path, query) => router.navigate(path, { queryParams: query }),
+            locale: () => this.t.lang,
+            errorText: (code, message) => joinStrings(this.t.lang).error(code, message),
+            emptyText: () => this.t.codeEmpty,
+        });
         const tag = this.tag = arrivalCampaign();
         // Only a browser that remembers a crew reads one (and opens the database for it).
         if (this.crews.length) {

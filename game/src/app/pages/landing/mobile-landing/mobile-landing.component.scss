@@ -145,6 +145,79 @@
 }
 
 
+// The code box at the top: "Got a code? [ ____ ] Join", one slim row, so Create (which leads for a
+// visitor with no code) stays on the first screen of a 640 px phone.
+.code-box {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    background-color: #3d2239;
+    color: #f4fcca;
+
+    .code-ask {
+        flex: none;
+        font-size: 1rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .code-input {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 38px;
+        padding: 0 10px;
+        border: 2px solid #f3d467;
+        border-radius: 6px;
+        background-color: #fff;
+        color: #2f1b2c;
+        // A PIN is letters: shown in capitals whatever the keyboard sends (the box upper-cases it too).
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-align: center;
+
+        &::placeholder {
+            color: #8a7a86;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+    }
+
+    // RTL pages: the placeholder is Hebrew, so it reads right to left even though the box is ltr.
+    [dir="rtl"] & .code-input::placeholder {
+        direction: rtl;
+    }
+
+    .code-join {
+        flex: none;
+        height: 38px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 6px;
+        background-color: #533159;
+        color: #f4fcca;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+
+        &.is-busy {
+            opacity: .6;
+        }
+    }
+
+    .code-error {
+        flex: 1 0 100%;
+        margin: 0;
+        color: #ffb3a7;
+        font-size: .9rem;
+        line-height: 1.3;
+    }
+}
+
 // What the game is: one line, and under it a picture of one round for someone who never played.
 .front-door {
     flex: none;
@@ -157,6 +230,15 @@
         margin: 0;
         font-size: 1.15rem;
         line-height: 1.35;
+        text-wrap: balance;
+    }
+
+    // The facts line: small and quiet, one line on most phones.
+    .facts {
+        margin: 4px 0 0;
+        font-size: .9rem;
+        line-height: 1.3;
+        opacity: .9;
         text-wrap: balance;
     }
 

@@ -10,7 +10,8 @@ const arrivalKey = 'BS_VIA';
 const hostedKey = 'BS_HOSTED_PIN';
 const campaignKey = 'BS_CAMPAIGN';
 const localeKey = 'BS_SITE_LOCALE';
-const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew'];
+// home: a join typed into the code box at the top of the home page (front-door.ts).
+const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home'];
 // The post tag of this page load, for a browser whose tab storage is blocked (see arrivalCampaign).
 let loadedWith: string | null = null;
 
