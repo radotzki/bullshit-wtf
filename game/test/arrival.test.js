@@ -95,7 +95,14 @@ test('the note holds no query string, no full address and no id of its own', () 
     t.window.location.search = '?via=link&name=Dana';
     t.arrival.rememberArrival();
     const text = t.sessionStorage.data.BS_ARRIVAL;
-    assert.ok(!/SECRET|thread|777|Dana|via=|\?/.test(text), text);
+    // "at" is the clock in milliseconds, whose digits can hold 777 by chance: it must be a plain number,
+    // and every other part of the note, taken from the address, is checked as strictly as before.
+    const kept = JSON.parse(text);
+    assert.strictEqual(typeof kept.at, 'number', text);
+    assert.ok(Number.isInteger(kept.at), text);
+    const { at, ...fromAddress } = kept;
+    assert.deepStrictEqual(Object.keys(fromAddress).sort(), ['page', 'ref'], text);
+    assert.ok(!/SECRET|thread|777|Dana|via=|\?/.test(JSON.stringify(fromAddress)), text);
     assert.deepStrictEqual(Object.keys(t.arrival.newGameArrival()).sort(), ['hosted', 'minutes', 'page', 'played', 'ref']);
 });
 
