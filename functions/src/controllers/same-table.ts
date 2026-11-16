@@ -63,9 +63,20 @@ export async function tableOpen(pin: string, now = Date.now): Promise<boolean> {
 export type LateTable = { playing: true } | { next: string } | null;
 
 /**
+ * How long after the table's final scores it still counts as playing, while nobody has pressed Replay
+ * yet: the group is on the final screen, and its Replay is likely seconds away. A late player's CATCH
+ * THE NEXT ROUND then waits for that Replay instead of opening a lobby alone, which the group's Replay
+ * would never find (Product's review of #163, section 2). After it, with no Replay, the press opens the
+ * table again.
+ */
+export const REPLAY_GRACE_MS = 2 * 60 * 1000;
+
+/**
  * `held` is the table's last lobby (the finished game's `forking` or `fork`). `playing`: it started and
- * isn't over. `next`: it is over, and its own Replay opened a lobby that a group can still sit down in.
- * Otherwise null. One hop only: the table's own next game, never a chain.
+ * isn't over, or it reached its final scores less than REPLAY_GRACE_MS ago and its Replay hasn't opened
+ * a lobby yet (none pressed, or one claimed and still being written). `next`: it is over, and its own
+ * Replay opened a lobby that a group can still sit down in. Otherwise null. One hop only: the table's
+ * own next game, never a chain.
  */
 export async function lateTable(held: string, now = Date.now()): Promise<LateTable> {
     const table = held ? await readGame(held) : null;
@@ -76,12 +87,25 @@ export async function lateTable(held: string, now = Date.now()): Promise<LateTab
     if (!over && table.state.id !== GameState.GameStaging) {
         return { playing: true };
     }
-    if (over && typeof table.fork === 'string' && table.fork && table.fork !== held) {
-        const next = await readGame(table.fork);
-        if (next && next.state && next.state.id === GameState.GameStaging && !isGameOver(next, now)
-            && Object.keys(next.players || {}).length < MAX_PLAYERS) {
-            return { next: table.fork };
-        }
+    if (!over) {
+        return null;
+    }
+    const ended = table.state.id === GameState.ScoreBoardFinal ? Number(table.state.timestamp) || 0 : 0;
+    const inGrace = ended > 0 && now - ended < REPLAY_GRACE_MS;
+    // Replay takes `forking` first and writes `fork` after its lobby: either one names the next lobby.
+    const pinOf = (v: unknown) => typeof v === 'string' && v && v !== held ? v : '';
+    const nextPin = pinOf(table.forking) || pinOf(table.fork);
+    if (!nextPin) {
+        return inGrace ? { playing: true } : null;
+    }
+    const next = await readGame(nextPin);
+    if (!next || !next.state) {
+        // Claimed, and still being written: wait for it, but not for a Replay that never finished.
+        return inGrace ? { playing: true } : null;
+    }
+    if (next.state.id === GameState.GameStaging && !isGameOver(next, now)
+        && Object.keys(next.players || {}).length < MAX_PLAYERS) {
+        return { next: nextPin };
     }
     return null;
 }
