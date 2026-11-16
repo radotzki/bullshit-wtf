@@ -76,7 +76,7 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
  * whoever pressed Replay may start it, so a player of the finished game gets its host key too.
  * Only a player of the finished game, from a client that sends a key (and so reads this one).
  */
-async function joinNext(game: GameScheme, next: string, hostPid?: string, hostKey?: string)
+export async function joinNext(game: GameScheme, next: string, hostPid?: string, hostKey?: string)
     : Promise<{ pin: string; host: boolean; hostKey?: string }> {
     const players = (game && game.players) || {};
     const theirs = hostPid && hostKey && players[hostPid]

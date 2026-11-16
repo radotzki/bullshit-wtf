@@ -186,10 +186,14 @@ test('a test game carries test (the page sends no rows); a crew game carries its
     assert.strictEqual(nightAfter('ABCD', finished(now - H, { crew: 'k3x9q2' }), now).crew, 'k3x9q2');
 });
 
-test('validateGameName: GAME_OVER with the recap for a week, in either half; none beside an open rematch', async () => {
+test('validateGameName: GAME_OVER with the recap for a week, in either half; beside an open rematch only in the new half', async () => {
     const pin = pinIn('new');
     const other = pinIn('control');
-    seed({ [pin]: finished(now - 3 * H), [other]: finished(now - 3 * H), OLDG: finished(now - 8 * 24 * H),
+    const rematchIn = (half) => { for (let i = 0; ; i++) { const p = 'RM' + String.fromCharCode(65 + (i % 26)) + String.fromCharCode(65 + Math.floor(i / 26)); if ((nightAfterHalf(p) ? 'new' : 'control') === half) return p; } };
+    const rmNew = rematchIn('new');
+    const rmControl = rematchIn('control');
+    seed({ [rmNew]: finished(now - 60000, { fork: 'NEXT' }), [rmControl]: finished(now - 60000, { fork: 'NEXT' }),
+        [pin]: finished(now - 3 * H), [other]: finished(now - 3 * H), OLDG: finished(now - 8 * 24 * H),
         RMCH: finished(now - 60000, { fork: 'NEXT' }), NEXT: { state: { id: Staging, timestamp: now }, timestamp: now, players: {} } });
     const v = await call('validateGameName', { pin: pin.toLowerCase(), uid: 'uNoa' });
     assert.strictEqual(v.code, 400);
@@ -200,9 +204,14 @@ test('validateGameName: GAME_OVER with the recap for a week, in either half; non
     assert.strictEqual(c.body.nightAfter.half, 'control');
     assert.strictEqual(c.body.nightAfter.player, false);
     assert.strictEqual((await call('validateGameName', { pin: 'OLDG' })).body.nightAfter, undefined);
-    const r = await call('validateGameName', { pin: 'RMCH' });
+    // Beside an open rematch: no recap in the control half, as before; in the new half the recap comes
+    // with it, for "They're playing again" (same-table.ts).
+    const r = await call('validateGameName', { pin: rmControl });
     assert.strictEqual(r.body.rematch, 'NEXT');
     assert.strictEqual(r.body.nightAfter, undefined);
+    const rn = await call('validateGameName', { pin: rmNew });
+    assert.strictEqual(rn.body.rematch, 'NEXT');
+    assert.strictEqual(rn.body.nightAfter.half, 'new');
     // A uid that is no uid is ignored, not an error.
     const bad = await call('validateGameName', { pin, uid: { $gt: '' }, pid: '../x' });
     assert.strictEqual(bad.body.nightAfter.player, false);
@@ -213,7 +222,8 @@ test('validateGameName: GAME_OVER with the recap for a week, in either half; non
 });
 
 test('the rows: night-after methods with the PIN in crew_id; anything else is dropped; a test game writes none', async () => {
-    for (const m of ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew']) {
+    for (const m of ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew',
+        'same-table', 'same-table-open', 'join-them']) {
         assert.deepStrictEqual(cleanShare({ content_type: 'night-after', method: m, crew: 'abcd', locale: 'he', uid: 'u1' }),
             { content_type: 'night-after', method: m, crew_id: 'ABCD', locale: 'he', uid: 'u1' });
     }
