@@ -218,8 +218,8 @@ test('the question row holds numbers only: no player id, name or text', () => {
         answerSelections: { pidSecret1: { text: 'another' } },
         answerTimes: { lies: { pidSecret1: { q: 0, at: 1 }, pidSecret2: { q: 0, at: 2001 } } },
     });
-    assert.deepStrictEqual(Object.keys(r).sort(), ['coach', 'friend_fooled', 'id', 'idea_lies', 'lie_span_s', 'lies', 'locale',
-        'pick_span_s', 'picks', 'players', 'q_index', 'round', 'total_q', 'unpicked_lies']);
+    assert.deepStrictEqual(Object.keys(r).sort(), ['coach', 'friend_fooled', 'house_picks', 'id', 'idea_lies', 'lie_span_s', 'lies',
+        'locale', 'pick_span_s', 'picks', 'players', 'q_index', 'qid', 'round', 'total_q', 'truth_picks', 'unpicked_lies']);
     assert.ok(!/secret|dana|avi|another/i.test(JSON.stringify(r)));
 });
 
