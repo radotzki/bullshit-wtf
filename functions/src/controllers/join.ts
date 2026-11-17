@@ -1,9 +1,10 @@
-import { MAX_PLAYERS, GameScheme, GamePlayer } from '../game-model';
+import { MAX_PLAYERS, GameScheme, GamePlayer, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
 import { onRefusedJoin, refusedJoin } from './analytics';
+import { keepFullSince } from './start';
 
 export interface JoinResult {
     pid: string;
@@ -95,6 +96,7 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
 
     if (!game.hostKey || !hostKey || hostKey !== game.hostKey) {
         await playersRef.child(pid).set(player);
+        await fullSince(pin, game);
         return result;
     }
 
@@ -104,6 +106,7 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     clearOtherHosts(game, pid, update);
     await playersRef.update(update);
     await hostIsHere(pin, game);
+    await fullSince(pin, game);
     return result;
 }
 
@@ -116,10 +119,18 @@ function clearOtherHosts(game: GameScheme, pid: string, update: { [path: string]
     });
 }
 
+/** A new seat in the lobby may make it full (5 or more): keep that moment for the host-away clock. */
+async function fullSince(pin: string, game: GameScheme) {
+    if (game.serverStart && game.state && game.state.id === GameState.GameStaging) {
+        await keepFullSince(pin).catch(e => console.error(`[PIN: ${pin}] fullSince not kept`, e && e.message));
+    }
+}
+
 async function hostIsHere(pin: string, game: GameScheme) {
     if (game.serverStart) {
         // The host is in the lobby now; their lobby page keeps reporting in (see hostHere).
-        await gamesRef.child(pin).child('hostSeen').set(Date.now());
+        // On the screen, too: not away (see hostAwaySince).
+        await gamesRef.child(pin).update({ hostSeen: Date.now(), hostAwaySince: null });
     }
 }
 

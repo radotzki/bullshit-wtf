@@ -11,7 +11,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/
 import { swapToast } from './../../name-flag';
 import { packIcon } from './../../game-model';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
-    hostAwayMs, shouldAskClock } from './lobby-host';
+    hostAwayMs, shouldAskClock, startPanelDue, startPanel, StartPanel, hiddenTitle } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
 import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY } from './lone-host';
 import { offerBigScreen, bigScreenStrings, BigScreenStrings, hostStillToJoin, pressedWith, PRESSED_WITH_KEY } from './big-screen-host';
@@ -52,6 +52,8 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     switching = false;
     /** This page is the big screen the host made of their computer. */
     hostScreenHere = false;
+    /** The big START for a host back on screen to a full lobby (startPanelDue), or null. */
+    panel: StartPanel = null;
 
     private hasPresenter: boolean;
     private creator: string = null;
@@ -84,9 +86,26 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     /** The host has been alone in this lobby, so the first friend in is greeted by name. */
     private wasAlone = false;
     private helpSeen = false;
+    /** The host's own page (not a big screen): it says when it is hidden, and gets the big START back. */
+    private hostPhone = false;
+    private hiddenAt: number = null;
+    private playersAtHide = 0;
+    private titleBefore: string = null;
+    /** Server time the host's page was hidden (`hostAwaySince`), or null while it is on screen. */
+    private hostAwaySince: number = null;
+    /** Server time the lobby reached 5 players (`fullSince`), or null: the host-away clock starts at the later. */
+    private fullSince: number = null;
+    private fullSinceSubscriber: Subscription;
+    private hostAwaySubscriber: Subscription;
+    private isHostView = false;
     private onVisible = () => {
         if (!document.hidden) {
             this.reportIn();
+            this.back();
+        } else if (this.hostPhone) {
+            this.hiddenAt = Date.now();
+            this.playersAtHide = (this.players || []).length;
+            this.apiService.hostAway(this.pin);
         }
     };
 
@@ -131,12 +150,27 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             }
         }, () => null);
         if (this.apiService.holdsHostKey(this.pin)) {
-            this.reportIn();
+            // A big screen never says it is away: the room is looking at it, and its START stays its own.
+            this.hostPhone = !this.presenter;
+            if (this.hostPhone && document.hidden) {
+                this.hiddenAt = Date.now();
+                this.apiService.hostAway(this.pin);
+            } else {
+                this.reportIn();
+            }
             this.pingTimer = setInterval(() => this.reportIn(), HOST_PING_MS);
             document.addEventListener('visibilitychange', this.onVisible);
             return;
         }
         this.askClock();
+        this.hostAwaySubscriber = this.apiService.getHostAwayObservable(this.pin).subscribe(since => {
+            this.hostAwaySince = typeof since === 'number' ? since : null;
+            this.updateLobby();
+        }, () => null);
+        this.fullSinceSubscriber = this.apiService.getFullSinceObservable(this.pin).subscribe(since => {
+            this.fullSince = typeof since === 'number' ? since : null;
+            this.updateLobby();
+        }, () => null);
         // Unreadable until the database rules that expose `hostSeen` are deployed: then nobody is gone.
         this.hostSeenSubscriber = this.apiService.getHostSeenObservable(this.pin).subscribe(seen => {
             this.hostSeen = typeof seen === 'number' ? seen : null;
@@ -168,8 +202,48 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * A ping from a hidden page (Android keeps some timers running) says it is still away: the phone is
+     * alive, so it is not gone, but it is not on the screen either.
+     */
     private reportIn() {
-        this.apiService.hostHere(this.pin).catch(() => null);
+        this.apiService.hostHere(this.pin, this.hostPhone && document.hidden).catch(() => null);
+    }
+
+    /** The host's page is on screen again: the big START if a full lobby waits, and the tab's own title. */
+    private back() {
+        if (this.titleBefore !== null) {
+            document.title = this.titleBefore;
+            this.titleBefore = null;
+        }
+        if (this.hiddenAt === null) {
+            return;
+        }
+        this.hiddenAt = null;
+        const count = (this.players || []).length;
+        if (!this.panel && startPanelDue(this.isHostView, !!(this.lobby && this.lobby.alone), count, this.playersAtHide)) {
+            this.panel = startPanel(count, this.locale);
+            try {
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+            } catch (e) { }
+        }
+    }
+
+    /** While the host's page is hidden and someone joins, the tab's title says how many wait. */
+    private hiddenTitle() {
+        if (!this.hostPhone || this.hiddenAt === null || !document.hidden) {
+            return;
+        }
+        const count = (this.players || []).length;
+        if (count <= this.playersAtHide || count < 2) {
+            return;
+        }
+        if (this.titleBefore === null) {
+            this.titleBefore = document.title;
+        }
+        document.title = hiddenTitle(count, this.locale);
     }
 
     /** Find out who may start: the game's host, or (if unknown) the big screen or anyone. */
@@ -242,7 +316,16 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             players: this.players || [],
             waitedMs: Date.now() - this.arrivedAt,
             hostAwayMs: hostAwayMs(Date.now(), this.clockAhead, this.hostSeen),
+            hostStepped: this.hostAwaySince !== null,
+            hostSteppedMs: hostAwayMs(Date.now(), this.clockAhead, this.hostAwaySince),
+            fullMs: hostAwayMs(Date.now(), this.clockAhead, this.fullSince),
         });
+        this.isHostView = !!view.isHost;
+        this.hiddenTitle();
+        if (this.panel) {
+            // The count on the panel follows the lobby; it goes with START (a lone host has none).
+            this.panel = view.canStart && !view.alone ? startPanel((this.players || []).length, this.locale) : null;
+        }
 
         if (view.alone) {
             this.wasAlone = true;
@@ -327,6 +410,15 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         clearInterval(this.pingTimer);
         clearInterval(this.lobbyTimer);
         document.removeEventListener('visibilitychange', this.onVisible);
+        if (this.titleBefore !== null) {
+            document.title = this.titleBefore;
+        }
+        if (this.hostAwaySubscriber) {
+            this.hostAwaySubscriber.unsubscribe();
+        }
+        if (this.fullSinceSubscriber) {
+            this.fullSinceSubscriber.unsubscribe();
+        }
         if (this.hostSeenSubscriber) {
             this.hostSeenSubscriber.unsubscribe();
         }
