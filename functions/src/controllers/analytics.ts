@@ -163,11 +163,23 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     create-now         pressed "or start a game right now" (the game it makes carries campaign after-game-invite)
 //   game-over   the same ask on the join page of a game that is over (campaigns after-game-late and
 //               after-game-late-remind): create, remind, remind-google
+//   night-after a finished game's own link, in the week after the game: the recap or today's "Game over",
+//               a 50/50 test by the game's PIN (night-after.ts). Every row carries the game's PIN, in
+//               capitals, in crew_id, as lobby-help's do. A test game's link sends no row:
+//     seen-player          the recap showed, to a browser that played that game (once per page load)
+//     seen-other           the recap showed, to a browser that didn't play it: "You missed it"
+//     seen-control-player  the other half: today's "Game over" showed, to a browser that played
+//     seen-control-other   the same, to a browser that didn't play
+//     create               pressed START YOUR OWN GAME (didn't play; the game it makes carries campaign night-after)
+//     create-player        pressed HOST THE NEXT ONE (played; its game carries campaign night-after-player)
+//     crew                 pressed "See who's in next time" (the table's saved crew page)
 //   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
 //     mute               tapped it to silence the game
 //     unmute             tapped it again
 /** The lone-host help's rows: their crew_id is the lobby's PIN. */
 export const LOBBY_HELP = 'lobby-help';
+/** The night-after rows: their crew_id is the finished game's PIN. */
+export const NIGHT_AFTER = 'night-after';
 
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
@@ -186,6 +198,7 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'game-over': ['create', 'remind', 'remind-google'],
     'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],
     'sound': ['mute', 'unmute'],
+    'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew'],
 };
 
 export interface ShareRow {
@@ -208,7 +221,7 @@ export function cleanShare(body: any): ShareRow | null {
         return null;
     }
     let crew = typeof body.crew === 'string' && /^[a-z0-9]{1,32}$/i.test(body.crew) ? body.crew.toLowerCase() : null;
-    if (contentType === LOBBY_HELP) {
+    if (contentType === LOBBY_HELP || contentType === NIGHT_AFTER) {
         // The lobby's PIN travels in the crew field: letters only, kept in capitals. No PIN, no row.
         if (typeof body.crew !== 'string' || !/^[A-Za-z]{1,12}$/.test(body.crew)) {
             return null;
@@ -220,9 +233,9 @@ export function cleanShare(body: any): ShareRow | null {
     return { content_type: contentType, method, crew_id: crew, locale, uid };
 }
 
-/** A test game's lobby leaves no lobby-help row: shares has no campaign column to leave it out by later. */
+/** A test game leaves no lobby-help or night-after row: shares has no campaign column to leave it out by later. */
 export async function onShare(row: ShareRow, testGame: (pin: string) => Promise<boolean> = isTestGame) {
-    if (row.content_type === LOBBY_HELP && await testGame(row.crew_id)) {
+    if ((row.content_type === LOBBY_HELP || row.content_type === NIGHT_AFTER) && await testGame(row.crew_id)) {
         return;
     }
     return insert('shares', { ...row, time: new Date() });

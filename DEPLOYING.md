@@ -2062,3 +2062,95 @@ Before this, six first-time hosts in ten left nothing to go by.
   `# where a host came from {...}`), `cd game && npm test` (`test/arrival.test.js`), and a run in a
   real browser against the emulators, from a search page and from an invite link:
   `node .github/smoke/emulator-arrival.js`.
+
+## The night after: a finished game's link shows the night (a 50/50 test)
+
+A finished game's own link (`/join-game/<PIN>`, `/he/join-game/<PIN>`) sits in the group chat of
+every table that gathered by link, and people scroll back to it. Until now it answered "Game over.
+Check the PIN". For 7 days after the game, in the new half of a 50/50 test by the game's PIN, it shows
+the night instead (Product's spreading-loop spec, change 2): "LAST NIGHT AT NOA'S", the winner, the
+biggest bullshitter, the lie of the night and how many it fooled, the final scores with how many each
+player fooled, and one button. A browser that played that game gets "You were there" and HOST THE NEXT
+ONE; anyone else gets "You missed it" and START YOUR OWN GAME. When the table has a saved crew, "See
+who's in next time" opens its page. The other half keeps today's page, with its "Start your own game" ask.
+
+- **Where it is built.** `validateGameName` answers GAME_OVER as before, and within 7 days of a game that
+  reached its final scoreboard with 2 or more players it adds `nightAfter`, the recap
+  (`functions/src/controllers/night-after.ts`). The join page sends its sign-in uid and its last seat
+  with that check, so the server can say whether this browser played. An open rematch lobby still
+  comes first: no recap beside it. A taste, a game that died in the lobby or mid-game, and a game past 7
+  days keep today's page.
+- **What is stored: nothing new.** The recap is built on each read from the game's own record, the one
+  its final screen read. After 7 days nothing is shown, and there is no copy to erase. (The game's own
+  record is kept as before: there is still no clean-up of old games.)
+- **What it shows.** Only what the final screen showed the table: nicknames, scores, places, the number
+  each player's lies fooled, the biggest bullshitter, and one lie, the one that fooled the most. Never a
+  question and never a true answer. The lie passes the nickname filter (`name-flag.ts`): a flagged lie
+  is skipped for the next best; with none left no lie shows. The host's name follows the link
+  preview's rules (`shownName`); without it the heading is "LAST NIGHT'S GAME". The heading's
+  "tonight", "last night", "yesterday" or weekday follows the visitor's own clock; a night runs to 05:00.
+- **The half.** The lowest bit of the first byte of SHA-256('night-after:' + PIN, in capitals). In
+  BigQuery: `MOD(TO_CODE_POINTS(SHA256(CONCAT('night-after:', UPPER(pin))))[OFFSET(0)], 2) = 1` is the
+  new half. **A tester's switch:** `localStorage.BS_NIGHT_AFTER = 'new'` (or `'control'`) in the browser
+  console. A test game (`?via=test`) shows the recap like any game but sends no row.
+- **No new column, no new table, no rules change, no new function.** Rows go to `shares`, which has
+  every column they need; the games the buttons start carry their tag in `opened_games.campaign`, as
+  every `?via=` tag does.
+
+| `shares.method` (`content_type = 'night-after'`, the game's PIN in capitals in `crew_id`) | When |
+|---|---|
+| `seen-player`, `seen-other` | the recap showed, to a browser that played that game, or to one that didn't (once per page load) |
+| `seen-control-player`, `seen-control-other` | the same moment in the other half: today's "Game over" showed |
+| `create` | pressed START YOUR OWN GAME; its game carries `campaign = 'night-after'` |
+| `create-player` | pressed HOST THE NEXT ONE; its game carries `campaign = 'night-after-player'` |
+| `crew` | pressed "See who's in next time" |
+
+**How to read it.** The first number is new: how many people open an old game's link at all.
+The test's own read is the share of browsers that didn't play and then host a real game within 14
+days, by half (the control half has no button, so its hosts started a game on their own):
+
+```sql
+WITH seen AS (
+  SELECT uid, crew_id AS pin, MIN(time) AS seen_at,
+    IF(LOGICAL_OR(method = 'seen-other'), 'new', 'control') AS half
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'night-after' AND method IN ('seen-other', 'seen-control-other')
+    AND time >= TIMESTAMP('2026-11-16') AND uid IS NOT NULL
+  GROUP BY uid, crew_id),
+hosted AS (
+  SELECT s.uid, s.pin, s.half,
+    LOGICAL_OR(o.id IS NOT NULL) AS hosted_14d,
+    LOGICAL_OR(o.campaign LIKE 'night-after%') AS from_button
+  FROM seen s
+  LEFT JOIN `bullshit-wtf-prod.analytics.opened_games` o
+    ON o.creator_uid = s.uid AND o.time > s.seen_at AND o.time <= TIMESTAMP_ADD(s.seen_at, INTERVAL 14 DAY)
+    AND o.players >= 2 AND NOT IFNULL(o.campaign LIKE 'test%', FALSE)
+  GROUP BY s.uid, s.pin, s.half)
+SELECT half, COUNT(*) AS visitors, COUNT(DISTINCT pin) AS games,
+  COUNTIF(hosted_14d) AS hosted_14d, ROUND(SAFE_DIVIDE(COUNTIF(hosted_14d), COUNT(*)), 3) AS share,
+  COUNTIF(from_button) AS from_the_button
+FROM hosted
+GROUP BY half
+```
+
+Views of old links a game, and players against the rest:
+
+```sql
+SELECT REGEXP_EXTRACT(method, r'(player|other)$') AS who,
+  COUNT(DISTINCT crew_id) AS games, COUNT(DISTINCT uid) AS browsers, COUNT(*) AS views
+FROM `bullshit-wtf-prod.analytics.shares`
+WHERE content_type = 'night-after' AND method LIKE 'seen-%' AND time >= TIMESTAMP('2026-11-16')
+GROUP BY who
+```
+
+Compare `games` with the finished link-invited games of the same days to get views a game (the spec's
+guess was 0.3 to 2). To keep the recap for everyone, make `nightAfterHalf` return true; to drop it,
+false. To change the 7 days, `NIGHT_AFTER_MS`.
+
+- Deploy functions and hosting together (a merge does both). A browser still on the older site
+  ignores the recap: it shows today's page and sends no row.
+- **Checked** with `functions/test/night-after.test.js`, `game/test/night-after.test.js`, and a run on
+  the Firebase emulators, `node .github/smoke/emulator-night-after.js`: a whole test game in English and
+  in Hebrew, then its link reopened by a player, by a browser that didn't play (whose button opens the
+  Create page tagged `night-after`), in the control half, with no switch, and, with the test mark taken
+  off, the rows that land in `shares`.

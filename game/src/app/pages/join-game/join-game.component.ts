@@ -8,6 +8,12 @@ import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
 import { cleanCode } from '../../services/game-code';
+import { StorageService } from '../../services/storage.service';
+import { GameService } from '../../services/game.service';
+import {
+    NIGHT_AFTER_CONTENT, NIGHT_AFTER_KEY, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
+    readRecap, seenMethod, shownHalf, whenWas,
+} from './night-after';
 
 @Component({
     standalone: false,
@@ -33,6 +39,11 @@ export class JoinGameComponent implements OnInit {
     crewNicknames: string[] = [];
     // The PIN belongs to a game that is over: say so, and offer another PIN (or its rematch).
     gameOver: { pin: string; rematch?: string; justEnded?: boolean };
+    // In the week after a finished game, its recap (night-after.ts); shown in the test's new half only.
+    recap: NightAfterRecap;
+    recapShown: boolean;
+    // The PIN whose seen- row this page load sent, so a second GAME_OVER answer sends no second one.
+    private recapCounted: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -40,6 +51,8 @@ export class JoinGameComponent implements OnInit {
         private sessionService: SessionService,
         private router: Router,
         private crewService: CrewService,
+        private storageService: StorageService,
+        private gameService: GameService,
     ) { }
 
     ngOnInit() {
@@ -61,7 +74,7 @@ export class JoinGameComponent implements OnInit {
     /** An old invite link: say the game is over before anyone types a nickname. */
     private checkLinkedGame() {
         const pin = this.pin;
-        this.apiService.validateGameName(pin).catch(err => {
+        this.apiService.validateGameName(pin, true).catch(err => {
             if (this.pin === pin && err && err.code === 'GAME_OVER') {
                 this.showGameOver(err);
             }
@@ -75,7 +88,78 @@ export class JoinGameComponent implements OnInit {
     private showGameOver(err) {
         this.loading = false;
         this.errorMsg = '';
-        this.gameOver = { pin: (this.pin || '').toUpperCase(), rematch: err.rematch, justEnded: !!err.justEnded };
+        const pin = (this.pin || '').toUpperCase();
+        this.gameOver = { pin, rematch: err.rematch, justEnded: !!err.justEnded };
+        // A later answer for the same PIN (a tap on JOIN) carries no recap: keep the one the page has.
+        const recap = err.rematch ? null : readRecap(err) || (this.recap && this.recapPin === pin ? this.recap : null);
+        this.setRecap(recap, pin);
+    }
+
+    private recapPin: string;
+
+    /** Shows the recap in the new half, and counts what this page load showed (once a PIN). */
+    private setRecap(recap: NightAfterRecap, pin: string) {
+        this.recap = recap;
+        this.recapPin = recap ? pin : undefined;
+        if (!recap) {
+            this.recapShown = false;
+            return;
+        }
+        let forced: string = null;
+        try {
+            forced = this.storageService.getItem(NIGHT_AFTER_KEY);
+        } catch (e) { }
+        const half = shownHalf(recap, forced);
+        this.recapShown = half === 'new';
+        if (this.recapCounted !== pin) {
+            this.recapCounted = pin;
+            this.countRecap(seenMethod(half, recap.player));
+        }
+    }
+
+    /** A night-after row; a test game's link sends none. */
+    private countRecap(method: string) {
+        if (!this.recap || this.recap.test) {
+            return;
+        }
+        this.apiService.logShare(NIGHT_AFTER_CONTENT, method, { crew: this.recapPin, locale: this.t.lang });
+    }
+
+    get n(): NightAfterStrings {
+        return nightAfterWords(this.t.lang);
+    }
+
+    get recapHeading() {
+        return this.recap ? this.n.heading(whenWas(this.recap.endedAt, Date.now()), this.recap.host) : '';
+    }
+
+    get recapWinners() {
+        return this.recap ? namesOf(this.recap.rows, r => r.place === 1, this.n.and) : '';
+    }
+
+    get recapWinnerCount() {
+        return this.recap ? this.recap.rows.filter(r => r.place === 1).length : 0;
+    }
+
+    get recapBiggest() {
+        return this.recap ? namesOf(this.recap.rows, r => !!r.biggest, this.n.and) : '';
+    }
+
+    /** START YOUR OWN GAME (didn't play) or HOST THE NEXT ONE (played): the Create page, tagged. */
+    recapCreate() {
+        const player = !!(this.recap && this.recap.player);
+        this.countRecap(player ? 'create-player' : 'create');
+        // A finished game must not move this browser any more.
+        try {
+            this.gameService.unregister();
+        } catch (e) { }
+        this.router.navigate(['/create-game'], {
+            queryParams: { via: player ? NIGHT_AFTER_TAGS.player : NIGHT_AFTER_TAGS.other, lang: this.t.lang },
+        });
+    }
+
+    recapCrew() {
+        this.countRecap('crew');
     }
 
     /** The join page under the same entry point (the Hebrew one keeps its /he). */
@@ -91,6 +175,8 @@ export class JoinGameComponent implements OnInit {
     /** Back to an empty PIN box. */
     tryAnotherPin() {
         this.gameOver = null;
+        this.recap = null;
+        this.recapShown = false;
         this.errorMsg = '';
         this.pin = '';
         this.pinInUrl = false;
@@ -107,6 +193,8 @@ export class JoinGameComponent implements OnInit {
             return;
         }
         this.gameOver = null;
+        this.recap = null;
+        this.recapShown = false;
         this.errorMsg = '';
         this.pin = rematch;
         this.nicknameState = true;
@@ -166,7 +254,7 @@ export class JoinGameComponent implements OnInit {
         this.errorMsg = '';
         this.gameOver = null;
 
-        this.apiService.validateGameName(this.pin)
+        this.apiService.validateGameName(this.pin, true)
             .then(() => {
                 this.nicknameState = true;
                 this.loading = false;

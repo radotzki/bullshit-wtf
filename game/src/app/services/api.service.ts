@@ -78,6 +78,10 @@ function apiError(url: string, resp: any) {
     if (body && body.justEnded === true) {
         error.justEnded = true;
     }
+    // GAME_OVER within a week of the end: the night's recap (pages/join-game/night-after.ts).
+    if (body && body.nightAfter && typeof body.nightAfter === 'object') {
+        error.nightAfter = body.nightAfter;
+    }
     return error;
 }
 
@@ -224,9 +228,22 @@ export class ApiService {
             .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
     }
 
-    validateGameName(pin: string) {
+    /**
+     * withSeat: also send this browser's sign-in (waiting at most SIGN_IN_WAIT_MS) and last seat, so a
+     * finished game's recap can tell a player of that game from someone who didn't come.
+     */
+    async validateGameName(pin: string, withSeat = false) {
         pin = pin.toUpperCase();
-        return this.post(`validateGameName`, { pin });
+        if (!withSeat) {
+            return this.post(`validateGameName`, { pin });
+        }
+        let uid: string;
+        try {
+            uid = (await this.uidWithin(SIGN_IN_WAIT_MS)).uid;
+        } catch (e) { }
+        const user = this.sessionService.user;
+        const pid = user && typeof user.pid === 'string' ? user.pid : undefined;
+        return this.post(`validateGameName`, { pin, uid, pid });
     }
 
     joinAsPresenter(pin: string) {
