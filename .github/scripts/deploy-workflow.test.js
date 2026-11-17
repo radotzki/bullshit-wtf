@@ -30,6 +30,7 @@ test('the steps run in the intended order', () => {
         '2. Deploy the database rules',
         '3. Deploy the site',
         '4. Add the new questions to the database',
+        '5. Tell search engines about the pages (IndexNow)',
         'Show why the step failed',
         'Summary',
         'Remove the key file and the Firebase debug files',
@@ -86,14 +87,17 @@ test('no check and no release step has a condition: a failed step skips every on
     assert.deepStrictEqual(conditional, [
         // Its one condition is checked below: it can only skip the step, never run it after a failure.
         '2. Deploy the database rules',
+        // Releases nothing and never fails (see its own test below): it runs after the site step.
+        '5. Tell search engines about the pages (IndexNow)',
         'Show why the step failed',
         'Summary',
         'Remove the key file and the Firebase debug files',
     ]);
     // And those three are the job's last, after the last release.
-    assert.deepStrictEqual(steps.slice(-3).map(title), conditional.slice(1));
-    assert.strictEqual(title(steps[steps.length - 5]), '3. Deploy the site');
-    assert.strictEqual(title(steps[steps.length - 4]), '4. Add the new questions to the database');
+    assert.deepStrictEqual(steps.slice(-3).map(title), conditional.slice(2));
+    assert.strictEqual(title(steps[steps.length - 6]), '3. Deploy the site');
+    assert.strictEqual(title(steps[steps.length - 5]), '4. Add the new questions to the database');
+    assert.strictEqual(title(steps[steps.length - 4]), '5. Tell search engines about the pages (IndexNow)');
     for (const name of ['1. Deploy all functions', '2. Deploy the database rules', '3. Deploy the site']) {
         const target = { 1: 'functions', 2: 'database', 3: 'hosting' }[name[0]];
         const step = steps.find(text => title(text) === name);
@@ -189,6 +193,7 @@ test('only the access check\'s output rules=unchanged skips the rules step, and 
         'if: github.ref == \'refs/heads/master\'',
         'if: github.ref == \'refs/heads/master\'',
         'if: steps.access.outputs.rules != \'unchanged\'',
+        'if: ${{ !cancelled() && steps.site.outcome == \'success\' }}',
         'if: failure()',
         'if: always()',
         'if: always()',
@@ -232,7 +237,7 @@ test('the summary says what was released from each release step\'s own outcome',
 // The one step that writes data: after the functions and the site, without a condition, and
 // only through the script whose lock allows a single PATCH of the listed question files' questions to questions/.
 test('the new questions are added last, by the update script alone, for the run\'s project', () => {
-    const step = yml.slice(yml.indexOf('      - name: 4. Add the new questions to the database'), yml.indexOf('      # A failed Firebase command prints one line'));
+    const step = yml.slice(yml.indexOf('      - name: 4. Add the new questions to the database'), yml.indexOf('      # Tells the search engines that use IndexNow'));
     assert.strictEqual(step.trim(), [
         '- name: 4. Add the new questions to the database',
         '        id: questions',
@@ -248,4 +253,22 @@ test('the new questions are added last, by the update script alone, for the run\
     // No other way to write the database: no database:set, import, update or push command.
     assert.doesNotMatch(code, /database:(set|update|push|remove|import)/);
     assert.strictEqual(code.split('load-pack-questions.js').length - 1, 1);
+});
+
+// The IndexNow ping: after the site step, only when it passed, never on a cancelled run, with no
+// secret and no step output, and no way to fail the job (the script always exits 0).
+test('search engines are told about the pages once, after the site, by the IndexNow script alone', () => {
+    const name = '5. Tell search engines about the pages (IndexNow)';
+    const step = yml.slice(yml.indexOf('      - name: ' + name), yml.indexOf('      # A failed Firebase command prints one line'));
+    assert.strictEqual(step.trim(), [
+        '- name: ' + name,
+        '        if: ${{ !cancelled() && steps.site.outcome == \'success\' }}',
+        '        run: node .github/scripts/indexnow.js game/dist/sitemap.xml',
+    ].join('\n'));
+    assert.ok(at('3. Deploy the site') < at(name));
+    assert.ok(at('4. Add the new questions to the database') < at(name));
+    assert.ok(at(name) < at('Show why the step failed'));
+    const code = yml.split('\n').filter(l => !l.trim().startsWith('#')).join('\n');
+    assert.strictEqual(code.split('indexnow.js').length - 1, 1);
+    assert.doesNotMatch(step, /secrets\.|env:|--dry-run/);
 });

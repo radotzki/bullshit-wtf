@@ -185,6 +185,17 @@ jobs:
           node .github/scripts/firebase-refusal.js reset
           node .github/scripts/load-pack-questions.js "$FIREBASE_PROJECT"
 
+      # Tells the search engines that use IndexNow (Bing and the engines sharing its index) about
+      # every page of the sitemap this release just deployed: one POST to api.indexnow.org, with
+      # bullshit.wtf's own URLs only, after checking that the live site serves the key file.
+      # It runs whenever the site step passed, also if the questions step failed, and never on a
+      # cancelled run. It cannot fail the release: the script prints a warning and exits 0 on any
+      # refusal, timeout or missing file. No secret: the key is public by design (the key file).
+      # See the script's header and DEPLOYING.md, "IndexNow".
+      - name: 5. Tell search engines about the pages (IndexNow)
+        if: ${{ !cancelled() && steps.site.outcome == 'success' }}
+        run: node .github/scripts/indexnow.js game/dist/sitemap.xml
+
       # A failed Firebase command prints one line; Google's answer (the status and the reason) is
       # only in firebase-debug.log. That file is never printed or uploaded whole: after the
       # functions step it holds config values and signed upload addresses. The script prints only
@@ -213,7 +224,7 @@ jobs:
           # What was released and what was left alone, in plain words, from each step's outcome.
           node .github/scripts/release-summary.js "$FUNCTIONS_STEP" "$RULES_STEP" "$SITE_STEP" "$RULES_MODE" "$QUESTIONS_STEP" "$QUESTIONS_RESULT"
           {
-            echo "Order: all functions, database rules, site, then the new questions. A failed step stops the ones after it."
+            echo "Order: all functions, database rules, site, then the new questions. A failed step stops the ones after it. Then the IndexNow ping, which never fails the run."
             echo "To retry, start a new run by hand: Actions > Deploy to production > Run workflow > branch master"
             echo "(every step is safe to repeat). A re-run of an old run stops by itself once master holds newer code."
             echo "Not done here: BigQuery schema SQL, loading questions from a file the release does not list, Search Console. See DEPLOYING.md."
