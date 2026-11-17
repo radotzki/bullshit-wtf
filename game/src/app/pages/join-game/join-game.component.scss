@@ -121,6 +121,17 @@
         .recap-ask-text {
             margin-bottom: 0.75rem;
         }
+
+        .recap-again-error {
+            margin-top: 0.5rem;
+            color: #ff3860;
+        }
+    }
+
+    // "They're playing again": above the recap, set apart from it.
+    .recap-playing {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 }
 

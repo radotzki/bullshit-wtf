@@ -25,6 +25,18 @@ export interface NightAfterRecap {
 /** A tester's switch, in the browser console: localStorage.BS_NIGHT_AFTER = 'new' or 'control'. */
 export const NIGHT_AFTER_KEY = 'BS_NIGHT_AFTER';
 export const NIGHT_AFTER_CONTENT = 'night-after';
+/**
+ * "Same table tomorrow": which ask the recap shows. A lobby of this game is open: everyone sees "They're
+ * playing again", a player with PLAY AGAIN, SAME TABLE (it joins that lobby, with its host key), anyone
+ * else with JOIN THEM. No lobby: a player opens one with PLAY AGAIN, SAME TABLE; anyone else starts their own.
+ */
+export function recapAsk(player: boolean, rematch: string | undefined): 'again-player' | 'again-other' | 'player' | 'other' {
+    if (rematch) {
+        return player ? 'again-player' : 'again-other';
+    }
+    return player ? 'player' : 'other';
+}
+
 /** The campaign tags of the games its buttons start (opened_games.campaign LIKE 'night-after%'). */
 export const NIGHT_AFTER_TAGS = { other: 'night-after', player: 'night-after-player' };
 
@@ -45,8 +57,16 @@ export function shownHalf(recap: NightAfterRecap, forced?: string | null): 'new'
     return recap.half === 'new' ? 'new' : 'control';
 }
 
-/** The `seen-` row's method for this page load. */
-export function seenMethod(half: 'new' | 'control', player: boolean): string {
+/**
+ * The `seen-` row's method for this page load, or null for none. Beside an open rematch lobby only the new
+ * half shows a recap ("They're playing again"); the other half shows none there, as before "Same table
+ * tomorrow". So neither half sends a `seen-` row then, and the test's read (seen-other against
+ * seen-control-other) compares the same visits; `same-table-open` and `join-them` count those.
+ */
+export function seenMethod(half: 'new' | 'control', player: boolean, rematch?: string | null): string | null {
+    if (rematch) {
+        return null;
+    }
     return (half === 'new' ? 'seen-' : 'seen-control-') + (player ? 'player' : 'other');
 }
 
@@ -113,7 +133,12 @@ export const nightAfterStrings = {
         missedText: 'Start your own game: it is free, takes 10 seconds, and everyone plays on their own phone.',
         create: 'START YOUR OWN GAME',
         playerTitle: 'You were there.',
-        playerText: 'Same people, another night? Or another group that would fall for your lies?',
+        playerText: 'Same people, another night? Open the table again: this link in your chat brings everyone to the same game.',
+        playAgain: 'PLAY AGAIN, SAME TABLE',
+        againTitle: 'They\'re playing again.',
+        againText: 'Same table, new game. It hasn\'t started yet.',
+        joinThem: 'JOIN THEM',
+        againError: 'That didn\'t work. Try again.',
         createPlayer: 'HOST THE NEXT ONE',
         crew: 'See who\'s in next time',
         tryAnother: 'JOIN ANOTHER GAME',
@@ -145,7 +170,12 @@ export const nightAfterStrings = {
         missedText: 'פתחו משחק משלכם: זה בחינם, לוקח 10 שניות, וכל אחד משחק מהטלפון שלו.',
         create: 'לפתוח משחק משלי',
         playerTitle: 'הייתם שם.',
-        playerText: 'אותם אנשים בערב אחר? או קבוצה אחרת שתיפול בשקרים שלכם?',
+        playerText: 'אותם אנשים, עוד ערב? פותחים את השולחן מחדש: הקישור הזה בצ\'אט יביא את כולם לאותו משחק.',
+        playAgain: 'לשחק שוב, אותו שולחן',
+        againTitle: 'משחקים שוב.',
+        againText: 'החבר\'ה פתחו משחק חדש, והוא עוד לא התחיל.',
+        joinThem: 'להצטרף אליהם',
+        againError: 'זה לא עבד. אפשר לנסות שוב.',
         createPlayer: 'לארח את המשחק הבא',
         crew: 'מי בא בפעם הבאה',
         tryAnother: 'להצטרף למשחק אחר',

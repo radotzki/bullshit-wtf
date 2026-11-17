@@ -19,8 +19,12 @@ export async function validateGameName(pin: string, uid?: any, pid?: any) {
 
     const over = await gameOverError(game, Date.now());
     if (over) {
-        // An open rematch lobby comes first, as before: no recap beside it.
-        const recap = over.rematch ? null : nightAfter(pin, game, Date.now(), uid, pid);
+        // An open rematch lobby comes first: in the test's other half, no recap beside it, as before. In the
+        // new half the page shows the recap under "They're playing again" (same-table.ts).
+        const recap = nightAfter(pin, game, Date.now(), uid, pid);
+        if (recap && over.rematch && recap.half !== 'new') {
+            return Promise.reject(over);
+        }
         return Promise.reject(recap ? { ...over, nightAfter: recap } : over);
     }
 

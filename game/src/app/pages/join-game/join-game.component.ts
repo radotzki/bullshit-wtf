@@ -12,7 +12,7 @@ import { StorageService } from '../../services/storage.service';
 import { GameService } from '../../services/game.service';
 import {
     NIGHT_AFTER_CONTENT, NIGHT_AFTER_KEY, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
-    readRecap, seenMethod, shownHalf, whenWas,
+    readRecap, recapAsk, seenMethod, shownHalf, whenWas,
 } from './night-after';
 
 @Component({
@@ -42,6 +42,9 @@ export class JoinGameComponent implements OnInit {
     // In the week after a finished game, its recap (night-after.ts); shown in the test's new half only.
     recap: NightAfterRecap;
     recapShown: boolean;
+    // PLAY AGAIN, SAME TABLE is on its way, or failed (its words).
+    againBusy: boolean;
+    againError: string;
     // The PIN whose seen- row this page load sent, so a second GAME_OVER answer sends no second one.
     private recapCounted: string;
 
@@ -91,7 +94,8 @@ export class JoinGameComponent implements OnInit {
         const pin = (this.pin || '').toUpperCase();
         this.gameOver = { pin, rematch: err.rematch, justEnded: !!err.justEnded };
         // A later answer for the same PIN (a tap on JOIN) carries no recap: keep the one the page has.
-        const recap = err.rematch ? null : readRecap(err) || (this.recap && this.recapPin === pin ? this.recap : null);
+        // Beside an open rematch the server sends one in the new half only ("They're playing again").
+        const recap = readRecap(err) || (this.recap && this.recapPin === pin ? this.recap : null);
         this.setRecap(recap, pin);
     }
 
@@ -113,7 +117,11 @@ export class JoinGameComponent implements OnInit {
         this.recapShown = half === 'new';
         if (this.recapCounted !== pin) {
             this.recapCounted = pin;
-            this.countRecap(seenMethod(half, recap.player));
+            // None beside an open rematch, in either half (seenMethod).
+            const seen = seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
+            if (seen) {
+                this.countRecap(seen);
+            }
         }
     }
 
@@ -158,6 +166,52 @@ export class JoinGameComponent implements OnInit {
         });
     }
 
+    /** Which ask the recap shows (see recapAsk). */
+    get ask() {
+        return recapAsk(!!(this.recap && this.recap.player), this.gameOver && this.gameOver.rematch);
+    }
+
+    /**
+     * PLAY AGAIN, SAME TABLE: the game's open lobby, or a new one this phone hosts; then into it, under
+     * this browser's last nickname when it has one (its seat comes along), else at the nickname box.
+     */
+    async playAgain() {
+        const pin = this.recapPin;
+        if (!pin || this.againBusy) {
+            return;
+        }
+        this.againBusy = true;
+        this.againError = '';
+        this.countRecap(this.gameOver && this.gameOver.rematch ? 'same-table-open' : 'same-table');
+        try {
+            const r = await this.apiService.sameTable(pin);
+            if (!r || !r.pin) {
+                throw new Error('no table');
+            }
+            try {
+                this.gameService.unregister();
+            } catch (e) { }
+            this.goToLobby(r.pin);
+            const me = this.sessionService.user;
+            if (me && me.nickname) {
+                this.nickname = me.nickname;
+                this.join();
+            }
+        } catch (err) {
+            this.againError = this.n.againError;
+            if (!(err && err.code === 'NOT_A_PLAYER')) {
+                reportError(err, 'sameTable', { pin });
+            }
+        }
+        this.againBusy = false;
+    }
+
+    /** JOIN THEM, under "They're playing again". */
+    joinThem() {
+        this.countRecap('join-them');
+        this.joinRematch();
+    }
+
     recapCrew() {
         this.countRecap('crew');
     }
@@ -189,9 +243,13 @@ export class JoinGameComponent implements OnInit {
     /** Join the rematch of the game that is over: its PIN, then a nickname. */
     joinRematch() {
         const rematch = this.gameOver && this.gameOver.rematch;
-        if (!rematch) {
-            return;
+        if (rematch) {
+            this.goToLobby(rematch);
         }
+    }
+
+    /** To the nickname box of a lobby (the rematch, or the table PLAY AGAIN opened). */
+    private goToLobby(rematch: string) {
         this.gameOver = null;
         this.recap = null;
         this.recapShown = false;

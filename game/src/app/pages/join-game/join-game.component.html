@@ -13,6 +13,16 @@
         <!-- The week after a finished game, in the test's new half: the night's recap (night-after.ts). -->
         <div class="controls-wrapper" *ngIf="gameOver && recapShown && recap">
             <div class="controls night-after">
+                <!-- Same table tomorrow: this game's lobby is open, so it comes first (same-table.ts). -->
+                <div class="recap-ask recap-playing" *ngIf="ask === 'again-player' || ask === 'again-other'">
+                    <p class="recap-ask-title">{{ n.againTitle }}</p>
+                    <p class="recap-ask-text">{{ n.againText }}</p>
+                    <button *ngIf="ask === 'again-other'" class="button is-primary is-medium is-fullwidth recap-join-them" type="button"
+                        (click)="joinThem()">{{ n.joinThem }}</button>
+                    <button *ngIf="ask === 'again-player'" class="button is-primary is-medium is-fullwidth recap-again" type="button"
+                        [disabled]="againBusy" [class.is-loading]="againBusy" (click)="playAgain()">{{ n.playAgain }}</button>
+                    <p class="recap-again-error" *ngIf="againError">{{ againError }}</p>
+                </div>
                 <p class="recap-heading" dir="auto">{{ recapHeading }}</p>
                 <p class="recap-line recap-winner">
                     <span class="recap-label">{{ recapWinnerCount > 1 ? n.winners : n.winner }}:</span>
@@ -39,17 +49,18 @@
                     </div>
                 </div>
 
-                <div class="recap-ask" *ngIf="!recap.player">
+                <div class="recap-ask" *ngIf="ask === 'other'">
                     <p class="recap-ask-title">{{ n.missedTitle }}</p>
                     <p class="recap-ask-text">{{ n.missedText }}</p>
                     <button class="button is-primary is-medium is-fullwidth recap-create" type="button"
                         (click)="recapCreate()">{{ n.create }}</button>
                 </div>
-                <div class="recap-ask" *ngIf="recap.player">
+                <div class="recap-ask" *ngIf="ask === 'player'">
                     <p class="recap-ask-title">{{ n.playerTitle }}</p>
                     <p class="recap-ask-text">{{ n.playerText }}</p>
-                    <button class="button is-primary is-medium is-fullwidth recap-create" type="button"
-                        (click)="recapCreate()">{{ n.createPlayer }}</button>
+                    <button class="button is-primary is-medium is-fullwidth recap-again" type="button" [disabled]="againBusy"
+                        [class.is-loading]="againBusy" (click)="playAgain()">{{ n.playAgain }}</button>
+                    <p class="recap-again-error" *ngIf="againError">{{ againError }}</p>
                 </div>
                 <div class="field" *ngIf="recap.crew">
                     <a class="button is-info is-fullwidth recap-crew" [routerLink]="['/c', recap.crew]" (click)="recapCrew()">{{ n.crew }}</a>

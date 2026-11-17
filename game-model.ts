@@ -160,7 +160,8 @@ export interface AnswerTimes {
     picks?: { [pid: string]: AnswerTime };
 }
 
-export type GameOrigin = 'create' | 'replay' | 'crew';
+// 'table': a Replay opened later from the finished game's link (PLAY AGAIN, SAME TABLE, same-table.ts).
+export type GameOrigin = 'create' | 'replay' | 'crew' | 'table';
 
 /**
  * The reveal screen shows, one row at a time, each answer somebody picked, then the truth last.

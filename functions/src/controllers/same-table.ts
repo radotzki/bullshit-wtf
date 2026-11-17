@@ -1,0 +1,142 @@
+// "Same table tomorrow": a finished game's link reopens its table (Product's build plan, item 3).
+// The link of a link-invited table sits in its group chat. In "The night after"'s new half (night-after.ts),
+// a browser that played gets PLAY AGAIN, SAME TABLE there: one lobby for that game, with fresh questions,
+// that the next person to tap the same link lands in (validateGameName sends them on to it as the game's
+// rematch). Groups that come back mostly come back the next evening, with that link already in their chat.
+//
+// What it promises:
+// - One lobby per game link, however many tap at once. It takes the claim Replay takes (the finished
+//   game's `forking`, see next-game.ts), so a Replay, the crew page and this button all land in one lobby.
+// - A lobby that has started, ended, filled up or gone stale traps nobody: the next tap replaces it, in a
+//   transaction that replaces only that very lobby, so two taps at once still make one new one.
+// - Nothing new is stored and no database rule changes: the lobby is a Replay (`fork`), and the finished
+//   game's `forking` and `fork` point to it, as after any Replay. Each new lobby writes a `forks` row.
+// - Only a player of the game may open it (the recap's `player`), within the recap's week, and only for a
+//   game that has a recap. The lobby starts with that player's seat alone: the others come by the link.
+import { GameScheme, GameState, GamePlayers, MAX_PLAYERS } from '../game-model';
+import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
+import { incGameCounter, generateGameName } from './new-game';
+import { randomQuestions } from './questions';
+import { replayLength } from './taste';
+import { crewLobbyFor, NEXT_GAME_WAIT_MS } from './next-game';
+import { REMATCH_REUSE_MS } from './crew';
+import { isGameOver } from './game-over';
+import { nightAfter } from './night-after';
+import { createFork, joinNext } from './fork';
+
+const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+/** How many times a tap that lost a race looks again before it gives up. */
+const TRIES = 4;
+
+export interface SameTableResult {
+    pin: string;
+    host: boolean;
+    hostKey?: string;
+}
+
+/**
+ * Whether `pin` is a lobby a group can still sit down in: waiting to start, not stale, not full.
+ * A lobby claimed but not written yet is waited for, up to NEXT_GAME_WAIT_MS.
+ */
+export async function tableOpen(pin: string, now = Date.now): Promise<boolean> {
+    const until = now() + NEXT_GAME_WAIT_MS;
+    while (true) {
+        const game = await readGame(pin);
+        if (game && game.state) {
+            return game.state.id === GameState.GameStaging && !isGameOver(game, now())
+                && Object.keys(game.players || {}).length < MAX_PLAYERS;
+        }
+        if (now() >= until) {
+            return false;
+        }
+        await wait(250);
+    }
+}
+
+/**
+ * Takes the finished game's claim for `fresh`, when nobody holds it or it still holds `gone` (a lobby
+ * this tap found closed). Resolves to the pin that holds the claim afterwards.
+ */
+export function reclaimFork(pin: string, gone: string | null, fresh: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('forking').transaction(
+            (current) => !current || current === gone ? fresh : undefined,
+            (error, committed, snapshot) => error ? reject(error) : resolve(snapshot.val()),
+        );
+    });
+}
+
+/** The seat of the browser that pressed: its last seat, or the seat of its sign-in. */
+function seatOfPresser(game: GameScheme, uid?: string, pid?: string): string | undefined {
+    const players = game.players || {};
+    if (pid && players[pid]) {
+        return pid;
+    }
+    return Object.keys(players).find(k => !!uid && players[k] && players[k].uid === uid);
+}
+
+/**
+ * PLAY AGAIN, SAME TABLE on a finished game's recap. `creator` and `hostPid` are the sign-in and last
+ * seat of the browser that pressed, `hostKey` its new one-game secret (as for Replay). Resolves to the
+ * game's open lobby, or a new one; the presser hosts a new one, and gets the key of one that was there.
+ */
+export async function sameTable(pin: string, creator?: string, hostPid?: string, hostKey?: string,
+    stagedReveal = false, aboutUs = false): Promise<SameTableResult> {
+    pin = String(pin || '').toUpperCase();
+    const game = await readGame(pin);
+    if (!game) {
+        return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
+    }
+    const recap = nightAfter(pin, game, Date.now(), creator, hostPid);
+    const seat = seatOfPresser(game, creator, hostPid);
+    if (!recap || !recap.player || !seat) {
+        return Promise.reject({ message: 'Only a player of this game can open its table again', code: 'NOT_A_PLAYER' });
+    }
+
+    for (let i = 0; i < TRIES; i++) {
+        // The game's lobby is open (or being written by a tap a moment ago): everyone goes there.
+        const held = await get<string>(gamesRef.child(pin).child('forking'));
+        if (held && await tableOpen(held)) {
+            return await joinNext(game, held, seat, hostKey);
+        }
+        const fresh = generateGameName(await incGameCounter());
+        const claimed = await reclaimFork(pin, held || null, fresh);
+        if (claimed === fresh) {
+            return await openTable(pin, game, fresh, seat, creator, hostKey, stagedReveal, aboutUs);
+        }
+        // Another tap took the claim between our read and our write: look again, and go to its lobby.
+    }
+    return Promise.reject({ message: 'Could not open the table, try again', code: 'TRY_AGAIN' });
+}
+
+/** This tap holds the claim: the crew's open lobby, if the crew page opened one, or a new game. */
+async function openTable(pin: string, game: GameScheme, fresh: string, seat: string, creator: string,
+    hostKey: string, stagedReveal: boolean, aboutUs: boolean): Promise<SameTableResult> {
+    if (game.crew) {
+        const lobby = await crewLobbyFor(game.crew, Date.now() - REMATCH_REUSE_MS, fresh, REMATCH_REUSE_MS)
+            .catch(e => { console.error('crewLobbyFor failed', pin, e && e.message); return null; });
+        if (lobby) {
+            await gamesRef.child(pin).child('forking').set(lobby);
+            await gamesRef.child(pin).child('fork').set(lobby);
+            return await joinNext(game, lobby, seat, hostKey);
+        }
+    }
+
+    // Fresh questions for everyone who sat at the table, and the presser's seat alone: the others take
+    // theirs by the link (one phone, one seat, see join.ts).
+    const uids = Object.keys(game.players || {}).map(k => game.players[k] && game.players[k].uid).filter(u => !!u);
+    const totalQ = replayLength(game);
+    const questions = await randomQuestions(game.locale, totalQ, uids, game.pack);
+    const players: GamePlayers = { [seat]: game.players[seat] };
+    const table: GameScheme = Object.assign({}, game, { players, totalQ, lastSent: undefined, played: undefined });
+    const lobby = createFork(pin, table, questions, creator || game.players[seat].uid, seat, hostKey,
+        stagedReveal, fresh, aboutUs);
+    lobby.origin = 'table';
+
+    await gamesRef.child(fresh).set(lobby);
+    await gamesRef.child(pin).child('fork').set(fresh);
+    console.log(`[PIN: ${pin}] Same table: ${fresh}`);
+    return { pin: fresh, host: true };
+}

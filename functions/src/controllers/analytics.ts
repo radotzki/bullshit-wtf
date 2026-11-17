@@ -173,6 +173,9 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     create               pressed START YOUR OWN GAME (didn't play; the game it makes carries campaign night-after)
 //     create-player        pressed HOST THE NEXT ONE (played; its game carries campaign night-after-player)
 //     crew                 pressed "See who's in next time" (the table's saved crew page)
+//     same-table           pressed PLAY AGAIN, SAME TABLE (played; opens the game's lobby, same-table.ts)
+//     same-table-open      the same, while the table's lobby was already open (it joins that lobby)
+//     join-them            pressed JOIN THEM under "They're playing again" (didn't play; joins the open lobby)
 //   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
 //     mute               tapped it to silence the game
 //     unmute             tapped it again
@@ -198,7 +201,7 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'game-over': ['create', 'remind', 'remind-google'],
     'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],
     'sound': ['mute', 'unmute'],
-    'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew'],
+    'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew', 'same-table', 'same-table-open', 'join-them'],
 };
 
 export interface ShareRow {

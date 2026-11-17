@@ -2072,15 +2072,20 @@ every table that gathered by link, and people scroll back to it. Until now it an
 Check the PIN". For 7 days after the game, in the new half of a 50/50 test by the game's PIN, it shows
 the night instead (Product's spreading-loop spec, change 2): "LAST NIGHT AT NOA'S", the winner, the
 biggest bullshitter, the lie of the night and how many it fooled, the final scores with how many each
-player fooled, and one button. A browser that played that game gets "You were there" and HOST THE NEXT
-ONE; anyone else gets "You missed it" and START YOUR OWN GAME. When the table has a saved crew, "See
+player fooled, and one button. A browser that played that game gets "You were there" and PLAY AGAIN,
+SAME TABLE (it reopens the game's own table, "Same table tomorrow", `same-table.ts`); anyone else gets
+"You missed it" and START YOUR OWN GAME. While a lobby of that game is open, the new half shows "They're
+playing again" above the recap: a player's PLAY AGAIN, SAME TABLE joins that lobby, anyone else gets
+JOIN THEM. When the table has a saved crew, "See
 who's in next time" opens its page. The other half keeps today's page, with its "Start your own game" ask.
 
 - **Where it is built.** `validateGameName` answers GAME_OVER as before, and within 7 days of a game that
   reached its final scoreboard with 2 or more players it adds `nightAfter`, the recap
   (`functions/src/controllers/night-after.ts`). The join page sends its sign-in uid and its last seat
-  with that check, so the server can say whether this browser played. An open rematch lobby still
-  comes first: no recap beside it. A taste, a game that died in the lobby or mid-game, and a game past 7
+  with that check, so the server can say whether this browser played. Beside an open rematch lobby the
+  control half gets no recap, as before; the new half gets one, under "They're playing again". **Neither
+  half sends a `seen-` row on such a page load**, so the read below compares the same visits in both
+  halves; `same-table-open` and `join-them` count what happens there. A taste, a game that died in the lobby or mid-game, and a game past 7
   days keep today's page.
 - **What is stored: nothing new.** The recap is built on each read from the game's own record, the one
   its final screen read. After 7 days nothing is shown, and there is no copy to erase. (The game's own
@@ -2101,10 +2106,13 @@ who's in next time" opens its page. The other half keeps today's page, with its 
 
 | `shares.method` (`content_type = 'night-after'`, the game's PIN in capitals in `crew_id`) | When |
 |---|---|
-| `seen-player`, `seen-other` | the recap showed, to a browser that played that game, or to one that didn't (once per page load) |
-| `seen-control-player`, `seen-control-other` | the same moment in the other half: today's "Game over" showed |
+| `seen-player`, `seen-other` | the recap showed, to a browser that played that game, or to one that didn't (once per page load; none while a rematch lobby is open) |
+| `seen-control-player`, `seen-control-other` | the same moment in the other half: today's "Game over" showed (none while a rematch lobby is open) |
 | `create` | pressed START YOUR OWN GAME; its game carries `campaign = 'night-after'` |
-| `create-player` | pressed HOST THE NEXT ONE; its game carries `campaign = 'night-after-player'` |
+| `create-player` | pressed HOST THE NEXT ONE; since "Same table tomorrow" no page shows it, so no new rows (kept for older rows) |
+| `same-table` | a player pressed PLAY AGAIN, SAME TABLE; it opens the game's lobby (`origin = 'table'`), or joins the one that opened meanwhile |
+| `same-table-open` | the same press while the page showed the table's lobby as open: it joins that lobby |
+| `join-them` | a browser that didn't play pressed JOIN THEM under "They're playing again": it goes to the open lobby |
 | `crew` | pressed "See who's in next time" |
 
 **How to read it.** The first number is new: how many people open an old game's link at all.
