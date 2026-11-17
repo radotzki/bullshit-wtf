@@ -28,11 +28,11 @@ test('the words, in both languages, with the friend\'s name', () => {
     const he = pairStrings('he');
     assert.strictEqual(pairStrings('fr'), en);
     assert.strictEqual(en.label('Dana'), 'YOUR DECOY: which one would fool Dana?');
-    assert.strictEqual(en.note('Dana'), 'Fools Dana: you get half points');
+    assert.strictEqual(en.note('Dana'), 'If it fools Dana, you get half points.');
     assert.strictEqual(en.tag, 'DECOY');
     assert.strictEqual(en.flash('Dana'), 'Your decoy fooled Dana!');
     assert.strictEqual(he.label('דנה'), 'הפיתיון שלך: מה יעבוד על דנה?');
-    assert.strictEqual(he.note('דנה'), 'אם זה עובד על דנה: חצי נקודות בשבילך');
+    assert.strictEqual(he.note('דנה'), 'עובד על דנה? חצי נקודות בשבילך');
     assert.strictEqual(he.tag, 'פיתיון');
     assert.strictEqual(he.flash('דנה'), 'הפיתיון שלך עבד על דנה!');
     Object.keys(en).forEach(k => assert.strictEqual(typeof he[k], typeof en[k], k));

@@ -9,6 +9,9 @@
 //                         each phone lists three answers, never its own lie or decoy, and no house lie is
 //                         on the table; a decoy that fooled shows its DECOY tag on the reveal and pays
 //                         half a lie's points; question_results rows say pair true and count decoy_picks.
+//   en-one-writer, he-one-writer  as en-pair, but on the first question the friend writes no lie. Checks:
+//                         both players still have a decoy, so the writer's phone lists two answers (the
+//                         truth and the friend's decoy), not the truth alone; the friend's lists three.
 //   en-control, he-control two phones in the other half: no chips, no card line, house lies as today,
 //                         pair false on every row.
 //   en-three              three phones, PIN in the decoy half: not in the test, nothing changes.
@@ -16,7 +19,7 @@
 // Nothing reaches production: see emulator-game.js, whose emulators and phones this run uses.
 // From the repository root, with game/ and functions/ built and the root's npm ci done:
 //   node .github/smoke/pick-a-decoy.js [path to dist]
-// ONLY=en-pair,he-pair,en-control,he-control,en-three plays only those. SHOTS=<dir> saves screenshots.
+// ONLY=en-pair,he-pair,en-one-writer,he-one-writer,en-control,he-control,en-three plays only those. SHOTS=<dir> saves screenshots.
 // Prints a JSON summary; exits non-zero when a check fails.
 
 'use strict';
@@ -136,6 +139,12 @@ async function act(phone, game, sitting) {
                 phone.choseShot = true;
                 await shot(page, `${sitting.key}-writing-chosen-${phone.name}`);
             }
+        }
+        // A one-writer sitting: the friend writes nothing on the first question and lets the time run out.
+        if (sitting.silentQ === index && phone.role !== 'host') {
+            phone.lies.push(index);
+            phone.chosen[index] = null;
+            return;
         }
         await input.fill(`${phone.name} lie ${index}`);
         await page.locator('form button[type="submit"]').first().click();
@@ -277,9 +286,16 @@ async function sitting(base, s) {
             const friendOf = (name) => phones.find((p) => p.name !== name).name;
             check(seen.chips.length === 10 && seen.chips.every((c) => c.chips === 2 && c.label === words.label(friendOf(c.phone))),
                 `the chooser on the writing screen: ${JSON.stringify(seen.chips)}`);
-            check(seen.answers.length === 10 && seen.answers.every((a) => a.buttons === 3 && !a.ownShown.length),
+            // With one writer, the writer's phone lists the truth and the friend's decoy: two, never the truth alone.
+            const listed = (a) => (s.silentQ === a.q && a.phone === phones[0].name ? 2 : 3);
+            check(seen.answers.length === 10 && seen.answers.every((a) => a.buttons === listed(a) && !a.ownShown.length),
                 `the answers each phone listed: ${JSON.stringify(seen.answers)}`);
-            check(seen.screenAnswers === 5, `the big screen listed ${seen.screenAnswers} answers, not the 5 on the table`);
+            const onTable = s.silentQ === 0 ? 4 : 5;
+            check(seen.screenAnswers === onTable, `the big screen listed ${seen.screenAnswers} answers, not the ${onTable} on the table`);
+            if (s.silentQ !== undefined) {
+                const row = rows.find((r) => r.q_index === s.silentQ);
+                check(!!row && row.lies === 1 && row.decoy_picks >= 1, `the one-writer question: ${JSON.stringify(row)}`);
+            }
             check(!!seen.screenTag, 'the big screen never showed the DECOY tag');
             check(rows.every((r) => r.house_picks === 0), 'a house lie was picked in the decoy half');
             const decoyPicks = rows.reduce((n, r) => n + (r.decoy_picks || 0), 0);
@@ -330,6 +346,8 @@ async function main() {
         const plan = [
             { key: 'en-pair', locale: 'en', half: true, pair: true, players: 2 },
             { key: 'he-pair', locale: 'he', half: true, pair: true, players: 2 },
+            { key: 'en-one-writer', locale: 'en', half: true, pair: true, players: 2, silentQ: 0 },
+            { key: 'he-one-writer', locale: 'he', half: true, pair: true, players: 2, silentQ: 0 },
             { key: 'en-control', locale: 'en', half: false, players: 2 },
             { key: 'he-control', locale: 'he', half: false, players: 2 },
             { key: 'en-three', locale: 'en', half: true, players: 3 },

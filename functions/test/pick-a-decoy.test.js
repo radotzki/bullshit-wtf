@@ -186,7 +186,7 @@ test('the chosen decoy is kept only while it is one of the offers and free', () 
     assert.strictEqual(matchOffer(offers, 5), null);
 });
 
-test('pairDecoys: one decoy per writer, never the text of a lie, the truth or the other decoy', () => {
+test('pairDecoys: one decoy per player with offers, writer or not, never the text of a lie, the truth or the other decoy', () => {
     let n = 0;
     const g = {
         players: { p1: {}, p2: {} },
@@ -202,6 +202,12 @@ test('pairDecoys: one decoy per writer, never the text of a lie, the truth or th
     assert.strictEqual(pairDecoys(Object.assign({}, g, { answers: {} }), 'Truth', () => 'x'), null, 'nobody wrote: no decoys');
     const one = pairDecoys(Object.assign({}, g, { ideas: { p2: ['House C'] } }), 'Truth', () => 'k');
     assert.deepStrictEqual(Object.keys(one).map(k => one[k].decoyOf), ['p2'], 'p1 had no offers: no decoy');
+    let m = 0;
+    const lone = pairDecoys(Object.assign({}, g, { answers: { p1: g.answers.p1 }, decoys: {} }), 'Truth', () => 'w' + (++m), () => 0);
+    assert.deepStrictEqual(lone, {
+        w1: { text: 'House A', houseLie: false, realAnswer: false, decoyOf: 'p1' },
+        w2: { text: 'House C', houseLie: false, realAnswer: false, decoyOf: 'p2' },
+    }, 'only p1 wrote: p2 gets a decoy too');
 });
 
 test('scoring: a decoy that fools pays half a lie to its chooser and costs the picker nothing', () => {
@@ -355,14 +361,35 @@ test('a chosen decoy is kept only if it was offered to that player and is not th
     assert.deepStrictEqual(decoyOf(pin, 'p1').map(a => a.text), [ideas.p1[0]]);
 });
 
-test('a player who wrote nothing has no decoy; if nobody wrote, the house lies come back', async () => {
+test('one writer: both players still get a decoy, so the writer has a real choice; if nobody wrote, the house lies come back', async () => {
     const pin = newGame(true);
     await toQuestion(pin);
+    const ideas = game(pin).ideas;
     await answer(pin, 'p1', 'only lie');
     assert.strictEqual(await next(pin), S.ShowAnswers);
-    let list = Object.values(game(pin).answers);
-    assert.deepStrictEqual(list.filter(a => a.decoyOf).map(a => a.decoyOf), ['p1']);
+    const answers = game(pin).answers;
+    let list = Object.keys(answers).map(k => answers[k]);
+    assert.deepStrictEqual(list.filter(a => a.decoyOf).map(a => a.decoyOf).sort(), ['p1', 'p2'], 'the friend who wrote nothing has a decoy too');
+    assert.ok(ideas.p2.indexOf(decoyOf(pin, 'p2')[0].text) >= 0, 'one of p2\'s offers');
     assert.strictEqual(list.filter(a => a.houseLie).length, 0);
+    // What each phone lists: everything but its own lie and its own decoy.
+    const seen = pid => list.filter(a => a.decoyOf !== pid && a !== answers[pid]).map(a => a.text).sort();
+    assert.deepStrictEqual(seen('p1'), [decoyOf(pin, 'p2')[0].text, 'Truth0'].sort(), 'the writer sees the truth and the friend\'s decoy');
+    assert.strictEqual(seen('p2').length, 3, 'the friend sees the lie, the writer\'s decoy and the truth');
+
+    await pick(pin, 'p1', decoyOf(pin, 'p2')[0].text);
+    await pick(pin, 'p2', 'truth0');
+    assert.strictEqual(state(pin), S.RevealTheTruth);
+    const decoyRow = game(pin).revealAnswers.find(r => r.decoy && r.creators[0] === 'p2');
+    assert.deepStrictEqual(decoyRow.selectors, ['p1']);
+    assert.strictEqual(decoyRow.points, DECOY_POINTS[0]);
+    await next(pin);
+    await next(pin);
+    assert.deepStrictEqual([game(pin).players.p1.score, game(pin).players.p2.score], [0, 1000 + DECOY_POINTS[0]], 'p2 found the truth and their decoy paid; p1 lost nothing');
+    const row = rowsFor(pin)[0];
+    assert.strictEqual(row.decoy_picks, 1, 'the writer fell for the friend\'s decoy');
+    assert.strictEqual(row.lies, 1);
+    assert.strictEqual(row.house_picks, 0);
 
     const empty = newGame(true);
     await toQuestion(empty);

@@ -30,7 +30,7 @@ export interface PairStrings {
 const en: PairStrings = {
     label: name => `YOUR DECOY: which one would fool ${name}?`,
     single: 'YOUR DECOY:',
-    note: name => `Fools ${name}: you get half points`,
+    note: name => `If it fools ${name}, you get half points.`,
     intro: 'Two players: each of you also picks a decoy. Every answer you see is the truth or a trap from your friend.',
     tag: 'DECOY',
     flash: names => `Your decoy fooled ${names}!`,
@@ -43,12 +43,12 @@ const en: PairStrings = {
 const he: PairStrings = {
     label: name => `הפיתיון שלך: מה יעבוד על ${name}?`,
     single: 'הפיתיון שלך:',
-    note: name => `אם זה עובד על ${name}: חצי נקודות בשבילך`,
-    intro: 'שני שחקנים: כל אחד בוחר גם פיתיון. כל תשובה שתראו היא האמת או מלכודת של החבר.',
+    note: name => `עובד על ${name}? חצי נקודות בשבילך`,
+    intro: 'שני שחקנים: כל אחד בוחר גם פיתיון. כל תשובה שתראו היא האמת או מלכודת מהצד השני.',
     tag: 'פיתיון',
     flash: names => `הפיתיון שלך עבד על ${names}!`,
     fooled: (names, points) => `הפיתיון שלך עבד על ${names}! ${points}`,
-    friend: 'החבר שלך',
+    friend: 'הצד השני',
 };
 
 export function pairStrings(locale: string): PairStrings {

@@ -79,9 +79,11 @@ export function chooseDecoy(
 }
 
 /**
- * A pair game's answers besides the lies and the truth: no neutral house lies, and each player who
- * wrote a lie gets a decoy, the one they chose or one of their offers (see chooseDecoy), under a key
- * of its own. A decoy never has the text of a lie, of the truth or of the other decoy.
+ * A pair game's answers besides the lies and the truth: no neutral house lies, and each player still
+ * in the game who has offers gets a decoy, the one they chose or one of their offers (see chooseDecoy),
+ * under a key of its own. That includes a player who wrote no lie: otherwise, when only one of the two
+ * writes, the writer's phone would list the truth alone (their own lie and decoy are hidden from them).
+ * A decoy never has the text of a lie, of the truth or of the other decoy.
  * null when nobody wrote a lie: the question then gets house lies as in any game, so it still has
  * answers to pick from.
  */
@@ -94,8 +96,10 @@ export function pairDecoys(game: GameScheme, realAnswer: string, newKey: () => s
         return null;
     }
     const taken = writers.map(pid => answers[pid].text).concat([realAnswer]);
+    const players = game.players || {};
+    const present = Object.keys(players).filter(pid => !!players[pid]).sort();
     const res: Answers = {};
-    writers.forEach(pid => {
+    present.forEach(pid => {
         const text = chooseDecoy((game.ideas || {})[pid], (game.decoys || {})[pid], taken, random);
         if (text) {
             taken.push(text);
