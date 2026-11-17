@@ -95,6 +95,8 @@ export interface QuestionResultRow {
     qid: string | null;
     truth_picks: number;
     house_picks: number;
+    pair: boolean | null;
+    decoy_picks: number;
 }
 
 /**
@@ -108,21 +110,28 @@ export interface QuestionResultRow {
  *   unpicked_lies  players' lies that nobody picked
  *   qid            the question's id in the bank (game.qids), to rank questions by how they play
  *   truth_picks    picks of the real answer
- *   house_picks    picks of a house lie
+ *   house_picks    picks of a neutral house lie (none in a pair game's decoy half)
+ *   pair           the game's "Pick a decoy" half (see pair.ts): true, false, or null when not in the test
+ *   decoy_picks    picks of a decoy another player chose (pair games); lies, friend_fooled and
+ *                  unpicked_lies count written lies only
  * A pick is the truth or a house lie as scoring counts it: it matches that answer alone (case aside).
  */
 export function questionResult(pin: string, game: GameScheme): QuestionResultRow {
     const answers = game.answers || {};
     const selections = game.answerSelections || {};
-    const playerLies = Object.keys(answers).filter(k => answers[k] && !answers[k].houseLie && !answers[k].realAnswer);
+    const playerLies = Object.keys(answers).filter(k => answers[k] && !answers[k].houseLie && !answers[k].realAnswer && !answers[k].decoyOf);
+    const decoys = Object.keys(answers).filter(k => answers[k] && !!answers[k].decoyOf);
 
     let friendFooled = 0;
+    let decoyPicks = 0;
     const pickedTexts: string[] = [];
     Object.keys(selections).forEach(pid => {
         const picked = normalize(selections[pid] && selections[pid].text);
         pickedTexts.push(picked);
         if (picked && playerLies.some(k => k !== pid && normalize(answers[k].text) === picked)) {
             friendFooled++;
+        } else if (picked && decoys.some(k => answers[k].decoyOf !== pid && normalize(answers[k].text) === picked)) {
+            decoyPicks++;
         }
     });
     const q = game.questionIndex || 0;
@@ -160,5 +169,7 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
         qid: qid !== undefined && qid !== null && qid !== '' ? String(qid) : null,
         truth_picks: truthPicks,
         house_picks: housePicks,
+        pair: game.pair === true || game.pair === false ? game.pair : null,
+        decoy_picks: decoyPicks,
     };
 }

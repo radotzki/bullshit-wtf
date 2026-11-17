@@ -33,6 +33,18 @@
                 </p>
             </div>
 
+            <!-- "Pick a decoy" (two-player games in the test): one of this player's own house lies, for the friend. -->
+            <div *ngIf="decoy as d" class="field decoy" [class.rtl]="rtl">
+                <p class="decoy-label" *ngIf="!d.single">{{ pairWords.label(friendLabel) }}</p>
+                <p class="decoy-label" *ngIf="d.single">{{ pairWords.single }}</p>
+                <div class="decoy-chips" role="radiogroup" [attr.aria-label]="pairWords.label(friendLabel)">
+                    <button type="button" *ngFor="let offer of d.offers" class="button is-primary is-fullwidth decoy-chip"
+                        role="radio" [attr.aria-checked]="offer === d.chosen" [class.is-outlined]="offer !== d.chosen"
+                        (click)="chooseDecoy(offer)">{{ offer | uppercase }}</button>
+                </div>
+                <p class="decoy-note">{{ pairWords.note(friendLabel) }}</p>
+            </div>
+
             <div class="field">
                 <p class="control">
                     <button type="submit" class="button is-primary is-fullwidth" [class.is-loading]="loading"

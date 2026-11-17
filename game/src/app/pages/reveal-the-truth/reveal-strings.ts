@@ -28,13 +28,20 @@ export interface ResultRow {
     creatorIds: string[];
     pickerNames: string[];
     creatorNames: string[];
+    // A pair game's decoy ("Pick a decoy"): its creator chose it, nobody wrote it.
+    decoy?: boolean;
 }
 
-/** One or two short lines on how the player `pid` did this question. */
-export function resultLines(pid: string, rows: ResultRow[], t: ResultWords): string[] {
+/**
+ * One to three short lines on how the player `pid` did this question. `decoyFooled`: in a pair game,
+ * the line for the player's decoy when it fooled somebody (see pages/pair-strings.ts).
+ */
+export function resultLines(pid: string, rows: ResultRow[], t: ResultWords,
+    decoyFooled?: (names: string, points: string) => string): string[] {
     const lines: string[] = [];
     const pickedRow = rows.filter(r => r.pickerIds.indexOf(pid) !== -1)[0];
-    const myLie = rows.filter(r => r.creatorIds.indexOf(pid) !== -1)[0];
+    const myLie = rows.filter(r => !r.decoy && r.creatorIds.indexOf(pid) !== -1)[0];
+    const myDecoy = rows.filter(r => r.decoy && r.creatorIds.indexOf(pid) !== -1)[0];
 
     if (pickedRow && pickedRow.realAnswer) {
         lines.push(t.foundTheTruth(t.signed(pickedRow.points)));
@@ -51,6 +58,10 @@ export function resultLines(pid: string, rows: ResultRow[], t: ResultWords): str
         lines.push(t.fooled(t.names(myLie.pickerNames), t.signed(myLie.points)));
     } else if (myLie) {
         lines.push(t.nobodyFellForYours);
+    }
+
+    if (myDecoy && myDecoy.pickerNames.length && decoyFooled) {
+        lines.push(decoyFooled(t.names(myDecoy.pickerNames), t.signed(myDecoy.points)));
     }
 
     return lines;

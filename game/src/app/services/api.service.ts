@@ -438,7 +438,10 @@ export class ApiService {
         return { coach: !!coach, roundIndex: roundIndex || 0, questionIndex: questionIndex || 0, locale };
     }
 
-    /** This player's ready-made lies for the current question (round 1 of a coach game), or []. */
+    /**
+     * This player's ready-made lies for the current question (round 1 of a coach game, and every question
+     * of a pair game, where they are also the decoy offers), or [].
+     */
     async getMyIdeas(pin: string): Promise<string[]> {
         pin = pin.toUpperCase();
         const user = this.sessionService.user;
@@ -503,10 +506,21 @@ export class ApiService {
         return { question, about: aboutOf(state), missed: aboutMissedOf(state), players };
     }
 
-    answer(pin: string, answer: string) {
+    /** Sends this player's lie; in a pair game, with the decoy they chose (see pages/pair-strings.ts). */
+    answer(pin: string, answer: string, decoy?: string) {
         pin = pin.toUpperCase();
         const pid = this.sessionService.user.pid;
-        return this.post('answer', { pin, answer, pid });
+        return this.post('answer', decoy ? { pin, answer, pid, decoy } : { pin, answer, pid });
+    }
+
+    /**
+     * Whether this game is in the decoy half of the "Pick a decoy" test (two players, set at START).
+     * False when it cannot be read: the phone then shows today's screens, and the server still gives
+     * the player a decoy.
+     */
+    isPairGame(pin: string): Promise<boolean> {
+        pin = pin.toUpperCase();
+        return this.get<boolean>(this.gamesRef.child(pin).child('pair')).then(v => v === true, () => false);
     }
 
     async getAnswers(pin: string) {
