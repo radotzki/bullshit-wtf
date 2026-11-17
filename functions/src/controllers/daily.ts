@@ -330,7 +330,28 @@ export interface DailyPost {
     /** Database paths under qHistory/daily/<lang>/<day> to add one to. Empty for anything but a pick. */
     add: string[];
     /** The row for BigQuery `shares`: existing columns only. */
-    row: { content_type: string, method: string, crew_id: string | null, locale: DailyLang, uid: string | null };
+    row: DailyRow;
+    /** One more row for an open from a post's own tag (see postViaRow); null otherwise. */
+    via: DailyRow | null;
+}
+
+export interface DailyRow { content_type: string, method: string, crew_id: string | null, locale: DailyLang, uid: string | null }
+
+/**
+ * The post's own tag of a puzzle opened from it (?via=fb-he-hanukkah): one more row beside the
+ * plain puzzle's open, content_type 'post-via', the tag in method, the browser's id in uid. Every
+ * other row keeps its content_type as before (daily-post for any post's tag), so today's queries
+ * read the same, and 'post-via' does not start with 'daily', so they leave it out on their own;
+ * this row tells the posts apart: join its uid and day on the browser's daily-post rows. The
+ * same as round-via (daily-round.ts) for a chat group's round, which carries its own row; so an
+ * open in a round (a round id) gets none here. Null for anything else.
+ */
+export const POST_VIA = 'post-via';
+export function postViaRow(row: DailyRow, src: any): DailyRow | null {
+    if (row.method !== 'open' || row.crew_id || row.content_type !== 'daily-post') {
+        return null;
+    }
+    return { content_type: POST_VIA, method: cleanCampaign(src), crew_id: null, locale: row.locale, uid: row.uid };
 }
 
 /**
@@ -390,5 +411,6 @@ export function cleanPost(body: any, bank: DailyBank, now: number): DailyPost | 
         }
     }
     const uid = typeof body.uid === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(body.uid) ? body.uid : null;
-    return { lang, day: body.day, add, row: { content_type: contentTypeOf(body.src), method, crew_id: g, locale: lang, uid } };
+    const row: DailyRow = { content_type: contentTypeOf(body.src), method, crew_id: g, locale: lang, uid };
+    return { lang, day: body.day, add, row, via: postViaRow(row, body.src) };
 }

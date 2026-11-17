@@ -117,6 +117,9 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
             try {
                 await dailyStore().addPicks(post);
                 await analytics.onShare(post.row);
+                if (post.via) {
+                    await analytics.onShare(post.via);
+                }
             } catch (e) {
                 console.error('daily: a post was not kept', e);
             }

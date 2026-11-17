@@ -153,6 +153,7 @@ test('a broken or foreign value under the key reads as no note', () => {
 
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'bs-pages-'));
 execFileSync(process.execPath, [path.join(__dirname, '..', 'seo', 'build-pages.js'), out], { stdio: 'pipe' });
+execFileSync(process.execPath, [path.join(__dirname, '..', 'seo', 'build-daily.js'), out], { stdio: 'pipe' });
 test.after(() => fs.rmSync(out, { recursive: true, force: true }));
 
 function noteScript(file) {
@@ -197,4 +198,38 @@ test('a plain page leaves an earlier note alone, and never notes a move inside t
     assert.strictEqual(openPlain('how-to-play.html', { pathname: '/how-to-play', referrer: 'https://bullshit.wtf/' }).data.BS_ARRIVAL, undefined);
     assert.strictEqual(JSON.parse(openPlain('he/hanukkah.html', { pathname: '/he/hanukkah' }).data.BS_ARRIVAL).ref, null);
     assert.doesNotThrow(() => openPlain('how-to-play.html', { pathname: '/how-to-play', blocked: true }));
+});
+
+// ---- the daily puzzle's pages (seo/daily-page.js, built apart from the search pages) ----
+
+test('both daily puzzle pages keep the same note, once, in the head', () => {
+    const { ARRIVAL_NOTE } = require('../seo/arrival-note');
+    for (const file of ['daily.html', 'he/daily.html']) {
+        const html = fs.readFileSync(path.join(out, file), 'utf8');
+        assert.strictEqual(noteScript(file), ARRIVAL_NOTE.replace(/<\/?script>/g, ''), file + ' carries the search pages\' note');
+        assert.ok(html.indexOf('BS_ARRIVAL') < html.indexOf('</head>'), file + ' notes the arrival before the body');
+    }
+    assert.strictEqual(noteScript('how-to-play.html'), noteScript('daily.html'), 'one note for every page built outside the app');
+});
+
+test('a puzzle opened from a post notes the puzzle and the referring site, and a game started from it sends them', () => {
+    const s = openPlain('he/daily.html', { pathname: '/he/daily', referrer: 'https://l.facebook.com/l.php?u=https%3A%2F%2Fbullshit.wtf%2Fhe%2Fdaily%3Fvia%3Dfb-he-hanukkah' });
+    const kept = JSON.parse(s.data.BS_ARRIVAL);
+    assert.strictEqual(kept.page, '/he/daily');
+    assert.strictEqual(kept.ref, 'l.facebook.com');
+    assert.ok(!/via|\?|fb-he/.test(s.data.BS_ARRIVAL), 'no query and no tag in the note');
+
+    // START A GAME opens the app in the same tab (/create-game?via=...): the app keeps the puzzle's note.
+    const t = tab({ pathname: '/he/create-game', referrer: 'https://bullshit.wtf/he/daily', session: s.data });
+    t.arrival.rememberArrival();
+    assert.deepStrictEqual(t.arrival.newGameArrival(kept.at + 5 * 60000),
+        { page: '/he/daily', ref: 'l.facebook.com', played: false, hosted: false, minutes: 5 });
+});
+
+test('the puzzle keeps an earlier page\'s note, and notes nothing for a move inside the site', () => {
+    const first = JSON.stringify({ page: '/how-to-play', ref: 'www.google.com', at: 1 });
+    assert.strictEqual(openPlain('daily.html', { pathname: '/daily', referrer: 'https://bullshit.wtf/how-to-play', session: { BS_ARRIVAL: first } }).data.BS_ARRIVAL, first);
+    assert.strictEqual(openPlain('daily.html', { pathname: '/daily', referrer: 'https://bullshit.wtf/' }).data.BS_ARRIVAL, undefined);
+    assert.deepStrictEqual(JSON.parse(openPlain('daily.html', { pathname: '/daily' }).data.BS_ARRIVAL).ref, null, 'a typed address');
+    assert.doesNotThrow(() => openPlain('he/daily.html', { pathname: '/he/daily', blocked: true }));
 });
