@@ -47,6 +47,8 @@ export class JoinGameComponent implements OnInit {
     againError: string;
     // The PIN whose seen- row this page load sent, so a second GAME_OVER answer sends no second one.
     private recapCounted: string;
+    // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
+    seatTaken: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -65,6 +67,7 @@ export class JoinGameComponent implements OnInit {
         this.lang = lang === 'he' || lang === 'en' ? lang : undefined;
         this.t = joinStrings(joinLocale(this.router.url, this.lang, preferredLocale()));
         this.pin = this.activatedRoute.snapshot.params['pin'];
+        this.seatTaken = !!this.pin && (this.activatedRoute.snapshot.queryParams || {})['taken'] === '1';
 
         if (this.pin) {
             this.pinInUrl = true;
@@ -234,6 +237,7 @@ export class JoinGameComponent implements OnInit {
 
     /** Back to an empty PIN box. */
     tryAnotherPin() {
+        this.seatTaken = false;
         this.gameOver = null;
         this.recap = null;
         this.recapShown = false;
@@ -256,6 +260,7 @@ export class JoinGameComponent implements OnInit {
 
     /** To the nickname box of a lobby (the rematch, or the table PLAY AGAIN opened). */
     private goToLobby(rematch: string) {
+        this.seatTaken = false;
         this.gameOver = null;
         this.recap = null;
         this.recapShown = false;

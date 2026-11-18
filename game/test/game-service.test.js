@@ -42,6 +42,8 @@ function phone() {
     const ticks = [];
     const states = {};
     const seats = [];
+    // What each game's seat watcher calls when the seat goes to another sign-in (ApiService.followSeat).
+    const taken = {};
     let clock = 1000;
     // The step's id alone (gameState) and the whole step (gamePhase), as the database gives them.
     const watch = (pin, pick) => ({
@@ -69,8 +71,9 @@ function phone() {
         // Whether a game plays the staged reveal, asked on the scoreboard step (game-service-scoreboard.test.js).
         isStagedReveal: () => Promise.resolve(false),
         // The phone marks its seat as here in the game it follows, until it stops (ApiService.followSeat).
-        followSeat(pin) {
+        followSeat(pin, onTaken) {
             seats.push('here ' + pin);
+            taken[pin] = onTaken;
             return () => seats.push('gone ' + pin);
         },
     };
@@ -93,7 +96,7 @@ function phone() {
     /** The database hands a listening phone the step it has again (as after a lost connection, with nothing new). */
     const again = pin => (watchers[pin] || []).slice().forEach(fn => fn(states[pin]));
     const watched = () => Object.keys(watchers).filter(pin => watchers[pin].length);
-    return { service, step, again, pages, ticks, watched, seats };
+    return { service, step, again, pages, ticks, watched, seats, taken, router };
 }
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
@@ -318,4 +321,41 @@ test('the phone marks its seat as here in the game it follows, and as gone when 
     p.service.unregister();
     p.service.unregister();
     assert.deepStrictEqual(p.seats, ['here AAAA', 'gone AAAA', 'here BBBB', 'gone BBBB']);
+});
+
+test('a phone whose seat went to another sign-in leaves the game for its join page', () => {
+    const p = phone();
+    p.service.register('AAAA');
+    p.step('AAAA', GameState.ShowQuestion);
+    p.pages.length = 0;
+    p.taken.AAAA();
+    assert.deepStrictEqual(p.pages, ['/join-game/AAAA']);
+    // It follows the game no more, and stops marking the seat.
+    assert.deepStrictEqual(p.watched(), []);
+    assert.deepStrictEqual(p.seats, ['here AAAA', 'gone AAAA']);
+    p.step('AAAA', GameState.ShowAnswers);
+    assert.deepStrictEqual(p.pages, ['/join-game/AAAA']);
+});
+
+test('the join page is told why, and the move replaces the game page in the history', () => {
+    const p = phone();
+    const calls = [];
+    const navigate = p.router.navigate;
+    p.router.navigate = (parts, extras) => { calls.push({ parts, extras }); return navigate(parts, extras); };
+    p.service.register('AAAA');
+    p.taken.AAAA();
+    assert.deepStrictEqual(calls.pop(), { parts: ['/join-game', 'AAAA'], extras: { queryParams: { taken: 1 }, replaceUrl: true } });
+});
+
+test('a seat taken in a game the phone has left does not move it (Replay, crew rematch)', () => {
+    const p = phone();
+    p.service.register('AAAA');
+    const old = p.taken.AAAA;
+    p.step('BBBB', GameState.GameStaging);
+    p.service.register('BBBB');
+    p.pages.length = 0;
+    old();
+    assert.deepStrictEqual(p.pages, []);
+    assert.deepStrictEqual(p.watched(), ['BBBB']);
+    p.service.unregister();
 });

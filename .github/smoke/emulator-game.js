@@ -426,4 +426,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { ROOT, DIST, LOCALE, HOST, DB, PROJECT, log, sleep, flag, up, startEmulators, stopEmulators, db, seed, newPhone, visible, act };
+module.exports = { ROOT, DIST, LOCALE, HOST, DB, PROJECT, log, sleep, flag, up, startEmulators, stopEmulators, db, seed, newPhone, dropConnection, restoreConnection, visible, act };

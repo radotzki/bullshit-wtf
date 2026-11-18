@@ -12,6 +12,11 @@
 //     She gets her old seat back: still two seats, and her new browser holds the old player id.
 //  4. Another Noa, on the same model of phone (the same browser string), joins while the first is here:
 //     a seat of her own. Two players with one name stay two seats.
+//  5. Two different Danas on the same model of phone. The first loses her signal (her page stays open);
+//     the database marks her seat gone, and the second Dana, from an empty browser, gets that seat by name.
+//     When the first one's signal returns, her page sees that its seat is another sign-in's now and leaves
+//     the game for the join page, which says so; she joins again under a new name, a seat of her own.
+//     Every other page (the host, Noa, the other Noa, the second Dana) stays in the lobby.
 //
 // Needs what emulator-game.js needs (Java, functions/ built, the root's npm ci). From the repository root:
 //   node .github/smoke/emulator-rejoin.js [path to dist]
@@ -21,7 +26,7 @@
 
 const { chromium } = require('playwright');
 const { serve, fileIn } = require('./smoke');
-const { startEmulators, stopEmulators, db, seed, newPhone, visible, log, sleep, HOST, DB, PROJECT, DIST } = require('./emulator-game');
+const { startEmulators, stopEmulators, db, seed, newPhone, dropConnection, restoreConnection, visible, log, sleep, HOST, DB, PROJECT, DIST } = require('./emulator-game');
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1';
 
@@ -157,9 +162,62 @@ async function main() {
         check(Object.keys(afterOther || {}).length === 3, `${Object.keys(afterOther || {}).length} seats with the second Noa, not 3`);
         log(`another Noa while the first is here: seat ${pidOther}, ${Object.keys(afterOther).length} seats`);
 
-        [host, again, other].forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
+        // 5. Two different Danas on one model of phone.
+        const dana = await newPhone(browser, base, 'Dana', 'player', IPHONE);
+        await joinByLink(dana, base, pin);
+        const pidDana = await storedPid(dana);
+        await until('the first Dana marked as here', async () => (await db('GET', `games/${pin}/seen/${pidDana}`)) === true);
+        const uidDana = await db('GET', `games/${pin}/players/${pidDana}/uid`);
+        dropConnection(dana);
+        await until('the database to mark the first Dana gone', async () =>
+            typeof (await db('GET', `games/${pin}/seen/${pidDana}`)) === 'number', 90000);
+        log(`the first Dana (${pidDana}) lost her signal; her seat is marked gone`);
+
+        const dana2 = await newPhone(browser, base, 'Dana', 'player', IPHONE);
+        await joinByLink(dana2, base, pin);
+        const pidDana2 = await storedPid(dana2);
+        const uidDana2 = await db('GET', `games/${pin}/players/${pidDana}/uid`);
+        check(pidDana2 === pidDana, `the second Dana got seat ${pidDana2}, not the quiet seat ${pidDana} (the case this guards)`);
+        check(uidDana2 && uidDana2 !== uidDana, 'the seat did not move to the second Dana\'s sign-in');
+        log(`the second Dana joined from an empty browser and got seat ${pidDana2}`);
+
+        restoreConnection(dana);
+        await until('the first Dana to leave the game for the join page',
+            async () => /\/join-game\/[A-Za-z0-9]+\?(.*&)?taken=1/.test(dana.page.url()), 90000)
+            .catch(() => problems.push(`the first Dana's page stayed on ${dana.page.url()}, sharing the seat`));
+        const notice = dana.page.locator('.seat-taken');
+        const noticeShown = await until('the seat-taken notice', () => visible(notice), 15000).catch(() => false);
+        check(noticeShown, 'the join page did not say the seat was taken');
+        const noticeText = noticeShown ? (await notice.innerText()).replace(/\s+/g, ' ').trim() : '';
+        check(await visible(dana.page.locator('input[name="nickname"]')), 'the join page offers no nickname box');
+        log(`the first Dana's signal returned: ${dana.page.url()} — "${noticeText}"`);
+        // Her seat stays the second Dana's, marked as here by the second Dana's page alone.
+        await sleep(3000);
+        check((await db('GET', `games/${pin}/players/${pidDana}/uid`)) === uidDana2, 'the seat went back to the first Dana');
+        check((await db('GET', `games/${pin}/seen/${pidDana}`)) === true, 'the second Dana\'s seat is not marked as here');
+
+        // She joins again under a new name: a seat of her own.
+        const input2 = dana.page.locator('input[name="nickname"]');
+        await input2.fill('Dana B');
+        await dana.page.locator('form button[type="submit"]').first().click();
+        await dana.page.waitForURL(/\/game-staging\//, { timeout: 30000 });
+        const pidDanaB = await storedPid(dana);
+        const afterDana = await db('GET', `games/${pin}/players`);
+        check(pidDanaB && pidDanaB !== pidDana, `the first Dana's new join got seat ${pidDanaB}`);
+        check(Object.keys(afterDana || {}).length === 5, `${Object.keys(afterDana || {}).length} seats at the end, not 5`);
+        await until('the first Dana\'s new seat marked as here', async () => (await db('GET', `games/${pin}/seen/${pidDanaB}`)) === true);
+        log(`she joined again as "Dana B": seat ${pidDanaB}, ${Object.keys(afterDana).length} seats`);
+
+        // Nobody else left the lobby.
+        for (const p of [host, again, other, dana2]) {
+            check(/\/game-staging\//.test(p.page.url()), `${p.name}'s page left the lobby: ${p.page.url()}`);
+            check(!(await visible(p.page.locator('.seat-taken'))), `${p.name}'s page says its seat was taken`);
+        }
+
+        [host, again, other, dana, dana2].forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
         const summary = { pin, firstSeat: pid, rejoinSeat: pidAgain, otherNoaSeat: pidOther,
-            seats: Object.values(afterOther).map((p) => p.nickname), problems };
+            firstDanaSeat: pidDana, secondDanaSeat: pidDana2, firstDanaNotice: noticeText,
+            firstDanaNewSeat: pidDanaB, seats: Object.values(afterDana).map((p) => p.nickname), problems };
         console.log('\nRESULT ' + JSON.stringify(summary, null, 2));
         console.log(problems.length ? 'FAIL' : 'PASS');
         process.exitCode = problems.length ? 1 : 0;
