@@ -15,6 +15,8 @@
 //     TABLE below it, at 390 and 320 px; one tap lands each in the first second table, which then holds 3.
 //     A computer refused after another started a second table joins it the same way.
 //     In English, a fourth phone taps START ANOTHER TABLE: its own table, and the first stays the one offered.
+//  7. (6) Three phones refused in the same second all see START A SECOND TABLE. The first taps it; the other two
+//     tap it after, and are offered JOIN <host>'S SECOND TABLE instead of a table of one. One table of three.
 //
 // Needs what emulator-game.js needs (Java, functions/ built, the root's npm ci). From the repository root:
 //   node .github/smoke/emulator-second-table.js [path to dist]
@@ -267,6 +269,63 @@ async function main() {
         const bigSecond = pinOf(computerEn.page.url());
         await computerNext.page.waitForURL(new RegExp(`/game-staging/${bigSecond}`, 'i'), { timeout: 30000 })
             .catch(() => problems.push(`the computer did not land in ${bigSecond}: ${computerNext.page.url()}`));
+
+        // 6. Refused in the same second, as a youth group arrives: three phones open the link of a full table together,
+        //    and all see START A SECOND TABLE, since none exists yet. The first taps it. The second and third then
+        //    tap the same button, still on their screens: each is offered JOIN <host>'S SECOND TABLE instead of a
+        //    table of one, and one tap lands it there. One second table of three.
+        for (const locale of ['he', 'en']) {
+            const { host: groupHost, pin: groupPin } = await hostGame(browser, base, locale, locale === 'he' ? 'מאיה' : 'Maya');
+            phones.push(groupHost);
+            await fillTable(groupPin);
+            const names = locale === 'he' ? ['אורי', 'שיר', 'גיל'] : ['Ari', 'Shir', 'Gil'];
+            const group = [];
+            for (const n of names) {
+                const p = await newPhone(browser, base, n, 'player');
+                phones.push(p);
+                group.push(p);
+            }
+            await Promise.all(group.map((p) => joinByLink(p, base, groupPin, locale)));
+            for (const p of group) {
+                check(await until(`${locale}: ${p.name}'s START`, () => visible(p.page.locator('.second-table-start'))).catch(() => false),
+                    `${locale}: ${p.name}, refused together, sees no START A SECOND TABLE`);
+            }
+            const line = (await group[1].page.locator('.second-table-text').innerText()).replace(/\s+/g, ' ').trim();
+            check(locale === 'he' ? /אחד מכם פותח שולחן שני/.test(line) : /One of you starts a second table/.test(line),
+                `${locale}: the line does not ask one of them to start: "${line}"`);
+            await shot(group[1], `${locale}-8-refused-together-390`);
+            const [first, ...rest] = group;
+            await first.page.locator('.second-table-start').click();
+            await first.page.waitForURL(/\/game-staging\//, { timeout: 30000 });
+            const together = pinOf(first.page.url());
+            for (const p of rest) {
+                await p.page.locator('.second-table-start').click();
+                // Fixed: the tap asks the full table again and shows the JOIN offer. Before: a table of one.
+                const joinBtn = p.page.locator('.second-table-join');
+                const outcome = await until(`${locale}: ${p.name} after START`, async () => {
+                    if (await visible(joinBtn)) return 'join';
+                    if (/\/game-staging\//.test(p.page.url())) return 'own';
+                    return undefined;
+                }).catch(() => 'nothing');
+                if (outcome !== 'join') {
+                    problems.push(`${locale}: ${p.name}, refused together, tapped START and got ${outcome === 'own' ? `a table of its own (${pinOf(p.page.url())})` : 'no JOIN offer'}, not ${together}`);
+                    continue;
+                }
+                const label = (await joinBtn.innerText()).replace(/\s+/g, ' ').trim();
+                check(label.toUpperCase().includes(first.name.toUpperCase()), `${locale}: the join after START does not name ${first.name}: "${label}"`);
+                check(await visible(p.page.locator('.second-table-another')), `${locale}: no START ANOTHER TABLE after the re-check`);
+                if (p === rest[0]) await shot(p, `${locale}-9-start-became-join-390`);
+                await joinBtn.click();
+                await p.page.waitForURL(new RegExp(`/game-staging/${together}`, 'i'), { timeout: 30000 })
+                    .catch(() => problems.push(`${locale}: ${p.name} did not land in ${together}: ${p.page.url()}`));
+            }
+            const togetherSeats = Object.values((await db('GET', `games/${together}/players`)) || {});
+            check(togetherSeats.length === 3, `${locale}: refused together, the second table holds ${togetherSeats.length}, not 3`);
+            check((await db('GET', `games/${groupPin}/secondTable/pin`)) === together, `${locale}: refused together, the offered table is not ${together}`);
+            check(Object.keys(await db('GET', `games/${groupPin}/players`)).length === 12, `${locale}: refused together, a 13th seat`);
+            summary[`${locale}Together`] = { full: groupPin, second: together, seats: togetherSeats.map((x) => x.nickname) };
+            log(`${locale}: refused together, ${togetherSeats.length} at ${together}`);
+        }
 
         phones.forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
     } catch (e) {

@@ -94,7 +94,8 @@ export interface SecondTableStrings {
 
 const en: SecondTableStrings = {
     title: 'This table is full',
-    text: '12 players is the most one game holds. Start a second table, and send its link to the others who didn\'t get a seat.',
+    text: '12 players is the most one game holds. '
+        + 'One of you starts a second table and sends its link to the others who didn\'t get a seat.',
     start: 'START A SECOND TABLE',
     again: 'TRY THIS TABLE AGAIN',
     error: 'Couldn\'t start a table. Try again.',
@@ -107,7 +108,7 @@ const en: SecondTableStrings = {
 
 const he: SecondTableStrings = {
     title: 'השולחן הזה מלא',
-    text: 'במשחק אחד יש מקום ל-12 שחקנים לכל היותר. פתחו שולחן שני, ושלחו את הקישור למי שלא קיבל מקום.',
+    text: 'במשחק אחד יש מקום ל-12 שחקנים לכל היותר. אחד מכם פותח שולחן שני ושולח את הקישור למי שלא קיבל מקום.',
     start: 'פתיחת שולחן שני',
     again: 'לנסות שוב את השולחן הזה',
     error: 'לא הצלחנו לפתוח שולחן. נסו שוב.',

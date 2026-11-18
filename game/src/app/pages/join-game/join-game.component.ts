@@ -352,10 +352,14 @@ export class JoinGameComponent implements OnInit {
             });
     }
 
-    async join() {
+    /**
+     * Resolves to how it ended: seated (on to the lobby), full (the second-table offer shows, fresh from the
+     * server), over (the game-over page shows), error (the error shows), or busy (a join was already on its way).
+     */
+    async join(): Promise<'seated' | 'full' | 'over' | 'error' | 'busy'> {
         // A second tap while the first join is still on its way would ask for a second seat.
         if (this.loading) {
-            return;
+            return 'busy';
         }
         this.loading = true;
         this.errorMsg = '';
@@ -365,8 +369,8 @@ export class JoinGameComponent implements OnInit {
         const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
         const uid: any = user ? user.uid : 0;
 
-        this.apiService.join(this.pin, this.nickname, uid)
-            .then(({ pid, nickname, swapped }) => {
+        return this.apiService.join(this.pin, this.nickname, uid)
+            .then(({ pid, nickname, swapped }): 'seated' => {
                 // Keep the name the server stored, so Replay and the crew never send the typed one back.
                 this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };
                 this.sessionService.nameSwap = swapped ? { pin: this.pin.toUpperCase(), nickname } : null;
@@ -376,23 +380,26 @@ export class JoinGameComponent implements OnInit {
                 }
                 this.router.navigate(['game-staging', this.pin]);
                 this.loading = false;
+                return 'seated';
             })
-            .catch(err => {
+            .catch((err): 'full' | 'over' | 'error' => {
                 if (err && err.code === 'GAME_OVER') {
-                    return this.showGameOver(err);
+                    this.showGameOver(err);
+                    return 'over';
                 }
                 this.loading = false;
                 const full = readSecondTable(err, this.t.lang);
                 if (full) {
                     this.fullTable = full;
                     this.secondError = '';
-                    return;
+                    return 'full';
                 }
                 this.errorMsg = this.t.error(err && err.code, err && err.message);
                 // Wrong PIN, full game and finished game are expected; report anything else.
                 if (!this.isExpected(err)) {
                     reportError(err, 'join', { pin: this.pin });
                 }
+                return 'error';
             });
     }
 
@@ -406,12 +413,35 @@ export class JoinGameComponent implements OnInit {
      * is the screen; else at the new game's nickname box, as after Create.
      */
     async startSecondTable() {
-        const offer = this.fullTable;
-        if (!offer || this.secondBusy) {
+        let offer = this.fullTable;
+        if (!offer || this.secondBusy || this.loading) {
             return;
         }
         this.secondBusy = true;
         this.secondError = '';
+        // START A SECOND TABLE, the plain button (no JOIN offer on screen): phones refused in the same second
+        // all see it, since no second table existed yet. So ask the full table again first, as TRY THIS TABLE
+        // AGAIN does: if another of them has started one meanwhile, its JOIN offer shows instead of a table of
+        // one; if a seat came free, this phone sits down. START ANOTHER TABLE, under a JOIN offer, is a choice:
+        // it goes straight on.
+        if (!offer.join && this.nickname) {
+            const again = await this.join();
+            if (again === 'seated' || again === 'over' || again === 'busy') {
+                this.secondBusy = false;
+                return;
+            }
+            if (again === 'full') {
+                offer = this.fullTable || offer;
+                if (offer.join) {
+                    this.secondBusy = false;
+                    return;
+                }
+            } else {
+                // The check failed (the network, most likely): start the table as before, without its error.
+                this.errorMsg = '';
+                this.fullTable = offer;
+            }
+        }
         try {
             // The full table's PIN: the server keeps this table on it, so the next phones refused there join it.
             const resp = await this.apiService.createSecondTable(offer.locale, offer.count, offer.pack,
