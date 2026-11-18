@@ -45,6 +45,12 @@ export interface Preview {
     host: string;
 }
 
+/**
+ * What a link was answered with: a join link's preview with or without the host's name, a challenge
+ * link's with its best lie or the plain one, the page as Hosting serves it, or the page that tries again.
+ */
+export type PreviewKind = 'named' | 'nameless' | 'challenge' | 'challenge-plain' | 'generic' | 'fallback';
+
 export const SITE = 'https://bullshit.wtf';
 /** The page is checked against the site again when the copy in memory is older than this. */
 export const SHELL_FRESH_MS = 15 * 1000;
@@ -230,8 +236,11 @@ export function personalize(shell: string, preview: Preview, url: string): strin
  * the name shows as soon as there is one. The page names the site's scripts, and Hosting empties its
  * CDN on every release.
  */
-export function cacheControl(kind: 'named' | 'nameless' | 'generic' | 'fallback'): string {
+export function cacheControl(kind: PreviewKind): string {
     switch (kind) {
+        // A challenge's preview changes only when its week is over.
+        case 'challenge':
+        case 'challenge-plain':
         case 'named': return 'public, max-age=300, s-maxage=600';
         case 'generic': return 'public, max-age=300, s-maxage=600';
         case 'nameless': return 'public, max-age=60, s-maxage=60';
@@ -349,11 +358,11 @@ export interface JoinPreviewAnswer {
     status: number;
     headers: { [name: string]: string };
     body: string;
-    /** What was served, for the log line: named, nameless, generic or fallback. */
-    kind: 'named' | 'nameless' | 'generic' | 'fallback';
+    /** What was served, for the log line: named, nameless, generic or fallback (and a challenge's two). */
+    kind: PreviewKind;
 }
 
-function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+export function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
     let timer: any;
     return Promise.race([
         p,
@@ -389,14 +398,34 @@ export function fallbackPage(path: string, shell: PreviewLocale): string {
 `;
 }
 
-/** The answer to GET /join-game/<PIN> or /he/join-game/<PIN> (path and query as the visitor sent them). */
-export async function joinPreviewPage(path: string, query: string, headers: any, deps: JoinPreviewDeps): Promise<JoinPreviewAnswer> {
+/**
+ * What one kind of link previews: the page it is served from, how its game is read, and its preview.
+ * The join link is one (below), CHALLENGE ANOTHER GROUP's link another (challenge-preview.ts).
+ */
+export interface PreviewTarget<G> {
+    pin: string;
+    shell: PreviewLocale;
+    /** The game's parts this preview needs, or null when there is no such game. */
+    read: (pin: string) => Promise<G | null>;
+    /** The preview, or null for the generic page. */
+    build: (game: G | null, now: number, origin: string) => Preview | null;
+    /** The link itself, for og:url. */
+    url: (origin: string) => string;
+    /** The log's kind and the cache's for a preview that was built. */
+    kindOf: (preview: Preview) => PreviewKind;
+}
+
+/**
+ * A link's answer: the site's page at `path` with the target's preview tags, the page as Hosting serves
+ * it when there is no preview, and a page that tries again when the site can't be fetched.
+ */
+export async function previewPage<G>(path: string, query: string, headers: any, deps: { fetcher: Fetcher; project: string; emulator: boolean;
+    now?: () => number; fault?: (e: any) => void }, target: PreviewTarget<G> | null): Promise<JoinPreviewAnswer> {
     const now = deps.now ? deps.now() : Date.now();
     const fault = (e: any) => { try { if (deps.fault) { deps.fault(e); } } catch (x) { /* never */ } };
-    const parsed = parseJoinPath(path);
-    const shellKind: PreviewLocale = parsed ? parsed.shell : (/^\/he(\/|$)/.test(path || '') ? 'he' : 'en');
+    const shellKind: PreviewLocale = target ? target.shell : (/^\/he(\/|$)/.test(path || '') ? 'he' : 'en');
     const origin = originOf(headers, deps.project, deps.emulator);
-    // Every answer is a join screen, never a page for search (the generic answer is the home page's
+    // Every answer is a page of one game, never a page for search (the generic answer is the home page's
     // own copy): the header keeps it out of search even where the page has no robots tag.
     const html = { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex' };
 
@@ -411,13 +440,13 @@ export async function joinPreviewPage(path: string, query: string, headers: any,
 
     const generic = (): JoinPreviewAnswer =>
         ({ status: 200, headers: Object.assign({ 'Cache-Control': cacheControl('generic') }, html), body: shell, kind: 'generic' });
-    if (!parsed) {
+    if (!target) {
         return generic();
     }
 
-    let game: PreviewGame | null;
+    let game: G | null;
     try {
-        game = await withTimeout(deps.readGame(parsed.pin), READ_TIMEOUT_MS);
+        game = await withTimeout(target.read(target.pin), READ_TIMEOUT_MS);
     } catch (e) {
         fault(e);
         // Not cached for long: the next tap may find the database quicker.
@@ -426,16 +455,28 @@ export async function joinPreviewPage(path: string, query: string, headers: any,
         return answer;
     }
 
-    const preview = previewOf(game, parsed.pin, now, origin);
+    const preview = target.build(game, now, origin);
     if (!preview) {
         return generic();
     }
-    const url = `${origin}${parsed.shell === 'he' ? '/he' : ''}/join-game/${parsed.pin}`;
-    const page = personalize(shell, preview, url);
+    const page = personalize(shell, preview, target.url(origin));
     if (!page) {
-        fault(new Error('the site\'s page lacks a preview tag the join preview sets'));
+        fault(new Error('the site\'s page lacks a preview tag the link preview sets'));
         return generic();
     }
-    const kind = preview.host ? 'named' : 'nameless';
+    const kind = target.kindOf(preview);
     return { status: 200, headers: Object.assign({ 'Cache-Control': cacheControl(kind) }, html), body: page, kind };
+}
+
+/** The answer to GET /join-game/<PIN> or /he/join-game/<PIN> (path and query as the visitor sent them). */
+export async function joinPreviewPage(path: string, query: string, headers: any, deps: JoinPreviewDeps): Promise<JoinPreviewAnswer> {
+    const parsed = parseJoinPath(path);
+    return previewPage<PreviewGame>(path, query, headers, deps, parsed && {
+        pin: parsed.pin,
+        shell: parsed.shell,
+        read: deps.readGame,
+        build: (game, now, origin) => previewOf(game, parsed.pin, now, origin),
+        url: (origin) => `${origin}${parsed.shell === 'he' ? '/he' : ''}/join-game/${parsed.pin}`,
+        kindOf: (preview) => preview.host ? 'named' : 'nameless',
+    });
 }

@@ -21,6 +21,14 @@
         "function": "joinPreview"
       },
       {
+        "source": "/challenge/*",
+        "function": "joinPreview"
+      },
+      {
+        "source": "/he/challenge/*",
+        "function": "joinPreview"
+      },
+      {
         "regex": "^/he/?$",
         "destination": "/he.html"
       },
