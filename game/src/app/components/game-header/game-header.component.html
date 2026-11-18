@@ -19,6 +19,16 @@
         </svg>
     </a>
 
+    <a *ngIf="host && !gameOver" class="button is-primary is-outlined host-players" (click)="openPlayers()"
+        role="button" [attr.aria-label]="h.playersButton" [attr.title]="h.playersButton">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <circle cx="9" cy="8" r="3.5" fill="currentColor"/>
+            <path d="M2 20c0-3.9 3.1-7 7-7s7 3.1 7 7z" fill="currentColor"/>
+            <circle cx="17" cy="7" r="2.6" fill="currentColor" opacity=".7"/>
+            <path d="M15.5 12.4A5.6 5.6 0 0 1 22.5 18H17.8a8.7 8.7 0 0 0-2.3-5.6z" fill="currentColor" opacity=".7"/>
+        </svg>
+    </a>
+
     <button *ngIf="button" (click)="onClick.emit()" class="button is-primary" [class.is-loading]="buttonLoading"> {{button}} </button>
 
     <span *ngIf="text" class="text"> {{text | uppercase}} </span>
@@ -44,5 +54,45 @@
             <button class="button" (click)="navigateHome()">{{t.backHome}}</button>
         </footer>
 
+    </div>
+</div>
+<!-- The host's players list: remove a seat (see host-strings.ts). -->
+<div class="modal host-players-modal" [class.is-active]="showPlayers" [attr.dir]="t.rtl ? 'rtl' : null">
+    <div class="modal-background" (click)="showPlayers=false"></div>
+    <div class="modal-content">
+        <section class="modal-card-body">
+            <h3 class="title">{{h.playersTitle}}</h3>
+            <p class="host-hint">{{h.removeHint}}</p>
+            <ul class="host-seats">
+                <li *ngFor="let seat of seats" class="host-seat">
+                    <span class="host-seat-name">{{seat.nickname}} <small *ngIf="seat.mine">{{h.thisPhone}}</small></span>
+                    <button *ngIf="!seat.mine && removing?.pid !== seat.pid" class="button is-danger is-outlined is-small host-remove"
+                        (click)="askRemove(seat)">{{h.remove}}</button>
+                    <span *ngIf="removing?.pid === seat.pid" class="host-confirm">
+                        <button class="button is-danger is-small host-remove-yes" [class.is-loading]="removeBusy" (click)="confirmRemove()">{{h.yesRemove}}</button>
+                        <button class="button is-small" (click)="removing=null">{{h.cancel}}</button>
+                    </span>
+                </li>
+            </ul>
+            <p *ngIf="removing" class="host-confirm-line">{{h.removeConfirm(removing.nickname)}}</p>
+            <p *ngIf="removeError" class="help is-danger">{{t.oops}}</p>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" (click)="showPlayers=false">{{h.close}}</button>
+        </footer>
+    </div>
+</div>
+
+<!-- This phone's seat was removed by the host. -->
+<div class="modal removed-modal" [class.is-active]="removed" [attr.dir]="t.rtl ? 'rtl' : null">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <section class="modal-card-body">
+            <h3 class="title">{{h.removedTitle}}</h3>
+            <p>{{h.removedText}}</p>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" (click)="navigateHome()">{{h.backHome}}</button>
+        </footer>
     </div>
 </div>

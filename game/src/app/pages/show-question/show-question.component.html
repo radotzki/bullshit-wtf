@@ -48,7 +48,7 @@
             </div>
         </form>
 
-        <div *ngIf="questionSubmitted" class="screen-center">
+        <div *ngIf="questionSubmitted" class="screen-center" [class.with-host-check]="host">
             <ng-container *ngIf="!aboutMe">
                 <app-waiting-row [pin]="pin" [t]="t" [line]="t.answerSubmitted"></app-waiting-row>
             </ng-container>
@@ -56,6 +56,34 @@
             <ng-container *ngIf="aboutMe">
                 <app-waiting-row [pin]="pin" [t]="t" [line]="aboutWords.truthIn"></app-waiting-row>
             </ng-container>
+
+            <!-- The host's look at the lies before they go on the screens (host-strings.ts). -->
+            <div *ngIf="host" class="host-check" [class.rtl]="rtl">
+                <button *ngIf="!check" type="button" class="button is-info is-outlined is-fullwidth check-lies"
+                    (click)="check = 'ask'">{{ h.checkButton }}</button>
+
+                <div *ngIf="check === 'ask'" class="check-ask">
+                    <p>{{ h.checkWarn }}</p>
+                    <button type="button" class="button is-info is-fullwidth open-lies" [class.is-loading]="checkBusy"
+                        (click)="openLies()">{{ h.checkOpen }}</button>
+                </div>
+
+                <div *ngIf="check === 'open'" class="check-list">
+                    <p class="check-title">{{ h.checkTitle }}</p>
+                    <p *ngIf="!lies.length" class="check-empty">{{ h.noLiesYet }}</p>
+                    <div *ngFor="let lie of lies" class="check-lie" [class.is-hidden-lie]="lie.hidden">
+                        <span class="check-text">{{ lie.text | uppercase }}</span>
+                        <span *ngIf="lie.hidden" class="tag is-warning">{{ h.hidden }}</span>
+                        <button type="button" class="button is-small" [class.is-danger]="!lie.hidden" [class.is-outlined]="!lie.hidden"
+                            [disabled]="checkBusy" (click)="toggleLie(lie)">{{ lie.hidden ? h.unhide : h.hide }}</button>
+                    </div>
+                    <p class="check-note">{{ h.checkingNote }}</p>
+                    <button type="button" class="button is-primary is-fullwidth show-now" [disabled]="checkBusy"
+                        (click)="showAnswersNow()">{{ h.showNow }}</button>
+                </div>
+
+                <p *ngIf="checkError" class="help is-danger">{{ checkError }}</p>
+            </div>
         </div>
 
         <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>

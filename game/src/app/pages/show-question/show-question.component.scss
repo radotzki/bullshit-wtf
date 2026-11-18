@@ -58,9 +58,58 @@
         text-align: center;
     }
 
+    // The host's phone: the waiting row, and under it the host's look at the lies.
+    .screen-center.with-host-check {
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 20px 16px;
+    }
+
     // The big screen: the question, and under it who the room is waiting for.
     .on-big-screen {
         flex-direction: column;
         padding: 0 20px;
+    }
+}
+
+// The host's look at the lies (host controls), under the waiting row on the host's phone.
+.host-check {
+    width: 100%;
+    max-width: 420px;
+    margin: 1rem auto 0;
+    font-size: 1rem;
+    text-align: left;
+
+    &.rtl {
+        text-align: right;
+    }
+
+    .check-ask p,
+    .check-title,
+    .check-note {
+        margin-bottom: 0.75rem;
+    }
+
+    .check-lie {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        border-bottom: 1px solid rgba(0, 0, 0, .1);
+    }
+
+    .check-text {
+        flex: 1;
+        overflow-wrap: anywhere;
+    }
+
+    .is-hidden-lie .check-text {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+
+    .check-note {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
     }
 }

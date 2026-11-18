@@ -7,6 +7,8 @@ import { Subscription } from 'rxjs';
 import { GameState } from './../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
+import { hostStrings, HostStrings, HostSeatRow, hostSeatRows, seatRemoved } from './../../pages/host-strings';
+import { GamePlayers } from './../../game-model';
 
 @Component({
     standalone: false,
@@ -31,6 +33,18 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     showGoHomeModal: boolean;
     /** A phone that plays the game's sounds (a staged-reveal game with no big screen) gets a mute button. */
     soundButton = false;
+    /** The host's controls (host-strings.ts): this browser holds the game's host key. */
+    host = false;
+    h: HostStrings = hostStrings('en');
+    showPlayers = false;
+    seats: HostSeatRow[] = [];
+    removing: HostSeatRow = null;
+    removeBusy = false;
+    removeError = false;
+    /** This phone's seat was removed by the host: it stops following the game and says so. */
+    removed = false;
+    private hadSeat = false;
+    private playersSubscription: Subscription;
     @Input() button: string;
     @Input() buttonLoading: boolean;
     @Output() onClick: EventEmitter<any> = new EventEmitter();
@@ -50,13 +64,19 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         this.presenter = !!this.sessionService.presenter;
         this.t = gameStrings(this.apiService.knownGameLocale(this.pin));
         // The header shows once the game's language is known, so a Hebrew game never flashes English.
+        this.h = hostStrings(this.apiService.knownGameLocale(this.pin));
         const known = (locale: string) => {
             this.t = gameStrings(locale);
+            this.h = hostStrings(locale);
             this.localeSeen = true;
             this.loading = !this.stateSeen;
         };
         this.apiService.getGameLocale(this.pin).then(known, () => known('en'));
         this.gameSubscription = this.apiService.gameState(this.pin).subscribe(this.onStateChange.bind(this));
+        this.host = !!this.pin && this.apiService.holdsHostKey(this.pin);
+        if (this.pin && (this.host || !this.presenter)) {
+            this.playersSubscription = this.apiService.getPlayersObservable(this.pin).subscribe(players => this.onPlayers(players));
+        }
 
         if (!this.presenter && this.pin) {
             this.apiService.phoneSound(this.pin).then(sound => {
@@ -98,6 +118,51 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.gameSubscription.unsubscribe();
+        if (this.playersSubscription) {
+            this.playersSubscription.unsubscribe();
+        }
+    }
+
+    private myPid(): string {
+        const user = this.sessionService.user;
+        return !this.presenter && user && user.pid ? user.pid : null;
+    }
+
+    private onPlayers(players: GamePlayers) {
+        const me = this.myPid();
+        this.seats = hostSeatRows(players, me);
+        if (seatRemoved(this.hadSeat, players, me, this.gameOver)) {
+            this.removed = true;
+            this.showPlayers = false;
+            this.gameService.unregister();
+        }
+        this.hadSeat = this.hadSeat || !!(me && players && players[me]);
+    }
+
+    openPlayers() {
+        this.removing = null;
+        this.removeError = false;
+        this.showPlayers = true;
+    }
+
+    askRemove(seat: HostSeatRow) {
+        this.removeError = false;
+        this.removing = seat;
+    }
+
+    confirmRemove() {
+        const seat = this.removing;
+        if (!seat || this.removeBusy) {
+            return;
+        }
+        this.removeBusy = true;
+        this.apiService.removePlayer(this.pin, seat.pid).then(() => {
+            this.removeBusy = false;
+            this.removing = null;
+        }, () => {
+            this.removeBusy = false;
+            this.removeError = true;
+        });
     }
 
     onStateChange(state: GameState) {

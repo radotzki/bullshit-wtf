@@ -99,9 +99,12 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
     const picksArray = Object.keys(answerSelections).map(k => ({ pid: k, text: answerSelections[k].text }));
 
     picksArray.forEach(pick => {
-        const relatedAnswers = answersArray.filter(answer => isSamePick(answer.text, pick.text));
+        const relatedAnswers = related(answersArray, pick.text);
 
-        if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
+        if (relatedAnswers.length === 1 && relatedAnswers[0].removedSeat) {
+            // The lie of a seat the host removed during the answers: the pick scores 0, the lie nothing.
+            answerSelections[pick.pid].score = 0;
+        } else if (relatedAnswers.length === 1 && relatedAnswers[0].realAnswer) {
             answerSelections[pick.pid].score = pointsForCorrectAnswer[game.roundIndex];
         } else if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
             // Set below, once every player's points for their own lie are known.
@@ -116,9 +119,9 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
 
     // A house lie only takes back points the player has: it never pushes a score below zero.
     picksArray.forEach(pick => {
-        const relatedAnswers = answersArray.filter(answer => isSamePick(answer.text, pick.text));
+        const relatedAnswers = related(answersArray, pick.text);
 
-        if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie) {
+        if (relatedAnswers.length === 1 && relatedAnswers[0].houseLie && !relatedAnswers[0].removedSeat) {
             const lie = ownLie({ answers }, pick.pid);
             answerSelections[pick.pid].score = houseLiePoints(
                 game.roundIndex,
@@ -143,8 +146,20 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
     return { answers, answerSelections, revealAnswers };
 }
 
+/**
+ * The answers a pick of `text` is for. A removed seat's lie counts only when no other answer has the
+ * same text: if a player still in the game wrote it too, the pick is theirs.
+ */
+function related<T extends { text: string; removedSeat?: boolean }>(answersArray: T[], text: string): T[] {
+    const all = answersArray.filter(answer => isSamePick(answer.text, text));
+    const kept = all.filter(answer => !answer.removedSeat);
+    return kept.length ? kept : all.slice(0, 1);
+}
+
 function revealRows(answers: Answers, answerSelections: AnswerSelections): RevealAnswer[] {
-    const answersArray = Object.keys(answers).map(k => Object.assign({}, { pid: k }, answers[k]));
+    // A removed seat's lie comes last, so that a player's lie with the same text makes the row.
+    const answersArray = Object.keys(answers).map(k => Object.assign({}, { pid: k }, answers[k]))
+        .sort((a, b) => (a.removedSeat ? 1 : 0) - (b.removedSeat ? 1 : 0));
     const answerSelectionsArray = Object.keys(answerSelections).map(k => Object.assign({}, { pid: k }, answerSelections[k]));
     const revealAnswers: RevealAnswer[] = [];
 

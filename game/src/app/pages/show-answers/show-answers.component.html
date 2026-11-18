@@ -32,6 +32,7 @@
         </div>
 
         <div *ngIf="answers && !answerSelected && !presenter && !aboutMe">
+            <p *ngIf="ownLieNotice" class="notification is-warning own-lie-notice" [class.rtl]="rtl">{{ ownLieNotice }}</p>
             <p *ngIf="taste" class="taste-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <p *ngFor="let answer of answers" class="control">

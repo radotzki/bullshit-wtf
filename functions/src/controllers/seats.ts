@@ -2,6 +2,7 @@ import { GameScheme, GameState } from '../game-model';
 import { revealDoneWait } from './phase';
 import { playerPicks } from './scoring';
 import { notPicking, writingSent } from './about';
+import { hostChecking } from './host-controls';
 
 /**
  * While a seat is left out, no phase ends early in its first seconds: a player who missed all of
@@ -61,6 +62,11 @@ function seatsPlaying(game: GameScheme): string[] {
  * Never true with nobody to wait for: a game nobody plays runs on its clocks, as before.
  */
 export function everyoneSent(game: GameScheme, sent: { [pid: string]: any } | null | undefined): boolean {
+    // The host is looking at this question's lies (host-controls.ts): the writing waits for SHOW THE
+    // ANSWERS or its clock, so the last lie never goes on the screens before the host has seen it.
+    if (hostChecking(game)) {
+        return false;
+    }
     const waited = seatsToWaitFor(game);
     return waited.length > 0 && waited.every(pid => !!(sent && sent[pid]));
 }
