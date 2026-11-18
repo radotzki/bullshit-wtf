@@ -208,6 +208,14 @@ test('namesAPlayer: each name-like word of a two-word nickname is a name of its 
     assert.strictEqual(cp.namesAPlayer('Big penguins', ['Big Dan']), false);
     assert.strictEqual(cp.namesAPlayer('המלך של הפינגווינים', ['המלך דני']), false);
     assert.strictEqual(cp.namesAPlayer('דני המציא', ['המלך דני']), true);
+    // No first name or common surname is a common word: "Guy", "מלכה" (Malka) and the like are names.
+    assert.strictEqual(cp.namesAPlayer('Guy invented sushi', ['Guy K']), true);
+    assert.strictEqual(cp.namesAPlayer('מלכה יודעת', ['מלכה ב']), true);
+    assert.strictEqual(cp.namesAPlayer('המלכה יודעת', ['המלכה דנה']), true);
+    assert.strictEqual(cp.namesAPlayer('young penguins', ['Neil Young']), true);
+    assert.strictEqual(cp.namesAPlayer('Little did they know', ['Dan Little']), true);
+    assert.strictEqual(cp.namesAPlayer('ask king', ['Ben King']), true);
+    assert.strictEqual(cp.namesAPlayer('הסופר כתב', ['רון סופר']), true);
     // A single-word nickname works as before: whole words only, a Hebrew prefix allowed.
     assert.strictEqual(cp.namesAPlayer('dana ate it', ['Dana']), true);
     assert.strictEqual(cp.namesAPlayer('Bento boxes', ['Ben']), false);

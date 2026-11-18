@@ -74,15 +74,16 @@ function words(text: string): string[] {
 // Words of a nickname that name nobody on their own: titles and common words ("The Boss", "Big Dan",
 // "המלך דני"). Any other word of 3 or more letters in a nickname of two or more words counts as a name by
 // itself, so "Dana K" or "דנה כהן" keeps "Dana" / "דנה" out of the preview. Kept as normalizeName gives
-// them (Hebrew final letters mapped).
+// them (Hebrew final letters mapped). No word here may be a first name or a common surname: "Guy", "מלכה"
+// (Malka), "King", "Young", "Little", "Prince", "סופר" (Sofer) and "קטן" (Katan) are left out on purpose.
 const COMMON_WORDS = [
-    'the', 'and', 'mr', 'mrs', 'ms', 'dr', 'mister', 'miss', 'sir', 'lady', 'lord', 'big', 'little', 'lil',
-    'king', 'queen', 'boss', 'prince', 'princess', 'captain', 'super', 'mega', 'real', 'not', 'one', 'only',
-    'man', 'guy', 'girl', 'boy', 'bro', 'sis', 'mom', 'mum', 'dad', 'baby', 'team', 'you', 'who', 'cool',
-    'mad', 'crazy', 'great', 'old', 'young', 'new', 'jr', 'sr',
-    'של', 'ה', 'מר', 'גברת', 'דוקטור', 'מלך', 'המלך', 'מלכה', 'המלכה', 'בוס', 'הבוס', 'גדול', 'הגדול',
-    'גדולה', 'הגדולה', 'קטן', 'הקטן', 'קטנה', 'הקטנה', 'אבא', 'אמא', 'אח', 'אחות', 'נסיך', 'הנסיך',
-    'נסיכה', 'הנסיכה', 'מלכת', 'אלוף', 'האלוף', 'אלופה', 'האלופה', 'סופר', 'מגה', 'זקן', 'הזקן',
+    'the', 'and', 'mr', 'mrs', 'ms', 'dr', 'mister', 'miss', 'sir', 'lady', 'lord', 'big', 'lil',
+    'queen', 'boss', 'princess', 'captain', 'super', 'mega', 'real', 'not', 'one', 'only',
+    'man', 'girl', 'boy', 'bro', 'sis', 'mom', 'mum', 'dad', 'baby', 'team', 'you', 'who', 'cool',
+    'mad', 'crazy', 'great', 'old', 'new', 'jr', 'sr',
+    'של', 'ה', 'מר', 'גברת', 'דוקטור', 'מלך', 'המלך', 'בוס', 'הבוס', 'גדול', 'הגדול',
+    'גדולה', 'הגדולה', 'הקטן', 'קטנה', 'הקטנה', 'אבא', 'אמא', 'אח', 'אחות', 'נסיך', 'הנסיך',
+    'נסיכה', 'הנסיכה', 'מלכת', 'אלוף', 'האלוף', 'אלופה', 'האלופה', 'מגה', 'זקן', 'הזקן',
     'חדש', 'החדש', 'מטורף', 'המטורף', 'משוגע', 'המשוגע', 'לא', 'אני', 'מי',
 ].map(w => normalizeName(w));
 
