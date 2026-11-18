@@ -46,9 +46,10 @@ test('the box sends a guest to the PIN\'s own join page, tagged home, under /he 
     assert.strictEqual(door.CODE_BOX_VIA, 'home');
 });
 
-test('a wrong PIN or a full game is said under the box; a game that is over, or any other failure, goes on', () => {
+test('a wrong PIN is said under the box; a full game, a game that is over, or any other failure, goes on', () => {
     assert.strictEqual(door.codeBoxOutcome('GAME_NOT_EXIST'), 'stay');
-    assert.strictEqual(door.codeBoxOutcome('GAME_IS_FULL'), 'stay');
+    // A full table's join page offers a second table (join-game/second-table.ts).
+    assert.strictEqual(door.codeBoxOutcome('GAME_IS_FULL'), 'go');
     assert.strictEqual(door.codeBoxOutcome('GAME_OVER'), 'go');
     assert.strictEqual(door.codeBoxOutcome(undefined), 'go');
     assert.strictEqual(door.codeBoxOutcome(null), 'go');
@@ -101,10 +102,14 @@ test('a wrong PIN stays home with the PIN page\'s own words, in each language', 
     await he.b.submit();
     assert.strictEqual(he.b.error, 'קוד המשחק שגוי');
 
+});
+
+test('a full game opens its join page, which takes the name and offers a second table if the join is refused', async () => {
     const full = box('he', () => Promise.reject({ code: 'GAME_IS_FULL', message: 'Sorry, game is full' }));
     full.b.code = 'abcd';
     await full.b.submit();
-    assert.strictEqual(full.b.error, 'מצטערים, המשחק מלא');
+    assert.strictEqual(full.b.error, '');
+    assert.deepStrictEqual(full.calls.navigate, [{ path: ['/he/join-game', 'ABCD'], query: { via: 'home' } }]);
 });
 
 test('a game that is over, or a check that failed, still opens the join page (which says so, or tries again)', async () => {

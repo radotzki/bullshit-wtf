@@ -31,6 +31,10 @@ function errorBody(e: any) {
             message: e.message || String(e),
             code: e.code || 'INTERNAL',
         };
+        // GAME_IS_FULL: the second table the refused phone may start (see second-table.ts).
+        if (e.secondTable && typeof e.secondTable === 'object') {
+            body.secondTable = e.secondTable;
+        }
         // GAME_OVER: the rematch's PIN, or that the game just ended (see game-over.ts).
         if (typeof e.rematch === 'string') {
             body.rematch = e.rematch;
