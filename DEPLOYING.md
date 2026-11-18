@@ -357,7 +357,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 22 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh + hostToBigScreen), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 23 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh + hostToBigScreen + hostControl), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -1632,6 +1632,35 @@ PINs whose `opened_games.presenter` is true (only a lobby that started has that 
 **Checked** with `game/test/lone-host.test.js`, `functions/test/lobby-help.test.js` and a run on the
 Firebase emulators, `.github/smoke/lone-host-lobby.js`: a phone and a computer, English and Hebrew,
 both halves, one to four players, and a test game.
+
+## The host's controls: hide a lie, remove a player
+
+For a table with strangers at it (a stream playing with its chat, a class, a big group), the host has two
+controls, in English and Hebrew. Only the browser with the game's host key has them: the host's phone, or
+the big screen when the host made their computer the big screen.
+
+- **Remove a player.** A people button in the game's top bar (lobby and every question) opens the players
+  list; REMOVE, then YES, REMOVE takes a seat off the table. The removed phone says "The host removed you
+  from this game" and stops following it; that browser (its sign-in, or its seat) is refused if it tries to
+  join the same game again (`REMOVED`). The host can't remove their own seat. A seat removed while the
+  answers are on the screens leaves its lie there as a house lie, so the list on every screen stays as it is.
+- **Hide a lie.** On the host's phone, once its own lie is in, CHECK THE LIES first says that the host will
+  read every lie before the table does, so the host's pick won't score this question; SHOW ME THE LIES
+  lists the lies sent so far (texts only, no names, the host's own left out), each with HIDE. A hidden lie
+  is left out of the answers (a house lie fills its place) and scores nothing; only its writer's phone is
+  told, on the answers screen. While the host looks, the last lie no longer ends the writing early: SHOW
+  THE ANSWERS does, or the 25-second clock.
+- **Where it is built.** `functions/src/controllers/host-controls.ts`, through one new HTTP function,
+  `hostControl` (`act`: `lies`, `hide`, `show`, `remove`; refused with 403 `NOT_HOST` without the key).
+  It keeps `games/<PIN>/checking`, `hidden` and `removed`, which no rule opens, so only the server reads
+  them: **no database rule changes**, and no BigQuery column. `seats.ts` holds the writing while the host
+  looks; `tick.ts` leaves hidden lies out and drops the checking host's pick from the scoring; `join.ts`
+  refuses a removed browser. Phones: `game/src/app/pages/host-strings.ts` (the words and small rules), the
+  top bar (`game-header`), the writing screen (`show-question`) and the answers screen (`show-answers`).
+- **Release:** the functions first (the deploy run does that), then the site. A site without the functions
+  shows the buttons, and their calls fail with "oops" until the functions are live.
+- **Checks:** `functions/test/host-controls.test.js`, `game/test/host-controls.test.js`, and the local run
+  `node .github/smoke/emulator-host-controls.js [--locale he]` (the emulators, five phones at 390 px).
 
 ## Who the room is waiting for
 

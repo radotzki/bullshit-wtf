@@ -11,6 +11,8 @@ import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings, aboutMissedLine } from './../about-strings';
+import { hostStrings, HostStrings, HostLieRow, hostLieRows } from './../host-strings';
+import { Subscription } from 'rxjs';
 
 @Component({
     standalone: false,
@@ -48,6 +50,16 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     // A bank question played in place of an About question that got no truth: the line saying why.
     missedLine: string = null;
     private missedView: { me: boolean; name: string } = null;
+    // The host's look at the lies (host-strings.ts): only on the phone with the game's host key, once its own lie is in.
+    host = false;
+    h: HostStrings = hostStrings('en');
+    /** null: closed; 'ask': the warning that the host's pick won't score; 'open': the list. */
+    check: null | 'ask' | 'open' = null;
+    lies: HostLieRow[] = [];
+    checkBusy = false;
+    checkError: string = null;
+    private hiddenLies: { [id: string]: boolean } = {};
+    private answersSubscription: Subscription;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -68,6 +80,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.playBackground();
 
         if (!this.presenter) {
+            this.host = this.apiService.holdsHostKey(this.pin);
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
             this.loadHelper();
         }
@@ -77,6 +90,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
         this.aboutWords = aboutStrings(locale);
+        this.h = hostStrings(locale);
         this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
     }
 
@@ -130,7 +144,61 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** The host opens the lies, after the warning: the server now holds the answers for them (see host-controls.ts). */
+    openLies() {
+        if (this.checkBusy) {
+            return;
+        }
+        this.checkBusy = true;
+        this.checkError = null;
+        this.apiService.hostLies(this.pin).then(r => {
+            this.checkBusy = false;
+            this.check = 'open';
+            (r.lies || []).forEach(l => this.hiddenLies[l.id] = !!l.hidden);
+            this.lies = r.lies || [];
+            const me = this.sessionService.user && this.sessionService.user.pid;
+            if (!this.answersSubscription) {
+                this.answersSubscription = this.apiService.answersLive(this.pin)
+                    .subscribe(answers => this.lies = hostLieRows(answers, me, this.hiddenLies));
+            }
+        }, err => this.checkFailed(err));
+    }
+
+    toggleLie(lie: HostLieRow) {
+        if (this.checkBusy) {
+            return;
+        }
+        this.checkBusy = true;
+        this.checkError = null;
+        this.apiService.hideLie(this.pin, lie.id, !lie.hidden).then(() => {
+            this.checkBusy = false;
+            this.hiddenLies[lie.id] = !lie.hidden;
+            this.lies = this.lies.map(l => l.id === lie.id ? Object.assign({}, l, { hidden: !lie.hidden }) : l);
+        }, err => this.checkFailed(err));
+    }
+
+    showAnswersNow() {
+        if (this.checkBusy) {
+            return;
+        }
+        this.checkBusy = true;
+        this.apiService.showAnswersNow(this.pin).then(() => this.checkBusy = false, err => this.checkFailed(err));
+    }
+
+    private checkFailed(err: any) {
+        this.checkBusy = false;
+        if (err && err.code === 'TOO_LATE') {
+            this.checkError = this.h.tooLate;
+            return;
+        }
+        reportError(err, 'hostControl', { pin: this.pin });
+        this.checkError = this.t.oops;
+    }
+
     ngOnDestroy() {
+        if (this.answersSubscription) {
+            this.answersSubscription.unsubscribe();
+        }
         this.stopMusic();
         this.phoneTickStopped = true;
         this.soundService.stop('time-warning');

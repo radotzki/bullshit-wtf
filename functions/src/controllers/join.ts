@@ -5,6 +5,7 @@ import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
 import { onRefusedJoin, refusedJoin } from './analytics';
 import { keepFullSince } from './start';
+import { removedJoin } from './host-controls';
 
 export interface JoinResult {
     pid: string;
@@ -112,6 +113,12 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
 
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
+    }
+
+    // A browser the host removed (host-controls.ts) does not sit down again in this game.
+    const removed = removedJoin(game, uid, myPid);
+    if (removed) {
+        return Promise.reject(removed);
     }
 
     // A phone that already has a seat here gets it back, even at a full table (not in a finished game).

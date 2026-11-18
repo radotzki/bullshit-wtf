@@ -60,6 +60,7 @@ const en: JoinStrings = {
 const heErrors: { [code: string]: string } = {
     GAME_NOT_EXIST: 'קוד המשחק שגוי',
     GAME_IS_FULL: 'מצטערים, המשחק מלא',
+    REMOVED: 'המארחים הוציאו אותך מהמשחק הזה.',
 };
 
 const he: JoinStrings = {

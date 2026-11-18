@@ -16,6 +16,7 @@ import {
     playsAboutUs, slotKey, truthOf, withAbout, withAboutMissed,
 } from './about';
 import { withNextWeek } from './next-week';
+import { withoutHidden, picksToScore } from './host-controls';
 
 // How long a run waits before its second try at leaving a phase of no length.
 const leaveRetryDelay = 1000;
@@ -239,6 +240,8 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
             return questionStep(game, game.questionIndex);
 
         case GameState.ShowQuestion:
+            // The lies the host hid (host-controls.ts) are left out: a house lie takes their place.
+            game = Object.assign({}, game, { answers: withoutHidden(game.answers, game) });
             if (aboutOf(game.state)) {
                 return aboutAnswersStep(pin, game);
             }
@@ -252,7 +255,10 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
             };
 
         case GameState.ShowAnswers:
-            const { answers, answerSelections, revealAnswers } = scoreAnswers(pin, game);
+            // A host who read this question's lies before they were shown: their pick does not count.
+            const { answers, answerSelections, revealAnswers } = scoreAnswers(pin, Object.assign({}, game, {
+                answerSelections: picksToScore(game.answerSelections, game),
+            }));
 
             return {
                 state: updateState(GameState.RevealTheTruth),

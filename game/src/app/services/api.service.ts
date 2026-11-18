@@ -507,7 +507,78 @@ export class ApiService {
     answer(pin: string, answer: string) {
         pin = pin.toUpperCase();
         const pid = this.sessionService.user.pid;
-        return this.post('answer', { pin, answer, pid });
+        // The question this lie was for, read before it is sent: the answers screen tells this phone
+        // when the host hid it (answersNotice in host-strings.ts).
+        const question = this.get<number>(this.gamesRef.child(pin).child('questionIndex')).catch(() => null);
+        return this.post('answer', { pin, answer, pid }).then(async done => {
+            const q = await question;
+            if (typeof q === 'number') {
+                this.lieSentOn[pin] = q;
+            }
+            return done;
+        });
+    }
+
+    // ---- the host's controls (functions: host-controls.ts). Only the browser with the host key. ----
+
+    /** The question each game's lie was sent on, and the question its host checked the lies on. */
+    private lieSentOn: { [pin: string]: number } = {};
+    private liesCheckedOn: { [pin: string]: number } = {};
+
+    private hostControl<T>(pin: string, body: object): Promise<T> {
+        pin = pin.toUpperCase();
+        const hostKey = hostKeyFor(pin);
+        if (!hostKey) {
+            return Promise.reject(new Error('Only the host can do this'));
+        }
+        return this.post<T>('hostControl', Object.assign({ pin, hostKey }, body));
+    }
+
+    /** The lies sent so far on this question (texts, no names); the host is now checking them. */
+    hostLies(pin: string) {
+        return this.hostControl<{ lies: { id: string; text: string; hidden: boolean }[]; q: number }>(pin, { act: 'lies' })
+            .then(r => {
+                this.liesCheckedOn[pin.toUpperCase()] = r.q;
+                return r;
+            });
+    }
+
+    /** Hide a lie before the answers are shown (hide false: show it again). Resolves to the list after it. */
+    hideLie(pin: string, id: string, hide = true) {
+        return this.hostControl<{ lies: { id: string; text: string; hidden: boolean }[]; q: number }>(pin, { act: 'hide', id, hide });
+    }
+
+    /** The host is done looking: the answers go on the screens now. */
+    showAnswersNow(pin: string) {
+        return this.hostControl<{ shown: boolean }>(pin, { act: 'show' });
+    }
+
+    /** The host removes a seat from the game. */
+    removePlayer(pin: string, pid: string) {
+        return this.hostControl<{ removed: boolean }>(pin, { act: 'remove', pid });
+    }
+
+    /** The answers node as it changes: while the lies are written, the host's list reads it (hostLieRows). */
+    answersLive(pin: string) {
+        return this.observe<Answers>(this.gamesRef.child(pin.toUpperCase()).child('answers'));
+    }
+
+    /** What this phone did on a question: sent a lie, checked the lies (as host). For answersNotice. */
+    ownLieState(pin: string): { sentOn: number | null; checkedOn: number | null } {
+        pin = pin.toUpperCase();
+        const sent = this.lieSentOn[pin];
+        const checked = this.liesCheckedOn[pin];
+        return { sentOn: typeof sent === 'number' ? sent : null, checkedOn: typeof checked === 'number' ? checked : null };
+    }
+
+    /** Is this phone's own lie among the answers on the screens now? */
+    async ownLieListed(pin: string): Promise<boolean> {
+        const pid = this.myPid();
+        if (!pid) {
+            return true;
+        }
+        const own = await this.get<unknown>(this.gamesRef.child(pin.toUpperCase()).child('answers').child(pid)).catch(() => true);
+        return !!own;
     }
 
     async getAnswers(pin: string) {

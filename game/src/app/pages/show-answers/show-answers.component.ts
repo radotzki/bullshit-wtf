@@ -10,6 +10,7 @@ import { GameState, aboutView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings } from './../about-strings';
+import { hostStrings, answersNotice } from './../host-strings';
 
 @Component({
     standalone: false,
@@ -37,6 +38,8 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     duration: number;
     past: number;
     timer;
+    // The host hid this phone's lie, or this phone is the host who read the lies (host-strings.ts).
+    ownLieNotice: string = null;
     sound: Howl;
     private phoneTickStopped = false;
     panic: boolean;
@@ -63,10 +66,30 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             const user = this.sessionService.user;
             this.aboutMe = aboutView(about, null, user && user.pid, this.presenter).aboutMe;
             this.answers = a;
+            this.loadOwnLieNotice();
         });
         this.apiService.getTaste(this.pin).then(taste => this.taste = !!taste);
         this.startTimer();
         this.playBackground();
+    }
+
+    /**
+     * On this phone only: the host hid its lie, or (on the host's phone) the host read the lies first, so
+     * its pick doesn't score (see host-controls.ts in the functions). Nobody else is told.
+     */
+    private async loadOwnLieNotice() {
+        if (this.presenter) {
+            return;
+        }
+        const own = this.apiService.ownLieState(this.pin);
+        if (own.sentOn === null && own.checkedOn === null) {
+            return;
+        }
+        const [question, listed] = await Promise.all([
+            this.apiService.getQuestionIndex(this.pin).catch(() => null),
+            this.apiService.ownLieListed(this.pin),
+        ]);
+        this.ownLieNotice = answersNotice(hostStrings(this.t.lang), question, own.sentOn, own.checkedOn, listed, this.aboutMe);
     }
 
     private useLocale(locale: string) {
