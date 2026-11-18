@@ -361,7 +361,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.errorMsg = '';
         this.apiService.logShare('lobby-help', 'big-screen', { crew: this.pin, locale: this.locale });
         try {
-            // Who was in at the press: the big screen keeps "scan the code" up until someone else joins.
+            // Who was in at the press, and the host's name: the big screen keeps "scan the code" up until the host's phone joins.
             sessionStorage.setItem(PRESSED_WITH_KEY + this.pinKey(), pressedWith(this.players || []));
         } catch (e) { }
         this.apiService.hostToBigScreen(this.pin).then(() => {
