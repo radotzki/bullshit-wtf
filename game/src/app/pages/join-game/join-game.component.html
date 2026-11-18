@@ -68,9 +68,8 @@
                 <div class="recap-ask" *ngIf="ask === 'player'">
                     <p class="recap-ask-title">{{ n.playerTitle }}</p>
                     <p class="recap-ask-text">{{ n.playerText }}</p>
-                    <button class="button is-primary is-medium is-fullwidth recap-again" type="button" [disabled]="againBusy"
-                        [class.is-loading]="againBusy" (click)="playAgain()">{{ n.playAgain }}</button>
-                    <p class="recap-again-error" *ngIf="againError">{{ againError }}</p>
+                    <button class="button is-primary is-medium is-fullwidth recap-create" type="button"
+                        (click)="recapCreate()">{{ n.create }}</button>
                 </div>
                 <div class="field" *ngIf="recap.crew">
                     <a class="button is-info is-fullwidth recap-crew" [routerLink]="['/c', recap.crew]" (click)="recapCrew()">{{ n.crew }}</a>

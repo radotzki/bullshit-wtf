@@ -13,6 +13,9 @@ name: Night after
 
 on:
   pull_request:
+  # THROWAWAY BRANCH ONLY: runs the check on this deliberately broken commit. Never merge.
+  push:
+    branches: [claude/night-after-ci-mutant]
   workflow_dispatch:
 
 permissions:
