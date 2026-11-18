@@ -59,9 +59,9 @@ About a thousand years ago, carrots grown in Asia and Europe were ____
 House lies: blue, green, grey  
 Source says: In the 10th century "roots from West Asia, India and Europe were purple". Kept out of the lies: yellow, white, red, black (all real carrot colours).
 
-**en-12. forever** · https://en.wikipedia.org/wiki/Honey  
-Kept in a closed jar, honey can last ____  
-House lies: about a week, exactly one year, ten days  
+**en-12. never** · https://en.wikipedia.org/wiki/Honey  
+Kept in a closed jar, honey goes bad ____  
+House lies: after about a week, after exactly one year, after ten days  
 Source says: Honey "has an indefinite shelf life"; "when properly stored, honey therefore does not spoil". The same page says no edible honey was found in Egyptian tombs, so the question does not claim it.
 
 **en-13. ear** · https://en.wikipedia.org/wiki/Stapes  
@@ -114,10 +114,10 @@ Source says: "Lake Hula is the stopover point for tens of thousands of cranes mi
 House lies: פי עשרה, פי חמישה, פי מאה  
 Source says: Tongues are "one and a half to two times the length of their bodies"; smaller chameleons "more than twice". Lies are all far longer.
 
-**he-03. שלושה חודשים** · https://en.wikipedia.org/wiki/Goldfish  
-אומרים שלדג זהב יש זיכרון של שלוש שניות, אבל בעצם הוא זוכר דברים לפחות ____  
-House lies: דקה, יום אחד, שבוע  
-Source says: "Goldfish have a memory span of at least three months".
+**he-03. שלוש שניות** · https://en.wikipedia.org/wiki/Goldfish  
+אומרים שלדג זהב יש זיכרון של ____, אבל בעצם הוא זוכר דברים לפחות שלושה חודשים  
+House lies: שלוש שעות, חצי יום, עשר דקות  
+Source says: "Goldfish have a memory span of at least three months". The blank holds the popular three-second myth that this fact answers; the lies are spans nobody says, so none of them is what people say.
 
 **he-04. שחור** · https://en.wikipedia.org/wiki/Zebra  
 מתחת לפסים, העור של הזברה ____  
@@ -181,7 +181,7 @@ Source says: The male balances the egg "on the tops of his feet" for "around 65-
 
 **he-16. כפות הרגליים** · https://en.wikipedia.org/wiki/Dog_anatomy  
 כלבים כמעט לא מזיעים בעור. הם מזיעים דרך ____  
-House lies: האוזניים, האף, הזנב  
+House lies: האוזניים, הגב, הזנב  
 Source says: Dogs have "few sweat glands in their skin" and cool by "sweating via their paws" and panting.
 
 **he-17. כסף** · https://en.wikipedia.org/wiki/1896_Summer_Olympics  

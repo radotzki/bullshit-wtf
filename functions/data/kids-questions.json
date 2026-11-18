@@ -132,12 +132,12 @@
     "pack": "kids"
   },
   "kids-26-en-12": {
-    "questionText": "Kept in a closed jar, honey can last $blank$",
-    "realAnswer": "forever",
+    "questionText": "Kept in a closed jar, honey goes bad $blank$",
+    "realAnswer": "never",
     "fakeAnswers": [
-      "about a week",
-      "exactly one year",
-      "ten days"
+      "after about a week",
+      "after exactly one year",
+      "after ten days"
     ],
     "citation": "https://en.wikipedia.org/wiki/Honey",
     "lang": "en",
@@ -264,12 +264,12 @@
     "pack": "kids"
   },
   "kids-26-he-03": {
-    "questionText": "אומרים שלדג זהב יש זיכרון של שלוש שניות, אבל בעצם הוא זוכר דברים לפחות $blank$",
-    "realAnswer": "שלושה חודשים",
+    "questionText": "אומרים שלדג זהב יש זיכרון של $blank$, אבל בעצם הוא זוכר דברים לפחות שלושה חודשים",
+    "realAnswer": "שלוש שניות",
     "fakeAnswers": [
-      "דקה",
-      "יום אחד",
-      "שבוע"
+      "שלוש שעות",
+      "חצי יום",
+      "עשר דקות"
     ],
     "citation": "https://en.wikipedia.org/wiki/Goldfish",
     "lang": "he",
@@ -424,7 +424,7 @@
     "realAnswer": "כפות הרגליים",
     "fakeAnswers": [
       "האוזניים",
-      "האף",
+      "הגב",
       "הזנב"
     ],
     "citation": "https://en.wikipedia.org/wiki/Dog_anatomy",
