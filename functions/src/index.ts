@@ -6,6 +6,7 @@ import { tick } from './controllers/tick';
 import { onPhaseStart } from './controllers/phase-timer';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
+import { openChallenge } from './controllers/challenge';
 import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
@@ -41,6 +42,14 @@ function errorBody(e: any) {
         // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
         if (e.nightAfter && typeof e.nightAfter === 'object') {
             body.nightAfter = e.nightAfter;
+        }
+        // GAME_OVER: the challenge card of a game whose challenge is open, and the other table of a game
+        // played against one (see challenge.ts).
+        if (e.challenge && typeof e.challenge === 'object') {
+            body.challenge = e.challenge;
+        }
+        if (e.versus && typeof e.versus === 'object') {
+            body.versus = e.versus;
         }
         return body;
     }
@@ -277,14 +286,19 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const stagedReveal = req.body.stagedReveal === true;
             // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
             const aboutUs = req.body.aboutUs === true;
+            // challenge: the PIN of a finished game to play against (CHALLENGE ANOTHER GROUP, challenge.ts).
+            const challenge = typeof req.body.challenge === 'string' ? req.body.challenge : undefined;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
+                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs, challenge,
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {
+            if (e && e.code === 'CHALLENGE_OVER') {
+                return res.status(400).send(errorBody(e));
+            }
             console.error('newGame failed', e);
             caught(e);
             return res.status(500).send(errorBody(e));
@@ -462,6 +476,11 @@ exports.validateGameName = functions.https.onRequest(http('validateGameName', (r
         const pin = req.body.pin;
 
         try {
+            // openChallenge: CHALLENGE ANOTHER GROUP pressed on the final screen, through this function so no
+            // new function has to be deployed (challenge.ts). Only a player of the game may open it.
+            if (req.body.openChallenge === true) {
+                return res.status(200).send(await openChallenge(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
+            }
             // uid and pid: the join page's sign-in and last seat, so a finished game's recap knows a player.
             return res.status(200).send(await validateGameName(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
         } catch (e) {
