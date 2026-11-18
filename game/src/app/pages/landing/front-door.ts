@@ -135,7 +135,7 @@ export function pictureStrings(locale: string): PictureStrings {
 export { cleanCode } from '../../services/game-code';
 
 /**
- * The facts line ("Free · no app · 2 to 12 players, …") in its parts, for the computer home, which
+ * The facts line ("Free · no sign-up · no app · 2 to 12 players") in its parts, for the computer home, which
  * shows each part whole and hides the dot that would start or end a line when the line wraps (at
  * 1280 px the Hebrew line broke after "אפליקציה ·" and left the dot hanging).
  */

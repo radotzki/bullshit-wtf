@@ -25,12 +25,13 @@
             <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
             <p class="facts"><span class="facts-row"><span class="fact" *ngFor="let fact of facts">{{ fact }}</span></span></p>
 
-            <!-- The one big button: the create flow, carrying the post's ?via= tag (front-door.ts). -->
+            <!-- The one big button: the create flow, carrying the post's ?via= tag (front-door.ts).
+                 A press shows in the visits log as the page moving to /create-game. -->
             <a class="host-button" routerLink="/create-game" [queryParams]="createQuery">
-                <i class="fa fa-television" aria-hidden="true"></i>
-                <span>{{ t.host }}</span>
+                <i class="fa fa-play-circle" aria-hidden="true"></i>
+                <span>{{ t.start }}</span>
             </a>
-            <p class="host-hint">{{ t.createHint }}</p>
+            <p class="host-hint">{{ t.startHint }}</p>
             <!-- For a visitor on their own (most strangers from a search, alone at a desk): today's
                  question, right under Create, once the puzzle is live (daily-line.ts). -->
             <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
