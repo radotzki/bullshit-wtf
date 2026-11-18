@@ -10,6 +10,9 @@
 //     host looks; SHOW THE ANSWERS does. Troll's lie is in no answer on any screen; Troll's phone alone says
 //     the host hid it, and the host's phone says its pick doesn't score. On the reveal, the host's pick is no pick.
 //  3. Question 2. The host removes Cleo from the writing screen: Cleo's phone says so, and the game goes on.
+//  4. Question 2's answers (or the next question that isn't an About question). Ben picks Troll's lie, then
+//     the host removes Troll: the lie stays up, marked as a removed seat's, and Ben's pick of it scores 0
+//     (not a house lie's take-back).
 //
 // Needs what emulator-game.js needs (Java, functions/ built, the root's npm ci). From the repository root:
 //   node .github/smoke/emulator-host-controls.js [path to dist] [--locale en|he]
@@ -213,6 +216,69 @@ async function main() {
         await sendLie(ben, 'ben 2');
         await sendLie(troll, 'troll 2');
         await until('question 2\'s answers', async () => (await db('GET', `games/${pin}/state`)).id === 3, 30000);
+
+        // 4. The answers on the screens: Ben picks Troll's lie, then the host removes Troll. Troll's lie
+        // stays up, marked, and Ben's pick of it scores 0: no house lie's take-back. An About question
+        // (Troll's answer would be the truth, or one phone has no pick) is played through to the next.
+        const pidOf = async (name) => Object.entries(await db('GET', `games/${pin}/players`)).find(([, p]) => p.nickname === name)[0];
+        const benPid = await pidOf(ben.name);
+        let qi = 1;
+        const label = new Map([[host, 'host'], [ben, 'ben'], [troll, 'troll']]);
+        const playable = async () => {
+            // Not an About question, and Troll's lie is up (an About question about a removed seat is
+            // replaced by a bank question from a fresh start, whose writing nobody here fills).
+            const [st, answers] = await Promise.all([db('GET', `games/${pin}/state`), db('GET', `games/${pin}/answers`)]);
+            return !st.about && Object.values(answers || {}).some((a) => a.text === `troll ${qi + 1}` && !a.realAnswer);
+        };
+        while (!(await playable())) {
+            if (qi >= 4) throw new Error('no question to remove a seat during the answers');
+            summary.aboutPlayedThrough = (summary.aboutPlayedThrough || []).concat(qi + 1);
+            for (const p of [host, ben, troll]) {
+                await p.page.locator('button.answer').first().click({ timeout: 3000 }).catch(() => { });
+            }
+            await until(`question ${qi + 2}`, async () => {
+                const [s, q] = await Promise.all([db('GET', `games/${pin}/state`), db('GET', `games/${pin}/questionIndex`)]);
+                return s.id === 2 && q === qi + 1;
+            }, 120000);
+            qi++;
+            for (const p of [host, ben, troll]) await sendLie(p, `${label.get(p)} ${qi + 1}`);
+            await until(`question ${qi + 1}'s answers`, async () => (await db('GET', `games/${pin}/state`)).id === 3, 30000);
+        }
+        const trollLie = `troll ${qi + 1}`;
+        summary.removedAt = qi + 1;
+        const benBefore = (await db('GET', `games/${pin}/players/${benPid}`)).score || 0;
+        await until('Ben has answers', () => visible(ben.page.locator('button.answer')));
+        await ben.page.locator('button.answer', { hasText: trollLie }).first().click({ timeout: 10000 }).catch(async (e) => {
+            summary.benSees = await ben.page.locator('button.answer').allInnerTexts();
+            summary.answersThen = await db('GET', `games/${pin}/answers`);
+            summary.stateThen = await db('GET', `games/${pin}/state`);
+            throw e;
+        });
+        await until('Ben\'s pick is in', async () => !!(await db('GET', `games/${pin}/answerSelections/${benPid}`)));
+        await host.page.locator('.host-players').first().click();
+        const trollSeat = host.page.locator('.host-seat', { hasText: troll.name });
+        await trollSeat.locator('.host-remove').click();
+        await trollSeat.locator('.host-remove-yes').click();
+        await until('Troll\'s phone says it was removed', () => visible(troll.page.locator('.removed-modal.is-active')));
+        const close = host.page.locator('.host-players-modal .modal-card-foot .button');
+        if (await visible(close)) await close.click();
+        const answersQ2 = await db('GET', `games/${pin}/answers`);
+        summary.answersAtRemoval = Object.values(answersQ2);
+        const kept = Object.values(answersQ2).find((a) => a.text === trollLie);
+        check(kept && kept.houseLie === true && kept.removedSeat === true, 'the removed seat\'s lie is not kept, marked');
+        const truthQ2 = Object.values(answersQ2).find((a) => a.realAnswer).text;
+        await until('the host has answers', () => visible(host.page.locator('button.answer')));
+        await host.page.locator('button.answer', { hasText: truthQ2 }).first().click();
+        await until('question 2\'s reveal', async () => (await db('GET', `games/${pin}/state`)).id >= 4, 30000);
+        const rowQ2 = ((await db('GET', `games/${pin}/revealAnswers`)) || []).find((r) => r.text === trollLie);
+        summary.removedLieRow = rowQ2;
+        check(rowQ2 && (rowQ2.selectors || []).includes(benPid), 'Ben\'s pick of the removed lie is not on the reveal');
+        check(rowQ2 && rowQ2.points === 0, 'the removed lie\'s row is not worth 0');
+        await until('question 2\'s scores', async () => (await db('GET', `games/${pin}/state`)).id >= 5, 90000);
+        const benAfter = (await db('GET', `games/${pin}/players/${benPid}`)).score || 0;
+        summary.benQ2 = { before: benBefore, after: benAfter };
+        check(benAfter === benBefore, `Ben's pick of the removed lie changed his score (${benBefore} to ${benAfter})`);
+        await shot(ben, '11-removed-lie-scored-0');
 
         phones.forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
     } catch (e) {

@@ -158,9 +158,10 @@ export function removeUpdate(game: HostGame, pid: string, now: number, newKey: (
     const lie = game.answers && game.answers[pid];
     if (lie && !lie.houseLie && !lie.realAnswer) {
         update[`answers/${pid}`] = null;
-        // The answers are on the screens: the lie stays there, written by the house.
+        // The answers are on the screens: the lie stays there, shown as the house's. It is marked, so
+        // that a pick of it, made when a real player wrote it, scores 0 and not a house lie's take-back.
         if (game.state.id === GameState.ShowAnswers) {
-            update[`answers/${newKey()}`] = { text: lie.text, houseLie: true, realAnswer: false };
+            update[`answers/${newKey()}`] = { text: lie.text, houseLie: true, realAnswer: false, removedSeat: true };
         }
     }
 

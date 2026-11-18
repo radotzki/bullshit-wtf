@@ -500,6 +500,9 @@ export interface Answer {
     score?: number;
     // The player sent one of the lies the round-1 helper offered them.
     idea?: boolean;
+    // A lie whose writer the host removed while the answers were on the screens: it stays up as a
+    // house lie, but a pick of it scores 0 (no house-lie take-back), and it scores for nobody.
+    removedSeat?: boolean;
 }
 
 export interface AnswerSelections {

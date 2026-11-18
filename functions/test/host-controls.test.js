@@ -5,7 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const hc = require('../dist/controllers/host-controls');
 const { everyoneSent } = require('../dist/controllers/seats');
-const { scoreQuestion } = require('../dist/controllers/scoring');
+const { scoreQuestion, addQuestionScores } = require('../dist/controllers/scoring');
 
 const S = { GameStaging: 0, RoundIntro: 1, ShowQuestion: 2, ShowAnswers: 3, RevealTheTruth: 4, ScoreBoard: 5, ScoreBoardFinal: 6 };
 const KEY = 'K'.repeat(24);
@@ -106,11 +106,68 @@ test('remove a player: the seat goes, its browser and seat are kept out, the hos
     assert.strictEqual(hc.removeUpdate(game(S.ScoreBoardFinal), 'troll', 1, key).error.code, 'GAME_OVER');
 });
 
-test('a seat removed while the answers are on the screens leaves its lie there as a house lie', () => {
+test('a seat removed while the answers are on the screens leaves its lie there as a house lie, marked', () => {
     const { update } = hc.removeUpdate(game(S.ShowAnswers), 'troll', 1, () => 'k1');
     assert.strictEqual(update['answers/troll'], null);
-    assert.deepStrictEqual(update['answers/k1'], { text: 'something crude', houseLie: true, realAnswer: false });
+    assert.deepStrictEqual(update['answers/k1'], { text: 'something crude', houseLie: true, realAnswer: false, removedSeat: true });
     assert.strictEqual(update['answerSelections/troll'], null);
+});
+
+// Apply a removeUpdate to a plain game object, as Firebase would.
+function applyUpdate(g, update) {
+    const out = JSON.parse(JSON.stringify(g));
+    Object.keys(update).forEach(path => {
+        const [part, key] = path.split('/');
+        if (key === undefined) {
+            out[part] = update[path];
+            return;
+        }
+        out[part] = out[part] || {};
+        if (update[path] === null) {
+            delete out[part][key];
+        } else {
+            out[part][key] = update[path];
+        }
+    });
+    return out;
+}
+
+test('a pick of a lie whose writer is removed during the answers scores 0, and the lie scores for nobody', () => {
+    const g = game(S.ShowAnswers, { roundIndex: 0 });
+    g.players.ben.score = 1000;
+    g.players.host.score = 1000;
+    g.answers.truth = { text: 'the truth', houseLie: false, realAnswer: true };
+    g.answers.h1 = { text: 'house one', houseLie: true, realAnswer: false };
+    g.answerSelections = { ben: { text: 'something crude' } };
+    const after = applyUpdate(g, hc.removeUpdate(g, 'troll', 1, () => 'k1').update);
+    after.answerSelections.host = { text: 'house one' };
+
+    const scored = scoreQuestion(after);
+    assert.strictEqual(scored.answerSelections.ben.score, 0, 'no house-lie take-back');
+    assert.ok(scored.answerSelections.host.score < 0, 'a real house lie still takes points back');
+    assert.strictEqual(scored.answers.k1.score, undefined, 'the lie scores for nobody');
+    const row = scored.revealAnswers.find(r => r.text === 'something crude');
+    assert.strictEqual(row.points, 0);
+    assert.deepStrictEqual(row.selectors, ['ben']);
+    const totals = addQuestionScores(Object.assign({}, after, scored));
+    assert.strictEqual(totals.ben.score, 1000, 'Ben keeps his 1,000');
+});
+
+test('a removed seat\'s lie with the same text as a player\'s lie: the pick is the player\'s', () => {
+    const g = game(S.ShowAnswers, { roundIndex: 0 });
+    g.players.ben.score = 1000;
+    g.answers.ben = { text: 'something crude', houseLie: false, realAnswer: false };
+    g.answers.truth = { text: 'the truth', houseLie: false, realAnswer: true };
+    g.answerSelections = { host: { text: 'something crude' } };
+    const after = applyUpdate(g, hc.removeUpdate(g, 'troll', 1, () => 'k1').update);
+
+    const scored = scoreQuestion(after);
+    assert.strictEqual(scored.answerSelections.host.score, 0);
+    assert.strictEqual(scored.answers.ben.score, 500, 'Ben\'s lie fooled the host');
+    assert.strictEqual(scored.answers.k1.score, undefined);
+    const row = scored.revealAnswers.find(r => r.text === 'something crude');
+    assert.strictEqual(row.houseLie, false, 'the row is Ben\'s lie');
+    assert.strictEqual(row.points, 500);
 });
 
 test('a lobby that drops below five forgets when it was full', () => {

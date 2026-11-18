@@ -68,7 +68,7 @@ const en: HostStrings = {
 const he: HostStrings = {
     playersButton: 'שחקנים',
     playersTitle: 'השחקנים בשולחן',
-    removeHint: 'אפשר להוציא מי שלא אמור להיות כאן. מהטלפון הזה אי אפשר יהיה לחזור למשחק.',
+    removeHint: 'אפשר להוציא מי שלא אמור להיות כאן. הטלפון שיוצא לא יוכל לחזור למשחק הזה.',
     remove: 'הוצאה',
     removeConfirm: name => `להוציא את ${name} מהמשחק?`,
     yesRemove: 'כן, להוציא',
