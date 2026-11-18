@@ -10,7 +10,8 @@
 // What it promises:
 // - A preview only while the link itself works: the challenge was opened by a player of that table and
 //   its week is not over (openCard in challenge.ts). Any other PIN gets the page as Hosting serves it.
-// - No player's name, ever: not the host's, not the liar's, and no lie that holds a nickname of that table.
+// - No player's name, ever: not the host's, not the liar's, and no lie that holds a nickname of that table,
+//   or a name-like word of one ("Dana" of "Dana K").
 // - The lie is a player's own words, which no filter checked when it was written (only nicknames are
 //   filtered), and it lands in a stranger's chat. So a lie is shown only when the nickname filter
 //   (name-flag.ts) passes it, as written and with its spaces taken out, and it holds no web or mail
@@ -70,24 +71,55 @@ function words(text: string): string[] {
     return normalizeName(text).split(NOT_WORD).filter(w => !!w);
 }
 
-/** The lie names a player of the table: a nickname's words appear in it, in a row (a Hebrew prefix allowed). */
+// Words of a nickname that name nobody on their own: titles and common words ("The Boss", "Big Dan",
+// "המלך דני"). Any other word of 3 or more letters in a nickname of two or more words counts as a name by
+// itself, so "Dana K" or "דנה כהן" keeps "Dana" / "דנה" out of the preview. Kept as normalizeName gives
+// them (Hebrew final letters mapped).
+const COMMON_WORDS = [
+    'the', 'and', 'mr', 'mrs', 'ms', 'dr', 'mister', 'miss', 'sir', 'lady', 'lord', 'big', 'little', 'lil',
+    'king', 'queen', 'boss', 'prince', 'princess', 'captain', 'super', 'mega', 'real', 'not', 'one', 'only',
+    'man', 'guy', 'girl', 'boy', 'bro', 'sis', 'mom', 'mum', 'dad', 'baby', 'team', 'you', 'who', 'cool',
+    'mad', 'crazy', 'great', 'old', 'young', 'new', 'jr', 'sr',
+    'של', 'ה', 'מר', 'גברת', 'דוקטור', 'מלך', 'המלך', 'מלכה', 'המלכה', 'בוס', 'הבוס', 'גדול', 'הגדול',
+    'גדולה', 'הגדולה', 'קטן', 'הקטן', 'קטנה', 'הקטנה', 'אבא', 'אמא', 'אח', 'אחות', 'נסיך', 'הנסיך',
+    'נסיכה', 'הנסיכה', 'מלכת', 'אלוף', 'האלוף', 'אלופה', 'האלופה', 'סופר', 'מגה', 'זקן', 'הזקן',
+    'חדש', 'החדש', 'מטורף', 'המטורף', 'משוגע', 'המשוגע', 'לא', 'אני', 'מי',
+].map(w => normalizeName(w));
+
+/** The ways a nickname appears in a lie: its words in a row, and each name-like word of a longer nickname. */
+function namesOf(nickname: any): string[][] {
+    const name = words(typeof nickname === 'string' ? nickname : '');
+    if (!name.length || name.join('').length < 2) {
+        return [];
+    }
+    const out = [name];
+    if (name.length > 1) {
+        name.filter(w => Array.from(w).length >= 3 && COMMON_WORDS.indexOf(w) < 0).forEach(w => out.push([w]));
+    }
+    return out;
+}
+
+/** The name's words appear in the lie's words, in a row; the first may carry a Hebrew prefix. */
+function appearsIn(lieWords: string[], name: string[]): boolean {
+    for (let i = 0; i + name.length <= lieWords.length; i++) {
+        const first = lieWords[i];
+        const firstOk = first === name[0] || (/^[\u0590-\u05ff]/.test(name[0])
+            && [1, 2].some(n => first.length > n && HE_PREFIX.test(first.slice(0, n)) && first.slice(n) === name[0]));
+        if (firstOk && name.every((w, j) => j === 0 || lieWords[i + j] === w)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * The lie names a player of the table: a nickname's words appear in it, in a row (a Hebrew prefix allowed),
+ * or, for a nickname of two or more words, any one of its words of 3 or more letters that isn't a common
+ * word (COMMON_WORDS) does.
+ */
 export function namesAPlayer(lie: string, nicknames: string[]): boolean {
     const lieWords = words(lie);
-    return nicknames.some(nickname => {
-        const name = words(typeof nickname === 'string' ? nickname : '');
-        if (!name.length || name.join('').length < 2) {
-            return false;
-        }
-        for (let i = 0; i + name.length <= lieWords.length; i++) {
-            const first = lieWords[i];
-            const firstOk = first === name[0] || (/^[\u0590-\u05ff]/.test(name[0])
-                && [1, 2].some(n => first.length > n && HE_PREFIX.test(first.slice(0, n)) && first.slice(n) === name[0]));
-            if (firstOk && name.every((w, j) => j === 0 || lieWords[i + j] === w)) {
-                return true;
-            }
-        }
-        return false;
-    });
+    return nicknames.some(nickname => namesOf(nickname).some(name => appearsIn(lieWords, name)));
 }
 
 /** A lie a stranger's chat may show: the nickname filter passes it, it holds no address and names nobody. */
@@ -139,7 +171,7 @@ const TEXT = {
             : `“${lie}” fooled ${fooled} of ${of}. Can your group spot the truth?`,
         plain: 'Your group is challenged to a game of Bullshit',
         description: (questions: number, top: number) =>
-            `Bullshit, the party game of lies: play the same ${questions} questions and beat ${top} points. Everyone plays on their own phone. Free, no download.`,
+            `Play the same ${questions} questions and beat ${top} points. Bullshit, the party game of lies: everyone plays on their own phone. Free, no download.`,
         alt: 'Bullshit: fool your friends with fake answers to strange true facts',
     },
     // Hebrew with no gender: "תצליחו" and "אתכם" are the plural, said to a group. A lie that starts left
@@ -150,7 +182,7 @@ const TEXT = {
             : `השקר שעבד על ${fooled} מתוך ${of}: ״${lie}״. תצליחו לזהות את האמת?`,
         plain: 'אתגר בבולשיט: קבוצה אחרת מאתגרת אתכם',
         description: (questions: number, top: number) =>
-            `בולשיט, משחק השקרים למסיבות: אותן ${questions} שאלות, ו־${top} נקודות לעבור. כל אחד משחק מהטלפון, בחינם ובלי הורדה.`,
+            `אותן ${questions} שאלות, ו־${top} נקודות לעבור. בולשיט, משחק השקרים למסיבות: כל אחד משחק מהטלפון, בחינם ובלי הורדה.`,
         alt: 'בולשיט: עבדו על החברים עם תשובות מזויפות לעובדות מוזרות ואמיתיות',
     },
 };

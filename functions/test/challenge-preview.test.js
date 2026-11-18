@@ -193,6 +193,40 @@ test('bestLie: no lie that names a player of the table, or holds an address', ()
     }
 });
 
+test('namesAPlayer: each name-like word of a two-word nickname is a name of its own, in English and Hebrew', () => {
+    const table = ['Dana K', 'דנה כהן', 'Yossi Cohen'];
+    // A first name of a two-word nickname is caught, also with a Hebrew prefix.
+    for (const lie of ['Dana did it', 'Yossi made it up', 'ask cohen', 'דנה המציאה את זה', 'בגלל ולדנה', 'משפחת כהן']) {
+        assert.strictEqual(cp.namesAPlayer(lie, table), true, lie);
+    }
+    // The whole nickname still counts; a word of under 3 letters ("K") does not on its own.
+    assert.strictEqual(cp.namesAPlayer('Dana K was here', ['Dana K']), true);
+    assert.strictEqual(cp.namesAPlayer('Vitamin K', ['Dana K']), false);
+    // A common word of a nickname is no name: "The Boss" and "המלך דני" don't over-match.
+    assert.strictEqual(cp.namesAPlayer('the penguins wear socks', ['The Boss']), false);
+    assert.strictEqual(cp.namesAPlayer('ask the boss', ['The Boss']), true);
+    assert.strictEqual(cp.namesAPlayer('Big penguins', ['Big Dan']), false);
+    assert.strictEqual(cp.namesAPlayer('המלך של הפינגווינים', ['המלך דני']), false);
+    assert.strictEqual(cp.namesAPlayer('דני המציא', ['המלך דני']), true);
+    // A single-word nickname works as before: whole words only, a Hebrew prefix allowed.
+    assert.strictEqual(cp.namesAPlayer('dana ate it', ['Dana']), true);
+    assert.strictEqual(cp.namesAPlayer('Bento boxes', ['Ben']), false);
+    assert.strictEqual(cp.namesAPlayer('ולדנה יש ברכיים', ['דנה']), true);
+    assert.strictEqual(cp.namesAPlayer('דנהלה', ['דנה']), false);
+    // A name inside another word is still no name.
+    assert.strictEqual(cp.namesAPlayer('Danas are fruit', ['Dana K']), false);
+});
+
+test('bestLie: a first name of a two-word nickname sends the preview to the next lie', () => {
+    const players = { p1: { nickname: 'Dana K', uid: 'u1', score: 9, host: true }, p2: { nickname: 'יוסי כהן', uid: 'u2', score: 1 } };
+    const en = finished({ players, highlights: { p1: hl('Dana did it', 5, 'q7'), p2: hl('They glue the eggs', 2, 'q5') } });
+    assert.strictEqual(cp.bestLie(en).text, 'They glue the eggs');
+    const he = finished({ players, highlights: { p1: hl('יוסי המציא את זה', 5, 'q7'), p2: hl('הם מדביקים את הביצים', 2, 'q5') } });
+    assert.strictEqual(cp.bestLie(he).text, 'הם מדביקים את הביצים');
+    const none = finished({ players, highlights: { p1: hl('Dana did it', 5, 'q7'), p2: hl('בגלל כהן', 2, 'q5') } });
+    assert.strictEqual(cp.bestLie(none), null);
+});
+
 test('bestLie: one clean line, cut at a word with an ellipsis', () => {
     const g = finished({ highlights: { p1: hl('Pen‮guins\n  have\tknees', 4, 'q2') } });
     assert.strictEqual(cp.bestLie(g).text, 'Penguins have knees');
@@ -207,13 +241,13 @@ test('bestLie: one clean line, cut at a word with an ellipsis', () => {
 test('challengePreviewOf: English and Hebrew, with the lie and its count, no names', () => {
     const en = cp.challengePreviewOf(finished(), 'QBCD', now);
     assert.strictEqual(en.title, '“Penguins have knees” fooled 4 of 5. Can your group spot the truth?');
-    assert.strictEqual(en.description, 'Bullshit, the party game of lies: play the same 7 questions and beat 2400 points. Everyone plays on their own phone. Free, no download.');
+    assert.strictEqual(en.description, 'Play the same 7 questions and beat 2400 points. Bullshit, the party game of lies: everyone plays on their own phone. Free, no download.');
     assert.strictEqual(en.locale, 'en');
     assert.strictEqual(en.image, 'https://bullshit.wtf/assets/og-image.png');
     assert.strictEqual(en.lie, true);
     const he = cp.challengePreviewOf(finished({ locale: 'he', highlights: { p1: hl('לפינגווינים יש ברכיים', 4, 'q2') } }), 'QBCD', now);
     assert.strictEqual(he.title, '״לפינגווינים יש ברכיים״ עבד על 4 מתוך 5. תצליחו לזהות את האמת?');
-    assert.strictEqual(he.description, 'בולשיט, משחק השקרים למסיבות: אותן 7 שאלות, ו־2400 נקודות לעבור. כל אחד משחק מהטלפון, בחינם ובלי הורדה.');
+    assert.strictEqual(he.description, 'אותן 7 שאלות, ו־2400 נקודות לעבור. בולשיט, משחק השקרים למסיבות: כל אחד משחק מהטלפון, בחינם ובלי הורדה.');
     assert.strictEqual(he.image, 'https://bullshit.wtf/assets/og-image-he.png');
     for (const p of [en, he]) {
         for (const name of ['Dana', 'Ben', 'Maya', 'Ron', 'Tal', 'Avi']) {
