@@ -49,6 +49,8 @@ export class GameService implements CanActivate {
     /** The step this phone was last sent to: its id and the time it began (see phaseKey). */
     private phase: string;
     private stepId: GameState;
+    /** Stops marking this phone's seat as here (ApiService.followSeat). */
+    private stopSeat: () => void;
 
     constructor(
         private router: Router,
@@ -68,6 +70,7 @@ export class GameService implements CanActivate {
         }
         this.unregister();
         this.pin = next;
+        this.stopSeat = this.apiService.followSeat(next);
         this.game = this.apiService.gamePhase(pin).subscribe(state => {
             // A step of a game this phone has left since must not move it.
             if (this.pin === next) {
@@ -86,6 +89,10 @@ export class GameService implements CanActivate {
         this.phase = undefined;
         this.stepId = undefined;
         this.clearTimer();
+        if (this.stopSeat) {
+            this.stopSeat();
+            this.stopSeat = undefined;
+        }
         if (this.game) {
             this.game.unsubscribe();
             this.game = undefined;

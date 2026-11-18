@@ -172,10 +172,11 @@ function redirect(url) {
     return null;
 }
 
-async function newPhone(browser, base, name, role) {
-    const context = await browser.newContext(role === 'screen'
+async function newPhone(browser, base, name, role, userAgent) {
+    const context = await browser.newContext(Object.assign(role === 'screen'
         ? { serviceWorkers: 'block', viewport: { width: 1280, height: 720 } }
-        : { serviceWorkers: 'block', viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
+        : { serviceWorkers: 'block', viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true },
+    userAgent ? { userAgent } : {}));
     const phone = { name, role, context, away: false, sockets: [], connects: [], problems: [], screens: [], lies: [], picks: [], done: false };
     const ours = (u) => new URL(u).host === new URL(base).host;
 
@@ -417,7 +418,7 @@ async function main() {
 }
 
 // Run as a script it plays the game; required, it lends its emulators and phones to the other
-// local runs (emulator-crew-night.js, emulator-invite-group.js).
+// local runs (emulator-crew-night.js, emulator-invite-group.js, emulator-rejoin.js).
 if (require.main === module) {
     main().catch((e) => {
         console.error('FAIL', e.stack || e);
