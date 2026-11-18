@@ -90,6 +90,32 @@ test('every game screen, and /m and /d, send noindex, with or without a trailing
     });
 });
 
+// A screen added later is caught too: every address a rewrite sends to the game (index.html or
+// he.html), read off the rewrite's own pattern, other than the two homes, must send noindex.
+function appAddresses() {
+    const out = new Set();
+    hosting.rewrites.filter(r => r.regex && /^\/(index|he)\.html$/.test(r.destination || '')).forEach(r => {
+        const m = /^\^(\/(?:he\/)?)\??\(([^)]*)\)/.exec(r.regex);
+        if (!m) {
+            return;
+        }
+        m[2].split('|').map(a => (/^[a-z][a-z-]*/.exec(a) || [''])[0]).filter(Boolean).forEach(stem => {
+            [m[1] + stem, m[1] + stem + '/', m[1] + stem + '/ABCD', m[1] + stem + '/ABCD/']
+                .filter(u => new RegExp(r.regex).test(u)).forEach(u => out.add(u));
+        });
+    });
+    return [...out].filter(u => !['/', '/he', '/he/'].includes(u));
+}
+
+test('every address the game answers, read off firebase.json, sends noindex and is not blocked', () => {
+    const all = appAddresses();
+    ['/m', '/d', '/game-staging/ABCD', '/score-board-final/ABCD', '/he/c/ABCD'].forEach(u => assert.ok(all.includes(u), u));
+    all.forEach(u => {
+        assert.ok(noindex(u), u);
+        assert.ok(crawlable(u), u);
+    });
+});
+
 test('robots.txt blocks no game screen, so a search engine can fetch it and read its noindex', () => {
     SCREENS.concat(PHONE_AND_COMPUTER).forEach(u => assert.ok(crawlable(u), u));
     assert.ok(!/^\s*disallow\s*:\s*\S/im.test(robots), 'no Disallow line:\n' + robots);
