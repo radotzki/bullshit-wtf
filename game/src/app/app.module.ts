@@ -43,6 +43,7 @@ import { CrewService } from './services/crew.service';
 import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
 import { StepComponent } from './pages/step/step.component';
+import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-night.component';
 
 @NgModule({
     declarations: [
@@ -76,6 +77,7 @@ import { StepComponent } from './pages/step/step.component';
         WaitingRowComponent,
         CrewComponent,
         StepComponent,
+        HanukkahNightComponent,
     ],
     imports: [
         BrowserModule,
