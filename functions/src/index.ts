@@ -10,6 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
+import { keepSecondTable } from './controllers/second-table';
 import { fork } from './controllers/fork';
 import { sameTable } from './controllers/same-table';
 import { startGame, hostHere, hostToBigScreen } from './controllers/start';
@@ -286,6 +287,10 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);
+            // Made from START A SECOND TABLE at a full table: the next phones refused there are offered it.
+            if (req.body.secondOf) {
+                await keepSecondTable(req.body.secondOf, pin);
+            }
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {

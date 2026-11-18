@@ -158,6 +158,8 @@ export class ApiService {
         const resp = await this.post<{ pin: string }>(`newGame`, {
             // Where this visit started and whether this browser played before (see arrival.ts).
             arrival: newGameArrival(),
+            // START A SECOND TABLE: the full table this game is for (createSecondTable), so its next refused phones come here.
+            ...this.takeSecondOf(),
             locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
             // This client starts through startGame, so the server may refuse START ticks for this game.
             serverStart: true,
@@ -168,6 +170,25 @@ export class ApiService {
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
+    }
+
+    // The full table the next createGame is a second table for (createSecondTable); taken once.
+    private secondOf: string;
+
+    /**
+     * START A SECOND TABLE at full table `fullPin`: a game made as createGame makes it, which the server then
+     * keeps on the full table, so the next phones refused there are offered JOIN <host>'S SECOND TABLE.
+     * A method of its own, so createGame's arguments stay as they are.
+     */
+    createSecondTable(locale: string, count: number, pack: string, campaign: string, fullPin: string): Promise<{ pin: string }> {
+        this.secondOf = fullPin;
+        return this.createGame(locale, count, pack, campaign);
+    }
+
+    private takeSecondOf(): { secondOf?: string } {
+        const secondOf = this.secondOf;
+        this.secondOf = undefined;
+        return secondOf ? { secondOf } : {};
     }
 
     /**

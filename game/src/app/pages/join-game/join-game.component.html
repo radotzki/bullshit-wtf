@@ -104,11 +104,25 @@
         <div class="controls-wrapper" *ngIf="fullTable && !gameOver">
             <div class="controls second-table">
                 <p class="second-table-title">{{ st.title }}</p>
-                <p class="second-table-text">{{ st.text }}</p>
-                <div class="field">
-                    <button class="button is-primary is-medium is-fullwidth second-table-start" type="button"
-                        [disabled]="secondBusy" [class.is-loading]="secondBusy" (click)="startSecondTable()">{{ st.start }}</button>
-                </div>
+                <!-- A phone refused here already started a second table, still in its lobby: join it first. -->
+                <ng-container *ngIf="fullTable.join">
+                    <p class="second-table-text">{{ st.joinText(fullTable.join.host) }}</p>
+                    <div class="field">
+                        <button class="button is-primary is-medium is-fullwidth second-table-join" type="button"
+                            [disabled]="secondBusy" (click)="joinSecondTable()">{{ st.join(fullTable.join.host) }}</button>
+                    </div>
+                    <div class="field">
+                        <button class="button is-fullwidth second-table-another" type="button" [disabled]="secondBusy"
+                            [class.is-loading]="secondBusy" (click)="startSecondTable()">{{ st.another }}</button>
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="!fullTable.join">
+                    <p class="second-table-text">{{ st.text }}</p>
+                    <div class="field">
+                        <button class="button is-primary is-medium is-fullwidth second-table-start" type="button"
+                            [disabled]="secondBusy" [class.is-loading]="secondBusy" (click)="startSecondTable()">{{ st.start }}</button>
+                    </div>
+                </ng-container>
                 <div class="notification is-danger second-table-error" *ngIf="secondError">{{ secondError }}</div>
                 <div class="field">
                     <button class="button is-fullwidth second-table-again" type="button" [disabled]="secondBusy"

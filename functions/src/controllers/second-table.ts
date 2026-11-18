@@ -1,4 +1,7 @@
-import { GameScheme, cleanCampaign, isTestCampaign, packFits } from '../game-model';
+import { GameScheme, GameState, MAX_PLAYERS, cleanCampaign, isTestCampaign, packFits } from '../game-model';
+import { get, gamesRef } from '../firebase';
+import { readGame } from './old-games';
+import { isGameOver } from './game-over';
 
 /**
  * START A SECOND TABLE: what a phone refused at a full table (MAX_PLAYERS seats taken) is offered instead
@@ -24,6 +27,31 @@ export interface SecondTable {
     pack?: string;
     /** The tag of the second game: second-table, or the full table's own test tag. */
     campaign: string;
+    /**
+     * JOIN <host>'S SECOND TABLE: the second table a phone refused here already started, while it waits in
+     * its lobby with a free seat. The next refused phones go there with one tap instead of each making a
+     * table of one (on 18 November two phones refused together made two tables of one player each).
+     */
+    join?: SecondTableJoin;
+}
+
+export interface SecondTableJoin {
+    /** The open second table's PIN. */
+    pin: string;
+    /** Its host's name, when the host has joined (a phone that started it joins at once). */
+    host?: string;
+}
+
+/**
+ * Where a full game keeps the second table started from its offer (games/<pin>/secondTable): its PIN and
+ * when. Server only: the games/$pin rule lets only the server write or read a path with no rule of its own,
+ * so no database rule changes.
+ */
+export const SECOND_TABLE_KEY = 'secondTable';
+
+export interface KeptSecondTable {
+    pin: string;
+    at: number;
 }
 
 /** The second table to offer at this full game: same language, length and pack, tagged. */
@@ -41,7 +69,81 @@ export function secondTable(game: GameScheme): SecondTable {
     return offer;
 }
 
-/** The answer to a join (or a PIN check) at a full table: GAME_IS_FULL, as before, with the second table. */
-export function fullTableError(game: GameScheme) {
-    return { message: 'Sorry, game is full', code: 'GAME_IS_FULL', secondTable: secondTable(game) };
+/** The answer to a join at a full table: GAME_IS_FULL, as before, with the second table. */
+export function fullTableError(game: GameScheme, join?: SecondTableJoin) {
+    const offer = secondTable(game);
+    if (join) {
+        offer.join = join;
+    }
+    return { message: 'Sorry, game is full', code: 'GAME_IS_FULL', secondTable: offer };
+}
+
+/** A game a refused phone can still sit down in: in its lobby, not over, with a free seat. */
+export function isOpenLobby(game: GameScheme, now: number): boolean {
+    return !!game && !!game.state && game.state.id === GameState.GameStaging && !isGameOver(game, now)
+        && Object.keys(game.players || {}).length < MAX_PLAYERS;
+}
+
+/** The name of the game's host seat, if one has joined. */
+export function hostName(game: GameScheme): string | undefined {
+    const players = game && game.players || {};
+    const k = Object.keys(players).find(p => players[p] && players[p].host === true);
+    const name = k && typeof players[k].nickname === 'string' ? players[k].nickname.trim() : '';
+    return name || undefined;
+}
+
+/**
+ * The second table started from this full game, while a refused phone can still join it; else undefined.
+ * Never rejects: a failed read is logged, and the refused phone gets the offer without it.
+ */
+export async function openSecondTable(fullPin: string, now: number = Date.now()): Promise<SecondTableJoin | undefined> {
+    try {
+        const kept = await get<KeptSecondTable>(gamesRef.child(fullPin).child(SECOND_TABLE_KEY));
+        if (!kept || typeof kept.pin !== 'string' || !kept.pin) {
+            return undefined;
+        }
+        const game = await readGame(kept.pin);
+        if (!isOpenLobby(game, now)) {
+            return undefined;
+        }
+        const host = hostName(game);
+        return host ? { pin: kept.pin, host } : { pin: kept.pin };
+    } catch (e) {
+        console.error(`[PIN: ${fullPin}] open second table not read`, e && e.message);
+        return undefined;
+    }
+}
+
+/** A PIN as a phone may send it: letters and digits only (the server makes capital letters). */
+function cleanPin(pin: any): string | undefined {
+    return typeof pin === 'string' && /^[A-Za-z0-9]{3,12}$/.test(pin) ? pin.toUpperCase() : undefined;
+}
+
+/**
+ * A game was just made from the offer at full table `fullPin` (newGame's `secondOf`): keep its PIN there,
+ * so the next phones refused at that table are offered this one. Only for a table that really is full,
+ * and never over a second table that is still open (the first one stays the one offered). Resolves to
+ * whether it was kept. A failure is logged and never fails the new game.
+ */
+export async function keepSecondTable(secondOf: any, newPin: string, now: number = Date.now()): Promise<boolean> {
+    const fullPin = cleanPin(secondOf);
+    if (!fullPin || !newPin || fullPin === newPin) {
+        return false;
+    }
+    try {
+        const full = await readGame(fullPin);
+        if (!full || Object.keys(full.players || {}).length < MAX_PLAYERS || isGameOver(full, now)) {
+            return false;
+        }
+        if (await openSecondTable(fullPin, now)) {
+            return false;
+        }
+        const kept: KeptSecondTable = { pin: newPin, at: now };
+        await gamesRef.child(fullPin).child(SECOND_TABLE_KEY).set(kept);
+        console.log(`[PIN: ${fullPin}] second table ${newPin} kept for the next refused phones`);
+        return true;
+    } catch (e) {
+        console.error(`[PIN: ${fullPin}] second table not kept`, e && e.message);
+        return false;
+    }
 }

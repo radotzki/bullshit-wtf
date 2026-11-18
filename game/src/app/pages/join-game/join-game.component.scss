@@ -171,4 +171,12 @@
         margin-left: auto;
         margin-right: auto;
     }
+
+    // JOIN <host>'S SECOND TABLE carries a name (up to 9 characters): it may take two lines on a small phone.
+    .second-table-join {
+        white-space: normal;
+        height: auto;
+        min-height: 2.5em;
+        line-height: 1.25;
+    }
 }

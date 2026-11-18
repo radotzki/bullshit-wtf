@@ -20,6 +20,31 @@ export interface SecondTableOffer {
     count: number;
     pack?: string;
     campaign: string;
+    /**
+     * JOIN <host>'S SECOND TABLE: the second table a phone refused at this full table already started, while
+     * it waits in its lobby with a free seat (functions' openSecondTable). One tap joins it, so phones refused
+     * together play at one second table instead of each at a table of one. Absent: nobody started one yet.
+     */
+    join?: SecondTableJoin;
+}
+
+export interface SecondTableJoin {
+    pin: string;
+    /** Its host's name, when the host has joined. */
+    host?: string;
+}
+
+/** The open second table in the server's offer, or undefined when it has none or it looks wrong. */
+function readJoin(j: any): SecondTableJoin | undefined {
+    if (!j || typeof j !== 'object' || typeof j.pin !== 'string' || !/^[A-Za-z0-9]{3,12}$/.test(j.pin)) {
+        return undefined;
+    }
+    const join: SecondTableJoin = { pin: j.pin.toUpperCase() };
+    const host = typeof j.host === 'string' ? j.host.replace(/\s+/g, ' ').trim().slice(0, 20) : '';
+    if (host) {
+        join.host = host;
+    }
+    return join;
 }
 
 /**
@@ -40,6 +65,10 @@ export function readSecondTable(err: any, pageLang: string): SecondTableOffer | 
     if (typeof s.pack === 'string' && /^[a-z0-9-]{1,40}$/.test(s.pack)) {
         offer.pack = s.pack;
     }
+    const join = readJoin(s.join);
+    if (join) {
+        offer.join = join;
+    }
     return offer;
 }
 
@@ -57,6 +86,10 @@ export interface SecondTableStrings {
     start: string;
     again: string;
     error: string;
+    /** With an open second table: the line under the title, its button, and START ANOTHER TABLE below it. */
+    joinText: (host?: string) => string;
+    join: (host?: string) => string;
+    another: string;
 }
 
 const en: SecondTableStrings = {
@@ -65,6 +98,11 @@ const en: SecondTableStrings = {
     start: 'START A SECOND TABLE',
     again: 'TRY THIS TABLE AGAIN',
     error: 'Couldn\'t start a table. Try again.',
+    joinText: host => host
+        ? `${host} started a second table for those who didn't get a seat. Join it, and play there.`
+        : 'A second table is waiting for those who didn\'t get a seat. Join it, and play there.',
+    join: host => host ? `JOIN ${host.toUpperCase()}'S SECOND TABLE` : 'JOIN THE SECOND TABLE',
+    another: 'START ANOTHER TABLE',
 };
 
 const he: SecondTableStrings = {
@@ -73,6 +111,12 @@ const he: SecondTableStrings = {
     start: 'פתיחת שולחן שני',
     again: 'לנסות שוב את השולחן הזה',
     error: 'לא הצלחנו לפתוח שולחן. נסו שוב.',
+    // Without a verb in the past (פתח/פתחה), so it fits a host of any gender.
+    joinText: host => host
+        ? `נפתח שולחן שני למי שלא קיבל מקום, אצל ${host}. הצטרפו ושחקו שם.`
+        : 'נפתח שולחן שני למי שלא קיבל מקום. הצטרפו ושחקו שם.',
+    join: host => host ? `להצטרף לשולחן השני של ${host}` : 'להצטרף לשולחן השני',
+    another: 'פתיחת שולחן נוסף',
 };
 
 export function secondTableWords(lang: string): SecondTableStrings {

@@ -413,8 +413,9 @@ export class JoinGameComponent implements OnInit {
         this.secondBusy = true;
         this.secondError = '';
         try {
-            const resp = await this.apiService.createGame(offer.locale, offer.count, offer.pack,
-                secondTableCampaign(offer, arrivalCampaign()));
+            // The full table's PIN: the server keeps this table on it, so the next phones refused there join it.
+            const resp = await this.apiService.createSecondTable(offer.locale, offer.count, offer.pack,
+                secondTableCampaign(offer, arrivalCampaign()), this.pin);
             if (!resp || !resp.pin) {
                 throw new Error('no pin');
             }
@@ -433,7 +434,22 @@ export class JoinGameComponent implements OnInit {
         }
     }
 
-    /** TRY THIS TABLE AGAIN: a seat may have come free. */
+    /**
+     * JOIN <host>'S SECOND TABLE: one tap joins the second table a phone refused here already started, under the
+     * name this phone typed, and lands on its lobby. If it filled up meanwhile, its own offer shows instead.
+     */
+    joinSecondTable() {
+        const open = this.fullTable && this.fullTable.join;
+        if (!open || this.secondBusy || this.loading) {
+            return;
+        }
+        this.fullTable = null;
+        this.secondError = '';
+        this.goToLobby(open.pin);
+        this.join();
+    }
+
+        /** TRY THIS TABLE AGAIN: a seat may have come free. */
     tryFullTableAgain() {
         this.fullTable = null;
         this.secondError = '';

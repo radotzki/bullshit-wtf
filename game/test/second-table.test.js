@@ -76,3 +76,46 @@ test('the join page shows the offer on a refused join, and a typed PIN at a full
     assert.match(html, /\*ngIf="!gameOver && !fullTable"/);
     assert.match(html, /\(click\)="startSecondTable\(\)"/);
 });
+
+// ---- One second table for several refused phones (18 November: two refused phones made two tables of one) ----
+
+test('an open second table in the offer is read, with its host; anything odd in it is dropped', () => {
+    const base = { locale: 'he', count: 7, campaign: 'second-table' };
+    const err = { code: 'GAME_IS_FULL', secondTable: Object.assign({ join: { pin: 'qwxz', host: '  נועה  ' } }, base) };
+    assert.deepStrictEqual(readSecondTable(err, 'he').join, { pin: 'QWXZ', host: 'נועה' });
+    const noHost = { code: 'GAME_IS_FULL', secondTable: Object.assign({ join: { pin: 'QWXZ' } }, base) };
+    assert.deepStrictEqual(readSecondTable(noHost, 'he').join, { pin: 'QWXZ' });
+    for (const join of [null, 'QWXZ', { pin: '../x' }, { pin: '' }, { pin: 12 }, { host: 'a' }]) {
+        const odd = { code: 'GAME_IS_FULL', secondTable: Object.assign({ join }, base) };
+        assert.strictEqual(readSecondTable(odd, 'he').join, undefined, JSON.stringify(join));
+    }
+    // An older server sends no join: the offer is the one before.
+    assert.strictEqual(readSecondTable({ code: 'GAME_IS_FULL', secondTable: base }, 'he').join, undefined);
+});
+
+test('the join offer\'s words name the host, in both languages, and work without one', () => {
+    const en = secondTableWords('en');
+    assert.strictEqual(en.join('Noa'), 'JOIN NOA\'S SECOND TABLE');
+    assert.strictEqual(en.join(), 'JOIN THE SECOND TABLE');
+    assert.match(en.joinText('Noa'), /^Noa started a second table/);
+    assert.ok(en.joinText().length > 10);
+    assert.strictEqual(en.another, 'START ANOTHER TABLE');
+    const he = secondTableWords('he');
+    assert.strictEqual(he.join('נועה'), 'להצטרף לשולחן השני של נועה');
+    assert.match(he.joinText('נועה'), /נועה/);
+    assert.match(he.join(), /[֐-׿]/);
+    assert.match(he.another, /[֐-׿]/);
+});
+
+test('the join page offers the open second table first, joins it with one tap, and names the full table on START', () => {
+    const ts_ = fs.readFileSync(path.join(page, 'join-game.component.ts'), 'utf8');
+    const html = fs.readFileSync(path.join(page, 'join-game.component.html'), 'utf8');
+    assert.match(html, /\*ngIf="fullTable\.join"[\s\S]*\(click\)="joinSecondTable\(\)"[\s\S]*\(click\)="startSecondTable\(\)"/);
+    assert.match(ts_, /joinSecondTable\(\) \{[\s\S]*this\.goToLobby\(open\.pin\);\s*this\.join\(\);/);
+    assert.match(ts_, /createSecondTable\([^;]*secondTableCampaign\(offer, arrivalCampaign\(\)\), this\.pin\)/);
+    const api = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'services', 'api.service.ts'), 'utf8');
+    assert.match(api, /createSecondTable\([^)]*fullPin: string\): Promise<\{ pin: string \}> \{\s*this\.secondOf = fullPin;\s*return this\.createGame\(/);
+    assert.match(api, /arrival: newGameArrival\(\),[\s\S]*?\.\.\.this\.takeSecondOf\(\),[\s\S]*?\}\);\s*rememberHostKey/);
+    // createGame's own arguments don't carry it (Challenge adds an argument of its own there).
+    assert.doesNotMatch(api.match(/async createGame\([^)]*\)/)[0], /secondOf/);
+});

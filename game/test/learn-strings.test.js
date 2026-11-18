@@ -85,7 +85,7 @@ test('the lengths and the player limit are the game\'s', () => {
     const join = read(root, 'functions', 'src', 'controllers', 'join.ts');
     // The join function refuses a seat past the shared model's MAX_PLAYERS; the page says the same number.
     // (with a second table on offer, controllers/second-table.ts).
-    assert.match(join, /length >= MAX_PLAYERS\) \{[^}]*?return Promise\.reject\(fullTableError\(game\)\)/);
+    assert.match(join, /length >= MAX_PLAYERS\) \{[^}]*?return Promise\.reject\(fullTableError\(game[,)]/);
     const full = read(root, 'functions', 'src', 'controllers', 'second-table.ts');
     assert.match(full, /message: 'Sorry, game is full', code: 'GAME_IS_FULL'/);
     const model = read(root, 'game-model.ts');
