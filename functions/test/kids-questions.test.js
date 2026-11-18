@@ -1,8 +1,8 @@
 // The kid-friendly questions (functions/data/kids-questions.json): 20 English and 20 Hebrew
 // strange-but-true facts that a child of 8 to 12 can follow, for the "Kids are playing" switch on
 // the create page. Every question carries `pack: "kids"`, so it never turns up in a normal game.
-// The switch, its place in game-model.ts and the release's load (load-pack-questions.js, FILES)
-// come with the pull request that builds the switch; this file checks only the questions.
+// The switch, the pack in game-model.ts and the release's load (load-pack-questions.js, FILES) are
+// checked in kids-switch.test.js; this file checks only the questions.
 // Each question's source is its `citation`; docs/kids-questions-sources.md quotes what it says.
 const test = require('node:test');
 const assert = require('node:assert');

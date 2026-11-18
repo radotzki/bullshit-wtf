@@ -1,0 +1,23 @@
+-- "Kids are playing" (DEPLOYING.md). Nothing to run: a kids game carries pack = 'kids' in the
+-- pack column that opened_games and closed_games already have (2026-11-hanukkah.sql). Before
+-- this switch no game had that value. Read-only queries; test games out (2026-11-test-mark.sql).
+
+-- Kids games started and finished, against all games, by day (Israel).
+-- SELECT o.day, o.kids_games, IFNULL(c.kids_finished, 0) AS kids_finished, o.games
+-- FROM (
+--   SELECT DATE(time, 'Asia/Jerusalem') AS day, COUNTIF(pack = 'kids') AS kids_games, COUNT(*) AS games
+--   FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= '2026-11-19' AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+--   GROUP BY day) o
+-- LEFT JOIN (
+--   SELECT DATE(time, 'Asia/Jerusalem') AS day, COUNTIF(pack = 'kids') AS kids_finished
+--   FROM `bullshit-wtf-prod.analytics.closed_games`
+--   WHERE time >= '2026-11-19' AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+--   GROUP BY day) c USING (day)
+-- ORDER BY o.day;
+
+-- Kids games by language, and how many players sat at them.
+-- SELECT locale, COUNT(*) AS games, SUM(players) AS players, ROUND(AVG(players), 1) AS players_per_game
+-- FROM `bullshit-wtf-prod.analytics.opened_games`
+-- WHERE pack = 'kids' AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+-- GROUP BY locale;
