@@ -144,10 +144,10 @@ test('same table: the page puts "They\'re playing again" above the recap, and th
     assert.ok(playing > 0 && playing < html.indexOf('recap-heading'), 'the open lobby comes first');
     assert.match(html, /ask === 'again-other'"[^>]*>[\s\S]*?\(click\)="joinThem\(\)"/);
     assert.match(html, /ask === 'again-player'"[\s\S]*?\(click\)="playAgain\(\)"/);
-    assert.match(component, /this\.apiService\.sameTable\(pin\)/);
+    assert.match(component, /this\.apiService\.sameTable\(pin, late && wait\)/);
     assert.match(component, /'same-table-open' : 'same-table'/);
     assert.match(component, /countRecap\('join-them'\)/);
-    assert.match(api, /`fork`, \{ pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true \}/);
+    assert.match(api, /`fork`, \{ pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, \.\.\.\(wait \? \{ wait: true \} : \{\}\) \}/);
 });
 
 // The page's own methods (showGameOver, setRecap, countRecap), run on a stand-in for the page, so what a
@@ -198,4 +198,51 @@ test('same table: a page load beside an open rematch sends no seen- row, in eith
     }
     // The control half's server answer beside a rematch carries no recap: nothing sent, as before.
     assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', rematch: 'JWAB' }).sent, []);
+});
+
+// ---- A player who comes late: the table's next game started without them (review of #160, section 2) ----
+
+test('late player: the ask, only for a player, only while the table plays and no lobby is open', () => {
+    assert.strictEqual(na.recapAsk(true, undefined, true), 'late-player');
+    assert.strictEqual(na.recapAsk(false, undefined, true), 'other', 'non-players see what they saw');
+    assert.strictEqual(na.recapAsk(true, 'JWAB', true), 'again-player', 'an open lobby comes first');
+    assert.strictEqual(na.recapAsk(false, 'JWAB', true), 'again-other');
+    assert.strictEqual(na.recapAsk(true, undefined, false), 'player');
+    assert.strictEqual(na.recapAsk(true, undefined), 'player');
+    for (const lang of ['en', 'he']) {
+        const t = na.nightAfterStrings[lang];
+        for (const k of ['lateTitle', 'lateText', 'catchNext', 'lateStill', 'newTable']) {
+            assert.ok(typeof t[k] === 'string' && t[k].length > 0, `${lang}.${k}`);
+        }
+        // The text names the button as the page shows it.
+        assert.ok(t.lateText.indexOf(t.catchNext) >= 0, `${lang}: lateText names ${t.catchNext}`);
+    }
+    assert.strictEqual(na.nightAfterStrings.en.lateTitle, 'They started without you.');
+});
+
+test('late player: the page says so above the recap, and its two buttons', () => {
+    const late = html.indexOf('recap-late');
+    assert.ok(late > 0 && late < html.indexOf('recap-heading'), 'above the recap');
+    assert.match(html, /ask === 'late-player'"[\s\S]*?n\.lateTitle[\s\S]*?\(click\)="playAgain\(true\)"[\s\S]*?n\.catchNext[\s\S]*?\(click\)="playAgain\(false\)"[\s\S]*?n\.newTable/);
+    // Its rows, and TABLE_PLAYING is an answer, not an error.
+    assert.match(component, /late \? \(wait \? 'catch-next' : 'new-table'\)/);
+    assert.match(component, /err\.code === 'TABLE_PLAYING'/);
+    assert.match(component, /playing \? this\.n\.lateStill : this\.n\.againError/);
+    assert.match(component, /!!\(this\.recap && this\.recap\.tablePlaying\)/);
+    // The server takes both rows.
+    const analytics = fs.readFileSync(path.join(__dirname, '..', '..', 'functions', 'src', 'controllers', 'analytics.ts'), 'utf8');
+    const methods = /'night-after': \[([\s\S]*?)\]/.exec(analytics)[1];
+    for (const m of ['catch-next', 'new-table']) {
+        assert.ok(methods.indexOf(`'${m}'`) >= 0, m);
+    }
+});
+
+test('late player: the page load sends its seen- row as before, and no other row', () => {
+    const late = { ...recap, player: true, tablePlaying: true };
+    assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: late }).sent, ['night-after:seen-player']);
+    assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: late }, 'control').sent, ['night-after:seen-control-player']);
+    const p = loadPage({ code: 'GAME_OVER', nightAfter: late });
+    assert.strictEqual(p.page.recapShown, true);
+    p.again({ code: 'GAME_OVER' });
+    assert.deepStrictEqual(p.sent, ['night-after:seen-player']);
 });

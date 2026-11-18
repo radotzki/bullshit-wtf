@@ -2158,7 +2158,11 @@ player fooled, and one button. A browser that played that game gets "You were th
 SAME TABLE (it reopens the game's own table, "Same table tomorrow", `same-table.ts`); anyone else gets
 "You missed it" and START YOUR OWN GAME. While a lobby of that game is open, the new half shows "They're
 playing again" above the recap: a player's PLAY AGAIN, SAME TABLE joins that lobby, anyone else gets
-JOIN THEM. When the table has a saved crew, "See
+JOIN THEM. A player who comes late, while that lobby has started without them and isn't over, gets
+"They started without you" above the recap, with CATCH THE NEXT ROUND (while the table still plays it
+only says "They're still playing"; once their game is over it joins the lobby that game's Replay opened,
+as a guest, or opens the table again if nobody has) and START A NEW TABLE NOW (a new lobby, as PLAY
+AGAIN, SAME TABLE did before). Anyone who didn't play sees what they saw before. When the table has a saved crew, "See
 who's in next time" opens its page. The other half keeps today's page, with its "Start your own game" ask.
 
 - **Where it is built.** `validateGameName` answers GAME_OVER as before, and within 7 days of a game that
@@ -2169,6 +2173,13 @@ who's in next time" opens its page. The other half keeps today's page, with its 
   half sends a `seen-` row on such a page load**, so the read below compares the same visits in both
   halves; `same-table-open` and `join-them` count what happens there. A taste, a game that died in the lobby or mid-game, and a game past 7
   days keep today's page.
+- **A player who comes late.** When this browser played and the game's last lobby (`fork`) has started
+  and isn't over, the recap carries `tablePlaying` (`lateTable` in `same-table.ts`). It is on the recap
+  alone, which the other half doesn't show, and it changes no `seen-` row: both halves send theirs as
+  for any player. CATCH THE NEXT ROUND sends `wait` with the table's press (`fork` with `sameTable`), and
+  the server answers `TABLE_PLAYING` instead of a new lobby while that game runs. Once it is over, any
+  player's press joins the lobby its Replay opened (one hop, without that lobby's host key); with none,
+  the press opens the table again, as before.
 - **What is stored: nothing new.** The recap is built on each read from the game's own record, the one
   its final screen read. After 7 days nothing is shown, and there is no copy to erase. (The game's own
   record is kept as before: there is still no clean-up of old games.)
@@ -2194,6 +2205,8 @@ who's in next time" opens its page. The other half keeps today's page, with its 
 | `create-player` | pressed HOST THE NEXT ONE; since "Same table tomorrow" no page shows it, so no new rows (kept for older rows) |
 | `same-table` | a player pressed PLAY AGAIN, SAME TABLE; it opens the game's lobby (`origin = 'table'`), or joins the one that opened meanwhile |
 | `same-table-open` | the same press while the page showed the table's lobby as open: it joins that lobby |
+| `catch-next` | a player who came late, while the table's lobby was mid-game, pressed CATCH THE NEXT ROUND under "They started without you" (the page load itself sends `seen-player` or `seen-control-player` as any player's) |
+| `new-table` | the same player pressed START A NEW TABLE NOW there: a new lobby (`origin = 'table'`) |
 | `join-them` | a browser that didn't play pressed JOIN THEM under "They're playing again": it goes to the open lobby |
 | `crew` | pressed "See who's in next time" |
 

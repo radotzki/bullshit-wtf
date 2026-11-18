@@ -300,9 +300,12 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
         try {
             // sameTable: PLAY AGAIN, SAME TABLE on a finished game's recap (same-table.ts), through this
             // function so no new function has to be deployed.
-            const next = req.body.sameTable === true ? sameTable : fork;
-            const forked = await next(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
-                req.body.stagedReveal === true, req.body.aboutUs === true);
+            // wait: CATCH THE NEXT ROUND, while the table is mid-game (same-table.ts).
+            const forked = req.body.sameTable === true
+                ? await sameTable(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
+                    req.body.stagedReveal === true, req.body.aboutUs === true, req.body.wait === true)
+                : await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
+                    req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(forked);
         } catch (e) {
             caught(e);

@@ -76,7 +76,7 @@ const dist = path.join(__dirname, '..', 'dist', 'controllers');
 const { newGame } = require(path.join(dist, 'new-game'));
 const { fork } = require(path.join(dist, 'fork'));
 const { join } = require(path.join(dist, 'join'));
-const { sameTable } = require(path.join(dist, 'same-table'));
+const { sameTable, REPLAY_GRACE_MS } = require(path.join(dist, 'same-table'));
 const { validateGameName } = require(path.join(dist, 'validate-game-name'));
 const { nightAfterHalf } = require(path.join(dist, 'night-after'));
 const crew = require(path.join(dist, 'crew'));
@@ -242,4 +242,120 @@ test('a game the old-games sweep moved still reopens, with its players known', a
     assert.strictEqual(a.pin, b.pin);
     assert.ok(staging(a.pin));
     assert.strictEqual(db.games[g.pin].players, undefined, 'nothing put back where strangers read');
+});
+
+// ---- A player who comes late (Product's review of #160, section 2) ----
+
+test('a late player while the table plays: the recap says so, and CATCH THE NEXT ROUND opens nothing', async () => {
+    const g = await finishedGame(20 * H);
+    const first = await again(g, 1);
+    db.games[first.pin].state = { id: RoundIntro, timestamp: Date.now() };
+    // Player 4 opens the link: the recap carries tablePlaying; a stranger's doesn't, nor does it change.
+    const seen = await validateGameName(g.pin, 'u4', g.pids.u4).catch(e => e);
+    assert.strictEqual(seen.code, 'GAME_OVER');
+    assert.strictEqual(seen.rematch, undefined);
+    assert.strictEqual(seen.nightAfter.player, true);
+    assert.strictEqual(seen.nightAfter.tablePlaying, true);
+    const stranger = await validateGameName(g.pin, 'friend').catch(e => e);
+    assert.strictEqual(stranger.nightAfter.player, false);
+    assert.strictEqual(stranger.nightAfter.tablePlaying, undefined, 'non-players\' lines stay as they were');
+    // CATCH THE NEXT ROUND: told the table plays; the link still points at their game.
+    await assert.rejects(sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true), e => e.code === 'TABLE_PLAYING');
+    assert.strictEqual(db.games[g.pin].fork, first.pin);
+    assert.strictEqual(db.games[g.pin].forking, first.pin);
+    // START A NEW TABLE NOW (no wait): a new lobby, as #160 does.
+    const own = await again(g, 4);
+    assert.notStrictEqual(own.pin, first.pin);
+    assert.ok(staging(own.pin));
+    assert.strictEqual(own.host, true);
+});
+
+test('a late player after the table\'s game: its Replay\'s lobby, as a guest; with none, the table opens again', async () => {
+    const g = await finishedGame(20 * H);
+    const first = await again(g, 1);
+    db.games[first.pin].state = { id: RoundIntro, timestamp: Date.now() };
+    // Their game ends, and one of them presses Replay on its final screen.
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    const pid1 = Object.keys(db.games[first.pin].players)[0];
+    const next = await fork(first.pin, 'u1', pid1, KEYS[0]);
+    assert.ok(staging(next.pin));
+    // The recap no longer says they play; both buttons land in that lobby, without its key.
+    const seen = await validateGameName(g.pin, 'u4', g.pids.u4).catch(e => e);
+    assert.strictEqual(seen.nightAfter.tablePlaying, undefined);
+    const [a, b] = await Promise.all([
+        sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true),
+        again(g, 3),
+    ]);
+    assert.deepStrictEqual([a.pin, b.pin], [next.pin, next.pin]);
+    assert.strictEqual(a.host, false, 'the next lobby\'s key stays with who opened it');
+    assert.strictEqual(a.hostKey, undefined);
+    assert.strictEqual(db.games[g.pin].fork, first.pin, 'nothing replaced');
+
+    // Another table whose game ended with no Replay, longer ago than the grace: CATCH THE NEXT ROUND
+    // opens the table again.
+    const h = await finishedGame(20 * H);
+    const lobby = await again(h, 1);
+    db.games[lobby.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - REPLAY_GRACE_MS - 1000 };
+    const reopened = await sameTable(h.pin, 'u2', h.pids.u2, KEYS[1], false, false, true);
+    assert.notStrictEqual(reopened.pin, lobby.pin);
+    assert.ok(staging(reopened.pin));
+    assert.strictEqual(reopened.host, true);
+    assert.strictEqual(db.games[h.pin].fork, reopened.pin);
+});
+
+test('wait changes nothing while the table\'s lobby is open, or when there is none', async () => {
+    const g = await finishedGame(20 * H);
+    const a = await sameTable(g.pin, 'u1', g.pids.u1, KEYS[0], false, false, true);
+    assert.ok(staging(a.pin));
+    const b = await sameTable(g.pin, 'u2', g.pids.u2, KEYS[1], false, false, true);
+    assert.strictEqual(b.pin, a.pin);
+    assert.strictEqual(b.hostKey, db.games[a.pin].hostKey);
+});
+
+test('a late player who taps between the table\'s final scores and its Replay: one table, not two', async () => {
+    const g = await finishedGame(20 * H);
+    const first = await again(g, 1);
+    db.games[first.pin].state = { id: RoundIntro, timestamp: Date.now() };
+    // Their game reaches its final scores; nobody has pressed Replay yet.
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    // The page still says they play, and CATCH THE NEXT ROUND opens nothing: told to try again.
+    const seen = await validateGameName(g.pin, 'u4', g.pids.u4).catch(e => e);
+    assert.strictEqual(seen.nightAfter.tablePlaying, true);
+    await assert.rejects(sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true), e => e.code === 'TABLE_PLAYING');
+    assert.strictEqual(db.games[g.pin].forking, first.pin, 'the link still points at their game');
+    assert.strictEqual(db.games[first.pin].forking, undefined, 'their Replay\'s claim untouched');
+
+    // Replay pressed, its lobby claimed but not written yet: still TABLE_PLAYING, never a second lobby.
+    db.games[first.pin].forking = 'ZZZZ';
+    await assert.rejects(sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true), e => e.code === 'TABLE_PLAYING');
+    delete db.games[first.pin].forking;
+
+    // The group presses Replay: the late player's next tap joins that lobby, as a guest. One table.
+    const pid1 = Object.keys(db.games[first.pin].players)[0];
+    const next = await fork(first.pin, 'u1', pid1, KEYS[0]);
+    assert.ok(staging(next.pin));
+    const caught = await sameTable(g.pin, 'u4', g.pids.u4, KEYS[3], false, false, true);
+    assert.strictEqual(caught.pin, next.pin);
+    assert.strictEqual(caught.host, false);
+    assert.strictEqual(db.games[g.pin].forking, first.pin, 'no lone lobby from the late player\'s taps');
+    assert.strictEqual(db.games[g.pin].fork, first.pin);
+
+    // With no Replay and the grace over, the press opens the table again, the late player hosting.
+    const h = await finishedGame(20 * H);
+    const lobby = await again(h, 1);
+    db.games[lobby.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - REPLAY_GRACE_MS + 30 * 1000 };
+    await assert.rejects(sameTable(h.pin, 'u2', h.pids.u2, KEYS[1], false, false, true), e => e.code === 'TABLE_PLAYING');
+    db.games[lobby.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - REPLAY_GRACE_MS - 1000 };
+    const reopened = await sameTable(h.pin, 'u2', h.pids.u2, KEYS[1], false, false, true);
+    assert.notStrictEqual(reopened.pin, lobby.pin);
+    assert.ok(staging(reopened.pin));
+    assert.strictEqual(reopened.host, true);
+    // A Replay claim that never got written doesn't hold the table past the grace either.
+    const k = await finishedGame(20 * H);
+    const lost = await again(k, 1);
+    db.games[lost.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - REPLAY_GRACE_MS - 1000 };
+    db.games[lost.pin].forking = 'YYYY';
+    const after = await sameTable(k.pin, 'u2', k.pids.u2, KEYS[1], false, false, true);
+    assert.ok(staging(after.pin));
+    assert.strictEqual(after.host, true);
 });

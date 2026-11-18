@@ -69,6 +69,8 @@ export interface NightAfter {
     lie: { text: string; fooled: number; by: string } | null;
     /** The table's saved crew, for "See who's in next time" (crew page), when it has one. */
     crew?: string;
+    /** Same table: this browser played, and the table's lobby is mid-game without it (validateGameName). */
+    tablePlaying?: boolean;
     /** A test game: the page shows the recap as usual but sends no rows (test games stay out of every count). */
     test?: boolean;
 }
