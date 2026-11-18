@@ -15,6 +15,7 @@ import { shuffle, Random } from './question-picker';
 import { normalize } from './answer-options';
 import { GameScheme } from '../game-model';
 import { spanSeconds } from './answer-times';
+import { isSamePick } from './same-pick';
 
 export const IDEAS_PER_PLAYER = 2;
 
@@ -91,6 +92,9 @@ export interface QuestionResultRow {
     lie_span_s: number | null;
     pick_span_s: number | null;
     unpicked_lies: number;
+    qid: string | null;
+    truth_picks: number;
+    house_picks: number;
 }
 
 /**
@@ -102,6 +106,10 @@ export interface QuestionResultRow {
  *   lie_span_s     seconds from the first lie to the last (null with fewer than two, or no times)
  *   pick_span_s    the same for picks
  *   unpicked_lies  players' lies that nobody picked
+ *   qid            the question's id in the bank (game.qids), to rank questions by how they play
+ *   truth_picks    picks of the real answer
+ *   house_picks    picks of a house lie
+ * A pick is the truth or a house lie as scoring counts it: it matches that answer alone (case aside).
  */
 export function questionResult(pin: string, game: GameScheme): QuestionResultRow {
     const answers = game.answers || {};
@@ -120,6 +128,20 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
     const q = game.questionIndex || 0;
     const times = game.answerTimes || {};
 
+    const answerList = Object.keys(answers).map(k => answers[k]).filter(a => !!a);
+    let truthPicks = 0;
+    let housePicks = 0;
+    Object.keys(selections).forEach(pid => {
+        const text = selections[pid] && selections[pid].text;
+        const matches = answerList.filter(a => isSamePick(a.text, text));
+        if (matches.length === 1 && matches[0].realAnswer) {
+            truthPicks++;
+        } else if (matches.length === 1 && matches[0].houseLie) {
+            housePicks++;
+        }
+    });
+    const qid = game.qids && game.qids[game.questionIndex || 0];
+
     return {
         id: pin,
         q_index: q,
@@ -135,5 +157,8 @@ export function questionResult(pin: string, game: GameScheme): QuestionResultRow
         lie_span_s: spanSeconds(playerLies, times.lies, q),
         pick_span_s: spanSeconds(Object.keys(selections), times.picks, q),
         unpicked_lies: playerLies.filter(k => pickedTexts.indexOf(normalize(answers[k].text)) < 0).length,
+        qid: qid !== undefined && qid !== null && qid !== '' ? String(qid) : null,
+        truth_picks: truthPicks,
+        house_picks: housePicks,
     };
 }

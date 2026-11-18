@@ -45,6 +45,8 @@ that changes only `*.md`, `docs/` or `graphics/` deploys nothing. It releases to
    and nothing else. It runs last, after the functions that know pack questions are live; if it is
    refused, the release before it stands, and the run fails and says why. The summary's verdict
    then starts "WARNING: the game was released whole, but the new questions were NOT added".
+8. Tells the search engines that use **IndexNow** about every page of the new sitemap (see
+   "IndexNow" below). It runs when the site step passed and can never fail the run.
 
 Things to know:
 
@@ -307,8 +309,8 @@ prints less, never more.
   exception is the listed question files, which every release adds itself ("Question files the
   release adds", below). A file that is not on that list is still loaded by hand.
 - **Deleting a function**, as above.
-- **Google Search Console** (submitting the sitemap) and anything in the Firebase or Google Cloud
-  consoles.
+- **Google Search Console** and **Bing Webmaster Tools** (verifying the site and submitting the
+  sitemap), and anything in the Firebase or Google Cloud consoles. IndexNow (step 8) needs neither.
 - The dev project (`bullshit-wtf-dev`) is not deployed by any workflow.
 
 ## Build
@@ -2196,3 +2198,145 @@ Before this, six first-time hosts in ten left nothing to go by.
   `# where a host came from {...}`), `cd game && npm test` (`test/arrival.test.js`), and a run in a
   real browser against the emulators, from a search page and from an invite link:
   `node .github/smoke/emulator-arrival.js`.
+
+## The night after: a finished game's link shows the night (a 50/50 test)
+
+A finished game's own link (`/join-game/<PIN>`, `/he/join-game/<PIN>`) sits in the group chat of
+every table that gathered by link, and people scroll back to it. Until now it answered "Game over.
+Check the PIN". For 7 days after the game, in the new half of a 50/50 test by the game's PIN, it shows
+the night instead (Product's spreading-loop spec, change 2): "LAST NIGHT AT NOA'S", the winner, the
+biggest bullshitter, the lie of the night and how many it fooled, the final scores with how many each
+player fooled, and one button. A browser that played that game gets "You were there" and PLAY AGAIN,
+SAME TABLE (it reopens the game's own table, "Same table tomorrow", `same-table.ts`); anyone else gets
+"You missed it" and START YOUR OWN GAME. While a lobby of that game is open, the new half shows "They're
+playing again" above the recap: a player's PLAY AGAIN, SAME TABLE joins that lobby, anyone else gets
+JOIN THEM. A player who comes late, while that lobby has started without them and isn't over, gets
+"They started without you" above the recap, with CATCH THE NEXT ROUND (while the table still plays it
+only says "They're still playing"; once their game is over it joins the lobby that game's Replay opened,
+as a guest, or opens the table again if nobody has) and START A NEW TABLE NOW (a new lobby, as PLAY
+AGAIN, SAME TABLE did before). Anyone who didn't play sees what they saw before. When the table has a saved crew, "See
+who's in next time" opens its page. The other half keeps today's page, with its "Start your own game" ask.
+
+- **Where it is built.** `validateGameName` answers GAME_OVER as before, and within 7 days of a game that
+  reached its final scoreboard with 2 or more players it adds `nightAfter`, the recap
+  (`functions/src/controllers/night-after.ts`). The join page sends its sign-in uid and its last seat
+  with that check, so the server can say whether this browser played. Beside an open rematch lobby the
+  control half gets no recap, as before; the new half gets one, under "They're playing again". **Neither
+  half sends a `seen-` row on such a page load**, so the read below compares the same visits in both
+  halves; `same-table-open` and `join-them` count what happens there. A taste, a game that died in the lobby or mid-game, and a game past 7
+  days keep today's page.
+- **A player who comes late.** When this browser played and the game's last lobby (`fork`) has started
+  and isn't over, the recap carries `tablePlaying` (`lateTable` in `same-table.ts`). It is on the recap
+  alone, which the other half doesn't show, and it changes no `seen-` row: both halves send theirs as
+  for any player. CATCH THE NEXT ROUND sends `wait` with the table's press (`fork` with `sameTable`), and
+  the server answers `TABLE_PLAYING` instead of a new lobby while that game runs. Once it is over, any
+  player's press joins the lobby its Replay opened (one hop, without that lobby's host key); with none,
+  the press opens the table again, as before.
+- **What is stored: nothing new.** The recap is built on each read from the game's own record, the one
+  its final screen read. After 7 days nothing is shown, and there is no copy to erase. (The game's own
+  record is kept as before: there is still no clean-up of old games.)
+- **What it shows.** Only what the final screen showed the table: nicknames, scores, places, the number
+  each player's lies fooled, the biggest bullshitter, and one lie, the one that fooled the most. Never a
+  question and never a true answer. The lie passes the nickname filter (`name-flag.ts`): a flagged lie
+  is skipped for the next best; with none left no lie shows. The host's name follows the link
+  preview's rules (`shownName`); without it the heading is "LAST NIGHT'S GAME". The heading's
+  "tonight", "last night", "yesterday" or weekday follows the visitor's own clock; a night runs to 05:00.
+- **The half.** The lowest bit of the first byte of SHA-256('night-after:' + PIN, in capitals). In
+  BigQuery: `MOD(TO_CODE_POINTS(SHA256(CONCAT('night-after:', UPPER(pin))))[OFFSET(0)], 2) = 1` is the
+  new half. **A tester's switch:** `localStorage.BS_NIGHT_AFTER = 'new'` (or `'control'`) in the browser
+  console. A test game (`?via=test`) shows the recap like any game but sends no row.
+- **No new column, no new table, no rules change, no new function.** Rows go to `shares`, which has
+  every column they need; the games the buttons start carry their tag in `opened_games.campaign`, as
+  every `?via=` tag does.
+
+| `shares.method` (`content_type = 'night-after'`, the game's PIN in capitals in `crew_id`) | When |
+|---|---|
+| `seen-player`, `seen-other` | the recap showed, to a browser that played that game, or to one that didn't (once per page load; none while a rematch lobby is open) |
+| `seen-control-player`, `seen-control-other` | the same moment in the other half: today's "Game over" showed (none while a rematch lobby is open) |
+| `create` | pressed START YOUR OWN GAME; its game carries `campaign = 'night-after'` |
+| `create-player` | pressed HOST THE NEXT ONE; since "Same table tomorrow" no page shows it, so no new rows (kept for older rows) |
+| `same-table` | a player pressed PLAY AGAIN, SAME TABLE; it opens the game's lobby (`origin = 'table'`), or joins the one that opened meanwhile |
+| `same-table-open` | the same press while the page showed the table's lobby as open: it joins that lobby |
+| `catch-next` | a player who came late, while the table's lobby was mid-game, pressed CATCH THE NEXT ROUND under "They started without you" (the page load itself sends `seen-player` or `seen-control-player` as any player's) |
+| `new-table` | the same player pressed START A NEW TABLE NOW there: a new lobby (`origin = 'table'`) |
+| `join-them` | a browser that didn't play pressed JOIN THEM under "They're playing again": it goes to the open lobby |
+| `crew` | pressed "See who's in next time" |
+
+**How to read it.** The first number is new: how many people open an old game's link at all.
+The test's own read is the share of browsers that didn't play and then host a real game within 14
+days, by half (the control half has no button, so its hosts started a game on their own):
+
+```sql
+WITH seen AS (
+  SELECT uid, crew_id AS pin, MIN(time) AS seen_at,
+    IF(LOGICAL_OR(method = 'seen-other'), 'new', 'control') AS half
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'night-after' AND method IN ('seen-other', 'seen-control-other')
+    AND time >= TIMESTAMP('2026-11-16') AND uid IS NOT NULL
+  GROUP BY uid, crew_id),
+hosted AS (
+  SELECT s.uid, s.pin, s.half,
+    LOGICAL_OR(o.id IS NOT NULL) AS hosted_14d,
+    LOGICAL_OR(o.campaign LIKE 'night-after%') AS from_button
+  FROM seen s
+  LEFT JOIN `bullshit-wtf-prod.analytics.opened_games` o
+    ON o.creator_uid = s.uid AND o.time > s.seen_at AND o.time <= TIMESTAMP_ADD(s.seen_at, INTERVAL 14 DAY)
+    AND o.players >= 2 AND NOT IFNULL(o.campaign LIKE 'test%', FALSE)
+  GROUP BY s.uid, s.pin, s.half)
+SELECT half, COUNT(*) AS visitors, COUNT(DISTINCT pin) AS games,
+  COUNTIF(hosted_14d) AS hosted_14d, ROUND(SAFE_DIVIDE(COUNTIF(hosted_14d), COUNT(*)), 3) AS share,
+  COUNTIF(from_button) AS from_the_button
+FROM hosted
+GROUP BY half
+```
+
+Views of old links a game, and players against the rest:
+
+```sql
+SELECT REGEXP_EXTRACT(method, r'(player|other)$') AS who,
+  COUNT(DISTINCT crew_id) AS games, COUNT(DISTINCT uid) AS browsers, COUNT(*) AS views
+FROM `bullshit-wtf-prod.analytics.shares`
+WHERE content_type = 'night-after' AND method LIKE 'seen-%' AND time >= TIMESTAMP('2026-11-16')
+GROUP BY who
+```
+
+Compare `games` with the finished link-invited games of the same days to get views a game (the spec's
+guess was 0.3 to 2). To keep the recap for everyone, make `nightAfterHalf` return true; to drop it,
+false. To change the 7 days, `NIGHT_AFTER_MS`.
+
+- Deploy functions and hosting together (a merge does both). A browser still on the older site
+  ignores the recap: it shows today's page and sends no row.
+- **Checked** with `functions/test/night-after.test.js`, `game/test/night-after.test.js`, and a run on
+  the Firebase emulators, `node .github/smoke/emulator-night-after.js`: a whole test game in English and
+  in Hebrew, then its link reopened by a player, by a browser that didn't play (whose button opens the
+  Create page tagged `night-after`), in the control half, with no switch, and, with the test mark taken
+  off, the rows that land in `shares`.
+
+## IndexNow: telling search engines about the pages
+
+[IndexNow](https://www.indexnow.org) is a free protocol used by Bing and the engines that share its
+index (Yandex, Seznam, Naver and others; Bing's index also feeds DuckDuckGo and Yahoo). It needs no
+account and no sign-in: the site proves it is ours with a key file at its root.
+
+- **The key file** is `game/src/e432234c1f11fa1e0e7d54760e33db98.txt`, with the key as its only
+  text. `game/angular.json` lists it in `assets`, so the build copies it to `game/dist/`, and
+  Firebase Hosting serves it at `https://bullshit.wtf/e432234c1f11fa1e0e7d54760e33db98.txt` as
+  `text/plain` (a real file is served before any rewrite). The key is public by design; it is not a
+  secret. To change it, rename the file, change `angular.json`, and change `KEY` in the script.
+- **The ping** is the release's last step before the summary, "5. Tell search engines about the
+  pages (IndexNow)" (`.github/scripts/indexnow.js`). It reads `game/dist/sitemap.xml`, the sitemap
+  this release just deployed, keeps only the `https://bullshit.wtf/...` pages, checks that the live
+  site serves the key file (200, `text/plain`, the key), then sends one POST to
+  `https://api.indexnow.org/indexnow` with the host, the key, the key file's address and the URLs.
+  One request per release, nothing else.
+- **It never fails a release.** It runs when the site step passed (also when the questions step
+  failed), never on a cancelled run, and exits 0 whatever happens: a missing file, a key file that
+  is not live, a refusal (400, 403, 422, 429) or a timeout (15 s a request, 60 s in all) is a
+  warning in the run's log, titled "IndexNow". 200 and 202 are a yes.
+- **Every release sends every page**, also the unchanged ones; the sitemap has no dates to tell
+  which changed. If IndexNow starts answering 429, send only on releases that change `game/`.
+- **Try it without sending:** after a site build, `node .github/scripts/indexnow.js --dry-run`
+  prints the URLs it would send. Tests: `node --test .github/scripts/indexnow.test.js`.
+- **To see it worked:** the deploy run's log for that step says "IndexNow: sent N URLs". Bing
+  Webmaster Tools (the owner's sign-in) shows the received URLs under IndexNow once the site is
+  verified there.

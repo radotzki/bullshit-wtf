@@ -28,7 +28,8 @@
                 "input": "src/assets",
                 "output": "assets"
               },
-              "src/favicon.ico"
+              "src/favicon.ico",
+              "src/e432234c1f11fa1e0e7d54760e33db98.txt"
             ],
             "styles": [
               "src/styles.scss"

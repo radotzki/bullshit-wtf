@@ -11,6 +11,9 @@
 const fs = require('fs');
 const path = require('path');
 const strings = require('./daily-strings');
+// Where a visit started: the same note as every search page writes (see arrival-note.js), so a
+// puzzle player who goes on to start a game is counted by the site that sent them here.
+const { ARRIVAL_NOTE } = require('./arrival-note');
 
 const ROOT = path.join(__dirname, '..', '..');
 const SITE = 'https://bullshit.wtf';
@@ -72,8 +75,8 @@ function visitBeacon() {
 }
 
 // The page's scripts, in the order the page runs them: the rules, the round's rules (which use the
-// rules), the round's page script (a function the page script calls), and the page script. A later
-// script of the page (such as a note of where visitors arrive from) goes into this list.
+// rules), the round's page script (a function the page script calls), and the page script. The note
+// of where a visit started is not one of them: it goes into <head> (ARRIVAL_NOTE), before the body.
 const SCRIPTS = ['daily-core.js', 'daily-round-core.js', 'daily-round-client.js', 'daily-client.js'];
 const pageScripts = () => SCRIPTS.map(file => read(__dirname, file));
 
@@ -112,6 +115,7 @@ function render(lang) {
   <meta property="og:image:alt" content="${esc(s.title)}">
   <meta property="og:locale" content="${s.lang === 'he' ? 'he_IL' : 'en_US'}">
   <meta name="twitter:card" content="summary_large_image">
+  ${ARRIVAL_NOTE}
   <link rel="icon" type="image/png" href="/assets/favicon-32x32.png" sizes="32x32">
   <link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
   <script type="application/ld+json">${json(ld)}</script>

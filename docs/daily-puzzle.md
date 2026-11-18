@@ -35,6 +35,29 @@ link for friends. One button starts a real game, tagged so it can be counted.
   `daily-game`, `daily-share`, `daily-fool`, `daily-post`), `method` what they did (`open`, `truth`,
   `house`, `friend`, `whatsapp`, `native`, `copy`, `fool-whatsapp`, `fool-native`, `fool-copy`,
   `create`), `uid` a random id kept in the browser.
+- **A post's own tag.** Every post's tag reads `daily-post`. So posts can be compared, an `open`
+  from a post's tag (not in a round, which has `round-via`) adds one more row: `content_type`
+  `post-via`, the tag in `method`, the browser's `uid`. It does not start with `daily`, so the daily
+  queries leave it out on their own. Join it on `uid` and the day:
+
+```sql
+-- Puzzle players and picks by the post they came from
+WITH via AS (
+  SELECT DISTINCT method AS tag, uid, DATE(time, 'Asia/Jerusalem') AS day
+  FROM `bullshit-wtf-prod.analytics.shares` WHERE content_type = 'post-via' AND uid IS NOT NULL)
+SELECT via.tag, COUNT(DISTINCT via.uid) AS opened,
+       COUNT(DISTINCT IF(s.method IN ('truth', 'house', 'friend'), s.uid, NULL)) AS picked,
+       COUNT(DISTINCT IF(s.method = 'create', s.uid, NULL)) AS pressed_start
+FROM via LEFT JOIN `bullshit-wtf-prod.analytics.shares` s
+  ON s.uid = via.uid AND DATE(s.time, 'Asia/Jerusalem') = via.day
+  AND s.content_type = 'daily-post' AND s.crew_id IS NULL
+GROUP BY via.tag ORDER BY opened DESC;
+```
+
+- **Where a visit started.** Both pages write the site's arrival note into their head
+  (`seo/arrival-note.js`, the same script as the search pages): the page's path and the referring
+  site's host name, kept for the tab. A game started from the puzzle then carries
+  `first_page = /daily` (or `/he/daily`) and the site that sent the visitor (`opened_games.referrer`).
 - **A friend's lie never reaches the server.** It travels in the link (`l=`, base64url of
   `[name, lie]`) and is screened in the browser before it is sent and again before it is shown:
   not the truth or an answer already there, no slur or sex word (the game's nickname lists), 40

@@ -21,6 +21,7 @@ const stand = {
     'on-reveal-done': controller(['onRevealDone']),
     'join': controller(['join']),
     'fork': controller(['fork']),
+    'same-table': controller(['sameTable']),
     'start': controller(['startGame', 'hostHere', 'hostToBigScreen']),
     'validate-game-name': controller(['validateGameName']),
     'crew': controller(['createCrew', 'crewRematch']),

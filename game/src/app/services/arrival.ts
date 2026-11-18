@@ -5,9 +5,10 @@
  *
  * It is noted once, by the first page of the site this tab loads, and kept for the tab: the app
  * notes it at start-up (rememberArrival, called by AppComponent), and a plain page (how to play,
- * the search pages) notes it with the small script that seo/build-pages.js writes into it, under
- * the same key and in the same shape. Only the page's path and the referring site's host name are
- * kept: never a full address, a query string or an id. The server replaces a PIN or crew id in
+ * the search pages, the daily puzzle) notes it with the small script in seo/arrival-note.js, which
+ * seo/build-pages.js and seo/daily-page.js write into it, under the same key and in the same
+ * shape. Only the page's path and the referring site's host name are kept: never a full address,
+ * a query string or an id. The server replaces a PIN or crew id in
  * the path before anything is stored (arrivalPage in game-model).
  *
  * Kept free of Angular so it can be tested in Node.

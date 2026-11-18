@@ -11,6 +11,7 @@ import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
+import { sameTable } from './controllers/same-table';
 import { startGame, hostHere, hostToBigScreen } from './controllers/start';
 import { validateGameName } from './controllers/validate-game-name';
 import { createCrew, createTable, crewRematch } from './controllers/crew';
@@ -37,6 +38,10 @@ function errorBody(e: any) {
         if (e.justEnded === true) {
             body.justEnded = true;
         }
+        // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
+        if (e.nightAfter && typeof e.nightAfter === 'object') {
+            body.nightAfter = e.nightAfter;
+        }
         return body;
     }
     return { message: String(e), code: 'INTERNAL' };
@@ -50,6 +55,24 @@ function cleanUid(uid: any): string | undefined {
 // A phone's one-game host key (see hostKey in game-model); ignore anything else.
 function cleanHostKey(key: any): string | undefined {
     return typeof key === 'string' && /^[A-Za-z0-9_-]{16,64}$/.test(key) ? key : undefined;
+}
+
+// hostHere's body: JSON from the app's own calls, or a text/plain JSON string from the hidden page.
+function hostHereBody(req: any): { pin?: any; hostKey?: any; away?: any } {
+    const raw = req.body;
+    if (raw && typeof raw === 'object' && !Buffer.isBuffer(raw)) {
+        return raw;
+    }
+    const text = typeof raw === 'string' ? raw : req.rawBody ? req.rawBody.toString('utf8') : '';
+    if (!text || text.length > 400) {
+        return {};
+    }
+    try {
+        const parsed = JSON.parse(text);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (e) {
+        return {};
+    }
 }
 
 // A player id (a database push key); ignore anything else.
@@ -113,6 +136,9 @@ exports.daily = functions.https.onRequest(http('daily', async (req, res) => {
             try {
                 await dailyStore().addPicks(post);
                 await analytics.onShare(post.row);
+                if (post.via) {
+                    await analytics.onShare(post.via);
+                }
             } catch (e) {
                 console.error('daily: a post was not kept', e);
             }
@@ -272,8 +298,14 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
         const uid = cleanUid(req.body.uid);
 
         try {
-            const forked = await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
-                req.body.stagedReveal === true, req.body.aboutUs === true);
+            // sameTable: PLAY AGAIN, SAME TABLE on a finished game's recap (same-table.ts), through this
+            // function so no new function has to be deployed.
+            // wait: CATCH THE NEXT ROUND, while the table is mid-game (same-table.ts).
+            const forked = req.body.sameTable === true
+                ? await sameTable(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
+                    req.body.stagedReveal === true, req.body.aboutUs === true, req.body.wait === true)
+                : await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
+                    req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(forked);
         } catch (e) {
             caught(e);
@@ -336,7 +368,8 @@ exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
 }, 'crew'));
 
 // START in the lobby. In a game with a host key only the host's phone may start it, unless the host
-// never joined within 90 s or has been gone 5 minutes: see startVerdict in controllers/start.ts.
+// never joined within 90 s or has been gone 5 minutes, or a lobby of 5 or more whose host's page has
+// been hidden 45 s: see startVerdict in controllers/start.ts.
 exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
     cors(req, res, async () => {
         try {
@@ -349,10 +382,13 @@ exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
 }, 'game'));
 
 // The host's lobby page reports in, so the group can start without a host whose phone died.
+// With `away: true` it says the page was just hidden (sent with fetch keepalive as text/plain, so no
+// CORS preflight, the way the visit beacon sends its end row): guests are told the host stepped away.
 exports.hostHere = functions.https.onRequest(http('hostHere', (req, res) => {
     cors(req, res, async () => {
         try {
-            return res.status(200).send(await hostHere(req.body.pin, cleanHostKey(req.body.hostKey)));
+            const body = hostHereBody(req);
+            return res.status(200).send(await hostHere(body.pin, cleanHostKey(body.hostKey), Date.now(), body.away === true));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
@@ -426,7 +462,8 @@ exports.validateGameName = functions.https.onRequest(http('validateGameName', (r
         const pin = req.body.pin;
 
         try {
-            return res.status(200).send(await validateGameName(pin));
+            // uid and pid: the join page's sign-in and last seat, so a finished game's recap knows a player.
+            return res.status(200).send(await validateGameName(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
         } catch (e) {
             caught(e);
             return res.status(400).send(errorBody(e));

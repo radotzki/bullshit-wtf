@@ -16,7 +16,17 @@ export const HOST_GRACE_MS = 90 * 1000;
  */
 export const HOST_GONE_MS = 5 * 60 * 1000;
 
-export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'not-host';
+/**
+ * How long the host's lobby page may be hidden (another app, a locked phone) before anyone may start
+ * a lobby of HOST_AWAY_MIN_PLAYERS or more. The page says so itself when it is hidden (hostHere with
+ * `away`), so this is the server's own clock, not missed reports.
+ * Must match HOST_AWAY_MS in game/src/app/pages/game-staging/lobby-host.ts.
+ */
+export const HOST_AWAY_MS = 45 * 1000;
+/** The smallest lobby (players, the host included) that may start without a host who stepped away. */
+export const HOST_AWAY_MIN_PLAYERS = 5;
+
+export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'host-away' | 'not-host';
 
 /**
  * Who may start a game from the lobby. Only a game made with a host key (see hostKey in game-model)
@@ -29,6 +39,10 @@ export type StartVerdict = 'host' | 'open' | 'host-missing' | 'host-gone' | 'not
  *   start it, so a host whose phone died cannot leave the group stuck either. Only the server writes
  *   hostSeen, and only for the phone that brings the host key: a guest cannot make the host look gone.
  *   Only games from clients that report (serverStart) have it; without it the host must start;
+ * - if the seated host's lobby page has been hidden (hostAwaySince, see hostHere) and the lobby has had
+ *   5 or more players (fullSince, see keepFullSince), both for 45 s, anyone may start: a big room gives
+ *   up within a minute of a host who went to WhatsApp, counted from the later of the two. Smaller
+ *   lobbies keep waiting for the host (or the 5 minutes above);
  * - when the host made their computer the big screen (hasHost 'screen', see hostToBigScreen), no player
  *   row is the host and none is waited for: the big screen brings the host key and starts the game.
  *   It reports in like a host's phone, so only a big screen gone 5 minutes lets anyone start;
@@ -51,7 +65,29 @@ export function startVerdict(game: GameScheme, hostKey: string | undefined, now:
     if (hostIn && game.serverStart && typeof game.hostSeen === 'number' && now - game.hostSeen >= HOST_GONE_MS) {
         return 'host-gone';
     }
+    // A joined host whose lobby page has been hidden HOST_AWAY_MS, in a lobby of 5 or more. Only a seated
+    // host's phone reports away (a big screen never does), and only the server writes hostAwaySince.
+    // The 45 s count from the later of the host hiding and the lobby reaching 5 (fullSince): a host who
+    // went to WhatsApp to send the link is away from the first second, and the fifth friend in must not
+    // find START at once. A lobby without fullSince (filled before it was kept) is not full yet.
+    const seated = Object.keys(players).filter(k => !!players[k]).length;
+    const hostSeated = Object.keys(players).some(k => players[k] && players[k].host);
+    if (hostSeated && game.serverStart && typeof game.hostAwaySince === 'number' && typeof game.fullSince === 'number'
+        && seated >= HOST_AWAY_MIN_PLAYERS && now - Math.max(game.hostAwaySince, game.fullSince) >= HOST_AWAY_MS) {
+        return 'host-away';
+    }
     return 'not-host';
+}
+
+/** Writes how the game was started, unless a START a moment earlier already did. */
+function keepStartBy(pin: string, verdict: StartVerdict): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        gamesRef.child(pin).child('startBy').transaction(
+            (current: any) => current === null ? verdict : undefined,
+            (error: any, committed: boolean) => error ? reject(error) : resolve(committed),
+            false,
+        );
+    });
 }
 
 /** START in the lobby: move the game into its first round, if this phone may start it. */
@@ -75,6 +111,9 @@ export async function startGame(pin: string, hostKey: string | undefined, now = 
     }
 
     console.log(`[PIN: ${pin}] START by ${verdict}`);
+    // Kept for opened_games.start_by. Only the first START's verdict: a second press at the same moment
+    // finds it set, and its advance finds the lobby already taken (see advance in tick.ts).
+    await keepStartBy(pin, verdict).catch(e => console.error(`[PIN: ${pin}] startBy not kept`, e && e.message));
     await advance(pin, game.state);
     return { started: true };
 }
@@ -83,8 +122,14 @@ export async function startGame(pin: string, hostKey: string | undefined, now = 
  * The host's lobby page reports that it is still there. Only the phone (or big screen) that brings
  * the game's host key counts; the time is the server's. Nothing to do once the game has started,
  * or for games from older clients (no serverStart), which keep the host-only rule.
+ *
+ * `away`: the page is hidden (the host went to WhatsApp, or locked the phone). The phone is still
+ * alive, so hostSeen moves on as before, and hostAwaySince keeps the moment it was first hidden. A
+ * report from the screen (no `away`) clears it. Guests are told the host stepped away; in a lobby of
+ * 5 or more anyone may start once it is HOST_AWAY_MS old (startVerdict).
  */
-export async function hostHere(pin: string, hostKey: string | undefined, now = Date.now()): Promise<{ seen: boolean }> {
+export async function hostHere(pin: string, hostKey: string | undefined, now = Date.now(), away = false)
+    : Promise<{ seen: boolean }> {
     pin = typeof pin === 'string' ? pin.toUpperCase() : '';
     const game = pin ? await readGame(pin) : null;
 
@@ -98,7 +143,14 @@ export async function hostHere(pin: string, hostKey: string | undefined, now = D
         return { seen: false };
     }
 
-    await gamesRef.child(pin).child('hostSeen').set(now);
+    const update: { [path: string]: any } = { hostSeen: now };
+    // A big screen the host made of their computer is never away: the room is looking at it.
+    if (!away || game.hasHost === 'screen') {
+        update.hostAwaySince = null;
+    } else if (typeof game.hostAwaySince !== 'number') {
+        update.hostAwaySince = now;
+    }
+    await gamesRef.child(pin).update(update);
     return { seen: true };
 }
 
@@ -131,7 +183,12 @@ export async function hostToBigScreen(pin: string, hostKey: string | undefined, 
 
     const update: { [path: string]: any } = { hasHost: 'screen', presenter: true };
     const players = game.players || {};
-    Object.keys(players).filter(k => players[k] && players[k].host).forEach(k => update[`players/${k}`] = null);
+    const freed = Object.keys(players).filter(k => players[k] && players[k].host);
+    freed.forEach(k => update[`players/${k}`] = null);
+    // One seat fewer: a lobby that drops below 5 is not full any more, and fills again with a new clock.
+    if (Object.keys(players).filter(k => !!players[k]).length - freed.length < HOST_AWAY_MIN_PLAYERS) {
+        update.fullSince = null;
+    }
     if (game.serverStart) {
         // The big screen's lobby page reports in from now on (see hostHere).
         update.hostSeen = now;
@@ -139,4 +196,25 @@ export async function hostToBigScreen(pin: string, hostKey: string | undefined, 
     await gamesRef.child(pin).update(update);
     console.log(`[PIN: ${pin}] the host's computer is the big screen now`);
     return { screen: true };
+}
+
+/**
+ * Keeps the server time the lobby first reached HOST_AWAY_MIN_PLAYERS players (fullSince), for the
+ * host-away clock (startVerdict). Called after a join has written its seat, so it counts the seats as
+ * they are now: two friends joining at the same moment can't both count 4. Only the first moment is
+ * kept; a lobby that drops below 5 has it cleared (hostToBigScreen), so it fills again with a new clock.
+ */
+export async function keepFullSince(pin: string, now = Date.now()): Promise<void> {
+    const players = await get<GameScheme['players']>(gamesRef.child(pin).child('players'));
+    const seated = Object.keys(players || {}).filter(k => !!players[k]).length;
+    if (seated < HOST_AWAY_MIN_PLAYERS) {
+        return;
+    }
+    await new Promise<void>((resolve, reject) => {
+        gamesRef.child(pin).child('fullSince').transaction(
+            (current: any) => typeof current === 'number' ? undefined : now,
+            (error: any) => error ? reject(error) : resolve(),
+            false,
+        );
+    });
 }

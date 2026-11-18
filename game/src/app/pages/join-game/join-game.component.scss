@@ -23,6 +23,122 @@
     }
 }
 
+// The night after: a finished game's recap, on a phone first (320 px and up).
+.night-after {
+    text-align: center;
+
+    .recap-heading {
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.2;
+        margin-bottom: 0.75rem;
+        overflow-wrap: anywhere;
+    }
+
+    .recap-line {
+        margin-bottom: 0.25rem;
+    }
+
+    .recap-label {
+        opacity: 0.8;
+        margin-inline-end: 0.25rem;
+    }
+
+    .recap-name {
+        font-weight: bold;
+        overflow-wrap: anywhere;
+    }
+
+    .recap-lie {
+        margin: 0.75rem 0;
+
+        .recap-lie-text {
+            font-size: 1.25rem;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .recap-lie-by {
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+    }
+
+    .recap-facts {
+        font-size: 0.9rem;
+        opacity: 0.85;
+        margin-bottom: 1rem;
+    }
+
+    .recap-scores {
+        margin-bottom: 1.25rem;
+
+        .recap-row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.2rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: start;
+
+            &.first {
+                font-weight: bold;
+            }
+        }
+
+        .recap-place {
+            width: 1.5rem;
+            flex: none;
+        }
+
+        .recap-row-name {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .recap-row-fooled {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            flex: none;
+        }
+
+        .recap-row-score {
+            flex: none;
+            min-width: 3rem;
+            text-align: end;
+        }
+    }
+
+    .recap-ask {
+        margin-bottom: 1rem;
+
+        .recap-ask-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .recap-ask-text {
+            margin-bottom: 0.75rem;
+        }
+
+        .recap-again-error {
+            margin-top: 0.5rem;
+            color: #ff3860;
+        }
+    }
+
+    // "They're playing again" and "They started without you": above the recap, set apart from it.
+    .recap-playing, .recap-late {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .recap-new-table {
+        margin-top: 0.75rem;
+    }
+}
+
 // The Hebrew pages: Hebrew letters read better unspaced.
 .join-game.is-rtl {
     .button, .input, .sub-title {
