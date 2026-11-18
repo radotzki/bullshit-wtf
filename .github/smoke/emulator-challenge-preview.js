@@ -228,9 +228,8 @@ async function main() {
             const all = Object.keys(r.meta).map((k) => unescape(r.meta[k])).join(' ') + ' ' + tags.title;
             names.forEach((n) => { if (new RegExp(`(^|[^\\p{L}])${n}([^\\p{L}]|$)`, 'u').test(all)) problems.push(`${pin}: a tag names ${n}`); });
             if (scriptOf(r.body) !== scriptOf(he ? staticHe : staticIndex) || !/<app-root/.test(r.body)) problems.push(`${pin}: not the app's page`);
-            // firebase.json's own header rule for the app's challenge pages (no-cache) wins over the function's
-            // header, so no CDN or browser keeps an old preview: every fetch reads the table again.
-            if (r.cache !== 'no-cache') problems.push(`${pin}: Cache-Control is ${r.cache}`);
+            // Browsers ask again every time; the CDN may keep it ten minutes (challengeCache).
+            if (r.cache !== 'public, max-age=0, s-maxage=600') problems.push(`${pin}: Cache-Control is ${r.cache}`);
         }
         for (const [bot, ua] of Object.entries(BOTS)) {
             if (bot === 'whatsapp') continue;

@@ -209,6 +209,19 @@ export interface ChallengePreviewDeps {
     fault?: (e: any) => void;
 }
 
+/**
+ * How long a challenge link's answer is kept. Browsers ask again every time (max-age=0), as for the site's
+ * other pages, so a phone never keeps a page that names scripts a release deleted; the CDN keeps it ten
+ * minutes (Hosting empties it on every release), a minute when the database was slow, never the page
+ * that tries again.
+ */
+export function challengeCache(kind: string): string {
+    if (kind === 'fallback') {
+        return 'no-store';
+    }
+    return kind === 'slow' ? 'public, max-age=0, s-maxage=60' : 'public, max-age=0, s-maxage=600';
+}
+
 /** The answer to GET /challenge/<PIN> or /he/challenge/<PIN> (path and query as the visitor sent them). */
 export async function challengePreviewPage(path: string, query: string, headers: any, deps: ChallengePreviewDeps): Promise<JoinPreviewAnswer> {
     const parsed = parseChallengePath(path);
@@ -219,5 +232,6 @@ export async function challengePreviewPage(path: string, query: string, headers:
         build: (game, now, origin) => challengePreviewOf(game, parsed.pin, now, origin),
         url: (origin) => `${origin}${parsed.shell === 'he' ? '/he' : ''}/challenge/${parsed.pin}`,
         kindOf: (preview: any) => preview.lie ? 'challenge' : 'challenge-plain',
+        cacheOf: challengeCache,
     });
 }

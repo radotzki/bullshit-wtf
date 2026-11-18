@@ -291,7 +291,7 @@ test('the joinPreview function answers a challenge link with its lie, reading on
     assert.strictEqual(one(res.body, 'og:url'), 'https://bullshit.wtf/challenge/QBCD');
     assert.strictEqual(one(res.body, 'robots'), 'noindex');
     assert.ok(/<app-root/.test(res.body), 'still the app');
-    assert.strictEqual(res.headers['Cache-Control'], 'public, max-age=300, s-maxage=600');
+    assert.strictEqual(res.headers['Cache-Control'], 'public, max-age=0, s-maxage=600');
     assert.deepStrictEqual(reads.filter(r => r.startsWith('games/QBCD/') && !r.includes('/kept/')).sort(), cp.CHALLENGE_PARTS.map(p => 'games/QBCD/' + p).sort());
     const line = res.logs.find(l => l.startsWith('joinPreview '));
     assert.strictEqual(JSON.parse(line.slice('joinPreview '.length)).kind, 'challenge');
@@ -312,6 +312,7 @@ test('the joinPreview function: an old game\'s kept highlights, and an unopened 
     assert.ok(one(res.body, 'og:title').startsWith('“Penguins have knees” fooled 4 of 5'));
     const shut = await serve('/challenge/SHUT');
     assert.strictEqual(shut.body, EN_SHELL);
+    assert.strictEqual(shut.headers['Cache-Control'], 'public, max-age=0, s-maxage=600');
     const none = await serve('/challenge/NOPE');
     assert.strictEqual(none.body, EN_SHELL);
 });

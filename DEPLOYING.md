@@ -2429,7 +2429,9 @@ game of Bullshit". Before, every challenge link showed the site's generic card.
   `/challenge/*` and `/he/challenge/*` to the existing `joinPreview` function (two rewrites, beside the
   join links'), which answers with the site's own page and its preview tags, exactly as for a join link
   (see "Join link previews"). A browser still gets the app's challenge page. The site's own header rule
-  for the challenge pages (`no-cache`) stays, so no old preview is kept anywhere.
+  for the challenge pages (`no-cache`) is dropped for these two paths, since a function route sets its own
+  (game/test/hosting-cache.test.js): the function sends `public, max-age=0, s-maxage=600`, so browsers
+  still ask again every time and the CDN keeps a preview at most ten minutes (emptied on every release).
 - **What it reads** (`functions/src/controllers/challenge-preview.ts`): twelve small paths of the game
   (`locale`, `state`, `timestamp`, `idle`, `qids`, `totalQ`, `players`, `creator`, `challengeOpen`,
   `campaign`, `pack`, `highlights`), never its questions, answers or host key, and it never writes. A

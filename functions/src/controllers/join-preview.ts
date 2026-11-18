@@ -238,9 +238,6 @@ export function personalize(shell: string, preview: Preview, url: string): strin
  */
 export function cacheControl(kind: PreviewKind): string {
     switch (kind) {
-        // A challenge's preview changes only when its week is over.
-        case 'challenge':
-        case 'challenge-plain':
         case 'named': return 'public, max-age=300, s-maxage=600';
         case 'generic': return 'public, max-age=300, s-maxage=600';
         case 'nameless': return 'public, max-age=60, s-maxage=60';
@@ -413,6 +410,8 @@ export interface PreviewTarget<G> {
     url: (origin: string) => string;
     /** The log's kind and the cache's for a preview that was built. */
     kindOf: (preview: Preview) => PreviewKind;
+    /** The Cache-Control of each answer to this kind of link (`slow` when the read gave up); cacheControl when absent. */
+    cacheOf?: (kind: PreviewKind | 'slow') => string;
 }
 
 /**
@@ -423,6 +422,7 @@ export async function previewPage<G>(path: string, query: string, headers: any, 
     now?: () => number; fault?: (e: any) => void }, target: PreviewTarget<G> | null): Promise<JoinPreviewAnswer> {
     const now = deps.now ? deps.now() : Date.now();
     const fault = (e: any) => { try { if (deps.fault) { deps.fault(e); } } catch (x) { /* never */ } };
+    const cache = (kind: PreviewKind | 'slow') => target && target.cacheOf ? target.cacheOf(kind) : cacheControl(kind === 'slow' ? 'nameless' : kind);
     const shellKind: PreviewLocale = target ? target.shell : (/^\/he(\/|$)/.test(path || '') ? 'he' : 'en');
     const origin = originOf(headers, deps.project, deps.emulator);
     // Every answer is a page of one game, never a page for search (the generic answer is the home page's
@@ -435,11 +435,11 @@ export async function previewPage<G>(path: string, query: string, headers: any, 
     } catch (e) {
         fault(e);
         const safePath = /^\/[A-Za-z0-9\/_-]*$/.test(path || '') ? path : '/';
-        return { status: 200, headers: Object.assign({ 'Cache-Control': cacheControl('fallback') }, html), body: fallbackPage(safePath + (query || ''), shellKind), kind: 'fallback' };
+        return { status: 200, headers: Object.assign({ 'Cache-Control': cache('fallback') }, html), body: fallbackPage(safePath + (query || ''), shellKind), kind: 'fallback' };
     }
 
     const generic = (): JoinPreviewAnswer =>
-        ({ status: 200, headers: Object.assign({ 'Cache-Control': cacheControl('generic') }, html), body: shell, kind: 'generic' });
+        ({ status: 200, headers: Object.assign({ 'Cache-Control': cache('generic') }, html), body: shell, kind: 'generic' });
     if (!target) {
         return generic();
     }
@@ -451,7 +451,7 @@ export async function previewPage<G>(path: string, query: string, headers: any, 
         fault(e);
         // Not cached for long: the next tap may find the database quicker.
         const answer = generic();
-        answer.headers['Cache-Control'] = cacheControl('nameless');
+        answer.headers['Cache-Control'] = cache('slow');
         return answer;
     }
 
@@ -465,7 +465,7 @@ export async function previewPage<G>(path: string, query: string, headers: any, 
         return generic();
     }
     const kind = target.kindOf(preview);
-    return { status: 200, headers: Object.assign({ 'Cache-Control': cacheControl(kind) }, html), body: page, kind };
+    return { status: 200, headers: Object.assign({ 'Cache-Control': cache(kind) }, html), body: page, kind };
 }
 
 /** The answer to GET /join-game/<PIN> or /he/join-game/<PIN> (path and query as the visitor sent them). */
