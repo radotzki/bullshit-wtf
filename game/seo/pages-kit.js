@@ -15,8 +15,8 @@
 
 const classroomEn = `
 <p><strong>The game in one line:</strong> a strange true fact appears with a blank, everyone writes a lie to fill it, and then everyone tries to find the truth among all the lies.</p>
-<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and a projector can show it to the whole room. This page is for teachers and youth leaders: how to put it on the projector, how to split a class, and which settings fit a 15-minute slot.</p>
 <!--start-->
+<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and a projector can show it to the whole room. This page is for teachers and youth leaders: how to put it on the projector, how to split a class, and which settings fit a 15-minute slot.</p>
 <h2>Before the lesson</h2>
 <ul>
   <li><strong>Try it once yourself.</strong> Open a game, and in the empty lobby tap "Try 5 quick questions alone". You will see five of the game's questions. They are odd true facts about the world and were not written for children, so check that they suit your group.</li>
@@ -56,8 +56,8 @@ const classroomEn = `
 
 const classroomHe = `
 <p><strong>המשחק בשורה אחת:</strong> מופיעה עובדה אמיתית ומוזרה עם חלק חסר, כל אחד ממציא תשובה שקרית שתשלים אותה, ואז כולם מנסים למצוא את האמת בין כל השקרים.</p>
-<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 12 טלפונים, והמקרן מציג אותו לכל הכיתה. העמוד הזה נכתב למורים ולמדריכים: איך מציגים את המשחק על המקרן, איך מחלקים כיתה, ואילו הגדרות מתאימות לרבע שעה.</p>
 <!--start-->
+<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 12 טלפונים, והמקרן מציג אותו לכל הכיתה. העמוד הזה נכתב למורים ולמדריכים: איך מציגים את המשחק על המקרן, איך מחלקים כיתה, ואילו הגדרות מתאימות לרבע שעה.</p>
 <h2>לפני השיעור</h2>
 <ul>
   <li><strong>מנסים פעם אחת לבד.</strong> פותחים משחק, ובלובי הריק לוחצים על "לנסות לבד 5 שאלות מהירות". כך רואים חמש שאלות מהמשחק. אלה עובדות אמיתיות ומשונות על העולם, והן לא נכתבו במיוחד לילדים, אז כדאי לבדוק שהן מתאימות לקבוצה.</li>
@@ -97,8 +97,8 @@ const classroomHe = `
 
 const teamEn = `
 <p><strong>The game in one line:</strong> a strange true fact appears with a blank, everyone writes a lie to fill it, and then everyone tries to find the truth among all the lies.</p>
-<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and the screen in the meeting room can show it to everyone. This page is for team leads who want 15 minutes of something that is not a status update: how to run it on a big screen, how to split a large team, and which settings fit the slot.</p>
 <!--start-->
+<p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and the screen in the meeting room can show it to everyone. This page is for team leads who want 15 minutes of something that is not a status update: how to run it on a big screen, how to split a large team, and which settings fit the slot.</p>
 <h2>Before the meeting</h2>
 <ul>
   <li><strong>Try it once yourself.</strong> Open a game, and in the empty lobby tap "Try 5 quick questions alone" to see five of the game's questions.</li>
@@ -137,8 +137,8 @@ const teamEn = `
 
 const teamHe = `
 <p><strong>המשחק בשורה אחת:</strong> מופיעה עובדה אמיתית ומוזרה עם חלק חסר, כל אחד ממציא תשובה שקרית שתשלים אותה, ואז כולם מנסים למצוא את האמת בין כל השקרים.</p>
-<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 12 טלפונים, והמסך בחדר הישיבות מציג אותו לכולם. העמוד הזה נכתב לראשי צוותים שרוצים רבע שעה של משהו שהוא לא עוד עדכון סטטוס: איך מציגים את המשחק על מסך גדול, איך מחלקים צוות גדול, ואילו הגדרות מתאימות לזמן שיש.</p>
 <!--start-->
+<p>בולשיט רץ בדפדפן של הטלפון. הוא חינמי, אין מה להתקין, ואין הרשמה: המשחק מבקש כינוי ותו לא. במשחק אחד יכולים להשתתף עד 12 טלפונים, והמסך בחדר הישיבות מציג אותו לכולם. העמוד הזה נכתב לראשי צוותים שרוצים רבע שעה של משהו שהוא לא עוד עדכון סטטוס: איך מציגים את המשחק על מסך גדול, איך מחלקים צוות גדול, ואילו הגדרות מתאימות לזמן שיש.</p>
 <h2>לפני הישיבה</h2>
 <ul>
   <li><strong>מנסים פעם אחת לבד.</strong> פותחים משחק, ובלובי הריק לוחצים על "לנסות לבד 5 שאלות מהירות" כדי לראות חמש שאלות מהמשחק.</li>
