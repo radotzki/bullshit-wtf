@@ -301,6 +301,8 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const aboutUs = req.body.aboutUs === true;
             const pin = await newGame(locale, count, uid, {
                 pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
+                // The host's own questions (see own-questions.ts), checked and cut there.
+                own: req.body.own,
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);

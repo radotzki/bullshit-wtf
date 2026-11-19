@@ -157,6 +157,10 @@ export interface GameScheme {
     // no database rule of its own, so only the server reads it. Nothing is erased. Server only: see
     // old-games.ts in the functions, whose readGame puts them back for every server reader.
     kept?: { [part: string]: any };
+    // The host's own questions, from the create page (see OwnQuestion), keyed by their id's number
+    // ("0" for own-0). Server only: no rule opens it, so no phone reads a truth before the answers.
+    // Placed into qids at START (own-<n>); not carried by Replay, a crew rematch or a challenge.
+    ownQs?: { [n: string]: OwnQuestion };
     // The "About us" questions, a 50/50 test set when the game is made, and only for a game made by a
     // client that can show them (see about.ts in the functions). true: two or three questions of the game
     // are about one of its players, when it starts with three or more. false: in the test, plays as
@@ -1280,5 +1284,210 @@ export function aboutView(about: About | null, players: any, pid: string | null 
     return {
         aboutMe: !presenter && !!pid && pid === about.pid,
         aboutName: seat && seat.nickname ? String(seat.nickname) : '',
+    };
+}
+
+/**
+ * Own questions: up to OWN_MAX questions the host writes on the create page, about their own people
+ * ("On the class trip, Noa lost her ___"), each with the true answer and two wrong answers. They play
+ * in that game only, from question 2 on, in place of bank questions. Friends write lies as usual; the
+ * host, who knows the truth, writes a lie too but does not pick (they would always find it). The two
+ * wrong answers are the question's house lies, so a table of two still picks from four answers.
+ *
+ * The texts are kept at games/{pin}/ownQs, which no phone may read, and never reach the question bank,
+ * the daily puzzle, a search page or a link preview. What every phone reads is the question being
+ * played (currentQ, as for any question) and, on the game's state, that it is the host's (`own`).
+ * See own-questions.ts in the functions.
+ */
+export const OWN_MAX = 3;
+/** The longest question, true answer and wrong answer, in characters: two lines of a 320 px phone. */
+export const OWN_TEXT_MAX = 110;
+export const OWN_TEXT_MIN = 8;
+export const OWN_ANSWER_MAX = 30;
+/** The prefix of an own question's id in the game's qids ("own-0" .. "own-2"). */
+export const OWN_ID_PREFIX = 'own-';
+
+/** What the create page sends for one own question. */
+export interface OwnQuestionInput {
+    text: string;
+    truth: string;
+    lies: string[];
+}
+
+/** An own question as the server keeps it: the bank's shape, $blank$ and all. */
+export interface OwnQuestion {
+    questionText: string;
+    realAnswer: string;
+    fakeAnswers: string[];
+}
+
+/** Why an own question is not taken: no text, too short or long, a missing answer, a word we do not take, or a wrong answer that is the truth. */
+export type OwnProblem = 'text' | 'truth' | 'lies' | 'words' | 'same';
+
+/** The state of an own question: the host who wrote it ('' when the game has no host seat, e.g. a big-screen host). */
+export interface Own {
+    pid: string;
+}
+
+export function isOwnId(qid: any): boolean {
+    return typeof qid === 'string' && qid.indexOf(OWN_ID_PREFIX) === 0;
+}
+
+/** The own question a state is on, or null (every bank question, and anything unreadable). */
+export function ownOf(state: any): Own | null {
+    const own = state && typeof state === 'object' ? state.own : null;
+    if (!own || typeof own !== 'object') {
+        return null;
+    }
+    return { pid: typeof own.pid === 'string' ? own.pid : '' };
+}
+
+function ownSpaces(s: any): string {
+    return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+}
+
+function ownKey(s: string): string {
+    return ownSpaces(s).toLowerCase().replace(/[.,!?;:"'`׳״]+/g, '');
+}
+
+/** Does any word of the text, or the whole of it, hit the nickname filter's lists (slurs, sex words)? */
+export function ownFlagged(text: string): boolean {
+    const clean = ownSpaces(text);
+    if (!clean) {
+        return false;
+    }
+    if (nameFlag(clean)) {
+        return true;
+    }
+    const words = clean.split(' ');
+    for (let i = 0; i < words.length; i++) {
+        if (nameFlag(words[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * The question text with its blank: the first run of two or more underscores (or the bank's $blank$)
+ * becomes $blank$, any other run is dropped, and a text with no blank gets one at its end
+ * ("Our team's first client was" -> "Our team's first client was $blank$").
+ */
+export function ownBlankText(text: string): string {
+    let clean = ownSpaces(text).replace(/\$\s?blank\s?\$/gi, '__');
+    let found = false;
+    clean = clean.replace(/_{2,}/g, () => {
+        if (found) {
+            return '';
+        }
+        found = true;
+        return '$blank$';
+    });
+    clean = ownSpaces(clean);
+    if (!found) {
+        clean = clean.replace(/[.?!:]+$/, '') + ' $blank$';
+    }
+    return clean;
+}
+
+/** Is this card empty (the create page ignores it)? */
+export function ownEmpty(input: OwnQuestionInput | null | undefined): boolean {
+    if (!input) {
+        return true;
+    }
+    const lies = Array.isArray(input.lies) ? input.lies : [];
+    return !ownSpaces(input.text) && !ownSpaces(input.truth) && !lies.some(l => !!ownSpaces(l));
+}
+
+/** What is wrong with one own question, or null when it can be played. The same rule on the page and on the server. */
+export function ownProblem(input: OwnQuestionInput | null | undefined): OwnProblem | null {
+    if (!input || typeof input !== 'object') {
+        return 'text';
+    }
+    const text = ownSpaces(input.text);
+    const bare = text.replace(/_+/g, '').replace(/\$\s?blank\s?\$/gi, '').trim();
+    if (bare.length < OWN_TEXT_MIN || text.length > OWN_TEXT_MAX) {
+        return 'text';
+    }
+    const truth = ownSpaces(input.truth);
+    if (!truth || truth.length > OWN_ANSWER_MAX) {
+        return 'truth';
+    }
+    const lies = (Array.isArray(input.lies) ? input.lies : []).map(ownSpaces);
+    if (lies.length !== 2 || lies.some(l => !l || l.length > OWN_ANSWER_MAX)) {
+        return 'lies';
+    }
+    if (lies.some(l => ownKey(l) === ownKey(truth)) || ownKey(lies[0]) === ownKey(lies[1])) {
+        return 'same';
+    }
+    if (ownFlagged(text) || ownFlagged(truth) || lies.some(ownFlagged)) {
+        return 'words';
+    }
+    return null;
+}
+
+/**
+ * The own questions the server keeps from what a create page sent: at most OWN_MAX, each one that
+ * ownProblem takes, empty cards skipped. Anything else is dropped (the page already refused it).
+ */
+export function cleanOwnQuestions(raw: any): OwnQuestion[] {
+    const list = Array.isArray(raw) ? raw : [];
+    const out: OwnQuestion[] = [];
+    list.forEach(item => {
+        if (out.length >= OWN_MAX || !item || typeof item !== 'object' || ownEmpty(item) || ownProblem(item)) {
+            return;
+        }
+        out.push({
+            questionText: ownBlankText(item.text),
+            realAnswer: ownSpaces(item.truth),
+            fakeAnswers: item.lies.map(ownSpaces),
+        });
+    });
+    return out;
+}
+
+/**
+ * The places (question indexes) of a game's own questions: from question 2 (index 1) on, spread over the
+ * game, the last question kept for the bank while there is room (5 questions: 1; 1, 3; 1, 2, 3.
+ * 7: 1; 1, 5; 1, 3, 5. 9: 1; 1, 7; 1, 4, 7).
+ */
+export function ownPlaces(count: number, totalQ: number): number[] {
+    const n = Math.min(Math.max(0, Math.floor(count || 0)), OWN_MAX);
+    const total = Math.floor(totalQ || 0);
+    if (!n || total < 2) {
+        return [];
+    }
+    const last = total - 2 >= n ? total - 2 : total - 1;
+    const span = last - 1;
+    const places: number[] = [];
+    for (let k = 0; k < n; k++) {
+        const at = n === 1 ? 1 : 1 + Math.round(k * span / (n - 1));
+        if (at >= 1 && at <= total - 1 && places.indexOf(at) < 0) {
+            places.push(at);
+        }
+    }
+    return places;
+}
+
+/** How many of a game's questions are own questions (its qids, an array or the database's object). */
+export function ownCount(qids: any): number {
+    if (!qids || typeof qids !== 'object') {
+        return 0;
+    }
+    return Object.keys(qids).filter(k => isOwnId(qids[k])).length;
+}
+
+/**
+ * What an own question's screens show, from the state's `own` and the game's players: the host's
+ * nickname ('' when unknown) and whether this phone is the host's (the big screen never is).
+ */
+export function ownView(own: Own | null, players: any, pid: string | null | undefined, presenter: boolean): { ownMe: boolean; ownName: string } | null {
+    if (!own) {
+        return null;
+    }
+    const seat = own.pid && players && typeof players === 'object' ? players[own.pid] : null;
+    return {
+        ownMe: !presenter && !!pid && !!own.pid && pid === own.pid,
+        ownName: seat && seat.nickname ? String(seat.nickname) : '',
     };
 }

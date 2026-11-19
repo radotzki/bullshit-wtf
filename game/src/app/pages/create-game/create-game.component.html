@@ -50,6 +50,38 @@
                     </p>
                 </ng-container>
 
+                <!-- The host's own questions: closed until tapped, so CREATE stays one tap away. -->
+                <p class="control own-toggle" *ngIf="!ownOpen">
+                    <button type="button" class="button is-text own-open" (click)="openOwn()">{{ t.own.toggle }}</button>
+                </p>
+                <div class="own-questions" *ngIf="ownOpen">
+                    <p class="own-intro">{{ t.own.intro }}</p>
+                    <div class="own-card" *ngFor="let card of ownCards; let i = index; trackBy: trackCard">
+                        <div class="own-card-head">
+                            <span class="own-number">{{ t.own.number(i + 1) }}</span>
+                            <button type="button" class="button is-small is-text own-remove" (click)="removeOwn(i)">{{ t.own.remove }}</button>
+                        </div>
+                        <label class="own-label" [attr.for]="'own-text-' + i">{{ t.own.textLabel }}</label>
+                        <textarea class="textarea own-text" rows="2" [id]="'own-text-' + i" [name]="'ownText' + i"
+                            [(ngModel)]="card.text" [attr.maxlength]="ownTextMax" [attr.placeholder]="t.own.textPlaceholder"></textarea>
+                        <label class="own-label" [attr.for]="'own-truth-' + i">{{ t.own.truthLabel }}</label>
+                        <input class="input own-truth" type="text" autocomplete="off" [id]="'own-truth-' + i" [name]="'ownTruth' + i"
+                            [(ngModel)]="card.truth" [attr.maxlength]="ownAnswerMax" [attr.placeholder]="t.own.truthPlaceholder">
+                        <label class="own-label" [attr.for]="'own-lie-0-' + i">{{ t.own.liesLabel }}</label>
+                        <div class="own-lies">
+                            <input class="input own-lie" type="text" autocomplete="off" [id]="'own-lie-0-' + i" [name]="'ownLie0' + i"
+                                [(ngModel)]="card.lies[0]" [attr.maxlength]="ownAnswerMax" [attr.placeholder]="t.own.liePlaceholders[0]">
+                            <input class="input own-lie" type="text" autocomplete="off" [name]="'ownLie1' + i"
+                                [(ngModel)]="card.lies[1]" [attr.maxlength]="ownAnswerMax" [attr.placeholder]="t.own.liePlaceholders[1]">
+                        </div>
+                        <p class="help is-danger own-error" *ngIf="ownErrors[i]">{{ ownErrors[i] }}</p>
+                    </div>
+                    <p class="control" *ngIf="ownCards.length < ownMax">
+                        <button type="button" class="button is-small is-text own-add" (click)="addOwn()">{{ t.own.add }}</button>
+                    </p>
+                    <p class="own-rule">{{ t.own.hostRule }}</p>
+                </div>
+
                 <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
             </div>
 

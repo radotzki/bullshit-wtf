@@ -114,7 +114,8 @@ test('the writing form and the answers wait for whom the question is about', () 
     assert.ok(/getQuestionWithAbout/.test(q));
     assert.ok(!/getQuestion\(this\.pin\)/.test(q));
     const a = src('show-answers/show-answers.component.ts');
-    assert.ok(/Promise\.all\(\[this\.apiService\.getAnswers\(this\.pin\), this\.apiService\.getAbout\(this\.pin\)\]\)/.test(a));
+    // The answers, whom it is about and whose own question it is (own-strings.ts), in one read.
+    assert.ok(/Promise\.all\(\[\s*this\.apiService\.getAnswers\(this\.pin\),\s*this\.apiService\.getAbout\(this\.pin\),\s*this\.apiService\.getOwn\(this\.pin\),?\s*\]\)/.test(a));
 });
 
 test('a bank question in place of an About question with no truth: the line says why, on every screen', () => {

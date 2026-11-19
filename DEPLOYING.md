@@ -2398,3 +2398,43 @@ account and no sign-in: the site proves it is ours with a key file at its root.
 - **To see it worked:** the deploy run's log for that step says "IndexNow: sent N URLs". Bing
   Webmaster Tools (the owner's sign-in) shows the received URLs under IndexNow once the site is
   verified there.
+
+## Own questions: the host adds up to three of their own
+
+The create page (`/create-game`, Hebrew too) has a closed line, "Add your own questions (optional)".
+Opened, it takes up to three cards: a sentence with a blank (`___`; a sentence without one gets the
+blank at its end), the true answer, and two wrong answers. Empty cards are ignored, so CREATE never
+needs the section. Server in `functions/src/controllers/own-questions.ts`, the rules both sides share
+(`ownProblem`, `cleanOwnQuestions`, `ownPlaces`, `ownOf`) in `game-model.ts`, the screens' words in
+`game/src/app/pages/own-strings.ts` and the create page's in `create-strings.ts` (`own`). Tests:
+`functions/test/own-questions.test.js`, `game/test/own-strings.test.js`; a whole game on the emulators:
+`node .github/smoke/emulator-own-questions.js --locale en|he`.
+
+- What is taken: a sentence of 8 to 110 characters, answers of up to 30, two wrong answers that
+  differ from the truth and from each other, and no word the nickname filter (`name-flag.ts`) flags,
+  in the sentence or any answer. The page says what is wrong under the card; the server checks the
+  same rule again and drops a card it refuses.
+- Where it is kept: `games/$pin/ownQs`, which has no rule of its own, so only the server reads it. A
+  phone reads an own question only as `currentQ` while it is played, like any question. Own questions
+  never reach the question bank, the seen-questions record, `qHistory` (it keeps `{ pin, own: true }`),
+  BigQuery, the daily puzzle, the search pages or any link preview. Replay and a crew rematch start
+  without them.
+- Where they play: placed at START, from question 2 on, spread, the last question kept for the bank
+  (5 questions: 2; 2, 4; 2, 3, 4. 7: 2; 2, 6; 2, 4, 6. 9: 2; 2, 8; 2, 5, 8, counting from 1). Their
+  ids in `qids` are `own-0` .. `own-2`. A pack question on such a place first swaps with a bank
+  question, so a pack game keeps its pack questions. A host alone (the taste) plays bank questions.
+  A game with own questions is not drawn into the About questions' test.
+- The host's rule: the host wrote the truth, so on their own questions they write a lie like everyone
+  (scored as any lie) but do not pick: their phone shows the answers without buttons ("Your question.
+  Watch them hunt for the truth."), their seat is marked done, the picks do not wait for them, and a
+  pick from an older site is ignored. On the reveal their line says they knew the truth. A host who
+  gave their seat to the big screen has no seat: everyone writes and picks.
+- Small tables: the two wrong answers are the question's house lies (picking one costs points as
+  any house lie). A two-player table sees the host's lie, the two wrong answers and the truth. No
+  round-1 ready-made lies and no pair-game decoys on an own question (both come from the bank's lies).
+- The "too close to the truth" refusal applies to every lie, the host's too.
+- Deploy: **run `functions/bigquery/2026-11-own-questions.sql` (two ALTERs) first**, then functions,
+  then hosting. **No rules change.** Until the site is live no create page sends own questions.
+- In the usage data: `opened_games.own_questions` and `closed_games.own_questions` (how many the game
+  placed, 0 without); `question_results.qid` is `own-0` .. `own-2` for an own question. The read
+  queries are in the SQL file: own games a week, finished share and rematches, fooled per pick.
