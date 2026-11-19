@@ -10,7 +10,8 @@
 //   anyone's screen; the page shows names as text.
 // - A finished game shows nothing to strangers until one of its own players opens the challenge
 //   (openChallenge, which only a browser that sat at that table may do). Then, for CHALLENGE_MS after the
-//   game ended, its PIN shows its host's name as a preview shows it, its table's size and its best score;
+//   game ended, its PIN shows its host's name as a preview shows it, its table's size and its challenge
+//   number (challengeNumber: points a player, house-lie picks counted like a friend's lie);
 //   the full scores only at the end of a game played against it. After that the link says it is over.
 // - The new game gets the other game's question ids exactly, in order: the room's seen-questions record,
 //   the opener rule and the About questions are all skipped for it (tick.ts keeps the ids at START), so a
@@ -75,6 +76,24 @@ function seats(game: GameScheme): string[] {
 }
 
 /**
+ * The table's challenge number, what a challenge is judged by: the seats' scores plus the game's house-lie
+ * credit, a player, rounded. Up to 4 players most wrong picks land on house lies, which pay nobody, so the
+ * plain average a player leaves small tables far behind a big one; the credit counts each house-lie pick as
+ * a friend's lie would have paid, and gives back what it cost (houseLieCredit in scoring.ts). Equally good
+ * tables of 2 to 12 then land within about 10% of each other. Built from the game's own record alone; a game
+ * that started before the credit was kept (no houseCredit) gets its plain average, as before.
+ */
+export function challengeNumber(game: GameScheme | null): number {
+    const pids = game ? seats(game) : [];
+    if (!pids.length) {
+        return 0;
+    }
+    const total = pids.reduce((sum, p) => sum + Math.max(0, Number(game.players[p].score) || 0), 0);
+    const credit = typeof game.houseCredit === 'number' && isFinite(game.houseCredit) ? Math.max(0, game.houseCredit) : 0;
+    return Math.round((total + credit) / pids.length);
+}
+
+/**
  * The card of a finished game another group may play against, or null when it can't be challenged (see
  * the header). Built from the game's own record alone.
  */
@@ -102,6 +121,7 @@ export function challengeCard(pin: string, game: GameScheme | null, now: number)
         played: pids.length,
         top: rows.length ? rows[0].score : 0,
         rows: rows.slice(0, CHALLENGE_ROWS),
+        average: challengeNumber(game),
     };
     if (isTestCampaign(game.campaign)) {
         card.test = true;
@@ -124,7 +144,9 @@ export function versusCard(game: GameScheme | null, now: number): ChallengeCard 
     if (!card || typeof card !== 'object' || !ended || now - ended > CHALLENGE_MS) {
         return null;
     }
-    return card;
+    // This game's own challenge number, from its record, beside the other table's. A card copied before
+    // the number was kept has no `average`: the page then judges both tables by their plain averages.
+    return typeof card.average === 'number' ? { ...card, ours: challengeNumber(game) } : card;
 }
 
 /** The browser asking sat at this game: its sign-in uid is a seat's, or its last seat is one of the game's. */

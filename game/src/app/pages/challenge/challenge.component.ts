@@ -4,7 +4,8 @@ import { ApiService } from './../../services/api.service';
 import { reportError } from './../../sentry/sentry.module';
 import { markHosted, markVisit } from './../../services/join-source';
 import {
-    CHALLENGE_CONTENT, CHALLENGE_OVER_TAG, ChallengeCard, ChallengeStrings, challengeCampaign, challengeWords, readCard,
+    CHALLENGE_CONTENT, CHALLENGE_OVER_TAG, ChallengeCard, ChallengeStrings, cardAverage, challengeCampaign, challengeWords, houseCounted,
+    readCard,
 } from './../../components/challenge/challenge';
 
 /**
@@ -64,6 +65,16 @@ export class ChallengeComponent implements OnInit {
 
     get rtl() {
         return this.locale === 'he';
+    }
+
+    /** The score to beat: the table's points a player, from the server (challenge.ts, cardAverage). */
+    get toBeat(): number {
+        return this.card ? cardAverage(this.card) : 0;
+    }
+
+    /** The server counted house lies like a friend's lie, so any size of table can win. */
+    get fair(): boolean {
+        return houseCounted(this.card);
     }
 
     get table() {

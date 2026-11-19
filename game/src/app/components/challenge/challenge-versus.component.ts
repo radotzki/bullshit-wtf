@@ -2,12 +2,13 @@ import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import {
-    CHALLENGE_CONTENT, ChallengeCard, ChallengeRow, ChallengeStrings, challengeWords, readCard, topRows, verdict, verdictLine,
+    CHALLENGE_CONTENT, ChallengeCard, ChallengeRow, ChallengeStrings, cardAverage, challengeWords, houseCounted, ourAverage, readCard,
+    sizesLine, topRows, verdict, verdictLine,
 } from './challenge';
 
 /**
  * The side-by-side scores at the end of a game played against a challenge (see challenge.ts): the other
- * table's final scores beside this one's, and who won by each table's best score. The other table comes
+ * table's final scores beside this one's, and who won by each table's average a player (fair across sizes). The other table comes
  * from the server (validateGameName's `versus`, copied from that game when this one was made); a game
  * that was no challenge shows nothing. Names are shown as text.
  */
@@ -49,16 +50,35 @@ export class ChallengeVersusComponent implements OnInit {
         return this.locale === 'he';
     }
 
-    get ourTop(): number {
-        return this.players && this.players.length ? Math.max(...this.players.map(p => Number(p.score) || 0)) : 0;
+    private get ourScores(): number[] {
+        return (this.players || []).map(p => Number(p.score) || 0);
+    }
+
+    /** This table's points a player, the number the verdict compares (the server's when it sent one). */
+    get ourAverage(): number {
+        return ourAverage(this.ourScores, this.card);
+    }
+
+    /** The server counted house lies like a friend's lie: say so, since the big numbers aren't the rows' mean. */
+    get houseNote(): string {
+        return houseCounted(this.card, true) ? this.t.houseNote : '';
+    }
+
+    get theirAverage(): number {
+        return this.card ? cardAverage(this.card) : 0;
     }
 
     get line(): string {
-        return this.card ? verdictLine(this.ourTop, this.card, this.locale) : '';
+        return this.card ? verdictLine(this.ourScores, this.card, this.locale) : '';
+    }
+
+    /** How it was judged, and both tables' sizes. */
+    get sizes(): string {
+        return this.card ? sizesLine((this.players || []).length, this.card, this.locale) : '';
     }
 
     get outcome(): string {
-        return this.card ? verdict(this.ourTop, this.card.top).verdict : '';
+        return this.card ? verdict(this.ourAverage, this.theirAverage).verdict : '';
     }
 
     get ours(): { rows: ChallengeRow[]; more: number } {

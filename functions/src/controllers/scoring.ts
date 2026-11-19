@@ -259,3 +259,36 @@ export function addQuestionScores(game: GameScheme): GamePlayers {
 
     return players;
 }
+
+/**
+ * CHALLENGE ANOTHER GROUP's fair number (challenge.ts): what this question's house-lie picks add to the
+ * table's challenge total. Not part of anyone's score.
+ *
+ * Up to 4 players the answers screen is topped up with house lies, so a wrong pick mostly lands on one:
+ * it pays nobody and costs the picker. From 5 players up there are none, and every wrong pick pays a
+ * friend 500-1000. Judged by points a player alone, a pair of players as good as a table of eight would
+ * trail it by about half. So, in the challenge number only, a house lie counts like one more bluffer at
+ * the table: each pick of it is credited what a friend's lie would have paid (pointsForBullshitting),
+ * and what the house lie took from the picker is given back. Worked out from the reveal rows, which only
+ * the server writes, as addQuestionScores is.
+ */
+export function houseLieCredit(game: GameScheme): number {
+    const round = Math.min(Math.max(Number(game && game.roundIndex) || 0, 0), pointsForBullshitting.length - 1);
+    let credit = 0;
+    const counted: { [pid: string]: boolean } = {};
+
+    (game && Array.isArray(game.revealAnswers) ? game.revealAnswers : []).forEach(row => {
+        if (!row || !row.houseLie || !Array.isArray(row.selectors)) {
+            return;
+        }
+        row.selectors.forEach(pid => {
+            if (typeof pid !== 'string' || !isPlayer(game, pid) || counted[pid]) {
+                return;
+            }
+            counted[pid] = true;
+            credit += pointsForBullshitting[round] - Math.min(0, pickPoints(row, pid));
+        });
+    });
+
+    return credit;
+}
