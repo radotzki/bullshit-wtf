@@ -7,6 +7,7 @@ import {
 import { About, CrewNight, aboutOf, aboutMissedOf, sentMark } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
+import { rememberRemoteKey, remoteKeyFor, forgetRemoteKey } from './remote-key';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
 import { newGameArrival } from './arrival';
 import { startReconnectNudge, pageVisible } from './reconnect-nudge';
@@ -528,10 +529,63 @@ export class ApiService {
     private hostControl<T>(pin: string, body: object): Promise<T> {
         pin = pin.toUpperCase();
         const hostKey = hostKeyFor(pin);
-        if (!hostKey) {
+        // The big screen's paired remote (the host's phone) brings its own key, never the host key.
+        const remote = hostKey ? undefined : remoteKeyFor(pin);
+        if (!hostKey && !remote) {
             return Promise.reject(new Error('Only the host can do this'));
         }
-        return this.post<T>('hostControl', Object.assign({ pin, hostKey }, body));
+        const keys = hostKey ? { hostKey } : { remoteKey: remote.key, seat: this.myPid() || null };
+        return this.post<T>('hostControl', Object.assign({ pin }, keys, body));
+    }
+
+    // ---- the host's controls on a second device (host-controls.ts, "on a second device") ----
+
+    /** The big screen opens a pairing: a one-time code for its QR and link. Host key only. */
+    pairOpen(pin: string) {
+        return this.hostControl<PairingView>(pin, { act: 'pairOpen' });
+    }
+
+    /** The big screen's view of its pairing: open, how many phones asked, paired. Host key only. */
+    pairState(pin: string) {
+        return this.hostControl<PairingView>(pin, { act: 'pairState' });
+    }
+
+    /** The host typed the number their phone shows: that phone becomes the remote. Host key only. */
+    pairPhone(pin: string, digits: string) {
+        return this.hostControl<{ paired: boolean }>(pin, { act: 'pair', digits });
+    }
+
+    /** The big screen takes the controls back from the paired phone. Host key only. */
+    unpairPhone(pin: string) {
+        return this.hostControl<{ paired: boolean }>(pin, { act: 'unpair' });
+    }
+
+    /** A phone that opened the big screen's link asks to pair: its key (kept, never shown) and its number. */
+    claimRemote(pin: string, code: string) {
+        pin = pin.toUpperCase();
+        return this.post<{ remoteKey: string; digits: string }>('hostControl', { pin, act: 'claim', code }).then(r => {
+            rememberRemoteKey(pin, r.remoteKey, r.digits);
+            return r;
+        });
+    }
+
+    /** Has the big screen paired this phone yet? */
+    remoteStatus(pin: string) {
+        pin = pin.toUpperCase();
+        const remote = remoteKeyFor(pin);
+        if (!remote) {
+            return Promise.resolve({ paired: false, waiting: false });
+        }
+        return this.post<{ paired: boolean; waiting: boolean }>('hostControl', { pin, act: 'remoteStatus', remoteKey: remote.key });
+    }
+
+    /** The key and number this phone holds for the game, if it asked to pair. */
+    remoteKey(pin: string) {
+        return remoteKeyFor(pin);
+    }
+
+    forgetRemote(pin: string) {
+        forgetRemoteKey(pin);
     }
 
     /** The lies sent so far on this question (texts, no names); the host is now checking them. */
@@ -1013,4 +1067,13 @@ export class ApiService {
         return ref.once('value').then(s => s.val());
     }
 
+}
+
+/** What the big screen sees of its pairing (host-controls.ts pairingView). */
+export interface PairingView {
+    open: boolean;
+    code: string | null;
+    exp: number | null;
+    asked: number;
+    paired: boolean;
 }

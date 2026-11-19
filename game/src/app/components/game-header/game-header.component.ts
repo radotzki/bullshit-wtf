@@ -2,12 +2,15 @@ import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import {
+    Component, OnInit, OnDestroy, AfterViewInit, Input, Output, EventEmitter, ChangeDetectionStrategy, ElementRef, ViewChild,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { GameState } from './../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
-import { hostStrings, HostStrings, HostSeatRow, hostSeatRows, seatRemoved } from './../../pages/host-strings';
+import { hostStrings, HostStrings, HostSeatRow, hostSeatRows, seatRemoved, remoteLink } from './../../pages/host-strings';
+import { PairingView } from './../../services/api.service';
 import { GamePlayers } from './../../game-model';
 
 @Component({
@@ -17,7 +20,7 @@ import { GamePlayers } from './../../game-model';
     templateUrl: './game-header.component.html',
     styleUrls: ['./game-header.component.scss']
 })
-export class GameHeaderComponent implements OnInit, OnDestroy {
+export class GameHeaderComponent implements OnInit, OnDestroy, AfterViewInit {
     pin: string;
     /** The game's words: the header follows the game's language, like every game screen. */
     t: GameStrings = gameStrings('en');
@@ -44,6 +47,14 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     /** This phone's seat was removed by the host: it stops following the game and says so. */
     removed = false;
     private hadSeat = false;
+    /** The big screen's pairing of the host's phone ("on a second device" in host-controls.ts). */
+    showRemote = false;
+    pairing: PairingView = null;
+    pairDigits = '';
+    pairBusy = false;
+    pairError: string = null;
+    private pairPoll: any = null;
+    @ViewChild('remoteModal') private remoteModal: ElementRef<HTMLElement>;
     private playersSubscription: Subscription;
     @Input() button: string;
     @Input() buttonLoading: boolean;
@@ -89,6 +100,18 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * The pairing window is moved to the page's body: the big screen's page is drawn with CSS zoom to
+     * fit the TV (fit-screen.directive.ts), and a fixed window inside a zoomed page is placed and cut
+     * wrongly. Angular keeps its bindings on a moved element.
+     */
+    ngAfterViewInit() {
+        const el = this.remoteModal && this.remoteModal.nativeElement;
+        if (el && typeof document !== 'undefined' && document.body) {
+            document.body.appendChild(el);
+        }
+    }
+
     get muted() {
         return this.soundService.muted;
     }
@@ -116,7 +139,140 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
         return this.round !== null ? this.t.round(this.round) : undefined;
     }
 
+    /** The big screen's host has no seat: their controls go to their phone, off the screen. */
+    get remoteButton() {
+        return this.host && this.presenter && !this.gameOver;
+    }
+
+    get pairLink() {
+        return this.pairing && this.pairing.open ? remoteLink('https://bullshit.wtf', this.pin, this.pairing.code) : null;
+    }
+
+    get pairLinkShown() {
+        const link = this.pairLink;
+        return link ? link.replace(/^https:\/\//, '') : null;
+    }
+
+    /**
+     * The press that opens the window: if a phone is already paired, it says so first; otherwise a new
+     * one-time code is opened now (the code is never on the screen before this press).
+     */
+    openRemote() {
+        this.showRemote = true;
+        this.pairError = null;
+        this.pairDigits = '';
+        this.pairing = null;
+        this.pairBusy = true;
+        this.apiService.pairState(this.pin).then(view => {
+            this.pairBusy = false;
+            if (view.paired) {
+                this.pairing = view;
+            } else {
+                this.newCode();
+            }
+        }, err => this.pairFailed(err));
+    }
+
+    newCode() {
+        this.pairError = null;
+        this.pairDigits = '';
+        this.pairBusy = true;
+        this.apiService.pairOpen(this.pin).then(view => {
+            this.pairBusy = false;
+            this.pairing = view;
+            this.watchPairing();
+        }, err => this.pairFailed(err));
+    }
+
+    /** While the code is open: how many phones asked, and when it runs out. */
+    private watchPairing() {
+        this.stopPairPoll();
+        this.pairPoll = setInterval(() => {
+            if (!this.showRemote) {
+                return this.stopPairPoll();
+            }
+            this.apiService.pairState(this.pin).then(view => {
+                if (!this.pairing || !this.pairing.open) {
+                    return;
+                }
+                if (!view.open && !view.paired) {
+                    this.pairError = this.h.remoteExpired;
+                }
+                this.pairing = view;
+                if (!view.open) {
+                    this.stopPairPoll();
+                }
+            }, () => { /* try again on the next beat */ });
+        }, 3000);
+    }
+
+    private stopPairPoll() {
+        if (this.pairPoll) {
+            clearInterval(this.pairPoll);
+            this.pairPoll = null;
+        }
+    }
+
+    pairPhone() {
+        const digits = String(this.pairDigits || '').replace(/\D/g, '');
+        if (this.pairBusy || digits.length !== 4) {
+            return;
+        }
+        this.pairBusy = true;
+        this.pairError = null;
+        this.apiService.pairPhone(this.pin, digits).then(() => {
+            this.pairBusy = false;
+            this.pairDigits = '';
+            this.stopPairPoll();
+            this.pairing = { open: false, code: null, exp: null, asked: 0, paired: true };
+        }, err => this.pairFailed(err));
+    }
+
+    unpairPhone() {
+        if (this.pairBusy) {
+            return;
+        }
+        this.pairBusy = true;
+        this.apiService.unpairPhone(this.pin).then(() => {
+            this.pairBusy = false;
+            this.pairing = { open: false, code: null, exp: null, asked: 0, paired: false };
+            this.newCode();
+        }, err => this.pairFailed(err));
+    }
+
+    closeRemote() {
+        this.showRemote = false;
+        this.pairDigits = '';
+        this.stopPairPoll();
+    }
+
+    private pairFailed(err: any) {
+        this.pairBusy = false;
+        this.pairDigits = '';
+        const code = err && err.code;
+        if (code === 'WRONG_NUMBER') {
+            this.pairError = this.h.remoteWrong;
+            return;
+        }
+        if (code === 'NO_OFFER') {
+            this.pairError = this.h.remoteExpired;
+            this.pairing = Object.assign({}, this.pairing || { asked: 0, paired: false }, { open: false, code: null, exp: null });
+            this.stopPairPoll();
+            return;
+        }
+        if (code === 'NO_PAIRING') {
+            this.pairError = this.h.remoteCantPair;
+            return;
+        }
+        this.pairError = this.t.oops;
+    }
+
     ngOnDestroy() {
+        this.stopPairPoll();
+        const el = this.remoteModal && this.remoteModal.nativeElement;
+        if (el && el.parentNode) {
+            el.parentNode.removeChild(el);
+        }
         this.gameSubscription.unsubscribe();
         if (this.playersSubscription) {
             this.playersSubscription.unsubscribe();

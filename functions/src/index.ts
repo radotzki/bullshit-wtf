@@ -440,13 +440,18 @@ exports.laugh = functions.https.onRequest(http('laugh', (req, res) => {
 }, 'game'));
 
 // The host's controls (controllers/host-controls.ts): see the lies being written and hide one, end the
-// writing, or remove a player. Only for the browser with the game's host key.
+// writing, or remove a player. Only for the browser with the game's host key, or the phone a big-screen
+// host paired to it.
 exports.hostControl = functions.https.onRequest(http('hostControl', (req, res) => {
     cors(req, res, async () => {
         try {
             const body = req.body || {};
             return res.status(200).send(await hostControl(body.pin, cleanHostKey(body.hostKey), {
                 act: body.act, id: cleanPid(body.id), hide: body.hide !== false, pid: cleanPid(body.pid),
+                // A big-screen host's phone (see "on a second device" in host-controls.ts).
+                code: typeof body.code === 'string' && /^[A-Za-z0-9]{8}$/.test(body.code) ? body.code : undefined,
+                digits: typeof body.digits === 'string' && /^[0-9 ]{1,8}$/.test(body.digits) ? body.digits : undefined,
+                remoteKey: cleanHostKey(body.remoteKey), seat: cleanPid(body.seat),
             }));
         } catch (e) {
             caught(e);

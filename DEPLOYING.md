@@ -1662,6 +1662,34 @@ the big screen when the host made their computer the big screen.
 - **Checks:** `functions/test/host-controls.test.js`, `game/test/host-controls.test.js`, and the local run
   `node .github/smoke/emulator-host-controls.js [--locale he]` (the emulators, five phones at 390 px).
 
+### A big-screen host's controls on their phone
+
+A host who made their computer the big screen (streamers, teachers) has no seat and no phone in the game,
+and the lies can't be opened on a screen the room or the stream sees. The big screen's top bar has a
+**Your phone** button (Hebrew: **מהטלפון**): it pairs ONE phone as the host's controls. That phone shows
+the lies being written (no names) with HIDE, SHOW THE ANSWERS, and the players with REMOVE, through the same
+`hostControl` and the same rules (the writing waits while it looks). It is not a player: it never joins,
+takes no seat and is in no count of players. Its page is `/host/<PIN>` (`game/src/app/pages/host-remote`).
+
+- **Why a stream viewer can't take it.** The press opens a pairing for 3 minutes with a one-time code
+  (QR and link: PIN and code only, no key). A phone that opens the link only *asks*: the server gives that
+  phone alone a random key (kept on the phone, never shown) and a 4-digit number, shown on that phone.
+  The host types the number from **their own phone** into the big screen; only that phone is paired, the
+  pairing closes and every other phone that asked is dropped. A viewer's phone shows a different number,
+  which the host never sees. At most 5 phones may ask and 5 wrong numbers close it; the big screen warns
+  when more than one phone asked. A typed number is worth nothing once used. The paired key opens only
+  lies, hide, show and remove (not start, pairing, or joining as the host), and the big screen can
+  disconnect the phone at any time (a new pairing also replaces it).
+- **Where it is built.** `functions/src/controllers/host-controls.ts` ("on a second device"): new `act`s
+  `pairOpen`, `pairState`, `pair`, `unpair` (host key only), `claim`, `remoteStatus` (the phone), and a
+  `remoteKey` accepted for `lies`, `hide`, `show`, `remove`. It keeps `games/<PIN>/pairing` and `remote`,
+  which no rule opens: **no database rule changes**, no new function, no BigQuery column.
+- **Release:** the functions first, then the site (`firebase.json` serves `/host/*` as the app, noindex,
+  no-cache). A site without the functions shows the button, and pairing fails with "oops".
+- **Checks:** `functions/test/host-remote.test.js`, `game/test/host-remote.test.js`, and the local run
+  `node .github/smoke/emulator-host-remote.js [--locale he]` (a 1280x720 big screen, the host's phone, a
+  viewer's phone, four players and a stranger).
+
 ## Who the room is waiting for
 
 After a player sends a lie or picks an answer, the phone no longer shows one line and nothing else.

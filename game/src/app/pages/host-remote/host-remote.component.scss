@@ -1,0 +1,90 @@
+// The host's controls on a second device (a big-screen host's phone).
+.host-remote {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    text-align: left;
+
+    &.is-rtl {
+        text-align: right;
+    }
+}
+
+.remote-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+    border-bottom: 3px solid rgba(0, 0, 0, .15);
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.remote-number,
+.remote-message {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 1.1rem;
+}
+
+.pair-number {
+    font-size: 3.5rem;
+    font-weight: bold;
+    letter-spacing: 6px;
+    margin: 1rem 0;
+}
+
+.remote-wait,
+.remote-note,
+.remote-later,
+.check-note,
+.host-hint {
+    opacity: .75;
+    font-size: .95rem;
+}
+
+.remote-note {
+    margin-bottom: 1rem;
+}
+
+.remote-lies {
+    margin-bottom: 1.5rem;
+}
+
+.check-title {
+    margin-bottom: .75rem;
+}
+
+.check-lie,
+.host-seat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+.check-text,
+.host-seat-name {
+    flex: 1;
+    overflow-wrap: anywhere;
+}
+
+.is-hidden-lie .check-text {
+    text-decoration: line-through;
+    opacity: .6;
+}
+
+.check-note {
+    margin: .75rem 0;
+}
+
+.host-confirm {
+    display: flex;
+    gap: 6px;
+}
+
+.host-confirm-line {
+    margin-top: .5rem;
+}

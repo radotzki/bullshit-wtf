@@ -1,0 +1,67 @@
+<div class="host-remote" [attr.dir]="rtl ? 'rtl' : null" [class.is-rtl]="rtl">
+    <header class="remote-top">
+        <span class="remote-title">{{ h.phoneTitle }}</span>
+        <span class="remote-pin">{{ t.pin(pin) }}</span>
+    </header>
+
+    <section *ngIf="view === 'number'" class="remote-number">
+        <p>{{ h.phoneShowNumber }}</p>
+        <p class="pair-number" dir="ltr">{{ numberText }}</p>
+        <p class="remote-wait">{{ h.phoneWaiting }}</p>
+    </section>
+
+    <section *ngIf="view === 'nolink'" class="remote-message">
+        <p>{{ h.phoneNoLink }}</p>
+    </section>
+
+    <section *ngIf="view === 'lost'" class="remote-message">
+        <p>{{ h.phoneLost }}</p>
+    </section>
+
+    <ng-container *ngIf="view === 'paired'">
+        <p class="remote-note">{{ h.phoneNotPlayer }}</p>
+
+        <section class="remote-lies">
+            <p *ngIf="gameOver">{{ h.phoneGameOver }}</p>
+            <p *ngIf="!gameOver && !writing" class="remote-later">{{ h.phoneLiesLater }}</p>
+
+            <ng-container *ngIf="writing">
+                <button *ngIf="!checking" type="button" class="button is-info is-fullwidth open-lies" [class.is-loading]="busy"
+                    (click)="openLies()">{{ h.checkOpen }}</button>
+
+                <div *ngIf="checking" class="check-list">
+                    <p class="check-title">{{ h.checkTitle }}</p>
+                    <p *ngIf="!lies.length" class="check-empty">{{ h.noLiesYet }}</p>
+                    <div *ngFor="let lie of lies" class="check-lie" [class.is-hidden-lie]="lie.hidden">
+                        <span class="check-text">{{ lie.text | uppercase }}</span>
+                        <span *ngIf="lie.hidden" class="tag is-warning">{{ h.hidden }}</span>
+                        <button type="button" class="button is-small" [class.is-danger]="!lie.hidden" [class.is-outlined]="!lie.hidden"
+                            [disabled]="busy" (click)="toggleLie(lie)">{{ lie.hidden ? h.unhide : h.hide }}</button>
+                    </div>
+                    <p class="check-note">{{ h.checkingNote }}</p>
+                    <button type="button" class="button is-primary is-fullwidth show-now" [disabled]="busy"
+                        (click)="showAnswersNow()">{{ h.showNow }}</button>
+                </div>
+            </ng-container>
+        </section>
+
+        <section *ngIf="!gameOver" class="remote-players">
+            <h3 class="title is-5">{{ h.playersTitle }}</h3>
+            <p class="host-hint">{{ h.removeHint }}</p>
+            <ul class="host-seats">
+                <li *ngFor="let seat of seats" class="host-seat">
+                    <span class="host-seat-name">{{ seat.nickname }}</span>
+                    <button *ngIf="removing?.pid !== seat.pid" class="button is-danger is-outlined is-small host-remove"
+                        (click)="askRemove(seat)">{{ h.remove }}</button>
+                    <span *ngIf="removing?.pid === seat.pid" class="host-confirm">
+                        <button class="button is-danger is-small host-remove-yes" [class.is-loading]="busy" (click)="confirmRemove()">{{ h.yesRemove }}</button>
+                        <button class="button is-small" (click)="removing=null">{{ h.cancel }}</button>
+                    </span>
+                </li>
+            </ul>
+            <p *ngIf="removing" class="host-confirm-line">{{ h.removeConfirm(removing.nickname) }}</p>
+        </section>
+
+        <p *ngIf="error" class="help is-danger">{{ error }}</p>
+    </ng-container>
+</div>

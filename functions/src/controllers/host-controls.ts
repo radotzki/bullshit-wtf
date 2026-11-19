@@ -3,7 +3,8 @@
  * group): HIDE A LIE before the answers are on the screens, and REMOVE A PLAYER.
  *
  * Only the browser that holds the game's host key (see hostKey in game-model) may use them: the host's
- * phone, or the big screen when the host made their computer the big screen (hasHost 'screen').
+ * phone, or the big screen when the host made their computer the big screen (hasHost 'screen'), and the
+ * big screen's paired remote, the host's phone (see "on a second device" below).
  *
  * Hide a lie. While the lies are written, the host's phone may open the lies sent so far (texts only, no
  * names) and hide any of them. A hidden lie is left out of the question: when the writing ends, it is not
@@ -49,6 +50,9 @@ export interface HostParts {
     // pid -> the question index the host hid that seat's lie in.
     hidden?: { [pid: string]: number } | null;
     removed?: { [pid: string]: RemovedSeat } | null;
+    // The big screen's pairing of a second device, and the paired remote (see below). Server only.
+    pairing?: Pairing | null;
+    remote?: RemoteSeat | null;
 }
 
 export type HostGame = GameScheme & HostParts;
@@ -176,14 +180,182 @@ export function removeUpdate(game: HostGame, pid: string, now: number, newKey: (
     return { update };
 }
 
+// ---- The host's controls on a second device (a big-screen host's phone) ----
+//
+// A host who made their computer the big screen has no seat and no phone in the game, and the big screen
+// is what a stream or a class sees, so the lies can't be opened there. The big screen may pair ONE other
+// browser, the host's phone, as its remote: that browser may then use the same controls as the host (the
+// lies, hide, show, remove), and nothing else (it can't start the game, pair another remote, or join as the
+// host). It takes no seat: it is not a player, sends no join, and is in no count of players.
+//
+// Pairing, made so that a viewer who reads the big screen off a stream can't take the controls:
+//   1. The host presses "Host controls on your phone" on the big screen (pairOpen, host key only). The
+//      server opens a pairing for PAIR_MS (3 minutes) with a one-time code, shown as a QR and a link.
+//      Nothing secret is in that link: the code only lets a phone ASK to pair, up to PAIR_MAX_CLAIMS phones.
+//   2. The phone that opens the link asks (claim, no key). The server gives that phone alone a random
+//      remote key (kept on the phone, never shown) and a 4-digit number, which the phone shows.
+//   3. The host types the number from their own phone into the big screen (pair, host key only). Only the
+//      claim with that number becomes the remote; the pairing closes, every other claim is dropped. A viewer
+//      who opened the link has a different number on their own phone, which the host never sees. Wrong
+//      numbers close the pairing after PAIR_MAX_TRIES.
+//   4. The phone asks if it is paired (remoteStatus, with its key) and then calls hostControl with it.
+// The big screen may unpair at any time (unpair), and a new pairing replaces the old remote.
+// The number typed on the big screen may be read off the stream, but it is worth nothing once used:
+// the remote key never leaves the server and the phone.
+//
+// `pairing` and `remote` live under games/<pin>, which only the server reads and writes. No rule changes.
+
+export const PAIR_MS = 3 * 60 * 1000;
+export const PAIR_MAX_CLAIMS = 5;
+export const PAIR_MAX_TRIES = 5;
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const KEY_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/** A phone that opened the pairing link: its remote key (if paired) and the number it shows. Server only. */
+export interface PairClaim {
+    key: string;
+    digits: string;
+    at: number;
+}
+
+/** An open pairing, from the big screen's press. Server only. */
+export interface Pairing {
+    code: string;
+    exp: number;
+    tries: number;
+    claims?: { [id: string]: PairClaim } | null;
+}
+
+/** The paired remote: the key its phone brings. Server only. */
+export interface RemoteSeat {
+    key: string;
+    at: number;
+}
+
+/** Random bytes: crypto in the functions, a fixed list in the tests. */
+export type RandomBytes = (n: number) => ArrayLike<number>;
+
+function randomFrom(chars: string, n: number, bytes: RandomBytes): string {
+    const b = bytes(n);
+    let out = '';
+    for (let i = 0; i < n; i++) {
+        out += chars[b[i] % chars.length];
+    }
+    return out;
+}
+
+const NO_OFFER = { message: 'This code has expired. Press the button on the big screen again.', code: 'NO_OFFER' };
+
+/** Can this game pair a remote? A big-screen host's game (no seat is the host's), not over. */
+export function canPair(game: Partial<HostGame> | null | undefined): boolean {
+    return !!game && !!game.state && game.state.id !== GameState.ScoreBoardFinal && hostSeat(game) === null;
+}
+
+/** The big screen's press: a new pairing, open for PAIR_MS. Any earlier pairing (not the remote) goes. */
+export function openPairing(now: number, bytes: RandomBytes): Pairing {
+    return { code: randomFrom(CODE_CHARS, 8, bytes), exp: now + PAIR_MS, tries: 0, claims: null };
+}
+
+function openNow(pairing: Pairing | null | undefined, now: number): boolean {
+    return !!pairing && typeof pairing.exp === 'number' && pairing.exp > now && (pairing.tries || 0) < PAIR_MAX_TRIES;
+}
+
+/**
+ * A phone opened the link with `code`: its claim (a remote key and a number no other claim shows), and the
+ * pairing with it, or NO_OFFER (wrong, used or expired code, or too many phones already asked).
+ */
+export function claimPairing(pairing: Pairing | null | undefined, code: any, now: number, bytes: RandomBytes)
+    : { pairing?: Pairing; id?: string; claim?: PairClaim; error?: { message: string; code: string } } {
+    if (!openNow(pairing, now) || typeof code !== 'string' || code.toUpperCase() !== pairing.code) {
+        return { error: NO_OFFER };
+    }
+    const claims = Object.assign({}, pairing.claims || {});
+    if (Object.keys(claims).length >= PAIR_MAX_CLAIMS) {
+        return { error: NO_OFFER };
+    }
+    const taken = new Set(Object.keys(claims).map(k => claims[k].digits));
+    let digits = '';
+    for (let i = 0; i < 50 && (!digits || taken.has(digits)); i++) {
+        digits = randomFrom('0123456789', 4, bytes);
+    }
+    if (taken.has(digits)) {
+        return { error: NO_OFFER };
+    }
+    const id = randomFrom(KEY_CHARS, 10, bytes);
+    const claim: PairClaim = { key: randomFrom(KEY_CHARS, 24, bytes), digits, at: now };
+    claims[id] = claim;
+    return { pairing: Object.assign({}, pairing, { claims }), id, claim };
+}
+
+/**
+ * The host typed `digits` on the big screen. The claim that shows them becomes the remote, and the pairing
+ * closes. A wrong number counts a try (the returned pairing); PAIR_MAX_TRIES of them close the pairing.
+ */
+export function confirmPairing(pairing: Pairing | null | undefined, digits: any, now: number)
+    : { pairing: Pairing | null; remote?: RemoteSeat; error?: { message: string; code: string } } {
+    if (!openNow(pairing, now)) {
+        return { pairing: null, error: NO_OFFER };
+    }
+    const claims = pairing.claims || {};
+    const typed = typeof digits === 'string' ? digits.replace(/\D/g, '') : '';
+    const id = typed.length === 4 ? Object.keys(claims).find(k => claims[k] && claims[k].digits === typed) : undefined;
+    if (!id) {
+        const tries = (pairing.tries || 0) + 1;
+        return {
+            pairing: tries >= PAIR_MAX_TRIES ? null : Object.assign({}, pairing, { tries }),
+            error: { message: 'That is not the number on a phone that asked.', code: 'WRONG_NUMBER' },
+        };
+    }
+    return { pairing: null, remote: { key: claims[id].key, at: now } };
+}
+
+/** Does this key belong to the game's paired remote? */
+export function isRemoteKey(game: Partial<HostGame> | null | undefined, key: any): boolean {
+    const remote = game && game.remote;
+    return !!remote && typeof remote.key === 'string' && remote.key.length >= 16 && typeof key === 'string' && key === remote.key;
+}
+
+/** What the phone that asked learns: paired, still waiting for the number on the big screen, or neither. */
+export function remoteStatus(game: Partial<HostGame> | null | undefined, key: any, now: number): { paired: boolean; waiting: boolean } {
+    if (isRemoteKey(game, key)) {
+        return { paired: true, waiting: false };
+    }
+    const pairing = game && game.pairing;
+    const claims = (pairing && pairing.claims) || {};
+    const waiting = openNow(pairing, now) && typeof key === 'string'
+        && Object.keys(claims).some(k => claims[k] && claims[k].key === key);
+    return { paired: false, waiting };
+}
+
+/** What the big screen shows while pairing: open or not, until when, and how many phones asked. */
+export function pairingView(game: Partial<HostGame> | null | undefined, now: number) {
+    const pairing = game && game.pairing;
+    const open = openNow(pairing, now);
+    return {
+        open,
+        code: open ? pairing.code : null,
+        exp: open ? pairing.exp : null,
+        asked: open ? Object.keys(pairing.claims || {}).length : 0,
+        paired: !!(game && game.remote && game.remote.key),
+    };
+}
+
 /** What a host's call asks for. */
 export interface HostAct {
-    act: 'lies' | 'hide' | 'show' | 'remove';
+    act: 'lies' | 'hide' | 'show' | 'remove' | 'pairOpen' | 'pairState' | 'pair' | 'unpair' | 'claim' | 'remoteStatus';
     // hide: the lie (its id from 'lies'), and whether to hide it (false: show it again).
     id?: string;
     hide?: boolean;
     // remove: the seat.
     pid?: string;
+    // claim: the code from the big screen's link. pair: the number the host typed.
+    code?: string;
+    digits?: string;
+    // The paired remote's key (lies, hide, show, remove), or a phone's claim key (remoteStatus).
+    remoteKey?: string;
+    // The remote's own seat in this game, if the same browser also plays: its pick won't score once it
+    // has read the lies, as for a phone host.
+    seat?: string;
 }
 
 /**
@@ -192,8 +364,10 @@ export interface HostAct {
  *   hide:   { lies, q }, the list after the change
  *   show:   { shown: true } once the answers are on their way
  *   remove: { removed: true }
- * Rejects with NOT_HOST for any browser without the game's host key, and with TOO_LATE when the lies
- * are already on the screens.
+ *   pairOpen, pairState: pairingView (big screen); pair: { paired: true }; unpair: { paired: false }
+ *   claim:  { remoteKey, digits } (any phone with the code); remoteStatus: { paired, waiting }
+ * Rejects with NOT_HOST for any browser without the game's host key (or, for lies, hide, show and remove,
+ * the paired remote's key), and with TOO_LATE when the lies are already on the screens.
  */
 export async function hostControl(pinIn: any, hostKey: any, body: HostAct, now = Date.now()): Promise<any> {
     // Loaded here, not at the top: they open the database, and the rules above stay testable alone.
@@ -209,11 +383,22 @@ export async function hostControl(pinIn: any, hostKey: any, body: HostAct, now =
     if (!game) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
     }
-    if (!isHostKey(game, hostKey)) {
-        return Promise.reject({ message: 'Only the host can do this.', code: 'NOT_HOST' });
-    }
     const act = body && body.act;
     const ref = gamesRef.child(pin);
+
+    // A phone with the big screen's link: no key yet. See "on a second device" above.
+    if (act === 'claim' || act === 'remoteStatus') {
+        return remoteCall(ref, game, act, body, now);
+    }
+    const host = isHostKey(game, hostKey);
+    const remote = !host && (act === 'lies' || act === 'hide' || act === 'show' || act === 'remove')
+        && isRemoteKey(game, body && body.remoteKey);
+    if (!host && !remote) {
+        return Promise.reject({ message: 'Only the host can do this.', code: 'NOT_HOST' });
+    }
+    if (act === 'pairOpen' || act === 'pairState' || act === 'pair' || act === 'unpair') {
+        return pairCall(pin, ref, game, act, body, now);
+    }
 
     if (act === 'remove') {
         const pid = typeof body.pid === 'string' ? body.pid : '';
@@ -223,7 +408,7 @@ export async function hostControl(pinIn: any, hostKey: any, body: HostAct, now =
             return Promise.reject(error);
         }
         await ref.update(update);
-        console.log(`[PIN: ${pin}] the host removed a player (state ${game.state.id})`);
+        console.log(`[PIN: ${pin}] the host removed a player (state ${game.state.id})${remote ? ' from their phone' : ''}`);
         // The table may now be waiting for nobody: end the writing as the last lie would have.
         const after: HostGame = Object.assign({}, game, { players: Object.assign({}, game.players, { [pid]: undefined }) });
         delete after.players[pid];
@@ -250,7 +435,8 @@ export async function hostControl(pinIn: any, hostKey: any, body: HostAct, now =
         return { shown: true };
     }
 
-    const check: HostCheck = { q: qi, pid: hostSeat(game) };
+    const seat = remote && typeof body.seat === 'string' && game.players && game.players[body.seat] ? body.seat : null;
+    const check: HostCheck = { q: qi, pid: hostSeat(game) || seat };
     const update: { [path: string]: any } = { checking: check };
     game.checking = check;
     if (act === 'hide') {
@@ -282,4 +468,68 @@ async function endIfAllSent(pin: string, game: HostGame, advance: (pin: string, 
     if (everyoneSent(game, sent) && leftOutGuardWait(game, Date.now()) === 0) {
         await advance(pin, game.state);
     }
+}
+
+function cryptoBytes(n: number): ArrayLike<number> {
+    return require('crypto').randomBytes(n);
+}
+
+/** The big screen's side of pairing (host key only). */
+async function pairCall(pin: string, ref: any, game: HostGame, act: string, body: HostAct, now: number): Promise<any> {
+    if (act === 'unpair') {
+        await ref.update({ remote: null, pairing: null });
+        console.log(`[PIN: ${pin}] the big screen unpaired the host's phone`);
+        return { paired: false };
+    }
+    if (act === 'pairState') {
+        return pairingView(game, now);
+    }
+    if (!canPair(game)) {
+        return Promise.reject({ message: 'Only a big screen with no host seat pairs a phone.', code: 'NO_PAIRING' });
+    }
+    if (act === 'pairOpen') {
+        await ref.child('pairing').set(openPairing(now, cryptoBytes));
+        const view = pairingView(await readPairing(ref, game), now);
+        console.log(`[PIN: ${pin}] the big screen opened a pairing`);
+        return view;
+    }
+    // pair: a transaction, so a try is counted once and a claim made at the same moment is seen.
+    let result: { pairing: Pairing | null; remote?: RemoteSeat; error?: { message: string; code: string } } = null;
+    await ref.child('pairing').transaction((current: Pairing | null) => {
+        result = confirmPairing(current, body.digits, now);
+        return result.pairing;
+    });
+    if (!result || result.error) {
+        return Promise.reject(result ? result.error : NO_OFFER);
+    }
+    await ref.child('remote').set(result.remote);
+    console.log(`[PIN: ${pin}] the big screen paired the host's phone`);
+    return { paired: true };
+}
+
+async function readPairing(ref: any, game: HostGame): Promise<HostGame> {
+    const snap = await ref.child('pairing').once('value');
+    return Object.assign({}, game, { pairing: snap.val() });
+}
+
+/** The phone's side: ask to pair with the link's code, then ask whether the big screen confirmed it. */
+async function remoteCall(ref: any, game: HostGame, act: string, body: HostAct, now: number): Promise<any> {
+    if (act === 'remoteStatus') {
+        return remoteStatus(game, body.remoteKey, now);
+    }
+    if (!canPair(game)) {
+        return Promise.reject(NO_OFFER);
+    }
+    let result: { id?: string; claim?: PairClaim; error?: { message: string; code: string } } = null;
+    await ref.child('pairing').transaction((current: Pairing | null) => {
+        const r = claimPairing(current, body.code, now, cryptoBytes);
+        result = r;
+        // A wrong or expired code changes nothing. It writes back what it read, never aborts, so a first
+        // run on a stale local copy (null) is checked against the server and run again.
+        return r.error ? current : r.pairing;
+    });
+    if (!result || result.error || !result.claim) {
+        return Promise.reject(result && result.error ? result.error : NO_OFFER);
+    }
+    return { remoteKey: result.claim.key, digits: result.claim.digits };
 }

@@ -15,6 +15,7 @@ import { LearnComponent } from '../pages/learn/learn.component';
 import { SessionService } from '../services/session.service';
 import { CrewComponent } from '../pages/crew/crew.component';
 import { StepComponent } from '../pages/step/step.component';
+import { HostRemoteComponent } from '../pages/host-remote/host-remote.component';
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -32,6 +33,8 @@ const routes: Routes = [
     { path: 'learn', component: LearnComponent },
     // A saved crew: standings across games and a one-tap rematch
     { path: 'c/:id', component: CrewComponent },
+    // A big-screen host's phone, paired as the host's controls (no seat, no join): see host-remote.
+    { path: 'host/:pin', component: HostRemoteComponent },
     // Hebrew entry points: same pages, served from he.html so link previews are in Hebrew
     { path: 'he', component: LandingComponent },
     { path: 'he/join-game', component: JoinGameComponent },
