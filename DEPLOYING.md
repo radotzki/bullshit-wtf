@@ -818,6 +818,28 @@ and `game/`. It takes about five minutes.
   after that may repeat: retire the double in `retired-questions.ts`.
 - To retire one, add its id to `retired-questions.ts` as with any question.
 
+## Everyday questions: 100 more
+
+- 50 English and 50 Hebrew questions for the normal bank (no pack, no opener flag), ids
+  `everyday-26-en-01..50` and `everyday-26-he-01..50`, in `functions/data/everyday-questions-2026-11.json`.
+  Each is a true, surprising fact about everyday things (food, brands, toys, words, places) with one
+  blank, the truth, three house lies and a `citation`, a page that states the fact. The Hebrew set is
+  written in Hebrew, not translated, and leans on Israel. They keep the nights of groups that replay
+  new for longer: the picker skips what any phone at the table has seen.
+- Nothing in the game's code changes for them. **Every release adds them itself**, in its last step
+  (see "Question files the release adds" below). By hand, if that step is ever refused:
+  `npx firebase database:update /questions functions/data/everyday-questions-2026-11.json --instance bullshit-wtf-prod -P bullshit-wtf-prod`
+  An update writes only these 100 ids and leaves every other question as it is.
+- **Edit these questions in the file, never in the Firebase console:** each release rewrites them.
+- `functions/test/everyday-questions.test.js` checks the shape (as for the strange facts), 50 per
+  language with ids from 01, and that no question's text, nor a truth longer than six letters in the
+  same language, repeats any other question file in `functions/data`.
+- Repeats: checked by hand against every question file in the repository, the kids' set, and the
+  last copy of the bank kept in git (`functions/raw-data.json`, removed in 2017). A fact added to the
+  live bank by hand after that may repeat: retire the double in `retired-questions.ts`.
+- The source of each question, with the sentence that backs it, is kept with the project's notes
+  (questions/fresh-2026-11/sources.md), not in the repository.
+
 ## Question files the release adds
 
 New questions reach players only once they are in `questions/` in the live database. Every release
@@ -833,7 +855,9 @@ puts the questions of the repository's reviewed question files there itself, in 
   - `functions/data/thanksgiving-questions.json`, ids `thanksgiving-26-en-NN` (English only: the id
     rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below);
   - `functions/data/christmas-questions.json`, ids `christmas-26-en-NN` (English only), every
-    question with `pack: "christmas"` (see "Christmas and New Year pack" below).
+    question with `pack: "christmas"` (see "Christmas and New Year pack" below);
+  - `functions/data/everyday-questions-2026-11.json`, ids `everyday-26-en-NN` and `everyday-26-he-NN`,
+    questions of the normal bank like the strange facts (see "Everyday questions: 100 more" above).
 - **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
   body is exactly those files. Every key must be an id of the file it stands in, and every value a
   whole question in that id's language with that file's fields and no other, or nothing is sent for

@@ -1,0 +1,1102 @@
+{
+    "everyday-26-en-01": {
+        "questionText": "The first product ever scanned at a supermarket checkout with a barcode was a pack of $blank$",
+        "realAnswer": "chewing gum",
+        "fakeAnswers": [
+            "cigarettes",
+            "razor blades",
+            "cough drops"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Universal_Product_Code",
+        "lang": "en"
+    },
+    "everyday-26-en-02": {
+        "questionText": "Before it was called Amazon, Jeff Bezos's online store was named $blank$",
+        "realAnswer": "cadabra",
+        "fakeAnswers": [
+            "bookworm",
+            "shopzilla",
+            "bookstack"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Amazon_(company)",
+        "lang": "en"
+    },
+    "everyday-26-en-03": {
+        "questionText": "The first bubble gum was $blank$ because that was the only food coloring its inventor had",
+        "realAnswer": "pink",
+        "fakeAnswers": [
+            "blue",
+            "green",
+            "orange"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Walter_Diemer",
+        "lang": "en"
+    },
+    "everyday-26-en-04": {
+        "questionText": "Since 2002, Australia has sold meat from its wild camels to $blank$",
+        "realAnswer": "saudi arabia",
+        "fakeAnswers": [
+            "mongolia",
+            "japan",
+            "argentina"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Australian_feral_camel",
+        "lang": "en"
+    },
+    "everyday-26-en-05": {
+        "questionText": "Canada's official national summer sport is $blank$",
+        "realAnswer": "lacrosse",
+        "fakeAnswers": [
+            "canoeing",
+            "baseball",
+            "curling"
+        ],
+        "citation": "https://laws-lois.justice.gc.ca/eng/acts/N-16.7/FullText.html",
+        "lang": "en"
+    },
+    "everyday-26-en-06": {
+        "questionText": "The fish in Lea & Perrins Worcestershire sauce is $blank$",
+        "realAnswer": "anchovies",
+        "fakeAnswers": [
+            "sardines",
+            "herring",
+            "mackerel"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Worcestershire_sauce",
+        "lang": "en"
+    },
+    "everyday-26-en-07": {
+        "questionText": "Winnie-the-Pooh got his name from a real bear at London Zoo, named after the city of $blank$",
+        "realAnswer": "winnipeg",
+        "fakeAnswers": [
+            "windsor",
+            "winchester",
+            "wellington"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Winnipeg_(bear)",
+        "lang": "en"
+    },
+    "everyday-26-en-08": {
+        "questionText": "Cookie Monster's real name is $blank$",
+        "realAnswer": "sid",
+        "fakeAnswers": [
+            "chester",
+            "gus",
+            "milo"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Cookie_Monster",
+        "lang": "en"
+    },
+    "everyday-26-en-09": {
+        "questionText": "The first known vending machine, described by Hero of Alexandria, took a coin and dispensed wine or $blank$",
+        "realAnswer": "holy water",
+        "fakeAnswers": [
+            "olive oil",
+            "incense",
+            "perfume"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Vending_machine",
+        "lang": "en"
+    },
+    "everyday-26-en-10": {
+        "questionText": "When it was put up in 1923, the Hollywood sign read $blank$",
+        "realAnswer": "hollywoodland",
+        "fakeAnswers": [
+            "hollywood hills",
+            "holly woods",
+            "hollywood ranch"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Hollywood_Sign",
+        "lang": "en"
+    },
+    "everyday-26-en-11": {
+        "questionText": "Caesar salad was invented in $blank$",
+        "realAnswer": "mexico",
+        "fakeAnswers": [
+            "italy",
+            "greece",
+            "spain"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Caesar_salad",
+        "lang": "en"
+    },
+    "everyday-26-en-12": {
+        "questionText": "The tomato's old scientific name, lycopersicum, means $blank$",
+        "realAnswer": "wolf peach",
+        "fakeAnswers": [
+            "devil's berry",
+            "witch fruit",
+            "red plague"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Tomato",
+        "lang": "en"
+    },
+    "everyday-26-en-13": {
+        "questionText": "The first glass of Coca-Cola was sold at a $blank$",
+        "realAnswer": "pharmacy",
+        "fakeAnswers": [
+            "bakery",
+            "barber shop",
+            "saloon"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Coca-Cola",
+        "lang": "en"
+    },
+    "everyday-26-en-14": {
+        "questionText": "In 1943, the United States briefly banned $blank$",
+        "realAnswer": "sliced bread",
+        "fakeAnswers": [
+            "comic books",
+            "bubble baths",
+            "roller skates"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Sliced_bread",
+        "lang": "en"
+    },
+    "everyday-26-en-15": {
+        "questionText": "Monopoly is based on an older board game called The $blank$ Game",
+        "realAnswer": "landlord's",
+        "fakeAnswers": [
+            "banker's",
+            "tycoon's",
+            "merchant's"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/The_Landlord%27s_Game",
+        "lang": "en"
+    },
+    "everyday-26-en-16": {
+        "questionText": "Before it was called Twister, the game was going to be called $blank$",
+        "realAnswer": "pretzel",
+        "fakeAnswers": [
+            "knots",
+            "spaghetti",
+            "tangle"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Twister_(game)",
+        "lang": "en"
+    },
+    "everyday-26-en-17": {
+        "questionText": "Candy Land was invented by a woman in hospital recovering from $blank$",
+        "realAnswer": "polio",
+        "fakeAnswers": [
+            "measles",
+            "chickenpox",
+            "a broken leg"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Candy_Land",
+        "lang": "en"
+    },
+    "everyday-26-en-18": {
+        "questionText": "Silly Putty was discovered while trying to make a substitute for $blank$",
+        "realAnswer": "rubber",
+        "fakeAnswers": [
+            "glue",
+            "wax",
+            "chalk"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Silly_Putty",
+        "lang": "en"
+    },
+    "everyday-26-en-19": {
+        "questionText": "The tune of Happy Birthday was first a school song called Good $blank$ to All",
+        "realAnswer": "morning",
+        "fakeAnswers": [
+            "evening",
+            "cheer",
+            "luck"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Happy_Birthday_to_You",
+        "lang": "en"
+    },
+    "everyday-26-en-20": {
+        "questionText": "Kiwifruit used to be sold as $blank$",
+        "realAnswer": "chinese gooseberries",
+        "fakeAnswers": [
+            "fuzzy plums",
+            "hairy figs",
+            "furry limes"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Kiwifruit",
+        "lang": "en"
+    },
+    "everyday-26-en-21": {
+        "questionText": "The country that grows the most vanilla is $blank$",
+        "realAnswer": "madagascar",
+        "fakeAnswers": [
+            "india",
+            "brazil",
+            "thailand"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Vanilla",
+        "lang": "en"
+    },
+    "everyday-26-en-22": {
+        "questionText": "The E in IKEA stands for Elmtaryd, the founder's family $blank$",
+        "realAnswer": "farm",
+        "fakeAnswers": [
+            "boat",
+            "bakery",
+            "dog"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/IKEA",
+        "lang": "en"
+    },
+    "everyday-26-en-23": {
+        "questionText": "Adidas and Puma began as one shoe company, run by two $blank$",
+        "realAnswer": "brothers",
+        "fakeAnswers": [
+            "cousins",
+            "neighbours",
+            "best friends"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Puma_(brand)",
+        "lang": "en"
+    },
+    "everyday-26-en-24": {
+        "questionText": "Starbucks is named after a character in $blank$",
+        "realAnswer": "moby-dick",
+        "fakeAnswers": [
+            "treasure island",
+            "peter pan",
+            "the odyssey"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Starbucks",
+        "lang": "en"
+    },
+    "everyday-26-en-25": {
+        "questionText": "Häagen-Dazs ice cream was founded in $blank$",
+        "realAnswer": "new york",
+        "fakeAnswers": [
+            "denmark",
+            "sweden",
+            "norway"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/H%C3%A4agen-Dazs",
+        "lang": "en"
+    },
+    "everyday-26-en-26": {
+        "questionText": "The bird in Twitter's old logo was named $blank$",
+        "realAnswer": "larry",
+        "fakeAnswers": [
+            "tweety",
+            "jack",
+            "pete"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Twitter",
+        "lang": "en"
+    },
+    "everyday-26-en-27": {
+        "questionText": "The earliest surviving photo of a person is thought to show a man in Paris having his $blank$",
+        "realAnswer": "boots polished",
+        "fakeAnswers": [
+            "hair cut",
+            "beard trimmed",
+            "portrait painted"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Boulevard_du_Temple_(photograph)",
+        "lang": "en"
+    },
+    "everyday-26-en-28": {
+        "questionText": "The name Crayola comes partly from the French word for $blank$",
+        "realAnswer": "chalk",
+        "fakeAnswers": [
+            "colour",
+            "pencil",
+            "rainbow"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Crayola",
+        "lang": "en"
+    },
+    "everyday-26-en-29": {
+        "questionText": "The first Ferris wheel was built as Chicago's answer to Paris's $blank$",
+        "realAnswer": "eiffel tower",
+        "fakeAnswers": [
+            "arc de triomphe",
+            "notre-dame",
+            "louvre palace"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Ferris_Wheel_(1893)",
+        "lang": "en"
+    },
+    "everyday-26-en-30": {
+        "questionText": "The word robot comes from a Czech word for $blank$",
+        "realAnswer": "forced labour",
+        "fakeAnswers": [
+            "iron man",
+            "machine",
+            "puppet"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Robot",
+        "lang": "en"
+    },
+    "everyday-26-en-31": {
+        "questionText": "The word quarantine comes from the Venetian for $blank$ days",
+        "realAnswer": "forty",
+        "fakeAnswers": [
+            "ten",
+            "seven",
+            "twenty"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Quarantine",
+        "lang": "en"
+    },
+    "everyday-26-en-32": {
+        "questionText": "The word muscle comes from the Latin for little $blank$",
+        "realAnswer": "mouse",
+        "fakeAnswers": [
+            "snake",
+            "fish",
+            "rope"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Muscle",
+        "lang": "en"
+    },
+    "everyday-26-en-33": {
+        "questionText": "The word jumbo became famous thanks to a 19th-century $blank$",
+        "realAnswer": "elephant",
+        "fakeAnswers": [
+            "racehorse",
+            "whale",
+            "ship"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Jumbo",
+        "lang": "en"
+    },
+    "everyday-26-en-34": {
+        "questionText": "The shape of the classic Coca-Cola bottle was inspired by a picture of a $blank$",
+        "realAnswer": "cocoa pod",
+        "fakeAnswers": [
+            "pineapple",
+            "bowling pin",
+            "violin"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Contour_bottle",
+        "lang": "en"
+    },
+    "everyday-26-en-35": {
+        "questionText": "The two Ms in M&M's stand for Mars and $blank$",
+        "realAnswer": "murrie",
+        "fakeAnswers": [
+            "miller",
+            "morgan",
+            "milton"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/M%26M%27s",
+        "lang": "en"
+    },
+    "everyday-26-en-36": {
+        "questionText": "Dr. Seuss wrote Green Eggs and Ham using only $blank$ different words",
+        "realAnswer": "50",
+        "fakeAnswers": [
+            "100",
+            "26",
+            "200"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Green_Eggs_and_Ham",
+        "lang": "en"
+    },
+    "everyday-26-en-37": {
+        "questionText": "In his first cartoon, Tom the cat from Tom and Jerry was called $blank$",
+        "realAnswer": "jasper",
+        "fakeAnswers": [
+            "felix",
+            "oscar",
+            "morris"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Tom_and_Jerry",
+        "lang": "en"
+    },
+    "everyday-26-en-38": {
+        "questionText": "Scooby-Doo's full name is $blank$",
+        "realAnswer": "scoobert",
+        "fakeAnswers": [
+            "samuel",
+            "scott",
+            "scoobinald"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Scooby-Doo_(character)",
+        "lang": "en"
+    },
+    "everyday-26-en-39": {
+        "questionText": "Pac-Man's creator said its shape was partly inspired by a $blank$ with a slice missing",
+        "realAnswer": "pizza",
+        "fakeAnswers": [
+            "cookie",
+            "clock",
+            "orange"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Pac-Man",
+        "lang": "en"
+    },
+    "everyday-26-en-40": {
+        "questionText": "In his first game, Mario was called $blank$",
+        "realAnswer": "jumpman",
+        "fakeAnswers": [
+            "plumber pete",
+            "barrel boy",
+            "hammer man"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Mario",
+        "lang": "en"
+    },
+    "everyday-26-en-41": {
+        "questionText": "Tetris was first made in the $blank$",
+        "realAnswer": "soviet union",
+        "fakeAnswers": [
+            "japan",
+            "finland",
+            "east germany"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Tetris",
+        "lang": "en"
+    },
+    "everyday-26-en-42": {
+        "questionText": "The Frisbee is named after a $blank$ company whose tins students threw around",
+        "realAnswer": "pie",
+        "fakeAnswers": [
+            "paint",
+            "tobacco",
+            "shoe polish"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Frisbee",
+        "lang": "en"
+    },
+    "everyday-26-en-43": {
+        "questionText": "The country that grows the most oranges is $blank$",
+        "realAnswer": "brazil",
+        "fakeAnswers": [
+            "spain",
+            "usa",
+            "israel"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Orange_(fruit)",
+        "lang": "en"
+    },
+    "everyday-26-en-44": {
+        "questionText": "Almost every banana sold abroad is of one kind, the $blank$",
+        "realAnswer": "cavendish",
+        "fakeAnswers": [
+            "lady finger",
+            "manzano",
+            "red dacca"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Cavendish_banana",
+        "lang": "en"
+    },
+    "everyday-26-en-45": {
+        "questionText": "The holes in Swiss cheese are called $blank$",
+        "realAnswer": "eyes",
+        "fakeAnswers": [
+            "windows",
+            "bubbles",
+            "pockets"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Swiss_cheese_(North_America)",
+        "lang": "en"
+    },
+    "everyday-26-en-46": {
+        "questionText": "Candido Jacuzzi built a whirlpool bath pump to treat his son's $blank$",
+        "realAnswer": "arthritis",
+        "fakeAnswers": [
+            "back pain",
+            "asthma",
+            "insomnia"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Jacuzzi",
+        "lang": "en"
+    },
+    "everyday-26-en-47": {
+        "questionText": "In 17th-century Kraków, bagels were given as gifts to women after $blank$",
+        "realAnswer": "childbirth",
+        "fakeAnswers": [
+            "weddings",
+            "funerals",
+            "divorce"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Bagel",
+        "lang": "en"
+    },
+    "everyday-26-en-48": {
+        "questionText": "The pretzel's shape is said to show arms crossed in $blank$",
+        "realAnswer": "prayer",
+        "fakeAnswers": [
+            "a hug",
+            "a dance",
+            "anger"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Pretzel",
+        "lang": "en"
+    },
+    "everyday-26-en-49": {
+        "questionText": "In World War II, people in $blank$ wore paper clips as a sign of resistance",
+        "realAnswer": "norway",
+        "fakeAnswers": [
+            "denmark",
+            "poland",
+            "italy"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Paper_clip",
+        "lang": "en"
+    },
+    "everyday-26-en-50": {
+        "questionText": "An early version of the zipper was called the $blank$",
+        "realAnswer": "clasp locker",
+        "fakeAnswers": [
+            "hook chain",
+            "snap belt",
+            "quick button"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Zipper",
+        "lang": "en"
+    },
+    "everyday-26-he-01": {
+        "questionText": "לפני שנקראה על שם יצחק רבין, כיכר רבין בתל אביב נקראה כיכר $blank$",
+        "realAnswer": "מלכי ישראל",
+        "fakeAnswers": [
+            "העצמאות",
+            "הכנסת",
+            "הציונות"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Rabin_Square",
+        "lang": "he"
+    },
+    "everyday-26-he-02": {
+        "questionText": "כשנבנה ב־1965, מגדל שלום מאיר היה הבניין הגבוה במזרח התיכון. יש בו $blank$ קומות",
+        "realAnswer": "34",
+        "fakeAnswers": [
+            "22",
+            "48",
+            "60"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Shalom_Meir_Tower",
+        "lang": "he"
+    },
+    "everyday-26-he-03": {
+        "questionText": "השידור הראשון של הערוץ הראשון, ב־1968, היה $blank$",
+        "realAnswer": "מצעד צה\"ל",
+        "fakeAnswers": [
+            "נאום ראש הממשלה",
+            "משחק כדורגל",
+            "תפילת ערבית"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Channel_1_(Israel)",
+        "lang": "he"
+    },
+    "everyday-26-he-04": {
+        "questionText": "תפוז יפו המפורסם הוא מזן בשם $blank$",
+        "realAnswer": "שמוטי",
+        "fakeAnswers": [
+            "זהבי",
+            "טבריני",
+            "פרדסי"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Jaffa_orange",
+        "lang": "he"
+    },
+    "everyday-26-he-05": {
+        "questionText": "לפני שקמה העיר אילת, המקום נקרא $blank$",
+        "realAnswer": "אום רשרש",
+        "fakeAnswers": [
+            "אבו נעמה",
+            "באר אילות",
+            "ראס אל-בחר"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Umm_al-Rashrash",
+        "lang": "he"
+    },
+    "everyday-26-he-06": {
+        "questionText": "לפני שנקרא יום המשפחה, החג נקרא יום ה$blank$",
+        "realAnswer": "אם",
+        "fakeAnswers": [
+            "ילד",
+            "סבתא",
+            "בית"
+        ],
+        "citation": "https://archive.israel21c.org/the-story-of-how-israels-mothers-day-became-family-day/",
+        "lang": "he"
+    },
+    "everyday-26-he-07": {
+        "questionText": "על מטבע עשרה שקלים מופיע $blank$",
+        "realAnswer": "עץ תמר",
+        "fakeAnswers": [
+            "רימון",
+            "אשכול ענבים",
+            "עץ זית"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Israeli_new_shekel",
+        "lang": "he"
+    },
+    "everyday-26-he-08": {
+        "questionText": "על שטר 200 השקלים בסדרה החדשה מופיע $blank$",
+        "realAnswer": "נתן אלתרמן",
+        "fakeAnswers": [
+            "חיים נחמן ביאליק",
+            "יהודה עמיחי",
+            "שאול טשרניחובסקי"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Israeli_new_shekel",
+        "lang": "he"
+    },
+    "everyday-26-he-09": {
+        "questionText": "בצעירותו היה אריק איינשטיין אלוף ישראל לנוער בהדיפת כדור ברזל וב$blank$",
+        "realAnswer": "קפיצה לגובה",
+        "fakeAnswers": [
+            "שחייה",
+            "ריצת מרתון",
+            "שחמט"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Arik_Einstein",
+        "lang": "he"
+    },
+    "everyday-26-he-10": {
+        "questionText": "לפי אחד ההסברים, הכנרת נקראת כך כי צורתה דומה ל$blank$",
+        "realAnswer": "כינור",
+        "fakeAnswers": [
+            "שופר",
+            "ביצה",
+            "אגס"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Sea_of_Galilee",
+        "lang": "he"
+    },
+    "everyday-26-he-11": {
+        "questionText": "הכנרת היא אגם המים המתוקים ה$blank$ בעולם",
+        "realAnswer": "נמוך",
+        "fakeAnswers": [
+            "עמוק",
+            "עתיק",
+            "גדול"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Sea_of_Galilee",
+        "lang": "he"
+    },
+    "everyday-26-he-12": {
+        "questionText": "מסילת הרכבת שנפתחה ב־1892, בימי השלטון העות'מאני, חיברה את ירושלים ל$blank$",
+        "realAnswer": "יפו",
+        "fakeAnswers": [
+            "חיפה",
+            "עזה",
+            "שכם"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Jaffa%E2%80%93Jerusalem_railway",
+        "lang": "he"
+    },
+    "everyday-26-he-13": {
+        "questionText": "נמל התעופה בן גוריון נקרא בעבר נמל התעופה $blank$",
+        "realAnswer": "לוד",
+        "fakeAnswers": [
+            "רמלה",
+            "יפו",
+            "השרון"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Ben_Gurion_Airport",
+        "lang": "he"
+    },
+    "everyday-26-he-14": {
+        "questionText": "אלברט איינשטיין הוריש את כתביו ואת זכויות היוצרים שלו ל$blank$",
+        "realAnswer": "אוניברסיטה העברית",
+        "fakeAnswers": [
+            "טכניון",
+            "מכון ויצמן",
+            "כנסת"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Albert_Einstein_Archives",
+        "lang": "he"
+    },
+    "everyday-26-he-15": {
+        "questionText": "נטפים, החברה שפיתחה את הטפטפת המודרנית, נוסדה בקיבוץ $blank$",
+        "realAnswer": "חצרים",
+        "fakeAnswers": [
+            "דגניה",
+            "עין גדי",
+            "יטבתה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Netafim",
+        "lang": "he"
+    },
+    "everyday-26-he-16": {
+        "questionText": "בסקר מ־2021 בחרו הישראלים ב$blank$ כעץ הלאומי",
+        "realAnswer": "זית",
+        "fakeAnswers": [
+            "אלון",
+            "תמר",
+            "חרוב"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Olea_europaea",
+        "lang": "he"
+    },
+    "everyday-26-he-17": {
+        "questionText": "פעמיים בשנה, באביב ובסתיו, חוצות את שמי ישראל כ־$blank$ מיליון ציפורים נודדות",
+        "realAnswer": "500",
+        "fakeAnswers": [
+            "50",
+            "10",
+            "2000"
+        ],
+        "citation": "https://www.jewishvirtuallibrary.org/bird-migration-in-israel",
+        "lang": "he"
+    },
+    "everyday-26-he-18": {
+        "questionText": "השם 'פתח תקווה' לקוח מספר $blank$",
+        "realAnswer": "הושע",
+        "fakeAnswers": [
+            "ישעיהו",
+            "תהלים",
+            "רות"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Petah_Tikva",
+        "lang": "he"
+    },
+    "everyday-26-he-19": {
+        "questionText": "השם 'ראשון לציון' לקוח מספר $blank$",
+        "realAnswer": "ישעיהו",
+        "fakeAnswers": [
+            "הושע",
+            "ירמיהו",
+            "תהלים"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Rishon_LeZion",
+        "lang": "he"
+    },
+    "everyday-26-he-20": {
+        "questionText": "כביש 90 מתחיל בגבול לבנון ונגמר בגבול עם $blank$",
+        "realAnswer": "מצרים",
+        "fakeAnswers": [
+            "ירדן",
+            "סעודיה",
+            "סוריה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Highway_90_(Israel)",
+        "lang": "he"
+    },
+    "everyday-26-he-21": {
+        "questionText": "ה'לוף' שבמנות הקרב של צה\"ל הוא $blank$ משומר",
+        "realAnswer": "בשר",
+        "fakeAnswers": [
+            "דג",
+            "חומוס",
+            "טופו"
+        ],
+        "citation": "https://jweekly.com/2011/11/24/as-idf-bids-adieu-to-loof-a-history-of-kosher-spam/",
+        "lang": "he"
+    },
+    "everyday-26-he-22": {
+        "questionText": "המילה 'חמסין' באה מערבית, ופירושה $blank$",
+        "realAnswer": "חמישים",
+        "fakeAnswers": [
+            "אבק",
+            "צמא",
+            "ארבעים"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Khamsin",
+        "lang": "he"
+    },
+    "everyday-26-he-23": {
+        "questionText": "בגנים הבהאיים בחיפה יש $blank$ טרסות",
+        "realAnswer": "19",
+        "fakeAnswers": [
+            "7",
+            "12",
+            "40"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Terraces_(Bah%C3%A1%CA%BC%C3%AD)",
+        "lang": "he"
+    },
+    "everyday-26-he-24": {
+        "questionText": "לכרמלית, הרכבת התחתית של חיפה, יש $blank$ תחנות",
+        "realAnswer": "6",
+        "fakeAnswers": [
+            "3",
+            "12",
+            "9"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Carmelit",
+        "lang": "he"
+    },
+    "everyday-26-he-25": {
+        "questionText": "הסרט הישראלי הראשון שהיה מועמד לאוסקר הוא $blank$",
+        "realAnswer": "סאלח שבתי",
+        "fakeAnswers": [
+            "גבעת חלפון אינה עונה",
+            "אסקימו לימון",
+            "הלהקה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Sallah_Shabati",
+        "lang": "he"
+    },
+    "everyday-26-he-26": {
+        "questionText": "מגדל השעון ביפו נבנה לכבוד יום השנה ה־25 לשלטונו של ה$blank$ העות'מאני",
+        "realAnswer": "סולטאן",
+        "fakeAnswers": [
+            "מושל",
+            "שאה",
+            "פחה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Jaffa_Clock_Tower",
+        "lang": "he"
+    },
+    "everyday-26-he-27": {
+        "questionText": "גזע הכלבים הלאומי של ישראל הוא $blank$",
+        "realAnswer": "הכלב הכנעני",
+        "fakeAnswers": [
+            "כלב הצבר",
+            "הכלב הגלילי",
+            "כלב הנגב"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Canaan_Dog",
+        "lang": "he"
+    },
+    "everyday-26-he-28": {
+        "questionText": "העיר הנמוכה בעולם היא $blank$",
+        "realAnswer": "יריחו",
+        "fakeAnswers": [
+            "בית שאן",
+            "ערד",
+            "טבריה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Jericho",
+        "lang": "he"
+    },
+    "everyday-26-he-29": {
+        "questionText": "קריית שמונה נקראה על שם שמונה $blank$",
+        "realAnswer": "מגיני תל חי",
+        "fakeAnswers": [
+            "מייסדי העיר",
+            "מעיינות",
+            "קיבוצים"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Kiryat_Shmona",
+        "lang": "he"
+    },
+    "everyday-26-he-30": {
+        "questionText": "'התקווה' הפכה להמנון הרשמי של ישראל בחוק רק בשנת $blank$",
+        "realAnswer": "2004",
+        "fakeAnswers": [
+            "1948",
+            "1967",
+            "1977"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Hatikvah",
+        "lang": "he"
+    },
+    "everyday-26-he-31": {
+        "questionText": "את החומות של העיר העתיקה בירושלים, כפי שהן היום, בנה $blank$",
+        "realAnswer": "סולימאן המפואר",
+        "fakeAnswers": [
+            "הורדוס",
+            "דוד המלך",
+            "צלאח א-דין"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Walls_of_Jerusalem",
+        "lang": "he"
+    },
+    "everyday-26-he-32": {
+        "questionText": "התזמורת הפילהרמונית הישראלית נוסדה בידי הכנר $blank$",
+        "realAnswer": "ברוניסלב הוברמן",
+        "fakeAnswers": [
+            "יאשה חפץ",
+            "יצחק פרלמן",
+            "דוד אויסטרך"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Israel_Philharmonic_Orchestra",
+        "lang": "he"
+    },
+    "everyday-26-he-33": {
+        "questionText": "מנורת הכנסת הגדולה, מול בניין הכנסת, היא מתנה של $blank$",
+        "realAnswer": "הפרלמנט הבריטי",
+        "fakeAnswers": [
+            "ממשלת צרפת",
+            "האפיפיור",
+            "מלך ספרד"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Knesset_Menorah",
+        "lang": "he"
+    },
+    "everyday-26-he-34": {
+        "questionText": "השם 'שש בש' פירושו בעצם $blank$",
+        "realAnswer": "שש חמש",
+        "fakeAnswers": [
+            "שש שש",
+            "שש שבע",
+            "שש שתיים"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Backgammon",
+        "lang": "he"
+    },
+    "everyday-26-he-35": {
+        "questionText": "דגניה, הקבוצה הראשונה, נקראה כך על שם $blank$",
+        "realAnswer": "דגן",
+        "fakeAnswers": [
+            "דגים",
+            "דגל",
+            "הנהר"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Degania_Alef",
+        "lang": "he"
+    },
+    "everyday-26-he-36": {
+        "questionText": "לפני שנקראה תל אביב, השכונה נקראה $blank$",
+        "realAnswer": "אחוזת בית",
+        "fakeAnswers": [
+            "נווה צדק",
+            "שכונת החול",
+            "גבעת הכורכר"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Ahuzat_Bayit",
+        "lang": "he"
+    },
+    "everyday-26-he-37": {
+        "questionText": "השם 'תל אביב' לקוח מהתרגום העברי של הספר $blank$",
+        "realAnswer": "אלטנוילנד",
+        "fakeAnswers": [
+            "מדינת היהודים",
+            "אהבת ציון",
+            "מסעות בנימין"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Ahuzat_Bayit",
+        "lang": "he"
+    },
+    "everyday-26-he-38": {
+        "questionText": "הרחוב המרכזי של אחוזת בית, השכונה שממנה צמחה תל אביב, היה רחוב $blank$",
+        "realAnswer": "הרצל",
+        "fakeAnswers": [
+            "דיזנגוף",
+            "אלנבי",
+            "בן יהודה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Ahuzat_Bayit",
+        "lang": "he"
+    },
+    "everyday-26-he-39": {
+        "questionText": "במקום שבו עמד בניין גימנסיה הרצליה הראשון עומד היום $blank$",
+        "realAnswer": "מגדל שלום",
+        "fakeAnswers": [
+            "תיאטרון הבימה",
+            "כיכר רבין",
+            "שוק הכרמל"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Shalom_Meir_Tower",
+        "lang": "he"
+    },
+    "everyday-26-he-40": {
+        "questionText": "העיר נתניה נקראה על שם $blank$",
+        "realAnswer": "נתן שטראוס",
+        "fakeAnswers": [
+            "נתן ילין-מור",
+            "נתן ביסטריצקי",
+            "הנביא נתן"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Netanya",
+        "lang": "he"
+    },
+    "everyday-26-he-41": {
+        "questionText": "השם 'חדרה' בא מהמילה הערבית ל$blank$",
+        "realAnswer": "ירוק",
+        "fakeAnswers": [
+            "חול",
+            "דקל",
+            "מעיין"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Hadera",
+        "lang": "he"
+    },
+    "everyday-26-he-42": {
+        "questionText": "השם 'רחובות' לקוח מספר $blank$",
+        "realAnswer": "בראשית",
+        "fakeAnswers": [
+            "שמות",
+            "ישעיהו",
+            "תהלים"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Rehovot",
+        "lang": "he"
+    },
+    "everyday-26-he-43": {
+        "questionText": "תת־המקלע 'עוזי' נקרא על שם $blank$",
+        "realAnswer": "עוזיאל גל",
+        "fakeAnswers": [
+            "עוזי דיין",
+            "עוזיה המלך",
+            "עוזי חיטמן"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Uzi",
+        "lang": "he"
+    },
+    "everyday-26-he-44": {
+        "questionText": "את המשפט 'אנחנו על המפה' אמר ב־1977 $blank$",
+        "realAnswer": "טל ברודי",
+        "fakeAnswers": [
+            "מיקי ברקוביץ'",
+            "מנחם בגין",
+            "משה דיין"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Tal_Brody",
+        "lang": "he"
+    },
+    "everyday-26-he-45": {
+        "questionText": "לפני שהפכה לכוכבת הוליווד, גל גדות זכתה ב־2004 בתואר $blank$",
+        "realAnswer": "מלכת היופי",
+        "fakeAnswers": [
+            "אלופת ישראל בטניס",
+            "מדריכת השנה בצה\"ל",
+            "ספורטאית השנה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Gal_Gadot",
+        "lang": "he"
+    },
+    "everyday-26-he-46": {
+        "questionText": "לפי הסבר נפוץ, השם 'צ'ולנט' בא מהמילים הצרפתיות ל'חם' ו$blank$",
+        "realAnswer": "איטי",
+        "fakeAnswers": [
+            "שבת",
+            "סיר",
+            "לילה"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Cholent",
+        "lang": "he"
+    },
+    "everyday-26-he-47": {
+        "questionText": "המילה 'שווארמה' באה ממילה טורקית שפירושה $blank$",
+        "realAnswer": "סיבוב",
+        "fakeAnswers": [
+            "בשר שמן",
+            "גחלים",
+            "חריף"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Shawarma",
+        "lang": "he"
+    },
+    "everyday-26-he-48": {
+        "questionText": "אתר הסקי היחיד בשטח שבשליטת ישראל נמצא ב$blank$",
+        "realAnswer": "חרמון",
+        "fakeAnswers": [
+            "הר מירון",
+            "הר תבור",
+            "הר רמון"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Mount_Hermon",
+        "lang": "he"
+    },
+    "everyday-26-he-49": {
+        "questionText": "המכביה, שמכונה 'האולימפיאדה היהודית', נערכה לראשונה בשנת $blank$",
+        "realAnswer": "1932",
+        "fakeAnswers": [
+            "1948",
+            "1921",
+            "1953"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Maccabiah_Games",
+        "lang": "he"
+    },
+    "everyday-26-he-50": {
+        "questionText": "המדינה הוכרזה בבניין ששימש במקור כביתו של $blank$",
+        "realAnswer": "מאיר דיזנגוף",
+        "fakeAnswers": [
+            "דוד בן גוריון",
+            "הברון רוטשילד",
+            "אחד העם"
+        ],
+        "citation": "https://en.wikipedia.org/wiki/Independence_Hall_(Israel)",
+        "lang": "he"
+    }
+}

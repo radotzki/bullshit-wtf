@@ -20,9 +20,11 @@ const THANKS_FILE = 'functions/data/thanksgiving-questions.json';
 const THANKS = read(THANKS_FILE);
 const XMAS_FILE = 'functions/data/christmas-questions.json';
 const XMAS = read(XMAS_FILE);
+const EVERY_FILE = 'functions/data/everyday-questions-2026-11.json';
+const EVERY = read(EVERY_FILE);
 // What the release sends: every listed file's questions, in the list's order.
-const QUESTIONS = { ...PACK, ...FACTS, ...THANKS, ...XMAS };
-const ANY_ID = /^((hanukkah|fact)-26-(en|he)|(thanksgiving|christmas)-26-en)-\d{2}$/;
+const QUESTIONS = { ...PACK, ...FACTS, ...THANKS, ...XMAS, ...EVERY };
+const ANY_ID = /^((hanukkah|fact|everyday)-26-(en|he)|(thanksgiving|christmas)-26-en)-\d{2}$/;
 const URLS = {
     project: `https://firebase.googleapis.com/v1beta1/projects/${PROJECT}`,
     config: `https://firebase.googleapis.com/v1beta1/projects/${PROJECT}/adminSdkConfig`,
@@ -49,7 +51,7 @@ const noAnswer = (place, e) => [`no answer from ${place}: ${e && e.code}`];
 const tmpWith = (data, files = { [PACK_FILE]: data }) => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pack-'));
     fs.mkdirSync(path.join(dir, 'functions', 'data'), { recursive: true });
-    const all = { [PACK_FILE]: PACK, [FACTS_FILE]: FACTS, [THANKS_FILE]: THANKS, [XMAS_FILE]: XMAS, ...files };
+    const all = { [PACK_FILE]: PACK, [FACTS_FILE]: FACTS, [THANKS_FILE]: THANKS, [XMAS_FILE]: XMAS, [EVERY_FILE]: EVERY, ...files };
     for (const file of Object.keys(all)) {
         if (all[file] !== undefined) {
             fs.writeFileSync(path.join(dir, file), JSON.stringify(all[file]));
@@ -63,11 +65,19 @@ const fact = () => JSON.parse(JSON.stringify(FACTS['fact-26-en-01']));
 test('the repository\'s files pass the check, and every key is an id of its own file', () => {
     const { questions, counts } = payload(ROOT);
     assert.deepStrictEqual(questions, QUESTIONS);
-    assert.deepStrictEqual(counts.map(c => c.file), [PACK_FILE, FACTS_FILE, THANKS_FILE, XMAS_FILE]);
+    assert.deepStrictEqual(counts.map(c => c.file), [PACK_FILE, FACTS_FILE, THANKS_FILE, XMAS_FILE, EVERY_FILE]);
     assert.deepStrictEqual(counts[0].ids, Object.keys(PACK));
     assert.deepStrictEqual(counts[1].ids, Object.keys(FACTS));
     assert.deepStrictEqual(counts[2].ids, Object.keys(THANKS));
     assert.deepStrictEqual(counts[3].ids, Object.keys(XMAS));
+    assert.deepStrictEqual(counts[4].ids, Object.keys(EVERY));
+    for (const id of Object.keys(EVERY)) {
+        assert.match(id, /^everyday-26-(en|he)-\d{2}$/);
+        // Questions of the normal bank, like the strange facts: the five fields, no pack.
+        assert.deepStrictEqual(Object.keys(questions[id]).sort(), ['citation', 'fakeAnswers', 'lang', 'questionText', 'realAnswer']);
+        assert.strictEqual(questions[id].lang, id.split('-')[2]);
+    }
+    assert.strictEqual(Object.keys(EVERY).length, 100);
     for (const id of Object.keys(XMAS)) {
         assert.match(id, /^christmas-26-en-\d{2}$/);
         assert.strictEqual(questions[id].pack, 'christmas');
@@ -97,6 +107,7 @@ test('the list of question files is exactly the reviewed ones, and never the dai
         ['functions/data/strange-facts-2026-11.json', '/^fact-26-(en|he)-\\d{2}$/', null],
         ['functions/data/thanksgiving-questions.json', '/^thanksgiving-26-(en)-\\d{2}$/', 'thanksgiving'],
         ['functions/data/christmas-questions.json', '/^christmas-26-(en)-\\d{2}$/', 'christmas'],
+        ['functions/data/everyday-questions-2026-11.json', '/^everyday-26-(en|he)-\\d{2}$/', null],
     ]);
     assert.doesNotThrow(() => checkList(FILES));
     assert.deepStrictEqual(NEVER, ['functions/data/daily-questions.json']);
@@ -142,14 +153,15 @@ test('the daily puzzle\'s questions are refused, as a file and as a body', async
 test('the dry run names exactly the file\'s ids, as an update', () => {
     const lines = dryRun(ROOT);
     assert.match(lines[0], /^Would send: PATCH .*\/questions\.json \(an update, never a set\)$/);
-    assert.strictEqual(lines[1], `Question files (4): ${PACK_FILE}, ${FACTS_FILE}, ${THANKS_FILE}, ${XMAS_FILE}`);
+    assert.strictEqual(lines[1], `Question files (5): ${PACK_FILE}, ${FACTS_FILE}, ${THANKS_FILE}, ${XMAS_FILE}, ${EVERY_FILE}`);
     assert.strictEqual(lines[2], `Children of questions/ it writes (${Object.keys(QUESTIONS).length}):`);
     assert.strictEqual(lines[3], `  from ${PACK_FILE}, the Hanukkah pack (${Object.keys(PACK).length}): ${Object.keys(PACK).join(', ')}`);
     assert.strictEqual(lines[4], `  from ${FACTS_FILE}, the strange facts (120): ${Object.keys(FACTS).join(', ')}`);
     assert.strictEqual(lines[5], `  from ${THANKS_FILE}, the Thanksgiving pack (${Object.keys(THANKS).length}): ${Object.keys(THANKS).join(', ')}`);
     assert.strictEqual(lines[6], `  from ${XMAS_FILE}, the Christmas and New Year pack (${Object.keys(XMAS).length}): ${Object.keys(XMAS).join(', ')}`);
-    assert.match(lines[7], /: yes$/);
-    assert.strictEqual(lines.length, 9);
+    assert.strictEqual(lines[7], `  from ${EVERY_FILE}, the everyday questions (100): ${Object.keys(EVERY).join(', ')}`);
+    assert.match(lines[8], /: yes$/);
+    assert.strictEqual(lines.length, 10);
 });
 
 test('one update of questions/ is sent, its body exactly the file, and nothing else is written', async () => {
@@ -417,4 +429,23 @@ test('the Christmas and New Year pack is English only: a Hebrew id, a question w
         assert.throws(() => check(data), JSON.stringify(Object.keys(data)));
     }
     assert.throws(() => payload(tmpWith(null, { [XMAS_FILE]: { ...XMAS, 'thanksgiving-26-en-90': JSON.parse(JSON.stringify(THANKS['thanksgiving-26-en-01'])) } })), /christmas-questions\.json: Not an id/);
+});
+
+test('the everyday questions are of the normal bank: no pack, their own ids, in their own file only', () => {
+    const day = () => JSON.parse(JSON.stringify(EVERY['everyday-26-en-01']));
+    assert.doesNotThrow(() => check({ 'everyday-26-en-01': day(), 'everyday-26-he-01': JSON.parse(JSON.stringify(EVERY['everyday-26-he-01'])) }));
+    for (const data of [
+        { 'everyday-26-en-01': { ...day(), pack: 'hanukkah' } },
+        { 'everyday-26-en-01': { ...day(), lang: 'he' } },
+        { 'everyday-26-he-01': day() },
+        { 'everyday-26-fr-01': day() },
+        { 'everyday-27-en-01': day() },
+        { 'everyday-26-en-001': day() },
+        { 'everyday-26-en-01': { ...day(), opener: true } },
+        { 'everyday-26-en-01': one() },
+    ]) {
+        assert.throws(() => check(data), JSON.stringify(Object.keys(data)));
+    }
+    assert.throws(() => payload(tmpWith(null, { [EVERY_FILE]: { ...EVERY, 'fact-26-en-90': fact() } })), /everyday-questions-2026-11\.json: Not an id/);
+    assert.throws(() => payload(tmpWith(null, { [FACTS_FILE]: { ...FACTS, 'everyday-26-en-90': day() } })), /strange-facts-2026-11\.json: Not an id/);
 });
