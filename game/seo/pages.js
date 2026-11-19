@@ -11,10 +11,10 @@ const kit = require('./pages-kit');
 const jackbox = require('./pages-jackbox');
 const holidays = require('./pages-en-holidays');
 const thanksgiving = require('./pages-en-thanksgiving');
-// Grown-up party nights: bachelorette and bachelor parties, adult birthdays, a weekend away.
-const partyNights = require('./pages-party-nights');
 // A game for the Shabbat (Friday-night) dinner table, the English twin of /he/friday-dinner.
 const shabbatDinner = require('./pages-shabbat-dinner');
+// Grown-up party nights: bachelorette and bachelor parties, adult birthdays, a weekend away.
+const partyNights = require('./pages-party-nights');
 
 const en = {
     lang: 'en',
@@ -25,6 +25,7 @@ const en = {
         { href: '/how-to-play', label: 'How to play' },
         { href: '/party-games-on-your-phone', label: 'Party games on your phone' },
         { href: '/hanukkah-party-game', label: 'Hanukkah party game' },
+        { href: '/shabbat-dinner-game', label: 'A game for Shabbat dinner' },
         { href: '/purim-party-game', label: 'Purim party game' },
         { href: '/classroom-game', label: 'A game for the classroom' },
         { href: '/team-building-game', label: 'A team-building game' },
@@ -39,7 +40,6 @@ const en = {
         { href: '/bachelorette-party-game', label: 'Bachelorette party game' },
         { href: '/adult-birthday-party-game', label: 'Adult birthday party game' },
         { href: '/weekend-away-games', label: 'Games for a weekend away' },
-        { href: '/shabbat-dinner-game', label: 'A game for Shabbat dinner' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -145,6 +145,7 @@ const howHe = `
 
 module.exports = [
     ...groupsHome.pages(en, he),
+    ...shabbatDinner.pages(en),
     {
         path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',
@@ -302,4 +303,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he), shabbatDinner.pages(en));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he));
