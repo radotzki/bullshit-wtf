@@ -51,6 +51,16 @@ export class GameService implements CanActivate {
     private stepId: GameState;
     /** Stops marking this phone's seat as here (ApiService.followSeat). */
     private stopSeat: () => void;
+    /**
+     * A seat that joined after START (GamePlayer.late): the question it begins at, and the question the
+     * game is on (null until read). Until the game reaches it, the phone shows the late page, not the
+     * step's (see waitingLate).
+     */
+    private lateFrom: number | null = null;
+    private lateQ: number | null = null;
+    private lateSub: Subscription;
+    /** The step last heard, to show it once a latecomer's first question comes. */
+    private lastState: GameStateInfo;
 
     constructor(
         private router: Router,
@@ -71,6 +81,16 @@ export class GameService implements CanActivate {
         this.unregister();
         this.pin = next;
         this.stopSeat = this.apiService.followSeat(next, () => this.seatTaken(next));
+        // A latecomer: the join's answer says so at once; the seat itself says so after a reload.
+        this.lateFrom = this.apiService.lateHint(next);
+        const late = this.apiService.lateSeat(next);
+        if (late) {
+            this.lateSub = late.subscribe(seat => {
+                if (this.pin === next) {
+                    this.onLateSeat(next, seat.late, seat.q);
+                }
+            });
+        }
         this.game = this.apiService.gamePhase(pin).subscribe(state => {
             // A step of a game this phone has left since must not move it.
             if (this.pin === next) {
@@ -98,10 +118,34 @@ export class GameService implements CanActivate {
         return this.phase;
     }
 
+    /** A latecomer whose first question has not come yet: the phone shows the late page. */
+    waitingLate(): boolean {
+        return this.lateFrom !== null && (this.lateQ === null || this.lateQ < this.lateFrom);
+    }
+
+    /** The seat's late mark or the game's question changed: once the first question comes, show its step. */
+    private onLateSeat(pin: string, late: number | null, q: number) {
+        const was = this.waitingLate();
+        this.lateFrom = typeof late === 'number' ? late : null;
+        this.lateQ = q;
+        if (was !== this.waitingLate() && this.lastState) {
+            this.phase = undefined;
+            this.stepId = undefined;
+            this.handleGameState(pin, this.lastState);
+        }
+    }
+
     unregister() {
         this.pin = undefined;
         this.phase = undefined;
         this.stepId = undefined;
+        this.lateFrom = null;
+        this.lateQ = null;
+        this.lastState = undefined;
+        if (this.lateSub) {
+            this.lateSub.unsubscribe();
+            this.lateSub = undefined;
+        }
         this.clearTimer();
         if (this.stopSeat) {
             this.stopSeat();
@@ -116,6 +160,7 @@ export class GameService implements CanActivate {
     private handleGameState(pin: string, state: GameStateInfo) {
         const id = state ? state.id : undefined;
         const key = phaseKey(state);
+        this.lastState = state;
 
         // The same step as before, with only something else on it changed: nothing to do.
         if (key && key === this.phase) {
@@ -137,6 +182,17 @@ export class GameService implements CanActivate {
         this.clearTimer();
 
         if (!page) {
+            return;
+        }
+
+        // A latecomer watches from the late page until their first question (not the lobby, not the end).
+        if (this.waitingLate() && id !== GameState.GameStaging && id !== GameState.ScoreBoardFinal) {
+            if (!this.onPage('late-join', pin)) {
+                this.router.navigate(['late-join', pin]);
+            }
+            if (timedSteps.indexOf(id) >= 0) {
+                this.fallbackTick(pin, id);
+            }
             return;
         }
 

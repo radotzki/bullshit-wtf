@@ -1,0 +1,15 @@
+<section class="game-container late-join" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
+    <app-game-header></app-game-header>
+
+    <div class="game-main">
+        <div class="screen-center">
+            <p class="late-wave" aria-hidden="true">👋</p>
+            <h1 class="late-title">{{ t.lateTitle }}</h1>
+            <p class="late-name" *ngIf="nickname" dir="auto">{{ nickname }}</p>
+            <p class="late-text">{{ t.lateText }}</p>
+            <p class="late-score" *ngIf="score !== null">{{ t.lateScore(score) }}</p>
+        </div>
+    </div>
+
+    <app-game-footer></app-game-footer>
+</section>

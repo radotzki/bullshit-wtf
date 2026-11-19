@@ -17,6 +17,7 @@ import { CreateGameComponent } from './pages/create-game/create-game.component';
 import { JoinGameComponent } from './pages/join-game/join-game.component';
 import { PresentGameComponent } from './pages/present-game/present-game.component';
 import { GameStagingComponent } from './pages/game-staging/game-staging.component';
+import { LateJoinComponent } from './pages/late-join/late-join.component';
 import { GameHeaderComponent } from './components/game-header/game-header.component';
 import { GameFooterComponent } from './components/game-footer/game-footer.component';
 import { RoundIntroComponent } from './pages/round-intro/round-intro.component';
@@ -55,6 +56,7 @@ import { StepComponent } from './pages/step/step.component';
         LandingComponent,
         PresentGameComponent,
         GameStagingComponent,
+        LateJoinComponent,
         GameHeaderComponent,
         GameFooterComponent,
         RoundIntroComponent,

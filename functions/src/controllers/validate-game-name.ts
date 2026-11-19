@@ -1,7 +1,8 @@
-import { MAX_PLAYERS, GameScheme } from '../game-model';
+import { MAX_PLAYERS, GameScheme, lateStart } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { gameOverError } from './game-over';
+import { endingError } from './join';
 import { nightAfter } from './night-after';
 import { lateTable } from './same-table';
 
@@ -41,5 +42,12 @@ export async function validateGameName(pin: string, uid?: any, pid?: any) {
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });
     }
 
-    return Promise.resolve({});
+    // On its last question: no new seat until the Replay (the page waits, see join.ts endingError).
+    const ending = endingError(game);
+    if (ending) {
+        return Promise.reject(ending);
+    }
+
+    // Started: the page says the phone joins from the next question before a name is typed.
+    return Promise.resolve(lateStart(game) !== null ? { late: true } : {});
 }

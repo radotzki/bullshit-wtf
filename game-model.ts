@@ -415,6 +415,64 @@ export interface GamePlayer {
     // The phase in which this seat last sent a lie or a pick (see sentMark), written by the server.
     // It says that the seat has sent, never what: the waiting screens show who the room waits for.
     sent?: string;
+    // A seat that joined after START: the question (from 0) it begins at, the one after the question the
+    // game was on (see lateStart). Until the game reaches it, the seat is not waited for, its phone shows
+    // "You're in from the next question", and every screen of the table shows it as joining. Server only.
+    late?: number;
+}
+
+/**
+ * The question a phone that joins a started game begins at, or null when the game takes no latecomers
+ * now: still in the lobby (an ordinary join), or on its last question or after it. In a round's intro
+ * the question is not on screen yet, so the seat begins with it; on any step of a question, with the
+ * next one. A taste (a lone host's pick-only questions) takes a friend the same way.
+ */
+export function lateStart(game: Partial<GameScheme> | null | undefined): number | null {
+    const state = game && game.state;
+    if (!state || state.id === GameState.GameStaging) {
+        return null;
+    }
+    const q = game.questionIndex || 0;
+    const total = game.totalQ || 0;
+    if (state.id === GameState.ScoreBoardFinal || (total > 0 && q >= total - 1)) {
+        return null;
+    }
+    return state.id === GameState.RoundIntro ? q : q + 1;
+}
+
+/**
+ * Whether a join of this browser (sign-in `uid`) is a late one, for the users table's `via` ('late'): the
+ * game takes latecomers now, and this browser holds no seat of its own from before (a player back on
+ * their own seat mid-game is no latecomer). Read when the join's row is written, which may be just before
+ * or just after the seat itself, so a late seat this browser already has counts as late too.
+ */
+export function isLateJoin(game: Partial<GameScheme> | null | undefined, uid: any): boolean {
+    if (lateStart(game) === null) {
+        return false;
+    }
+    const players = (game && game.players) || {};
+    return !Object.keys(players).some(pid => !!players[pid] && !!uid && players[pid].uid === uid
+        && typeof players[pid].late !== 'number');
+}
+
+/** A late seat that the game has not reached yet (see GamePlayer.late): it watches, and is not waited for. */
+export function lateWaiting(player: GamePlayer | null | undefined, questionIndex: number): boolean {
+    return !!player && typeof player.late === 'number' && player.late > (questionIndex || 0);
+}
+
+/**
+ * The score a late seat starts with: the lowest at the table among the seats that have played (or among
+ * all seats, when none has yet; 0 at an empty table). Other latecomers still waiting are left out. A
+ * latecomer can still win, and nobody who played from the start is passed by someone who just walked in.
+ */
+export function lateScore(game: Partial<GameScheme> | null | undefined): number {
+    const players = (game && game.players) || {};
+    const played = (game && game.played) || {};
+    const pids = Object.keys(players).filter(pid => !!players[pid] && typeof players[pid] === 'object'
+        && !lateWaiting(players[pid], game.questionIndex));
+    const playing = pids.filter(pid => played[pid] === true);
+    const scores = (playing.length ? playing : pids).map(pid => Number(players[pid].score) || 0);
+    return scores.length ? Math.min(...scores) : 0;
 }
 
 /**
@@ -472,7 +530,8 @@ export interface WaitingRow {
  *
  * It follows the server's own rule (seatsToWaitFor in the functions' seats.ts): on the first
  * question every seat is waited for; from the second on, a seat that has sent no lie and no pick
- * in this game is away until it sends one. A mark older than the game (carried over by a Replay
+ * in this game is away until it sends one. A latecomer is away until their first question, and waited
+ * for on it. A mark older than the game (carried over by a Replay
  * from an older server) does not count.
  */
 export function waitingRow(players: GamePlayers | null | undefined, state: GameStateInfo | null | undefined,
@@ -486,7 +545,11 @@ export function waitingRow(players: GamePlayers | null | undefined, state: GameS
         const sent = players[pid].sent;
         const done = !!mark && sent === mark;
         const played = sentMarkTime(sent) > 0 && sentMarkTime(sent) >= since;
-        return { pid, nickname: String(players[pid].nickname || ''), index, done, away: later && !done && !played, played };
+        // A latecomer is not waited for before their first question, and is on it (lateWaiting, seats.ts).
+        const late = players[pid].late;
+        const firstQuestion = typeof late === 'number' && late === (questionIndex || 0);
+        const away = lateWaiting(players[pid], questionIndex) || (later && !done && !played && !firstQuestion);
+        return { pid, nickname: String(players[pid].nickname || ''), index, done, away, played };
     });
 
     return {

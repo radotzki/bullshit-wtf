@@ -1,0 +1,57 @@
+$primary: #db7151;
+$gold: #f3d467;
+$dark: #363636;
+
+.late-join {
+    .screen-center {
+        flex-direction: column;
+        padding: 0 16px;
+        text-align: center;
+    }
+
+    .late-wave {
+        font-size: 3rem;
+        line-height: 1;
+        margin-bottom: 0.3em;
+        animation: late-wave 1.2s ease-in-out 2;
+    }
+
+    .late-title {
+        max-width: 14em;
+        margin-bottom: 0.5em;
+        color: $primary;
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .late-name {
+        margin-bottom: 0.8em;
+        padding: 0.2em 0.8em;
+        border-radius: 0.5em;
+        background: $gold;
+        color: $dark;
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+
+    .late-text {
+        max-width: 22em;
+        margin-bottom: 1em;
+        font-size: 1.2rem;
+        line-height: 1.35;
+    }
+
+    .late-score {
+        max-width: 22em;
+        font-size: 1rem;
+        line-height: 1.35;
+        opacity: 0.85;
+    }
+}
+
+@keyframes late-wave {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(18deg); }
+    75% { transform: rotate(-12deg); }
+}

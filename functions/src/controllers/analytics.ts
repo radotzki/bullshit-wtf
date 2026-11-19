@@ -1,4 +1,4 @@
-import { GameScheme, GameState, isTestCampaign } from "../game-model";
+import { GameScheme, GameState, isTestCampaign, isLateJoin } from "../game-model";
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { recordCrewGame } from './crew';
@@ -52,7 +52,9 @@ export async function onStateChange(pin: string) {
 //   replay  carried into the next game by Replay
 //   crew    tapped Rematch on a crew page, or opened a crew link
 //   home    typed the PIN into the code box at the top of the home page ("Got a code?")
-// The server alone writes one more value, 'test', for every join of a test game (see onJoinGame).
+// The server alone writes two more values (see onJoinGame): 'test', for every join of a test game, and
+// 'late', for a join of a game that had started (a seat from the next question, join.ts), in place of the
+// page's own source, so late joins can be counted on their own.
 export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home'];
 
 export function cleanVia(via: any): string | null {
@@ -65,6 +67,27 @@ export function cleanVia(via: any): string | null {
 
 /** The value of users.via for every join of a test game, whatever the join's real source was. */
 export const TEST_VIA = 'test';
+
+/** The value of users.via for a join of a game that had started (see isLateJoin in game-model). */
+export const LATE_VIA = 'late';
+
+/** Whether this browser's join of the game is a late one. A failed read counts as not. */
+async function lateJoin(pin: string, uid: string): Promise<boolean> {
+    try {
+        if (typeof pin !== 'string' || !/^[A-Za-z]{1,12}$/.test(pin)) {
+            return false;
+        }
+        const game = gamesRef.child(pin.toUpperCase());
+        const [state, questionIndex, totalQ, players] = await Promise.all([
+            get<any>(game.child('state')), get<number>(game.child('questionIndex')), get<number>(game.child('totalQ')),
+            get<any>(game.child('players')),
+        ]);
+        return isLateJoin({ state, questionIndex, totalQ, players }, uid);
+    } catch (e) {
+        console.error('lateJoin failed', pin, e && e.message);
+        return false;
+    }
+}
 
 /** Whether the game is a test game (its campaign is a test tag). A failed read counts as not. */
 async function isTestGame(pin: string): Promise<boolean> {
@@ -86,6 +109,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
     const arrival = await hostArrivalColumns(pin, via);
     if (await isTestGame(pin)) {
         via = TEST_VIA;
+    } else if (await lateJoin(pin, uid)) {
+        via = LATE_VIA;
     }
     return insert('users', {
         ...arrival,

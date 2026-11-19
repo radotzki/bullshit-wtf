@@ -27,6 +27,11 @@ export interface JoinStrings {
     /** This phone's seat went to another phone with the same name (GameService.seatTaken). */
     seatTakenTitle: string;
     seatTakenText: string;
+    /** The game has started: the phone joins from the next question (join.ts lateStart). */
+    lateNote: string;
+    /** The game is on its last question: no new seat until its players play again (GAME_ENDING). */
+    endingTitle: string;
+    endingText: string;
     /** What to show for a failed PIN or join: the server's code, and its (English) message. */
     error: (code: string, message: string) => string;
     /** Added to a wrong PIN that was typed with Hebrew letters: codes are English letters. */
@@ -52,6 +57,9 @@ const en: JoinStrings = {
     tryAnother: 'TRY ANOTHER PIN',
     seatTakenTitle: 'Someone else took this seat',
     seatTakenText: 'Another phone joined under the same name. Pick a new name to join again.',
+    lateNote: 'This game has started. You\'re in from the next question.',
+    endingTitle: 'Almost over',
+    endingText: 'This game is on its last question. Stay here: when they play again, you can join the next game.',
     // The English pages show the server's own words, as before.
     error: (code, message) => message,
     englishLetters: 'Game codes are English letters.',
@@ -60,6 +68,7 @@ const en: JoinStrings = {
 const heErrors: { [code: string]: string } = {
     GAME_NOT_EXIST: 'קוד המשחק שגוי',
     GAME_IS_FULL: 'מצטערים, המשחק מלא',
+    GAME_ENDING: 'המשחק כמעט נגמר',
 };
 
 const he: JoinStrings = {
@@ -81,6 +90,9 @@ const he: JoinStrings = {
     tryAnother: 'לנסות קוד אחר',
     seatTakenTitle: 'מישהו אחר תפס את המקום הזה',
     seatTakenText: 'טלפון אחר הצטרף עם אותו כינוי. בחרו כינוי חדש כדי להצטרף שוב.',
+    lateNote: 'המשחק כבר התחיל. נכנסים מהשאלה הבאה.',
+    endingTitle: 'המשחק כמעט נגמר',
+    endingText: 'זאת השאלה האחרונה. הישארו כאן: כשישחקו שוב, תוכלו להצטרף למשחק הבא.',
     error: code => heErrors[code] || 'אופס, משהו השתבש. נסו שוב',
     englishLetters: 'הקוד באותיות באנגלית.',
 };

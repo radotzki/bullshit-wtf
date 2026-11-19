@@ -1,4 +1,4 @@
-import { GameScheme, GameState } from '../game-model';
+import { GameScheme, GameState, lateWaiting } from '../game-model';
 import { revealDoneWait } from './phase';
 import { playerPicks } from './scoring';
 import { notPicking, writingSent } from './about';
@@ -31,11 +31,24 @@ function canLeaveOut(game: GameScheme): boolean {
     return !!game && typeof game.playedFrom === 'number' && (game.questionIndex || 0) > game.playedFrom;
 }
 
-/** Has this seat sent a lie or a pick in this game, the question being played included? */
+/**
+ * Has this seat sent a lie or a pick in this game, the question being played included? A latecomer's
+ * first question counts as played: the player has just sat down and is waited for like everyone.
+ */
 function hasPlayed(game: GameScheme, pid: string): boolean {
+    const player = game.players && game.players[pid];
+    if (player && typeof player.late === 'number' && player.late === (game.questionIndex || 0)) {
+        return true;
+    }
     // writingSent: the lies, and the truth of the player an About question is about (see about.ts).
     return !!((game.played && game.played[pid]) || writingSent(game)[pid] ||
         playerPicks(game)[pid]);
+}
+
+/** The seats in the game now: every seat but a latecomer's whose first question has not come yet. */
+function seatsIn(game: GameScheme): string[] {
+    const players = (game && game.players) || {};
+    return Object.keys(players).filter(pid => !lateWaiting(players[pid], game.questionIndex));
 }
 
 /**
@@ -52,7 +65,7 @@ export function seatsToWaitFor(game: GameScheme): string[] {
 
 /** The seats the empty seats rule waits for: every seat on question 1, then those that sent something. */
 function seatsPlaying(game: GameScheme): string[] {
-    const pids = Object.keys(game && game.players || {});
+    const pids = seatsIn(game);
     return canLeaveOut(game) ? pids.filter(pid => hasPlayed(game, pid)) : pids;
 }
 
@@ -70,8 +83,7 @@ export function everyoneSent(game: GameScheme, sent: { [pid: string]: any } | nu
  * (leftOutGuardMs) while a seat is left out, 0 when no seat is.
  */
 export function leftOutGuardWait(game: GameScheme, now: number): number {
-    const seats = Object.keys(game && game.players || {}).length;
-    if (!game || !game.state || seatsPlaying(game).length === seats) {
+    if (!game || !game.state || seatsPlaying(game).length === seatsIn(game).length) {
         return 0;
     }
     return Math.max(0, game.state.timestamp + leftOutGuardMs(game.state.id) - now);
@@ -122,7 +134,7 @@ export function endsAfterGuard(game: GameScheme, now: number): boolean {
     if (!game || !game.state || !guardedPhase(game.state.id) || leftOutGuardWait(game, now) > 0) {
         return false;
     }
-    const leftOut = seatsPlaying(game).length < Object.keys(game.players || {}).length;
+    const leftOut = seatsPlaying(game).length < seatsIn(game).length;
     // Only a player's pick counts (see scoring.ts). The writing counts an About question's truth too.
     const sent = game.state.id === GameState.ShowQuestion ? writingSent(game) : playerPicks(game);
     return leftOut && everyoneSent(game, sent);

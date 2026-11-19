@@ -110,6 +110,14 @@ export interface GameStrings {
 
     /** Anything that failed without a message of its own. */
     oops: string;
+
+    // A phone that joined after START (GamePlayer.late), until its first question comes.
+    lateTitle: string;
+    lateText: string;
+    /** Its starting score: the lowest at the table (lateScore in game-model). */
+    lateScore: (points: number) => string;
+    /** Every screen of the table, while latecomers wait for their first question. */
+    lateJoining: (names: string) => string;
 }
 
 /** A number that has been read: a line built from a missing one prints nothing, never "undefined". */
@@ -196,6 +204,11 @@ const en: GameStrings = {
     signed: points => points > 0 ? `+${points}` : `${points}`,
 
     oops: 'oops, something went wrong. Please try again',
+
+    lateTitle: 'You\'re in from the next question',
+    lateText: 'The table is in the middle of a question. Yours is coming.',
+    lateScore: points => `You start on ${points} points, the lowest at the table, so you can still win.`,
+    lateJoining: names => `👋 Joining from the next question: ${names}`,
 };
 
 // Hebrew: short and plain, as players of party games say it, and without gendered verbs
@@ -281,6 +294,11 @@ const he: GameStrings = {
     signed: points => `⁦${points > 0 ? '+' + points : points}⁩`,
 
     oops: 'אופס, משהו השתבש. נסו שוב',
+
+    lateTitle: 'נכנסת מהשאלה הבאה',
+    lateText: 'השולחן באמצע שאלה. השאלה הבאה כבר שלך.',
+    lateScore: points => `מתחילים עם ⁦${points}⁩ נקודות, הניקוד הנמוך בשולחן, אז עוד אפשר לנצח.`,
+    lateJoining: names => `👋 מצטרפים מהשאלה הבאה: ${names}`,
 };
 
 export function gameStrings(locale: string): GameStrings {

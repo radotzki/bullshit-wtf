@@ -288,7 +288,26 @@ function updateState(stateId: number): GameStateInfo {
 
 function updateGame(pin: string, update: Partial<GameScheme>) {
     // Returned so the caller waits for the write before finishing.
-    return gamesRef.child(pin).update(update);
+    return gamesRef.child(pin).update(scoresOnly(update));
+}
+
+/**
+ * The scoreboard's new scores are written seat by seat, not as the whole players node: a latecomer who
+ * joined while this step was being worked out keeps their seat (join.ts), which a whole node read a
+ * moment before would erase.
+ */
+export function scoresOnly(update: Partial<GameScheme>): { [path: string]: any } {
+    if (!update || !update.players) {
+        return update;
+    }
+    const out: { [path: string]: any } = Object.assign({}, update);
+    delete out.players;
+    Object.keys(update.players).forEach(pid => {
+        if (update.players[pid]) {
+            out[`players/${pid}/score`] = update.players[pid].score || 0;
+        }
+    });
+    return out;
 }
 
 async function populateQuestion(game: GameScheme, qidx: number) {

@@ -225,8 +225,12 @@ export class ApiService {
         // page, or reloaded it), the server gives the seat back instead of adding a second one.
         const user = this.sessionService.user;
         const pid = user && user.pid ? user.pid : null;
-        return this.post<{ pid: string; nickname?: string; swapped?: boolean }>(`join`, { pin, nickname, uid, hostKey, pid })
-            .then(resp => ({ pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped }));
+        // late: the game had started, and the seat begins at this question (from 0); see GameService.
+        return this.post<{ pid: string; nickname?: string; swapped?: boolean; late?: number }>(`join`, { pin, nickname, uid, hostKey, pid })
+            .then(resp => ({
+                pid: resp.pid, nickname: resp.nickname || nickname, swapped: !!resp.swapped,
+                late: typeof resp.late === 'number' ? resp.late : undefined,
+            }));
     }
 
     /**
@@ -292,6 +296,44 @@ export class ApiService {
 
             return () => subs.forEach(s => s.unsubscribe());
         });
+    }
+
+    /**
+     * This phone's seat, if it joined after START: the question it begins at (GamePlayer.late), and the
+     * question the game is on, live. `late` is null for a seat that was there from the lobby.
+     */
+    lateSeat(pin: string): Observable<{ late: number | null; q: number }> | null {
+        const user = this.sessionService.user;
+        const pid = user && user.pid;
+        if (!pin || !pid || this.sessionService.presenter) {
+            return null;
+        }
+        pin = pin.toUpperCase();
+        const game = this.gamesRef.child(pin);
+        return new Observable<{ late: number | null; q: number }>((observer: Subscriber<{ late: number | null; q: number }>) => {
+            let late: number | null;
+            let q: number;
+            let lateRead = false;
+            let qRead = false;
+            const next = () => {
+                if (lateRead && qRead) {
+                    observer.next({ late: typeof late === 'number' ? late : null, q: q || 0 });
+                }
+            };
+            const subs: Subscription[] = [
+                this.observe<number>(game.child('players').child(pid).child('late'))
+                    .subscribe(v => { late = v; lateRead = true; next(); }, err => observer.error(err)),
+                this.observe<number>(game.child('questionIndex'))
+                    .subscribe(v => { q = v; qRead = true; next(); }, err => observer.error(err)),
+            ];
+            return () => subs.forEach(sub => sub.unsubscribe());
+        });
+    }
+
+    /** The question this phone's seat begins at, as its join just said (SessionService.lateHint), or null. */
+    lateHint(pin: string): number | null {
+        const hint = this.sessionService.lateHint;
+        return hint && hint.pin === String(pin || '').toUpperCase() ? hint.late : null;
     }
 
     gameState(pin: string) {

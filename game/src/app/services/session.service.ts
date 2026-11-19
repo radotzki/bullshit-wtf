@@ -12,6 +12,11 @@ export class SessionService implements CanActivate {
     private _user: User;
     /** Set when the server swapped this phone's nickname; the lobby shows the toast once and clears it. */
     nameSwap: { pin: string; nickname: string } = null;
+    /**
+     * Set by the join page when the game had started (join's `late`): this phone shows "You're in from
+     * the next question" at once, before the seat's own `late` is read (GameService).
+     */
+    lateHint: { pin: string; late: number } = null;
 
     constructor(
         private router: Router,

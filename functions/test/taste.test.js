@@ -318,21 +318,24 @@ test('one player with a big screen is a whole game: the room is watching', async
     assert.strictEqual(await next(pin), S.ShowQuestion);
 });
 
-test('a friend who joins a running taste picks too, and the game stays pick-only', async () => {
+test('a friend who joins a running taste picks from the next question, and the game stays pick-only', async () => {
     const pin = lobby(['dana'], 9);
     await next(pin);
     await next(pin);
     assert.strictEqual(state(pin), S.ShowAnswers);
-    const { pid } = await join(pin, 'ben', 'u-ben');
+    const { pid, late } = await join(pin, 'ben', 'u-ben');
+    assert.strictEqual(late, 1, 'a latecomer begins at the next question');
     await pick(pin, 'p1', truthOf(pin));
-    assert.strictEqual(state(pin), S.ShowAnswers, 'question 1 waits for every seat, as in any game');
-    await pick(pin, pid, houseLieOf(pin));
-    assert.strictEqual(state(pin), S.RevealTheTruth);
+    assert.strictEqual(state(pin), S.RevealTheTruth, 'the latecomer is not waited for on the question under way');
     assert.deepStrictEqual(game(pin).state.taste, { found: 1, length: 9 });
     await next(pin);
     assert.strictEqual(await next(pin), S.ShowAnswers, 'still no writing');
     assert.strictEqual(game(pin).players.p1.score, 1000);
-    assert.strictEqual(game(pin).players[pid].score, 0);
+    assert.strictEqual(game(pin).players[pid].score, 0, 'the lowest score when they came: dana had 0 then');
+    await pick(pin, 'p1', truthOf(pin));
+    assert.strictEqual(state(pin), S.ShowAnswers, 'from the next question the latecomer is waited for');
+    await pick(pin, pid, truthOf(pin));
+    assert.strictEqual(state(pin), S.RevealTheTruth);
 });
 
 test('Replay after a taste makes a whole game of the length the host chose, in its lobby', async () => {

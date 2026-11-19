@@ -1,4 +1,4 @@
-import { MAX_PLAYERS, GameScheme, GamePlayer, GameState } from '../game-model';
+import { MAX_PLAYERS, GameScheme, GamePlayer, GameState, lateStart, lateScore } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
@@ -12,6 +12,20 @@ export interface JoinResult {
     nickname: string;
     /** The typed name was a slur or a sex word and was swapped; only this phone is told. */
     swapped?: boolean;
+    /** The game had started: the seat begins at this question (from 0), see lateStart. */
+    late?: number;
+}
+
+/**
+ * Why a phone may not take a new seat in a started game now: it is on its last question,
+ * so a seat would begin at nothing. The join page waits on it, and offers the Replay lobby once the
+ * game is over (GAME_OVER with its rematch). Null in the lobby, and while the game takes latecomers.
+ */
+export function endingError(game: GameScheme): { message: string; code: 'GAME_ENDING' } | null {
+    if (!game || !game.state || game.state.id === GameState.GameStaging || lateStart(game) !== null) {
+        return null;
+    }
+    return { message: 'That game is about to end', code: 'GAME_ENDING' };
 }
 
 /**
@@ -139,11 +153,26 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
         return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });
     }
 
+    // A started game on its last question takes no new seat: the page waits for its Replay.
+    const ending = endingError(game);
+    if (ending) {
+        return Promise.reject(ending);
+    }
+
     const playersRef = gamesRef.child(pin).child('players');
     const pid = playersRef.push().key;
     const { nickname, swapped } = cleanNickname(typed, uid, pid, game.locale, game.players);
     const player: GamePlayer = { nickname, uid, score: 0 };
     const result: JoinResult = swapped ? { pid, nickname, swapped } : { pid, nickname };
+    // A latecomer: a seat from the next question, at the lowest score at the table (lateScore), so a
+    // friend who walks in at the second round can still win and passes nobody by walking in.
+    const late = lateStart(game);
+    if (late !== null) {
+        player.late = late;
+        player.score = lateScore(game);
+        result.late = late;
+        console.log(`[PIN: ${pin}] a latecomer joined, from question ${late + 1}`);
+    }
     const ua = cleanAgent(agent);
     if (ua) {
         await gamesRef.child(pin).child('agents').child(pid).set(ua);
