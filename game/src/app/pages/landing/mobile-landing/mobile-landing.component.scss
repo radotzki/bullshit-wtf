@@ -290,6 +290,22 @@
         }
     }
 
+    // The picture's band and the daily line a little tighter: with the daily line under Create,
+    // Join Game's foot sat 16 px under the first screen of a 320 x 568 phone.
+    .front-door.round {
+        padding-top: 4px;
+        padding-bottom: 6px;
+
+        .picture {
+            margin-top: 0;
+        }
+    }
+
+    .home .alone-line {
+        padding-top: 7px;
+        padding-bottom: 8px;
+    }
+
     .home .menu-button-text-second {
         font-size: .9rem;
     }

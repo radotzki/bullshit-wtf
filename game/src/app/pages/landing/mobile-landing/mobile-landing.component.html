@@ -40,9 +40,6 @@
         </ng-container>
     </div>
 
-    <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
-    <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
-
     <!-- Someone who never played (most visitors from a search) gets one button that starts a game,
          right under the facts and above the picture, so it is on the first screen of the smallest
          phone; then the picture of one round; then the rest of the menu. A returning player keeps
@@ -84,6 +81,7 @@
             </div>
         </div>
         <ng-container *ngTemplateOutlet="join"></ng-container>
+        <ng-container *ngTemplateOutlet="season_line"></ng-container>
         <!-- The demo clip: 20 silent seconds of one real round (components/demo-clip). Under Join, so
              it moves nothing of the first screen, and it loads only once it is near the screen. -->
         <app-demo-clip [lang]="t.lang"></app-demo-clip>
@@ -93,7 +91,15 @@
     <ng-container *ngIf="!picture">
         <ng-container *ngTemplateOutlet="first === 'create' ? create : join"></ng-container>
         <ng-container *ngTemplateOutlet="first === 'create' ? join : create"></ng-container>
+        <ng-container *ngTemplateOutlet="season_line"></ng-container>
     </ng-container>
+
+    <ng-template #season_line>
+        <!-- In season, one line to the holiday page (search-links.ts). Under Join, not above Create:
+             above Create it pushed Join Game off the first screen of a 360 x 640 phone, and a guest
+             told "open bullshit.wtf and join" is the one who needs Join. -->
+        <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
+    </ng-template>
 
     <ng-template #join>
         <div class="menu-button join-game" [class.is-first]="first === 'join'" routerLink="/join-game">
