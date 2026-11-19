@@ -13,7 +13,8 @@
 --                             tap to the beacon starting (Hosting or the joinPreview function)
 --   one row of kind 'drawn'   when the app first drew (from Nov 2026): ms on the beacon's clock, as
 --                             every other row; page.ms + drawn.ms is the whole wait from the tap.
---   Both kinds use the existing columns: no column was added for them.
+--   one row of kind 'clip'    the first time the home's demo clip is half in view (from Nov 2026).
+--   These kinds use the existing columns: no column was added for them.
 -- So: page views = COUNT(DISTINCT view); a view made a game when any of its rows has created.
 -- A row holds no IP address, no user agent, no uid, no nickname, no PIN and no crew id, and the
 -- beacon sets no cookie and stores nothing on the device.

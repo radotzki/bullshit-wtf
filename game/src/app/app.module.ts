@@ -37,6 +37,7 @@ import { HostAskComponent } from './components/host-ask/host-ask.component';
 import { InviteGroupComponent } from './components/invite-group/invite-group.component';
 import { NextWeekComponent } from './components/next-week/next-week.component';
 import { WaitingRowComponent } from './components/waiting-row/waiting-row.component';
+import { DemoClipComponent } from './components/demo-clip/demo-clip.component';
 import { ShareService } from './services/share.service';
 import { ResultsCardService } from './services/results-card.service';
 import { CrewService } from './services/crew.service';
@@ -74,6 +75,7 @@ import { StepComponent } from './pages/step/step.component';
         InviteGroupComponent,
         NextWeekComponent,
         WaitingRowComponent,
+        DemoClipComponent,
         CrewComponent,
         StepComponent,
     ],

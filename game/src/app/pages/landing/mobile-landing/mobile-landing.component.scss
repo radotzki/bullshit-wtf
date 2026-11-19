@@ -330,6 +330,15 @@
     }
 }
 
+// The demo clip of one round (components/demo-clip), under Join for someone who never played: on the
+// same dark band as the front door, so its caption reads.
+app-demo-clip {
+    flex: none;
+    padding: 2px 0 4px;
+    background-color: #2f1b2c;
+    color: #f4fcca;
+}
+
 // One line to the Hanukkah page, in season only.
 .season {
     flex: none;

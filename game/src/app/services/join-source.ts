@@ -119,9 +119,10 @@ export function setPreferredLocale(locale: string) {
 
 /**
  * Tell the visit beacon (the inline script in index.html) that this page view created or joined a
- * game. It sends no PIN and no name: only that it happened, for the visits table.
+ * game, or that the home's demo clip came into view ('clip', once a page view). It sends no PIN and
+ * no name: only that it happened, for the visits table.
  */
-export function markVisit(what: 'create' | 'join') {
+export function markVisit(what: 'create' | 'join' | 'clip') {
     try {
         const beacon = (window as any).bsVisit;
         if (typeof beacon === 'function') {

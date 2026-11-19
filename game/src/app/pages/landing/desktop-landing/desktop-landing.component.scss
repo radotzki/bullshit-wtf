@@ -269,6 +269,11 @@
     }
 }
 
+// The demo clip of one round (components/demo-clip), right under the first screen.
+app-demo-clip {
+    color: #f4fcca;
+}
+
 .below {
     flex: none;
     width: calc(100% - 48px);
