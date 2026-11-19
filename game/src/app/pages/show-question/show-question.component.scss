@@ -47,6 +47,38 @@
         margin-top: 0;
     }
 
+    // "Pick a decoy": a line, the offers one per line (they fit at 320 px), and a small note.
+    .decoy {
+        margin-top: -4px;
+    }
+
+    .decoy-label {
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+    }
+
+    .decoy-chip {
+        height: auto;
+        min-height: 2.5em;
+        margin-bottom: 6px;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    // Only the chosen chip is filled: a chip under a resting mouse or a finger stays outlined.
+    .decoy-chip.is-outlined:hover,
+    .decoy-chip.is-outlined:focus {
+        background-color: transparent;
+        color: #db7151;
+    }
+
+    .decoy-note {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
     .give-me-a-lie {
         text-decoration: none;
         font-size: 0.9rem;

@@ -40,7 +40,8 @@
                                     <span class="points negative" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                 </ng-container>
                                 <ng-container *ngIf="!row.realAnswer && !row.houseLie">
-                                    <span class="label">{{t.bullshitBy}}</span>
+                                    <span class="tag-house tag-decoy" *ngIf="row.decoy">{{ pairWords.tag }}</span>
+                                    <span class="label" *ngIf="!row.decoy">{{t.bullshitBy}}</span>
                                     <span class="player" *ngFor="let c of row.creators">
                                         <img [src]="'/assets/' + c.picture"> {{ c.nickname }}
                                     </span>
@@ -104,7 +105,8 @@
                                         <span class="points negative" dir="ltr" *ngIf="row.points"> {{ row.points | bsPoints }} </span>
                                     </ng-container>
                                     <ng-container *ngIf="!row.realAnswer && !row.houseLie">
-                                        <span class="label">{{ t.bullshitBy }}</span>
+                                        <span class="tag-house tag-decoy" *ngIf="row.decoy">{{ pairWords.tag }}</span>
+                                        <span class="label" *ngIf="!row.decoy">{{ t.bullshitBy }}</span>
                                         <span class="player" *ngFor="let c of row.creators">
                                             <img [src]="'/assets/' + c.picture"> <span class="name">{{ c.nickname }}</span>
                                         </span>

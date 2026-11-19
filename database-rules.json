@@ -53,6 +53,10 @@
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"
                 },
+                "pair": {
+                    ".read": "true",
+                    ".write": "auth.uid == 'bl-service-worker'"
+                },
                 "currentQ": {
                     ".read": "true",
                     ".write": "auth.uid == 'bl-service-worker'"

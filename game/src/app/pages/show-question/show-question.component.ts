@@ -11,6 +11,7 @@ import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings, aboutMissedLine } from './../about-strings';
+import { pairStrings, PairStrings, decoyView, DecoyView, friendName } from './../pair-strings';
 
 @Component({
     standalone: false,
@@ -48,6 +49,12 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     // A bank question played in place of an About question that got no truth: the line saying why.
     missedLine: string = null;
     private missedView: { me: boolean; name: string } = null;
+    // "Pick a decoy" (two-player games in the test): this player's offers are `ideas`, the chip they
+    // tapped, and the friend's name for the chooser's lines.
+    pair = false;
+    pairWords: PairStrings = pairStrings('en');
+    friend = '';
+    private chosenDecoy: string = null;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -78,6 +85,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.t = gameStrings(locale);
         this.aboutWords = aboutStrings(locale);
         this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
+        this.pairWords = pairStrings(locale);
     }
 
     /**
@@ -97,20 +105,46 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies. */
+    /**
+     * Round 1 of a coach game: the hint line, the placeholder and this player's ready-made lies.
+     * A pair game: the same lies on every question, as the decoy offers, and the friend's name.
+     */
     private async loadHelper() {
         try {
-            const info = await this.apiService.getLieHelperInfo(this.pin);
+            const [info, pair] = await Promise.all([
+                this.apiService.getLieHelperInfo(this.pin),
+                this.apiService.isPairGame(this.pin),
+            ]);
             this.helperInfo = info;
             this.updateHelper();
 
-            if (info.coach && info.roundIndex === 0) {
+            if ((info.coach && info.roundIndex === 0) || pair) {
+                if (pair) {
+                    const players = await this.apiService.getPlayers(this.pin).catch(() => null);
+                    const user = this.sessionService.user;
+                    this.friend = friendName(players, user && user.pid);
+                }
                 this.ideas = await this.apiService.getMyIdeas(this.pin);
+                this.pair = pair;
                 this.updateHelper();
             }
         } catch (e) {
             // The screen works without the helper.
         }
+    }
+
+    /** The decoy chooser (pair games only), or null when it hides. Follows what is in the box. */
+    get decoy(): DecoyView {
+        return this.pair && !this.aboutName ? decoyView(this.ideas, this.answer, this.chosenDecoy) : null;
+    }
+
+    /** The friend's name in the chooser's lines. */
+    get friendLabel(): string {
+        return this.friend || this.pairWords.friend;
+    }
+
+    chooseDecoy(offer: string) {
+        this.chosenDecoy = offer;
     }
 
     private updateHelper() {
@@ -143,7 +177,9 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.loading = true;
         this.errorMsg = '';
 
-        this.apiService.answer(this.pin, this.answer.trim())
+        // A pair game: the chosen decoy goes with the lie. None chosen: the server picks one of the offers.
+        const decoy = this.decoy;
+        this.apiService.answer(this.pin, this.answer.trim(), decoy && decoy.chosen ? decoy.chosen : undefined)
             .then(() => {
                 this.questionSubmitted = true;
                 this.loading = false;
