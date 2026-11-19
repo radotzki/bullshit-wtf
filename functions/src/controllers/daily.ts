@@ -289,9 +289,10 @@ export function cacheSeconds(now: number, friend: boolean): number {
  *   daily-share  a friend's result
  *   daily-fool   a friend's lie
  *   daily-round  a chat group's round link (the puzzle's group mode, see daily-round.ts)
+ *   daily-past   a past day's page or the list of them (daily-past.ts)
  *   daily-post   any other tag, such as a post's
  */
-export const DAILY_ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool', 'daily-round'];
+export const DAILY_ARRIVALS = ['daily', 'daily-home', 'daily-seo', 'daily-game', 'daily-share', 'daily-fool', 'daily-round', 'daily-past'];
 
 /**
  * What they did (shares.method):

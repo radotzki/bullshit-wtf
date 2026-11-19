@@ -89,6 +89,8 @@ const en = {
 
     // Where the rest of the site points here.
     seoLink: 'Try today\'s question',
+    // The link to the past days (/daily/past), served by the dailyPast function.
+    pastLink: 'Past puzzles',
 
     // ---------- a chat group's round (the puzzle's group mode; see daily-round-core.js) ----------
     // The starter's card, in place of SEND TO YOUR GROUP and "Now fool your friends" (half of browsers).
@@ -243,6 +245,7 @@ const he = {
     shareFool: 'בולשיט{noTag}: החבאתי שקר בשאלה של היום. בטוח תיפלו בו.',
 
     seoLink: 'נסו את השאלה של היום',
+    pastLink: 'השאלות הקודמות',
 
     roundTitle: 'עכשיו תעבדו על הקבוצה',
     roundText: 'כתבו שקר לשאלה של היום ושלחו לקבוצה. כל מי שיפתח יכול ליפול בו, ולהוסיף שקר משלו.',

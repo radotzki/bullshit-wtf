@@ -204,6 +204,28 @@ function eraseOldRounds(now: number) {
     });
 }
 
+// Past days of the daily puzzle, a page each, for search (controllers/daily-past.ts), reached through
+// Hosting rewrites: /daily/<day> and /he/daily/<day>, the lists /daily/past and /he/daily/past, and
+// /sitemap-daily.xml (named in robots.txt). Plain HTML from the question file: no database, no write.
+// A day shows once it has ended in Israel and in every US time zone; today and later answer 404.
+import * as dailyPast from './controllers/daily-past';
+import { ARRIVAL_NOTE, VISIT_BEACON } from './plain-scripts';
+
+exports.dailyPast = functions.https.onRequest(http('dailyPast', (req, res) => {
+    const url = String(req.originalUrl || req.url || '/');
+    // On the emulators only, a play-test may set the clock (DAILY_PAST_NOW, any date Date.parse reads),
+    // to show that tomorrow's question stays hidden.
+    const set = process.env.FUNCTIONS_EMULATOR === 'true' && Date.parse(process.env.DAILY_PAST_NOW || '');
+    const now = set && isFinite(set) ? set : Date.now();
+    const found = dailyPast.answer(dailyQuestions(), url.split('?')[0], now, { arrival: ARRIVAL_NOTE, beacon: VISIT_BEACON });
+    res.set('Content-Type', found.type);
+    res.set('Cache-Control', `public, max-age=${found.status === 200 ? 300 : 0}, s-maxage=${found.cache}`);
+    if (found.noindex) {
+        res.set('X-Robots-Tag', 'noindex');
+    }
+    return res.status(found.status).send(found.body);
+}, '', ['GET', 'HEAD']));
+
 /** The round a browser opens, as it sees it (see dailyRound.roundView); a load error reads as missing. */
 async function roundFor(lang: daily.DailyLang, list: daily.DailyQuestion[], no: number, g: string, u: any, now: number) {
     const day = dailyRound.dayOfNumber(list, no);

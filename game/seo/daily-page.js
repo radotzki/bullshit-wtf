@@ -177,6 +177,7 @@ function render(lang) {
     .card .count { margin: 12px 0 0; font-weight: 600; overflow-wrap: anywhere; }
     .card .hint { margin: 8px 0 0; text-align: center; font-size: 14px; color: #6b5f59; }
     .next { margin: 24px 0 0; text-align: center; font-variant-numeric: tabular-nums; }
+    .past-link { margin: 14px 0 0; text-align: center; font-size: 15px; }
     .yesterday { margin: 10px 0 0; text-align: center; font-size: 15px; color: #5d524c; overflow-wrap: anywhere; }
     #d-error { margin-top: 8px; }
     .sub .source { font-weight: normal; font-size: 15px; }
@@ -216,6 +217,7 @@ function render(lang) {
     <div id="d-error" hidden><button type="button" class="btn primary" id="d-retry">${esc(s.tryAgain)}</button></div>
     <div class="answers" id="d-answers"></div>
     <div id="d-reveal" hidden></div>
+    <p class="past-link"><a href="${s.path}/past">${esc(s.pastLink)}</a></p>
     <p class="foot" id="d-foot">${esc(s.foot)}</p>
     <noscript><p class="note">${esc(s.noscript)}</p></noscript>
   </main>
