@@ -1618,14 +1618,14 @@
   "daily-27-en-037": {
     "day": "2027-02-06",
     "lang": "en",
-    "questionText": "On her 63rd birthday in 1901, a $blank$ named Annie Taylor went over Niagara Falls in a barrel",
-    "realAnswer": "schoolteacher",
+    "questionText": "Elizabeth II became queen on the night of 5–6 February 1952, while she was staying at a hotel in Africa built in a $blank$",
+    "realAnswer": "fig tree",
     "fakeAnswers": [
-      "circus acrobat",
-      "nun",
-      "lighthouse keeper"
+      "lighthouse",
+      "salt mine",
+      "railway carriage"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Annie_Edson_Taylor"
+    "citation": "https://en.wikipedia.org/wiki/Treetops_Hotel"
   },
   "daily-27-en-038": {
     "day": "2027-02-07",
@@ -2326,14 +2326,14 @@
   "daily-27-he-037": {
     "day": "2027-02-06",
     "lang": "he",
-    "questionText": "ביום הולדתה ה-63, ב-1901, $blank$ בשם אנני טיילור עברה את מפלי הניאגרה בתוך חבית",
-    "realAnswer": "מורה",
+    "questionText": "אליזבת השנייה הפכה למלכה בלילה של 5–6 בפברואר 1952, כשהתארחה במלון באפריקה שנבנה בתוך $blank$",
+    "realAnswer": "עץ תאנה",
     "fakeAnswers": [
-      "אקרובטית בקרקס",
-      "נזירה",
-      "שומרת מגדלור"
+      "מגדלור",
+      "מכרה מלח",
+      "קרון רכבת"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Annie_Edson_Taylor"
+    "citation": "https://en.wikipedia.org/wiki/Treetops_Hotel"
   },
   "daily-27-he-038": {
     "day": "2027-02-07",
@@ -2458,7 +2458,7 @@
   "daily-27-he-048": {
     "day": "2027-02-17",
     "lang": "he",
-    "questionText": "באצטדיון של המכביה הראשונה, בתל אביב ב-1932, העבודות הסתיימו $blank$",
+    "questionText": "באצטדיון של המכביה הראשונה בתל אביב, העבודות הסתיימו $blank$",
     "realAnswer": "בלילה שלפני הפתיחה",
     "fakeAnswers": [
       "שלוש שנים קודם",
