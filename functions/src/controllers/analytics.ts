@@ -192,6 +192,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     seen-hanukkah        the link SAME TABLE TOMORROW saved (?via=hanukkah-night-N) opened the page: the
 //                          recap shows in either half, so this row stands in for seen-player/seen-other and the
 //                          test's halves still compare the same visits
+//     join-playing         on that link, a browser that didn't play pressed JOIN NOW: the table's game was
+//                          under way, and it joined it (a link that waits for the table says nothing more)
 /** The lone-host help's rows: their crew_id is the lobby's PIN. */
 export const LOBBY_HELP = 'lobby-help';
 /** The night-after rows: their crew_id is the finished game's PIN. */
@@ -217,8 +219,8 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew', 'same-table', 'same-table-open', 'join-them',
         // A player came late, the table mid-game: CATCH THE NEXT ROUND, or START A NEW TABLE NOW.
         'catch-next', 'new-table',
-        // Opened by SAME TABLE TOMORROW's link, on a Hanukkah night.
-        'seen-hanukkah'],
+        // Opened by SAME TABLE TOMORROW's link, on a Hanukkah night; JOIN NOW into the table's game under way.
+        'seen-hanukkah', 'join-playing'],
     'hanukkah-night': ['save', 'save-google'],
 };
 

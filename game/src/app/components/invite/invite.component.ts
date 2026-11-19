@@ -42,6 +42,8 @@ export class InviteComponent implements OnInit {
     g: GameStrings = gameStrings('en');
     /** Shown once the game's language is known, so a Hebrew game never flashes English. */
     ready = false;
+    /** The game's seasonal pack: a Hanukkah game's invite text says so. */
+    pack: string = null;
 
     constructor(
         private apiService: ApiService,
@@ -63,6 +65,7 @@ export class InviteComponent implements OnInit {
                 this.shareService.warmInvite(this.pin, this.locale);
             }
         }, () => this.ready = true);
+        this.apiService.getGamePack(this.pin).then(pack => this.pack = typeof pack === 'string' ? pack : null, () => { });
     }
 
     get pinUpper() {
@@ -82,7 +85,7 @@ export class InviteComponent implements OnInit {
     }
 
     get whatsappUrl() {
-        return this.shareService.whatsappUrl(this.t.inviteText(this.pinUpper), this.linkUrl);
+        return this.shareService.whatsappUrl(this.t.inviteText(this.pinUpper, this.pack), this.linkUrl);
     }
 
     get canShare() {
@@ -102,7 +105,7 @@ export class InviteComponent implements OnInit {
     async share() {
         const result = await this.shareService.share({
             title: this.t.inviteTitle,
-            text: this.t.inviteText(this.pinUpper),
+            text: this.t.inviteText(this.pinUpper, this.pack),
             url: this.linkUrl,
         }, 'invite');
         this.copied = result === 'copied';
