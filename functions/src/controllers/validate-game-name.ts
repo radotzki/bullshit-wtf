@@ -20,14 +20,9 @@ export async function validateGameName(pin: string, uid?: any, pid?: any) {
 
     const over = await gameOverError(game, Date.now());
     if (over) {
-        // An open rematch lobby comes first: in the test's other half, no recap beside it, as before. In the
-        // new half the page shows the recap under "They're playing again" (same-table.ts).
+        // Beside an open rematch lobby the page shows the recap under "They're playing again" (same-table.ts).
         const recap = nightAfter(pin, game, Date.now(), uid, pid);
-        if (recap && over.rematch && recap.half !== 'new') {
-            return Promise.reject(over);
-        }
         // A player who comes late while the table's lobby is mid-game: the page says so (same-table.ts).
-        // Only on the recap, which the other half doesn't show, so its rows stay as they were.
         if (recap && recap.player && !over.rematch && game.fork) {
             const late = await lateTable(game.fork).catch(() => null);
             if (late && 'playing' in late) {

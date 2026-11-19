@@ -37,29 +37,23 @@ test('readRecap takes the server\'s recap off a GAME_OVER error, and nothing els
     assert.strictEqual(na.readRecap({ nightAfter: recap }), recap);
 });
 
-test('the half: the game\'s own, unless the tester\'s switch says new or control', () => {
-    assert.strictEqual(na.shownHalf(recap, null), 'new');
-    assert.strictEqual(na.shownHalf({ ...recap, half: 'control' }, null), 'control');
-    assert.strictEqual(na.shownHalf({ ...recap, half: 'control' }, 'new'), 'new');
-    assert.strictEqual(na.shownHalf(recap, 'control'), 'control');
-    assert.strictEqual(na.shownHalf(recap, 'nonsense'), 'new');
-    assert.strictEqual(na.NIGHT_AFTER_KEY, 'BS_NIGHT_AFTER');
+test('the 50/50 test is retired: no half to draw, no tester\'s switch', () => {
+    assert.strictEqual(na.shownHalf, undefined);
+    assert.strictEqual(na.NIGHT_AFTER_KEY, undefined);
+    assert.ok(!/BS_NIGHT_AFTER|shownHalf|recap\.half/.test(component), 'the page still reads a half');
 });
 
-test('the seen rows name the half and whether this browser played', () => {
-    assert.strictEqual(na.seenMethod('new', true), 'seen-player');
-    assert.strictEqual(na.seenMethod('new', false), 'seen-other');
-    assert.strictEqual(na.seenMethod('control', true), 'seen-control-player');
-    assert.strictEqual(na.seenMethod('control', false), 'seen-control-other');
-    // Beside an open rematch lobby: no seen- row in either half (same-table-open / join-them count those).
-    for (const half of ['new', 'control']) {
-        for (const player of [true, false]) {
-            assert.strictEqual(na.seenMethod(half, player, 'JWAB'), null, `${half} ${player}`);
-            assert.strictEqual(na.seenMethod(half, player, undefined), na.seenMethod(half, player));
-        }
+test('the seen rows say whether this browser played', () => {
+    assert.strictEqual(na.seenMethod(true), 'seen-player');
+    assert.strictEqual(na.seenMethod(false), 'seen-other');
+    // Beside an open rematch lobby: no seen- row (same-table-open / join-them count those).
+    for (const player of [true, false]) {
+        assert.strictEqual(na.seenMethod(player, 'JWAB'), null, String(player));
+        assert.strictEqual(na.seenMethod(player, undefined), na.seenMethod(player));
     }
     assert.deepStrictEqual(na.NIGHT_AFTER_TAGS, { other: 'night-after', player: 'night-after-player' });
-    // Each method is one the server counts (functions/src/controllers/analytics.ts).
+    // Each method is one the server counts (functions/src/controllers/analytics.ts); it still takes the
+    // retired half's seen-control- rows, from pages loaded before the release.
     const analytics = fs.readFileSync(path.join(__dirname, '..', '..', 'functions', 'src', 'controllers', 'analytics.ts'), 'utf8');
     const line = /'night-after': \[([^\]]*)\]/.exec(analytics)[1];
     for (const m of ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew']) {
@@ -101,10 +95,10 @@ test('every word exists in both languages, and the Hebrew has no English left in
     assert.strictEqual(na.namesOf(recap.rows, () => false, en.and), '');
 });
 
-test('the page: the recap only in the new half, today\'s page otherwise, and the rematch first', () => {
+test('the page: the recap whenever the server sends one, today\'s page otherwise, and the rematch first', () => {
     assert.match(html, /\*ngIf="gameOver && recapShown && recap"/);
     assert.match(html, /\*ngIf="gameOver && !\(recapShown && recap\)"/);
-    // Today's page keeps its late-joiner ask, untouched, in the other half.
+    // Today's page keeps its late-joiner ask, untouched, for a link with no recap (older than a week, say).
     assert.match(html, /<app-host-ask \[locale\]="t.lang" place="game-over"><\/app-host-ask>/);
     // Players and the rest get their own button (same-table: a player opens the table again); the crew
     // link only for a crew's game.
@@ -112,7 +106,7 @@ test('the page: the recap only in the new half, today\'s page otherwise, and the
     assert.match(html, /\*ngIf="recap.crew"/);
     // Nothing of the questions: no question text, no truth on the page.
     assert.ok(!/questionText|currentQ|truth|realAnswer|\.q\b/i.test(html.slice(html.indexOf('night-after'), html.indexOf('controls game-over'))));
-    // Beside an open rematch the server sends a recap in the new half only; a later answer without one keeps the page's.
+    // A later answer without a recap (a tap on JOIN) keeps the page's.
     assert.match(component, /const recap = readRecap\(err\) \|\| \(this\.recap && this\.recapPin === pin/);
     // A test game's link sends no rows.
     assert.match(component, /this\.recap\.test\) \{\s*return;/);
@@ -159,18 +153,16 @@ function pageMethods() {
         return ts.transpile(`(function (${m[1]}) {\n${m[2]}\n})`, { target: ts.ScriptTarget.ES2017, noImplicitUseStrict: true })
             .replace(/^"use strict";\s*/, '').trim().replace(/;$/, '');
     };
-    const scope = { readRecap: na.readRecap, seenMethod: na.seenMethod, shownHalf: na.shownHalf,
-        NIGHT_AFTER_KEY: na.NIGHT_AFTER_KEY, NIGHT_AFTER_CONTENT: na.NIGHT_AFTER_CONTENT };
+    const scope = { readRecap: na.readRecap, seenMethod: na.seenMethod, NIGHT_AFTER_CONTENT: na.NIGHT_AFTER_CONTENT };
     const make = src => new Function(...Object.keys(scope), `return ${src}`)(...Object.values(scope));
     return { showGameOver: make(body('showGameOver')), setRecap: make(body('setRecap')), countRecap: make(body('countRecap')) };
 }
 
-function loadPage(err, forced) {
+function loadPage(err) {
     const m = pageMethods();
     const sent = [];
     const page = {
         pin: 'abcd', t: { lang: 'en' },
-        storageService: { getItem: () => forced || null },
         apiService: { logShare: (content, method) => sent.push(`${content}:${method}`) },
         setRecap: m.setRecap, countRecap: m.countRecap,
     };
@@ -178,13 +170,31 @@ function loadPage(err, forced) {
     return { page, sent, again: e => m.showGameOver.call(page, e) };
 }
 
-test('same table: a page load beside an open rematch sends no seen- row, in either half', () => {
+test('every game: the recap shows whatever half the server once drew, and counts one seen- row', () => {
     const played = { ...recap, player: true };
-    // No rematch: one seen- row, as before.
-    assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: recap }).sent, ['night-after:seen-other']);
+    for (const half of ['new', 'control', undefined]) {
+        const p = loadPage({ code: 'GAME_OVER', nightAfter: { ...recap, half } });
+        assert.strictEqual(p.page.recapShown, true, String(half));
+        assert.deepStrictEqual(p.sent, ['night-after:seen-other'], String(half));
+    }
     assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: played }).sent, ['night-after:seen-player']);
-    assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: recap }, 'control').sent, ['night-after:seen-control-other']);
-    // Rematch open: the new half shows the recap ("They're playing again") but sends no seen- row.
+    // A test game's link shows the recap and sends nothing.
+    const t = loadPage({ code: 'GAME_OVER', nightAfter: { ...recap, test: true } });
+    assert.strictEqual(t.page.recapShown, true);
+    assert.deepStrictEqual(t.sent, []);
+    // No recap (older than a week): today's page, nothing sent.
+    const none = loadPage({ code: 'GAME_OVER' });
+    assert.strictEqual(none.page.recapShown, false);
+    assert.deepStrictEqual(none.sent, []);
+    // A second answer for the same PIN sends no second row.
+    const again = loadPage({ code: 'GAME_OVER', nightAfter: recap });
+    again.again({ code: 'GAME_OVER' });
+    assert.strictEqual(again.page.recapShown, true);
+    assert.deepStrictEqual(again.sent, ['night-after:seen-other']);
+});
+
+test('same table: a page load beside an open rematch shows the recap and sends no seen- row', () => {
+    const played = { ...recap, player: true };
     for (const r of [recap, played]) {
         const p = loadPage({ code: 'GAME_OVER', rematch: 'JWAB', nightAfter: r });
         assert.strictEqual(p.page.recapShown, true);
@@ -193,11 +203,7 @@ test('same table: a page load beside an open rematch sends no seen- row, in eith
         // A later answer on the same page load (a tap on JOIN) sends none either.
         p.again({ code: 'GAME_OVER', rematch: 'JWAB' });
         assert.deepStrictEqual(p.sent, []);
-        // The tester's control switch: still none.
-        assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', rematch: 'JWAB', nightAfter: r }, 'control').sent, []);
     }
-    // The control half's server answer beside a rematch carries no recap: nothing sent, as before.
-    assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', rematch: 'JWAB' }).sent, []);
 });
 
 // ---- A player who comes late: the table's next game started without them (review of #160, section 2) ----
@@ -240,7 +246,6 @@ test('late player: the page says so above the recap, and its two buttons', () =>
 test('late player: the page load sends its seen- row as before, and no other row', () => {
     const late = { ...recap, player: true, tablePlaying: true };
     assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: late }).sent, ['night-after:seen-player']);
-    assert.deepStrictEqual(loadPage({ code: 'GAME_OVER', nightAfter: late }, 'control').sent, ['night-after:seen-control-player']);
     const p = loadPage({ code: 'GAME_OVER', nightAfter: late });
     assert.strictEqual(p.page.recapShown, true);
     p.again({ code: 'GAME_OVER' });

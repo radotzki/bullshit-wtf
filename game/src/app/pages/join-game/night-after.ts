@@ -1,14 +1,14 @@
 /**
- * "The night after": what a finished game's own link shows in the week after the game, in the new half
- * of a 50/50 test (by the game's PIN; the server's night-after.ts builds the recap and draws the half).
- * The other half keeps today's "Game over" page. Every row it sends goes to BigQuery `shares` with
- * content_type night-after and the game's PIN in crew_id; a test game sends none.
+ * "The night after": what a finished game's own link shows in the week after the game, for every game
+ * (the server's night-after.ts builds the recap; its 50/50 test by PIN is retired). Every row it sends goes
+ * to BigQuery `shares` with content_type night-after and the game's PIN in crew_id; a test game sends none.
  * Kept free of Angular so it can be tested in Node.
  */
 
 /** The recap as the server sends it on GAME_OVER (validateGameName), within a week of the game. */
 export interface NightAfterRecap {
-    half: 'new' | 'control';
+    /** The retired test's half: the server sends 'new' for every game, and the page no longer reads it. */
+    half?: string;
     player: boolean;
     endedAt: number;
     locale: 'en' | 'he';
@@ -24,8 +24,6 @@ export interface NightAfterRecap {
     tablePlaying?: boolean;
 }
 
-/** A tester's switch, in the browser console: localStorage.BS_NIGHT_AFTER = 'new' or 'control'. */
-export const NIGHT_AFTER_KEY = 'BS_NIGHT_AFTER';
 export const NIGHT_AFTER_CONTENT = 'night-after';
 /**
  * "Same table tomorrow": which ask the recap shows. A lobby of this game is open: everyone sees "They're
@@ -57,25 +55,17 @@ export function readRecap(err: any): NightAfterRecap | null {
     return r as NightAfterRecap;
 }
 
-/** The half this browser sees: the tester's switch when it is set, else the game's own. */
-export function shownHalf(recap: NightAfterRecap, forced?: string | null): 'new' | 'control' {
-    if (forced === 'new' || forced === 'control') {
-        return forced;
-    }
-    return recap.half === 'new' ? 'new' : 'control';
-}
-
 /**
- * The `seen-` row's method for this page load, or null for none. Beside an open rematch lobby only the new
- * half shows a recap ("They're playing again"); the other half shows none there, as before "Same table
- * tomorrow". So neither half sends a `seen-` row then, and the test's read (seen-other against
- * seen-control-other) compares the same visits; `same-table-open` and `join-them` count those.
+ * The `seen-` row's method for this page load, or null for none. Beside an open rematch lobby the recap
+ * shows "They're playing again" and sends no `seen-` row, as it always did, so seen-other keeps counting
+ * the same visits as before; `same-table-open` and `join-them` count those. (Pages of the retired test's
+ * other half sent seen-control-player / seen-control-other.)
  */
-export function seenMethod(half: 'new' | 'control', player: boolean, rematch?: string | null): string | null {
+export function seenMethod(player: boolean, rematch?: string | null): string | null {
     if (rematch) {
         return null;
     }
-    return (half === 'new' ? 'seen-' : 'seen-control-') + (player ? 'player' : 'other');
+    return player ? 'seen-player' : 'seen-other';
 }
 
 /** When the game was, as the heading says it: tonight, today, last night, yesterday, or a weekday. */

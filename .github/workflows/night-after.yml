@@ -1,7 +1,7 @@
 # The night-after check for every pull request: .github/smoke/emulator-night-after.js plays a whole
 # test game on three phones and the big screen, in English and in Hebrew, against the Firebase
-# emulators, then opens the game's link again as a player, as someone who didn't play and in the
-# control half. It is the one test of the join page's recap and the final scoreboard together.
+# emulators, then opens the game's link again as a player, as someone who didn't play, and as a
+# browser with the retired 50/50 test's control switch still set: every one sees the recap. It is the one test of the join page's recap and the final scoreboard together.
 #
 # Needs no secrets and touches no Firebase project: the emulators run under the demo-bullshit
 # project, the browser resolves no host but 127.0.0.1, and every request the built game makes to

@@ -82,7 +82,8 @@ function call(name, body, headers = {}) {
     });
 }
 
-const { nightAfter, nightAfterHalf, NIGHT_AFTER_MS } = require(path.join(dist, 'night-after'));
+const naModule = require(path.join(dist, 'night-after'));
+const { nightAfter, NIGHT_AFTER_MS } = naModule;
 const { cleanShare, onShare } = require(path.join(dist, 'analytics'));
 console.log = () => {};
 const Staging = 0, Final = 6;
@@ -109,26 +110,24 @@ function finished(at, extra = {}) {
 function seed(games) {
     db.games = JSON.parse(JSON.stringify(games));
 }
-/** A PIN in the given half of the test. */
+/** PINs of the retired test's two halves (the lowest bit of the first byte of SHA-256('night-after:' + PIN)). */
+const oldHalf = (pin) => require('crypto').createHash('sha256').update('night-after:' + pin).digest()[0] % 2 === 1;
 function pinIn(half) {
     for (let i = 0; i < 1000; i++) {
         const pin = 'NA' + String.fromCharCode(65 + (i % 26)) + String.fromCharCode(65 + Math.floor(i / 26) % 26);
-        if (nightAfterHalf(pin) === (half === 'new')) return pin;
+        if (oldHalf(pin) === (half === 'new')) return pin;
     }
     throw new Error('no pin');
 }
 
-test('the half: a stable hash of the PIN, about half each way, case aside', () => {
-    let n = 0;
-    for (let i = 0; i < 2000; i++) {
+test('the 50/50 test is retired: every finished game\'s recap is in the half that shows it', () => {
+    assert.strictEqual(naModule.nightAfterHalf, undefined);
+    assert.strictEqual(naModule.NIGHT_AFTER_TEST, undefined);
+    for (let i = 0; i < 200; i++) {
         const pin = 'P' + i.toString(36).toUpperCase();
-        if (nightAfterHalf(pin)) n++;
-        assert.strictEqual(nightAfterHalf(pin), nightAfterHalf(pin.toLowerCase()));
+        assert.strictEqual(nightAfter(pin, finished(now - H), now).half, 'new', pin);
     }
-    assert.ok(n > 900 && n < 1100, String(n));
-    // The BigQuery line in the comment: the lowest bit of the first byte of SHA-256('night-after:' + PIN).
-    const first = require('crypto').createHash('sha256').update('night-after:ABCD').digest()[0];
-    assert.strictEqual(nightAfterHalf('abcd'), first % 2 === 1);
+    assert.strictEqual(nightAfter(pinIn('control'), finished(now - H), now).half, 'new');
 });
 
 test('the recap: winner, places with ties, the biggest bullshitter, the lie of the night, and nothing of the questions', () => {
@@ -186,10 +185,10 @@ test('a test game carries test (the page sends no rows); a crew game carries its
     assert.strictEqual(nightAfter('ABCD', finished(now - H, { crew: 'k3x9q2' }), now).crew, 'k3x9q2');
 });
 
-test('validateGameName: GAME_OVER with the recap for a week, in either half; beside an open rematch only in the new half', async () => {
+test('validateGameName: GAME_OVER with the recap for a week, for every game; beside an open rematch too', async () => {
     const pin = pinIn('new');
     const other = pinIn('control');
-    const rematchIn = (half) => { for (let i = 0; ; i++) { const p = 'RM' + String.fromCharCode(65 + (i % 26)) + String.fromCharCode(65 + Math.floor(i / 26)); if ((nightAfterHalf(p) ? 'new' : 'control') === half) return p; } };
+    const rematchIn = (half) => { for (let i = 0; ; i++) { const p = 'RM' + String.fromCharCode(65 + (i % 26)) + String.fromCharCode(65 + Math.floor(i / 26)); if ((oldHalf(p) ? 'new' : 'control') === half) return p; } };
     const rmNew = rematchIn('new');
     const rmControl = rematchIn('control');
     seed({ [rmNew]: finished(now - 60000, { fork: 'NEXT' }), [rmControl]: finished(now - 60000, { fork: 'NEXT' }),
@@ -200,18 +199,19 @@ test('validateGameName: GAME_OVER with the recap for a week, in either half; bes
     assert.strictEqual(v.body.code, 'GAME_OVER');
     assert.strictEqual(v.body.nightAfter.half, 'new');
     assert.strictEqual(v.body.nightAfter.player, true);
+    // A game of the retired test's other half gets its recap now too.
     const c = await call('validateGameName', { pin: other });
-    assert.strictEqual(c.body.nightAfter.half, 'control');
+    assert.strictEqual(c.body.nightAfter.half, 'new');
     assert.strictEqual(c.body.nightAfter.player, false);
+    assert.strictEqual(c.body.nightAfter.rows.length, 4);
     assert.strictEqual((await call('validateGameName', { pin: 'OLDG' })).body.nightAfter, undefined);
-    // Beside an open rematch: no recap in the control half, as before; in the new half the recap comes
-    // with it, for "They're playing again" (same-table.ts).
-    const r = await call('validateGameName', { pin: rmControl });
-    assert.strictEqual(r.body.rematch, 'NEXT');
-    assert.strictEqual(r.body.nightAfter, undefined);
-    const rn = await call('validateGameName', { pin: rmNew });
-    assert.strictEqual(rn.body.rematch, 'NEXT');
-    assert.strictEqual(rn.body.nightAfter.half, 'new');
+    // Beside an open rematch the recap comes with it, for "They're playing again" (same-table.ts), whatever
+    // half the game was in.
+    for (const p of [rmNew, rmControl]) {
+        const r = await call('validateGameName', { pin: p });
+        assert.strictEqual(r.body.rematch, 'NEXT', p);
+        assert.strictEqual(r.body.nightAfter.half, 'new', p);
+    }
     // A uid that is no uid is ignored, not an error.
     const bad = await call('validateGameName', { pin, uid: { $gt: '' }, pid: '../x' });
     assert.strictEqual(bad.body.nightAfter.player, false);
