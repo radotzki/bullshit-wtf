@@ -13,6 +13,8 @@ const holidays = require('./pages-en-holidays');
 const thanksgiving = require('./pages-en-thanksgiving');
 // Grown-up party nights: bachelorette and bachelor parties, adult birthdays, a weekend away.
 const partyNights = require('./pages-party-nights');
+// A game for the Shabbat (Friday-night) dinner table, the English twin of /he/friday-dinner.
+const shabbatDinner = require('./pages-shabbat-dinner');
 
 const en = {
     lang: 'en',
@@ -37,6 +39,7 @@ const en = {
         { href: '/bachelorette-party-game', label: 'Bachelorette party game' },
         { href: '/adult-birthday-party-game', label: 'Adult birthday party game' },
         { href: '/weekend-away-games', label: 'Games for a weekend away' },
+        { href: '/shabbat-dinner-game', label: 'A game for Shabbat dinner' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -299,4 +302,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he), shabbatDinner.pages(en));
