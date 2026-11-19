@@ -192,6 +192,9 @@ export function removeUpdate(game: HostGame, pid: string, now: number, newKey: (
 //   1. The host presses "Host controls on your phone" on the big screen (pairOpen, host key only). The
 //      server opens a pairing for PAIR_MS (3 minutes) with a one-time code, shown as a QR and a link.
 //      Nothing secret is in that link: the code only lets a phone ASK to pair, up to PAIR_MAX_CLAIMS phones.
+//      The cap is high on purpose: on a stream or a class projector, dozens of viewers may scan before the
+//      host does, and more phones asking gives none of them the controls (only the typed number pairs).
+//      It only bounds the pairing's size. A phone past it is told the link is full (PAIR_FULL), not expired.
 //   2. The phone that opens the link asks (claim, no key). The server gives that phone alone a random
 //      remote key (kept on the phone, never shown) and a 4-digit number, which the phone shows.
 //   3. The host types the number from their own phone into the big screen (pair, host key only). Only the
@@ -206,7 +209,7 @@ export function removeUpdate(game: HostGame, pid: string, now: number, newKey: (
 // `pairing` and `remote` live under games/<pin>, which only the server reads and writes. No rule changes.
 
 export const PAIR_MS = 3 * 60 * 1000;
-export const PAIR_MAX_CLAIMS = 5;
+export const PAIR_MAX_CLAIMS = 50;
 export const PAIR_MAX_TRIES = 5;
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const KEY_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -245,6 +248,7 @@ function randomFrom(chars: string, n: number, bytes: RandomBytes): string {
 }
 
 const NO_OFFER = { message: 'This code has expired. Press the button on the big screen again.', code: 'NO_OFFER' };
+const PAIR_FULL = { message: 'Too many phones opened this link. Press "New code" on the big screen.', code: 'PAIR_FULL' };
 
 /** Can this game pair a remote? A big-screen host's game (no seat is the host's), not over. */
 export function canPair(game: Partial<HostGame> | null | undefined): boolean {
@@ -262,7 +266,7 @@ function openNow(pairing: Pairing | null | undefined, now: number): boolean {
 
 /**
  * A phone opened the link with `code`: its claim (a remote key and a number no other claim shows), and the
- * pairing with it, or NO_OFFER (wrong, used or expired code, or too many phones already asked).
+ * pairing with it, NO_OFFER (wrong, used or expired code) or PAIR_FULL (PAIR_MAX_CLAIMS phones already asked).
  */
 export function claimPairing(pairing: Pairing | null | undefined, code: any, now: number, bytes: RandomBytes)
     : { pairing?: Pairing; id?: string; claim?: PairClaim; error?: { message: string; code: string } } {
@@ -271,7 +275,7 @@ export function claimPairing(pairing: Pairing | null | undefined, code: any, now
     }
     const claims = Object.assign({}, pairing.claims || {});
     if (Object.keys(claims).length >= PAIR_MAX_CLAIMS) {
-        return { error: NO_OFFER };
+        return { error: PAIR_FULL };
     }
     const taken = new Set(Object.keys(claims).map(k => claims[k].digits));
     let digits = '';
@@ -327,7 +331,7 @@ export function remoteStatus(game: Partial<HostGame> | null | undefined, key: an
     return { paired: false, waiting };
 }
 
-/** What the big screen shows while pairing: open or not, until when, and how many phones asked. */
+/** What the big screen shows while pairing: open or not, until when, how many phones asked, and if no more may. */
 export function pairingView(game: Partial<HostGame> | null | undefined, now: number) {
     const pairing = game && game.pairing;
     const open = openNow(pairing, now);
@@ -336,6 +340,7 @@ export function pairingView(game: Partial<HostGame> | null | undefined, now: num
         code: open ? pairing.code : null,
         exp: open ? pairing.exp : null,
         asked: open ? Object.keys(pairing.claims || {}).length : 0,
+        full: open && Object.keys(pairing.claims || {}).length >= PAIR_MAX_CLAIMS,
         paired: !!(game && game.remote && game.remote.key),
     };
 }

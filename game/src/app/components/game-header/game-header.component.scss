@@ -210,9 +210,21 @@
         font-size: .9em;
     }
 
-    .remote-asked {
+    .remote-asked, .remote-full {
         color: #a14a00;
         font-weight: bold;
+    }
+
+    // A full link: the line and NEW CODE side by side, so the window still fits a 1280x720 big screen.
+    .remote-full-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .remote-full {
+            flex: 1;
+            margin: 0;
+        }
     }
 
     .remote-form {

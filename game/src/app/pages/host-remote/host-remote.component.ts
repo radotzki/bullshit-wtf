@@ -28,7 +28,7 @@ export class HostRemoteComponent implements OnInit, OnDestroy {
     h: HostStrings = hostStrings('en');
     rtl = false;
     /** loading; number: shows its number, waits for the big screen; paired: the controls; nolink; lost. */
-    view: 'loading' | 'number' | 'paired' | 'nolink' | 'lost' = 'loading';
+    view: 'loading' | 'number' | 'paired' | 'nolink' | 'full' | 'lost' = 'loading';
     digits = '';
     state: number = null;
     question: number = null;
@@ -96,15 +96,29 @@ export class HostRemoteComponent implements OnInit, OnDestroy {
             this.view = 'nolink';
             return;
         }
-        try {
-            const r = await this.apiService.claimRemote(this.pin, code);
-            this.digits = r.digits;
-            this.view = 'number';
-            // The code has done its work: keep it out of the address bar (and any screenshot of it).
-            this.router.navigate([], { queryParams: {}, replaceUrl: true });
-            this.waitForBigScreen();
-        } catch (e) {
-            this.view = 'nolink';
+        // A class or a stream chat may scan at the same moment as the host: a claim that fails for no
+        // reason of the code's own (a busy server) is tried again before the phone gives up.
+        for (let attempt = 0; ; attempt++) {
+            try {
+                const r = await this.apiService.claimRemote(this.pin, code);
+                this.digits = r.digits;
+                this.view = 'number';
+                // The code has done its work: keep it out of the address bar (and any screenshot of it).
+                this.router.navigate([], { queryParams: {}, replaceUrl: true });
+                this.waitForBigScreen();
+                return;
+            } catch (e) {
+                const why = e && (e as any).code;
+                if (why === 'PAIR_FULL') {
+                    this.view = 'full';
+                    return;
+                }
+                if (why === 'NO_OFFER' || attempt >= 2) {
+                    this.view = 'nolink';
+                    return;
+                }
+                await new Promise(done => setTimeout(done, 700 + Math.floor(Math.random() * 800)));
+            }
         }
     }
 

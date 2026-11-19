@@ -1075,5 +1075,7 @@ export interface PairingView {
     code: string | null;
     exp: number | null;
     asked: number;
+    /** No more phones may open this link (PAIR_MAX_CLAIMS asked): the host needs a new code. */
+    full?: boolean;
     paired: boolean;
 }

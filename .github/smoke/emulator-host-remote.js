@@ -7,8 +7,9 @@
 //  1. The host makes the game on the computer and makes it the big screen. Ben, Cleo, Troll, Dee and a
 //     Stranger join. Nobody pairs without a press on the big screen, and no made-up key opens anything.
 //  2. The host presses "Host controls on your phone": a QR and link with a one-time code. A viewer who read
-//     the link off the stream opens it first; the host's phone opens it next. Each phone shows its own
-//     number; the big screen says two phones asked. A wrong number is refused; the host's phone's number
+//     the link off the stream opens it first, and 19 more phones of a class or a stream chat claim at the
+//     same moment (20 in all); the host's phone opens it next and still gets a number. Each phone shows its
+//     own number; the big screen says 21 phones asked. A wrong number is refused; the host's phone's number
 //     pairs it. The viewer's phone is told the link expired, and its key opens nothing.
 //  3. The phone (no seat, not a player) removes the Stranger in the lobby. The big screen starts.
 //  4. Question 1. The phone opens the lies (no names) while the big screen shows none of them, and hides
@@ -16,6 +17,8 @@
 //     hidden lie is in no answer; every player's pick still scores (the host has no pick to lose).
 //  5. Question 2. The phone removes Cleo from the writing.
 //  6. The big screen disconnects the phone: its next press says it no longer has the host controls.
+//  7. A full link: PAIR_MAX_CLAIMS phones claim a new code; the next phone is told the link is full (not
+//     expired), and the big screen says so and offers NEW CODE.
 //
 // Needs what emulator-game.js needs (Java, functions/ built, the root's npm ci). From the repository root:
 //   node .github/smoke/emulator-host-remote.js [path to dist] [--locale en|he]
@@ -157,25 +160,37 @@ async function main() {
         check(safety && safety.y + safety.height <= 720, `the pairing window runs below the big screen (${JSON.stringify(summary.pairingBox)})`);
         const link = `${base}/host/${pin}?c=${pairing.code}`;
 
-        // A viewer who read the link off the stream opens it first; the host's phone next.
-        await viewer.page.goto(link);
+        // A viewer who read the link off the stream opens it first, with 19 more phones of a crowd at the
+        // same moment (20 in all); the host's phone next.
+        const CROWD = 19;
+        const [, ...crowd] = await Promise.all([
+            viewer.page.goto(link),
+            ...Array.from({ length: CROWD }, () => post('hostControl', { pin, act: 'claim', code: pairing.code })),
+        ]);
         await until('the viewer\'s phone shows a number', () => visible(viewer.page.locator('.pair-number')));
+        const crowdOk = crowd.filter((r) => r.status === 200 && /^\d{4}$/.test(r.body && r.body.digits));
+        check(crowdOk.length === CROWD, `only ${crowdOk.length} of ${CROWD} crowd phones got a number: ${JSON.stringify(crowd.filter((r) => r.status !== 200).slice(0, 3))}`);
+        summary.crowdClaimed = crowdOk.length + 1;
         await remote.page.goto(link);
         await until('the host\'s phone shows a number', () => visible(remote.page.locator('.pair-number')));
         const viewerNumber = (await viewer.page.locator('.pair-number').innerText()).replace(/\D/g, '');
         const hostNumber = (await remote.page.locator('.pair-number').innerText()).replace(/\D/g, '');
         summary.numbers = { viewer: viewerNumber, host: hostNumber };
-        check(/^\d{4}$/.test(hostNumber) && viewerNumber !== hostNumber, 'the two phones show the same number');
+        const crowdNumbers = crowdOk.map((r) => r.body.digits);
+        check(/^\d{4}$/.test(hostNumber) && viewerNumber !== hostNumber && !crowdNumbers.includes(hostNumber), 'two phones show the same number');
+        check(new Set([viewerNumber, hostNumber, ...crowdNumbers]).size === CROWD + 2, 'two crowd phones show the same number');
         check(!remote.page.url().includes('c='), 'the code stays in the phone\'s address bar');
         await shot(remote, '3-phone-number');
-        await until('the big screen says two phones asked', () => visible(modal.locator('.remote-asked')), 10000);
+        await until('the big screen says 21 phones asked', async () => (await visible(modal.locator('.remote-asked')))
+            && (await modal.locator('.remote-asked').innerText()).includes(String(CROWD + 2)), 10000);
+        check(!(await visible(modal.locator('.remote-full'))), 'the big screen says the link is full after 21 phones');
         // Wrong number: refused, and nothing is paired.
-        const wrong = ['1111', '2222', '3333'].find((n) => n !== viewerNumber && n !== hostNumber);
+        const wrong = ['1111', '2222', '3333', '4444', '5555'].find((n) => n !== viewerNumber && n !== hostNumber && !crowdNumbers.includes(n));
         await modal.locator('.remote-digits').fill(wrong);
         await modal.locator('.remote-pair-button').click();
         await until('a wrong number is refused', () => visible(modal.locator('.remote-error')));
         check(!(await db('GET', `games/${pin}/remote`)), 'a wrong number paired a phone');
-        await shot(screen, '4-big-screen-two-asked-wrong-number');
+        await shot(screen, '4-big-screen-21-asked-wrong-number');
         await modal.locator('.remote-digits').fill(`${hostNumber.slice(0, 2)} ${hostNumber.slice(2)}`);
         await modal.locator('.remote-pair-button').click();
         await until('the big screen says the phone is paired', () => visible(modal.locator('.remote-paired')));
@@ -301,6 +316,33 @@ async function main() {
         await shot(remote, '13-phone-disconnected');
         const oldKey = await post('hostControl', { pin, act: 'lies', remoteKey: hostRemoteKey.key });
         check(oldKey.status === 403, `the old remote key got ${oldKey.status}`);
+
+        // 7. A full link: the press opens a new code, the cap's phones claim it; the next phone hears it is full.
+        await button.click();
+        await until('a new code on the big screen', () => visible(modal.locator('.remote-link')));
+        const fresh = await db('GET', `games/${pin}/pairing`);
+        const max = 50;
+        for (let i = 0; i < max; i += 10) {
+            const batch = await Promise.all(Array.from({ length: 10 }, () => post('hostControl', { pin, act: 'claim', code: fresh.code })));
+            check(batch.every((r) => r.status === 200), `a claim under the cap was refused: ${JSON.stringify(batch.find((r) => r.status !== 200))}`);
+        }
+        const over = await post('hostControl', { pin, act: 'claim', code: fresh.code });
+        check(over.status === 400 && over.body && over.body.code === 'PAIR_FULL', `claim ${max + 1} got ${over.status} ${JSON.stringify(over.body)}`);
+        await viewer.page.evaluate(() => localStorage.removeItem('BS_REMOTE_KEYS'));
+        await viewer.page.goto(`${base}/host/${pin}?c=${fresh.code}`);
+        await until('the late phone is told the link is full', () => visible(viewer.page.locator('.remote-message.remote-full')), 15000);
+        summary.fullText = (await viewer.page.locator('.remote-full').innerText()).trim();
+        await shot(viewer, '14-phone-link-full');
+        await until('the big screen says the link is full', () => visible(modal.locator('.remote-full')), 10000);
+        const fullNew = await modal.locator('.remote-full-new').boundingBox();
+        check(fullNew && fullNew.y + fullNew.height <= 720, `NEW CODE runs below the big screen when the link is full (${JSON.stringify(fullNew)})`);
+        await shot(screen, '15-big-screen-link-full');
+        await modal.locator('.remote-full-new').click();
+        await until('a new code with room', async () => {
+            const p = await db('GET', `games/${pin}/pairing`);
+            return p && p.code !== fresh.code && !p.claims;
+        });
+        check(!(await visible(modal.locator('.remote-full'))), 'the new code is still full');
 
         [screen, remote, viewer, ...players].forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
     } catch (e) {

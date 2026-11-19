@@ -14,6 +14,10 @@
         <p>{{ h.phoneNoLink }}</p>
     </section>
 
+    <section *ngIf="view === 'full'" class="remote-message remote-full">
+        <p>{{ h.phoneFull }}</p>
+    </section>
+
     <section *ngIf="view === 'lost'" class="remote-message">
         <p>{{ h.phoneLost }}</p>
     </section>

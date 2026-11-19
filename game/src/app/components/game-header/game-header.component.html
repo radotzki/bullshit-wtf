@@ -137,7 +137,11 @@
                             <button type="submit" class="button is-primary remote-pair-button" [class.is-loading]="pairBusy">{{h.remotePair}}</button>
                         </form>
                         <p class="remote-safety">{{h.remoteSafety}}</p>
-                        <p *ngIf="pairing.asked > 1" class="help is-warning remote-asked">{{h.remoteAsked('' + pairing.asked)}}</p>
+                        <p *ngIf="pairing.asked > 1 && !pairing.full" class="help is-warning remote-asked">{{h.remoteAsked('' + pairing.asked)}}</p>
+                        <div *ngIf="pairing.full" class="remote-full-line">
+                            <p class="help is-warning remote-full">{{h.remoteFull}}</p>
+                            <button class="button is-small remote-new remote-full-new" [class.is-loading]="pairBusy" (click)="newCode()">{{h.remoteNewCode}}</button>
+                        </div>
                     </div>
                 </div>
             </ng-container>

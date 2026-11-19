@@ -47,6 +47,8 @@ export interface HostStrings {
     remoteAsked: (count: string) => string;
     remoteWrong: string;
     remoteExpired: string;
+    /** The big screen: so many phones opened the link that no more may. */
+    remoteFull: string;
     remoteOnce: string;
     remoteNewCode: string;
     remotePaired: string;
@@ -58,6 +60,8 @@ export interface HostStrings {
     phoneShowNumber: string;
     phoneWaiting: string;
     phoneNoLink: string;
+    /** The phone came after PAIR_MAX_CLAIMS others: the link is full, not expired. */
+    phoneFull: string;
     phoneLost: string;
     phoneNotPlayer: string;
     phoneLiesLater: string;
@@ -100,6 +104,7 @@ const en: HostStrings = {
     remoteAsked: count => `${count} phones opened this link. Type only the number on yours.`,
     remoteWrong: 'That\'s not the number on a phone that opened the link.',
     remoteExpired: 'This code has expired.',
+    remoteFull: 'Too many phones opened this link. If yours isn\'t one of them, press NEW CODE.',
     remoteOnce: 'The code works once, for 3 minutes.',
     remoteNewCode: 'NEW CODE',
     remotePaired: 'Your phone has the host controls.',
@@ -110,6 +115,7 @@ const en: HostStrings = {
     phoneShowNumber: 'Type this number on the big screen:',
     phoneWaiting: 'Waiting for the big screen…',
     phoneNoLink: 'This link has expired. Press "Host controls on your phone" on the big screen for a new one.',
+    phoneFull: 'Too many phones opened this link. If you are the host, press "New code" on the big screen and scan again.',
     phoneLost: 'This phone no longer has the host controls. Pair it again from the big screen.',
     phoneNotPlayer: 'This phone runs the game. It isn\'t a player.',
     phoneLiesLater: 'The lies show up here while the players write them.',
@@ -152,6 +158,7 @@ const he: HostStrings = {
     remoteAsked: count => `${count} טלפונים פתחו את הקישור. מקלידים רק את המספר שבטלפון שלכם.`,
     remoteWrong: 'זה לא המספר שמופיע בטלפון שפתח את הקישור.',
     remoteExpired: 'תוקף הקוד הזה נגמר.',
+    remoteFull: 'יותר מדי טלפונים פתחו את הקישור. אם הטלפון שלכם לא ביניהם, לוחצים על "קוד חדש".',
     remoteOnce: 'הקוד עובד פעם אחת, למשך 3 דקות.',
     remoteNewCode: 'קוד חדש',
     remotePaired: 'הטלפון מחובר לשליטת המארחים.',
@@ -162,6 +169,7 @@ const he: HostStrings = {
     phoneShowNumber: 'מקלידים את המספר הזה במסך הגדול:',
     phoneWaiting: 'מחכים למסך הגדול…',
     phoneNoLink: 'תוקף הקישור הזה נגמר. לוחצים על "שליטה מהטלפון" במסך הגדול לקישור חדש.',
+    phoneFull: 'יותר מדי טלפונים פתחו את הקישור. אם אתם המארחים, לוחצים על "קוד חדש" במסך הגדול וסורקים שוב.',
     phoneLost: 'הטלפון הזה כבר לא מחובר לשליטת המארחים. אפשר לחבר אותו שוב מהמסך הגדול.',
     phoneNotPlayer: 'הטלפון הזה מנהל את המשחק. הוא לא משתתף בו.',
     phoneLiesLater: 'השקרים יופיעו כאן בזמן שהשחקנים כותבים אותם.',

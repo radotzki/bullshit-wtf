@@ -49,7 +49,7 @@ test('the phone with the code gets its own secret key and a 4-digit number', () 
     assert.notStrictEqual(r.claim.key, KEY);
 });
 
-test('a wrong, expired or full code gives nothing, with the same answer', () => {
+test('a wrong or expired code gives nothing, with the same answer; a full link says it is full', () => {
     const p = hc.openPairing(NOW, bytes);
     assert.strictEqual(hc.claimPairing(p, 'AAAAAAAA', NOW, bytes).error.code, 'NO_OFFER');
     assert.strictEqual(hc.claimPairing(p, p.code, NOW + hc.PAIR_MS, bytes).error.code, 'NO_OFFER');
@@ -64,7 +64,31 @@ test('a wrong, expired or full code gives nothing, with the same answer', () => 
         seen.add(r.claim.digits);
         cur = r.pairing;
     }
-    assert.strictEqual(hc.claimPairing(cur, p.code, NOW, bytes).error.code, 'NO_OFFER');
+    const late = hc.claimPairing(cur, p.code, NOW, bytes);
+    assert.strictEqual(late.error.code, 'PAIR_FULL');
+    assert.ok(!late.pairing, 'a full link changes nothing');
+    assert.strictEqual(hc.pairingView(screenGame({ pairing: cur }), NOW).full, true);
+    // A wrong code on a full link still gets the same answer as any wrong code.
+    assert.strictEqual(hc.claimPairing(cur, 'AAAAAAAA', NOW, bytes).error.code, 'NO_OFFER');
+});
+
+test('a class or a stream chat can scan first: the cap is well past 20 phones, and the host\'s phone still pairs', () => {
+    assert.ok(hc.PAIR_MAX_CLAIMS >= 50, `only ${hc.PAIR_MAX_CLAIMS} phones may ask`);
+    const p = hc.openPairing(NOW, bytes);
+    let cur = p;
+    for (let i = 0; i < 20; i++) {
+        const r = hc.claimPairing(cur, p.code, NOW + i, bytes);
+        assert.ok(!r.error, `viewer ${i}`);
+        cur = r.pairing;
+    }
+    const host = hc.claimPairing(cur, p.code, NOW + 30, bytes);
+    assert.ok(!host.error, 'the host\'s phone was refused after 20 others');
+    assert.strictEqual(hc.pairingView(screenGame({ pairing: host.pairing }), NOW + 31).asked, 21);
+    assert.strictEqual(hc.pairingView(screenGame({ pairing: host.pairing }), NOW + 31).full, false);
+    const done = hc.confirmPairing(host.pairing, host.claim.digits, NOW + 40);
+    assert.ok(!done.error);
+    assert.strictEqual(done.remote.key, host.claim.key);
+    assert.strictEqual(done.pairing, null, 'every other claim is dropped');
 });
 
 test('numbers never repeat between claims, even with a poor random source', () => {
@@ -148,10 +172,10 @@ test('the big screen sees whether a pairing is open, how many phones asked, and 
     const p = hc.openPairing(NOW, bytes);
     const c = hc.claimPairing(p, p.code, NOW, bytes);
     const view = hc.pairingView(screenGame({ pairing: c.pairing }), NOW + 1);
-    assert.deepStrictEqual(view, { open: true, code: p.code, exp: p.exp, asked: 1, paired: false });
+    assert.deepStrictEqual(view, { open: true, code: p.code, exp: p.exp, asked: 1, full: false, paired: false });
     assert.ok(!JSON.stringify(view).includes(c.claim.key));
     assert.deepStrictEqual(hc.pairingView(screenGame({ pairing: c.pairing, remote: { key: 'R'.repeat(24), at: 1 } }), NOW + hc.PAIR_MS),
-        { open: false, code: null, exp: null, asked: 0, paired: true });
+        { open: false, code: null, exp: null, asked: 0, full: false, paired: true });
 });
 
 test('the remote looks at every lie (a big-screen host has no seat and no pick to lose)', () => {
