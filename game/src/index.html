@@ -8,6 +8,7 @@
     rows to /_v (the `visit` function), which writes them to BigQuery `analytics.visits`:
       view    once, as the page opens
       create  when this page view creates a game; join when it joins one (the app calls bsVisit)
+      clip    once, the first time the home's demo clip is half in view (the app calls bsVisit)
       end     when the page is hidden or closed (up to 3 times)
       stuck   once at 12 s if the app has still not drawn (the loading card is still there)
       page    once, as the page opens: ms is the time from the tap to this script running (the page's
@@ -24,7 +25,7 @@
   <!-- BS:VISIT:START -->
   <script>
   (function () {
-    var w = window, d = document, max = { view: 1, page: 1, drawn: 1, stuck: 1, end: 3, create: 3, join: 3 }, sent = {}, did = {};
+    var w = window, d = document, max = { view: 1, page: 1, drawn: 1, stuck: 1, end: 3, create: 3, join: 3, clip: 1 }, sent = {}, did = {};
     var v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
     // A plain page (how to play and the other search pages) has no app to wait for.
     var plain = d.documentElement.getAttribute('data-page') === 'plain';
@@ -78,9 +79,11 @@
       } catch (e) { }
       try { var x = new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type', 'text/plain'); x.send(body); } catch (e) { }
     }
-    // The app calls bsVisit('create') after a game is created and bsVisit('join') after a join.
+    // The app calls bsVisit('create') after a game is created and bsVisit('join') after a join,
+    // and bsVisit('clip') the first time the home's demo clip is half in view.
     w.bsVisit = function (what) {
       if (what === 'create' || what === 'join') { did[what] = true; send(what); }
+      if (what === 'clip') { send(what); }
     };
     send('view');
     try { if (w.performance && typeof w.performance.now === 'function') { send('page', Math.round(w.performance.now())); } } catch (e) { }

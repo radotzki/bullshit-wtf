@@ -83,6 +83,10 @@
         </div>
     </div>
 
+    <!-- The demo clip: 20 silent seconds of one real round (components/demo-clip), right under the
+         first screen. Nothing of it loads until it is near the screen. -->
+    <app-demo-clip [lang]="t.lang"></app-demo-clip>
+
     <div class="below">
         <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
         <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>

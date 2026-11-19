@@ -84,6 +84,9 @@
             </div>
         </div>
         <ng-container *ngTemplateOutlet="join"></ng-container>
+        <!-- The demo clip: 20 silent seconds of one real round (components/demo-clip). Under Join, so
+             it moves nothing of the first screen, and it loads only once it is near the screen. -->
+        <app-demo-clip [lang]="t.lang"></app-demo-clip>
     </ng-container>
 
     <!-- Create leads for a visitor with no PIN; a returning guest keeps Join on top (front-door.ts). -->

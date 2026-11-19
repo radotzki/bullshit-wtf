@@ -377,3 +377,20 @@ test('the function keeps page and drawn rows, and still drops unknown kinds', as
         ['page', '/join-game/:pin', 912, null],
     ]);
 });
+
+test('the home demo clip: the beacon sends one clip row a page view, and the function keeps it', async () => {
+    rows.length = 0;
+    quiet();
+    const page = openPage({ href: 'https://bullshit.wtf/he', ua: IPHONE });
+    page.window.bsVisit('clip');
+    page.window.bsVisit('clip');          // scrolled away and back: still one row
+    await page.deliver();
+    loud();
+    const got = visits();
+    assert.deepStrictEqual(got.map(r => [r.kind, r.page, r.locale, r.created]), [
+        ['view', '/', 'he', false],
+        ['clip', '/', 'he', false],
+    ]);
+    assert.strictEqual(got[1].view, got[0].view);
+    assert.deepStrictEqual(Object.keys(got[1]).sort(), Object.keys(got[0]).sort());
+});
