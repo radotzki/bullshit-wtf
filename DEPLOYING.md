@@ -2398,3 +2398,35 @@ account and no sign-in: the site proves it is ours with a key file at its root.
 - **To see it worked:** the deploy run's log for that step says "IndexNow: sent N URLs". Bing
   Webmaster Tools (the owner's sign-in) shows the received URLs under IndexNow once the site is
   verified there.
+
+## A lobby's own address sends a stranger to its join form
+
+Twice in one week a whole group opened a lobby's own address (`/game-staging/PIN`) instead of the
+invite link (Sunday 15 Nov, 5 first-time phones; Thursday 19 Nov, 10). The page sent them to the
+home page; they got in a minute later through the invite link. Now a browser with no seat in an
+open lobby goes straight to that lobby's join form, the PIN filled in, in the game's language
+(`/join-game/PIN` or `/he/join-game/PIN`, as the invite link), so it only types a nickname.
+
+- What changes: the lobby route's guard (`game/src/app/services/lobby-door.guard.ts`, the rules in
+  `lobby-door.ts`) in place of the plain player check, on the lobby route only. A browser with no
+  saved player reads the game's `state` and `locale` (open to every phone): an open lobby
+  (`state.id` 0) sends it to the join form; an unknown PIN, a started game, or a read that fails or
+  takes over 2.5 s goes to the home page, as today. A finished game's lobby, if its state still reads
+  as a lobby, lands on the join form, which says "Game over" (or shows the night after) as for an
+  old invite link.
+- Who is never moved: the host (host key), the big screen, and every move inside the app with a
+  saved player (after JOIN, Replay, a crew rematch, the big screen's own moves) pass at once, with
+  no read. Only when the lobby is the first page the tab opens and the browser has a saved player
+  is the seat looked up (`games/PIN/players/<pid>`, open to every phone): a seated player's reload
+  opens the lobby as before; a player from an earlier game with no seat here goes to the join form;
+  a seat that can't be read opens the lobby as before.
+- Counting: such a join is tagged `via=lobby-address`, a new value of the existing `users.via`
+  column (`JOIN_SOURCES` in `functions/src/controllers/analytics.ts`, `known` in
+  `game/src/app/services/join-source.ts`). **No BigQuery change, no database rules change.**
+- Deploy functions and hosting together (a merge does both, functions first). A join that reaches
+  older functions is counted as `other`.
+- The game's own copy and share buttons always give the invite link (`ShareService.inviteUrl`);
+  the lobby's address can only travel from the address bar or the browser's own share menu.
+- Reading it: `SELECT DATE(time) AS day, COUNT(*) AS joins, COUNT(DISTINCT pin) AS lobbies FROM
+  analytics.users WHERE via = 'lobby-address' GROUP BY day ORDER BY day`.
+- Check locally: `cd game && npm test` (`test/lobby-door.test.js`), `cd functions && npm test`.

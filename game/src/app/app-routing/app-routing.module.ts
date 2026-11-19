@@ -19,6 +19,7 @@ import { StepComponent } from '../pages/step/step.component';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { GameService } from '../services/game.service';
+import { lobbyDoor } from '../services/lobby-door.guard';
 
 const routes: Routes = [
     { path: '', component: LandingComponent },
@@ -37,7 +38,8 @@ const routes: Routes = [
     { path: 'he/join-game', component: JoinGameComponent },
     { path: 'he/join-game/:pin', component: JoinGameComponent },
     { path: 'he/c/:id', component: CrewComponent },
-    { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService, GameService] },
+    // A browser with no seat that opens a lobby's own address goes to its join form (services/lobby-door.ts).
+    { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [lobbyDoor, GameService] },
     { path: 'round-intro/:pin', component: RoundIntroComponent, canActivate: [SessionService, GameService] },
     { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService, GameService] },
     { path: 'show-answers/:pin', component: ShowAnswersComponent, canActivate: [SessionService, GameService] },
