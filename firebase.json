@@ -29,14 +29,6 @@
         "function": "joinPreview"
       },
       {
-        "regex": "^/portal/crazygames/?$",
-        "destination": "/index.html"
-      },
-      {
-        "regex": "^/he/portal/crazygames/?$",
-        "destination": "/he.html"
-      },
-      {
         "regex": "^/he/?$",
         "destination": "/he.html"
       },
@@ -51,6 +43,14 @@
       {
         "regex": "^/(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/]+/?$",
         "destination": "/index.html"
+      },
+      {
+        "regex": "^/portal/crazygames/?$",
+        "destination": "/index.html"
+      },
+      {
+        "regex": "^/he/portal/crazygames/?$",
+        "destination": "/he.html"
       }
     ],
     "headers": [
