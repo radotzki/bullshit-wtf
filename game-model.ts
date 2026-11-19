@@ -884,7 +884,19 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Kids are playing', he: 'ילדים משחקים' },
         icon: '🧒',
     },
+    // Party nights (functions/data/party-questions.json): true facts about weddings and bachelor and
+    // bachelorette customs, birthdays, trips and weekends away, and nights out, in each language. Not
+    // seasonal: only the six party-night pages ask for it, with their Start button (?pack=party), and
+    // no other game gets it. Up to 4 a game, the first one opening it; Rematch keeps the pack.
+    party: {
+        perGame: 4,
+        label: { en: 'Party night questions', he: 'שאלות למסיבה' },
+        icon: '🎉',
+    },
 };
+
+/** The pack the six party-night pages ask for with their Start button. */
+export const PARTY_PACK = 'party';
 
 /** The pack the create page's "Kids are playing" switch asks for. */
 export const KIDS_PACK = 'kids';

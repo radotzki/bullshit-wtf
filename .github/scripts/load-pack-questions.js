@@ -7,7 +7,8 @@
 // (functions/data/christmas-questions.json, ids christmas-26-en-01.., English only), the kids
 // pack for the create page's "Kids are playing" switch (functions/data/kids-questions.json, ids
 // kids-26-en-01.., -he-01..) and the everyday questions (functions/data/everyday-questions-2026-11.json,
-// ids everyday-26-en-01.., -he-01..).
+// ids everyday-26-en-01.., -he-01..), and the party pack that the party-night pages ask for
+// (functions/data/party-questions.json, ids party-26-en-01.., -he-01..).
 // It adds or rewrites exactly the questions in those files, each under its own id, and touches
 // nothing else.
 //
@@ -77,6 +78,7 @@ const FILES = [
     { file: 'functions/data/christmas-questions.json', name: 'the Christmas and New Year pack', id: /^christmas-26-(en)-\d{2}$/, like: 'christmas-26-en-01', pack: 'christmas' },
     { file: 'functions/data/kids-questions.json', name: 'the kids pack', id: /^kids-26-(en|he)-\d{2}$/, like: 'kids-26-en-01', pack: 'kids' },
     { file: 'functions/data/everyday-questions-2026-11.json', name: 'the everyday questions', id: /^everyday-26-(en|he)-\d{2}$/, like: 'everyday-26-en-01', pack: null },
+    { file: 'functions/data/party-questions.json', name: 'the party pack', id: /^party-26-(en|he)-\d{2}$/, like: 'party-26-en-01', pack: 'party' },
 ];
 // Never a file of the game's bank, whatever a later edit adds to FILES: the daily puzzle reads
 // its questions from the functions bundle, and a daily question in questions/ would turn up in

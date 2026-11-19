@@ -11,7 +11,9 @@
 // Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
 // game, 5, 7 or 9 questions, three rounds where points grow, house lies, an optional big screen
 // ("Present" / "מסך"), Rematch, saved crews, "the biggest bullshitter" at the end. The questions are
-// general strange facts, not adult ones: the pages say so. No player counts, reviews or quotes.
+// strange facts, not adult ones: the pages say so. The Start buttons open Create with the party pack
+// (?pack=party, functions/data/party-questions.json): up to 4 questions a game about weddings,
+// birthdays, trips and nights out, mixed with the usual ones. No player counts, reviews or quotes.
 // Each example is a real question of the game (functions/data/opening-questions.json), with its true answer.
 
 const example = (q, story) => `<div class="example">
@@ -50,7 +52,7 @@ ${example('בפינלנד מתקיימת אליפות עולם בסחיבת ____
   <li><strong>חינם ובדפדפן.</strong> אין מה להוריד ואין חשבון לפתוח. מי שמגיעה באיחור מצטרפת עם הקוד תוך שניות.</li>
 </ul>
 <h2>טריק קטן למארגנת</h2>
-<p>השאלות במשחק הן עובדות מוזרות מכל העולם, לא שאלות על הכלה. אבל השקרים הם שלכן. תשובה כמו "הדייט הראשון של הכלה" או "השיר שהחתן שר באוטו" לא תמיד תעבוד על מישהי, אבל היא תפיל את כל החדר מצחוק כשהיא תופיע על המסך. ובסוף כל משחק, "משחק חוזר" פותח סבב חדש עם אותן שחקניות ושאלות חדשות.</p>
+<p>השאלות במשחק הן עובדות מוזרות מכל העולם, וכמה מהן על חתונות, מסיבות וטיולים, אבל אף אחת לא על הכלה. אבל השקרים הם שלכן. תשובה כמו "הדייט הראשון של הכלה" או "השיר שהחתן שר באוטו" לא תמיד תעבוד על מישהי, אבל היא תפיל את כל החדר מצחוק כשהיא תופיע על המסך. ובסוף כל משחק, "משחק חוזר" פותח סבב חדש עם אותן שחקניות ושאלות חדשות.</p>
 <h2>ובמסיבת רווקים?</h2>
 <p>אותו משחק בדיוק. החתן נגד החברים מהשכונה, מהצבא ומהעבודה, וכל אחד מנסה לעבוד על כולם. יש טלוויזיה בצימר או בבית? פותחים בה את <bdi dir="ltr">bullshit.wtf/he</bdi>, לוחצים על "מסך" ומקלידים את קוד המשחק: השאלות, התשובות ומי בחר במה מופיעים בגדול, והטלפונים נשארים לכתיבה ולבחירה.</p>
 <h2>כדאי לדעת מראש</h2>
@@ -81,7 +83,7 @@ ${example('האיש שעיצב את קופסת הפרינגלס ביקש להי�
 <h2>רעיונות לבעל או לבעלת השמחה</h2>
 <ul>
   <li>תנו לחוגג לפתוח את המשחק ולבחור את מספר השאלות. זה היום שלו.</li>
-  <li>השאלות הן עובדות כלליות, אבל השקרים יכולים להיות על החוגג: "הגיל שהוא מודה בו", "הדבר שהיא אף פעם לא תודה שהיא אוהבת". גם אם אף אחד לא יבחר בתשובה כזאת, כולם יצחקו כשהיא תופיע.</li>
+  <li>השאלות הן עובדות מוזרות, וכמה מהן על ימי הולדת, חתונות ובילויים, אבל השקרים יכולים להיות על החוגג: "הגיל שהוא מודה בו", "הדבר שהיא אף פעם לא תודה שהיא אוהבת". גם אם אף אחד לא יבחר בתשובה כזאת, כולם יצחקו כשהיא תופיע.</li>
   <li>בסוף המשחק מוכרז "הבולשיטר הגדול", מי שהשקרים שלו עבדו על הכי הרבה אורחים. שווה לראות מי זה, כי זה כמעט אף פעם לא מי שחשבתם.</li>
   <li>שמרו את החבורה בסוף המשחק: לחבורה יש דף עם טבלה שממשיכה ממשחק למשחק, והיא תחכה ליום ההולדת הבא.</li>
 </ul>
@@ -133,7 +135,7 @@ ${example('Finland hosts a world championship in carrying your ____',
   <li><strong>Free and in the browser.</strong> Nothing to download. Whoever arrives late joins with the PIN in seconds.</li>
 </ul>
 <h2>A trick for the maid of honor</h2>
-<p>The questions are strange facts from all over the world, not questions about the bride. But the lies are yours. An answer like "the bride's first date" or "the song the groom sings in the car" may not fool anyone, but the room will lose it when it comes up on the screen. When a game ends, "Rematch" starts another with the same players and new questions.</p>
+<p>The questions are strange facts from all over the world, a few of them about weddings, birthdays and nights out, but none about the bride. But the lies are yours. An answer like "the bride's first date" or "the song the groom sings in the car" may not fool anyone, but the room will lose it when it comes up on the screen. When a game ends, "Rematch" starts another with the same players and new questions.</p>
 <h2>And the bachelor party?</h2>
 <p>Same game. The groom against his friends from school, from work and from the team, each trying to fool the rest. If there is a TV in the house, open bullshit.wtf on a laptop connected to it, click "Present" and type the PIN: the questions, the lies and who picked what show up big, and the phones are only for writing and picking.</p>
 <h2>Good to know first</h2>
@@ -164,7 +166,7 @@ ${example('The man who designed the Pringles can asked to be buried in ____',
 <h2>Ideas for the birthday</h2>
 <ul>
   <li>Let the birthday person open the game and pick the number of questions. It's their day.</li>
-  <li>The questions are general facts, but the lies can be about the guest of honor: "the age he admits to", "the song she pretends not to know". Nobody may pick it, but everyone will laugh when it appears.</li>
+  <li>The questions are strange facts, a few of them about birthdays, weddings and nights out, but the lies can be about the guest of honor: "the age he admits to", "the song she pretends not to know". Nobody may pick it, but everyone will laugh when it appears.</li>
   <li>At the end the game names the biggest bullshitter, whoever fooled the most guests. It is almost never who you expected.</li>
   <li>Save the group as a crew at the end. The crew gets its own page with standings that carry over from game to game, ready for the next birthday.</li>
 </ul>
@@ -203,7 +205,7 @@ module.exports = {
     pages: (en, he) => [
         {
             path: '/he/bachelorette', twin: '/bachelorette-party-game', site: he, tag: 'party-bachelorette-he',
-            start: { href: '/create-game?lang=he', label: 'פותחים משחק למסיבה' },
+            start: { href: '/create-game?lang=he&pack=party', label: 'פותחים משחק למסיבה' },
             image: '/assets/og-bachelorette-he.png',
             title: 'משחק למסיבת רווקות ורווקים: בולשיט, חינם בטלפון',
             description: 'מי משקרת הכי טוב? בולשיט הוא משחק בלוף חינמי שכל אחת משחקת מהטלפון שלה, בצימר, בבית או בדרך לבר. עד 12 במשחק, בלי הורדה.',
@@ -212,7 +214,7 @@ module.exports = {
         },
         {
             path: '/he/adult-birthday', twin: '/adult-birthday-party-game', site: he, tag: 'party-birthday-he',
-            start: { href: '/create-game?lang=he', label: 'פותחים משחק ליום הולדת' },
+            start: { href: '/create-game?lang=he&pack=party', label: 'פותחים משחק ליום הולדת' },
             image: '/assets/og-birthday-he.png',
             title: 'משחק ליום הולדת למבוגרים: בולשיט, חינם בטלפון',
             description: 'משחק שמחבר בין המשפחה, החברים והקולגות בתוך דקה: כל אחד ממציא שקר מהטלפון שלו, וכולם מחפשים את האמת. חינם, בדפדפן, עד 12 במשחק.',
@@ -221,7 +223,7 @@ module.exports = {
         },
         {
             path: '/he/friends-weekend', twin: '/weekend-away-games', site: he, tag: 'party-weekend-he',
-            start: { href: '/create-game?lang=he', label: 'פותחים משחק לסופ"ש' },
+            start: { href: '/create-game?lang=he&pack=party', label: 'פותחים משחק לסופ"ש' },
             image: '/assets/og-weekend-he.png',
             title: 'משחק חברה למבוגרים לסופ"ש בצימר: בולשיט',
             description: 'סופ"ש בצימר או בווילה עם החבר\'ה? בולשיט הוא משחק בלוף וטריוויה חינמי שכל אחד משחק מהטלפון שלו. לא צריך לארוז קופסה, רק מטען.',
@@ -230,7 +232,7 @@ module.exports = {
         },
         {
             path: '/bachelorette-party-game', twin: '/he/bachelorette', site: en, tag: 'party-bachelorette-en',
-            start: { href: '/create-game?lang=en', label: 'Start a party game' },
+            start: { href: '/create-game?lang=en&pack=party', label: 'Start a party game' },
             image: '/assets/og-bachelorette-en.png',
             title: 'Bachelorette party game on your phones, free · Bullshit',
             description: 'Who lies best? Bullshit is a free bluffing game everyone plays on their own phone, at the rental or before going out. Up to 12 players, no app.',
@@ -239,7 +241,7 @@ module.exports = {
         },
         {
             path: '/adult-birthday-party-game', twin: '/he/adult-birthday', site: en, tag: 'party-birthday-en',
-            start: { href: '/create-game?lang=en', label: 'Start a birthday game' },
+            start: { href: '/create-game?lang=en&pack=party', label: 'Start a birthday game' },
             image: '/assets/og-birthday-en.png',
             title: 'Birthday party game for adults, on phones · Bullshit',
             description: 'A game that gets family, old friends and colleagues laughing in a minute: everyone writes a lie on their phone and hunts for the truth. Free, no app.',
@@ -248,7 +250,7 @@ module.exports = {
         },
         {
             path: '/weekend-away-games', twin: '/he/friends-weekend', site: en, tag: 'party-weekend-en',
-            start: { href: '/create-game?lang=en', label: 'Start a weekend game' },
+            start: { href: '/create-game?lang=en&pack=party', label: 'Start a weekend game' },
             image: '/assets/og-weekend-en.png',
             title: 'Games for a cabin weekend with friends · Bullshit',
             description: 'A cabin or lake-house weekend with friends? Bullshit is a free bluffing trivia game everyone plays on their own phone. Nothing to pack but a charger.',
