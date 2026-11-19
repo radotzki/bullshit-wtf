@@ -1,9 +1,15 @@
 // "The night after": the recap a finished game's own link shows for NIGHT_AFTER_MS after the game.
-// The link of every link-invited table sits in its group chat, and people scroll back to it; until now
-// it answered only "Game over". In the new half of a 50/50 test (by the game's PIN), the join page shows
-// the night instead: the winner, the biggest bullshitter, the lie of the night and the final scores, and,
-// to someone who didn't play, "You missed it: start your own game" (Product's spreading-loop spec,
-// change 2). The other half keeps today's "Game over" page.
+// The link of every link-invited table sits in its group chat, and people scroll back to it; it used to
+// answer only "Game over". Now the join page shows the night instead: the winner, the biggest bullshitter,
+// the lie of the night and the final scores, and, to someone who didn't play, "You missed it: start your
+// own game" (Product's spreading-loop spec, change 2).
+//
+// It began as a 50/50 test by the game's PIN (the lowest bit of the first byte of
+// SHA-256('night-after:' + PIN)); the other half kept "Game over" and sent seen-control-* rows. Since
+// that test was retired (the release of the "recap for every game" pull request), every finished game
+// shows it: in BigQuery, seen-control-* rows stop and seen-player / seen-other rows come for every game.
+// Before the release, a game's half is
+//   MOD(TO_CODE_POINTS(SHA256(CONCAT('night-after:', UPPER(id))))[OFFSET(0)], 2) = 1  (new half)
 //
 // What it promises:
 // - It is built on each read from the game's own record (the one the final screen read). Nothing new
@@ -16,28 +22,20 @@
 // - Only a game that reached its final scoreboard with 2 or more players gets a recap; a taste, a game
 //   that died in the lobby or mid-game, a stale one and a game in its first minutes after the end with an
 //   open rematch lobby keep today's page (the rematch comes first, as before).
-import { createHash } from 'crypto';
 import { GameScheme, GameState, Highlights, finalPlaces, isTestCampaign } from '../game-model';
 import { nameFlag } from '../name-flag';
 import { hostOf, shownName } from './join-preview';
 
 /** How long after the game its link shows the recap. */
 export const NIGHT_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
-/** The prefix of the test's hash, so a game's half here says nothing about its half in another test. */
-export const NIGHT_AFTER_TEST = 'night-after';
 /** At most this many rows of the final scores travel to the page (the game seats 12). */
 export const RECAP_ROWS = 12;
 
-export type NightAfterHalf = 'new' | 'control';
-
 /**
- * Which half a game falls in: true for the recap. The lowest bit of the first byte of
- * SHA-256('night-after:' + PIN, in capitals). In BigQuery, with the PIN in column id:
- *   MOD(TO_CODE_POINTS(SHA256(CONCAT('night-after:', UPPER(id))))[OFFSET(0)], 2) = 1
+ * The recap's half, from the retired 50/50 test: always 'new' now, so every finished game shows it. It
+ * stays in the answer so that a page loaded before the release (which still reads it) shows the recap too.
  */
-export function nightAfterHalf(pin: string): boolean {
-    return createHash('sha256').update(NIGHT_AFTER_TEST + ':' + String(pin || '').toUpperCase(), 'utf8').digest()[0] % 2 === 1;
-}
+export type NightAfterHalf = 'new';
 
 export interface RecapRow {
     name: string;
@@ -49,7 +47,7 @@ export interface RecapRow {
 }
 
 export interface NightAfter {
-    /** The game's half of the test. The page shows the recap only in 'new' (a tester may force either). */
+    /** Always 'new' (the retired test's half), for pages loaded before the release. */
     half: NightAfterHalf;
     /** The browser asking sat in this game (its sign-in uid or its last seat is one of the game's). */
     player: boolean;
@@ -148,7 +146,7 @@ export function nightAfter(pin: string, game: GameScheme, now: number, uid?: any
         return row;
     });
     const recap: NightAfter = {
-        half: nightAfterHalf(pin) ? 'new' : 'control',
+        half: 'new',
         player: playedHere(game, uid, pid),
         endedAt: ended,
         locale: game.locale === 'he' ? 'he' : 'en',
