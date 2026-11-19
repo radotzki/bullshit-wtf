@@ -2,6 +2,21 @@
     margin-top: 10px;
 }
 
+// Second to SHARE RESULTS: an outline in the game's colour, so the screen keeps one main button.
+.story-button {
+    margin-top: 8px;
+    border: 2px solid #db7151;
+    color: #db7151;
+    background: #fff;
+}
+
+.story-saved {
+    margin-top: 6px;
+    font-size: .85rem;
+    color: #7a7a7a;
+    text-align: center;
+}
+
 .share-sheet {
     display: flex;
     flex-direction: column;

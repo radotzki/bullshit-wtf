@@ -151,6 +151,7 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     native             sent through the phone's share sheet (SHARE)
 //     copy               SHARE on a phone with no share sheet: the text and link were copied
 //     download           tapped SAVE IMAGE
+//     story              pressed POST TO YOUR STORY (one row a press; the card's link carries ?via=story)
 //   after-game  the "start your own game" ask a guest sees on the final screen (presses, not sends):
 //     create             tapped START MY OWN GAME (the game it makes carries campaign after-game)
 //     remind             tapped REMIND ME (saves a calendar entry; its link carries after-game-remind)
@@ -201,7 +202,7 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
         'whatsapp', 'native', 'copy',
         // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
         'big-screen'],
-    'results': ['whatsapp', 'native', 'copy', 'download'],
+    'results': ['whatsapp', 'native', 'copy', 'download', 'story'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],
     'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],
