@@ -52,7 +52,7 @@ ${example('בפינלנד מתקיימת אליפות עולם בסחיבת ____
   <li><strong>חינם ובדפדפן.</strong> אין מה להוריד ואין חשבון לפתוח. מי שמגיעה באיחור מצטרפת עם הקוד תוך שניות.</li>
 </ul>
 <h2>טריק קטן למארגנת</h2>
-<p>השאלות במשחק הן עובדות מוזרות מכל העולם, וכמה מהן על חתונות, מסיבות וטיולים, אבל אף אחת לא על הכלה. אבל השקרים הם שלכן. תשובה כמו "הדייט הראשון של הכלה" או "השיר שהחתן שר באוטו" לא תמיד תעבוד על מישהי, אבל היא תפיל את כל החדר מצחוק כשהיא תופיע על המסך. ובסוף כל משחק, "משחק חוזר" פותח סבב חדש עם אותן שחקניות ושאלות חדשות.</p>
+<p>השאלות במשחק הן עובדות מוזרות מכל העולם, וכמה מהן על חתונות, מסיבות וטיולים, אבל אף אחת לא על הכלה. השקרים הם שלכן. תשובה כמו "הדייט הראשון של הכלה" או "השיר שהחתן שר באוטו" לא תמיד תעבוד על מישהי, אבל היא תפיל את כל החדר מצחוק כשהיא תופיע על המסך. ובסוף כל משחק, "משחק חוזר" פותח סבב חדש עם אותן שחקניות ושאלות חדשות.</p>
 <h2>ובמסיבת רווקים?</h2>
 <p>אותו משחק בדיוק. החתן נגד החברים מהשכונה, מהצבא ומהעבודה, וכל אחד מנסה לעבוד על כולם. יש טלוויזיה בצימר או בבית? פותחים בה את <bdi dir="ltr">bullshit.wtf/he</bdi>, לוחצים על "מסך" ומקלידים את קוד המשחק: השאלות, התשובות ומי בחר במה מופיעים בגדול, והטלפונים נשארים לכתיבה ולבחירה.</p>
 <h2>כדאי לדעת מראש</h2>
@@ -135,7 +135,7 @@ ${example('Finland hosts a world championship in carrying your ____',
   <li><strong>Free and in the browser.</strong> Nothing to download. Whoever arrives late joins with the PIN in seconds.</li>
 </ul>
 <h2>A trick for the maid of honor</h2>
-<p>The questions are strange facts from all over the world, a few of them about weddings, birthdays and nights out, but none about the bride. But the lies are yours. An answer like "the bride's first date" or "the song the groom sings in the car" may not fool anyone, but the room will lose it when it comes up on the screen. When a game ends, "Rematch" starts another with the same players and new questions.</p>
+<p>The questions are strange facts from all over the world, a few of them about weddings, birthdays and nights out, but none about the bride. The lies are yours. An answer like "the bride's first date" or "the song the groom sings in the car" may not fool anyone, but the room will lose it when it comes up on the screen. When a game ends, "Rematch" starts another with the same players and new questions.</p>
 <h2>And the bachelor party?</h2>
 <p>Same game. The groom against his friends from school, from work and from the team, each trying to fool the rest. If there is a TV in the house, open bullshit.wtf on a laptop connected to it, click "Present" and type the PIN: the questions, the lies and who picked what show up big, and the phones are only for writing and picking.</p>
 <h2>Good to know first</h2>
