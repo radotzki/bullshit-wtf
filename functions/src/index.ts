@@ -10,6 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
+import { keepSecondTable } from './controllers/second-table';
 import { fork } from './controllers/fork';
 import { sameTable } from './controllers/same-table';
 import { startGame, hostHere, hostToBigScreen } from './controllers/start';
@@ -31,6 +32,10 @@ function errorBody(e: any) {
             message: e.message || String(e),
             code: e.code || 'INTERNAL',
         };
+        // GAME_IS_FULL: the second table the refused phone may start (see second-table.ts).
+        if (e.secondTable && typeof e.secondTable === 'object') {
+            body.secondTable = e.secondTable;
+        }
         // GAME_OVER: the rematch's PIN, or that the game just ended (see game-over.ts).
         if (typeof e.rematch === 'string') {
             body.rematch = e.rematch;
@@ -304,6 +309,10 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);
+            // Made from START A SECOND TABLE at a full table: the next phones refused there are offered it.
+            if (req.body.secondOf) {
+                await keepSecondTable(req.body.secondOf, pin);
+            }
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {

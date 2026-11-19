@@ -145,3 +145,38 @@
         letter-spacing: 0;
     }
 }
+
+// A full table: START A SECOND TABLE (second-table.ts), on a phone first (320 px and up).
+.second-table {
+    text-align: center;
+
+    .second-table-title {
+        font-size: 1.75rem;
+        font-weight: bold;
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+    }
+
+    .second-table-text {
+        margin-bottom: 1rem;
+    }
+
+    // The page's 40 px sides leave a 320 px phone too little room for START A SECOND TABLE on one line.
+    @media (max-width: 360px) {
+        padding: 0 16px;
+    }
+
+    .field {
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    // JOIN <host>'S SECOND TABLE carries a name (up to 9 characters): it may take two lines on a small phone.
+    .second-table-join {
+        white-space: normal;
+        height: auto;
+        min-height: 2.5em;
+        line-height: 1.25;
+    }
+}

@@ -159,11 +159,12 @@ export function codeJoinRoute(pin: string, locale: string): { path: string[]; qu
 }
 
 /**
- * What the code box does with the server's answer to the PIN. A wrong PIN or a full game is said
- * right under the box, so the guest can fix a typo where they typed it. A game that is over goes on
- * to its join page, which says so and offers its rematch; any other failure goes on too, and the
+ * What the code box does with the server's answer to the PIN. A wrong PIN is said right under the
+ * box, so the guest can fix a typo where they typed it. A game that is over goes on to its join page,
+ * which says so and offers its rematch. A full game goes on too: its join page takes the name, and a
+ * refused join offers a second table (join-game/second-table.ts). Any other failure goes on, and the
  * join page tries again there.
  */
 export function codeBoxOutcome(errorCode: string | null | undefined): 'go' | 'stay' {
-    return errorCode === 'GAME_NOT_EXIST' || errorCode === 'GAME_IS_FULL' ? 'stay' : 'go';
+    return errorCode === 'GAME_NOT_EXIST' ? 'stay' : 'go';
 }
