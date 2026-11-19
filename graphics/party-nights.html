@@ -1,0 +1,132 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link previews (1200x630) for the party-night pages (game/seo/pages-party-nights.js): a bachelorette or
+     bachelor party, a grown-up birthday, a weekend away. Same look as groups-home.html. No real faces,
+     no drinks or anything cruder than the name.
+     Render: node graphics/render-more-pages.js game/src/assets graphics/party-nights.html -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fff;margin-bottom:20px;color:#fff}
+.dots{position:absolute;inset:0}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{direction:ltr;width:340px;height:340px;margin:0 40px 90px 70px;display:block;flex:none;position:relative}
+.text{flex:1;padding-right:60px;margin-bottom:90px;position:relative}
+h1{margin:0;font-size:124px;line-height:1;color:#fff;-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.3);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:56px;line-height:1.1;color:#f3d467}
+p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 70px 90px 40px}
+.he .text{padding-right:0;padding-left:60px}
+.he .kicker{font-size:58px}
+/* Brand white, as the search pages' own previews */
+.white{background:#fff}
+.white h1{-webkit-text-stroke:5px #9b9b9b;text-shadow:6px 8px 0 rgba(0,0,0,.18)}
+.white .kicker{color:#97374e}
+.white p{color:#4a4a4a}
+/* Colours per occasion */
+.wine{background:#97374e}
+.night{background:#13284f}
+.green{background:#1f5b3e}
+.plum{background:#3b1f5c}
+.teal{background:#1d5560}
+.stars{background:
+ radial-gradient(circle at 10% 16%,rgba(243,212,103,.4) 0 3px,transparent 4px),
+ radial-gradient(circle at 84% 12%,rgba(243,212,103,.35) 0 2px,transparent 3px),
+ radial-gradient(circle at 66% 32%,rgba(255,255,255,.25) 0 2px,transparent 3px),
+ radial-gradient(circle at 26% 62%,rgba(255,255,255,.2) 0 2px,transparent 3px),
+ radial-gradient(circle at 93% 66%,rgba(243,212,103,.35) 0 3px,transparent 4px),
+ radial-gradient(circle at 47% 8%,rgba(255,255,255,.25) 0 2px,transparent 3px)}
+.snow{background:
+ radial-gradient(circle at 6% 10%,#fff 0 5px,transparent 6px),radial-gradient(circle at 18% 70%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 37% 14%,rgba(255,255,255,.8) 0 4px,transparent 5px),radial-gradient(circle at 55% 66%,#fff 0 3px,transparent 4px),
+ radial-gradient(circle at 72% 8%,#fff 0 5px,transparent 6px),radial-gradient(circle at 90% 40%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 97% 78%,#fff 0 3px,transparent 4px),radial-gradient(circle at 46% 40%,rgba(255,255,255,.6) 0 3px,transparent 4px)}
+.confetti{background:
+ radial-gradient(circle at 8% 14%,#f3d467 0 7px,transparent 8px),radial-gradient(circle at 22% 82%,#db7151 0 6px,transparent 7px),
+ radial-gradient(circle at 41% 9%,#7fd1c7 0 6px,transparent 7px),radial-gradient(circle at 63% 18%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 88% 10%,#db7151 0 7px,transparent 8px),radial-gradient(circle at 95% 55%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 55% 78%,#f3d467 0 5px,transparent 6px),radial-gradient(circle at 4% 52%,#7fd1c7 0 5px,transparent 6px)}
+.sky{background:#2a6f97}
+.sun{background:#c8553d}
+</style></head><body>
+
+<!-- Pictures, each in a 400x400 box. -->
+<template id="crown"><!-- a party crown over three phones, confetti -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <path d="M110 150 L140 60 L200 120 L260 60 L290 150 Z" fill="#f3d467" stroke="#2b2523" stroke-width="7" stroke-linejoin="round"/>
+  <circle cx="140" cy="58" r="12" fill="#db7151" stroke="#2b2523" stroke-width="5"/>
+  <circle cx="260" cy="58" r="12" fill="#db7151" stroke="#2b2523" stroke-width="5"/>
+  <circle cx="200" cy="112" r="10" fill="#7fd1c7" stroke="#2b2523" stroke-width="5"/>
+  <rect x="104" y="148" width="192" height="24" rx="6" fill="#f3d467" stroke="#2b2523" stroke-width="7"/>
+  <g stroke="#2b2523" stroke-width="7">
+    <rect x="70" y="210" width="80" height="140" rx="14" fill="#fff"/>
+    <rect x="160" y="200" width="80" height="150" rx="14" fill="#fff"/>
+    <rect x="250" y="210" width="80" height="140" rx="14" fill="#fff"/>
+  </g>
+  <rect x="82" y="236" width="56" height="14" rx="6" fill="#e6d9cc"/><rect x="82" y="258" width="56" height="14" rx="6" fill="#f3d467"/>
+  <rect x="172" y="226" width="56" height="14" rx="6" fill="#e6d9cc"/><rect x="172" y="248" width="56" height="14" rx="6" fill="#e6d9cc"/><rect x="172" y="270" width="56" height="14" rx="6" fill="#f3d467"/>
+  <rect x="262" y="236" width="56" height="14" rx="6" fill="#f3d467"/><rect x="262" y="258" width="56" height="14" rx="6" fill="#e6d9cc"/>
+</svg></template>
+
+<template id="cake"><!-- a birthday cake with candles, phones around it -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#2b2523" stroke-width="7" stroke-linejoin="round">
+    <rect x="90" y="200" width="220" height="110" rx="12" fill="#fff"/>
+    <path d="M90 230 q27 24 55 0 q27 24 55 0 q27 24 55 0 q27 24 55 0" fill="none"/>
+    <rect x="70" y="306" width="260" height="20" rx="8" fill="#e6d9cc"/>
+    <rect x="130" y="140" width="16" height="60" rx="4" fill="#7fd1c7"/>
+    <rect x="192" y="130" width="16" height="70" rx="4" fill="#db7151"/>
+    <rect x="254" y="140" width="16" height="60" rx="4" fill="#7fd1c7"/>
+  </g>
+  <g fill="#f3d467" stroke="#2b2523" stroke-width="5">
+    <path d="M138 98 q14 22 0 36 q-14 -14 0 -36z"/><path d="M200 88 q14 22 0 36 q-14 -14 0 -36z"/><path d="M262 98 q14 22 0 36 q-14 -14 0 -36z"/>
+  </g>
+  <g fill="#db7151"><circle cx="140" cy="268" r="9"/><circle cx="200" cy="278" r="9"/><circle cx="260" cy="268" r="9"/></g>
+</svg></template>
+
+<template id="cabin"><!-- a cabin at night with a lit window, a little fire outside -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#2b2523" stroke-width="7" stroke-linejoin="round">
+    <path d="M50 190 L180 80 L310 190 Z" fill="#db7151"/>
+    <rect x="76" y="186" width="208" height="150" fill="#c08552"/>
+    <rect x="110" y="214" width="70" height="60" fill="#f3d467"/>
+    <rect x="206" y="236" width="50" height="100" fill="#7a4a2a"/>
+  </g>
+  <g stroke="#2b2523" stroke-width="4"><line x1="145" y1="214" x2="145" y2="274"/><line x1="110" y1="244" x2="180" y2="244"/></g>
+  <g stroke="#2b2523" stroke-width="7" stroke-linecap="round"><line x1="300" y1="350" x2="360" y2="330"/><line x1="300" y1="330" x2="360" y2="350"/></g>
+  <path d="M330 330 q-24 -30 0 -62 q8 22 18 18 q10 24 -18 44z" fill="#f3d467" stroke="#2b2523" stroke-width="5"/>
+  <path d="M330 326 q-10 -16 0 -30 q10 14 0 30z" fill="#db7151"/>
+</svg></template>
+
+<div class="card plum" id="bachelorette-he"><div class="dots confetti"></div><span data-art="crown"></span>
+  <div class="text"><h1>בולשיט</h1><div class="kicker">משחק למסיבת רווקות</div><p>מי משקרת הכי טוב? כל אחת מהטלפון שלה</p></div>
+  <div class="band">חינם · בדפדפן · עד 12 במשחק · BULLSHIT.WTF</div></div>
+
+<div class="card wine" id="birthday-he"><div class="dots confetti"></div><span data-art="cake"></span>
+  <div class="text"><h1>בולשיט</h1><div class="kicker">משחק ליום הולדת למבוגרים</div><p>כל האורחים משחקים, כל אחד מהטלפון שלו</p></div>
+  <div class="band">חינם · בדפדפן · בלי הורדה · BULLSHIT.WTF</div></div>
+
+<div class="card night" id="weekend-he"><div class="dots stars"></div><span data-art="cabin"></span>
+  <div class="text"><h1>בולשיט</h1><div class="kicker">משחק לסופ"ש בצימר</div><p>לא צריך לארוז קופסה, רק מטען</p></div>
+  <div class="band">משחק חברה למבוגרים · חינם · BULLSHIT.WTF</div></div>
+
+<div class="card plum" id="bachelorette-en"><div class="dots confetti"></div><span data-art="crown"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The bachelorette party game</div><p>Who lies best? Everyone plays on their own phone</p></div>
+  <div class="band">FREE · IN THE BROWSER · UP TO 12 PLAYERS · BULLSHIT.WTF</div></div>
+
+<div class="card wine" id="birthday-en"><div class="dots confetti"></div><span data-art="cake"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">A game for a grown-up birthday</div><p>Every guest plays together, on their own phone</p></div>
+  <div class="band">FREE · NO DOWNLOAD · UP TO 12 PLAYERS · BULLSHIT.WTF</div></div>
+
+<div class="card night" id="weekend-en"><div class="dots stars"></div><span data-art="cabin"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">A game for the cabin weekend</div><p>Nothing to pack but a charger</p></div>
+  <div class="band">FREE PARTY GAME FOR GROWN-UPS · BULLSHIT.WTF</div></div>
+
+<script>
+// Hebrew cards: right to left. Each [data-art] takes its picture.
+document.querySelectorAll('.card').forEach(function (c) { if (/-he$/.test(c.id)) c.classList.add('he'); });
+document.querySelectorAll('[data-art]').forEach(function (el) {
+  el.replaceWith(document.getElementById(el.getAttribute('data-art')).content.cloneNode(true));
+});
+</script>
+</body></html>
