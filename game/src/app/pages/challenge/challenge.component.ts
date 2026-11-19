@@ -4,7 +4,7 @@ import { ApiService } from './../../services/api.service';
 import { reportError } from './../../sentry/sentry.module';
 import { markHosted, markVisit } from './../../services/join-source';
 import {
-    CHALLENGE_CONTENT, CHALLENGE_OVER_TAG, ChallengeCard, ChallengeStrings, challengeCampaign, challengeWords, readCard,
+    CHALLENGE_CONTENT, CHALLENGE_OVER_TAG, ChallengeCard, ChallengeStrings, cardAverage, challengeCampaign, challengeWords, readCard,
 } from './../../components/challenge/challenge';
 
 /**
@@ -64,6 +64,11 @@ export class ChallengeComponent implements OnInit {
 
     get rtl() {
         return this.locale === 'he';
+    }
+
+    /** The score to beat: the table's average a player (challenge.ts, tableAverage). */
+    get toBeat(): number {
+        return this.card ? cardAverage(this.card) : 0;
     }
 
     get table() {

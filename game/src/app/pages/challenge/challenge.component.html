@@ -11,7 +11,7 @@
             <ng-container *ngIf="!loading && card">
                 <p class="challenge-title">{{ t.title }}</p>
                 <p class="challenge-table" dir="auto">{{ table }}</p>
-                <p class="challenge-top">{{ card.top }}</p>
+                <p class="challenge-top">{{ toBeat }}</p>
                 <p class="challenge-to-beat">{{ t.toBeat }}</p>
                 <p class="challenge-facts">{{ t.facts(card.played, card.questions) }}</p>
                 <p class="challenge-text">{{ t.text(card.questions) }}</p>

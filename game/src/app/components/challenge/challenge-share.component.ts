@@ -3,7 +3,7 @@ import { ApiService } from './../../services/api.service';
 import { ShareService } from './../../services/share.service';
 import { reportError } from './../../sentry/sentry.module';
 import {
-    CHALLENGE_CONTENT, ChallengeCard, ChallengeMethod, ChallengeStrings, challengeUrl, challengeWords, readCard,
+    CHALLENGE_CONTENT, ChallengeCard, ChallengeMethod, ChallengeStrings, cardAverage, challengeUrl, challengeWords, readCard,
 } from './challenge';
 
 /**
@@ -88,11 +88,11 @@ export class ChallengeShareComponent {
     }
 
     get sheetText() {
-        return this.card ? this.t.sheetText(this.card.top, this.card.questions) : '';
+        return this.card ? this.t.sheetText(cardAverage(this.card), this.card.questions) : '';
     }
 
     private message() {
-        return this.card ? this.t.message(this.card.top, this.card.questions) : '';
+        return this.card ? this.t.message(cardAverage(this.card), this.card.questions) : '';
     }
 
     private url(method: ChallengeMethod) {

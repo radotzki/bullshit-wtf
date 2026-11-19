@@ -145,6 +145,8 @@ async function language(base, locale) {
         check(A && A.state.id === 6 && A.campaign === 'test', 'table A is not a finished test game');
         const scoresA = Object.values(A.players).map((p) => ({ name: p.nickname, score: p.score || 0 })).sort((x, y) => y.score - x.score);
         result.a = { pin: gameA.pin, scores: scoresA };
+        // A challenge is judged by each table's average a player (challenge.ts, tableAverage).
+        const averageA = ch.tableAverage(scoresA.map((r) => r.score));
 
         // 2. A guest of table A presses CHALLENGE ANOTHER GROUP.
         const guest = a[1];
@@ -160,7 +162,7 @@ async function language(base, locale) {
         const linkLine = message.split('\n').pop();
         const want = `https://bullshit.wtf${he ? '/he' : ''}/challenge/${gameA.pin}?via=challenge-whatsapp`;
         check(linkLine === want, `the link is ${linkLine}, not ${want}`);
-        check(message.indexOf(t.message(scoresA[0].score, A.totalQ)) === 0, `the message: ${message}`);
+        check(message.indexOf(t.message(averageA, A.totalQ)) === 0, `the message: ${message}`);
         result.message = message;
         check((await db('GET', `games/${gameA.pin}/challengeOpen`)) === true, 'the challenge is not open');
         await shot(guest.page, `${locale}-1-sheet`);
@@ -175,7 +177,7 @@ async function language(base, locale) {
         await b[0].page.goto(local);
         await waitFor('the challenge page shows no score', () => visible(b[0].page.locator('.challenge-top')), problems);
         const top = Number(((await b[0].page.locator('.challenge-top').textContent()) || '').trim());
-        check(top === scoresA[0].score, `the page shows ${top} to beat, table A's best is ${scoresA[0].score}`);
+        check(top === averageA, `the page shows ${top} to beat, table A's average is ${averageA}`);
         const table = ((await b[0].page.locator('.challenge-table').textContent()) || '').trim();
         check(table === t.table(a[0].name, 3), `the page names "${table}"`);
         check(he ? (await b[0].page.locator('.challenge-page[dir="rtl"]').count()) === 1 : true, 'the Hebrew page is not right to left');
@@ -198,7 +200,7 @@ async function language(base, locale) {
 
         // 4. Both tables side by side, on every phone of table B.
         const scoresB = Object.values(B.players).map((p) => p.score || 0);
-        const line = ch.verdictLine(Math.max(...scoresB), { top: scoresA[0].score, host: a[0].name }, locale);
+        const line = ch.verdictLine(scoresB, { rows: scoresA, played: scoresA.length, host: a[0].name }, locale);
         for (const p of b) {
             await waitFor(`${p.name} sees no side-by-side scores`, () => visible(p.page.locator('.versus')), problems);
             const shown = ((await p.page.locator('.versus-line').textContent()) || '').trim();
