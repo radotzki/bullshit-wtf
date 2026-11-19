@@ -30,6 +30,7 @@ const added = {
     '/christmas-party-game': 'seo-en-christmas',
     '/new-years-eve-party-game': 'seo-en-new-year',
     '/office-holiday-party-game': 'seo-en-office-party',
+    '/virtual-holiday-party-game': 'seo-en-virtual-party',
 };
 
 test('the new pages are there, each with its own tag', () => {
@@ -62,7 +63,7 @@ Object.keys(added).forEach(p => {
 });
 
 test('the holiday pages start an English game with the Christmas and New Year pack', () => {
-    ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game'].forEach(p => {
+    ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game', '/virtual-holiday-party-game'].forEach(p => {
         assert.strictEqual(page(p).start.href, '/create-game?lang=en&pack=christmas', p);
         assert.ok(!page(p).twin, `${p} is English only`);
     });
@@ -97,4 +98,18 @@ test('the English home row adds the holiday pages from 20 November to 1 January,
     assert.ok(hrefs('en', at(2027, 1, 2)).indexOf('/christmas-party-game') < 0);
     assert.ok(hrefs('he', at(2026, 12, 5)).every(h => h.indexOf('/he/') === 0));
     searchLinks('en', 'fb-x', at(2026, 12, 5)).forEach(l => assert.match(l.href, /\?via=fb-x$/));
+});
+
+test('the virtual party page walks a computer host to the big screen, shared in the call', () => {
+    const b = page('/virtual-holiday-party-game').body;
+    // The lobby button's own words (big-screen-host.ts), so the page names what the host will see.
+    const hostStrings = fs.readFileSync(path.join(root, 'game', 'src', 'app', 'pages', 'game-staging', 'big-screen-host.ts'), 'utf8');
+    assert.match(hostStrings, /button: 'USE AS THE BIG SCREEN'/);
+    assert.match(hostStrings, /ask: 'Everyone in one room, or on a call\?'/);
+    assert.match(b, /"Use as the big screen"/);
+    assert.match(b, /Share that browser window in the call/);
+    assert.match(b, /"Join Game"/);
+    // Linked from the office party page and the video call page.
+    assert.match(page('/office-holiday-party-game').body, /href="\/virtual-holiday-party-game"/);
+    assert.match(page('/video-call-party-game').body, /href="\/virtual-holiday-party-game"/);
 });

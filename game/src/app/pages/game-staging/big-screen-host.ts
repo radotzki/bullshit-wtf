@@ -87,14 +87,14 @@ export function hostStillToJoin(note: string | null, players: BigScreenPlayer[])
 
 const strings = {
     en: {
-        ask: 'Everyone in one room?',
+        ask: 'Everyone in one room, or on a call?',
         how: 'Put the game on this screen. You join from your phone like everyone else, and press START here.',
         button: 'USE AS THE BIG SCREEN',
         // On the big screen, until the host joins from a phone under their name (hostStillToJoin).
         joinNow: 'This is the big screen now. Scan the code with your phone to join.',
     },
     he: {
-        ask: 'כולם באותו חדר?',
+        ask: 'כולם באותו חדר, או בשיחת וידאו?',
         // "מתחילים" is the START button's word in a Hebrew game: gameStrings('he').start.
         how: 'שימו את המשחק על המסך הזה. אתם מצטרפים מהטלפון כמו כולם, ולוחצים כאן על "מתחילים".',
         button: 'להפוך למסך הגדול',
