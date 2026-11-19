@@ -104,7 +104,7 @@ test('a question result counts lies, helper lies, picks and friends fooled', () 
         id: 'JUPU', q_index: 0, round: 1, total_q: 7, players: 4,
         lies: 2, idea_lies: 1, picks: 4, friend_fooled: 2, coach: true, locale: 'he',
         lie_span_s: null, pick_span_s: null, unpicked_lies: 0,
-        qid: null, truth_picks: 1, house_picks: 1,
+        qid: null, truth_picks: 1, house_picks: 1, pair: null, decoy_picks: 0,
     });
 });
 
@@ -114,7 +114,7 @@ test('a question nobody wrote or picked on still gives a row', () => {
         id: 'ABCD', q_index: 4, round: 2, total_q: 7, players: 1,
         lies: 0, idea_lies: 0, picks: 0, friend_fooled: 0, coach: false, locale: 'en',
         lie_span_s: null, pick_span_s: null, unpicked_lies: 0,
-        qid: null, truth_picks: 0, house_picks: 0,
+        qid: null, truth_picks: 0, house_picks: 0, pair: null, decoy_picks: 0,
     });
 });
 

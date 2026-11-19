@@ -8,6 +8,7 @@ import { gameStrings, GameStrings } from './../game-strings';
 import { isFinalQuestion, standing, gapLine, Standing } from './final-question';
 import { tasteStrings, TasteStrings } from './../taste-strings';
 import { TASTE_QUESTIONS } from './../../game-model';
+import { pairStrings, PairStrings } from './../pair-strings';
 
 const roundPoints = [
     { truth: 1000, bullshit: 500 },
@@ -37,6 +38,9 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
     ready = false;
     /** The question that follows is the game's last. */
     final = false;
+    /** A pair game's first question ("Pick a decoy", two players): the line that says how it plays. */
+    pairIntro = false;
+    pairWords: PairStrings = pairStrings('en');
     private standing: Standing = null;
     private sound: Howl;
 
@@ -64,10 +68,12 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
             orNull(this.apiService.getQuestionIndex(this.pin)),
             orNull(this.apiService.getTotalQuestions(this.pin)),
             orNull(this.apiService.getTaste(this.pin)),
-        ]).then(([roundIndex, questionIndex, totalQ, taste]) => {
+            orNull(this.apiService.isPairGame(this.pin)),
+        ]).then(([roundIndex, questionIndex, totalQ, taste, pair]) => {
             this.points = roundPoints[roundIndex] || {};
             this.taste = !!taste;
             this.tasteIntro = !!taste && questionIndex === 0;
+            this.pairIntro = pair === true && questionIndex === 0;
 
             if (!isFinalQuestion(questionIndex, totalQ)) {
                 this.ready = true;
@@ -93,6 +99,7 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
     private useLocale(locale: string) {
         this.t = gameStrings(locale);
         this.tasteWords = tasteStrings(locale);
+        this.pairWords = pairStrings(locale);
     }
 
     /** The two points lines show only once the round's points are read, never with a missing number. */

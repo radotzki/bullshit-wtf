@@ -281,8 +281,9 @@ test('a lobby that a second player joined before START is a whole game, untouche
         await answer(pin, pid, `${pid} lie`);
     }
     assert.strictEqual(state(pin), S.ShowAnswers);
-    // Two lies, the truth, and house lies up to six answers, as before.
-    assert.strictEqual(answersOf(pin).length, 6);
+    // Two lies, the truth, and house lies up to six answers, as before; or, in the decoy half of the
+    // two-player test (pair.ts), one decoy for each writer in place of the house lies.
+    assert.strictEqual(answersOf(pin).length, game(pin).pair === true ? 5 : 6);
     assert.strictEqual('taste' in game(pin).state, false);
 });
 

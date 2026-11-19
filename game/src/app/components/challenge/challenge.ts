@@ -182,7 +182,7 @@ const words = {
         shareTitle: 'אתגר בבולשיט',
         title: 'קיבלתם אתגר',
         table: (host: string, played: number) => host ? `השולחן של ${host}` : `שולחן של ${played} שחקנים`,
-        toBeat: 'נקודות לנצח',
+        toBeat: 'הניקוד שצריך לעבור',
         facts: (played: number, questions: number) => `${played} שחקנים · ${questions} שאלות`,
         text: (questions: number) =>
             `שחקו עם החבורה שלכם באותן ${questions} שאלות. בסוף תראו את התוצאות של שני השולחנות זו לצד זו.`,

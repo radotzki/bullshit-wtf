@@ -97,6 +97,12 @@
         font-size: 1.1rem;
     }
 
+    // A pair game's decoy: the house's lie, chosen by the player beside it. Their colour, not the house's.
+    .tag-house.tag-decoy {
+        color: #db7151;
+        margin-inline-end: 6px;
+    }
+
     // An About question's truth: whose it is, and their points, after the finders' points.
     .about-score {
         display: inline-flex;
