@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { isSameAnswer, normalizeAnswer } from '../src/controllers/same-answer';
+import { isSameAnswer, normalizeAnswer, isPartOfTruth, wordsWithin } from '../src/controllers/same-answer';
 
 const tests: { [name: string]: () => void } = {
     'exact and case-only matches are refused, as before'() {
@@ -73,6 +73,79 @@ const tests: { [name: string]: () => void } = {
     'other one-letter prefixes are not dropped'() {
         assert.ok(!isSameAnswer('מים', 'ים'));
         assert.ok(!isSameAnswer('שמים', 'מים'));
+    },
+
+    'a lie that is only part of the truth is refused (live game: "גרמניה" for "גרמניה הנאצית")'() {
+        assert.ok(isPartOfTruth('גרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('הנאצית', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('נאצית', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('הנאצית גרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('Germany', 'Nazi Germany'));
+        assert.ok(isPartOfTruth('nazi', 'Nazi Germany'));
+        assert.ok(isPartOfTruth('germany nazi', 'Nazi Germany'));
+        assert.ok(isPartOfTruth('Germany!', 'Nazi Germany'));
+    },
+
+    'a Hebrew prefix glued to a word, or an English article, does not get the part through'() {
+        assert.ok(isPartOfTruth('וגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('בגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('לגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('מגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('שגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('והגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('מהגרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('the Germany', 'Nazi Germany'));
+        assert.ok(isPartOfTruth('a nazi', 'Nazi Germany'));
+        assert.ok(isPartOfTruth('Germany', 'Germany, under the Nazis'));
+        // A prefix on the truth's word that the lie leaves out.
+        assert.ok(isPartOfTruth('בית', 'הבית הלבן'));
+        assert.ok(isPartOfTruth('white house', 'The White House'));
+    },
+
+    'the whole truth is still refused, as before'() {
+        assert.ok(isPartOfTruth('גרמניה הנאצית', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('the beatles', 'Beatles'));
+        assert.ok(isPartOfTruth('הלונדון', 'לונדון'));
+    },
+
+    'a lie with one word of its own stays allowed'() {
+        assert.ok(!isPartOfTruth('Nazi Italy', 'Nazi Germany'));
+        assert.ok(!isPartOfTruth('East Germany', 'Nazi Germany'));
+        assert.ok(!isPartOfTruth('איטליה הפשיסטית', 'גרמניה הנאצית'));
+        assert.ok(!isPartOfTruth('גרמניה המזרחית', 'גרמניה הנאצית'));
+        assert.ok(!isPartOfTruth('איטליה', 'גרמניה הנאצית'));
+        assert.ok(!isPartOfTruth('mashed potato salad', 'mashed potatoes'));
+        assert.ok(!isPartOfTruth('potato', 'mashed potatoes'));
+        assert.ok(!isPartOfTruth('the germans', 'Nazi Germany'));
+    },
+
+    'a word is not matched by a few of its letters'() {
+        assert.ok(!isPartOfTruth('man', 'Germany'));
+        assert.ok(!isPartOfTruth('גרמן', 'גרמניה הנאצית'));
+        assert.ok(!isPartOfTruth('צית', 'גרמניה הנאצית'));
+        // מ and ש start ordinary words: alone they are dropped only from a long word.
+        assert.ok(!isPartOfTruth('שמים', 'מים קרים'));
+        assert.ok(!isPartOfTruth('משפחה', 'שפחה נאמנה'));
+        // Short words keep their first letter, as above ("bread" and "hot").
+        assert.ok(!isPartOfTruth('לחם', 'חם מאוד'));
+    },
+
+    'question bank cases that must stay allowed: a repeated word, numbers'() {
+        // Both from the bank's own house lies, checked against their truths.
+        assert.ok(!isPartOfTruth('שש שש', 'שש חמש'));
+        assert.ok(!isPartOfTruth('5 cm', '1.5 cm'));
+        assert.ok(!isPartOfTruth('4', '4 million'));
+        assert.ok(!isPartOfTruth('1,000', '1,000 years'));
+        // A word with its unit is still the truth's own words.
+        assert.ok(isPartOfTruth('years', '1,000 years'));
+        assert.ok(isPartOfTruth('Germany,', 'Germany (Nazi)'));
+    },
+
+    'an empty lie, or one of articles only, is not refused here'() {
+        assert.ok(!isPartOfTruth('', 'Nazi Germany'));
+        assert.ok(!isPartOfTruth('   ', 'Nazi Germany'));
+        assert.ok(!isPartOfTruth('the', 'The Beatles'));
+        assert.ok(!wordsWithin('a', 'a cat'));
     },
 
     'normalizeAnswer trims, lowercases and strips quotes'() {

@@ -6,7 +6,7 @@ import { readGame, isMoved } from './old-games';
 import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
-import { isSameAnswer } from './same-answer';
+import { isSameAnswer, isPartOfTruth } from './same-answer';
 import { stamp } from './answer-times';
 import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
@@ -48,7 +48,9 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
     const qid = game.qids[game.questionIndex];
     const question = await getQuestion(qid);
 
-    if (isSameAnswer(playerAnswer, question.realAnswer)) {
+    // The truth, typed a little differently, or only a part of it ("Germany" for "Nazi Germany"):
+    // refused with the same "too close to the truth" message (see same-answer.ts).
+    if (isPartOfTruth(playerAnswer, question.realAnswer)) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
     } else {
         const stored: Answer = {
