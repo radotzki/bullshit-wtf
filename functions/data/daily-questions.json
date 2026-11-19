@@ -1182,5 +1182,749 @@
       "ישר למעלה"
     ],
     "citation": "https://en.wikipedia.org/wiki/Ofeq"
+  },
+  "daily-27-en-001": {
+    "day": "2027-01-01",
+    "lang": "en",
+    "questionText": "Since 1971, a gas crater in the desert of Turkmenistan, nicknamed the Door to Hell, has been $blank$",
+    "realAnswer": "on fire",
+    "fakeAnswers": [
+      "filling with water",
+      "glowing green",
+      "humming"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Darvaza_gas_crater"
+  },
+  "daily-27-en-002": {
+    "day": "2027-01-02",
+    "lang": "en",
+    "questionText": "Wayne Allwine, the voice of Mickey Mouse, was married to Russi Taylor, the voice of $blank$",
+    "realAnswer": "minnie mouse",
+    "fakeAnswers": [
+      "daisy duck",
+      "cinderella",
+      "tinker bell"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wayne_Allwine"
+  },
+  "daily-27-en-003": {
+    "day": "2027-01-03",
+    "lang": "en",
+    "questionText": "Bubble Wrap was invented in 1957 by two inventors who were really trying to make $blank$",
+    "realAnswer": "plastic wallpaper",
+    "fakeAnswers": [
+      "a raincoat",
+      "a swimming float",
+      "a shower curtain"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bubble_wrap"
+  },
+  "daily-27-en-004": {
+    "day": "2027-01-04",
+    "lang": "en",
+    "questionText": "In 1912, Theodore Roosevelt was shot just before a speech. The bullet was slowed by his glasses case and $blank$, and he still spoke for 50 minutes",
+    "realAnswer": "a 50-page copy of his speech",
+    "fakeAnswers": [
+      "a pocket bible",
+      "a silver flask",
+      "a thick wallet"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Theodore_Roosevelt_assassination_attempt"
+  },
+  "daily-27-en-005": {
+    "day": "2027-01-05",
+    "lang": "en",
+    "questionText": "Neptune was discovered in 1846. It finished its first full orbit of the Sun since then in $blank$",
+    "realAnswer": "2011",
+    "fakeAnswers": [
+      "1932",
+      "1979",
+      "1990"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Neptune"
+  },
+  "daily-27-en-006": {
+    "day": "2027-01-06",
+    "lang": "en",
+    "questionText": "The first .com web address ever registered, in 1985, was $blank$.com",
+    "realAnswer": "symbolics",
+    "fakeAnswers": [
+      "ibm",
+      "apple",
+      "xerox"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Symbolics"
+  },
+  "daily-27-en-007": {
+    "day": "2027-01-07",
+    "lang": "en",
+    "questionText": "Each cashew nut grows outside its fruit, hanging from the end of a $blank$",
+    "realAnswer": "cashew apple",
+    "fakeAnswers": [
+      "thorny pod",
+      "hairy husk",
+      "prickly cone"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cashew"
+  },
+  "daily-27-en-008": {
+    "day": "2027-01-08",
+    "lang": "en",
+    "questionText": "According to her official profile, Hello Kitty was born in the suburbs of $blank$",
+    "realAnswer": "london",
+    "fakeAnswers": [
+      "tokyo",
+      "osaka",
+      "paris"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hello_Kitty"
+  },
+  "daily-27-en-009": {
+    "day": "2027-01-09",
+    "lang": "en",
+    "questionText": "As a teenager, actor Christopher Walken worked in a circus for a $blank$",
+    "realAnswer": "lion tamer",
+    "fakeAnswers": [
+      "knife thrower",
+      "fire eater",
+      "trapeze artist"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Christopher_Walken"
+  },
+  "daily-27-en-010": {
+    "day": "2027-01-10",
+    "lang": "en",
+    "questionText": "The Q in Q-tips stands for $blank$",
+    "realAnswer": "quality",
+    "fakeAnswers": [
+      "quick",
+      "quilted",
+      "queen"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cotton_swab"
+  },
+  "daily-27-en-011": {
+    "day": "2027-01-11",
+    "lang": "en",
+    "questionText": "The Statue of Liberty's full name is Liberty $blank$ the World",
+    "realAnswer": "enlightening",
+    "fakeAnswers": [
+      "welcoming",
+      "watching over",
+      "greeting"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Statue_of_Liberty"
+  },
+  "daily-27-en-012": {
+    "day": "2027-01-12",
+    "lang": "en",
+    "questionText": "The programming language Python is named after $blank$",
+    "realAnswer": "monty python",
+    "fakeAnswers": [
+      "a pet snake",
+      "a greek myth",
+      "a sports car"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Python_(programming_language)"
+  },
+  "daily-27-en-013": {
+    "day": "2027-01-13",
+    "lang": "en",
+    "questionText": "Kingsford charcoal began when $blank$ had the wood scraps from his car factories turned into charcoal",
+    "realAnswer": "henry ford",
+    "fakeAnswers": [
+      "walter chrysler",
+      "john dodge",
+      "louis chevrolet"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kingsford_(charcoal)"
+  },
+  "daily-27-en-014": {
+    "day": "2027-01-14",
+    "lang": "en",
+    "questionText": "The forerunner of the fax machine was patented in $blank$, decades before the telephone",
+    "realAnswer": "1843",
+    "fakeAnswers": [
+      "1895",
+      "1923",
+      "1951"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Fax"
+  },
+  "daily-27-en-015": {
+    "day": "2027-01-15",
+    "lang": "en",
+    "questionText": "On 15 January 1919, a wave of $blank$ swept through the streets of Boston, killing 21 people",
+    "realAnswer": "molasses",
+    "fakeAnswers": [
+      "beer",
+      "maple syrup",
+      "milk"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Great_Molasses_Flood"
+  },
+  "daily-27-en-016": {
+    "day": "2027-01-16",
+    "lang": "en",
+    "questionText": "In 1998 most of 'Toy Story 2' was accidentally deleted. It was saved by a copy on $blank$",
+    "realAnswer": "an employee's home computer",
+    "fakeAnswers": [
+      "a tape in a bank vault",
+      "a disc in the director's car",
+      "a server in another country"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Toy_Story_2"
+  },
+  "daily-27-en-017": {
+    "day": "2027-01-17",
+    "lang": "en",
+    "questionText": "The 40 in WD-40 stands for $blank$",
+    "realAnswer": "the 40th formula",
+    "fakeAnswers": [
+      "40 ingredients",
+      "40 percent oil",
+      "the year 1940"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/WD-40"
+  },
+  "daily-27-en-018": {
+    "day": "2027-01-18",
+    "lang": "en",
+    "questionText": "By 1968, workers at Bell Labs had invented a name for the # key on the telephone: the $blank$",
+    "realAnswer": "octothorp",
+    "fakeAnswers": [
+      "octogrid",
+      "quadrapound",
+      "tic-tac"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Number_sign"
+  },
+  "daily-27-en-019": {
+    "day": "2027-01-19",
+    "lang": "en",
+    "questionText": "Fortune cookies, served in Chinese restaurants in America, most likely came from $blank$",
+    "realAnswer": "japan",
+    "fakeAnswers": [
+      "hong kong",
+      "korea",
+      "vietnam"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Fortune_cookie"
+  },
+  "daily-27-en-020": {
+    "day": "2027-01-20",
+    "lang": "en",
+    "questionText": "Nachos were invented in 1943 by Ignacio 'Nacho' Anaya, who was a restaurant's $blank$",
+    "realAnswer": "maître d'",
+    "fakeAnswers": [
+      "dishwasher",
+      "cashier",
+      "delivery boy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Nachos"
+  },
+  "daily-27-en-021": {
+    "day": "2027-01-21",
+    "lang": "en",
+    "questionText": "Under ultraviolet light, the fur of a platypus $blank$",
+    "realAnswer": "glows cyan and green",
+    "fakeAnswers": [
+      "turns black",
+      "looks white",
+      "goes see-through"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Platypus"
+  },
+  "daily-27-en-022": {
+    "day": "2027-01-22",
+    "lang": "en",
+    "questionText": "Ian Fleming named his spy after the real James Bond, an American expert on $blank$",
+    "realAnswer": "birds",
+    "fakeAnswers": [
+      "poisons",
+      "codes",
+      "seashells"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/James_Bond_(ornithologist)"
+  },
+  "daily-27-en-023": {
+    "day": "2027-01-23",
+    "lang": "en",
+    "questionText": "Mel Blanc, the voice of Bugs Bunny, asked for his grave marker to say $blank$",
+    "realAnswer": "that's all folks",
+    "fakeAnswers": [
+      "what's up, doc?",
+      "be vewy vewy quiet",
+      "beep beep"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mel_Blanc"
+  },
+  "daily-27-en-024": {
+    "day": "2027-01-24",
+    "lang": "en",
+    "questionText": "Stored in big heaps, $blank$ can heat up on their own and even catch fire",
+    "realAnswer": "pistachios",
+    "fakeAnswers": [
+      "dates",
+      "raisins",
+      "chestnuts"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pistachio"
+  },
+  "daily-27-en-025": {
+    "day": "2027-01-25",
+    "lang": "en",
+    "questionText": "One story says chicken tikka masala was invented in Glasgow, with a sauce improvised from a tin of $blank$",
+    "realAnswer": "tomato soup",
+    "fakeAnswers": [
+      "baked beans",
+      "coconut milk",
+      "custard"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chicken_tikka_masala"
+  },
+  "daily-27-en-026": {
+    "day": "2027-01-26",
+    "lang": "en",
+    "questionText": "In 2007, Queen guitarist Brian May earned a doctorate in $blank$",
+    "realAnswer": "astrophysics",
+    "fakeAnswers": [
+      "music theory",
+      "marine biology",
+      "medieval history"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Brian_May"
+  },
+  "daily-27-en-027": {
+    "day": "2027-01-27",
+    "lang": "en",
+    "questionText": "The first actor cast as the Tin Man in 'The Wizard of Oz' dropped out after he fell ill from the $blank$ in his make-up",
+    "realAnswer": "aluminum dust",
+    "fakeAnswers": [
+      "lead paint",
+      "silver glitter",
+      "engine oil"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Buddy_Ebsen"
+  },
+  "daily-27-en-028": {
+    "day": "2027-01-28",
+    "lang": "en",
+    "questionText": "Ciabatta, the Italian bread, was first baked in $blank$",
+    "realAnswer": "1982",
+    "fakeAnswers": [
+      "1782",
+      "1890",
+      "1921"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ciabatta"
+  },
+  "daily-27-en-029": {
+    "day": "2027-01-29",
+    "lang": "en",
+    "questionText": "Matt Groening named Bart Simpson, the rebellious son, with an anagram of $blank$",
+    "realAnswer": "brat",
+    "fakeAnswers": [
+      "bart's grandfather",
+      "a dog's name",
+      "his own initials"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bart_Simpson"
+  },
+  "daily-27-en-030": {
+    "day": "2027-01-30",
+    "lang": "en",
+    "questionText": "Before he became a priest, the future Pope Francis worked as a $blank$",
+    "realAnswer": "bouncer",
+    "fakeAnswers": [
+      "tango teacher",
+      "taxi driver",
+      "football referee"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pope_Francis"
+  },
+  "daily-27-en-031": {
+    "day": "2027-01-31",
+    "lang": "en",
+    "questionText": "In December 1926, crime writer Agatha Christie $blank$ for 11 days",
+    "realAnswer": "went missing",
+    "fakeAnswers": [
+      "was jailed",
+      "lived in a lighthouse",
+      "stopped speaking"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Agatha_Christie"
+  },
+  "daily-27-he-001": {
+    "day": "2027-01-01",
+    "lang": "he",
+    "questionText": "מאז 1971, מכתש גז במדבר של טורקמניסטן, שמכונה 'שער הגיהנום', $blank$",
+    "realAnswer": "בוער בלי הפסקה",
+    "fakeAnswers": [
+      "מתמלא במים",
+      "זוהר בירוק",
+      "משמיע זמזום"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Darvaza_gas_crater"
+  },
+  "daily-27-he-002": {
+    "day": "2027-01-02",
+    "lang": "he",
+    "questionText": "לפני שהפכה ל-Waze, האפליקציה התחילה ב-2006 כפרויקט קהילתי בשם $blank$",
+    "realAnswer": "פרימאפ ישראל",
+    "fakeAnswers": [
+      "מפה פתוחה",
+      "נווט בכיס",
+      "דרך חכמה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Waze"
+  },
+  "daily-27-he-003": {
+    "day": "2027-01-03",
+    "lang": "he",
+    "questionText": "ניילון הבועות הומצא ב-1957 בידי שני ממציאים שבעצם ניסו לייצר $blank$",
+    "realAnswer": "טפט מפלסטיק",
+    "fakeAnswers": [
+      "מעיל גשם",
+      "מזרן ים",
+      "וילון למקלחת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bubble_wrap"
+  },
+  "daily-27-he-004": {
+    "day": "2027-01-04",
+    "lang": "he",
+    "questionText": "מפלס ים המלח יורד בכל שנה ב$blank$",
+    "realAnswer": "יותר ממטר",
+    "fakeAnswers": [
+      "כחצי סנטימטר",
+      "כ-5 סנטימטרים",
+      "כ-10 מטרים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dead_Sea"
+  },
+  "daily-27-he-005": {
+    "day": "2027-01-05",
+    "lang": "he",
+    "questionText": "נפטון התגלה ב-1846, ואת ההקפה המלאה הראשונה שלו סביב השמש מאז הוא השלים רק בשנת $blank$",
+    "realAnswer": "2011",
+    "fakeAnswers": [
+      "1932",
+      "1979",
+      "1990"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Neptune"
+  },
+  "daily-27-he-006": {
+    "day": "2027-01-06",
+    "lang": "he",
+    "questionText": "השם של תוכנת הצ'אט הישראלית ICQ בא מהמשפט באנגלית $blank$",
+    "realAnswer": "I Seek You",
+    "fakeAnswers": [
+      "Internet Chat Quick",
+      "I Click Quick",
+      "Instant Chat Query"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/ICQ"
+  },
+  "daily-27-he-007": {
+    "day": "2027-01-07",
+    "lang": "he",
+    "questionText": "כל אגוז קשיו גדל מחוץ לפרי, תלוי בקצה של $blank$",
+    "realAnswer": "תפוח הקשיו",
+    "fakeAnswers": [
+      "תרמיל קוצני",
+      "קליפה שעירה",
+      "אצטרובל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cashew"
+  },
+  "daily-27-he-008": {
+    "day": "2027-01-08",
+    "lang": "he",
+    "questionText": "לפי הפרופיל הרשמי שלה, הלו קיטי נולדה בפרברים של $blank$",
+    "realAnswer": "לונדון",
+    "fakeAnswers": [
+      "טוקיו",
+      "אוסקה",
+      "פריז"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hello_Kitty"
+  },
+  "daily-27-he-009": {
+    "day": "2027-01-09",
+    "lang": "he",
+    "questionText": "לפי ההסבר המקובל, השם 'סביח' בא מ$blank$",
+    "realAnswer": "השם של האיש שהמציא אותו",
+    "fakeAnswers": [
+      "ראשי תיבות: סלט, ביצה, יותר חציל",
+      "שם של שכונה בבגדד",
+      "המילה הערבית לחציל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sabich"
+  },
+  "daily-27-he-010": {
+    "day": "2027-01-10",
+    "lang": "he",
+    "questionText": "האות Q בשם של מקלוני האוזניים Q-tips מייצגת את המילה האנגלית ל$blank$",
+    "realAnswer": "איכות",
+    "fakeAnswers": [
+      "מהירות",
+      "מלכה",
+      "שקט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cotton_swab"
+  },
+  "daily-27-he-011": {
+    "day": "2027-01-11",
+    "lang": "he",
+    "questionText": "את התקנה שמחייבת לצפות באבן את הבתים בירושלים קבע ב-1918 $blank$",
+    "realAnswer": "מושל צבאי בריטי",
+    "fakeAnswers": [
+      "סולטן עות'מאני",
+      "קיסר גרמניה בביקורו",
+      "ראש העיר הראשון של ישראל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jerusalem_stone"
+  },
+  "daily-27-he-012": {
+    "day": "2027-01-12",
+    "lang": "he",
+    "questionText": "שפת התכנות פייתון נקראת על שם $blank$",
+    "realAnswer": "מונטי פייתון",
+    "fakeAnswers": [
+      "נחש שגידל הממציא",
+      "מפלצת מהמיתולוגיה היוונית",
+      "מכונית ספורט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Python_(programming_language)"
+  },
+  "daily-27-he-013": {
+    "day": "2027-01-13",
+    "lang": "he",
+    "questionText": "סודהסטרים נוסדה ב-1903 באנגליה, כחברה קשורה ליצרנים של $blank$",
+    "realAnswer": "ג'ין",
+    "fakeAnswers": [
+      "בירה",
+      "תה",
+      "בשמים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/SodaStream"
+  },
+  "daily-27-he-014": {
+    "day": "2027-01-14",
+    "lang": "he",
+    "questionText": "אבי מכשיר הפקס קיבל פטנט כבר ב-$blank$, עשרות שנים לפני הטלפון",
+    "realAnswer": "1843",
+    "fakeAnswers": [
+      "1895",
+      "1923",
+      "1951"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Fax"
+  },
+  "daily-27-he-015": {
+    "day": "2027-01-15",
+    "lang": "he",
+    "questionText": "ב-15 בינואר 1919 שטף את רחובות בוסטון גל של $blank$, ו-21 אנשים נהרגו",
+    "realAnswer": "מולסה",
+    "fakeAnswers": [
+      "בירה",
+      "סירופ מייפל",
+      "חלב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Great_Molasses_Flood"
+  },
+  "daily-27-he-016": {
+    "day": "2027-01-16",
+    "lang": "he",
+    "questionText": "ב-1998 כמעט כל הסרט 'צעצוע של סיפור 2' נמחק בטעות. הוא ניצל בזכות עותק ב$blank$",
+    "realAnswer": "מחשב הבית של עובדת",
+    "fakeAnswers": [
+      "כספת של בנק",
+      "רכב של הבמאי",
+      "שרת בארץ אחרת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Toy_Story_2"
+  },
+  "daily-27-he-017": {
+    "day": "2027-01-17",
+    "lang": "he",
+    "questionText": "ה-40 בשם WD-40 מציין $blank$",
+    "realAnswer": "את הנוסחה ה-40",
+    "fakeAnswers": [
+      "40 רכיבים",
+      "40 אחוז שמן",
+      "את שנת 1940"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/WD-40"
+  },
+  "daily-27-he-018": {
+    "day": "2027-01-18",
+    "lang": "he",
+    "questionText": "ב'עיר הלבנה' של תל אביב יש יותר מ-$blank$ בניינים משנות ה-30",
+    "realAnswer": "4,000",
+    "fakeAnswers": [
+      "400",
+      "1,200",
+      "40,000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/White_City_(Tel_Aviv)"
+  },
+  "daily-27-he-019": {
+    "day": "2027-01-19",
+    "lang": "he",
+    "questionText": "עוגיות המזל שמגישים במסעדות סיניות באמריקה מגיעות כנראה דווקא מ$blank$",
+    "realAnswer": "יפן",
+    "fakeAnswers": [
+      "הונג קונג",
+      "קוריאה",
+      "וייטנאם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Fortune_cookie"
+  },
+  "daily-27-he-020": {
+    "day": "2027-01-20",
+    "lang": "he",
+    "questionText": "עגולשון שחור-גחון, צפרדע מעמק החולה, הוכרז כנכחד בטבע ב-1996, ונמצא שוב ב-$blank$",
+    "realAnswer": "2011",
+    "fakeAnswers": [
+      "1999",
+      "2004",
+      "2020"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hula_painted_frog"
+  },
+  "daily-27-he-021": {
+    "day": "2027-01-21",
+    "lang": "he",
+    "questionText": "באור אולטרה-סגול, הפרווה של הברווזן $blank$",
+    "realAnswer": "זוהרת בכחול-ירוק",
+    "fakeAnswers": [
+      "נהיית שחורה",
+      "נראית לבנה",
+      "נהיית שקופה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Platypus"
+  },
+  "daily-27-he-022": {
+    "day": "2027-01-22",
+    "lang": "he",
+    "questionText": "איאן פלמינג קרא למרגל שלו על שם ג'יימס בונד אמיתי, אמריקאי שהיה מומחה ל$blank$",
+    "realAnswer": "ציפורים",
+    "fakeAnswers": [
+      "רעלים",
+      "צפנים",
+      "צדפים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/James_Bond_(ornithologist)"
+  },
+  "daily-27-he-023": {
+    "day": "2027-01-23",
+    "lang": "he",
+    "questionText": "לפני שעלתה לארץ, גולדה מאיר עבדה כמורה בעיר האמריקאית $blank$",
+    "realAnswer": "מילווקי",
+    "fakeAnswers": [
+      "ניו יורק",
+      "שיקגו",
+      "דטרויט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Golda_Meir"
+  },
+  "daily-27-he-024": {
+    "day": "2027-01-24",
+    "lang": "he",
+    "questionText": "בערמות גדולות, $blank$ יכולים להתחמם מעצמם ואפילו להתלקח",
+    "realAnswer": "פיסטוקים",
+    "fakeAnswers": [
+      "תמרים",
+      "צימוקים",
+      "ערמונים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pistachio"
+  },
+  "daily-27-he-025": {
+    "day": "2027-01-25",
+    "lang": "he",
+    "questionText": "ישראל משתמשת שוב בחקלאות בכמעט $blank$ מהשפכים שלה",
+    "realAnswer": "90%",
+    "fakeAnswers": [
+      "15%",
+      "40%",
+      "60%"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Water_supply_and_sanitation_in_Israel"
+  },
+  "daily-27-he-026": {
+    "day": "2027-01-26",
+    "lang": "he",
+    "questionText": "ב-2007 קיבל בריאן מיי, הגיטריסט של קווין, דוקטורט ב$blank$",
+    "realAnswer": "אסטרופיזיקה",
+    "fakeAnswers": [
+      "תורת המוזיקה",
+      "ביולוגיה ימית",
+      "היסטוריה של ימי הביניים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Brian_May"
+  },
+  "daily-27-he-027": {
+    "day": "2027-01-27",
+    "lang": "he",
+    "questionText": "מכתש רמון נוצר בכלל מ$blank$",
+    "realAnswer": "סחיפה של נהרות",
+    "fakeAnswers": [
+      "פגיעת מטאוריט",
+      "הר געש שקרס",
+      "רעידת אדמה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Makhtesh_Ramon"
+  },
+  "daily-27-he-028": {
+    "day": "2027-01-28",
+    "lang": "he",
+    "questionText": "לחם הצ'יאבטה האיטלקי נאפה לראשונה בשנת $blank$",
+    "realAnswer": "1982",
+    "fakeAnswers": [
+      "1782",
+      "1890",
+      "1921"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ciabatta"
+  },
+  "daily-27-he-029": {
+    "day": "2027-01-29",
+    "lang": "he",
+    "questionText": "במצרים מכינים את הפלאפל לא מחומוס, אלא מ$blank$",
+    "realAnswer": "פול",
+    "fakeAnswers": [
+      "עדשים",
+      "אפונה",
+      "שעועית לבנה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Falafel"
+  },
+  "daily-27-he-030": {
+    "day": "2027-01-30",
+    "lang": "he",
+    "questionText": "ב-1913 פרצה 'מלחמת השפות' כשחברת 'עזרה' רצתה שבטכניון ילמדו ב$blank$",
+    "realAnswer": "גרמנית",
+    "fakeAnswers": [
+      "אנגלית",
+      "צרפתית",
+      "יידיש"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/War_of_the_Languages"
+  },
+  "daily-27-he-031": {
+    "day": "2027-01-31",
+    "lang": "he",
+    "questionText": "בדצמבר 1926 אגתה כריסטי, סופרת ספרי המתח, $blank$ למשך 11 ימים",
+    "realAnswer": "נעלמה",
+    "fakeAnswers": [
+      "ישבה בכלא",
+      "גרה במגדלור",
+      "הפסיקה לדבר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Agatha_Christie"
   }
 }
