@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link preview (1200x630) for the free party game page, /free-party-game-tv-and-phones: a TV with the
+     answers on it and three phones in front. No other company's logo or artwork. Styles as more-pages.html.
+     Render: node graphics/render-more-pages.js game/src/assets graphics/free-party-game.html -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fff;margin-bottom:20px;color:#fff}
+.dots{position:absolute;inset:0}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{direction:ltr;width:340px;height:340px;margin:0 40px 90px 70px;display:block;flex:none;position:relative}
+.text{flex:1;padding-right:60px;margin-bottom:90px;position:relative}
+h1{margin:0;font-size:124px;line-height:1;color:#fff;-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.3);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:56px;line-height:1.1;color:#f3d467}
+p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 70px 90px 40px}
+.he .text{padding-right:0;padding-left:60px}
+.he .kicker{font-size:58px}
+/* Brand white, as the search pages' own previews */
+.white{background:#fff}
+.white h1{-webkit-text-stroke:5px #9b9b9b;text-shadow:6px 8px 0 rgba(0,0,0,.18)}
+.white .kicker{color:#97374e}
+.white p{color:#4a4a4a}
+/* Colours per occasion */
+.wine{background:#97374e}
+.night{background:#13284f}
+.green{background:#1f5b3e}
+.plum{background:#3b1f5c}
+.teal{background:#1d5560}
+.autumn{background:#6b3a16}
+.stars{background:
+ radial-gradient(circle at 10% 16%,rgba(243,212,103,.4) 0 3px,transparent 4px),
+ radial-gradient(circle at 84% 12%,rgba(243,212,103,.35) 0 2px,transparent 3px),
+ radial-gradient(circle at 66% 32%,rgba(255,255,255,.25) 0 2px,transparent 3px),
+ radial-gradient(circle at 26% 62%,rgba(255,255,255,.2) 0 2px,transparent 3px),
+ radial-gradient(circle at 93% 66%,rgba(243,212,103,.35) 0 3px,transparent 4px),
+ radial-gradient(circle at 47% 8%,rgba(255,255,255,.25) 0 2px,transparent 3px)}
+.snow{background:
+ radial-gradient(circle at 6% 10%,#fff 0 5px,transparent 6px),radial-gradient(circle at 18% 70%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 37% 14%,rgba(255,255,255,.8) 0 4px,transparent 5px),radial-gradient(circle at 55% 66%,#fff 0 3px,transparent 4px),
+ radial-gradient(circle at 72% 8%,#fff 0 5px,transparent 6px),radial-gradient(circle at 90% 40%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 97% 78%,#fff 0 3px,transparent 4px),radial-gradient(circle at 46% 40%,rgba(255,255,255,.6) 0 3px,transparent 4px)}
+.confetti{background:
+ radial-gradient(circle at 8% 14%,#f3d467 0 7px,transparent 8px),radial-gradient(circle at 22% 82%,#db7151 0 6px,transparent 7px),
+ radial-gradient(circle at 41% 9%,#7fd1c7 0 6px,transparent 7px),radial-gradient(circle at 63% 18%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 88% 10%,#db7151 0 7px,transparent 8px),radial-gradient(circle at 95% 55%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 55% 78%,#f3d467 0 5px,transparent 6px),radial-gradient(circle at 4% 52%,#7fd1c7 0 5px,transparent 6px)}
+</style></head><body>
+
+
+<template id="tv"><!-- a TV on a stand showing three answers, three phones in front of it -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="360" height="220" rx="14" fill="#2b2523" stroke="#2b2523" stroke-width="8"/>
+  <rect x="36" y="36" width="328" height="188" rx="6" fill="#13284f"/>
+  <rect x="56" y="52" width="288" height="26" rx="8" fill="#f3d467"/>
+  <g fill="#fff"><rect x="56" y="96" width="200" height="30" rx="8"/><rect x="56" y="138" width="240" height="30" rx="8"/><rect x="56" y="180" width="170" height="30" rx="8"/></g>
+  <rect x="56" y="138" width="240" height="30" rx="8" fill="#7fd1c7"/>
+  <rect x="180" y="240" width="40" height="22" fill="#2b2523"/><rect x="130" y="258" width="140" height="12" rx="6" fill="#2b2523"/>
+  <g stroke="#2b2523" stroke-width="7"><rect x="50" y="286" width="70" height="104" rx="12" fill="#fff"/><rect x="165" y="296" width="70" height="104" rx="12" fill="#fff"/><rect x="280" y="286" width="70" height="104" rx="12" fill="#fff"/></g>
+  <g fill="#db7151"><rect x="62" y="306" width="46" height="12" rx="5"/><rect x="177" y="316" width="46" height="12" rx="5"/><rect x="292" y="306" width="46" height="12" rx="5"/></g>
+  <g fill="#e6d9cc"><rect x="62" y="328" width="46" height="10" rx="5"/><rect x="177" y="338" width="34" height="10" rx="5"/><rect x="292" y="328" width="46" height="10" rx="5"/></g>
+</svg></template>
+
+<div class="card night" id="free-party-game-en"><div class="dots confetti"></div><span data-art="tv"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The free TV party game</div><p>Questions on the big screen. Lies on everyone's phone.</p></div>
+  <div class="band">FREE · IN THE BROWSER · NO DOWNLOAD · BULLSHIT.WTF</div></div>
+
+<script>
+document.querySelectorAll('[data-art]').forEach(function (el) {
+  el.replaceWith(document.getElementById(el.getAttribute('data-art')).content.cloneNode(true));
+});
+</script>
+</body></html>
