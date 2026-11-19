@@ -1186,7 +1186,7 @@
   "daily-27-en-001": {
     "day": "2027-01-01",
     "lang": "en",
-    "questionText": "Since 1971, a gas crater in the desert of Turkmenistan, nicknamed the Door to Hell, has been $blank$",
+    "questionText": "A gas crater in the desert of Turkmenistan, nicknamed the Door to Hell, has been $blank$, on and off, since 1971",
     "realAnswer": "on fire",
     "fakeAnswers": [
       "filling with water",
@@ -1555,15 +1555,351 @@
     ],
     "citation": "https://en.wikipedia.org/wiki/Agatha_Christie"
   },
+  "daily-27-en-032": {
+    "day": "2027-02-01",
+    "lang": "en",
+    "questionText": "The Super Soaker water gun was invented by Lonnie Johnson, an engineer who had worked for the US Air Force and $blank$",
+    "realAnswer": "nasa",
+    "fakeAnswers": [
+      "disney",
+      "boeing",
+      "the us navy"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Super_Soaker"
+  },
+  "daily-27-en-033": {
+    "day": "2027-02-02",
+    "lang": "en",
+    "questionText": "Punxsutawney Phil, the groundhog who forecasts the weather every 2 February, is said to have lived since 1883 thanks to a yearly sip of $blank$",
+    "realAnswer": "elixir of life",
+    "fakeAnswers": [
+      "maple syrup",
+      "royal jelly",
+      "warm cider"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Punxsutawney_Phil"
+  },
+  "daily-27-en-034": {
+    "day": "2027-02-03",
+    "lang": "en",
+    "questionText": "Doritos were first made in the early 1960s at a Mexican restaurant inside $blank$",
+    "realAnswer": "disneyland",
+    "fakeAnswers": [
+      "a las vegas casino",
+      "a texas gas station",
+      "a hollywood studio"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Doritos"
+  },
+  "daily-27-en-035": {
+    "day": "2027-02-04",
+    "lang": "en",
+    "questionText": "Sudoku was most likely designed by an American, and first appeared in 1979 under the name $blank$",
+    "realAnswer": "number place",
+    "fakeAnswers": [
+      "magic nine",
+      "digit grid",
+      "box logic"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sudoku"
+  },
+  "daily-27-en-036": {
+    "day": "2027-02-05",
+    "lang": "en",
+    "questionText": "A female kiwi lays an egg that can weigh up to $blank$ of her own body weight",
+    "realAnswer": "20%",
+    "fakeAnswers": [
+      "2%",
+      "5%",
+      "50%"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kiwi_(bird)"
+  },
+  "daily-27-en-037": {
+    "day": "2027-02-06",
+    "lang": "en",
+    "questionText": "On her 63rd birthday in 1901, a $blank$ named Annie Taylor went over Niagara Falls in a barrel",
+    "realAnswer": "schoolteacher",
+    "fakeAnswers": [
+      "circus acrobat",
+      "nun",
+      "lighthouse keeper"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Annie_Edson_Taylor"
+  },
+  "daily-27-en-038": {
+    "day": "2027-02-07",
+    "lang": "en",
+    "questionText": "Corn flakes were first made in 1894 for $blank$",
+    "realAnswer": "patients at a sanitarium",
+    "fakeAnswers": [
+      "soldiers in the army",
+      "children at an orphanage",
+      "railway workers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Corn_flakes"
+  },
+  "daily-27-en-039": {
+    "day": "2027-02-08",
+    "lang": "en",
+    "questionText": "Cher Ami, a famous carrier pigeon of World War I, ended up with only one $blank$",
+    "realAnswer": "leg",
+    "fakeAnswers": [
+      "wing",
+      "tail feather",
+      "toe"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cher_Ami"
+  },
+  "daily-27-en-040": {
+    "day": "2027-02-09",
+    "lang": "en",
+    "questionText": "The original Twinkies were filled with $blank$ cream, until wartime rationing changed the recipe",
+    "realAnswer": "banana",
+    "fakeAnswers": [
+      "strawberry",
+      "coconut",
+      "chocolate"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Twinkie"
+  },
+  "daily-27-en-041": {
+    "day": "2027-02-10",
+    "lang": "en",
+    "questionText": "René Laennec invented the stethoscope in 1816 because he was uncomfortable $blank$",
+    "realAnswer": "putting his ear to a woman's chest",
+    "fakeAnswers": [
+      "smelling his patients' breath",
+      "kneeling beside low beds",
+      "shouting at deaf patients"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stethoscope"
+  },
+  "daily-27-en-042": {
+    "day": "2027-02-11",
+    "lang": "en",
+    "questionText": "Tolkien wrote the first line of 'The Hobbit' on a blank page he found while $blank$",
+    "realAnswer": "marking exam papers",
+    "fakeAnswers": [
+      "waiting for a train",
+      "serving in the army",
+      "reading to his son"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Hobbit"
+  },
+  "daily-27-en-043": {
+    "day": "2027-02-12",
+    "lang": "en",
+    "questionText": "Robert FitzRoy, captain of Darwin's ship the Beagle, coined the term $blank$",
+    "realAnswer": "weather forecast",
+    "fakeAnswers": [
+      "heatwave",
+      "cold front",
+      "jet stream"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Robert_FitzRoy"
+  },
+  "daily-27-en-044": {
+    "day": "2027-02-13",
+    "lang": "en",
+    "questionText": "The card game UNO was created in 1971 by Merle Robbins, who first sold it from his $blank$",
+    "realAnswer": "barbershop",
+    "fakeAnswers": [
+      "gas station",
+      "ice cream truck",
+      "school cafeteria"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Uno_(card_game)"
+  },
+  "daily-27-en-045": {
+    "day": "2027-02-14",
+    "lang": "en",
+    "questionText": "The domain YouTube.com was activated on Valentine's Day 2005, for a site first meant for online $blank$",
+    "realAnswer": "dating",
+    "fakeAnswers": [
+      "cooking classes",
+      "pet adoption",
+      "karaoke"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/History_of_YouTube"
+  },
+  "daily-27-en-046": {
+    "day": "2027-02-15",
+    "lang": "en",
+    "questionText": "Hubert Booth's 'Puffing Billy', one of the first powered vacuum cleaners, was $blank$",
+    "realAnswer": "pulled by horses",
+    "fakeAnswers": [
+      "carried by six men",
+      "mounted on a bicycle",
+      "rolled along rails"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hubert_Cecil_Booth"
+  },
+  "daily-27-en-047": {
+    "day": "2027-02-16",
+    "lang": "en",
+    "questionText": "Pokémon was inspired by its creator's childhood hobby of collecting $blank$",
+    "realAnswer": "insects",
+    "fakeAnswers": [
+      "stamps",
+      "marbles",
+      "seashells"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Satoshi_Tajiri"
+  },
+  "daily-27-en-048": {
+    "day": "2027-02-17",
+    "lang": "en",
+    "questionText": "Gatorade got its name from $blank$",
+    "realAnswer": "a university's sports teams",
+    "fakeAnswers": [
+      "an alligator farm",
+      "a swamp in louisiana",
+      "its inventor's pet alligator"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gatorade"
+  },
+  "daily-27-en-049": {
+    "day": "2027-02-18",
+    "lang": "en",
+    "questionText": "The name Pluto was suggested in 1930 by $blank$",
+    "realAnswer": "an 11-year-old girl",
+    "fakeAnswers": [
+      "a walt disney animator",
+      "a greek fisherman",
+      "a radio quiz winner"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venetia_Burney"
+  },
+  "daily-27-en-050": {
+    "day": "2027-02-19",
+    "lang": "en",
+    "questionText": "As a schoolboy, Roald Dahl tested new chocolates sent to his school by $blank$",
+    "realAnswer": "cadbury",
+    "fakeAnswers": [
+      "nestlé",
+      "hershey's",
+      "mars"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Roald_Dahl"
+  },
+  "daily-27-en-051": {
+    "day": "2027-02-20",
+    "lang": "en",
+    "questionText": "The name Tetris combines 'tetra' with its inventor's favourite sport, $blank$",
+    "realAnswer": "tennis",
+    "fakeAnswers": [
+      "hockey",
+      "chess",
+      "polo"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tetris"
+  },
+  "daily-27-en-052": {
+    "day": "2027-02-21",
+    "lang": "en",
+    "questionText": "Because of a metal shortage in World War II, Oscar statuettes were made of $blank$ for three years",
+    "realAnswer": "painted plaster",
+    "fakeAnswers": [
+      "painted wood",
+      "baked clay",
+      "solid glass"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Academy_Awards"
+  },
+  "daily-27-en-053": {
+    "day": "2027-02-22",
+    "lang": "en",
+    "questionText": "Ed Headrick, who designed the modern Frisbee, asked for his ashes to be $blank$",
+    "realAnswer": "made into flying discs",
+    "fakeAnswers": [
+      "launched into space",
+      "scattered from a kite",
+      "sealed in a snow globe"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ed_Headrick"
+  },
+  "daily-27-en-054": {
+    "day": "2027-02-23",
+    "lang": "en",
+    "questionText": "Mary Shelley began 'Frankenstein' at 18, after Lord Byron challenged his guests to $blank$",
+    "realAnswer": "write a ghost story",
+    "fakeAnswers": [
+      "stay awake all night",
+      "climb a mountain",
+      "put on a play"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Frankenstein"
+  },
+  "daily-27-en-055": {
+    "day": "2027-02-24",
+    "lang": "en",
+    "questionText": "To get people used to his new shopping carts, Sylvan Goldman hired $blank$ to wheel them around his store",
+    "realAnswer": "models",
+    "fakeAnswers": [
+      "clowns",
+      "schoolchildren",
+      "off-duty police"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Shopping_cart"
+  },
+  "daily-27-en-056": {
+    "day": "2027-02-25",
+    "lang": "en",
+    "questionText": "Film star Hedy Lamarr co-invented a radio system for torpedoes together with a $blank$",
+    "realAnswer": "composer",
+    "fakeAnswers": [
+      "chess champion",
+      "stage magician",
+      "watchmaker"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hedy_Lamarr"
+  },
+  "daily-27-en-057": {
+    "day": "2027-02-26",
+    "lang": "en",
+    "questionText": "The name Jenga comes from a Swahili word meaning $blank$",
+    "realAnswer": "to build",
+    "fakeAnswers": [
+      "to fall",
+      "to wobble",
+      "to play"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jenga"
+  },
+  "daily-27-en-058": {
+    "day": "2027-02-27",
+    "lang": "en",
+    "questionText": "Scrabble was invented in 1931 by an American $blank$",
+    "realAnswer": "architect",
+    "fakeAnswers": [
+      "crossword editor",
+      "typesetter",
+      "librarian"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Scrabble"
+  },
+  "daily-27-en-059": {
+    "day": "2027-02-28",
+    "lang": "en",
+    "questionText": "Bobby Leach survived going over Niagara Falls in a barrel, but later died of an injury from slipping on $blank$",
+    "realAnswer": "an orange peel",
+    "fakeAnswers": [
+      "a bar of soap",
+      "an icy step",
+      "a banana skin"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bobby_Leach"
+  },
   "daily-27-he-001": {
     "day": "2027-01-01",
     "lang": "he",
-    "questionText": "מאז 1971, מכתש גז במדבר של טורקמניסטן, שמכונה 'שער הגיהנום', $blank$",
-    "realAnswer": "בוער בלי הפסקה",
+    "questionText": "מכתש גז במדבר של טורקמניסטן, שמכונה 'שער הגיהנום', $blank$ מאז 1971, לפעמים יותר ולפעמים פחות",
+    "realAnswer": "בוער",
     "fakeAnswers": [
       "מתמלא במים",
       "זוהר בירוק",
-      "משמיע זמזום"
+      "מזמזם"
     ],
     "citation": "https://en.wikipedia.org/wiki/Darvaza_gas_crater"
   },
@@ -1846,7 +2182,7 @@
   "daily-27-he-025": {
     "day": "2027-01-25",
     "lang": "he",
-    "questionText": "ישראל משתמשת שוב בחקלאות בכמעט $blank$ מהשפכים שלה",
+    "questionText": "ישראל ממחזרת לחקלאות כמעט $blank$ מהשפכים שלה",
     "realAnswer": "90%",
     "fakeAnswers": [
       "15%",
@@ -1926,5 +2262,341 @@
       "הפסיקה לדבר"
     ],
     "citation": "https://en.wikipedia.org/wiki/Agatha_Christie"
+  },
+  "daily-27-he-032": {
+    "day": "2027-02-01",
+    "lang": "he",
+    "questionText": "רובה המים 'סופר סוקר' הומצא בידי לוני ג'ונסון, מהנדס שעבד בחיל האוויר האמריקאי וב$blank$",
+    "realAnswer": "נאס\"א",
+    "fakeAnswers": [
+      "דיסני",
+      "בואינג",
+      "הצי האמריקאי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Super_Soaker"
+  },
+  "daily-27-he-033": {
+    "day": "2027-02-02",
+    "lang": "he",
+    "questionText": "לפי מי שמטפלים בו, פיל, המרמיטה שחוזה את מזג האוויר בכל 2 בפברואר, חי מאז 1883 בזכות לגימה שנתית של $blank$",
+    "realAnswer": "שיקוי החיים",
+    "fakeAnswers": [
+      "סירופ מייפל",
+      "ג'לי מלכות",
+      "סיידר חם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Punxsutawney_Phil"
+  },
+  "daily-27-he-034": {
+    "day": "2027-02-03",
+    "lang": "he",
+    "questionText": "מחקר מ-2008 מצא שאלרגיה לבוטנים נדירה בישראל, ככל הנראה כי כאן תינוקות אוכלים הרבה $blank$",
+    "realAnswer": "במבה",
+    "fakeAnswers": [
+      "חלבה",
+      "טחינה",
+      "פיצוחים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bamba_(snack)"
+  },
+  "daily-27-he-035": {
+    "day": "2027-02-04",
+    "lang": "he",
+    "questionText": "הסודוקו תוכנן כנראה בידי אמריקאי, והתפרסם לראשונה ב-1979 בשם $blank$",
+    "realAnswer": "Number Place",
+    "fakeAnswers": [
+      "Magic Nine",
+      "Digit Grid",
+      "Box Logic"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sudoku"
+  },
+  "daily-27-he-036": {
+    "day": "2027-02-05",
+    "lang": "he",
+    "questionText": "נקבת הקיווי מטילה ביצה שיכולה לשקול עד $blank$ ממשקל הגוף שלה",
+    "realAnswer": "20%",
+    "fakeAnswers": [
+      "2%",
+      "5%",
+      "50%"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kiwi_(bird)"
+  },
+  "daily-27-he-037": {
+    "day": "2027-02-06",
+    "lang": "he",
+    "questionText": "ביום הולדתה ה-63, ב-1901, $blank$ בשם אנני טיילור עברה את מפלי הניאגרה בתוך חבית",
+    "realAnswer": "מורה",
+    "fakeAnswers": [
+      "אקרובטית בקרקס",
+      "נזירה",
+      "שומרת מגדלור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Annie_Edson_Taylor"
+  },
+  "daily-27-he-038": {
+    "day": "2027-02-07",
+    "lang": "he",
+    "questionText": "פתיתי התירס (קורנפלקס) הוכנו לראשונה ב-1894 בשביל $blank$",
+    "realAnswer": "מטופלים בבית הבראה",
+    "fakeAnswers": [
+      "חיילים בצבא",
+      "ילדים בבית יתומים",
+      "פועלי רכבת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Corn_flakes"
+  },
+  "daily-27-he-039": {
+    "day": "2027-02-08",
+    "lang": "he",
+    "questionText": "שר אמי, יונת דואר מפורסמת ממלחמת העולם הראשונה, נשארה בסוף עם $blank$ אחת",
+    "realAnswer": "רגל",
+    "fakeAnswers": [
+      "כנף",
+      "נוצת זנב",
+      "אצבע"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cher_Ami"
+  },
+  "daily-27-he-040": {
+    "day": "2027-02-09",
+    "lang": "he",
+    "questionText": "העסק שממנו צמחה חברת התרופות טבע נוסד ב-1901 בירושלים, ושלח את התרופות ללקוחות על $blank$",
+    "realAnswer": "גמלים",
+    "fakeAnswers": [
+      "חמורים",
+      "עגלות סוסים",
+      "אופניים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Teva_Pharmaceuticals"
+  },
+  "daily-27-he-041": {
+    "day": "2027-02-10",
+    "lang": "he",
+    "questionText": "רנה לנק המציא ב-1816 את הסטטוסקופ כי היה לו לא נעים $blank$",
+    "realAnswer": "להצמיד את האוזן לחזה של אישה",
+    "fakeAnswers": [
+      "להריח את הנשימה של החולים",
+      "לכרוע ליד מיטות נמוכות",
+      "לצעוק על חולים כבדי שמיעה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stethoscope"
+  },
+  "daily-27-he-042": {
+    "day": "2027-02-11",
+    "lang": "he",
+    "questionText": "טולקין כתב את המשפט הראשון של 'ההוביט' על דף ריק שמצא בזמן ש$blank$",
+    "realAnswer": "בדק מבחנים",
+    "fakeAnswers": [
+      "חיכה לרכבת",
+      "שירת בצבא",
+      "הקריא סיפור לבנו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Hobbit"
+  },
+  "daily-27-he-043": {
+    "day": "2027-02-12",
+    "lang": "he",
+    "questionText": "רוברט פיצרוי, רב החובל של הספינה של דרווין, טבע את המונח האנגלי ל$blank$",
+    "realAnswer": "תחזית מזג אוויר",
+    "fakeAnswers": [
+      "גל חום",
+      "חזית קרה",
+      "זרם סילון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Robert_FitzRoy"
+  },
+  "daily-27-he-044": {
+    "day": "2027-02-13",
+    "lang": "he",
+    "questionText": "משחק הקלפים אונו נוצר ב-1971 בידי מרל רובינס, שבהתחלה מכר אותו ב$blank$ שלו",
+    "realAnswer": "מספרה",
+    "fakeAnswers": [
+      "תחנת הדלק",
+      "משאית הגלידה",
+      "מכולת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Uno_(card_game)"
+  },
+  "daily-27-he-045": {
+    "day": "2027-02-14",
+    "lang": "he",
+    "questionText": "הדומיין YouTube.com הופעל ביום האהבה 2005, בשביל אתר שבהתחלה נועד ל$blank$",
+    "realAnswer": "היכרויות",
+    "fakeAnswers": [
+      "שיעורי בישול",
+      "אימוץ חיות",
+      "קריוקי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/History_of_YouTube"
+  },
+  "daily-27-he-046": {
+    "day": "2027-02-15",
+    "lang": "he",
+    "questionText": "'פאפינג בילי' של הוברט בות', אחד משואבי האבק הממונעים הראשונים, $blank$",
+    "realAnswer": "נגרר בידי סוסים",
+    "fakeAnswers": [
+      "נישא בידי שישה גברים",
+      "הורכב על אופניים",
+      "נסע על פסים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hubert_Cecil_Booth"
+  },
+  "daily-27-he-047": {
+    "day": "2027-02-16",
+    "lang": "he",
+    "questionText": "פוקימון נולד בהשראת התחביב של היוצר שלו בילדות: איסוף $blank$",
+    "realAnswer": "חרקים",
+    "fakeAnswers": [
+      "בולים",
+      "גולות",
+      "צדפים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Satoshi_Tajiri"
+  },
+  "daily-27-he-048": {
+    "day": "2027-02-17",
+    "lang": "he",
+    "questionText": "באצטדיון של המכביה הראשונה, בתל אביב ב-1932, העבודות הסתיימו $blank$",
+    "realAnswer": "בלילה שלפני הפתיחה",
+    "fakeAnswers": [
+      "שלוש שנים קודם",
+      "שבוע אחרי הסיום",
+      "רק אחרי עשר שנים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Maccabiah_Games"
+  },
+  "daily-27-he-049": {
+    "day": "2027-02-18",
+    "lang": "he",
+    "questionText": "השם פלוטו הוצע ב-1930 בידי $blank$",
+    "realAnswer": "ילדה בת 11",
+    "fakeAnswers": [
+      "אנימטור של וולט דיסני",
+      "דייג יווני",
+      "זוכה בחידון ברדיו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venetia_Burney"
+  },
+  "daily-27-he-050": {
+    "day": "2027-02-19",
+    "lang": "he",
+    "questionText": "כתלמיד, רואלד דאל טעם שוקולדים חדשים שחברת $blank$ שלחה לבית הספר שלו",
+    "realAnswer": "קדבורי",
+    "fakeAnswers": [
+      "נסטלה",
+      "הרשי",
+      "מארס"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Roald_Dahl"
+  },
+  "daily-27-he-051": {
+    "day": "2027-02-20",
+    "lang": "he",
+    "questionText": "השם טטריס מחבר את 'טטרה' (ארבע) עם ענף הספורט האהוב על הממציא שלו, $blank$",
+    "realAnswer": "טניס",
+    "fakeAnswers": [
+      "הוקי",
+      "שחמט",
+      "פולו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tetris"
+  },
+  "daily-27-he-052": {
+    "day": "2027-02-21",
+    "lang": "he",
+    "questionText": "בגלל מחסור במתכת במלחמת העולם השנייה, פסלוני האוסקר יוצרו במשך שלוש שנים מ$blank$",
+    "realAnswer": "גבס צבוע",
+    "fakeAnswers": [
+      "עץ צבוע",
+      "חרס",
+      "זכוכית"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Academy_Awards"
+  },
+  "daily-27-he-053": {
+    "day": "2027-02-22",
+    "lang": "he",
+    "questionText": "אד הדריק, שעיצב את הפריזבי המודרני, ביקש שהאפר שלו $blank$",
+    "realAnswer": "יהפוך לפריזבים",
+    "fakeAnswers": [
+      "ישוגר לחלל",
+      "יפוזר מעפיפון",
+      "ייסגר בכדור שלג"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ed_Headrick"
+  },
+  "daily-27-he-054": {
+    "day": "2027-02-23",
+    "lang": "he",
+    "questionText": "מרי שלי התחילה לכתוב את 'פרנקנשטיין' בגיל 18, אחרי שלורד ביירון הציע לאורחים שלו $blank$",
+    "realAnswer": "לכתוב סיפור רפאים",
+    "fakeAnswers": [
+      "להישאר ערים כל הלילה",
+      "לטפס על הר",
+      "להעלות הצגה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Frankenstein"
+  },
+  "daily-27-he-055": {
+    "day": "2027-02-24",
+    "lang": "he",
+    "questionText": "הדיסק-און-קי, שממציאיו עבדו בחברה ישראלית, נמכר לראשונה בסוף 2000. הנפח הקטן ביותר שהיה לו אי פעם הוא $blank$",
+    "realAnswer": "8 מגה-בייט",
+    "fakeAnswers": [
+      "8 קילו-בייט",
+      "64 מגה-בייט",
+      "1 ג'יגה-בייט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/USB_flash_drive"
+  },
+  "daily-27-he-056": {
+    "day": "2027-02-25",
+    "lang": "he",
+    "questionText": "כוכבת הקולנוע הדי למאר המציאה מערכת רדיו לטורפדו יחד עם $blank$",
+    "realAnswer": "מלחין",
+    "fakeAnswers": [
+      "אלוף שחמט",
+      "קוסם במה",
+      "שען"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hedy_Lamarr"
+  },
+  "daily-27-he-057": {
+    "day": "2027-02-26",
+    "lang": "he",
+    "questionText": "השם ג'נגה בא ממילה בסווהילית שפירושה $blank$",
+    "realAnswer": "לבנות",
+    "fakeAnswers": [
+      "ליפול",
+      "להתנדנד",
+      "לשחק"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jenga"
+  },
+  "daily-27-he-058": {
+    "day": "2027-02-27",
+    "lang": "he",
+    "questionText": "את השבץ-נא (סקראבל) המציא ב-1931 $blank$ אמריקאי",
+    "realAnswer": "אדריכל",
+    "fakeAnswers": [
+      "עורך תשבצים",
+      "סדר דפוס",
+      "ספרן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Scrabble"
+  },
+  "daily-27-he-059": {
+    "day": "2027-02-28",
+    "lang": "he",
+    "questionText": "בובי ליץ' שרד את מפלי הניאגרה בתוך חבית, אבל מת מאוחר יותר מפציעה אחרי שהחליק על $blank$",
+    "realAnswer": "קליפת תפוז",
+    "fakeAnswers": [
+      "סבון",
+      "מדרגה קפואה",
+      "קליפת בננה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bobby_Leach"
   }
 }

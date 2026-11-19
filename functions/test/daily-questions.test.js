@@ -8,11 +8,11 @@ const daily = require('../data/daily-questions.json');
 
 // The first 35 ids of each language (001 to 035) run from 27 November to 31 December. The 13 written
 // after them (036 to 048) are for the days before: 14 to 26 November, from the puzzle's first weekend.
-// The 2027 ids (daily-27-..-001 to 031) are 1 to 31 January, one a day, so January never repeats a
+// The 2027 ids (daily-27-..-001 to 059) are 1 January to 28 February, one a day, so neither month repeats a
 // day whose answer is already on a past day's page.
 const FIRST_DAY = '2026-11-14';
 const DAYS_2026 = 48;
-const DAYS_2027 = 31;
+const DAYS_2027 = 59;
 const DAYS = DAYS_2026 + DAYS_2027;
 const FIRST_ID_DAY = '2026-11-27'; // the day of id 001
 const FIRST_IDS = 35;
@@ -53,7 +53,7 @@ test('every daily question is well formed', () => {
     }
 });
 
-test('each language has one question for every day, 14 November to 31 January', () => {
+test('each language has one question for every day, 14 November to 28 February', () => {
     for (const lang of ['en', 'he']) {
         const days = Object.values(daily).filter(q => q.lang === lang).map(q => q.day).sort();
         assert.deepStrictEqual(days, Array.from({ length: DAYS }, (_, n) => dayAt(n)), lang);
@@ -74,7 +74,7 @@ test('no daily question repeats a question of the game', () => {
     for (const [id, q] of Object.entries(daily)) assert.ok(!seen.has(norm(q.questionText)), id);
 });
 
-test('a fact both languages share is on the same day in both (January)', () => {
+test('a fact both languages share is on the same day in both (2027)', () => {
     // One language's past page must not give away the other language's question of a later day.
     const jan = Object.values(daily).filter(q => q.day >= '2027-01-01');
     const byCitation = {};
@@ -88,7 +88,7 @@ test('a fact both languages share is on the same day in both (January)', () => {
     }
 });
 
-test('no January question repeats a fact of an earlier daily question', () => {
+test('no 2027 question repeats a fact of an earlier daily question', () => {
     const before = Object.values(daily).filter(q => q.day < '2027-01-01');
     const seen = new Set(before.map(q => q.citation));
     const texts = new Set(before.map(q => norm(q.questionText)));

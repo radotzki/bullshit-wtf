@@ -8,7 +8,7 @@ link for friends. One button starts a real game, tagged so it can be counted.
 
 | What | Where |
 |---|---|
-| The questions | `functions/data/daily-questions.json` (ids `daily-26-(en\|he)-NNN` to 31 December 2026, `daily-27-(en\|he)-NNN` for January 2027, a `day` each). Never loaded into the game's bank. |
+| The questions | `functions/data/daily-questions.json` (ids `daily-26-(en\|he)-NNN` to 31 December 2026, `daily-27-(en\|he)-NNN` for January and February 2027, a `day` each). Never loaded into the game's bank. |
 | The function | `daily` in `functions/src/index.ts`; its rules, pure and tested, in `functions/src/controllers/daily.ts` |
 | The page | `game/seo/daily-page.js` (written into `dist/` by `game/seo/build-daily.js`, which `npm run build` runs after `build-pages.js`), words in `daily-strings.js`, rules in `daily-core.js`, page script in `daily-client.js` |
 | Link previews | `graphics/daily.html`, rendered with `node graphics/render-daily.js` into `game/src/assets/og-daily-(en\|he).png` |
