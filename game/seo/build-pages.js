@@ -194,11 +194,13 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
 function sitemap() {
     // No <lastmod>: the build day on every page tells search engines nothing, and a wrong date makes
     // them trust the field less. Leave it out until pages carry the day they really changed.
-    // The two home pages: / and /he (dist/he.html, written by scripts/build-he.js).
+    // The two home pages: / and /he (dist/he.html, written by scripts/build-he.js). Each pair names the
+    // English page as x-default too, as the pages' own <head> does (src/index.html, hreflang() above).
     const homes = ['/', '/he'].map(loc => `  <url>
     <loc>${SITE}${loc}</loc>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}/"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}/he"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}/"/>
   </url>`);
     const urls = pages.map(p => {
         if (!p.twin) {
@@ -213,6 +215,7 @@ function sitemap() {
     <loc>${SITE}${p.path}</loc>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}${en.path}"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}${he.path}"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}${en.path}"/>
   </url>`;
     });
     return `<?xml version="1.0" encoding="UTF-8"?>
