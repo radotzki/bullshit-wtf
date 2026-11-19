@@ -11,7 +11,8 @@ const hostedKey = 'BS_HOSTED_PIN';
 const campaignKey = 'BS_CAMPAIGN';
 const localeKey = 'BS_SITE_LOCALE';
 // home: a join typed into the code box at the top of the home page (front-door.ts).
-const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home'];
+// lobby-address: a browser with no seat that opened a lobby's own address, sent to its join form (lobby-door.ts).
+const known = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home', 'lobby-address'];
 // The post tag of this page load, for a browser whose tab storage is blocked (see arrivalCampaign).
 let loadedWith: string | null = null;
 

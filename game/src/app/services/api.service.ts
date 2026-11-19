@@ -383,6 +383,26 @@ export class ApiService {
         return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => tasteOf(state), () => null);
     }
 
+    /**
+     * For a lobby's own address (lobby-door.ts): the game's state and language, and, given this browser's
+     * saved player id, whether that player has a seat in the game. All three are open to every phone.
+     */
+    lobbyDoorRead(pin: string, pid: string | null): Promise<{ state: any; locale: string; seated?: boolean }> {
+        pin = pin.toUpperCase();
+        const game = this.gamesRef.child(pin);
+        return Promise.all([
+            this.get<any>(game.child('state')),
+            this.get<string>(game.child('locale')),
+            pid ? this.get<any>(game.child('players').child(pid)) : Promise.resolve(undefined),
+        ]).then(([state, locale, seat]) => {
+            const read: { state: any; locale: string; seated?: boolean } = { state, locale };
+            if (pid) {
+                read.seated = seat !== null && seat !== undefined;
+            }
+            return read;
+        });
+    }
+
     getGameLocale(pin: string) {
         pin = pin.toUpperCase();
         return this.get<string>(this.gamesRef.child(pin).child('locale')).then(locale => {

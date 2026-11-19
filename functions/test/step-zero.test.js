@@ -194,6 +194,17 @@ test('a join typed into the home page\'s code box is counted as "home", in the s
     assert.deepStrictEqual(Object.keys(row).sort(), ['ip', 'name_flag', 'nickname', 'pin', 'time', 'uid', 'useragent', 'via']);
 });
 
+test('a join sent to the join form from a lobby\'s own address is counted as "lobby-address", in the same column', async () => {
+    rows.length = 0;
+    assert.strictEqual(analytics.cleanVia('lobby-address'), 'lobby-address');
+    assert.strictEqual(analytics.cleanVia('LOBBY-ADDRESS'), 'lobby-address');
+    assert.strictEqual(analytics.cleanVia('lobby'), 'other');
+    await analytics.onJoinGame('u', '1.2.3.4', 'ua', 'ABCD', 'n', analytics.cleanVia('lobby-address'));
+    const [row] = take('users');
+    assert.strictEqual(row.via, 'lobby-address');
+    assert.deepStrictEqual(Object.keys(row).sort(), ['ip', 'name_flag', 'nickname', 'pin', 'time', 'uid', 'useragent', 'via']);
+});
+
 test('HTTP endpoints pass the uid and join source through, and drop bad uids', async () => {
     seedQuestions();
     rows.length = 0;

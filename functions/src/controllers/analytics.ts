@@ -52,8 +52,10 @@ export async function onStateChange(pin: string) {
 //   replay  carried into the next game by Replay
 //   crew    tapped Rematch on a crew page, or opened a crew link
 //   home    typed the PIN into the code box at the top of the home page ("Got a code?")
+//   lobby-address  opened a lobby's own address (/game-staging/PIN) with no seat in it, and was sent
+//           to that lobby's join form (game/src/app/services/lobby-door.ts)
 // The server alone writes one more value, 'test', for every join of a test game (see onJoinGame).
-export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home'];
+export const JOIN_SOURCES = ['pin', 'link', 'qr', 'results', 'host', 'replay', 'crew', 'home', 'lobby-address'];
 
 export function cleanVia(via: any): string | null {
     if (via === undefined || via === null || via === '') {
