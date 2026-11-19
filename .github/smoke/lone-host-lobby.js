@@ -149,6 +149,28 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
         check(await until('the invite', async () => (await visible(card)) || (await visible(inline))), 'no invite on the page of a host alone');
         check(await visible(tryAlone), 'alone: the "try alone" link is gone');
         check(!(await visible(start)), 'alone: START is in the header (today it waits behind the link)');
+
+        // ---- the nudge: 20 s alone, nothing pressed (lone-host.ts: nudgeDue), in both halves ----
+        const message = page.locator('.lobby-message');
+        const nudged = page.locator('.lobby-message.nudge');
+        check(!(await visible(nudged)), 'alone: the nudge shows before 20 s');
+        check(await until('the nudge', () => visible(nudged), help.NUDGE_AFTER_MS + 8000), 'alone 20 s: no nudge');
+        check((await message.innerText()).trim() === words.nudge, `alone 20 s: the line is "${await message.innerText()}"`);
+        check((await page.locator('.lobby-sub').innerText()).trim() === words.nudgeSub, 'alone 20 s: the second line is not the nudge\'s');
+        const pulsing = page.locator(wantNew && computer ? '.invite-computer .send button.nudge' : '.invite-inline a.whatsapp.nudge');
+        check(await visible(pulsing), 'alone 20 s: the first invite button does not pulse');
+        await sleep(6000); // the pulse is over: the screenshot shows where it rests
+        await shot(page, `${tag}-1b-nudge`);
+        if (!computer) {
+            await page.setViewportSize(SMALL_PHONE);
+            await sleep(300);
+            const box = await pulsing.boundingBox();
+            check(box && box.y + box.height <= SMALL_PHONE.height, 'alone 20 s, 320 px: the first invite button is below the screen');
+            check(await noSideScroll(page), 'alone 20 s: the page scrolls sideways at 320 px');
+            await shot(page, `${tag}-1b-nudge-320`);
+            await page.setViewportSize(PHONE);
+            await sleep(300);
+        }
         if (wantNew) {
             check((await best.innerText().catch(() => '')).trim() === words.best, `alone: the line is "${await best.innerText().catch(() => '')}"`);
             if (computer) {
@@ -192,6 +214,7 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
             // WhatsApp opens in a new tab, which never leaves this machine: its row below says it was pressed.
             await scope.locator('a.whatsapp').click();
             await sleep(500);
+            check(!(await visible(nudged)), 'an invite was pressed: the nudge is still there');
         } else {
             check(!(await visible(card)), 'the other half shows the computer\'s card');
             check(!(await visible(best)), 'the other half shows the "best with" line');
@@ -282,6 +305,7 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
             check(mine.filter((r) => r.method.startsWith('seen-')).length === 1 && mine.some((r) => r.method === seen),
                 `the seen rows are ${JSON.stringify(mine.filter((r) => r.method.startsWith('seen-')).map((r) => r.method))}, not one ${seen}`);
             check(mine.every((r) => r.locale === locale && r.uid === hostRow.uid), 'a row with another language or browser id');
+            check(mine.filter((r) => r.method === `nudge-${device}`).length === 1, `no single nudge-${device} row`);
             if (wantNew) {
                 check(mine.filter((r) => r.method === 'copy').length === 1, 'no single copy row');
                 check(mine.filter((r) => r.method === 'whatsapp').length === 1, 'no single whatsapp row');

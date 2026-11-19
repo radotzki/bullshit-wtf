@@ -142,6 +142,11 @@
             font-weight: 600;
         }
 
+        // The nudge: the host has been alone 20 s and pressed nothing. The line says what to do now.
+        .lobby-message.nudge {
+            color: #db7151;
+        }
+
         .lobby-sub {
             font-size: 1rem;
             margin-top: 2px;

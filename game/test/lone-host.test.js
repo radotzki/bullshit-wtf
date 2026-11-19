@@ -161,3 +161,26 @@ test('the words: both languages, every line, and the number the line names', () 
         assert.ok(line.includes(String(BEST_WITH)), line);
     }
 });
+
+test('the nudge: alone 20 s, nothing pressed, page on screen', () => {
+    const { nudgeDue, nudgeSeen, NUDGE_AFTER_MS } = load('pages', 'game-staging', 'lone-host.ts');
+    assert.strictEqual(NUDGE_AFTER_MS, 20000);
+    const base = { alone: true, aloneSince: 1000, now: 1000 + NUDGE_AFTER_MS, pressed: false, hidden: false };
+    assert.strictEqual(nudgeDue(base), true);
+    assert.strictEqual(nudgeDue({ ...base, now: 1000 + NUDGE_AFTER_MS - 1 }), false, 'not before 20 s');
+    assert.strictEqual(nudgeDue({ ...base, pressed: true }), false, 'not once an invite was pressed');
+    assert.strictEqual(nudgeDue({ ...base, hidden: true }), false, 'not while the page is hidden');
+    assert.strictEqual(nudgeDue({ ...base, alone: false }), false, 'not once a guest is in');
+    assert.strictEqual(nudgeDue({ ...base, aloneSince: null }), false);
+    assert.strictEqual(nudgeSeen('phone'), 'nudge-phone');
+    assert.strictEqual(nudgeSeen('computer'), 'nudge-computer');
+});
+
+test('the nudge has its words in both languages', () => {
+    for (const locale of ['en', 'he']) {
+        const s = loneHostStrings(locale);
+        assert.ok(s.nudge && s.nudgeSub, locale);
+    }
+    assert.match(loneHostStrings('en').nudge, /send the link/i);
+    assert.match(loneHostStrings('he').nudge, /שלחו את הקישור/);
+});

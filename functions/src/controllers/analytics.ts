@@ -146,6 +146,10 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     seen-classic-phone, seen-classic-computer  the same moment in the other half, which showed today's lobby
 //     whatsapp, native, copy                     the host's invite sends from this lobby, in either half and
 //                                                with any number of players in (each is an "invite" row too)
+//     share-tap                                  the host tapped SHARE LINK (the share sheet), whatever came of it:
+//                                                a press, where native counts only a send
+//     nudge-phone, nudge-computer                the host had been alone 20 s and pressed no invite, so the lobby
+//                                                said "Now send the link to 3 friends" (once per lobby and browser)
 //   results     the final screen's SHARE RESULTS sheet (the results card):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE)
@@ -200,7 +204,11 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',
         // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
-        'big-screen'],
+        'big-screen',
+        // The host alone 20 s with no invite pressed: "Now send the link to 3 friends" showed (lone-host.ts: nudgeDue).
+        'nudge-phone', 'nudge-computer',
+        // The host tapped SHARE LINK (the phone's share sheet), whatever came of it.
+        'share-tap'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],

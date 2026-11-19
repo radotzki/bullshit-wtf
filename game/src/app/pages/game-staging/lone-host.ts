@@ -157,8 +157,43 @@ export function loneHostHelp(input: LoneHostInput): LoneHostHelp {
     return { inTest, half, device, due, show: due && half === 'new', seen: `seen-${half}-${device}` };
 }
 
+/**
+ * The nudge: a host who has been alone in the lobby for NUDGE_AFTER_MS, and has pressed no invite, is told
+ * plainly what to do next, and the first invite button pulses. Both halves of the test get it, so they still
+ * compare fairly.
+ *
+ * Why: in the week of 16 November 2026, 12 of 27 first-time hosts never got a guest, and not one of them
+ * pressed an invite button. The lobby explained the game ("Bullshit needs friends") but never said "send it
+ * now". Counted once per lobby as a "lobby-help" row, `nudge-phone` or `nudge-computer`, with the PIN.
+ */
+export const NUDGE_AFTER_MS = 20 * 1000;
+
+export interface NudgeInput {
+    /** The host is alone in the lobby (LobbyHostView.alone). */
+    alone: boolean;
+    /** When this page first saw the host alone (Date.now()), or null. */
+    aloneSince: number | null;
+    now: number;
+    /** The host pressed an invite in this lobby (WhatsApp, the share sheet, COPY LINK). */
+    pressed: boolean;
+    /** The page is hidden (WhatsApp in front, a locked phone): nobody would see it. */
+    hidden: boolean;
+}
+
+export function nudgeDue(input: NudgeInput): boolean {
+    return !!input.alone && !input.pressed && !input.hidden && typeof input.aloneSince === 'number'
+        && input.now - input.aloneSince >= NUDGE_AFTER_MS;
+}
+
+/** The `lobby-help` row counted the first time the nudge shows. */
+export function nudgeSeen(device: HostDevice): string {
+    return `nudge-${device}`;
+}
+
 const strings = {
     en: {
+        nudge: 'Now send the link to 3 friends',
+        nudgeSub: 'They tap it, type a name, and pop up here. A game takes 5 to 10 minutes.',
         title: 'Friends join on their phones',
         scanOrOpen: 'They scan the code, or open',
         call: 'On a call? Paste the link in the chat.',
@@ -167,6 +202,8 @@ const strings = {
         bestWithOne: 'Two can play, but it\'s best with 4 or more. Invite one or two more.',
     },
     he: {
+        nudge: 'עכשיו שלחו את הקישור ל־3 חברים',
+        nudgeSub: 'הם לוחצים, כותבים שם ומופיעים כאן. משחק לוקח 5 עד 10 דקות.',
         title: 'החברים מצטרפים מהטלפון שלהם',
         // "הקוד" is the PIN in the header above, so the QR code is a ברקוד here, as people say.
         scanOrOpen: 'סורקים את הברקוד, או נכנסים בטלפון לכתובת:',
