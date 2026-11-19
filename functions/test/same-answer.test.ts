@@ -141,6 +141,49 @@ const tests: { [name: string]: () => void } = {
         assert.ok(isPartOfTruth('Germany,', 'Germany (Nazi)'));
     },
 
+    'a lie that leaves out a word that changes the meaning goes in, in both languages'() {
+        // half: a different amount
+        assert.ok(!isPartOfTruth('an hour', 'half an hour'));
+        assert.ok(!isPartOfTruth('hour', 'half an hour'));
+        assert.ok(!isPartOfTruth('שעה', 'חצי שעה'));
+        assert.ok(!isPartOfTruth('שעה', 'שעה וחצי'), 'a prefixed meaning word ("and a half")');
+        // no, not, never and their Hebrew kin: the opposite
+        assert.ok(!isPartOfTruth('work', 'do no work'));
+        assert.ok(!isPartOfTruth('do work', 'do no work'));
+        assert.ok(!isPartOfTruth('best', 'second-best bed'));
+        assert.ok(!isPartOfTruth('fly', 'cannot fly'));
+        assert.ok(!isPartOfTruth('fly', "doesn't fly"));
+        assert.ok(!isPartOfTruth('sleep', 'never sleep'));
+        assert.ok(!isPartOfTruth('עובדות', 'לא עובדות'));
+        assert.ok(!isPartOfTruth('מלבן', 'אינו מלבן'));
+        assert.ok(!isPartOfTruth('סוכר', 'בלי סוכר'));
+        assert.ok(!isPartOfTruth('סוכר', 'ללא סוכר'));
+        assert.ok(!isPartOfTruth('חשמל', 'אין חשמל'));
+        assert.ok(!isPartOfTruth('ישנים', 'שלא ישנים'));
+        // second: another place
+        assert.ok(!isPartOfTruth('best bed', 'second-best bed'));
+        assert.ok(!isPartOfTruth('best bed', 'second best bed'));
+    },
+
+    'a lie that keeps the meaning word, or misses only other words, is still refused'() {
+        assert.ok(isPartOfTruth('Germany', 'Nazi Germany'));
+        assert.ok(isPartOfTruth('גרמניה', 'גרמניה הנאצית'));
+        assert.ok(isPartOfTruth('half', 'half an hour'));
+        assert.ok(isPartOfTruth('no work', 'do no work'));
+        assert.ok(isPartOfTruth('לא עובדות', 'הן לא עובדות'));
+        assert.ok(isPartOfTruth('חצי', 'חצי שעה'));
+        assert.ok(isPartOfTruth('second bed', 'second-best bed'));
+        assert.ok(isPartOfTruth('half an hour', 'half an hour'));
+        assert.ok(isPartOfTruth('חצי שעה', 'חצי שעה'));
+        // The meaning word and the word it turns both left out: still a part of the truth.
+        assert.ok(isPartOfTruth('bed', 'second-best bed'));
+        assert.ok(isPartOfTruth('do', 'do no work'));
+        assert.ok(isPartOfTruth('בוער', 'בוער בלי הפסקה'));
+        assert.ok(!isPartOfTruth('הפסקה', 'בוער בלי הפסקה'), 'but keeping the turned word is a lie');
+        // "מלא" (full) is not "not" with a prefix: dropping it is still a part of the truth.
+        assert.ok(isPartOfTruth('ירח', 'ירח מלא'));
+    },
+
     'an empty lie, or one of articles only, is not refused here'() {
         assert.ok(!isPartOfTruth('', 'Nazi Germany'));
         assert.ok(!isPartOfTruth('   ', 'Nazi Germany'));

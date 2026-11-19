@@ -86,6 +86,10 @@ export function isSameAnswer(lie: string, truth: string): boolean {
  * on either side is ignored ("וגרמניה", "הנאצית"). A lie with even one word that is not in the truth
  * still goes in: "Nazi Italy" against "Nazi Germany" is a real lie. So does a lie of numbers only
  * ("4" against "4 million"), and a word of the truth counts once ("שש שש" against "שש חמש").
+ *
+ * A lie that leaves out a word that changes the truth's meaning (no, not, half, second, לא, אין, חצי
+ * and a few more: MEANING_WORDS), and keeps the word it turns, also goes in: "an hour" against "half an
+ * hour" and "work" against "do no work" are different answers, so fair lies.
  */
 
 // Words that carry nothing of their own, skipped in the lie: "the Germany" is "Germany".
@@ -102,6 +106,25 @@ const MIN_REST_MEM_SHIN = 5;
 const EDGE_PUNCTUATION = /^[,.;:!?()\[\]\/&+]+|[,.;:!?()\[\]\/&+]+$/g;
 // A number alone: "4" against "4 million" is a real lie, so a lie of numbers only is never refused here.
 const NUMBER = /^[\d.,%]+$/;
+
+// Words that turn a phrase into another answer: "an hour" is not "half an hour", "work" is the opposite
+// of "do no work". When the truth has one of these and the lie leaves it out, the lie is a different
+// answer and goes in. Kept short on purpose: each word here lets more lies through.
+const MEANING_WORDS = [
+    'no', 'not', 'never', 'without', 'half', 'second',
+    'dont', 'doesnt', 'didnt', 'isnt', 'arent', 'wasnt', 'werent', 'cant', 'cannot', 'wont',
+    'לא', 'אין', 'אינו', 'אינה', 'אינם', 'אינן', 'בלי', 'ללא', 'חצי',
+];
+// The only prefixes taken off a truth's word to find a meaning word in it: "ולא" (and not), "שלא"
+// (that not), "וחצי" (and a half). Not מ, ה, ב or ל: "מלא" is "full", "הלא" and "בלא" are rare.
+const MEANING_PREFIXES = ['ו', 'ש', 'וש'];
+
+function isMeaningWord(word: string): boolean {
+    if (MEANING_WORDS.indexOf(word) >= 0) {
+        return true;
+    }
+    return MEANING_PREFIXES.some(p => word.startsWith(p) && MEANING_WORDS.indexOf(word.slice(p.length)) >= 0);
+}
 
 function wordsOf(text: string): string[] {
     return normalizeAnswer(text).split(' ').map(w => w.replace(EDGE_PUNCTUATION, '')).filter(w => w);
@@ -135,14 +158,35 @@ export function wordsWithin(part: string, whole: string): boolean {
         return false;
     }
     // Each word of `whole` stands for one word of `part`: "שש שש" (six six) is not in "שש חמש".
-    const left = wholeWords.slice();
-    return words.every(w => {
-        const i = left.findIndex(t => sameWord(w, t));
+    const used = wholeWords.map(() => false);
+    const within = words.every(w => {
+        const i = wholeWords.findIndex((t, k) => !used[k] && sameWord(w, t));
         if (i < 0) {
             return false;
         }
-        left.splice(i, 1);
+        used[i] = true;
         return true;
+    });
+    return within && !changesMeaning(wholeWords, used);
+}
+
+/**
+ * Does `part` leave out a meaning word of `whole` (MEANING_WORDS) and keep the word it turns: "an hour"
+ * for "half an hour", "work" for "do no work", "best bed" for "second-best bed"? Then `part` is another
+ * answer. Leaving out the turned word too keeps it a part of the truth: "bed" is still the "second-best
+ * bed", "בוער" still "בוער בלי הפסקה". A meaning word at the end has no word to turn: "שעה" for "שעה
+ * וחצי" is another answer.
+ */
+function changesMeaning(wholeWords: string[], used: boolean[]): boolean {
+    return wholeWords.some((w, i) => {
+        if (used[i] || !isMeaningWord(w)) {
+            return false;
+        }
+        let j = i + 1;
+        while (j < wholeWords.length && SKIPPED_WORDS.indexOf(wholeWords[j]) >= 0) {
+            j++;
+        }
+        return j >= wholeWords.length || used[j];
     });
 }
 

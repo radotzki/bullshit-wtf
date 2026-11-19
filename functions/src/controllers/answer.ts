@@ -49,9 +49,12 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
     const question = await getQuestion(qid);
 
     // The truth, typed a little differently, or only a part of it ("Germany" for "Nazi Germany"):
-    // refused with the same "too close to the truth" message (see same-answer.ts).
-    if (isPartOfTruth(playerAnswer, question.realAnswer)) {
+    // refused (see same-answer.ts). The same code for both, so a phone that is still on an older page
+    // shows its message; `part` lets a newer one say "too close to the truth" and not "the correct answer".
+    if (isSameAnswer(playerAnswer, question.realAnswer)) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
+    } else if (isPartOfTruth(playerAnswer, question.realAnswer)) {
+        return Promise.reject({ message: 'Too close to the correct answer.', code: 'CORRECT_ANSWER', part: true });
     } else {
         const stored: Answer = {
             text: playerAnswer.toLowerCase(),
