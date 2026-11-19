@@ -26,6 +26,16 @@
         font-size: 2rem;
     }
 
+    // With the host's "your phone" button in the lobby, the join line keeps to one line.
+    &.with-remote .registration {
+        font-size: 1.15rem;
+
+        .url,
+        .game-pin {
+            font-size: 1.5rem;
+        }
+    }
+
     .game-header-left {
         display: flex;
         align-items: center;
@@ -50,6 +60,20 @@
         margin-right: 10px;
         padding-left: 0.75em;
         padding-right: 0.75em;
+    }
+
+    // A big-screen host's phone controls (host-remote).
+    .host-remote-button {
+        margin-left: auto;
+        margin-right: 10px;
+    }
+
+    .host-remote-button + .host-players {
+        margin-left: 0;
+    }
+
+    .host-remote-label {
+        margin-left: 6px;
     }
 
     .host-players + .sound {
@@ -123,5 +147,109 @@
     .host-confirm-line {
         margin-top: 0.75rem;
         font-weight: bold;
+    }
+}
+
+// The big screen's pairing of the host's phone.
+.host-remote-modal {
+    .modal-content {
+        width: 720px;
+        max-width: 94vw;
+        max-height: calc(100vh - 24px);
+    }
+
+    // The big screen's root font is large (32 px from 1192 px wide): the window keeps to about 22 px.
+    .modal-card-body {
+        font-size: .7rem;
+        padding: 16px 20px;
+        border-radius: 6px;
+    }
+
+    .title {
+        font-size: 1rem;
+    }
+
+    .title {
+        margin-bottom: .4rem;
+    }
+
+    .remote-pair {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        margin-top: .75rem;
+    }
+
+    .remote-qr {
+        width: 190px;
+        height: 190px;
+        flex: none;
+    }
+
+    .remote-steps {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .remote-steps p {
+        margin-bottom: .35rem;
+    }
+
+    .remote-link {
+        font-weight: bold;
+        word-break: break-all;
+    }
+
+    .remote-once,
+    .remote-safety {
+        opacity: .75;
+        font-size: .9em;
+    }
+
+    .help {
+        font-size: .9em;
+    }
+
+    .remote-asked, .remote-full {
+        color: #a14a00;
+        font-weight: bold;
+    }
+
+    // A full link: the line and NEW CODE side by side, so the window still fits a 1280x720 big screen.
+    .remote-full-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .remote-full {
+            flex: 1;
+            margin: 0;
+        }
+    }
+
+    .remote-form {
+        display: flex;
+        gap: 8px;
+        margin: .5rem 0;
+    }
+
+    .remote-form .button {
+        font-size: 1.1em;
+        height: auto;
+    }
+
+    .remote-digits {
+        width: 6.5em;
+        font-size: 1.3em;
+        height: auto;
+        letter-spacing: 4px;
+        text-align: center;
+    }
+
+    .remote-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 1rem;
     }
 }

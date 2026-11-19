@@ -1,4 +1,4 @@
-<div class="game-header" [style.visibility]="loading ? 'hidden' : 'visible'" [class.presenter]="presenter" [attr.dir]="t.rtl ? 'rtl' : null">
+<div class="game-header" [style.visibility]="loading ? 'hidden' : 'visible'" [class.presenter]="presenter" [class.with-remote]="remoteButton" [attr.dir]="t.rtl ? 'rtl' : null">
     <div class="game-header-left">
         <a class="button is-primary is-outlined" (click)="homeModal()">
             <span class="icon" [class.is-medium]="presenter">
@@ -17,6 +17,16 @@
                 stroke-width="2" stroke-linecap="round"/>
             <path *ngIf="muted" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
+    </a>
+
+    <!-- A big-screen host's controls go to their phone (host-remote), so the lies never show on this screen. -->
+    <a *ngIf="remoteButton" class="button is-primary is-outlined host-remote-button" (click)="openRemote()"
+        role="button" [attr.aria-label]="h.remoteButton" [attr.title]="h.remoteButton">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <rect x="6" y="2" width="12" height="20" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="12" cy="18" r="1.3" fill="currentColor"/>
+        </svg>
+        <span class="host-remote-label">{{ h.remoteShort }}</span>
     </a>
 
     <a *ngIf="host && !gameOver" class="button is-primary is-outlined host-players" (click)="openPlayers()"
@@ -95,4 +105,53 @@
             <button class="button is-primary" (click)="navigateHome()">{{h.backHome}}</button>
         </footer>
     </div>
+</div>
+
+<!-- The big screen pairs the host's phone: a one-time code (QR and link), then the number the phone shows. -->
+<div #remoteModal class="modal host-remote-modal" [class.is-active]="showRemote" [attr.dir]="t.rtl ? 'rtl' : null">
+    <div class="modal-background" (click)="closeRemote()"></div>
+    <div class="modal-content">
+        <section class="modal-card-body">
+            <h3 class="title">{{h.remoteButton}}</h3>
+
+            <ng-container *ngIf="pairing?.paired && !pairing?.open">
+                <p class="remote-paired">{{h.remotePaired}}</p>
+                <div class="remote-actions">
+                    <button class="button is-danger is-outlined remote-unpair" [class.is-loading]="pairBusy" (click)="unpairPhone()">{{h.remoteDisconnect}}</button>
+                    <button class="button remote-another" [disabled]="pairBusy" (click)="newCode()">{{h.remotePairAnother}}</button>
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="pairing?.open">
+                <p class="host-hint">{{h.remoteIntro}}</p>
+                <div class="remote-pair">
+                    <app-qr-code class="remote-qr" [data]="pairLink" [label]="h.remoteButton"></app-qr-code>
+                    <div class="remote-steps">
+                        <p>{{h.remoteScan}}</p>
+                        <p class="remote-link" dir="ltr">{{pairLinkShown}}</p>
+                        <p class="remote-once">{{h.remoteOnce}}</p>
+                        <p class="remote-type">{{h.remoteType}}</p>
+                        <form class="remote-form" (ngSubmit)="pairPhone()" autocomplete="off">
+                            <input class="input remote-digits" name="pairDigits" [(ngModel)]="pairDigits" inputmode="numeric"
+                                maxlength="5" placeholder="0000" dir="ltr" [attr.aria-label]="h.remoteType">
+                            <button type="submit" class="button is-primary remote-pair-button" [class.is-loading]="pairBusy">{{h.remotePair}}</button>
+                        </form>
+                        <p class="remote-safety">{{h.remoteSafety}}</p>
+                        <p *ngIf="pairing.asked > 1 && !pairing.full" class="help is-warning remote-asked">{{h.remoteAsked('' + pairing.asked)}}</p>
+                        <div *ngIf="pairing.full" class="remote-full-line">
+                            <p class="help is-warning remote-full">{{h.remoteFull}}</p>
+                            <button class="button is-small remote-new remote-full-new" [class.is-loading]="pairBusy" (click)="newCode()">{{h.remoteNewCode}}</button>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-container *ngIf="pairing && !pairing.open && !pairing.paired">
+                <button class="button is-primary remote-new" [class.is-loading]="pairBusy" (click)="newCode()">{{h.remoteNewCode}}</button>
+            </ng-container>
+
+            <p *ngIf="pairError" class="help is-danger remote-error">{{pairError}}</p>
+        </section>
+    </div>
+    <button class="modal-close is-large remote-close" type="button" [attr.aria-label]="h.close" (click)="closeRemote()"></button>
 </div>

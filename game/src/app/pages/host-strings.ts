@@ -35,6 +35,37 @@ export interface HostStrings {
     /** The answers screen. */
     yourLieHidden: string;
     checkedNoScore: string;
+    /** The big screen's pairing of the host's phone (a big-screen host has no seat and no phone in the game). */
+    remoteButton: string;
+    /** The header button's own words, short enough for the big screen's lobby header. */
+    remoteShort: string;
+    remoteIntro: string;
+    remoteScan: string;
+    remoteType: string;
+    remoteSafety: string;
+    remotePair: string;
+    remoteAsked: (count: string) => string;
+    remoteWrong: string;
+    remoteExpired: string;
+    /** The big screen: so many phones opened the link that no more may. */
+    remoteFull: string;
+    remoteOnce: string;
+    remoteNewCode: string;
+    remotePaired: string;
+    remoteDisconnect: string;
+    remotePairAnother: string;
+    remoteCantPair: string;
+    /** The host's phone, paired as the big screen's remote (pages/host-remote). */
+    phoneTitle: string;
+    phoneShowNumber: string;
+    phoneWaiting: string;
+    phoneNoLink: string;
+    /** The phone came after PAIR_MAX_CLAIMS others: the link is full, not expired. */
+    phoneFull: string;
+    phoneLost: string;
+    phoneNotPlayer: string;
+    phoneLiesLater: string;
+    phoneGameOver: string;
 }
 
 const en: HostStrings = {
@@ -63,6 +94,32 @@ const en: HostStrings = {
     tooLate: 'The answers are already on the screens.',
     yourLieHidden: 'The host hid your lie this time, so it isn\'t on the list. Pick as usual.',
     checkedNoScore: 'You checked the lies, so your pick doesn\'t score this question.',
+    remoteButton: 'Host controls on your phone',
+    remoteShort: 'Your phone',
+    remoteIntro: 'Hide lies and remove players from your phone, where the big screen doesn\'t show them. Your phone won\'t take a seat.',
+    remoteScan: 'Scan with your phone, or open:',
+    remoteType: 'Then type here the number your phone shows:',
+    remoteSafety: 'Type only the number on your own phone, never one someone else gives you.',
+    remotePair: 'PAIR',
+    remoteAsked: count => `${count} phones opened this link. Type only the number on yours.`,
+    remoteWrong: 'That\'s not the number on a phone that opened the link.',
+    remoteExpired: 'This code has expired.',
+    remoteFull: 'Too many phones opened this link. If yours isn\'t one of them, press NEW CODE.',
+    remoteOnce: 'The code works once, for 3 minutes.',
+    remoteNewCode: 'NEW CODE',
+    remotePaired: 'Your phone has the host controls.',
+    remoteDisconnect: 'DISCONNECT THE PHONE',
+    remotePairAnother: 'PAIR ANOTHER PHONE',
+    remoteCantPair: 'A phone can be paired only when this computer is the big screen.',
+    phoneTitle: 'Host controls',
+    phoneShowNumber: 'Type this number on the big screen:',
+    phoneWaiting: 'Waiting for the big screen…',
+    phoneNoLink: 'This link has expired. Press "Host controls on your phone" on the big screen for a new one.',
+    phoneFull: 'Too many phones opened this link. If you are the host, press "New code" on the big screen and scan again.',
+    phoneLost: 'This phone no longer has the host controls. Pair it again from the big screen.',
+    phoneNotPlayer: 'This phone runs the game. It isn\'t a player.',
+    phoneLiesLater: 'The lies show up here while the players write them.',
+    phoneGameOver: 'The game is over.',
 };
 
 const he: HostStrings = {
@@ -91,6 +148,32 @@ const he: HostStrings = {
     tooLate: 'התשובות כבר על המסכים.',
     yourLieHidden: 'המארחים הסתירו את השקר שלך הפעם, ולכן הוא לא ברשימה. בחרו כרגיל.',
     checkedNoScore: 'בדקת את השקרים, ולכן הבחירה שלך לא מקבלת ניקוד בשאלה הזאת.',
+    remoteButton: 'שליטה מהטלפון',
+    remoteShort: 'מהטלפון',
+    remoteIntro: 'אפשר להסתיר שקרים ולהוציא שחקנים מהטלפון, בלי שזה יופיע על המסך הגדול. הטלפון לא תופס מקום במשחק.',
+    remoteScan: 'סורקים בטלפון, או פותחים:',
+    remoteType: 'ואז מקלידים כאן את המספר שמופיע בטלפון:',
+    remoteSafety: 'מקלידים רק את המספר שבטלפון שלכם, אף פעם לא מספר שמישהו אחר נותן.',
+    remotePair: 'חיבור',
+    remoteAsked: count => `${count} טלפונים פתחו את הקישור. מקלידים רק את המספר שבטלפון שלכם.`,
+    remoteWrong: 'זה לא המספר שמופיע בטלפון שפתח את הקישור.',
+    remoteExpired: 'תוקף הקוד הזה נגמר.',
+    remoteFull: 'יותר מדי טלפונים פתחו את הקישור. אם הטלפון שלכם לא ביניהם, לוחצים על "קוד חדש".',
+    remoteOnce: 'הקוד עובד פעם אחת, למשך 3 דקות.',
+    remoteNewCode: 'קוד חדש',
+    remotePaired: 'הטלפון מחובר לשליטת המארחים.',
+    remoteDisconnect: 'ניתוק הטלפון',
+    remotePairAnother: 'חיבור טלפון אחר',
+    remoteCantPair: 'אפשר לחבר טלפון רק כשהמחשב הזה הוא המסך הגדול.',
+    phoneTitle: 'שליטת המארחים',
+    phoneShowNumber: 'מקלידים את המספר הזה במסך הגדול:',
+    phoneWaiting: 'מחכים למסך הגדול…',
+    phoneNoLink: 'תוקף הקישור הזה נגמר. לוחצים על "שליטה מהטלפון" במסך הגדול לקישור חדש.',
+    phoneFull: 'יותר מדי טלפונים פתחו את הקישור. אם אתם המארחים, לוחצים על "קוד חדש" במסך הגדול וסורקים שוב.',
+    phoneLost: 'הטלפון הזה כבר לא מחובר לשליטת המארחים. אפשר לחבר אותו שוב מהמסך הגדול.',
+    phoneNotPlayer: 'הטלפון הזה מנהל את המשחק. הוא לא משתתף בו.',
+    phoneLiesLater: 'השקרים יופיעו כאן בזמן שהשחקנים כותבים אותם.',
+    phoneGameOver: 'המשחק נגמר.',
 };
 
 export function hostStrings(locale: string): HostStrings {
@@ -163,4 +246,15 @@ export function hostLieRows(answers: { [pid: string]: { text?: string; houseLie?
             && typeof all[id].text === 'string' && !!all[id].text)
         .map(id => ({ id, text: all[id].text, hidden: !!(hidden && hidden[id]) }))
         .sort((a, b) => a.text > b.text ? 1 : a.text < b.text ? -1 : 0);
+}
+
+/** The address the big screen shows (as a QR and a link) for pairing the host's phone: the PIN and a one-time code. */
+export function remoteLink(site: string, pin: string, code: string): string {
+    return `${site}/host/${String(pin || '').toUpperCase()}?c=${encodeURIComponent(code || '')}`;
+}
+
+/** The phone's number, spaced for reading across a room: "48 21". */
+export function spacedNumber(digits: string | null | undefined): string {
+    const d = String(digits || '');
+    return d.length === 4 ? `${d.slice(0, 2)} ${d.slice(2)}` : d;
 }

@@ -33,7 +33,7 @@ function cacheControl(p) {
 
 const PAGES = ['/', '/he', '/he/', '/index.html', '/he.html', '/create-game', '/m', '/d', '/learn', '/join-game',
     '/he/join-game', '/c/k7m2qx', '/he/c/k7m2qx', '/game-staging/JVAA', '/score-board-final/JVAA', '/present-game/JVAA',
-    '/step/JVAA', '/how-to-play', '/he/how-to-play', '/hanukkah-party-game', '/he/friday-dinner', '/daily', '/he/daily', '/404.html'];
+    '/step/JVAA', '/host/JVAA', '/how-to-play', '/he/how-to-play', '/hanukkah-party-game', '/he/friday-dinner', '/daily', '/he/daily', '/404.html'];
 
 test('every page of the site is sent with no-cache', () => {
     for (const p of PAGES) {
