@@ -2,7 +2,7 @@
     [class.won]="outcome === 'won'" [class.lost]="outcome === 'lost'">
     <p class="versus-label">{{ t.label }}</p>
     <p class="versus-line" dir="auto">{{ line }}</p>
-    <p class="versus-sizes">{{ sizes }}</p>
+    <p class="versus-sizes" *ngIf="sizes">{{ sizes }}</p>
     <div class="versus-tables">
         <div class="versus-table ours">
             <p class="versus-name">{{ t.us }}</p>
@@ -29,4 +29,5 @@
             <p class="versus-more" *ngIf="theirMore">{{ t.more(theirMore) }}</p>
         </div>
     </div>
+    <p class="versus-sizes versus-house" *ngIf="houseNote">{{ houseNote }}</p>
 </div>

@@ -179,6 +179,10 @@ export interface GameScheme {
     // by the server when this game was made. Its questions are that game's, in the same order. Server
     // only: no rule opens it; the final screen gets it through validateGameName. Not carried by Replay.
     challenge?: ChallengeCard;
+    // CHALLENGE ANOTHER GROUP's fair number: what the game's house-lie picks add to its table's challenge
+    // total (houseLieCredit in scoring.ts), added up at each scoreboard. Not part of anyone's score.
+    // Server only: no rule opens it. Absent on a game that started before it was kept.
+    houseCredit?: number;
     // "Pick a decoy", a 50/50 test on two-player games, set at START (see pair.ts in the functions).
     // true: each player also picks a decoy, one of two house lies offered only to them, and the game has
     // no neutral house lies. false: in the test, plays as before. Absent: not in the test (not two
@@ -213,6 +217,18 @@ export interface ChallengeCard {
     top: number;
     /** Its final scores, best first, at most CHALLENGE_ROWS. */
     rows: ChallengeRow[];
+    /**
+     * The table's challenge number, what a challenge is judged by: its seats' scores plus its house-lie
+     * credit, a player (challengeNumber in the functions). Absent on a card made before it was kept: the
+     * page then takes the average of the rows.
+     */
+    average?: number;
+    /**
+     * Only on the `versus` answer of a game played against this card: that game's own challenge number,
+     * worked out by the server from its record. Absent from older servers: the page then takes the average
+     * of its own players' scores.
+     */
+    ours?: number;
     /** The other table was a test game: rows are not counted. */
     test?: boolean;
 }

@@ -2,8 +2,8 @@ import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import {
-    CHALLENGE_CONTENT, ChallengeCard, ChallengeRow, ChallengeStrings, cardAverage, challengeWords, readCard, sizesLine, tableAverage,
-    topRows, verdict, verdictLine,
+    CHALLENGE_CONTENT, ChallengeCard, ChallengeRow, ChallengeStrings, cardAverage, challengeWords, houseCounted, ourAverage, readCard,
+    sizesLine, topRows, verdict, verdictLine,
 } from './challenge';
 
 /**
@@ -54,9 +54,14 @@ export class ChallengeVersusComponent implements OnInit {
         return (this.players || []).map(p => Number(p.score) || 0);
     }
 
-    /** This table's average a player, the number the verdict compares. */
+    /** This table's points a player, the number the verdict compares (the server's when it sent one). */
     get ourAverage(): number {
-        return tableAverage(this.ourScores);
+        return ourAverage(this.ourScores, this.card);
+    }
+
+    /** The server counted house lies like a friend's lie: say so, since the big numbers aren't the rows' mean. */
+    get houseNote(): string {
+        return houseCounted(this.card, true) ? this.t.houseNote : '';
     }
 
     get theirAverage(): number {

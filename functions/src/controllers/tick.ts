@@ -276,6 +276,8 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
             return {
                 state: updateState(GameState.ScoreBoard),
                 players: playersScore(pin, game),
+                // CHALLENGE ANOTHER GROUP's fair number (houseLieCredit in scoring.ts); not anyone's score.
+                ...houseCreditUpdate(pin, game),
             };
 
         case GameState.ScoreBoard:
@@ -444,6 +446,25 @@ function playersScore(pin: string, game: GameScheme) {
     } catch (e) {
         console.error(`[PIN: ${pin}] Failed to add up the scores, keeping them as they were`, e);
         return game.players;
+    }
+}
+
+/**
+ * The game's house-lie credit with this question's added. Kept from the first question only: a game that
+ * was running when this was released gets none, and its challenge number is its plain average (as before),
+ * not one with some questions' credit missing. If adding fails, it stays as it was.
+ */
+export function houseCreditUpdate(pin: string, game: GameScheme): { houseCredit?: number } {
+    const kept = typeof game.houseCredit === 'number' && isFinite(game.houseCredit);
+    if (!kept && (game.questionIndex || 0) !== 0) {
+        return {};
+    }
+    const before = kept ? Math.max(0, game.houseCredit) : 0;
+    try {
+        return { houseCredit: before + scoring.houseLieCredit(game) };
+    } catch (e) {
+        console.error(`[PIN: ${pin}] Failed to add up the house-lie credit, keeping it as it was`, e);
+        return { houseCredit: before };
     }
 }
 

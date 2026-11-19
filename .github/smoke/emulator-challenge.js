@@ -4,7 +4,7 @@
 //   1. Table A, three phones and the big screen, plays a whole test game (?via=test) to the final scores.
 //   2. A guest of table A presses CHALLENGE ANOTHER GROUP: the sheet's WhatsApp link is the challenge link
 //      (/challenge/<PIN>?via=challenge-whatsapp, /he/... for a Hebrew game) and the game's challenge is open.
-//   3. Table B, three fresh phones, opens that link: the page shows table A's best score; START THE CHALLENGE
+//   3. Table B, three fresh phones, opens that link: the page shows table A's challenge number; START THE CHALLENGE
 //      makes table B's game, and table B plays it to the end.
 //   4. Table B's game played table A's questions, in the same order; at its end every phone shows both
 //      tables side by side, with table A's scores as the database has them, and the verdict line.
@@ -145,8 +145,14 @@ async function language(base, locale) {
         check(A && A.state.id === 6 && A.campaign === 'test', 'table A is not a finished test game');
         const scoresA = Object.values(A.players).map((p) => ({ name: p.nickname, score: p.score || 0 })).sort((x, y) => y.score - x.score);
         result.a = { pin: gameA.pin, scores: scoresA };
-        // A challenge is judged by each table's average a player (challenge.ts, tableAverage).
-        const averageA = ch.tableAverage(scoresA.map((r) => r.score));
+        // A challenge is judged by each table's challenge number: its scores plus its house-lie credit, a player
+        // (challengeNumber in the functions). Three players see house lies, and the credit is kept from question 1.
+        check(typeof A.houseCredit === 'number' && A.houseCredit >= 0, `table A's house-lie credit is ${A.houseCredit}`);
+        const numberOf = (g) => Math.round((Object.values(g.players).reduce((sum, p) => sum + Math.max(0, p.score || 0), 0)
+            + (g.houseCredit || 0)) / Object.keys(g.players).length);
+        const averageA = numberOf(A);
+        result.a.houseCredit = A.houseCredit;
+        result.a.number = averageA;
 
         // 2. A guest of table A presses CHALLENGE ANOTHER GROUP.
         const guest = a[1];
@@ -177,7 +183,9 @@ async function language(base, locale) {
         await b[0].page.goto(local);
         await waitFor('the challenge page shows no score', () => visible(b[0].page.locator('.challenge-top')), problems);
         const top = Number(((await b[0].page.locator('.challenge-top').textContent()) || '').trim());
-        check(top === averageA, `the page shows ${top} to beat, table A's average is ${averageA}`);
+        check(top === averageA, `the page shows ${top} to beat, table A's number is ${averageA}`);
+        const note = ((await b[0].page.locator('.challenge-house').textContent().catch(() => '')) || '').trim();
+        check(note === t.houseNote, `the page's house-lie line is "${note}"`);
         const table = ((await b[0].page.locator('.challenge-table').textContent()) || '').trim();
         check(table === t.table(a[0].name, 3), `the page names "${table}"`);
         check(he ? (await b[0].page.locator('.challenge-page[dir="rtl"]').count()) === 1 : true, 'the Hebrew page is not right to left');
@@ -200,11 +208,18 @@ async function language(base, locale) {
 
         // 4. Both tables side by side, on every phone of table B.
         const scoresB = Object.values(B.players).map((p) => p.score || 0);
-        const line = ch.verdictLine(scoresB, { rows: scoresA, played: scoresA.length, host: a[0].name }, locale);
+        check(typeof B.houseCredit === 'number', `table B's house-lie credit is ${B.houseCredit}`);
+        const averageB = numberOf(B);
+        result.b.houseCredit = B.houseCredit;
+        result.b.number = averageB;
+        const line = ch.verdictLine(scoresB, { rows: scoresA, played: scoresA.length, host: a[0].name, average: averageA, ours: averageB }, locale);
         for (const p of b) {
             await waitFor(`${p.name} sees no side-by-side scores`, () => visible(p.page.locator('.versus')), problems);
             const shown = ((await p.page.locator('.versus-line').textContent()) || '').trim();
             check(shown === line, `${p.name}: "${shown}", not "${line}"`);
+            const tops = await p.page.locator('.versus-top').evaluateAll((els) => els.map((e) => Number(e.textContent.trim())));
+            check(JSON.stringify(tops) === JSON.stringify([averageB, averageA]), `${p.name}: the big numbers ${JSON.stringify(tops)}`);
+            check(await visible(p.page.locator('.versus-house')), `${p.name}: no house-lie line under the scores`);
             const theirs = await p.page.locator('.versus-table.theirs .versus-row').evaluateAll((els) => els.map((e) => ({
                 name: e.querySelector('.versus-row-name').textContent.trim(), score: Number(e.querySelector('.versus-row-score').textContent.trim()) })));
             check(JSON.stringify(theirs.map((r) => r.score)) === JSON.stringify(scoresA.map((r) => r.score)), `${p.name}: table A's scores ${JSON.stringify(theirs)}`);

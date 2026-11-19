@@ -317,3 +317,149 @@ test('challenge rows are counted with the PIN in capitals, and a test game\'s ar
     await analytics.onShare(row, async pin => { asked.push(pin); return true; });
     assert.deepStrictEqual(asked, ['QVAB']);
 });
+
+// ---- A fair challenge number at every table size, through the real scoring ----
+
+const scoring = require(path.join(dist, 'scoring'));
+const { pickHouseLies } = require(path.join(dist, 'answer-options'));
+const { houseCreditUpdate } = require(path.join(dist, 'tick'));
+const RevealTheTruth = 4;
+
+/** A seeded random source, so every run plays the same games. */
+function seeded(seed) {
+    return () => {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+/**
+ * One seven-question game of `n` players, played through the server's own scoring: house lies filled by
+ * pickHouseLies (none from 5 players up), points by scoreQuestion and addQuestionScores, the challenge
+ * credit kept by houseCreditUpdate as the RevealTheTruth step keeps it. Each player knows the truth with
+ * the chance `k`, else picks at random among what their phone shows. Returns the finished game record.
+ */
+function playGame(n, k, random) {
+    const game = { players: {}, totalQ: 7, questionIndex: 0, state: { id: RevealTheTruth } };
+    for (let i = 0; i < n; i++) game.players['p' + i] = { nickname: 'p' + i, score: 0 };
+    [0, 0, 1, 1, 2, 2, 2].forEach((roundIndex, q) => {
+        const answers = { truth: { text: 'truth', realAnswer: true, houseLie: false } };
+        for (let i = 0; i < n; i++) answers['p' + i] = { text: 'lie' + i, realAnswer: false, houseLie: false };
+        const fakes = Array.from({ length: 12 }, (_, j) => 'house' + j);
+        pickHouseLies(fakes, Object.keys(answers).filter(a => a !== 'truth').map(a => answers[a].text), 'truth', n, random)
+            .forEach((text, j) => answers['h' + j] = { text, realAnswer: false, houseLie: true });
+        const answerSelections = {};
+        for (let i = 0; i < n; i++) {
+            const options = Object.keys(answers).filter(a => a !== 'p' + i);
+            const pick = random() < k ? 'truth' : options[Math.floor(random() * options.length)];
+            answerSelections['p' + i] = { text: answers[pick].text };
+        }
+        game.questionIndex = q;
+        game.roundIndex = roundIndex;
+        const s = scoring.scoreQuestion({ ...game, answers, answerSelections, state: { id: 2 } });
+        const revealed = { ...game, answers: s.answers, answerSelections: s.answerSelections, revealAnswers: s.revealAnswers };
+        Object.assign(game, houseCreditUpdate('TEST', revealed));
+        game.players = scoring.addQuestionScores(revealed);
+    });
+    game.state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    return game;
+}
+
+/** The mean challenge number, and the mean plain average a player, of `games` games of `n` players. */
+function tableNumbers(n, k, games = 1500) {
+    const random = seeded(n * 1000 + Math.round(k * 100));
+    let fair = 0, plain = 0;
+    for (let i = 0; i < games; i++) {
+        const g = playGame(n, k, random);
+        fair += ch.challengeNumber(g);
+        plain += Object.values(g.players).reduce((a, p) => a + p.score, 0) / n;
+    }
+    return { fair: fair / games, plain: plain / games };
+}
+
+test('equally good tables of 2, 3, 4 and 8 get a challenge number within 10% of each other, and 2 to 12 within 15%, house lies in', () => {
+    for (const k of [0.2, 0.4]) {
+        const by = {};
+        for (const n of [2, 3, 4, 5, 8, 12]) by[n] = tableNumbers(n, k);
+        const spread = sizes => {
+            const v = sizes.map(n => by[n].fair);
+            return (Math.max(...v) - Math.min(...v)) / Math.min(...v);
+        };
+        const shown = JSON.stringify(Object.fromEntries(Object.entries(by).map(([n, v]) => [n, Math.round(v.fair)])));
+        assert.ok(spread([2, 3, 4, 8]) <= 0.10, `k ${k}: ${shown}`);
+        assert.ok(spread([2, 3, 4, 5, 8, 12]) <= 0.15, `k ${k}: ${shown}`);
+        // The plain average a player, without the credit, is what left small tables behind.
+        assert.ok(by[2].plain < 0.8 * by[8].plain, `k ${k}: plain ${Math.round(by[2].plain)} vs ${Math.round(by[8].plain)}`);
+        // From 5 players up there are no house lies: the number is the plain average.
+        assert.ok(Math.abs(by[8].fair - by[8].plain) < 1);
+    }
+});
+
+test('a better table wins whatever the sizes: a pair beats an eight that plays worse, and an eight beats a worse pair', () => {
+    assert.ok(tableNumbers(2, 0.4).fair > tableNumbers(8, 0.2).fair);
+    assert.ok(tableNumbers(8, 0.4).fair > tableNumbers(2, 0.2).fair);
+    assert.ok(tableNumbers(3, 0.3).fair > tableNumbers(12, 0.2).fair);
+});
+
+test('a house-lie pick is credited what a friend\'s lie pays, plus what it cost the picker; nobody\'s score changes', () => {
+    const players = { a: { nickname: 'A', score: 1000 }, b: { nickname: 'B', score: 0 } };
+    const answers = {
+        truth: { text: 'truth', realAnswer: true, houseLie: false },
+        a: { text: 'lie a', realAnswer: false, houseLie: false },
+        b: { text: 'lie b', realAnswer: false, houseLie: false },
+        h: { text: 'house', realAnswer: false, houseLie: true },
+    };
+    const game = { players, answers, answerSelections: { a: { text: 'house' }, b: { text: 'house' } }, roundIndex: 1, state: { id: 2 } };
+    const s = scoring.scoreQuestion(game);
+    const revealed = { ...game, answers: s.answers, revealAnswers: s.revealAnswers };
+    // A had 1000 and loses 375; B had nothing to lose. Each pick is worth a friend's lie in round 2, 750.
+    assert.strictEqual(scoring.houseLieCredit(revealed), 750 + 375 + 750);
+    const after = scoring.addQuestionScores(revealed);
+    assert.strictEqual(after.a.score, 625);
+    assert.strictEqual(after.b.score, 0);
+    // Picks of the truth or a friend's lie earn no credit; a pick by no player counts for nothing.
+    assert.strictEqual(scoring.houseLieCredit({ ...revealed, revealAnswers: s.revealAnswers.map(r => r.houseLie ? { ...r, selectors: ['x'] } : r) }), 0);
+});
+
+test('the credit is kept from the first question only, and added at each reveal', () => {
+    const row = { text: 'house', houseLie: true, realAnswer: false, selectors: ['a'], creators: [''], points: 0, pointsBy: { a: 0 } };
+    const g = { players: { a: { nickname: 'A', score: 0 } }, roundIndex: 0, revealAnswers: [row] };
+    assert.deepStrictEqual(houseCreditUpdate('X', { ...g, questionIndex: 0 }), { houseCredit: 500 });
+    assert.deepStrictEqual(houseCreditUpdate('X', { ...g, questionIndex: 3, houseCredit: 1000 }), { houseCredit: 1500 });
+    // A game that was running when this was released keeps none: its number is its plain average.
+    assert.deepStrictEqual(houseCreditUpdate('X', { ...g, questionIndex: 3 }), {});
+    // Broken rows: the credit stays as it was.
+    assert.deepStrictEqual(houseCreditUpdate('X', { ...g, questionIndex: 2, houseCredit: 700, revealAnswers: 'x' }), { houseCredit: 700 });
+});
+
+test('the card carries the table\'s challenge number; the versus answer adds this game\'s own; an older card loads as before', async () => {
+    const g = await finishedGame({ scores: [3000, 4500, 1500] });
+    db.games[g.pin].houseCredit = 3000;
+    await ch.openChallenge(g.pin, 'u1');
+    const card = (await over(g.pin)).challenge;
+    assert.strictEqual(card.average, 4000, '(3000 + 4500 + 1500 + 3000) / 3');
+    assert.strictEqual(card.top, 4500);
+    // A finished game with no credit kept: its plain average.
+    const plain = await finishedGame({ scores: [3000, 4500, 1500] });
+    assert.strictEqual(ch.challengeCard(plain.pin, db.games[plain.pin], Date.now()).average, 3000);
+
+    const pin = await newGame('en', 5, 'x1', { challenge: g.pin, hostKey: OTHER_KEY });
+    await join(pin, 'A', 'x1', OTHER_KEY);
+    await join(pin, 'B', 'x2');
+    Object.values(db.games[pin].players).forEach((p, i) => p.score = [5000, 2000][i]);
+    db.games[pin].houseCredit = 1000;
+    db.games[pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    let e = await over(pin);
+    assert.strictEqual(e.versus.average, 4000);
+    assert.strictEqual(e.versus.ours, 4000, '(5000 + 2000 + 1000) / 2');
+    assert.strictEqual(db.games[pin].challenge.ours, undefined, 'worked out when asked, never stored');
+
+    // A game made from a card copied before the number was kept: its versus is the old card, untouched.
+    delete db.games[pin].challenge.average;
+    e = await over(pin);
+    assert.strictEqual(e.versus.average, undefined);
+    assert.strictEqual(e.versus.ours, undefined);
+    assert.deepStrictEqual(e.versus.rows.map(r => r.score), [4500, 3000, 1500]);
+});
