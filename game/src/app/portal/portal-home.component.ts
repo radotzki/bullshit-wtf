@@ -35,7 +35,8 @@ import { onPortalLocale } from './portal';
 :host { display: block; min-height: 100vh; background-color: #502440; color: #f4fcca; }
 .portal-home { max-width: 26rem; margin: 0 auto; padding: 3rem 1rem 1.5rem; text-align: center; position: relative; }
 .lang-switch { position: absolute; top: .75rem; inset-inline-end: 1rem; color: #f4fcca; text-decoration: underline; cursor: pointer; }
-.portal-title { font-family: 'Luckiest Guy', 'Suez One', cursive; font-size: 3rem; color: #f3d467; letter-spacing: .05em; margin-bottom: .5rem; }
+.portal-title { font-family: 'Luckiest Guy', 'Suez One', cursive; font-size: 3rem; color: #f3d467;
+    letter-spacing: .05em; margin-bottom: .5rem; }
 .portal-pitch { font-size: 1.15rem; margin-bottom: 1.75rem; }
 .portal-create { margin-bottom: 1.75rem; }
 .portal-code-ask { display: block; margin-bottom: .4rem; }
