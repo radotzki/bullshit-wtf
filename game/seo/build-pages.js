@@ -43,11 +43,14 @@ function startOf(p) {
 const startButton = (p) => `<a class="btn primary" href="${esc(startOf(p).href)}">${esc(startOf(p).label)}</a>`;
 
 // A page in one language only (no `twin`) names just itself, and its language link goes to the other home page.
-const otherHome = (p) => p.site.lang === 'he' ? '/' : '/he';
+// From Hebrew, '/?lang=en': "/" alone opens a Hebrew menu for a Hebrew browser or one that saw /he
+// (BS_SITE_LOCALE), and ?lang=en saves English there (join-source.ts), so "/" stays English after.
+const otherHome = (p) => p.site.lang === 'he' ? '/?lang=en' : '/he';
 // The logo and the language link to the other home carry the page's tag, like its Start button, so a
 // visitor who goes home first and then taps Create still says which page they came from. The homes'
 // canonical address has no tag, so search sees no new address.
 const viaOf = (p) => p.tag ? '?via=' + p.tag : '';
+const otherHomeLink = (p) => otherHome(p) + viaOf(p).replace(/^\?/, otherHome(p).indexOf('?') < 0 ? '?' : '&');
 const ownHome = (p) => (p.site.lang === 'he' ? '/he' : '/') + viaOf(p);
 
 function hreflang(p) {
@@ -151,7 +154,7 @@ function render(p) {
   <header>
     <div class="bar">
       <a class="logo" href="${ownHome(p)}">${s.lang === 'he' ? 'בולשיט' : 'Bullshit'}</a>
-      <a class="lang" href="${p.twin || otherHome(p) + viaOf(p)}" hreflang="${s.lang === 'he' ? 'en' : 'he'}" lang="${s.lang === 'he' ? 'en' : 'he'}">${esc(s.other)}</a>
+      <a class="lang" href="${p.twin || otherHomeLink(p)}" hreflang="${s.lang === 'he' ? 'en' : 'he'}" lang="${s.lang === 'he' ? 'en' : 'he'}">${esc(s.other)}</a>
     </div>
   </header>
   <main>
