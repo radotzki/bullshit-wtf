@@ -30,9 +30,10 @@ const { serve } = require('./smoke');
 const { LOCALE, HOST, DB, PROJECT, DIST, log, sleep, up, startEmulators, stopEmulators, db, seed, newPhone, visible } = require('./emulator-game');
 
 const he = LOCALE === 'he';
+// The facts line as home-strings.ts writes it (since #171), with its no-break spaces read as spaces.
 const WORDS = he
-    ? { ask: 'יש לכם קוד?', facts: 'חינם · בלי אפליקציה · 2 עד 12 שחקנים, כל אחד מהטלפון שלו', wrong: 'קוד המשחק שגוי', empty: 'הקלידו את קוד המשחק', guest: 'נועה', computer: 'גיל' }
-    : { ask: 'Got a code?', facts: 'Free · no app · 2 to 12 players, each on their own phone', wrong: 'Wrong game PIN', empty: 'Type the game PIN', guest: 'Noa', computer: 'Gil' };
+    ? { ask: 'יש לכם קוד?', facts: 'חינם · בלי הרשמה · בלי אפליקציה · 2 עד 12 שחקנים', wrong: 'קוד המשחק שגוי', empty: 'הקלידו את קוד המשחק', guest: 'נועה', computer: 'גיל' }
+    : { ask: 'Got a code?', facts: 'Free · no sign-up · no app · 2 to 12 players', wrong: 'Wrong game PIN', empty: 'Type the game PIN', guest: 'Noa', computer: 'Gil' };
 // What each English letter key types on the standard Israeli keyboard.
 const ISRAELI_KEYS = { Q: '/', W: '\'', E: 'ק', R: 'ר', T: 'א', Y: 'ט', U: 'ו', I: 'ן', O: 'ם', P: 'פ', A: 'ש', S: 'ד', D: 'ג', F: 'כ', G: 'ע', H: 'י', J: 'ח', K: 'ל', L: 'ך', Z: 'ז', X: 'ס', C: 'ב', V: 'ה', B: 'נ', N: 'מ', M: 'צ' };
 const hebrewKeys = (pin) => pin.split('').map((ch) => ISRAELI_KEYS[ch]).join('');

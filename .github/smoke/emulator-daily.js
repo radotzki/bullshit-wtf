@@ -52,6 +52,19 @@ const addDays = (day, n) => new Date(Date.parse(day + 'T00:00:00Z') + n * 864e5)
 const TODAY = israelDay(Date.now());
 const YESTERDAY = addDays(TODAY, -1);
 
+/**
+ * Whether the built home shows the daily line under Create in `lang` today: the same rule as
+ * copy-shared.js (the earliest day in functions/data/daily-questions.json) and daily-line.ts
+ * (on or after that day, in Israel).
+ */
+function homeDailyLive(lang) {
+    const file = path.join(ROOT, 'functions', 'data', 'daily-questions.json');
+    if (!fs.existsSync(file)) return false;
+    const days = Object.values(JSON.parse(fs.readFileSync(file, 'utf8')))
+        .filter((q) => q && q.lang === lang && /^\d{4}-\d{2}-\d{2}$/.test(q.day)).map((q) => q.day).sort();
+    return days.length > 0 && TODAY >= days[0];
+}
+
 const WORDS = {
     en: {
         today: { questionText: 'In 1518, hundreds of people in Strasbourg could not stop $blank$ for weeks', realAnswer: 'dancing', fakeAnswers: ['laughing', 'sneezing', 'hiccuping', 'yawning'] },
@@ -634,13 +647,31 @@ async function run(browser, base, lang) {
     const home = await newVisitor(browser, base, `${L} home`);
     // Hebrew has no /he/d address (it answers 404): /he is the Hebrew home, and the app itself opens the
     // phone or the computer page there, as it does for every Hebrew visitor.
+    // Before the puzzle's first day the home shows the old link under the pitch (a.daily-link); from
+    // that day on (commit 630f0db) it shows "On your own? Try today's question" under Create instead
+    // (a.alone-line, daily-line.ts), and the old link is gone. The build takes the first day from the
+    // repository's file (copy-shared.js), not from this run's scratch file, so read it from there.
+    const live = homeDailyLive(lang);
+    const want = live
+        ? { sel: 'a.alone-line', gone: 'a.daily-link', text: lang === 'he' ? 'לבד? נסו את השאלה של היום' : 'On your own? Try today\'s question' }
+        : { sel: 'a.daily-link', gone: 'a.alone-line', text: lang === 'he' ? 'השאלה של היום: תמצאו את האמת?' : 'Today\'s question: can you spot the truth?' };
     for (const [where, url] of [['phone home', lang === 'he' ? '/he' : '/m'], ['desktop home', lang === 'he' ? '/he' : '/d']]) {
         await home.page.goto(base + url);
-        const line = home.page.locator('a.daily-link');
+        const line = home.page.locator(want.sel);
         const found = await line.waitFor({ timeout: 15000 }).then(() => true, () => false);
-        check(`${L}: the ${where} links to today's question`, found && (await line.getAttribute('href')) === `${s.path}?via=daily-home`
-            && (await line.evaluate((n) => n.textContent.trim())) === (lang === 'he' ? 'השאלה של היום: תמצאו את האמת?' : 'Today\'s question: can you spot the truth?'),
-            found ? await line.getAttribute('href') : `no link on ${url}`);
+        check(`${L}: the ${where} links to today's question (${live ? 'under Create, the puzzle is live' : 'under the pitch, before the first day'})`,
+            found && (await line.count()) === 1 && (await line.getAttribute('href')) === `${s.path}?via=daily-home`
+            && (await line.evaluate((n) => n.textContent.trim())) === want.text,
+            found ? await line.getAttribute('href') : `no ${want.sel} on ${url}`);
+        check(`${L}: the ${where} shows no ${want.gone}`, (await home.page.locator(want.gone).count()) === 0);
+        if (live && found) {
+            // The line sits right under Create: the phone's Create button, or the hint under the computer's
+            // big Start button (/he opens whichever home fits the screen).
+            const create = home.page.locator('.home .menu-button.create-game, .computer-home .host-hint');
+            const under = await Promise.all([create.first().boundingBox(), line.boundingBox()])
+                .then(([c, l]) => !!(c && l && l.y >= c.y + c.height - 1), () => false);
+            check(`${L}: on the ${where} the line is under Create`, under);
+        }
         if (found) await shot(home.page, `${L}-15-${where.replace(' ', '-')}`);
     }
     await home.page.goto(base + (lang === 'he' ? '/he/how-to-play' : '/how-to-play'));
