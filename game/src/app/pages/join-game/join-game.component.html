@@ -4,9 +4,9 @@
 
         <div class="title-area">
             <h1 class="title" routerLink="/">{{ t.title }}</h1>
-            <h3 *ngIf="!nicknameState && !gameOver" class="sub-title">{{ t.pinHeading }}</h3>
-            <h3 *ngIf="nicknameState && !crewName && !gameOver" class="sub-title">{{ t.nicknameHeading }}</h3>
-            <h3 *ngIf="nicknameState && crewName && !gameOver" class="sub-title" dir="auto">{{ t.crewHeading(crewName) }}</h3>
+            <h3 *ngIf="!nicknameState && !gameOver && !fullTable" class="sub-title">{{ t.pinHeading }}</h3>
+            <h3 *ngIf="nicknameState && !crewName && !gameOver && !fullTable" class="sub-title">{{ t.nicknameHeading }}</h3>
+            <h3 *ngIf="nicknameState && crewName && !gameOver && !fullTable" class="sub-title" dir="auto">{{ t.crewHeading(crewName) }}</h3>
             <div class="separator">♦</div>
         </div>
 
@@ -100,7 +100,24 @@
             </div>
         </div>
 
-        <div class="controls-wrapper" *ngIf="!gameOver">
+        <!-- The join was refused at a full table: a second table instead of a dead end (second-table.ts). -->
+        <div class="controls-wrapper" *ngIf="fullTable && !gameOver">
+            <div class="controls second-table">
+                <p class="second-table-title">{{ st.title }}</p>
+                <p class="second-table-text">{{ st.text }}</p>
+                <div class="field">
+                    <button class="button is-primary is-medium is-fullwidth second-table-start" type="button"
+                        [disabled]="secondBusy" [class.is-loading]="secondBusy" (click)="startSecondTable()">{{ st.start }}</button>
+                </div>
+                <div class="notification is-danger second-table-error" *ngIf="secondError">{{ secondError }}</div>
+                <div class="field">
+                    <button class="button is-fullwidth second-table-again" type="button" [disabled]="secondBusy"
+                        (click)="tryFullTableAgain()">{{ st.again }}</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-wrapper" *ngIf="!gameOver && !fullTable">
             <div class="controls">
                 <div class="field" *ngIf="!nicknameState">
                     <p class="control">

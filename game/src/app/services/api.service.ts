@@ -72,6 +72,10 @@ function apiError(url: string, resp: any) {
     error.code = (body && body.code) || (status === 0 ? 'NETWORK_ERROR' : 'HTTP_' + status);
     error.status = status;
     error.endpoint = url;
+    // GAME_IS_FULL: the second table this phone may start (functions' second-table.ts).
+    if (body && body.secondTable && typeof body.secondTable === 'object') {
+        error.secondTable = body.secondTable;
+    }
     // GAME_OVER: the rematch's PIN when its lobby is open, or that the game just ended.
     if (body && typeof body.rematch === 'string') {
         error.rematch = body.rematch;

@@ -5,6 +5,7 @@ import { nameFlag, swapName, NICKNAME_MAX } from '../name-flag';
 import { gameOverError } from './game-over';
 import { onRefusedJoin, refusedJoin } from './analytics';
 import { keepFullSince } from './start';
+import { fullTableError } from './second-table';
 
 export interface JoinResult {
     pid: string;
@@ -136,7 +137,8 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
         // Counted, to size the audience for a seat past the limit. Awaited (a function may stop once it
         // answers); a BigQuery failure is logged and never changes the answer.
         await onRefusedJoin(refusedJoin(pin, game)).catch(e => console.error('onRefusedJoin failed', pin, e && e.message));
-        return Promise.reject({ message: 'Sorry, game is full', code: 'GAME_IS_FULL' });
+        // The phone is offered a second table like this one (second-table.ts).
+        return Promise.reject(fullTableError(game));
     }
 
     const playersRef = gamesRef.child(pin).child('players');

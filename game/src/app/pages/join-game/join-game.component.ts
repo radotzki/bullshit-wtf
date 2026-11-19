@@ -3,13 +3,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { takeJoinSource, markVisit, preferredLocale } from '../../services/join-source';
+import { takeJoinSource, markVisit, preferredLocale, arrivalCampaign, markHosted } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
 import { cleanCode } from '../../services/game-code';
 import { StorageService } from '../../services/storage.service';
 import { GameService } from '../../services/game.service';
+import { SecondTableOffer, SecondTableStrings, readSecondTable, secondTableCampaign, secondTableWords } from './second-table';
 import {
     NIGHT_AFTER_CONTENT, NIGHT_AFTER_KEY, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
     readRecap, recapAsk, seenMethod, shownHalf, whenWas,
@@ -33,6 +34,10 @@ export class JoinGameComponent implements OnInit {
     errorMsg: string;
     nicknameState: boolean;
     pinInUrl: boolean;
+    // The join was refused at a full table: START A SECOND TABLE (second-table.ts), and whether it is on its way.
+    fullTable: SecondTableOffer;
+    secondBusy: boolean;
+    secondError: string;
     // A crew game: the crew's nicknames not yet taken in this game, one tap to pick yours.
     crewId: string;
     crewName: string;
@@ -333,6 +338,12 @@ export class JoinGameComponent implements OnInit {
                     return this.showGameOver(err);
                 }
                 this.loading = false;
+                // A full table goes on to the nickname: the join itself decides (a phone with a seat there
+                // gets it back), and a refused one is offered a second table under the name it typed.
+                if (err && err.code === 'GAME_IS_FULL') {
+                    this.nicknameState = true;
+                    return;
+                }
                 // A wrong PIN typed in Hebrew letters also says that codes are English letters.
                 this.errorMsg = pinError(this.t.lang, err && err.code, err && err.message, typed);
                 if (!this.isExpected(err)) {
@@ -371,12 +382,62 @@ export class JoinGameComponent implements OnInit {
                     return this.showGameOver(err);
                 }
                 this.loading = false;
+                const full = readSecondTable(err, this.t.lang);
+                if (full) {
+                    this.fullTable = full;
+                    this.secondError = '';
+                    return;
+                }
                 this.errorMsg = this.t.error(err && err.code, err && err.message);
                 // Wrong PIN, full game and finished game are expected; report anything else.
                 if (!this.isExpected(err)) {
                     reportError(err, 'join', { pin: this.pin });
                 }
             });
+    }
+
+    get st(): SecondTableStrings {
+        return secondTableWords(this.t.lang);
+    }
+
+    /**
+     * START A SECOND TABLE: a new game like the full one, tagged second-table (a test tab keeps its test tag),
+     * hosted by this phone. With the name it typed, it joins at once and lands on the lobby, where the invite
+     * is the screen; else at the new game's nickname box, as after Create.
+     */
+    async startSecondTable() {
+        const offer = this.fullTable;
+        if (!offer || this.secondBusy) {
+            return;
+        }
+        this.secondBusy = true;
+        this.secondError = '';
+        try {
+            const resp = await this.apiService.createGame(offer.locale, offer.count, offer.pack,
+                secondTableCampaign(offer, arrivalCampaign()));
+            if (!resp || !resp.pin) {
+                throw new Error('no pin');
+            }
+            markHosted(resp.pin);
+            markVisit('create');
+            this.secondBusy = false;
+            this.fullTable = null;
+            this.goToLobby(resp.pin);
+            if (this.nickname) {
+                this.join();
+            }
+        } catch (err) {
+            this.secondBusy = false;
+            this.secondError = this.st.error;
+            reportError(err, 'secondTable', { pin: this.pin, locale: offer.locale });
+        }
+    }
+
+    /** TRY THIS TABLE AGAIN: a seat may have come free. */
+    tryFullTableAgain() {
+        this.fullTable = null;
+        this.secondError = '';
+        this.join();
     }
 
 }
