@@ -68,6 +68,7 @@ const he = {
 
 const howEn = `
 <p>Bullshit is a trivia game where the best liar wins. Everyone plays on their own phone, in the same room, in the browser. There is nothing to install.</p>
+<!--start-->
 <h2>The game in one minute</h2>
 <ol>
   <li><strong>A strange true fact appears, with a blank.</strong> For example: "In 1932 the Australian army lost a war against ____."</li>
@@ -100,6 +101,7 @@ const howEn = `
 
 const howHe = `
 <p>בולשיט הוא משחק טריוויה שבו השקרן הכי טוב מנצח. כל אחד משחק מהטלפון שלו, באותו חדר, בדפדפן. אין מה להתקין.</p>
+<!--start-->
 <h2>המשחק בדקה</h2>
 <ol>
   <li><strong>מופיעה עובדה אמיתית ומוזרה, עם חלק חסר.</strong> למשל: "ב-1932 הצבא האוסטרלי הפסיד במלחמה נגד ____."</li>
@@ -203,6 +205,7 @@ module.exports = [
         h1: 'משחק חברה שכל אחד משחק מהטלפון שלו',
         body: `
 <p>רוב משחקי החברה צריכים קופסה, חפיסת קלפים או מישהו שמקריא. בולשיט צריך רק את הטלפונים שכבר בכיס. מישהו אחד פותח משחק, השאר מקלידים קוד של ארבע אותיות, ומשחקים.</p>
+<!--start-->
 <h2>למה חבר'ה אוהבים אותו</h2>
 <ul>
   <li><strong>בלי הורדה ובלי הרשמה.</strong> הוא עובד בדפדפן של הטלפון. אף אחד לא צריך להתקין אפליקציה או לפתוח חשבון.</li>
@@ -225,6 +228,7 @@ module.exports = [
         h1: 'A Hanukkah game for after the candles',
         body: `
 <p>Hanukkah has eight nights and most of them end with the family around a table. Bullshit gives that table a game: everyone on their own phone, the grandparents included, and nothing to set up or clean away.</p>
+<!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 5 questions takes five to ten minutes.</p>
 <h2>Why it fits Hanukkah</h2>
@@ -246,6 +250,7 @@ module.exports = [
         h1: 'משחק לחנוכה, לאחרי הדלקת הנרות',
         body: `
 <p>בחנוכה יש שמונה לילות, ורובם נגמרים עם המשפחה סביב השולחן. בולשיט נותן לשולחן הזה משחק: כל אחד מהטלפון שלו, גם סבא וסבתא, ובלי שום דבר לסדר או לאסוף אחר כך.</p>
+<!--start-->
 <h2>איך זה עובד</h2>
 <p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 5 שאלות לוקח בין חמש לעשר דקות.</p>
 <h2>למה זה מתאים לחנוכה</h2>
@@ -266,6 +271,7 @@ module.exports = [
         h1: 'A Purim game where the best liar wins',
         body: `
 <p>Purim is the one day a year when hiding who you are is the point. Bullshit is a game about exactly that: everyone writes a lie, dresses it up as the truth, and tries to fool the room.</p>
+<!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a believable fake answer, then everyone picks what they think is the truth. Fool a friend and you score; find the truth and you score more. Fall for one of the house lies and you lose points.</p>
 <h2>Good for Purim parties</h2>
