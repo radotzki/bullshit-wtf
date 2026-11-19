@@ -1,5 +1,6 @@
 import { questionsRef, seenQuestionsRef, get } from './../firebase';
-import { Question, questionPacks, isPack } from '../game-model';
+import { Question, GameScheme, questionPacks, isPack, isOwnId } from '../game-model';
+import { ownQuestion } from './own-questions';
 import { pickQuestions, pickWithPack, pickWithOpener, SeenRecord } from './question-picker';
 import { isRetired } from './retired-questions';
 
@@ -33,6 +34,29 @@ export function getQuestion(id: string): Promise<Question> {
         .then(resp => Object.assign(resp, { id } as Question));
 }
 
+/**
+ * The question at `qidx` of this game: the host's own question for an own id (see own-questions.ts),
+ * else the bank's. An own id this game does not hold (a game that copied another's ids) plays a bank
+ * question in its language instead, so the game goes on.
+ */
+export async function questionFor(game: Partial<GameScheme>, qidx: number): Promise<Question> {
+    const qid = game && game.qids ? game.qids[qidx] : undefined;
+    if (isOwnId(qid)) {
+        const own = ownQuestion(game, qid);
+        if (own) {
+            return { id: own.id, questionText: own.questionText, realAnswer: own.realAnswer, fakeAnswers: own.fakeAnswers, citation: '' };
+        }
+        // The same bank question every time this id is read (the question, its lies, its truth).
+        console.error(`Own question ${qid} not in this game: a bank question instead`);
+        const bank = (await getQuestionsByLang(game.locale || 'en')).filter(q => !q.pack && !isRetired(q.id))
+            .sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+        let h = 0;
+        String(qid).split('').forEach(c => h = (h * 31 + c.charCodeAt(0)) % 100003);
+        return bank[h % bank.length];
+    }
+    return getQuestion(qid);
+}
+
 /** Remembers that these devices were shown this question now. */
 export function markQuestionSeen(qid: string, uids: string[]) {
     const now = Date.now();
@@ -40,7 +64,8 @@ export function markQuestionSeen(qid: string, uids: string[]) {
 
     validUids(uids).forEach(uid => update[`${uid}/${qid}`] = now);
 
-    if (!qid || Object.keys(update).length === 0) {
+    // The host's own questions are this game's alone: no device remembers them.
+    if (!qid || isOwnId(qid) || Object.keys(update).length === 0) {
         return Promise.resolve();
     }
 

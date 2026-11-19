@@ -6,10 +6,11 @@ import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { GameState, aboutView } from '../../game-model';
+import { GameState, aboutView, ownView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings } from './../about-strings';
+import { ownStrings, OwnStrings } from './../own-strings';
 
 @Component({
     standalone: false,
@@ -34,6 +35,9 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     /** An About question about this phone's player: they know the truth, so they watch and do not pick. */
     aboutMe = false;
     aboutWords: AboutStrings = aboutStrings('en');
+    /** The host's own question, on the host's phone: they know the truth, so they watch and do not pick. */
+    ownMe = false;
+    ownWords: OwnStrings = ownStrings('en');
     duration: number;
     past: number;
     timer;
@@ -59,9 +63,15 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
         // The answers and whom the question is about arrive together, so the player it is about never
         // sees pick buttons for an instant.
-        Promise.all([this.apiService.getAnswers(this.pin), this.apiService.getAbout(this.pin)]).then(([a, about]) => {
+        Promise.all([
+            this.apiService.getAnswers(this.pin),
+            this.apiService.getAbout(this.pin),
+            this.apiService.getOwn(this.pin),
+        ]).then(([a, about, own]) => {
             const user = this.sessionService.user;
             this.aboutMe = aboutView(about, null, user && user.pid, this.presenter).aboutMe;
+            const ownSeen = ownView(own, null, user && user.pid, this.presenter);
+            this.ownMe = !!ownSeen && ownSeen.ownMe;
             this.answers = a;
         });
         this.apiService.getTaste(this.pin).then(taste => this.taste = !!taste);
@@ -73,6 +83,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
         this.aboutWords = aboutStrings(locale);
+        this.ownWords = ownStrings(locale);
     }
 
     ngOnDestroy() {
@@ -85,7 +96,7 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     }
 
     submit(answer: string) {
-        if (this.aboutMe) {
+        if (this.aboutMe || this.ownMe) {
             return;
         }
         this.loading = true;

@@ -3,7 +3,7 @@ import { pickCoach } from './lie-helper';
 import { drawBigReveal } from './big-reveal';
 import { withStaged } from './phase';
 import { drawAboutUs } from './about';
-import { GameScheme, GameState, packFits, cleanCampaign } from '../game-model';
+import { GameScheme, GameState, packFits, cleanCampaign, cleanOwnQuestions } from '../game-model';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export interface NewGameOptions {
@@ -24,6 +24,8 @@ export interface NewGameOptions {
     aboutUs?: boolean;
     // A pin claimed already (a crew's lobby, see next-game.ts): the game is made under it.
     pin?: string;
+    // The host's own questions, as the create page sent them (see own-questions.ts). Cleaned here.
+    own?: any;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
@@ -71,9 +73,16 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
 
         // The About questions, for half of the games made by a client that can show them: by the crew's
         // half for a crew's game, else by the PIN's.
-        const aboutUs = drawAboutUs(options.aboutUs === true, gamePin, options.crew);
+        // A game with the host's own questions stays out of that test (own-questions.ts).
+        const own = cleanOwnQuestions(options.own);
+        const aboutUs = own.length ? undefined : drawAboutUs(options.aboutUs === true, gamePin, options.crew);
         if (aboutUs !== undefined) {
             game.aboutUs = aboutUs;
+        }
+
+        if (own.length) {
+            game.ownQs = {};
+            own.forEach((q, i) => game.ownQs[String(i)] = q);
         }
 
         return gamesRef.child(gamePin).set(game).then(() => gamePin);

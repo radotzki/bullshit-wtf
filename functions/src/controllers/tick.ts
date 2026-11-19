@@ -1,5 +1,5 @@
-import { getQuestion, randomQuestions, markQuestionSeen, seenRecordsFor } from './questions';
-import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart, aboutOf, sentMark } from '../game-model';
+import { questionFor, randomQuestions, markQuestionSeen, seenRecordsFor } from './questions';
+import { GameScheme, Answers, GameState, GameStateInfo, addHighlights, addLaughs, highlightsStart, aboutOf, sentMark, isOwnId, ownOf } from '../game-model';
 import { get, gamesRef, qHistoryRef, questionsRef } from '../firebase';
 import { readGame, isMoved } from './old-games';
 import { tickAllowed, stateKey, withDeadline, endsAtOnce } from './phase';
@@ -17,6 +17,7 @@ import {
 } from './about';
 import { withNextWeek } from './next-week';
 import { drawPair, pairDecoys } from './pair';
+import { carryOwn, hostSeat, ownIds, placeOwnQuestions, qidList, withOwn } from './own-questions';
 
 // How long a run waits before its second try at leaving a phase of no length.
 const leaveRetryDelay = 1000;
@@ -204,6 +205,8 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
     // An About question's `about` stays on its states up to the next question (see about.ts).
     if (update && update.state) {
         update.state = carryAbout(game.state, update.state, update);
+        // So does an own question's `own` (see own-questions.ts).
+        update.state = carryOwn(game.state, update.state, update);
     }
 
     if (taste && update && update.state) {
@@ -229,7 +232,7 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
             const aboutPlan = await aboutPlanFor(game, taste);
             return Object.assign({
                 state: updateState(GameState.RoundIntro),
-                qids: await packClearOfAbout(game, qids, aboutPlan.aboutQs),
+                qids: await withOwnQuestions(game, await packClearOfAbout(game, qids, aboutPlan.aboutQs)),
             }, aboutPlan, await pairFor(pin, game));
 
         case GameState.RoundIntro:
@@ -244,8 +247,12 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
                 return aboutAnswersStep(pin, game);
             }
 
+            const answersState = updateState(GameState.ShowAnswers);
+            const ownHostSeat = ownOf(game.state) ? ownOf(game.state).pid : '';
             return {
-                state: updateState(GameState.ShowAnswers),
+                state: answersState,
+                // An own question: its host knows the truth and does not pick, so their seat is done (own-questions.ts).
+                ...(ownHostSeat && game.players && game.players[ownHostSeat] ? { [`players/${ownHostSeat}/sent`]: sentMark(answersState) } : {}),
                 answers: await populateQuestionAnswers(pin, game),
                 // Picks open empty: a pick that landed while the lies were written was made in an
                 // earlier question, by a phone that was offline then (see pickIsFor).
@@ -293,7 +300,7 @@ function updateGame(pin: string, update: Partial<GameScheme>) {
 
 async function populateQuestion(game: GameScheme, qidx: number) {
     const qid = game.qids[qidx];
-    const question = await getQuestion(qid);
+    const question = await questionFor(game, qidx);
 
     try {
         await markQuestionSeen(qid, playerUids(game));
@@ -314,8 +321,13 @@ async function ideasFor(game: GameScheme, qidx: number) {
         return null;
     }
 
+    // An own question has no ready-made lies: its two wrong answers are the host's house lies.
+    if (isOwnId(game.qids[qidx])) {
+        return null;
+    }
+
     try {
-        const question = await getQuestion(game.qids[qidx]);
+        const question = await questionFor(game, qidx);
         const ideas = pickIdeas(cleanHouseLies(question.id, question.fakeAnswers), question.realAnswer, Object.keys(game.players || {}));
         return Object.keys(ideas).length ? ideas : null;
     } catch (e) {
@@ -353,8 +365,9 @@ async function populateQuestionAnswers(pin: string, game: GameScheme) {
 }
 
 async function populateFakeAnswers(pin: string, game: GameScheme) {
-    const question = await getQuestion(game.qids[game.questionIndex]);
-    const decoys = game.pair === true ? pairDecoys(game, question.realAnswer, () => gamesRef.child(pin).child('answers').push().key) : null;
+    const question = await questionFor(game, game.questionIndex);
+    // An own question offers no decoys (they come from the bank's lies): its wrong answers are on the table.
+    const decoys = game.pair === true && !isOwnId(game.qids[game.questionIndex]) ? pairDecoys(game, question.realAnswer, () => gamesRef.child(pin).child('answers').push().key) : null;
     if (decoys) {
         return decoys;
     }
@@ -395,7 +408,7 @@ async function pairFor(pin: string, game: GameScheme): Promise<Partial<GameSchem
  * the house lies. Nobody reads the old picks here: the picks node is emptied with the same write.
  */
 async function tasteQuestion(pin: string, game: GameScheme, qidx: number): Promise<Partial<GameScheme>> {
-    const question = await getQuestion(game.qids[qidx]);
+    const question = await questionFor(game, qidx);
     const answers: Answers = {
         truth: { text: question.realAnswer, houseLie: false, realAnswer: true },
     };
@@ -415,7 +428,7 @@ async function tasteQuestion(pin: string, game: GameScheme, qidx: number): Promi
 }
 
 async function getRealAnswer(game: GameScheme) {
-    const question = await getQuestion(game.qids[game.questionIndex]);
+    const question = await questionFor(game, game.questionIndex);
     const text = question.realAnswer;
     const realAnswer: Answers = {
         truth: { text, houseLie: false, realAnswer: true }
@@ -537,6 +550,10 @@ function saveQuestionHistory(game: GameScheme, pin: string) {
     if (about) {
         return qHistoryRef.push({ pin, about: about.prompt, timestamp: Date.now() });
     }
+    // An own question is the table's alone: not kept either.
+    if (ownOf(game.state)) {
+        return qHistoryRef.push({ pin, own: true, timestamp: Date.now() });
+    }
     return qHistoryRef.push({
         pin,
         q: game.currentQ,
@@ -578,8 +595,10 @@ async function questionStep(game: GameScheme, qidx: number): Promise<Partial<Gam
 }
 
 async function bankQuestionStep(game: GameScheme, qidx: number): Promise<Partial<GameScheme>> {
+    const state = updateState(GameState.ShowQuestion);
     return {
-        state: updateState(GameState.ShowQuestion),
+        // The host's own question says so on every screen, from its writing to its scoreboard (own-questions.ts).
+        state: isOwnId(game.qids[qidx]) ? withOwn(state, hostSeat(game)) : state,
         currentQ: await populateQuestion(game, qidx),
         ideas: await ideasFor(game, qidx),
         answers: {},
@@ -643,6 +662,29 @@ async function packClearOfAbout(game: GameScheme, qids: any, aboutQs: GameScheme
         console.error('Failed to keep the pack questions clear of the About questions', e);
         return qids;
     }
+}
+
+/**
+ * At START: the host's own questions on their places (see own-questions.ts), a pack game's pack questions
+ * moved off those places first. A game without own questions keeps its ids as they are. On any failure
+ * reading the pack, the own questions are still placed.
+ */
+async function withOwnQuestions(game: GameScheme, qids: any): Promise<any> {
+    const own = ownIds(game);
+    if (!own.length) {
+        return qids;
+    }
+    const list = qidList(qids);
+    let pack = new Set<string>();
+    if (game.pack) {
+        try {
+            const questions = await Promise.all(list.map(qid => qid && !isOwnId(qid) ? get<any>(questionsRef.child(qid)) : Promise.resolve(null)));
+            pack = new Set(list.filter((qid, i) => !!questions[i] && questions[i].pack === game.pack));
+        } catch (e) {
+            console.error('Failed to read the pack questions before placing the own questions', e);
+        }
+    }
+    return placeOwnQuestions(list, own, game.totalQ, qid => pack.has(qid));
 }
 
 /** At START: the About questions of a game that plays them (see about.ts), or nothing to write. */

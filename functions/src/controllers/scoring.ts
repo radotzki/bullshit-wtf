@@ -10,7 +10,7 @@
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
-import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor, aboutOf } from '../game-model';
+import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor, aboutOf, ownOf } from '../game-model';
 import { houseLiePoints } from './house-lie';
 import { isSamePick } from './same-pick';
 import { DECOY_POINTS } from './pair';
@@ -59,11 +59,17 @@ export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
     // An About question: the player it is about knows the truth, so their pick (from an older site,
     // which offers them the answers) is no pick.
     const about = aboutOf(game.state);
+    // An own question: its host wrote it, so their pick is no pick either (see own-questions.ts).
+    const own = ownOf(game.state);
 
     Object.keys(selections).forEach(pid => {
         const pick = selections[pid];
 
         if (about && pid === about.pid) {
+            return;
+        }
+
+        if (own && own.pid && pid === own.pid) {
             return;
         }
 

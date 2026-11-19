@@ -22,7 +22,10 @@ test('English visitors keep the English Create page word for word', () => {
     const en = createStrings('en');
     assert.strictEqual(createStrings(undefined), en);
     assert.strictEqual(createStrings('fr'), en);
-    assert.deepStrictEqual(en, {
+    // The own questions' section has its own test (own-strings.test.js).
+    const { own, ...rest } = en;
+    assert.ok(own && own.toggle);
+    assert.deepStrictEqual(rest, {
         lang: 'en',
         dir: 'ltr',
         title: 'Bullshit',
@@ -45,8 +48,11 @@ test('Hebrew visitors get every word in Hebrew, right to left', () => {
     const he = createStrings('he');
     assert.strictEqual(he.lang, 'he');
     assert.strictEqual(he.dir, 'rtl');
-    for (const [key, value] of Object.entries(he)) {
+    const flat = (o, at) => Object.entries(o).reduce((all, [k, v]) => all.concat(
+        typeof v === 'function' ? [[at + k, v(1)]] : v && typeof v === 'object' ? flat(v, at + k + '.') : [[at + k, v]]), []);
+    for (const [key, value] of flat(he, '')) {
         if (key === 'lang' || key === 'dir') continue;
+        // "+ עוד שאלה" and the number line hold Hebrew; the blank's underscores are no letters.
         assert.ok(/[֐-׿]/.test(value), `${key} is not Hebrew: ${value}`);
         assert.ok(!/[A-Za-z]/.test(value), `${key} has Latin letters: ${value}`);
     }

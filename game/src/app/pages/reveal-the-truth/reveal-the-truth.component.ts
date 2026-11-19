@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import {
     GamePlayer, GameState, RevealAnswer, RevealSchedule, Standing, seatPicture,
-    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isLie, isPlayerLie,
+    revealSchedule, revealMoment, revealRowStart, revealScoreChanges, revealStandings, canLaugh, isLie, isPlayerLie, ownOf,
 } from '../../game-model';
 import { gameStrings, GameStrings } from './../game-strings';
 import { resultLines, stingFor } from './reveal-strings';
@@ -16,6 +16,7 @@ import { followScrollTop } from './reveal-follow';
 import { laughView } from './reveal-laughs';
 import { aboutStrings, AboutStrings, aboutResultLine } from './../about-strings';
 import { pairStrings, PairStrings } from './../pair-strings';
+import { ownStrings } from './../own-strings';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
 // stand in their old order before they move to the new one (staged reveal only).
@@ -231,6 +232,12 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             this.myResult = [aboutResultLine(this.aboutWords, aboutRow.pickerNames, this.t.signed(aboutRow.aboutPoints), this.t.names)];
         } else if (me) {
             this.myResult = resultLines(me, all, this.t, this.pairWords.fooled);
+            // The host's own question: they knew the truth and sat the pick out (see OwnQuestion in game-model).
+            const own = ownOf(info.state);
+            if (own && own.pid === me) {
+                const knew = ownStrings(this.t.rtl ? 'he' : 'en').youKnew;
+                this.myResult = this.myResult.map(line => line === this.t.didNotPick ? knew : line);
+            }
         }
 
         this.schedule = revealSchedule(revealAnswers, !!hasPresenter, staged);

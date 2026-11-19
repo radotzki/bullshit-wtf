@@ -2,6 +2,7 @@ import { GameScheme, GameState } from '../game-model';
 import { revealDoneWait } from './phase';
 import { playerPicks } from './scoring';
 import { notPicking, writingSent } from './about';
+import { ownNotPicking } from './own-questions';
 
 /**
  * While a seat is left out, no phase ends early in its first seconds: a player who missed all of
@@ -46,8 +47,10 @@ function hasPlayed(game: GameScheme, pid: string): boolean {
  */
 export function seatsToWaitFor(game: GameScheme): string[] {
     // While an About question's answers are picked, the player it is about does not pick (see about.ts).
+    // Nor does the host of an own question, who knows its truth (see own-questions.ts).
     const out = notPicking(game);
-    return seatsPlaying(game).filter(pid => pid !== out);
+    const host = ownNotPicking(game);
+    return seatsPlaying(game).filter(pid => pid !== out && pid !== host);
 }
 
 /** The seats the empty seats rule waits for: every seat on question 1, then those that sent something. */

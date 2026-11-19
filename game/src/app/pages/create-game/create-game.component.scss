@@ -18,6 +18,80 @@
         opacity: 0.85;
     }
 
+    // The host's own questions: a closed line until tapped, then small cards that fit a 320 px phone.
+    .own-toggle .own-open {
+        padding-left: 0;
+        padding-right: 0;
+        font-size: 0.75em;
+        letter-spacing: 0;
+        white-space: normal;
+        height: auto;
+        text-align: start;
+        text-decoration: underline;
+    }
+
+    .own-questions {
+        font-size: 0.7em;
+        letter-spacing: 0;
+        line-height: 1.35;
+        margin: 0.25em 0 0.75em;
+
+        .own-intro, .own-rule {
+            opacity: 0.85;
+            margin-bottom: 0.5em;
+        }
+
+        .own-card {
+            border-top: 1px solid rgba(0, 0, 0, 0.15);
+            padding: 0.5em 0 0.25em;
+        }
+
+        .own-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .own-number {
+            font-weight: bold;
+        }
+
+        .own-remove, .own-add {
+            font-size: 1em;
+            letter-spacing: 0;
+        }
+
+        .own-add {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .own-label {
+            display: block;
+            margin: 0.35em 0 0.15em;
+        }
+
+        .textarea, .input {
+            font-size: 16px; // no zoom on a phone's tap
+            letter-spacing: 0;
+        }
+
+        .textarea {
+            min-height: 0;
+            resize: none;
+        }
+
+        .own-lies {
+            display: flex;
+            gap: 0.4em;
+
+            .input {
+                flex: 1 1 0;
+                min-width: 0;
+            }
+        }
+    }
+
     .controls {
         background: #fff;
         padding: 20px;

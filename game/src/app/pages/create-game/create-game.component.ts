@@ -3,7 +3,10 @@ import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, markVisit, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
-import { questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack } from '../../game-model';
+import {
+    questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack,
+    OwnQuestionInput, OWN_MAX, OWN_TEXT_MAX, OWN_ANSWER_MAX, ownEmpty, ownProblem,
+} from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
@@ -26,6 +29,14 @@ export class CreateGameComponent implements OnInit {
     usePack = false;
     // "Kids are playing": the game plays the kids pack in place of the seasonal one (see questionPacks.kids).
     kids = false;
+    // The host's own questions (see OwnQuestion in game-model): a closed section until tapped, one card
+    // to start, up to OWN_MAX. Empty cards are ignored, so an opened section never blocks CREATE.
+    ownOpen = false;
+    ownCards: OwnQuestionInput[] = [emptyCard()];
+    ownErrors: string[] = [];
+    readonly ownMax = OWN_MAX;
+    readonly ownTextMax = OWN_TEXT_MAX;
+    readonly ownAnswerMax = OWN_ANSWER_MAX;
     // A tag on this page's own address (the after-game ask links here with ?via=after-game).
     private campaign: string = null;
 
@@ -69,13 +80,57 @@ export class CreateGameComponent implements OnInit {
         return this.pack ? questionPacks[this.pack].label[lang] : '';
     }
 
+    openOwn() {
+        this.ownOpen = true;
+    }
+
+    addOwn() {
+        if (this.ownCards.length < OWN_MAX) {
+            this.ownCards.push(emptyCard());
+            this.ownErrors.push(null);
+        }
+    }
+
+    removeOwn(i: number) {
+        this.ownCards.splice(i, 1);
+        this.ownErrors.splice(i, 1);
+        if (!this.ownCards.length) {
+            this.ownCards.push(emptyCard());
+            this.ownOpen = false;
+        }
+    }
+
+    trackCard(index: number) {
+        return index;
+    }
+
+    /** The cards to send: the filled ones. Null (and each card's problem shown) when one cannot be played. */
+    private ownToSend(): OwnQuestionInput[] | null {
+        if (!this.ownOpen) {
+            return [];
+        }
+        this.ownErrors = this.ownCards.map(card => {
+            const problem = ownEmpty(card) ? null : ownProblem(card);
+            return problem ? this.t.own.problems[problem] : null;
+        });
+        if (this.ownErrors.some(e => !!e)) {
+            return null;
+        }
+        return this.ownCards.filter(card => !ownEmpty(card))
+            .map(card => ({ text: card.text, truth: card.truth, lies: card.lies.slice() }));
+    }
+
     submit() {
+        const own = this.ownToSend();
+        if (!own) {
+            return;
+        }
         this.loading = true;
         this.errorMsg = '';
         // One pack a game: with kids playing, the kid questions take the seasonal pack's place.
         const pack = chosenPack(this.kids, this.usePack, this.pack);
 
-        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign())
+        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign(), own)
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);
@@ -87,9 +142,13 @@ export class CreateGameComponent implements OnInit {
             })
             .catch(err => {
                 this.loading = false;
-                reportError(err, 'createGame', { locale: this.locale, count: this.length, pack });
+                reportError(err, 'createGame', { locale: this.locale, count: this.length, pack, own: own.length });
                 this.errorMsg = this.t.error;
             });
     }
 
+}
+
+function emptyCard(): OwnQuestionInput {
+    return { text: '', truth: '', lies: ['', ''] };
 }

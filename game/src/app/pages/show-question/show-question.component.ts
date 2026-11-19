@@ -6,12 +6,13 @@ import { SessionService } from './../../services/session.service';
 import { GameService, durations } from './../../services/game.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { GameState, aboutView, aboutMissedView } from '../../game-model';
+import { GameState, aboutView, aboutMissedView, ownView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings, aboutMissedLine } from './../about-strings';
 import { pairStrings, PairStrings, decoyView, DecoyView, friendName } from './../pair-strings';
+import { ownStrings, OwnStrings, ownLine } from './../own-strings';
 
 @Component({
     standalone: false,
@@ -55,6 +56,11 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     pairWords: PairStrings = pairStrings('en');
     friend = '';
     private chosenDecoy: string = null;
+    // The host's own question (see ownOf in game-model): the line under it, and whether this phone is the host's.
+    ownMe = false;
+    ownText: string = null;
+    ownWords: OwnStrings = ownStrings('en');
+    private ownSeen: { ownMe: boolean; ownName: string } = null;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -86,6 +92,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.aboutWords = aboutStrings(locale);
         this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
         this.pairWords = pairStrings(locale);
+        this.ownWords = ownStrings(locale);
+        this.ownText = ownLine(this.ownWords, this.ownSeen, this.presenter);
     }
 
     /**
@@ -94,13 +102,16 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
      * answer typed there would be a lie where their truth belongs).
      */
     private loadQuestion() {
-        this.apiService.getQuestionWithAbout(this.pin).then(({ question, about, missed, players }) => {
+        this.apiService.getQuestionWithAbout(this.pin).then(({ question, about, missed, players, own }) => {
             const user = this.sessionService.user;
             const view = aboutView(about, players, user && user.pid, this.presenter);
             this.aboutMe = view.aboutMe;
             this.aboutName = view.aboutName;
             this.missedView = aboutMissedView(missed, players, user && user.pid, this.presenter);
             this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
+            this.ownSeen = ownView(own, players, user && user.pid, this.presenter);
+            this.ownMe = !!this.ownSeen && this.ownSeen.ownMe;
+            this.ownText = ownLine(this.ownWords, this.ownSeen, this.presenter);
             this.question = question;
         });
     }

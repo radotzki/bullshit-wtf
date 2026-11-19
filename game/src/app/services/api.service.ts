@@ -4,7 +4,7 @@ import {
     Taste, tasteOf,
     WaitingRow, waitingRow, AnswerSelection, pickIsFor,
 } from './../game-model';
-import { About, CrewNight, aboutOf, aboutMissedOf, sentMark } from './../game-model';
+import { About, CrewNight, aboutOf, aboutMissedOf, sentMark, Own, ownOf, OwnQuestionInput } from './../game-model';
 import { SessionService } from './session.service';
 import { answersList } from './answers-list';
 import { newHostKey, rememberHostKey, hostKeyFor } from './host-key';
@@ -144,7 +144,7 @@ export class ApiService {
         return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
-    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
+    async createGame(locale: string, count: number, pack?: string, campaign?: string, own?: OwnQuestionInput[]): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating never waits long for sign-in:
         // without a uid the game is made all the same, and anyone may start it.
@@ -161,6 +161,8 @@ export class ApiService {
             stagedReveal: true,
             // This client can show the About questions, so the server may draw this game into their test.
             aboutUs: true,
+            // The host's own questions, if any (see OwnQuestion in game-model); the server checks them again.
+            ...(own && own.length ? { own } : {}),
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -490,12 +492,18 @@ export class ApiService {
         return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => aboutOf(state), () => null);
     }
 
+    /** The host's own question the game is on (see ownOf in game-model), or null. */
+    getOwn(pin: string): Promise<Own> {
+        pin = pin.toUpperCase();
+        return this.get<any>(this.gamesRef.child(pin).child('state')).then(state => ownOf(state), () => null);
+    }
+
     /**
      * The question being written, with whom it is about, read together (the question, the state and the
      * players at once), so a phone shows the writing form and the "about you" badge in the same frame,
      * even on a slow network. A state or players read that fails leaves an ordinary question.
      */
-    async getQuestionWithAbout(pin: string): Promise<{ question: string; about: About; missed: string; players: GamePlayers }> {
+    async getQuestionWithAbout(pin: string): Promise<{ question: string; about: About; missed: string; players: GamePlayers; own: Own }> {
         pin = pin.toUpperCase();
         const game = this.gamesRef.child(pin);
         const [question, state, players] = await Promise.all([
@@ -504,7 +512,8 @@ export class ApiService {
             this.get<GamePlayers>(game.child('players')).catch(() => null),
         ]);
         // missed: the player whose About question this bank question replaces (aboutMissedOf), or null.
-        return { question, about: aboutOf(state), missed: aboutMissedOf(state), players };
+        // own: the host's own question (ownOf), or null.
+        return { question, about: aboutOf(state), missed: aboutMissedOf(state), players, own: ownOf(state) };
     }
 
     /** Sends this player's lie; in a pair game, with the decoy they chose (see pages/pair-strings.ts). */

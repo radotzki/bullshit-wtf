@@ -1,5 +1,5 @@
 import { isPlayer } from './scoring';
-import { getQuestion } from './questions';
+import { questionFor } from './questions';
 import { Answer, Answers, GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame, isMoved } from './old-games';
@@ -45,8 +45,8 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
         return aboutAnswer(pin, game, pid, playerAnswer, about.pid === pid);
     }
 
-    const qid = game.qids[game.questionIndex];
-    const question = await getQuestion(qid);
+    // The bank's question, or the host's own (see own-questions.ts): the refusal is the same.
+    const question = await questionFor(game, game.questionIndex);
 
     if (isSameAnswer(playerAnswer, question.realAnswer)) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });

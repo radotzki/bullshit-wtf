@@ -1,4 +1,4 @@
-import { GameScheme, GameState, isTestCampaign } from "../game-model";
+import { GameScheme, GameState, isTestCampaign, ownCount } from "../game-model";
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { recordCrewGame } from './crew';
@@ -269,6 +269,9 @@ function origin(game: GameScheme) {
         coach: !!game.coach,
         // The About questions' half (see about.ts): null outside the test.
         about_us: typeof game.aboutUs === 'boolean' ? game.aboutUs : null,
+        // How many of the host's own questions the game placed (own-questions.ts): 0 for a game without.
+        // Needs the own_questions column: until it is added, ignoreUnknownValues drops it.
+        own_questions: ownCount(game.qids),
     };
 }
 
