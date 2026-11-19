@@ -270,7 +270,7 @@
   "daily-26-en-022": {
     "day": "2026-12-18",
     "lang": "en",
-    "questionText": "In the 1960s, the CIA spent millions of dollars trying to turn a $blank$ into a walking microphone",
+    "questionText": "In the 1960s, the CIA spent millions of dollars trying to make a $blank$ into a walking microphone",
     "realAnswer": "cat",
     "fakeAnswers": [
       "poodle",
@@ -282,7 +282,7 @@
   "daily-26-en-023": {
     "day": "2026-12-19",
     "lang": "en",
-    "questionText": "In 897, Pope Stephen VI put a $blank$ on trial in Rome",
+    "questionText": "In 897, Pope Stephen VI put a $blank$ on trial",
     "realAnswer": "dead pope",
     "fakeAnswers": [
       "church bell",
@@ -342,14 +342,14 @@
   "daily-26-en-028": {
     "day": "2026-12-24",
     "lang": "en",
-    "questionText": "The first song ever played on a musical instrument in space, in 1965, was $blank$",
-    "realAnswer": "jingle bells",
+    "questionText": "On 24 December 1968, while orbiting the Moon, the Apollo 8 astronauts read aloud on live TV from the Book of $blank$",
+    "realAnswer": "genesis",
     "fakeAnswers": [
-      "fly me to the moon",
-      "happy birthday",
-      "twinkle twinkle little star"
+      "psalms",
+      "exodus",
+      "revelation"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Gemini_6A"
+    "citation": "https://en.wikipedia.org/wiki/Apollo_8_Genesis_reading"
   },
   "daily-26-en-029": {
     "day": "2026-12-25",
