@@ -21,6 +21,14 @@
         "function": "joinPreview"
       },
       {
+        "source": "/challenge/*",
+        "function": "joinPreview"
+      },
+      {
+        "source": "/he/challenge/*",
+        "function": "joinPreview"
+      },
+      {
         "regex": "^/he/?$",
         "destination": "/he.html"
       },
@@ -75,7 +83,7 @@
         ]
       },
       {
-        "regex": "^/(he/)?(present-game|c|challenge|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/.]+/?$",
+        "regex": "^/(he/)?(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/.]+/?$",
         "headers": [
           {
             "key": "Cache-Control",

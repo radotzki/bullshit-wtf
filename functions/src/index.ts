@@ -21,6 +21,7 @@ import * as analytics from './controllers/analytics';
 import { cleanVisit, visitRecord, VISIT_MAX_INSTANCES } from './controllers/visit';
 import { laugh } from './controllers/laugh';
 import { joinPreviewPage, readPreviewGame } from './controllers/join-preview';
+import { challengePreviewPage, readChallengeGame } from './controllers/challenge-preview';
 import { caught, http, watched } from './report';
 import { sweepOldGames } from './controllers/old-games';
 
@@ -532,7 +533,8 @@ exports.visit = functions.runWith({ maxInstances: VISIT_MAX_INSTANCES }).https.o
     res.status(204).send('');
 }));
 
-// A join link, /join-game/<PIN> or /he/join-game/<PIN> (a Hosting rewrite in firebase.json): the site's
+// A join link, /join-game/<PIN> or /he/join-game/<PIN>, or a challenge link, /challenge/<PIN> or
+// /he/challenge/<PIN> (Hosting rewrites in firebase.json): the site's
 // own page, with link-preview tags for this game ("Dana invited you to play Bullshit", in the game's
 // language). Every visitor gets the same page, so a browser runs the app as on any other path and the
 // CDN may cache it. See controllers/join-preview.ts and DEPLOYING.md, "Join link previews".
@@ -543,8 +545,12 @@ exports.joinPreview = functions.runWith({ timeoutSeconds: 15 }).https.onRequest(
     const q = url.indexOf('?');
     const path = q >= 0 ? url.slice(0, q) : url;
     const query = q >= 0 ? url.slice(q) : '';
-    const answer = await joinPreviewPage(path, query, req.headers, {
-        readGame: readPreviewGame,
+    // A challenge link, /challenge/<PIN> or /he/challenge/<PIN>, previews its table's best lie
+    // (controllers/challenge-preview.ts); every other path is a join link's.
+    const challenge = /^\/(he\/)?challenge\//.test(path);
+    const page = challenge ? challengePreviewPage : joinPreviewPage;
+    const answer = await page(path, query, req.headers, {
+        readGame: (challenge ? readChallengeGame : readPreviewGame) as any,
         fetcher: (u, init) => fetch(u, init) as any,
         project,
         emulator: process.env.FUNCTIONS_EMULATOR === 'true',

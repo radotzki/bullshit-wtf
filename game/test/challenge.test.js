@@ -123,7 +123,7 @@ test('the final screen offers the challenge to a table of two or more, and shows
     assert.doesNotMatch(fs.readFileSync(path.join(app, 'pages', 'challenge', 'challenge.component.html'), 'utf8'), /innerHTML/);
 });
 
-test('the challenge link is a page of the site in both languages, sent with no-cache and kept out of search', () => {
+test('the challenge link is a page of the site in both languages, kept out of search; joinPreview serves it with its preview', () => {
     const routes = fs.readFileSync(path.join(app, 'app-routing', 'app-routing.module.ts'), 'utf8');
     assert.match(routes, /path: 'challenge\/:pin', component: ChallengeComponent/);
     assert.match(routes, /path: 'he\/challenge\/:pin', component: ChallengeComponent/);
@@ -138,6 +138,10 @@ test('the challenge link is a page of the site in both languages, sent with no-c
         .reduce((all, h) => all.concat(h.headers.map(x => x.key + ': ' + x.value)), []);
     for (const p of ['/challenge/QVAB', '/he/challenge/QVAB']) {
         assert.ok(headers(p).includes('X-Robots-Tag: noindex'), p);
-        assert.ok(headers(p).includes('Cache-Control: no-cache'), p);
+        // The joinPreview function answers it (its link preview) and sets its own Cache-Control, max-age=0
+        // for browsers (functions/src/controllers/challenge-preview.ts): no Hosting rule overrides it.
+        assert.ok(!headers(p).some(h => /^Cache-Control:/.test(h)), p);
     }
+    assert.strictEqual(hosting.rewrites.find(r => r.source === '/challenge/*').function, 'joinPreview');
+    assert.strictEqual(hosting.rewrites.find(r => r.source === '/he/challenge/*').function, 'joinPreview');
 });

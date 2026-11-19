@@ -2415,3 +2415,32 @@ GROUP BY method ORDER BY rows DESC
   Firebase emulators, `node .github/smoke/emulator-challenge.js`: in English and in Hebrew, table A plays a
   whole test game, a guest sends the challenge, table B opens the link, starts it, plays it to the end on
   the same questions, and every phone of table B shows both tables with table A's scores as stored.
+
+## Challenge link previews: the night's best lie
+
+A challenge link (`/challenge/<PIN>`, `/he/challenge/<PIN>`) now previews in WhatsApp, Telegram,
+Facebook, iMessage, Slack and X with the challenged table's best lie and how many it fooled, in the
+game's language: "“Penguins have knees” fooled 4 of 5. Can your group spot the truth?" /
+"״לפינגווינים יש ברכיים״ עבד על 4 מתוך 5. תצליחו לזהות את האמת?", with "play the same 7 questions
+and beat 2400 points…" under it. With no lie that fooled anyone, a plain "Your group is challenged to a
+game of Bullshit". Before, every challenge link showed the site's generic card.
+
+- **Functions and site. No new function, no rule change, no BigQuery change.** `firebase.json` sends
+  `/challenge/*` and `/he/challenge/*` to the existing `joinPreview` function (two rewrites, beside the
+  join links'), which answers with the site's own page and its preview tags, exactly as for a join link
+  (see "Join link previews"). A browser still gets the app's challenge page. The site's own header rule
+  for the challenge pages (`no-cache`) is dropped for these two paths, since a function route sets its own
+  (game/test/hosting-cache.test.js): the function sends `public, max-age=0, s-maxage=600`, so browsers
+  still ask again every time and the CDN keeps a preview at most ten minutes (emptied on every release).
+- **What it reads** (`functions/src/controllers/challenge-preview.ts`): twelve small paths of the game
+  (`locale`, `state`, `timestamp`, `idle`, `qids`, `totalQ`, `players`, `creator`, `challengeOpen`,
+  `campaign`, `pack`, `highlights`), never its questions, answers or host key, and it never writes. A
+  preview shows only while the link itself works (the challenge was opened, its week is not over).
+- **Which lie.** The players' best lies the server already keeps (`highlights`): most players fooled
+  first, then the later question, then more points. **No names**: never a player's, and no lie that
+  holds a nickname of that table. Lies are not filtered when written, so a lie is shown only when the
+  nickname filter (`name-flag.ts`) passes it, as written and with its spaces removed, and it holds no web
+  or mail address; otherwise the next best, else the plain preview. Cut to 60 characters at a word.
+- **Check after release:** open a challenge link in WhatsApp (or `curl -A "WhatsApp/2.24.21.80 A"
+  https://bullshit.wtf/challenge/<PIN>`); the log line is `joinPreview {"kind":"challenge"…}` (or
+  `challenge-plain`). Local run: `node .github/smoke/emulator-challenge-preview.js`.
