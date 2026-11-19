@@ -13,7 +13,8 @@ import { packIcon } from './../../game-model';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
     hostAwayMs, shouldAskClock, startPanelDue, startPanel, StartPanel, hiddenTitle } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
-import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY, nudgeDue, nudgeSeen, loneHostStrings, NUDGE_AFTER_MS } from './lone-host';
+import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY, nudgeDue, nudgeSeen, loneHostStrings, NUDGE_AFTER_MS,
+    INVITE_PRESSED_KEY } from './lone-host';
 import { offerBigScreen, bigScreenStrings, BigScreenStrings, hostStillToJoin, pressedWith, PRESSED_WITH_KEY } from './big-screen-host';
 
 /** A value from the browser's storage, or null where storage is closed (private mode). */
@@ -413,6 +414,10 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     /** The invite was pressed (WhatsApp, the share sheet, COPY LINK): no nudge for this lobby from now on. */
     onInviteSent() {
         this.invitePressed = true;
+        // Kept for this lobby across a reload (iOS reloads a tab left for WhatsApp when memory is short).
+        try {
+            sessionStorage.setItem(INVITE_PRESSED_KEY + this.pinKey(), '1');
+        } catch (e) { }
         this.updateLobby();
     }
 
@@ -431,6 +436,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             clearTimeout(this.nudgeTimer);
             this.nudgeTimer = setTimeout(() => this.updateLobby(), NUDGE_AFTER_MS + 100);
         }
+        this.invitePressed = this.invitePressed || !!stored(() => sessionStorage, INVITE_PRESSED_KEY + this.pinKey());
         this.nudge = nudgeDue({ alone, aloneSince: this.aloneSince, now, pressed: this.invitePressed, hidden: document.hidden });
         if (!this.nudge) {
             return;

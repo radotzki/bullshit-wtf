@@ -144,6 +144,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     seen-new-phone, seen-new-computer          the lobby first held one or two players, and showed the
 //                                                new help on a phone or a computer (once per lobby and browser)
 //     seen-classic-phone, seen-classic-computer  the same moment in the other half, which showed today's lobby
+//     seen-all-computer                          from 19 Nov 2026: a computer host, who gets the card whatever the
+//                                                PIN's half (the split ended for computers; phones keep it)
 //     whatsapp, native, copy                     the host's invite sends from this lobby, in either half and
 //                                                with any number of players in (each is an "invite" row too)
 //     share-tap                                  the host tapped SHARE LINK (the share sheet), whatever came of it:
@@ -202,6 +204,8 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
         'tell'],
     'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
+        // From 19 Nov 2026 every computer host gets the card, outside the 50/50 split: its own arm.
+        'seen-all-computer',
         'whatsapp', 'native', 'copy',
         // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
         'big-screen',

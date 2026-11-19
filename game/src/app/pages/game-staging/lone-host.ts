@@ -28,7 +28,10 @@ export const BEST_WITH = 4;
 /** A tester's switch: localStorage.BS_LONE_HOST = 'new' or 'classic' puts this browser's lobbies in that half. */
 export const HALF_OVERRIDE_KEY = 'BS_LONE_HOST';
 
-export type HelpHalf = 'new' | 'classic';
+/**
+ * 'all': a computer host outside the test, who always gets the new help (the card). See loneHostHelp.
+ */
+export type HelpHalf = 'new' | 'classic' | 'all';
 export type HostDevice = 'phone' | 'computer';
 
 const K = [
@@ -135,7 +138,7 @@ export interface LoneHostInput {
 }
 
 export interface LoneHostHelp {
-    /** This lobby is in the test: the host's own page, no big screen. Presses are counted while it is. */
+    /** This lobby is counted: the host's own page, no big screen (a computer is counted as the arm 'all'). */
     inTest: boolean;
     half: HelpHalf;
     device: HostDevice;
@@ -147,14 +150,21 @@ export interface LoneHostHelp {
     seen: string;
 }
 
+/**
+ * The split ended for computers on 19 November 2026: every computer host gets the card. In week 47 all 3
+ * first-time computer hosts who never got a guest were in the classic half, where the invite is a green
+ * WhatsApp bar and the QR code sits below a laptop's screen, and the nudge can't help there. Computers are
+ * counted as their own arm, `seen-all-computer`, so a later count never mixes them with the test's random
+ * halves. Phones keep the 50/50 split. The tester's switch still picks a half on a computer.
+ */
 export function loneHostHelp(input: LoneHostInput): LoneHostHelp {
     const inTest = !!input.isHost && !input.isPresenter && !input.hasPresenter && !!input.pin;
+    const device = hostDevice(input.userAgent, input.width);
     const half: HelpHalf = input.override === 'new' || input.override === 'classic'
         ? input.override
-        : (loneHostHalf(input.pin) ? 'new' : 'classic');
-    const device = hostDevice(input.userAgent, input.width);
+        : device === 'computer' ? 'all' : (loneHostHalf(input.pin) ? 'new' : 'classic');
     const due = inTest && input.playerCount >= 1 && input.playerCount <= HELP_MAX_PLAYERS;
-    return { inTest, half, device, due, show: due && half === 'new', seen: `seen-${half}-${device}` };
+    return { inTest, half, device, due, show: due && half !== 'classic', seen: `seen-${half}-${device}` };
 }
 
 /**
@@ -184,6 +194,12 @@ export function nudgeDue(input: NudgeInput): boolean {
     return !!input.alone && !input.pressed && !input.hidden && typeof input.aloneSince === 'number'
         && input.now - input.aloneSince >= NUDGE_AFTER_MS;
 }
+
+/**
+ * sessionStorage key, + the PIN in capitals: this tab pressed an invite in that lobby. The press outlives a
+ * reload, so a host who already sent the link isn't told to send it again.
+ */
+export const INVITE_PRESSED_KEY = 'BS_LOBBY_PRESSED_';
 
 /** The `lobby-help` row counted the first time the nudge shows. */
 export function nudgeSeen(device: HostDevice): string {

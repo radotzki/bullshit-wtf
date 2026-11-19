@@ -119,13 +119,41 @@ test('what is counted names the half and the device', () => {
     assert.strictEqual(help({ override: 'classic', userAgent: ANDROID, width: 412 }).seen, 'seen-classic-phone');
 });
 
-test('without the tester\'s switch the half follows the PIN; any other stored value is ignored', () => {
+test('without the tester\'s switch a phone\'s half follows the PIN; any other stored value is ignored', () => {
     for (const pin of ['ABCD', 'XKQZ', 'HELLO', 'BSWTF', 'QQQQ', 'LMNOP']) {
         const want = loneHostHalf(pin) ? 'new' : 'classic';
-        assert.strictEqual(help({ pin, override: null }).half, want);
-        assert.strictEqual(help({ pin, override: 'yes' }).half, want);
-        assert.strictEqual(help({ pin, override: undefined }).half, want);
+        const phone = { pin, userAgent: IPHONE, width: 390 };
+        assert.strictEqual(help({ ...phone, override: null }).half, want);
+        assert.strictEqual(help({ ...phone, override: 'yes' }).half, want);
+        assert.strictEqual(help({ ...phone, override: undefined }).half, want);
     }
+});
+
+test('every computer host gets the card, whatever the PIN, and is counted as its own arm', () => {
+    for (const pin of ['ABCD', 'XKQZ', 'HELLO', 'BSWTF', 'QQQQ', 'LMNOP']) {
+        for (const [userAgent, width] of [[MAC, 1440], [WINDOWS, 1280], [WINDOWS, 700]]) {
+            const h = help({ pin, userAgent, width, override: null });
+            assert.deepStrictEqual([h.half, h.device, h.show, h.seen], ['all', 'computer', true, 'seen-all-computer'], `${pin} ${width}`);
+        }
+    }
+    // HELLO is in the PIN's classic half: on a computer it gets the card, not the green WhatsApp bar.
+    assert.strictEqual(loneHostHalf('HELLO'), false);
+    assert.deepStrictEqual([1, 2, 3].map(n => help({ pin: 'HELLO', override: null, playerCount: n }).show), [true, true, false]);
+    // A narrow window on a computer is a phone, and stays in the split.
+    assert.strictEqual(help({ pin: 'HELLO', override: null, userAgent: WINDOWS, width: 699 }).half, 'classic');
+    // The tester's switch still picks a half on a computer.
+    assert.strictEqual(help({ pin: 'HELLO', override: 'classic' }).show, false);
+    assert.strictEqual(help({ pin: 'HELLO', override: 'new' }).seen, 'seen-new-computer');
+    // Not the host's own page: still out of it.
+    assert.strictEqual(help({ pin: 'HELLO', override: null, isHost: false }).show, false);
+});
+
+test('a press is kept per lobby across a reload, under a key of its own', () => {
+    const { INVITE_PRESSED_KEY } = load('pages', 'game-staging', 'lone-host.ts');
+    assert.strictEqual(INVITE_PRESSED_KEY, 'BS_LOBBY_PRESSED_');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'pages', 'game-staging', 'game-staging.component.ts'), 'utf8');
+    assert.match(src, /sessionStorage\.setItem\(INVITE_PRESSED_KEY \+ this\.pinKey\(\)/);
+    assert.match(src, /stored\(\(\) => sessionStorage, INVITE_PRESSED_KEY \+ this\.pinKey\(\)\)/);
 });
 
 test('the lobby marks the host\'s own page, and only that', () => {
