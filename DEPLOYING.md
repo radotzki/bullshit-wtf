@@ -2398,3 +2398,63 @@ account and no sign-in: the site proves it is ours with a key file at its root.
 - **To see it worked:** the deploy run's log for that step says "IndexNow: sent N URLs". Bing
   Webmaster Tools (the owner's sign-in) shows the received URLs under IndexNow once the site is
   verified there.
+
+## POST TO YOUR STORY: a tall card of a player's best lie (final screen)
+
+A results card shared into the group chat reaches only people who were at the table. A story reaches
+everyone a player knows. Under SHARE RESULTS, a player whose lie fooled someone (or who wrote the
+game's funniest lie) gets one more button, POST TO YOUR STORY (Hebrew: לפרסם בסטורי). It makes a
+1080 by 1920 picture (9:16, an Instagram story or WhatsApp Status) of that player's own best lie: the
+game's name big (BULLSHIT.WTF; בולשיט on a Hebrew game), the question with its blank, the lie, "fooled
+N friends", the badges the player won (BIGGEST BULLSHITTER, FUNNIEST LIE), and "play with your friends"
+with the site's address. In the game's language; Hebrew right to left. It shows no other player's name
+or avatar.
+
+- How it goes out: the picture is drawn when the final screen settles (so the share sheet opens
+  within the press), and the press hands it to the phone's share sheet as an image file (Web Share
+  API with files), with a short line and `https://bullshit.wtf/?via=story` (`/he?via=story` on a
+  Hebrew game) as the text. A browser that cannot share files (most computers, some in-app browsers)
+  saves the picture and says "Saved! Add the picture to your story."
+- Code: the words and the choice of lie in `game/src/app/components/share-results/story-card.ts`;
+  the drawing in `ResultsCardService.renderStory` (the results card's own service, its fonts and
+  colours); the button in the share-results component. The big screen, a player who fooled nobody
+  and got no laugh, and a taste played alone get no button.
+- Counted: each press is one row of `analytics.shares`, content_type `results`, method `story`
+  (`SHARE_METHODS` in `functions/src/controllers/analytics.ts`). The press is counted, not the post:
+  the share sheet does not say which app the picture went to, or whether it was posted.
+- The link's tag: `story` is a campaign tag, not a join source. A visitor from the story lands on the
+  home page with `?via=story`; the visit beacon writes `tag = 'story'` to `analytics.visits`, the tab
+  keeps the tag (`BS_CAMPAIGN`, `rememberArrivalSource` in `join-source.ts`), and a game that visitor
+  creates sends it with `newGame`, so it lands in `opened_games.campaign` and `closed_games.campaign`.
+  A visitor who instead types a friend's PIN joins with `users.via = 'other'`, as for any post tag.
+- **No BigQuery change, no rules change.** Deploy functions then site (a merge does both). A phone
+  on the new site before the functions are live would send story rows the old server drops.
+- Check locally: `cd game && npm test` (`test/story-card.test.js`), `cd functions && npm test`
+  (`test/story-share.test.js`), and a whole game on the emulators that presses the button and saves
+  the picture, in each language:
+  `SHOTS=<dir> node .github/smoke/emulator-story.js --locale en` (and `--locale he`).
+
+```sql
+-- Story presses, visits from story links, and games those visitors made, per day.
+SELECT day,
+  SUM(presses) AS story_presses, SUM(pressers) AS phones_pressing,
+  SUM(visits) AS story_visits, SUM(games) AS games_made, SUM(games_started) AS games_with_2_plus
+FROM (
+  SELECT DATE(time) AS day, COUNT(*) AS presses, COUNT(DISTINCT uid) AS pressers, 0 AS visits, 0 AS games, 0 AS games_started
+  FROM `bullshit-wtf-prod.analytics.shares`
+  WHERE content_type = 'results' AND method = 'story' AND time >= TIMESTAMP('<release time>')
+  GROUP BY day
+  UNION ALL
+  SELECT DATE(time), 0, 0, COUNT(*), 0, 0
+  FROM `bullshit-wtf-prod.analytics.visits`
+  WHERE tag = 'story' AND kind = 'view' AND NOT IFNULL(bot, FALSE) AND time >= TIMESTAMP('<release time>')
+  GROUP BY 1
+  UNION ALL
+  SELECT DATE(time), 0, 0, 0, COUNT(*), COUNTIF(players >= 2)
+  FROM `bullshit-wtf-prod.analytics.opened_games`
+  WHERE campaign = 'story' AND time >= TIMESTAMP('<release time>')
+  GROUP BY 1
+)
+GROUP BY day
+ORDER BY day DESC;
+```

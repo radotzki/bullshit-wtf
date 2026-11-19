@@ -2,6 +2,13 @@
     <span class="icon"><i class="fa fa-share-alt"></i></span>
     <span> {{ label || ui.shareResults }} </span>
 </button>
+<!-- The sharer's own best lie as a tall picture for a story (story-card.ts); only when they have one. -->
+<button *ngIf="story" class="button is-fullwidth story-button" (click)="postStory()" [class.is-loading]="storyBusy"
+    [attr.dir]="locale === 'he' ? 'rtl' : 'ltr'">
+    <span class="icon"><i class="fa fa-instagram"></i></span>
+    <span> {{ storyUi.button }} </span>
+</button>
+<p *ngIf="storySaved" class="story-saved" [attr.dir]="locale === 'he' ? 'rtl' : 'ltr'"> {{ storyUi.saved }} </p>
 
 <div class="modal" [class.is-active]="open">
     <div class="modal-background" (click)="close()"></div>

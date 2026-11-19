@@ -4,6 +4,7 @@ import { ShareService } from './../../services/share.service';
 import { CardPlayer, ResultsCardService } from './../../services/results-card.service';
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { STORY_VIA, StoryLie, storyLie, storyWords } from './story-card';
 
 const sheetStrings = {
     en: { shareResults: 'SHARE RESULTS', share: 'SHARE', whatsapp: 'WHATSAPP', saveImage: 'SAVE IMAGE', done: 'DONE',
@@ -16,6 +17,10 @@ const sheetStrings = {
  * After the final scoreboard: turn the results into a picture people want to post,
  * with the site address on it, and share it.
  * Each send is counted in BigQuery's shares table as content_type "results".
+ *
+ * Under it, POST TO YOUR STORY: a tall card of this player's own best lie (story-card.ts) through the
+ * phone's share sheet as an image, or saved where a phone cannot share files. Its link carries
+ * ?via=story; each press is a shares row, results / story.
  */
 @Component({
     standalone: false,
@@ -39,6 +44,13 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
     file: File;
     previewUrl: SafeUrl;
     private objectUrl: string;
+    /** The story card: drawn once the game's language is known, so a press can share at once. */
+    storyBlob: Blob;
+    storyFile: File;
+    storyBusy: boolean;
+    storySaved: boolean;
+    private storyDrawing: Promise<void>;
+    private destroyed: boolean;
 
     constructor(
         private apiService: ApiService,
@@ -49,11 +61,16 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
     ) { }
 
     ngOnInit() {
-        this.apiService.getGameLocale(this.pin).then(locale => this.locale = locale || 'en');
+        this.apiService.getGameLocale(this.pin).then(locale => {
+            this.locale = locale || 'en';
+            // Drawn a moment after the screen settles: the share sheet must open within the press.
+            setTimeout(() => this.drawStory(), 800);
+        });
         this.apiService.getGamePack(this.pin).then(pack => this.pack = pack || null);
     }
 
     ngOnDestroy() {
+        this.destroyed = true;
         if (this.objectUrl) {
             URL.revokeObjectURL(this.objectUrl);
         }
@@ -126,6 +143,72 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
             }
             this.loading = false;
         }
+    }
+
+    /** This player's lie for the story card, or null: then there is no story button. */
+    get story(): StoryLie | null {
+        return storyLie(this.players || []);
+    }
+
+    get storyUi() {
+        return storyWords(this.locale);
+    }
+
+    get storyUrl() {
+        return this.shareService.siteUrl(this.locale, STORY_VIA);
+    }
+
+    private drawStory(): Promise<void> {
+        const lie = this.story;
+        if (!lie || this.destroyed) {
+            return Promise.resolve();
+        }
+        if (!this.storyDrawing) {
+            this.storyDrawing = this.resultsCardService.renderStory(lie, this.locale)
+                .then(blob => {
+                    this.storyBlob = blob;
+                    this.storyFile = new File([blob], this.locale === 'he' ? 'bullshit-story-he.png' : 'bullshit-story.png',
+                        { type: 'image/png' });
+                })
+                .catch(e => {
+                    console.log(e);
+                    this.storyDrawing = null;
+                });
+        }
+        return this.storyDrawing;
+    }
+
+    /**
+     * POST TO YOUR STORY: the card goes to the share sheet as an image (Instagram, WhatsApp Status...),
+     * with the tagged link as its text. A phone that cannot share files saves the picture instead.
+     */
+    async postStory() {
+        if (this.storyBusy) {
+            return;
+        }
+        this.storySaved = false;
+        this.apiService.logShare('results', 'story', { locale: this.locale === 'he' ? 'he' : 'en' });
+        if (!this.storyBlob) {
+            this.storyBusy = true;
+            await this.drawStory();
+            this.storyBusy = false;
+        }
+        if (!this.storyBlob) {
+            return;
+        }
+        const files = [this.storyFile];
+        if (this.shareService.canShareFiles(files)) {
+            try {
+                await (navigator as any).share({ files, text: `${this.storyUi.shareText} ${this.storyUrl}` });
+                return;
+            } catch (e) {
+                if (e && e.name === 'AbortError') {
+                    return;
+                }
+            }
+        }
+        this.shareService.download(this.storyBlob, this.storyFile.name);
+        this.storySaved = true;
     }
 
     close() {
