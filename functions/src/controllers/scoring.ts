@@ -13,6 +13,7 @@
 import { GameScheme, GameState, Answers, AnswerSelections, GamePlayers, RevealAnswer, pickIsFor, aboutOf } from '../game-model';
 import { houseLiePoints } from './house-lie';
 import { isSamePick } from './same-pick';
+import { DECOY_POINTS } from './pair';
 
 export const pointsForCorrectAnswer = [1000, 1500, 2000];
 export const pointsForBullshitting = [500, 750, 1000];
@@ -33,9 +34,16 @@ function ownLie(game: Partial<GameScheme>, pid: string) {
     return answer && !answer.realAnswer && !answer.houseLie ? answer : undefined;
 }
 
+/** Is `text` a decoy this player chose (a pair game, see pair.ts)? */
+function isOwnDecoy(game: Partial<GameScheme>, pid: string, text: string): boolean {
+    const answers = game.answers || {};
+    return Object.keys(answers).some(k => !!answers[k] && answers[k].decoyOf === pid && isSamePick(answers[k].text, text));
+}
+
 /**
  * The picks that count, as `{ text }` and nothing else: one per player, made by a player of this
- * game, with a text, and not the player's own lie (the game never offers a player their own lie).
+ * game, with a text, and not the player's own lie or own decoy (the game never offers a player
+ * either; a phone on an older build shows its own decoy, and picking it counts for nothing).
  * While picks are open, a pick that names another step (made in an earlier question by a phone that
  * was offline, see pickIsFor) does not count either.
  * Everything else under answerSelections is ignored.
@@ -73,6 +81,10 @@ export function playerPicks(game: Partial<GameScheme>): AnswerSelections {
             return;
         }
 
+        if (isOwnDecoy(game, pid, pick.text)) {
+            return;
+        }
+
         picks[pid] = { text: pick.text };
     });
 
@@ -107,9 +119,12 @@ export function scoreQuestion(game: GameScheme): { answers: Answers; answerSelec
             // Set below, once every player's points for their own lie are known.
             answerSelections[pick.pid].score = 0;
         } else {
+            // A friend's lie, or a friend's decoy in a pair game: the picker loses nothing, the writer
+            // scores a lie's points, the one who chose the decoy half that (see pair.ts).
             answerSelections[pick.pid].score = 0;
             relatedAnswers.forEach(answer => {
-                answers[answer.pid].score = (answers[answer.pid].score || 0) + pointsForBullshitting[game.roundIndex];
+                const points = answer.decoyOf ? DECOY_POINTS[game.roundIndex] : pointsForBullshitting[game.roundIndex];
+                answers[answer.pid].score = (answers[answer.pid].score || 0) + points;
             });
         }
     });
@@ -156,7 +171,7 @@ function revealRows(answers: Answers, answerSelections: AnswerSelections): Revea
         const houseLie = answer.houseLie;
         const creators = answersArray
             .filter(a => a.text === answer.text)
-            .map(a => a.houseLie || a.realAnswer ? '' : a.pid);
+            .map(a => a.houseLie || a.realAnswer ? '' : (a.decoyOf || a.pid));
         let points = 0;
 
         if (revealAnswers.find(w => w.text === answer.text)) {
@@ -179,6 +194,7 @@ function revealRows(answers: Answers, answerSelections: AnswerSelections): Revea
         revealAnswers.push(Object.assign(
             { creators, selectors, points, text, realAnswer, houseLie },
             pointsBy ? { pointsBy } : {},
+            answer.decoyOf ? { decoy: true } : {},
         ));
     });
 
@@ -213,6 +229,12 @@ export function addQuestionScores(game: GameScheme): GamePlayers {
 
         if (lie && isPlayer(game, pid)) {
             players[pid].score = num(players[pid].score) + num(lie.score);
+        }
+
+        // A pair game's decoy: its points go to the player who chose it.
+        const answer = game.answers[pid];
+        if (answer && answer.decoyOf && !answer.houseLie && !answer.realAnswer && isPlayer(game, answer.decoyOf)) {
+            players[answer.decoyOf].score = num(players[answer.decoyOf].score) + num(answer.score);
         }
     });
 

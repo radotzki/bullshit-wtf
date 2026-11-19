@@ -12,8 +12,15 @@ import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
 import { aboutOf } from '../game-model';
 import { writingSent } from './about';
+import { matchOffer } from './pair';
 
-export async function answer(pin: string, pid: string, playerAnswer: string) {
+/**
+ * A player's lie for the current question. `decoy`: in a pair game (see pair.ts), the house lie the
+ * player chose to fool their friend with, sent with the lie. It is kept only if it is one of the lies
+ * offered to this player and not the lie they wrote; else the server picks one of their offers when
+ * the answers go on the table.
+ */
+export async function answer(pin: string, pid: string, playerAnswer: string, decoy?: string) {
     pin = pin.toUpperCase();
     const game = await readGame(pin);
 
@@ -56,6 +63,13 @@ export async function answer(pin: string, pid: string, playerAnswer: string) {
         }
 
         await gamesRef.child(pin).child('answers').child(pid).set(stored);
+        // A pair game's decoy, where no phone can read it. A lie sent again replaces the choice.
+        if (game.pair === true) {
+            const offer = matchOffer(game.ideas && game.ideas[pid], decoy);
+            const kept = offer && !isSameAnswer(offer, playerAnswer) ? offer : null;
+            await gamesRef.child(pin).child('decoys').child(pid).set(kept)
+                .catch(e => console.error('decoy not saved', pin, e && e.message));
+        }
         // When the lie arrived, to measure the wait. Never fails the answer.
         await gamesRef.child(pin).child('answerTimes').child('lies').child(pid).set(stamp(game.questionIndex, Date.now()))
             .catch(e => console.error('lie time not saved', pin, e && e.message));

@@ -414,9 +414,11 @@ exports.answer = functions.https.onRequest(http('answer', (req, res) => {
         const pin = req.body.pin;
         const pid = req.body.pid;
         const playerAnswer = req.body.answer;
+        // A pair game's decoy (see pair.ts); older phones send none.
+        const decoy = typeof req.body.decoy === 'string' ? req.body.decoy : undefined;
 
         try {
-            await answer(pin, pid, playerAnswer);
+            await answer(pin, pid, playerAnswer, decoy);
             return res.status(200).send({});
         } catch (e) {
             caught(e);

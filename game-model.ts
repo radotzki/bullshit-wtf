@@ -171,6 +171,14 @@ export interface GameScheme {
     // Server time each player's lie and pick arrived, for measuring the wait (question_results).
     // Server only: no rule opens it, so no phone can read or write it.
     answerTimes?: AnswerTimes;
+    // "Pick a decoy", a 50/50 test on two-player games, set at START (see pair.ts in the functions).
+    // true: each player also picks a decoy, one of two house lies offered only to them, and the game has
+    // no neutral house lies. false: in the test, plays as before. Absent: not in the test (not two
+    // players at START, a taste, or started before the test). Readable: the first question's card says so.
+    pair?: boolean;
+    // A pair game's decoy each player chose with their lie for the current question. Server only: no
+    // rule opens it, so the friend never learns it before the answers are on the table.
+    decoys?: { [pid: string]: string };
 }
 
 /** When one player's lie or pick arrived (server time, ms), and for which question. */
@@ -500,6 +508,9 @@ export interface Answer {
     score?: number;
     // The player sent one of the lies the round-1 helper offered them.
     idea?: boolean;
+    // A pair game's decoy: a house lie this player chose to fool their friend (see pair.ts in the
+    // functions). Kept under a key of its own, never the player's id, so it is never their lie.
+    decoyOf?: string;
 }
 
 export interface AnswerSelections {
@@ -531,6 +542,9 @@ export interface RevealAnswer {
     // friend's worth of a fooled lie for each friend who found it). Written by the server.
     about?: string;
     aboutPoints?: number;
+    // A pair game's decoy: its creator is the player who chose it, its points are theirs (half a lie's).
+    // Not a written lie: it counts for no best lie, no BIGGEST BULLSHITTER and no funniest lie.
+    decoy?: boolean;
 }
 
 /**
@@ -549,15 +563,15 @@ export function laughCount(row: RevealAnswer | null | undefined): number {
     return laughs && typeof laughs === 'object' ? Object.keys(laughs).filter(pid => laughs[pid] === true).length : 0;
 }
 
-/** A player's lie (not the truth, not a house lie): the lies that can be the funniest lie. */
+/** A player's written lie (not the truth, not a house lie, not a decoy): the lies that can be the funniest lie. */
 export function isPlayerLie(row: RevealAnswer | null | undefined): boolean {
-    return !!row && !row.realAnswer && !row.houseLie && typeof row.text === 'string' && !!row.text &&
+    return !!row && !row.realAnswer && !row.houseLie && !row.decoy && typeof row.text === 'string' && !!row.text &&
         (row.creators || []).some(pid => !!pid);
 }
 
-/** A row that takes laughs: any lie, a player's or the house's (not the truth). */
+/** A row that takes laughs: any lie, a player's, a decoy or the house's (not the truth). */
 export function isLie(row: RevealAnswer | null | undefined): boolean {
-    return !!row && !row.realAnswer && typeof row.text === 'string' && !!row.text && (!!row.houseLie || isPlayerLie(row));
+    return !!row && !row.realAnswer && typeof row.text === 'string' && !!row.text && (!!row.houseLie || !!row.decoy || isPlayerLie(row));
 }
 
 /** May `pid` laugh at this row? At any lie, the house's too, but never at a lie they wrote themselves. */
@@ -1039,7 +1053,7 @@ export function addHighlights(previous: Highlights | null | undefined, revealAns
 
     (revealAnswers || []).forEach(row => {
         const fooled = row ? (row.selectors || []).length : 0;
-        if (!fooled || row.realAnswer || row.houseLie) {
+        if (!fooled || row.realAnswer || row.houseLie || row.decoy) {
             return;
         }
         (row.creators || []).filter(pid => !!pid).forEach(pid => {
