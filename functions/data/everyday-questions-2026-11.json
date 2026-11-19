@@ -33,14 +33,14 @@
         "lang": "en"
     },
     "everyday-26-en-04": {
-        "questionText": "Since 2002, Australia has sold meat from its wild camels to $blank$",
-        "realAnswer": "saudi arabia",
+        "questionText": "The world's first traffic light, outside the Houses of Parliament in 1868, was taken down after it $blank$",
+        "realAnswer": "exploded",
         "fakeAnswers": [
-            "mongolia",
-            "japan",
-            "argentina"
+            "was stolen",
+            "sank into the mud",
+            "was hit by a bus"
         ],
-        "citation": "https://en.wikipedia.org/wiki/Australian_feral_camel",
+        "citation": "https://en.wikipedia.org/wiki/Traffic_light",
         "lang": "en"
     },
     "everyday-26-en-05": {
@@ -473,14 +473,14 @@
         "lang": "en"
     },
     "everyday-26-en-44": {
-        "questionText": "Almost every banana sold abroad is of one kind, the $blank$",
-        "realAnswer": "cavendish",
+        "questionText": "The first working escalator, built in 1896, was put up at $blank$",
+        "realAnswer": "coney island",
         "fakeAnswers": [
-            "lady finger",
-            "manzano",
-            "red dacca"
+            "grand central station",
+            "the white house",
+            "niagara falls"
         ],
-        "citation": "https://en.wikipedia.org/wiki/Cavendish_banana",
+        "citation": "https://en.wikipedia.org/wiki/Escalator",
         "lang": "en"
     },
     "everyday-26-en-45": {
