@@ -28,8 +28,9 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     t: GameStrings = gameStrings('en');
     answerSelected: boolean;
     answers: string[];
-    showQuestion: boolean;
-    /** A taste (a game started alone) has no writing screen: its question is first read here, above the answers. */
+    /** The answer this phone picked, kept marked while it is sent and on the waiting screen after it. */
+    picked: string;
+    /** A taste (a game started alone): its question is first read here (every game now shows it above the answers). */
     taste = false;
     /** An About question about this phone's player: they know the truth, so they watch and do not pick. */
     aboutMe = false;
@@ -56,7 +57,13 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         this.apiService.getQuestion(this.pin).then(q => this.question = q);
         this.useLocale(this.apiService.knownGameLocale(this.pin));
         this.apiService.getGameLocale(this.pin).then(locale => this.useLocale(locale), () => null);
-        this.apiService.didAnswerSelected(this.pin).then(selected => this.answerSelected = selected);
+        this.apiService.didAnswerSelected(this.pin).then(selected => {
+            this.answerSelected = selected;
+            // Back on this screen after a reload: the pick this tab made, if it made one on this question.
+            if (selected && !this.picked) {
+                this.picked = this.savedPick();
+            }
+        });
         // The answers and whom the question is about arrive together, so the player it is about never
         // sees pick buttons for an instant.
         Promise.all([this.apiService.getAnswers(this.pin), this.apiService.getAbout(this.pin)]).then(([a, about]) => {
@@ -90,6 +97,8 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
         }
         this.loading = true;
         this.errorMsg = '';
+        this.picked = answer;
+        this.rememberPick(answer);
 
         this.apiService.chooseAnswer(this.pin, answer, this.gameService.currentStep())
             .then(() => {
@@ -98,9 +107,29 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             })
             .catch(err => {
                 this.loading = false;
+                this.picked = undefined;
                 reportError(err, 'chooseAnswer', { pin: this.pin });
                 this.errorMsg = this.t.oops;
             });
+    }
+
+    /** The pick is kept for this tab and this question, so a reload still shows it. */
+    private pickKey(): string {
+        return `BS_PICK_${String(this.pin || '').toUpperCase()}_${this.gameService.currentStep()}`;
+    }
+
+    private rememberPick(answer: string) {
+        try {
+            window.sessionStorage.setItem(this.pickKey(), answer);
+        } catch (e) { }
+    }
+
+    private savedPick(): string {
+        try {
+            return window.sessionStorage.getItem(this.pickKey()) || undefined;
+        } catch (e) {
+            return undefined;
+        }
     }
 
     startTimer() {

@@ -14,11 +14,55 @@
         margin: 15px 0;
     }
 
-    // A taste's question, above its answers: the phone's writing screen shows a question the same way.
-    .taste-question {
-        margin: 10px 0 14px;
+    // The question above the answers, as the phone's writing screen shows it, then what to do.
+    .pick-question {
+        margin: 10px 0 4px;
         font-size: 1.3rem;
         line-height: 1.3;
+    }
+
+    .which-is-true {
+        margin: 0 0 8px;
+        font-weight: 700;
+        opacity: 0.85;
+    }
+
+    // The answer this phone picked: it stays marked while it is sent, and on the waiting screen.
+    .answer.picked {
+        box-shadow: 0 0 0 3px #fff, 0 0 0 6px rgba(0, 0, 0, .35);
+        font-weight: 700;
+        opacity: 1;
+    }
+
+    .button.is-primary.answer[disabled]:not(.picked) {
+        opacity: 0.35;
+    }
+
+    // The waiting screen with the pick: the pick on top, the waiting line and row under it.
+    .screen-center.with-pick {
+        flex-direction: column;
+        padding: 0 1rem;
+    }
+
+    .your-pick {
+        font-size: 1rem;
+        margin: 0 0 1.5rem;
+        width: 100%;
+        max-width: 30rem;
+
+        .your-pick-label {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .answer {
+            height: auto;
+            white-space: normal;
+            font-size: 1.1rem;
+            cursor: default;
+            pointer-events: none;
+        }
     }
 
     // Ten answers or more (a table of 9 to 12): closer together, so the list stays short on a phone,

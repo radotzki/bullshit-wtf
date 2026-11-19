@@ -145,3 +145,12 @@
         letter-spacing: 0;
     }
 }
+
+// A guest's line above the nickname box: who invited them, and what the game is (join-invite.ts).
+.invited-line {
+    text-align: center;
+    font-size: 1.1rem;
+    line-height: 1.35;
+    margin-bottom: 0.75rem;
+    overflow-wrap: anywhere;
+}

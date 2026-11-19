@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { takeJoinSource, markVisit, preferredLocale } from '../../services/join-source';
+import { takeJoinSource, markVisit, preferredLocale, hostedHere } from '../../services/join-source';
+import { inviteHost } from './join-invite';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
@@ -49,6 +50,10 @@ export class JoinGameComponent implements OnInit {
     private recapCounted: string;
     // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
     seatTaken: boolean;
+    // This tab just created the game: its nickname page says the game is ready (hostedHere).
+    isHost: boolean;
+    // A guest's line above the nickname box, once the game is read: who invited them, and what the game is.
+    invitedLine: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -72,8 +77,40 @@ export class JoinGameComponent implements OnInit {
         if (this.pin) {
             this.pinInUrl = true;
             this.nicknameState = true;
+            this.isHost = hostedHere(this.pin);
+            if (this.isHost && !this.nickname) {
+                // A second game in the same browser: the name from the last one, ready to keep or change.
+                this.nickname = this.sessionService.lastNickname || undefined;
+            }
             this.loadCrew();
             this.checkLinkedGame();
+            this.loadGuestView();
+        }
+    }
+
+    /**
+     * A guest's page follows the game's language (an English game's link on a phone that last played
+     * in Hebrew is English from the first tap; joinLocale), and names who invited them (inviteHost).
+     * The host's page keeps the Create page's language and needs no invite line.
+     */
+    private async loadGuestView() {
+        const pin = this.pin;
+        if (!pin || this.isHost) {
+            return;
+        }
+        try {
+            const [locale, players, creator] = await Promise.all([
+                this.apiService.getGameLocale(pin),
+                this.apiService.getPlayers(pin),
+                this.apiService.getGameCreator(pin),
+            ]);
+            if (this.pin !== pin) {
+                return;
+            }
+            this.t = joinStrings(joinLocale(this.router.url, this.lang, preferredLocale(), locale));
+            this.invitedLine = this.t.invited(inviteHost(players, creator));
+        } catch (e) {
+            // The page works without either: the browser's language, and no line.
         }
     }
 
@@ -247,6 +284,8 @@ export class JoinGameComponent implements OnInit {
         this.nicknameState = false;
         this.crewId = this.crewName = undefined;
         this.crewNicknames = [];
+        this.isHost = false;
+        this.invitedLine = undefined;
         this.router.navigate([this.joinPath()], { replaceUrl: true, queryParams: this.keepLang() });
     }
 
@@ -270,6 +309,8 @@ export class JoinGameComponent implements OnInit {
         this.crewId = this.crewName = undefined;
         this.crewNicknames = [];
         this.router.navigate([this.joinPath(), rematch], { replaceUrl: true, queryParams: this.keepLang() });
+        this.isHost = false;
+        this.invitedLine = undefined;
         this.loadCrew();
     }
 
@@ -327,6 +368,8 @@ export class JoinGameComponent implements OnInit {
             .then(() => {
                 this.nicknameState = true;
                 this.loading = false;
+                this.isHost = hostedHere(this.pin);
+                this.loadGuestView();
             })
             .catch(err => {
                 if (err && err.code === 'GAME_OVER') {
@@ -358,6 +401,7 @@ export class JoinGameComponent implements OnInit {
             .then(({ pid, nickname, swapped }) => {
                 // Keep the name the server stored, so Replay and the crew never send the typed one back.
                 this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };
+                this.sessionService.lastNickname = nickname;
                 this.sessionService.nameSwap = swapped ? { pin: this.pin.toUpperCase(), nickname } : null;
                 markVisit('join');
                 if (this.crewId) {

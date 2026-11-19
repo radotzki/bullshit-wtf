@@ -12,6 +12,11 @@ export interface JoinStrings {
     title: string;
     pinHeading: string;
     nicknameHeading: string;
+    /** The host's first screen after Create: the game exists, now their name (hostButton under it). */
+    hostHeading: string;
+    hostButton: string;
+    /** A guest's line above the nickname box: who invited them and what the game is ('' host: nameless). */
+    invited: (host: string) => string;
     /** A crew's rematch: the crew's name, then the question. */
     crewHeading: (crew: string) => string;
     pinPlaceholder: string;
@@ -33,12 +38,22 @@ export interface JoinStrings {
     englishLetters: string;
 }
 
+/** A name kept apart from the sentence's direction, so "Dana" in a Hebrew line, or a Hebrew name in an English one, keeps its place. */
+function isolate(name: string): string {
+    return `\u2068${name}\u2069`;
+}
+
 const en: JoinStrings = {
     lang: 'en',
     dir: 'ltr',
     title: 'Bullshit',
     pinHeading: 'Enter a game PIN',
     nicknameHeading: 'Enter a nickname',
+    hostHeading: 'Your game is ready. What\'s your name?',
+    hostButton: 'CONTINUE',
+    invited: host => host
+        ? `${isolate(host)} invited you to Bullshit, a 10-minute lying game.`
+        : 'You\'re invited to Bullshit, a 10-minute lying game.',
     crewHeading: crew => `${crew} rematch: who are you?`,
     pinPlaceholder: 'Game PIN',
     nicknamePlaceholder: 'Nickname',
@@ -68,6 +83,12 @@ const he: JoinStrings = {
     title: 'בולשיט',
     pinHeading: 'הקלידו את קוד המשחק',
     nicknameHeading: 'בחרו כינוי',
+    hostHeading: 'המשחק שלכם מוכן. איך יקראו לכם?',
+    hostButton: 'להמשך',
+    // "מחכה" is written the same for a man and a woman, as the link's own preview says it.
+    invited: host => host
+        ? `${isolate(host)} מחכה לכם בבולשיט, משחק שקרים של 10 דקות.`
+        : 'הוזמנתם לבולשיט, משחק שקרים של 10 דקות.',
     crewHeading: crew => `המשחק החוזר של ${crew}: מי אתם?`,
     pinPlaceholder: 'קוד המשחק',
     nicknamePlaceholder: 'כינוי',
@@ -108,12 +129,18 @@ export function pinError(locale: string, code: string, message: string, typed: s
 
 /**
  * The language of the PIN and nickname pages. `lang` on the address wins (the Create page sends
- * its own language along when it differs from the browser's), then a Hebrew address (/he/...),
- * then the language this browser last arrived in: the Create page's own rule.
+ * its own language along when it differs from the browser's), then the language of the game the
+ * guest is joining, once it is read (an English game's link opened on a phone that last played in
+ * Hebrew is English from the first tap), then a Hebrew address (/he/...), then the language this
+ * browser last arrived in: the Create page's own rule. The host's page passes no game language: it
+ * stays in the language of the Create page they came from.
  */
-export function joinLocale(path: string, lang: string, preferred: string): 'he' | 'en' {
+export function joinLocale(path: string, lang: string, preferred: string, gameLocale?: string): 'he' | 'en' {
     if (lang === 'he' || lang === 'en') {
         return lang;
+    }
+    if (gameLocale === 'he' || gameLocale === 'en') {
+        return gameLocale;
     }
     if (/^\/he(\/|$)/.test(path || '')) {
         return 'he';

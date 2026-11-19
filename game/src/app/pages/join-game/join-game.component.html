@@ -5,7 +5,8 @@
         <div class="title-area">
             <h1 class="title" routerLink="/">{{ t.title }}</h1>
             <h3 *ngIf="!nicknameState && !gameOver" class="sub-title">{{ t.pinHeading }}</h3>
-            <h3 *ngIf="nicknameState && !crewName && !gameOver" class="sub-title">{{ t.nicknameHeading }}</h3>
+            <h3 *ngIf="nicknameState && !crewName && !gameOver && isHost" class="sub-title host-ready">{{ t.hostHeading }}</h3>
+            <h3 *ngIf="nicknameState && !crewName && !gameOver && !isHost" class="sub-title">{{ t.nicknameHeading }}</h3>
             <h3 *ngIf="nicknameState && crewName && !gameOver" class="sub-title" dir="auto">{{ t.crewHeading(crewName) }}</h3>
             <div class="separator">♦</div>
         </div>
@@ -114,6 +115,9 @@
                     <p>{{ t.seatTakenText }}</p>
                 </div>
 
+                <!-- A guest: who invited them, and what the game is, above the name (join-invite.ts). -->
+                <p class="invited-line" *ngIf="nicknameState && !isHost && !crewName && !seatTaken && invitedLine">{{ invitedLine }}</p>
+
                 <div class="field" *ngIf="nicknameState">
                     <p class="control">
                         <input class="input is-large pin-input" type="text" [placeholder]="t.nicknamePlaceholder"
@@ -134,7 +138,7 @@
                 </div>
                 <div class="field" *ngIf="nicknameState">
                     <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!nickname || loading"
-                        [class.is-loading]="loading">{{ t.join }}</button>
+                        [class.is-loading]="loading">{{ isHost ? t.hostButton : t.join }}</button>
                 </div>
             </div>
         </div>

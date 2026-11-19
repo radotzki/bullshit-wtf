@@ -127,7 +127,7 @@ function joinPage(answer) {
         './../../sentry/sentry.module': { reportError: () => undefined },
         './../../services/session.service': {},
         './../../services/api.service': {},
-        '../../services/join-source': {},
+        '../../services/join-source': { hostedHere: () => false },
         '../../services/crew.service': {},
         '../../game-model': {},
     };

@@ -32,22 +32,24 @@
         </div>
 
         <div *ngIf="answers && !answerSelected && !presenter && !aboutMe">
-            <p *ngIf="taste" class="taste-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <!-- The question, then what to do: a first-timer forgets it in the writing time. -->
+            <p class="pick-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <p class="which-is-true" [class.rtl]="rtl"> {{t.whichIsTrue}} </p>
 
             <p *ngFor="let answer of answers" class="control">
-                <button class="button is-primary is-fullwidth answer" (click)="submit(answer)" [disabled]="loading" [class.rtl]="rtl">
+                <button class="button is-primary is-fullwidth answer" (click)="submit(answer)" [disabled]="loading" [class.rtl]="rtl"
+                    [class.picked]="answer === picked">
                     {{ answer | uppercase }}
                 </button>
             </p>
-
-            <p class="control">
-                <button *ngIf="!showQuestion && !taste" class="button is-info is-fullwidth" (click)="showQuestion = true">{{t.whatWasTheQuestion}}</button>
-            </p>
-
-            <p *ngIf="showQuestion" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
         </div>
 
-        <div *ngIf="answerSelected" class="screen-center">
+        <div *ngIf="answerSelected" class="screen-center" [class.with-pick]="!!picked">
+            <!-- The answer this phone picked stays in sight, so the tap plainly counted. -->
+            <div *ngIf="picked" class="your-pick" [class.rtl]="rtl">
+                <p class="your-pick-label"> {{t.yourPick}} </p>
+                <p class="button is-primary is-fullwidth answer picked" [class.rtl]="rtl"> {{ picked | uppercase }} </p>
+            </div>
             <app-waiting-row [pin]="pin" [t]="t" [line]="t.waitForFriends"></app-waiting-row>
         </div>
 
