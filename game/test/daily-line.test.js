@@ -77,7 +77,7 @@ test('on both homes the line sits right under Create, and replaces the older puz
     assert.match(phone, /<ng-container \*ngIf="!dailyLive">\s*<a class="daily-link"/);
 
     const computer = read('desktop-landing', 'desktop-landing.component.html');
-    assert.match(computer, /<p class="host-hint">\{\{ t\.createHint \}\}<\/p>\s*<!--[^]*?-->\s*<a class="alone-line" \*ngIf="dailyLive" \[href\]="dailyHref">\{\{ t\.aloneTry \}\}<\/a>/);
+    assert.match(computer, /<p class="host-hint">\{\{ t\.startHint \}\}<\/p>\s*<!--[^]*?-->\s*<a class="alone-line" \*ngIf="dailyLive" \[href\]="dailyHref">\{\{ t\.aloneTry \}\}<\/a>/);
     assert.match(computer, /<ng-container \*ngIf="!dailyLive">\s*<p class="alone">/);
     assert.strictEqual((computer.match(/class="alone-line"/g) || []).length, 1);
     assert.strictEqual((phone.match(/class="alone-line"/g) || []).length, 1);

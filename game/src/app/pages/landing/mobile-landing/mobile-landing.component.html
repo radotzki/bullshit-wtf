@@ -27,57 +27,70 @@
         <p class="code-error" *ngIf="box.error" role="alert">{{ box.error }}</p>
     </form>
 
-    <!-- The front door: what the game is, in one line, and for someone who never played, a small
-         looping picture of one round. Text and CSS only: no image to download. -->
+    <!-- The front door: what the game is, in one line, and the facts a stranger from a search
+         asks first. -->
     <div class="front-door" [class.has-picture]="picture">
         <p class="pitch">{{ t.pitch }}</p>
-        <!-- What a stranger from a search asks first: what it costs, whether to download, who plays. -->
+        <!-- What a stranger from a search asks first: what it costs, whether to sign up or download, who plays. -->
         <p class="facts">{{ t.facts }}</p>
         <!-- The daily puzzle: a plain link, the page is outside the app. Once the puzzle is live,
              the line under Create takes its place. -->
         <ng-container *ngIf="!dailyLive">
         <a class="daily-link" [href]="t.lang === 'he' ? '/he/daily?via=daily-home' : '/daily?via=daily-home'">{{ t.daily }}</a>
         </ng-container>
-
-        <div class="picture" *ngIf="picture" role="img" [attr.aria-label]="p.alt">
-            <div class="screen" aria-hidden="true">
-                <p class="question">{{ p.before }} <span class="blank"></span> {{ p.after }}</p>
-
-                <div class="frame frame-write">
-                    <p class="step">{{ p.steps[0] }}</p>
-                    <p class="typed">{{ p.lie }}</p>
-                    <p class="send">{{ p.send }}</p>
-                </div>
-
-                <div class="frame frame-pick">
-                    <p class="step">{{ p.steps[1] }}</p>
-                    <p class="answer">{{ p.otherLie }}</p>
-                    <p class="answer">{{ p.truth }}</p>
-                    <p class="answer">{{ p.lie }}</p>
-                </div>
-
-                <div class="frame frame-reveal">
-                    <p class="step">{{ p.steps[2] }}</p>
-                    <div class="row">
-                        <p class="text">{{ p.lie }}</p>
-                        <p class="who"><span>{{ p.fooled }}</span> <span class="points">{{ p.yourLie }} <span dir="ltr">+500</span></span></p>
-                    </div>
-                    <div class="row truth">
-                        <p class="text">{{ p.truth }}</p>
-                        <p class="who"><span></span> <span class="points">{{ p.theTruth }} <span dir="ltr">+1000</span></span></p>
-                    </div>
-                </div>
-            </div>
-            <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
-        </div>
     </div>
 
     <!-- In Hanukkah season, one line to the Hanukkah page (search-links.ts). -->
     <a class="season" *ngIf="season" [href]="season.href">{{ season.label }}</a>
 
+    <!-- Someone who never played (most visitors from a search) gets one button that starts a game,
+         right under the facts and above the picture, so it is on the first screen of the smallest
+         phone; then the picture of one round; then the rest of the menu. A returning player keeps
+         the short menu, with Join on top for a returning guest (front-door.ts). -->
+    <ng-container *ngIf="picture">
+        <ng-container *ngTemplateOutlet="create"></ng-container>
+        <!-- A small looping picture of one round. Text and CSS only: no image to download. -->
+        <div class="front-door round">
+            <div class="picture" role="img" [attr.aria-label]="p.alt">
+                <div class="screen" aria-hidden="true">
+                    <p class="question">{{ p.before }} <span class="blank"></span> {{ p.after }}</p>
+
+                    <div class="frame frame-write">
+                        <p class="step">{{ p.steps[0] }}</p>
+                        <p class="typed">{{ p.lie }}</p>
+                        <p class="send">{{ p.send }}</p>
+                    </div>
+
+                    <div class="frame frame-pick">
+                        <p class="step">{{ p.steps[1] }}</p>
+                        <p class="answer">{{ p.otherLie }}</p>
+                        <p class="answer">{{ p.truth }}</p>
+                        <p class="answer">{{ p.lie }}</p>
+                    </div>
+
+                    <div class="frame frame-reveal">
+                        <p class="step">{{ p.steps[2] }}</p>
+                        <div class="row">
+                            <p class="text">{{ p.lie }}</p>
+                            <p class="who"><span>{{ p.fooled }}</span> <span class="points">{{ p.yourLie }} <span dir="ltr">+500</span></span></p>
+                        </div>
+                        <div class="row truth">
+                            <p class="text">{{ p.truth }}</p>
+                            <p class="who"><span></span> <span class="points">{{ p.theTruth }} <span dir="ltr">+1000</span></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            </div>
+        </div>
+        <ng-container *ngTemplateOutlet="join"></ng-container>
+    </ng-container>
+
     <!-- Create leads for a visitor with no PIN; a returning guest keeps Join on top (front-door.ts). -->
-    <ng-container *ngTemplateOutlet="first === 'create' ? create : join"></ng-container>
-    <ng-container *ngTemplateOutlet="first === 'create' ? join : create"></ng-container>
+    <ng-container *ngIf="!picture">
+        <ng-container *ngTemplateOutlet="first === 'create' ? create : join"></ng-container>
+        <ng-container *ngTemplateOutlet="first === 'create' ? join : create"></ng-container>
+    </ng-container>
 
     <ng-template #join>
         <div class="menu-button join-game" [class.is-first]="first === 'join'" routerLink="/join-game">
@@ -98,8 +111,10 @@
                 <i class="fa fa-plus-square"></i>
             </div>
             <div class="menu-button-text">
-                <p class="menu-button-text-main"> {{ t.create }} </p>
-                <p class="menu-button-text-second"> {{ t.createHint }} </p>
+                <!-- For someone who never played: "Start a game" and how friends play. A press shows in
+                     the visits log as the page moving to /create-game. -->
+                <p class="menu-button-text-main"> {{ picture ? t.start : t.create }} </p>
+                <p class="menu-button-text-second"> {{ picture ? t.startHint : t.createHint }} </p>
             </div>
         </div>
         <!-- For a visitor on their own: today's question, right under Create, once the puzzle is
