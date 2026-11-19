@@ -83,6 +83,8 @@ const about = `
       <a href="/he/days-at-home">ימים בבית</a> · <a href="/he/video-call">משחק לשיחת וידאו</a> ·
       <a href="/he/school-break">משחקים לחופש</a> · <a href="/he/purim">משחק לפורים</a> ·
       <a href="/he/seder">משחק לליל הסדר</a> · <a href="/he/made-up-answers">משחק שממציאים בו תשובות</a> ·
+      <a href="/he/bachelorette">משחק למסיבת רווקות</a> · <a href="/he/adult-birthday">משחק ליום הולדת למבוגרים</a> ·
+      <a href="/he/friends-weekend">משחק לסופ"ש בצימר</a> ·
       <a href="/" hreflang="en" lang="en">Bullshit in English</a></p>
     <noscript><p>המשחק עצמו צריך JavaScript פעיל בדפדפן.</p></noscript>
   </main>

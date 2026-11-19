@@ -11,6 +11,8 @@ const kit = require('./pages-kit');
 const jackbox = require('./pages-jackbox');
 const holidays = require('./pages-en-holidays');
 const thanksgiving = require('./pages-en-thanksgiving');
+// Grown-up party nights: bachelorette and bachelor parties, adult birthdays, a weekend away.
+const partyNights = require('./pages-party-nights');
 
 const en = {
     lang: 'en',
@@ -32,6 +34,9 @@ const en = {
         { href: '/family-game-night', label: 'Family game night' },
         { href: '/video-call-party-game', label: 'A party game for a video call' },
         { href: '/snow-day-games', label: 'Snow day games' },
+        { href: '/bachelorette-party-game', label: 'Bachelorette party game' },
+        { href: '/adult-birthday-party-game', label: 'Adult birthday party game' },
+        { href: '/weekend-away-games', label: 'Games for a weekend away' },
     ],
     other: 'בעברית',
     footer: 'Bullshit is a free party game for phones. No app, no sign-up, no ads in the game.',
@@ -61,6 +66,9 @@ const he = {
         { href: '/he/days-at-home', label: 'ימים בבית עם הילדים' },
         { href: '/he/video-call', label: 'משחק בשיחת וידאו' },
         { href: '/he/school-break', label: 'משחקים לחופש' },
+        { href: '/he/bachelorette', label: 'משחק למסיבת רווקות' },
+        { href: '/he/adult-birthday', label: 'משחק ליום הולדת למבוגרים' },
+        { href: '/he/friends-weekend', label: 'משחק לסופ"ש בצימר' },
     ],
     other: 'English',
     footer: 'בולשיט הוא משחק חברה חינמי בטלפון. בלי אפליקציה, בלי הרשמה, בלי פרסומות במשחק.',
@@ -291,4 +299,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he));
