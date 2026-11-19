@@ -143,9 +143,9 @@ test('an invite link, a results card or no tag at all is not a post tag', () => 
 });
 
 test('the line that says what the game is, in both languages', () => {
-    assert.strictEqual(homeStrings('en').pitch, 'Everyone writes a lie. One answer is true. Fool your friends.');
-    assert.ok(/[֐-׿]/.test(homeStrings('he').pitch));
-    assert.strictEqual(homeStrings('he').pitch.split('. ').length, 3);
+    // A stranger from a "party game" search reads that this is one, on phones, and what you do in it.
+    assert.strictEqual(homeStrings('en').pitch, 'A party game on your phones: fool your friends with made-up answers.');
+    assert.strictEqual(homeStrings('he').pitch, 'משחק חברה בטלפונים: ממציאים תשובות ועובדים על החברים.');
 });
 
 test('the picture uses a real opening question, with its true answer, in both languages', () => {

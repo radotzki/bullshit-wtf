@@ -16,6 +16,7 @@ import {
     playsAboutUs, slotKey, truthOf, withAbout, withAboutMissed,
 } from './about';
 import { withNextWeek } from './next-week';
+import { drawPair, pairDecoys } from './pair';
 
 // How long a run waits before its second try at leaving a phase of no length.
 const leaveRetryDelay = 1000;
@@ -229,7 +230,7 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
             return Object.assign({
                 state: updateState(GameState.RoundIntro),
                 qids: await packClearOfAbout(game, qids, aboutPlan.aboutQs),
-            }, aboutPlan);
+            }, aboutPlan, await pairFor(pin, game));
 
         case GameState.RoundIntro:
             if (taste) {
@@ -249,6 +250,8 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
                 // Picks open empty: a pick that landed while the lies were written was made in an
                 // earlier question, by a phone that was offline then (see pickIsFor).
                 answerSelections: {},
+                // A pair game's decoy choices are in the answers now (see pair.ts).
+                decoys: null,
             };
 
         case GameState.ShowAnswers:
@@ -303,10 +306,11 @@ async function populateQuestion(game: GameScheme, qidx: number) {
 
 /**
  * The round-1 lie helper: ready-made lies for each player, for the question at `qidx`.
- * Only in round 1 of a coach game; null everywhere else, which also clears the last question's.
+ * Only in round 1 of a coach game, and on every question of a pair game, where the same lies are the
+ * player's decoy offers (see pair.ts); null everywhere else, which also clears the last question's.
  */
 async function ideasFor(game: GameScheme, qidx: number) {
-    if (!game.coach || (game.roundIndex || 0) !== 0) {
+    if (game.pair !== true && (!game.coach || (game.roundIndex || 0) !== 0)) {
         return null;
     }
 
@@ -350,6 +354,11 @@ async function populateQuestionAnswers(pin: string, game: GameScheme) {
 
 async function populateFakeAnswers(pin: string, game: GameScheme) {
     const question = await getQuestion(game.qids[game.questionIndex]);
+    const decoys = game.pair === true ? pairDecoys(game, question.realAnswer, () => gamesRef.child(pin).child('answers').push().key) : null;
+    if (decoys) {
+        return decoys;
+    }
+
     const playerAnswers = Object.keys(game.answers || {}).map(k => game.answers[k].text);
     const playersCount = Object.keys(game.players || {}).length;
     const fakeAnswers = pickHouseLies(cleanHouseLies(question.id, question.fakeAnswers), playerAnswers, question.realAnswer, playersCount);
@@ -361,6 +370,24 @@ async function populateFakeAnswers(pin: string, game: GameScheme) {
     });
 
     return res;
+}
+
+/**
+ * At START, a game with two players gets its half of the "Pick a decoy" test (see pair.ts). A Replay
+ * keeps its parent's half while it still has two players. Nothing to write for any other game.
+ */
+async function pairFor(pin: string, game: GameScheme): Promise<Partial<GameScheme>> {
+    const count = Object.keys(game.players || {}).filter(k => !!game.players[k]).length;
+    if (count !== 2) {
+        return {};
+    }
+    let parentPair: boolean | null = null;
+    if (game.parent) {
+        parentPair = await get<boolean>(gamesRef.child(String(game.parent).toUpperCase()).child('pair'))
+            .catch(e => { console.error(`[PIN: ${pin}] parent's pair not read`, e && e.message); return null; });
+    }
+    const pair = drawPair(count, pin, parentPair);
+    return pair === undefined ? {} : { pair };
 }
 
 /**
@@ -559,6 +586,8 @@ async function bankQuestionStep(game: GameScheme, qidx: number): Promise<Partial
         answerSelections: {},
         revealAnswers: null,
         aboutTruth: null,
+        // A pair game's decoy choices start empty with every question (see pair.ts).
+        decoys: null,
     };
 }
 

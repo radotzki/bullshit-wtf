@@ -3,7 +3,7 @@ import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, markVisit, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
-import { questionPacks, seasonalPack, packFits, packIcon } from '../../game-model';
+import { questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack } from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
@@ -24,6 +24,8 @@ export class CreateGameComponent implements OnInit {
     // The pack asked for with ?pack=, if any, and whether a pack on offer is switched on.
     private askedPack: string = null;
     usePack = false;
+    // "Kids are playing": the game plays the kids pack in place of the seasonal one (see questionPacks.kids).
+    kids = false;
     // A tag on this page's own address (the after-game ask links here with ?via=after-game).
     private campaign: string = null;
 
@@ -42,14 +44,16 @@ export class CreateGameComponent implements OnInit {
 
         this.campaign = typeof params.via === 'string' ? readCampaign(`?via=${encodeURIComponent(params.via)}`) : null;
 
-        this.askedPack = typeof params.pack === 'string' ? params.pack : null;
+        // ?pack=kids switches "Kids are playing" on; it is never offered as the Special pack.
+        this.kids = params.pack === KIDS_PACK;
+        this.askedPack = typeof params.pack === 'string' && params.pack !== KIDS_PACK ? params.pack : null;
         this.usePack = params.pack !== 'none';
     }
 
     /**
      * The seasonal pack on offer for the language picked on the form: the one asked for with ?pack=,
      * else the one in season. A pack with questions in one language only (Thanksgiving: English)
-     * leaves the form when the other language is picked.
+     * leaves the form when the other language is picked. Hidden while "Kids are playing" is on.
      */
     get pack(): string {
         return packFits(this.askedPack, this.locale) ? this.askedPack : seasonalPack(Date.now(), this.locale) || null;
@@ -68,7 +72,8 @@ export class CreateGameComponent implements OnInit {
     submit() {
         this.loading = true;
         this.errorMsg = '';
-        const pack = this.usePack && this.pack ? this.pack : undefined;
+        // One pack a game: with kids playing, the kid questions take the seasonal pack's place.
+        const pack = chosenPack(this.kids, this.usePack, this.pack);
 
         this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign())
             .then((resp) => {

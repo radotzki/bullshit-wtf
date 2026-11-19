@@ -41,8 +41,9 @@ test('one big button hosts a game on this screen, through the create flow, keepi
     assert.match(ts_, /this\.createQuery = createQuery\(this\.tag\)/);
     assert.match(ts_, /this\.tag = arrivalCampaign\(\)/);
     assert.ok(html.indexOf('host-button') < html.indexOf('class="other-ways"'), 'the big button comes before the other ways in');
-    assert.strictEqual(homeStrings('en').host, 'Host a game on this screen');
-    assert.strictEqual(homeStrings('he').host, 'מארחים משחק על המסך הזה');
+    assert.match(html, /<span>\{\{ t\.start \}\}<\/span>/);
+    assert.strictEqual(homeStrings('en').start, 'Start a game');
+    assert.strictEqual(homeStrings('he').start, 'מתחילים משחק');
 });
 
 test('join, present and how to play stay one click away', () => {

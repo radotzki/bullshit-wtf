@@ -9,6 +9,15 @@
         margin-left: 0;
     }
 
+    // Under "Kids are playing" while it is on: what the switch does, and what comes after the 20.
+    .kids-note {
+        font-size: 0.7em;
+        letter-spacing: 0;
+        line-height: 1.35;
+        margin: -0.25em 0 0.75em;
+        opacity: 0.85;
+    }
+
     .controls {
         background: #fff;
         padding: 20px;

@@ -171,6 +171,14 @@ export interface GameScheme {
     // Server time each player's lie and pick arrived, for measuring the wait (question_results).
     // Server only: no rule opens it, so no phone can read or write it.
     answerTimes?: AnswerTimes;
+    // "Pick a decoy", a 50/50 test on two-player games, set at START (see pair.ts in the functions).
+    // true: each player also picks a decoy, one of two house lies offered only to them, and the game has
+    // no neutral house lies. false: in the test, plays as before. Absent: not in the test (not two
+    // players at START, a taste, or started before the test). Readable: the first question's card says so.
+    pair?: boolean;
+    // A pair game's decoy each player chose with their lie for the current question. Server only: no
+    // rule opens it, so the friend never learns it before the answers are on the table.
+    decoys?: { [pid: string]: string };
 }
 
 /** When one player's lie or pick arrived (server time, ms), and for which question. */
@@ -500,6 +508,9 @@ export interface Answer {
     score?: number;
     // The player sent one of the lies the round-1 helper offered them.
     idea?: boolean;
+    // A pair game's decoy: a house lie this player chose to fool their friend (see pair.ts in the
+    // functions). Kept under a key of its own, never the player's id, so it is never their lie.
+    decoyOf?: string;
 }
 
 export interface AnswerSelections {
@@ -531,6 +542,9 @@ export interface RevealAnswer {
     // friend's worth of a fooled lie for each friend who found it). Written by the server.
     about?: string;
     aboutPoints?: number;
+    // A pair game's decoy: its creator is the player who chose it, its points are theirs (half a lie's).
+    // Not a written lie: it counts for no best lie, no BIGGEST BULLSHITTER and no funniest lie.
+    decoy?: boolean;
 }
 
 /**
@@ -549,15 +563,15 @@ export function laughCount(row: RevealAnswer | null | undefined): number {
     return laughs && typeof laughs === 'object' ? Object.keys(laughs).filter(pid => laughs[pid] === true).length : 0;
 }
 
-/** A player's lie (not the truth, not a house lie): the lies that can be the funniest lie. */
+/** A player's written lie (not the truth, not a house lie, not a decoy): the lies that can be the funniest lie. */
 export function isPlayerLie(row: RevealAnswer | null | undefined): boolean {
-    return !!row && !row.realAnswer && !row.houseLie && typeof row.text === 'string' && !!row.text &&
+    return !!row && !row.realAnswer && !row.houseLie && !row.decoy && typeof row.text === 'string' && !!row.text &&
         (row.creators || []).some(pid => !!pid);
 }
 
-/** A row that takes laughs: any lie, a player's or the house's (not the truth). */
+/** A row that takes laughs: any lie, a player's, a decoy or the house's (not the truth). */
 export function isLie(row: RevealAnswer | null | undefined): boolean {
-    return !!row && !row.realAnswer && typeof row.text === 'string' && !!row.text && (!!row.houseLie || isPlayerLie(row));
+    return !!row && !row.realAnswer && typeof row.text === 'string' && !!row.text && (!!row.houseLie || !!row.decoy || isPlayerLie(row));
 }
 
 /** May `pid` laugh at this row? At any lie, the house's too, but never at a lie they wrote themselves. */
@@ -817,10 +831,12 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
  * `seasonIn`, when set, are the only game languages that get the pack by default in its season
  * (default: every language it fits). In other languages it is still playable by link. Seasons may
  * overlap only for packs that no one language gets by default, so a game has one pack a day.
+ * A pack without `season` (kids) is never on by default: the create page's own switch asks for it.
  */
 export interface QuestionPack {
     perGame: number;
-    season: { from: string; to: string };
+    // No season: never on by default, only when asked for (the kids pack, by its own switch).
+    season?: { from: string; to: string };
     label: { en: string; he: string };
     locales?: string[];
     seasonIn?: string[];
@@ -858,7 +874,31 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         locales: ['en'],
         icon: '🎄',
     },
+    // "Kids are playing" (functions/data/kids-questions.json): 20 strange-but-true facts in each
+    // language that a child of 8 to 12 can follow. Not seasonal: the create page's own switch asks for
+    // it, and it takes the place of the seasonal pack in that game (one pack a game). Every question
+    // of a kids game is a kid question nobody in the room has seen; once the room has seen them all,
+    // the rest of the game comes from the normal bank (pickWithPack), as the switch's line says.
+    kids: {
+        perGame: 99,
+        label: { en: 'Kids are playing', he: 'ילדים משחקים' },
+        icon: '🧒',
+    },
 };
+
+/** The pack the create page's "Kids are playing" switch asks for. */
+export const KIDS_PACK = 'kids';
+
+/**
+ * The pack a game made on the create page asks for: kids when "Kids are playing" is on (it takes
+ * the seasonal pack's place, one pack a game), else the Special pack on offer if it is ticked.
+ */
+export function chosenPack(kids: boolean, usePack: boolean, offered: string): string | undefined {
+    if (kids) {
+        return KIDS_PACK;
+    }
+    return usePack && offered ? offered : undefined;
+}
 
 export function isPack(id: any): boolean {
     return typeof id === 'string' && Object.prototype.hasOwnProperty.call(questionPacks, id);
@@ -881,7 +921,7 @@ export function packIcon(id: any): string {
 /** Whether a game in `locale` gets pack `id` by default in its season. */
 export function packInSeasonFor(id: any, locale: any): boolean {
     const only = isPack(id) && questionPacks[id].seasonIn;
-    return packFits(id, locale) && (!only || only.indexOf(locale) >= 0);
+    return packFits(id, locale) && !!questionPacks[id].season && (!only || only.indexOf(locale) >= 0);
 }
 
 /**
@@ -893,7 +933,7 @@ export function seasonalPack(now: number = Date.now(), locale?: string): string 
     const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
     return Object.keys(questionPacks).find(id => {
         const s = questionPacks[id].season;
-        return day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
+        return !!s && day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
     });
 }
 
@@ -1039,7 +1079,7 @@ export function addHighlights(previous: Highlights | null | undefined, revealAns
 
     (revealAnswers || []).forEach(row => {
         const fooled = row ? (row.selectors || []).length : 0;
-        if (!fooled || row.realAnswer || row.houseLie) {
+        if (!fooled || row.realAnswer || row.houseLie || row.decoy) {
             return;
         }
         (row.creators || []).filter(pid => !!pid).forEach(pid => {

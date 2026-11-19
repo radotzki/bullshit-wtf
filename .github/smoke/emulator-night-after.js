@@ -3,7 +3,8 @@
 // night-after.ts) in headless Chromium, against the Firebase emulators. Three phones and the big screen
 // play a whole test game (?via=test) to the final scoreboard, in English and in Hebrew. Then the game's own
 // link (/join-game/<PIN>, /he/join-game/<PIN>) is opened again:
-//   - by a player of that game (the guest's own browser): the recap, with HOST THE NEXT ONE;
+//   - by a player of that game (the guest's own browser): the recap, with PLAY AGAIN, SAME TABLE (not pressed:
+//     it would open a lobby, and the visits below are of a table with none);
 //   - by someone who didn't play (a fresh browser): the recap, "You missed it", START YOUR OWN GAME, whose
 //     press opens the Create page tagged night-after;
 //   - in the other half (the tester's switch set to control): today's "Game over" page, with its ask;
@@ -34,12 +35,21 @@ const SHOTS = process.env.SHOTS || '';
 const GAME_TIMEOUT_MS = Number(process.env.GAME_MINUTES || 8) * 60 * 1000;
 
 const ts = require(path.join(ROOT, 'game', 'node_modules', 'typescript'));
+/** A game .ts file, transpiled; its own relative imports (join-strings.ts takes game-code.ts) load the same way. */
+const loaded = {};
 function loadTs(file) {
+    if (loaded[file]) return loaded[file].exports;
     const out = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES5 },
     }).outputText;
-    const mod = { exports: {} };
-    new Function('module', 'exports', 'require', out)(mod, mod.exports, require);
+    const mod = loaded[file] = { exports: {} };
+    const req = (name) => {
+        if (!/^\.\.?\//.test(name)) return require(name);
+        const base = path.resolve(path.dirname(file), name);
+        const src = [base + '.ts', path.join(base, 'index.ts')].find((f) => fs.existsSync(f));
+        return src ? loadTs(src) : require(base);
+    };
+    new Function('module', 'exports', 'require', out)(mod, mod.exports, req);
     return mod.exports;
 }
 const na = loadTs(path.join(ROOT, 'game', 'src', 'app', 'pages', 'join-game', 'night-after.ts'));
@@ -138,7 +148,8 @@ async function readRecap(page) {
             place: Number(e.querySelector('.recap-place').textContent.trim()),
         }))),
         askTitle: await text('.night-after .recap-ask-title'),
-        button: await text('.night-after .recap-create'),
+        // A player's ask is PLAY AGAIN, SAME TABLE (#160); anyone else's, START YOUR OWN GAME.
+        button: await text('.night-after .recap-again, .night-after .recap-create'),
         all: await text('.night-after'),
     };
 }
@@ -190,7 +201,8 @@ async function language(base, locale) {
             `scores ${JSON.stringify(seen.rows)} against the database's ${JSON.stringify(expected)}`);
         const top = expected[0].score;
         check(expected.filter((r) => r.score === top).every((r) => seen.winner.indexOf(r.name) >= 0), `winner "${seen.winner}"`);
-        check(seen.askTitle === n.playerTitle && seen.button === n.createPlayer, `the player's ask is "${seen.askTitle}" / "${seen.button}"`);
+        check(seen.askTitle === n.playerTitle && seen.button === n.playAgain, `the player's ask is "${seen.askTitle}" / "${seen.button}"`);
+        check(!(await visible(player.page.locator('.night-after .recap-create'))), 'the player still sees START YOUR OWN GAME');
         // Nothing of the questions: no question text, no true answer.
         const leaks = Object.values(truths).filter((q) => q.lang === locale)
             .filter((q) => seen.all.indexOf(q.realAnswer) >= 0 || seen.all.indexOf(q.questionText.slice(0, 20)) >= 0);

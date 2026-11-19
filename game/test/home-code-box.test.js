@@ -137,8 +137,8 @@ test('the words of the box and the facts line, in English and in Hebrew', () => 
     const en = homeStrings('en');
     const he = homeStrings('he');
     const plain = s => s.replace(/ /g, ' ');
-    assert.strictEqual(plain(en.facts), 'Free · no app · 2 to 12 players, each on their own phone');
-    assert.strictEqual(plain(he.facts), 'חינם · בלי אפליקציה · 2 עד 12 שחקנים, כל אחד מהטלפון שלו');
+    assert.strictEqual(plain(en.facts), 'Free · no sign-up · no app · 2 to 12 players');
+    assert.strictEqual(plain(he.facts), 'חינם · בלי הרשמה · בלי אפליקציה · 2 עד 12 שחקנים');
     // "2 to 12 players" never breaks across lines.
     assert.ok(en.facts.includes('2 to 12 players'));
     assert.ok(he.facts.includes('2 עד 12 שחקנים'));

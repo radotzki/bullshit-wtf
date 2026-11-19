@@ -1,0 +1,482 @@
+{
+  "kids-26-en-01": {
+    "questionText": "When people first played table tennis in Victorian England, they used a row of $blank$ as the net",
+    "realAnswer": "books",
+    "fakeAnswers": [
+      "chairs",
+      "walking sticks",
+      "umbrellas"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Table_tennis",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-02": {
+    "questionText": "The first American alarm clock, made in 1787 by Levi Hutchins, could only ring at $blank$",
+    "realAnswer": "4 am",
+    "fakeAnswers": [
+      "midnight",
+      "7 am",
+      "noon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Alarm_clock",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-03": {
+    "questionText": "Cotton candy machines were invented in 1897 by a candy maker and a $blank$",
+    "realAnswer": "dentist",
+    "fakeAnswers": [
+      "clown",
+      "barber",
+      "firefighter"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cotton_candy",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-04": {
+    "questionText": "The first toothbrushes with bristles, made in China over a thousand years ago, used $blank$",
+    "realAnswer": "pig hair",
+    "fakeAnswers": [
+      "horse tails",
+      "goose feathers",
+      "grass roots"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Toothbrush",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-05": {
+    "questionText": "Our pupils are round, but a goat's pupils are $blank$",
+    "realAnswer": "sideways slits",
+    "fakeAnswers": [
+      "star-shaped",
+      "heart-shaped",
+      "triangles"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Goat",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-06": {
+    "questionText": "A baby echidna is called a $blank$",
+    "realAnswer": "puggle",
+    "fakeAnswers": [
+      "pinlet",
+      "spikelet",
+      "joey-poo"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Echidna",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-07": {
+    "questionText": "Under its white fur, a polar bear's skin is $blank$",
+    "realAnswer": "black",
+    "fakeAnswers": [
+      "pink",
+      "bright blue",
+      "see-through"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Polar_bear",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-08": {
+    "questionText": "Baby seahorses are carried in a pouch and born from their $blank$",
+    "realAnswer": "dad",
+    "fakeAnswers": [
+      "mum",
+      "big sister",
+      "grandma"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Seahorse",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-09": {
+    "questionText": "You could fit about $blank$ Earths inside the Sun",
+    "realAnswer": "1.3 million",
+    "fakeAnswers": [
+      "5,000",
+      "300",
+      "20 billion"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sun",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-10": {
+    "questionText": "Jupiter's Great Red Spot is a giant $blank$ that is wider than the whole Earth",
+    "realAnswer": "storm",
+    "fakeAnswers": [
+      "volcano",
+      "lake of lava",
+      "mountain"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Great_Red_Spot",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-11": {
+    "questionText": "About a thousand years ago, carrots grown in Asia and Europe were $blank$",
+    "realAnswer": "purple",
+    "fakeAnswers": [
+      "blue",
+      "green",
+      "grey"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Carrot",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-12": {
+    "questionText": "Kept in a closed jar, honey goes bad $blank$",
+    "realAnswer": "never",
+    "fakeAnswers": [
+      "after about a week",
+      "after exactly one year",
+      "after ten days"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Honey",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-13": {
+    "questionText": "The smallest bone in your body is in your $blank$",
+    "realAnswer": "ear",
+    "fakeAnswers": [
+      "little toe",
+      "nose",
+      "pinky finger"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stapes",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-14": {
+    "questionText": "Children are about $blank$ shorter by late afternoon than when they wake up",
+    "realAnswer": "1.5 cm",
+    "fakeAnswers": [
+      "3 mm",
+      "5 cm",
+      "10 cm"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_height",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-15": {
+    "questionText": "The first footballs were blown-up $blank$",
+    "realAnswer": "animal bladders",
+    "fakeAnswers": [
+      "fish skins",
+      "coconut shells",
+      "rubber boots"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ball_(association_football)",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-16": {
+    "questionText": "Peanuts are not really nuts: they belong to the same plant family as $blank$",
+    "realAnswer": "peas and beans",
+    "fakeAnswers": [
+      "potatoes",
+      "sunflowers",
+      "coconuts"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Peanut",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-17": {
+    "questionText": "Bananas are very slightly $blank$",
+    "realAnswer": "radioactive",
+    "fakeAnswers": [
+      "magnetic",
+      "fizzy",
+      "see-through"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Banana_equivalent_dose",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-18": {
+    "questionText": "A woodpecker's tongue bone wraps all the way around its $blank$",
+    "realAnswer": "skull",
+    "fakeAnswers": [
+      "beak",
+      "neck",
+      "heart"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Woodpecker",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-19": {
+    "questionText": "Some dolphins rest while swimming in a group, and each one keeps $blank$",
+    "realAnswer": "one eye open",
+    "fakeAnswers": [
+      "its mouth open",
+      "its tail still",
+      "its fins touching"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Unihemispheric_slow-wave_sleep",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-20": {
+    "questionText": "The International Space Station goes all the way around the Earth in about $blank$",
+    "realAnswer": "an hour and a half",
+    "fakeAnswers": [
+      "a whole day",
+      "a week",
+      "ten minutes"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/International_Space_Station",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-he-01": {
+    "questionText": "בכל חורף עוצרים באגם החולה עשרות אלפי $blank$ בדרכם מפינלנד לאתיופיה, והחקלאים מאכילים אותם כדי שלא יאכלו את השדות",
+    "realAnswer": "עגורים",
+    "fakeAnswers": [
+      "ברבורים",
+      "פלמינגו",
+      "יענים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hula_Valley",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-02": {
+    "questionText": "הלשון של זיקית יכולה להיות ארוכה $blank$ מכל הגוף שלה",
+    "realAnswer": "פי שניים",
+    "fakeAnswers": [
+      "פי עשרה",
+      "פי חמישה",
+      "פי מאה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chameleon",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-03": {
+    "questionText": "אומרים שלדג זהב יש זיכרון של $blank$, אבל בעצם הוא זוכר דברים לפחות שלושה חודשים",
+    "realAnswer": "שלוש שניות",
+    "fakeAnswers": [
+      "שלוש שעות",
+      "חצי יום",
+      "עשר דקות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Goldfish",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-04": {
+    "questionText": "מתחת לפסים, העור של הזברה $blank$",
+    "realAnswer": "שחור",
+    "fakeAnswers": [
+      "לבן",
+      "ורוד",
+      "מפוספס גם הוא"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Zebra",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-05": {
+    "questionText": "על כוכב הלכת אורנוס, בכל קוטב יש $blank$ של אור יום בלי הפסקה",
+    "realAnswer": "42 שנה",
+    "fakeAnswers": [
+      "שבוע",
+      "חודש",
+      "300 שנה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Uranus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-06": {
+    "questionText": "האור מהשמש מגיע אלינו בערך תוך $blank$",
+    "realAnswer": "8 דקות",
+    "fakeAnswers": [
+      "שנייה אחת",
+      "יום שלם",
+      "שעה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sunlight",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-07": {
+    "questionText": "בשוקולד לבן אין $blank$",
+    "realAnswer": "אבקת קקאו",
+    "fakeAnswers": [
+      "סוכר",
+      "חלב",
+      "שומן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/White_chocolate",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-08": {
+    "questionText": "לשפן הסלע הקטן, שחי בעין גדי, יש שיניים קדמיות שמזכירות את אלה של $blank$, שהוא קרוב משפחה רחוק שלו",
+    "realAnswer": "הפיל",
+    "fakeAnswers": [
+      "הארנב",
+      "הסנאי",
+      "הבונה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rock_hyrax",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-09": {
+    "questionText": "לנחשים אין $blank$ מבחוץ, אבל יש להם בפנים",
+    "realAnswer": "אוזניים",
+    "fakeAnswers": [
+      "אף",
+      "לשון",
+      "שיניים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Snake",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-10": {
+    "questionText": "תינוקות נולדים עם $blank$ עשויות סחוס רך, והן הופכות לעצם רק בגיל שלוש בערך",
+    "realAnswer": "פיקות ברכיים",
+    "fakeAnswers": [
+      "אצבעות",
+      "ציפורניים",
+      "שיניים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Patella",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-11": {
+    "questionText": "השם 'לגו' בא משתי מילים בדנית שפירושן $blank$",
+    "realAnswer": "שחק טוב",
+    "fakeAnswers": [
+      "בנה גבוה",
+      "ילד שמח",
+      "קובייה קטנה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Lego",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-12": {
+    "questionText": "דולפינים קוראים זה לזה בעזרת $blank$ אישית שיש לכל אחד",
+    "realAnswer": "שריקה",
+    "fakeAnswers": [
+      "תנועת סנפיר",
+      "בועה",
+      "קפיצה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Common_bottlenose_dolphin",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-13": {
+    "questionText": "המכתשים בנגב קיבלו את השם שלהם כי הם דומים ל$blank$",
+    "realAnswer": "כלי לכתישת תבלינים",
+    "fakeAnswers": [
+      "קערת מרק",
+      "צלחת לוויין",
+      "כובע הפוך"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Makhtesh",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-14": {
+    "questionText": "החללית הישראלית 'בראשית', שנחתה על הירח ב-2019 בנחיתה קשה, נשאה איתה גם $blank$",
+    "realAnswer": "דובוני מים",
+    "fakeAnswers": [
+      "נמלים",
+      "זרעי חמנייה",
+      "דגי זהב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Beresheet",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-15": {
+    "questionText": "אצל הפינגווינים הקיסריים, האבא מחמם את הביצה יותר מחודשיים על $blank$",
+    "realAnswer": "הרגליים שלו",
+    "fakeAnswers": [
+      "הגב שלו",
+      "הראש שלו",
+      "קרח מיוחד"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emperor_penguin",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-16": {
+    "questionText": "כלבים כמעט לא מזיעים בעור. הם מזיעים דרך $blank$",
+    "realAnswer": "כפות הרגליים",
+    "fakeAnswers": [
+      "האוזניים",
+      "הגב",
+      "הזנב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dog_anatomy",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-17": {
+    "questionText": "באולימפיאדה הראשונה של העת החדשה, ב-1896, המנצחים קיבלו מדליית $blank$",
+    "realAnswer": "כסף",
+    "fakeAnswers": [
+      "זהב",
+      "ארד",
+      "עץ"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/1896_Summer_Olympics",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-18": {
+    "questionText": "לתמנון יש $blank$ לבבות",
+    "realAnswer": "שלושה",
+    "fakeAnswers": [
+      "שניים",
+      "חמישה",
+      "שמונה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Octopus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-19": {
+    "questionText": "הדבשת של הגמל היא מחסן של $blank$",
+    "realAnswer": "שומן",
+    "fakeAnswers": [
+      "מים",
+      "חלב",
+      "אוויר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Camel",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-20": {
+    "questionText": "בצוואר הארוך של הג'ירפה יש רק $blank$ חוליות, בדיוק כמו אצל רוב היונקים",
+    "realAnswer": "שבע",
+    "fakeAnswers": [
+      "שלושים",
+      "עשרים",
+      "חמישים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Giraffe",
+    "lang": "he",
+    "pack": "kids"
+  }
+}

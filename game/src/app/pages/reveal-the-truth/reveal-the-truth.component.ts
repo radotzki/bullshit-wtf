@@ -15,6 +15,7 @@ import { resultLines, stingFor } from './reveal-strings';
 import { followScrollTop } from './reveal-follow';
 import { laughView } from './reveal-laughs';
 import { aboutStrings, AboutStrings, aboutResultLine } from './../about-strings';
+import { pairStrings, PairStrings } from './../pair-strings';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
 // stand in their old order before they move to the new one (staged reveal only).
@@ -57,6 +58,8 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     rtl: boolean;
     t: GameStrings = gameStrings('en');
     aboutWords: AboutStrings = aboutStrings('en');
+    // "Pick a decoy" (two-player games in the test): the DECOY tag and the decoy's lines.
+    pairWords: PairStrings = pairStrings('en');
     question: string;
     staged = false;
     me: string = null;
@@ -122,6 +125,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.rtl = locale === 'he';
         this.t = gameStrings(locale);
         this.aboutWords = aboutStrings(locale);
+        this.pairWords = pairStrings(locale);
     }
 
     ngOnDestroy() {
@@ -226,7 +230,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             // The player it is about picked nothing and wrote no lie: their line is who found them.
             this.myResult = [aboutResultLine(this.aboutWords, aboutRow.pickerNames, this.t.signed(aboutRow.aboutPoints), this.t.names)];
         } else if (me) {
-            this.myResult = resultLines(me, all, this.t);
+            this.myResult = resultLines(me, all, this.t, this.pairWords.fooled);
         }
 
         this.schedule = revealSchedule(revealAnswers, !!hasPresenter, staged);
@@ -239,10 +243,16 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             const added = !info.state || info.state.id !== GameState.RevealTheTruth;
             this.standings = revealStandings(players, revealScoreChanges(revealAnswers), added);
 
-            // The player's own lie, if it fooled somebody: its writer gets the flash.
-            this.myRow = me ? this.rows.findIndex(r => !r.realAnswer && !r.houseLie && r.creatorIds.indexOf(me) !== -1) : -1;
+            // The player's own lie, if it fooled somebody: its writer gets the flash. Else, in a pair
+            // game, their decoy, if it did.
+            this.myRow = me ? this.rows.findIndex(r => !r.realAnswer && !r.houseLie && !r.decoy && r.creatorIds.indexOf(me) !== -1) : -1;
+            const myDecoyRow = me ? this.rows.findIndex(r => r.decoy && r.creatorIds.indexOf(me) !== -1) : -1;
             if (this.myRow !== -1) {
                 this.flash = this.t.youFooled(this.t.names(this.rows[this.myRow].pickerNames));
+                this.flashPoints = this.rows[this.myRow].points;
+            } else if (myDecoyRow !== -1) {
+                this.myRow = myDecoyRow;
+                this.flash = this.pairWords.flash(this.t.names(this.rows[this.myRow].pickerNames));
                 this.flashPoints = this.rows[this.myRow].points;
             } else if (me && aboutRow && aboutRow.aboutId === me && aboutRow.pickers.length) {
                 // An About question: friends found this player's truth.
@@ -388,6 +398,7 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
             text: answer.text,
             realAnswer: !!answer.realAnswer,
             houseLie: !!answer.houseLie,
+            decoy: !!answer.decoy,
             points: answer.points || 0,
             pointsBy: answer.pointsBy,
             pickerIds: answer.selectors || [],
@@ -450,6 +461,8 @@ interface Row {
     text: string;
     realAnswer: boolean;
     houseLie: boolean;
+    // A pair game's decoy: shown like a player's lie, by the player who chose it, with a DECOY tag.
+    decoy: boolean;
     points: number;
     pointsBy?: { [pid: string]: number };
     pickerIds: string[];

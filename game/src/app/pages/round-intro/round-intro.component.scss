@@ -13,6 +13,15 @@ $dark: #363636;
         margin-bottom: 50px;
     }
 
+    // A pair game's first question: how "Pick a decoy" plays, smaller than the points.
+    .pair-intro {
+        max-width: 28em;
+        margin-top: 1.2em;
+        padding: 0 16px;
+        font-size: 1.1rem;
+        line-height: 1.35;
+    }
+
     // Before the last question: its name first, then how far first place is ahead, then the points.
     .final-question {
         padding: 0 16px;
