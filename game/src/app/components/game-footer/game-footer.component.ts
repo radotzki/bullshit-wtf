@@ -1,8 +1,10 @@
-import { Observable } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { footerScore, revealedScore, revealSettled } from './footer-score';
 
 @Component({
     standalone: false,
@@ -29,8 +31,19 @@ export class GameFooterComponent implements OnInit {
         this.apiService.getGameLocale(pin).then(locale => this.rtl = locale === 'he', () => null);
 
         if (!this.sessionService.presenter) {
+            const pid = this.sessionService.user.pid;
             this.name = this.sessionService.user.nickname;
-            this.score = this.apiService.playerScore(pin, this.sessionService.user.pid);
+            // The server's total, moved on with the reveal's board while the reveal shows it (footer-score.ts).
+            this.score = combineLatest([this.apiService.playerScore(pin, pid), revealedScore]).pipe(
+                // The server's total moved on: the reveal's hand-off is spent (a later question's points
+                // may bring the total back to its old figure, which must not show the old reveal's).
+                tap(([live, shown]) => {
+                    if (revealSettled(live, shown, pin, pid)) {
+                        revealedScore.next(null);
+                    }
+                }),
+                map(([live, shown]) => footerScore(live, shown, pin, pid)),
+            );
         }
     }
 }

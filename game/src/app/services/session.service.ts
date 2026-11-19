@@ -5,6 +5,8 @@ import { CanActivate, Router } from '@angular/router';
 
 const playerKey = 'BS_PLAYER';
 const presenterKey = 'BS_PRESENTER';
+// The nickname this browser last joined under, as the server kept it (BS_PLAYER keeps it in lower case).
+const lastNameKey = 'BS_LAST_NAME';
 
 @Injectable()
 export class SessionService implements CanActivate {
@@ -35,6 +37,26 @@ export class SessionService implements CanActivate {
         } catch (e) {
             return undefined;
         }
+    }
+
+    /** The nickname this browser last joined a game under, for the next game's nickname box. */
+    get lastNickname(): string {
+        try {
+            const saved = this.storageService.getItem(lastNameKey);
+            if (saved) {
+                return saved;
+            }
+        } catch (e) { }
+        const user = this.user;
+        return user && typeof user.nickname === 'string' ? user.nickname : '';
+    }
+
+    set lastNickname(nickname: string) {
+        try {
+            if (nickname) {
+                this.storageService.setItem(lastNameKey, nickname);
+            }
+        } catch (e) { }
     }
 
     get presenter() {

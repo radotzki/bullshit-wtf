@@ -240,3 +240,13 @@
         letter-spacing: .04em;
     }
 }
+
+// START in the body, under the count, once two or more are in (the corner one stays).
+.game-staging .start-body {
+    padding: 0.6rem 1rem 0.2rem;
+
+    .start-body-button {
+        font-weight: 700;
+        letter-spacing: .04em;
+    }
+}

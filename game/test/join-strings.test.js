@@ -41,6 +41,9 @@ test('English visitors keep the English pages word for word', () => {
         title: 'Bullshit',
         pinHeading: 'Enter a game PIN',
         nicknameHeading: 'Enter a nickname',
+        hostHeading: 'Your game is ready. What\'s your name?',
+        hostButton: 'CONTINUE',
+        invited: '\u2068@@\u2069 invited you to Bullshit, a 10-minute lying game.',
         crewHeading: '@@ rematch: who are you?',
         pinPlaceholder: 'Game PIN',
         nicknamePlaceholder: 'Nickname',
@@ -95,6 +98,35 @@ test('the pages decide who is Hebrew the way the Create page does', () => {
     assert.strictEqual(joinLocale('/he/join-game/ABCD?via=link', undefined, 'en'), 'he');
     assert.strictEqual(joinLocale('/he/join-game', undefined, 'en'), 'he');
     assert.strictEqual(joinLocale('/hello', undefined, 'en'), 'en');
+});
+
+test('a guest\'s page follows the language of the game they are joining', () => {
+    // An English game's link opened on a phone that last played in Hebrew: English from the first tap.
+    assert.strictEqual(joinLocale('/join-game/ABCD', undefined, 'he', 'en'), 'en');
+    // Even on the Hebrew address, and the other way round.
+    assert.strictEqual(joinLocale('/he/join-game/ABCD', undefined, 'he', 'en'), 'en');
+    assert.strictEqual(joinLocale('/join-game/ABCD', undefined, 'en', 'he'), 'he');
+    // lang on the address still wins: the host's own page, sent by the Create page.
+    assert.strictEqual(joinLocale('/join-game/ABCD', 'he', 'en', 'en'), 'he');
+    // A game whose language can't be read leaves the old rule.
+    assert.strictEqual(joinLocale('/join-game/ABCD', undefined, 'he', null), 'he');
+    assert.strictEqual(joinLocale('/join-game/ABCD', undefined, 'he', 'fr'), 'he');
+});
+
+test('the host\'s first screen says the game is ready, and a guest\'s says who invited them', () => {
+    const en = joinStrings('en');
+    const he = joinStrings('he');
+    assert.strictEqual(en.invited(''), 'You\'re invited to Bullshit, a 10-minute lying game.');
+    assert.strictEqual(he.hostHeading, 'המשחק שלכם מוכן. איך יקראו לכם?');
+    assert.strictEqual(he.hostButton, 'להמשך');
+    assert.strictEqual(he.invited('Dana'), '\u2068Dana\u2069 מחכה לכם בבולשיט, משחק שקרים של 10 דקות.');
+    assert.strictEqual(he.invited(''), 'הוזמנתם לבולשיט, משחק שקרים של 10 דקות.');
+    // Gender-neutral in Hebrew: no "invited" verb that is a man's or a woman's.
+    assert.ok(!/הזמין|הזמינה/.test(he.invited('Dana')));
+    const html = fs.readFileSync(path.join(page, 'join-game.component.html'), 'utf8');
+    assert.ok(html.indexOf('{{ isHost ? t.hostButton : t.join }}') >= 0);
+    assert.ok(/isHost" class="sub-title host-ready">\{\{ t\.hostHeading \}\}/.test(html));
+    assert.ok(html.indexOf('{{ invitedLine }}') >= 0);
 });
 
 test('the Create page hands its language to the nickname page when the browser would say otherwise', () => {

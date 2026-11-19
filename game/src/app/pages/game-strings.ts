@@ -66,7 +66,10 @@ export interface GameStrings {
     answerSubmitted: string;
 
     // Picking an answer.
-    whatWasTheQuestion: string;
+    /** Under the question, above the answers: what to do with them. */
+    whichIsTrue: string;
+    /** Over the answer this phone picked, on the waiting screen after the pick. */
+    yourPick: string;
     waitForFriends: string;
 
     // The row of players under both waiting lines: who is in, and who the room waits for.
@@ -163,7 +166,8 @@ const en: GameStrings = {
     tooCloseToTruth: 'You entered the correct answer! Try something else',
     answerSubmitted: 'Your answer has been submitted',
 
-    whatWasTheQuestion: 'WHAT WAS THE QUESTION AGAIN?',
+    whichIsTrue: 'Which one is true?',
+    yourPick: 'Your pick',
     waitForFriends: 'Let\'s wait for your friends',
 
     waitingForName: name => `Waiting for ${name}`,
@@ -247,7 +251,8 @@ const he: GameStrings = {
     tooCloseToTruth: 'זאת התשובה הנכונה! נסו משהו אחר',
     answerSubmitted: 'התשובה נשלחה',
 
-    whatWasTheQuestion: 'מה הייתה השאלה?',
+    whichIsTrue: 'איזו תשובה נכונה?',
+    yourPick: 'הבחירה שלכם',
     waitForFriends: 'מחכים לחברים',
 
     waitingForName: name => `מחכים ל־${name}`,

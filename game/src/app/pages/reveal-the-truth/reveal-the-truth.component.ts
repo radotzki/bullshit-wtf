@@ -16,6 +16,7 @@ import { followScrollTop } from './reveal-follow';
 import { laughView } from './reveal-laughs';
 import { aboutStrings, AboutStrings, aboutResultLine } from './../about-strings';
 import { pairStrings, PairStrings } from './../pair-strings';
+import { revealedScore, RevealedScore } from '../../components/game-footer/footer-score';
 
 // How long "You fooled Chen!" covers the writer's phone, and how long after the last row the scores
 // stand in their old order before they move to the new one (staged reveal only).
@@ -63,6 +64,9 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
     question: string;
     staged = false;
     me: string = null;
+    /** This phone's total before and after this question; handed to the footer when the board moves (footer-score.ts). */
+    private myScore: RevealedScore = null;
+    private scoreHandedOn = false;
 
     rows: Row[];
     unpicked: Row[] = [];
@@ -237,6 +241,13 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         this.clockOffset = info.now - Date.now();
         this.startedAt = info.state && info.state.timestamp || info.now;
 
+        // This phone's total before and after the question, for the footer once the board shows it.
+        if (me) {
+            const scoresAdded = !info.state || info.state.id !== GameState.RevealTheTruth;
+            const mine = revealStandings(players, revealScoreChanges(revealAnswers), scoresAdded).filter(p => p.pid === me)[0];
+            this.myScore = mine ? { pin: this.pin, pid: me, before: mine.before, after: mine.after } : null;
+        }
+
         if (staged) {
             // The players' scores do not hold this question yet while the reveal is on; a phone that
             // loads this page a moment late may read them after the server has added it.
@@ -301,6 +312,12 @@ export class RevealTheTruthComponent implements OnInit, OnDestroy {
         if (this.staged) {
             this.scoresMoved = elapsed >= this.schedule.allShown + SCORES_MOVE_AFTER_MS;
             this.updateFlash(elapsed);
+        }
+
+        // The footer moves with the board: in the staged reveal when the scores move, else once all is shown.
+        if (this.myScore && !this.scoreHandedOn && (this.staged ? this.scoresMoved : this.allShown)) {
+            this.scoreHandedOn = true;
+            revealedScore.next(this.myScore);
         }
 
         this.follow();

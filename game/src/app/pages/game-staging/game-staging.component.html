@@ -16,6 +16,12 @@
         <span *ngIf="lobby.count" class="lobby-count"> {{lobby.count}} </span>
     </div>
 
+    <!-- Two or more in: START in the body too, under the count, where a first-time host looks for the
+         next step. The corner one stays; both show for whoever may start, as the corner one does. -->
+    <div *ngIf="showStartButton && !lobby?.alone && !panel && !presenter && players?.length >= 2" class="start-body" [attr.dir]="lobby?.rtl ? 'rtl' : null">
+        <button class="button is-primary is-medium is-fullwidth start-body-button" [class.is-loading]="loading" [disabled]="loading" (click)="startGame()"> {{t.start}} </button>
+    </div>
+
     <div *ngIf="packBanner" class="pack-banner" [class.presenter]="presenter" [attr.dir]="locale === 'he' ? 'rtl' : null">
         {{ packIcon }} {{ packBanner }}
     </div>

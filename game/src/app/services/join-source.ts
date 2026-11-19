@@ -141,6 +141,22 @@ export function markHosted(pin: string) {
 }
 
 /**
+ * This tab created the game with this PIN and has not joined it yet: its nickname page is the
+ * host's first screen ("Your game is ready"). Reads the mark without using it up (takeJoinSource does).
+ */
+export function hostedHere(pin: string): boolean {
+    const s = storage();
+    if (!s || !pin) {
+        return false;
+    }
+    try {
+        return s.getItem(hostedKey) === pin.toUpperCase();
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
  * The join source for a join that is about to happen, used once.
  * routeVia: the `via` on the join page's address; pinInUrl: whether the
  * PIN came in the address (a link) rather than typed.
