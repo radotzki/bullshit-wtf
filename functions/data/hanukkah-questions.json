@@ -1044,14 +1044,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-11": {
-    "questionText": "ב-2013 היום הראשון של חנוכה יצא באותו יום עם $blank$ האמריקאי, ובארה\"ב חגגו את שניהם על שולחן אחד",
-    "realAnswer": "חג ההודיה",
+    "questionText": "על סביבונים שנקנים בחוץ לארץ יש ש' במקום פ', ושם היא מסמנת את המילה $blank$",
+    "realAnswer": "שם",
     "fakeAnswers": [
-      "יום העצמאות",
-      "ליל כל הקדושים",
-      "הסופרבול"
+      "שמן",
+      "שמונה",
+      "שמחה"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1128,14 +1128,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-18": {
-    "questionText": "ב-1979 הודלקה לראשונה חנוכייה לאומית מול הבית הלבן, בהשתתפות הנשיא $blank$",
-    "realAnswer": "ג'ימי קרטר",
+    "questionText": "בפתיחת המכבייה הראשונה, ב-1932 בתל אביב, ראש העיר מאיר דיזנגוף הוביל את המצעד רכוב על $blank$",
+    "realAnswer": "סוס לבן",
     "fakeAnswers": [
-      "רונלד רייגן",
-      "ג'רלד פורד",
-      "ריצ'רד ניקסון"
+      "גמל",
+      "אופנוע",
+      "פרד"
     ],
-    "citation": "https://www.whitehousehistory.org/lighting-the-menorah-celebrating-hanukkah-at-the-white-house",
+    "citation": "https://en.wikipedia.org/wiki/1932_Maccabiah_Games",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1164,14 +1164,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-21": {
-    "questionText": "הסרט המצויר של אדם סנדלר על חנוכה, מ-2002, נקרא $blank$",
-    "realAnswer": "שמונה לילות מטורפים",
+    "questionText": "חיים נחמן ביאליק הציע לקרוא לסביבון $blank$, אבל המילה שלו לא נקלטה",
+    "realAnswer": "כרכר",
     "fakeAnswers": [
-      "ילד הלביבות",
-      "סביבון בשכונה",
-      "הנס של סנדלר"
+      "סובבון",
+      "סחרחר",
+      "גלגילון"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Eight_Crazy_Nights",
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1188,26 +1188,26 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-23": {
-    "questionText": "ב'סאטרדיי נייט לייב' ג'ון לוביץ גילם את $blank$, שהחליף את סנטה כשחלה",
-    "realAnswer": "הארי של חנוכה",
+    "questionText": "האותיות הראשונות של חמשת הבתים הראשונים ב'מעוז צור' יוצרות את השם $blank$",
+    "realAnswer": "מרדכי",
     "fakeAnswers": [
-      "הדוד מנורה",
-      "מלך הלביבות",
-      "דייב סביבון"
+      "מתתיהו",
+      "משה",
+      "מכבי"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Hanukkah_Harry",
+    "citation": "https://en.wikipedia.org/wiki/Ma%27oz_Tzur",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-24": {
-    "questionText": "התשובה היהודית לבובת 'שדון על המדף' האמריקאית, שהוצגה ב'שארק טנק', נקראת $blank$",
-    "realAnswer": "מנטש על ספסל",
+    "questionText": "המנגינה המוכרת של 'מעוז צור' עובדה משיר עם $blank$ ישן",
+    "realAnswer": "גרמני",
     "fakeAnswers": [
-      "רב על הרדיאטור",
-      "מצווה על המדף",
-      "שדון הלביבות"
+      "יווני",
+      "פולני",
+      "תימני"
     ],
-    "citation": "https://www.entrepreneur.com/article/240838",
+    "citation": "https://en.wikipedia.org/wiki/Ma%27oz_Tzur",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1248,26 +1248,26 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-28": {
-    "questionText": "עץ אשוח בבית יהודי בארה\"ב נקרא בצחוק $blank$",
-    "realAnswer": "שיח חנוכה",
+    "questionText": "את 'באנו חושך לגרש' כתבה $blank$, שייסדה אחר כך את להקת המחול ענבל",
+    "realAnswer": "שרה לוי-תנאי",
     "fakeAnswers": [
-      "אורן המכבים",
-      "אשוח כשר",
-      "עץ הנס"
+      "נעמי שמר",
+      "לאה גולדברג",
+      "דתיה בן דור"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Hanukkah_bush",
+    "citation": "https://he.wikipedia.org/wiki/%D7%91%D7%90%D7%A0%D7%95_%D7%97%D7%95%D7%A9%D7%9A_%D7%9C%D7%92%D7%A8%D7%A9",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-29": {
-    "questionText": "בניו יורק יש ליגה תחרותית של סביבונים בשם $blank$",
-    "realAnswer": "מייג'ור ליג דריידל",
+    "questionText": "בשיר 'אנו נושאים לפידים' שרים: 'נס לא קרה לנו, $blank$ לא מצאנו'",
+    "realAnswer": "פך שמן",
     "fakeAnswers": [
-      "גביע הסביבון",
-      "איגוד הסביבונאים",
-      "הסבב העולמי"
+      "חרב",
+      "מטמון",
+      "חנוכייה"
     ],
-    "citation": "https://www.villagevoice.com/oy-vey-2/",
+    "citation": "https://www.kipa.co.il/%D7%99%D7%94%D7%93%D7%95%D7%AA/%D7%97%D7%92%D7%99%D7%9D/%D7%97%D7%A0%D7%95%D7%9B%D7%94/1171898-0",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1320,14 +1320,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-34": {
-    "questionText": "מאז 1946 פרופסורים באוניברסיטת שיקגו עורכים ויכוח היתולי: לביבות נגד $blank$",
-    "realAnswer": "אוזני המן",
+    "questionText": "בשיר 'מי ימלל' שרים: 'הן בכל דור יקום הגיבור, $blank$ העם'",
+    "realAnswer": "גואל",
     "fakeAnswers": [
-      "בייגל",
-      "קניידלך",
-      "גפילטע פיש"
+      "מלך",
+      "שומר",
+      "אבי"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Latke%E2%80%93Hamantash_Debate",
+    "citation": "https://www.nli.org.il/en/items/NNL_MUSIC_AL997008899700805171/NLI",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1356,14 +1356,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-37": {
-    "questionText": "ב-2013, כשחנוכה חל יחד עם חג אמריקאי, ילד מניו יורק המציא $blank$: חנוכייה בצורת תרנגול הודו",
-    "realAnswer": "מנורקי",
+    "questionText": "יש שאומרים שהשם 'מכבי' הוא ראשי תיבות של $blank$",
+    "realAnswer": "מי כמוכה באלים ה'",
     "fakeAnswers": [
-      "הודוכייה",
-      "תרנגוכייה",
-      "פילגרימנורה"
+      "מגן כל בני ישראל",
+      "מכה כל בני יון",
+      "מלך כל בני ישראל"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Thanksgivukkah",
+    "citation": "https://en.wikipedia.org/wiki/Maccabees",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1392,38 +1392,38 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-40": {
-    "questionText": "וודי גאתרי כתב שירי חנוכה בהשראת חמותו, שהייתה $blank$",
-    "realAnswer": "משוררת ביידיש",
+    "questionText": "יש שמפרשים את המילה 'חנוכה' כ'חנו כ\"ה': בעשרים וחמישה בכסלו המכבים $blank$",
+    "realAnswer": "נחו מהמלחמה",
     "fakeAnswers": [
-      "קצבית כשרה",
-      "רבנית",
-      "אלופת לביבות"
+      "חנכו את הכותל",
+      "אכלו סופגניות",
+      "הדליקו משואה"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Aliza_Greenblatt",
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-41": {
-    "questionText": "ב-1993, אחרי שלבנה ניפצה חלון עם חנוכייה בעיר בילינגס שבמונטנה, אלפי שכנים $blank$",
-    "realAnswer": "תלו חנוכיות מנייר",
+    "questionText": "יהודה המכבי היה אחד מ$blank$ בניו של מתתיהו",
+    "realAnswer": "חמשת",
     "fakeAnswers": [
-      "סובבו סביבונים ברחוב",
-      "טיגנו לביבות בעירייה",
-      "הדליקו את בית ראש העיר"
+      "שלושת",
+      "שבעת",
+      "שמונת"
     ],
-    "citation": "https://www.niot.org/nios-video/not-our-town",
+    "citation": "https://en.wikipedia.org/wiki/Mattathias",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-42": {
-    "questionText": "מסיבת החנוכה הרשמית הראשונה בבית הלבן נערכה ב-2001, אצל הנשיא $blank$",
-    "realAnswer": "ג'ורג' וו. בוש",
+    "questionText": "את סמל המדינה, עם המנורה וענפי הזית, עיצבו ב-1948 $blank$",
+    "realAnswer": "האחים שמיר",
     "fakeAnswers": [
-      "רונלד רייגן",
-      "ג'ימי קרטר",
-      "הארי טרומן"
+      "האחים ריבלין",
+      "בוריס ש\"ץ",
+      "האחים כהן"
     ],
-    "citation": "https://www.whitehousehistory.org/lighting-the-menorah-celebrating-hanukkah-at-the-white-house",
+    "citation": "https://en.wikipedia.org/wiki/Emblem_of_Israel",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1524,38 +1524,38 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-51": {
-    "questionText": "השיר ההיתולי של טום לירר מעביר את חנוכה ל$blank$",
-    "realAnswer": "סנטה מוניקה",
+    "questionText": "את השם 'קברי המכבים' נתנו ב-1909 לקברים ליד מודיעין, שבכלל אינם של המכבים, $blank$",
+    "realAnswer": "תלמידי הגימנסיה הרצליה",
     "fakeAnswers": [
-      "לאס וגאס",
-      "טיחואנה",
-      "קלמזו"
+      "הברון רוטשילד",
+      "חיילים בריטים",
+      "אנשי אגודת מכבי"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Tom_Lehrer",
+    "citation": "https://www.ynet.co.il/articles/0,7340,L-4159055,00.html",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-52": {
-    "questionText": "ב-2010 להקת המכבייטס כבשה את הרשת עם שיר חנוכה שהיה פרודיה על $blank$",
-    "realAnswer": "דינמיט של טאיו קרוז",
+    "questionText": "במאה ה-17 בפולין, הורים נתנו לילדים דמי חנוכה כדי ש$blank$",
+    "realAnswer": "יעבירו אותם למורים",
     "fakeAnswers": [
-      "בייבי של ג'סטין ביבר",
-      "פוקר פייס של ליידי גאגא",
-      "היי סול סיסטר"
+      "יקנו נרות",
+      "ישחקו בסביבון",
+      "יחסכו לבר מצווה"
     ],
-    "citation": "https://en.wikipedia.org/wiki/The_Maccabeats",
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_gelt",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-53": {
-    "questionText": "את המילים לשיר 'שמונה ימי חנוכה' מ-2009 כתב $blank$",
-    "realAnswer": "הסנטור אורין האץ'",
+    "questionText": "לפי המסורת, את המילה 'סביבון' המציא בגיל חמש $blank$",
+    "realAnswer": "איתמר בן אב\"י",
     "fakeAnswers": [
-      "מיט רומני",
-      "ג'ו ביידן",
-      "ג'ון מקיין"
+      "חיים נחמן ביאליק",
+      "רחל המשוררת",
+      "דוד בן גוריון"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Orrin_Hatch",
+    "citation": "https://en.wikipedia.org/wiki/Dreidel",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1704,14 +1704,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-66": {
-    "questionText": "בקומדיה מ-2003, לוחם צדק יהודי בשם מרדכי ג'פרסון קארבר מציל את חנוכה מ$blank$",
-    "realAnswer": "הבן המרושע של סנטה",
+    "questionText": "התנועה שממנה צמחו אגודות מכבי התחילה ב-1895, במועדון התעמלות יהודי ב$blank$",
+    "realAnswer": "קושטא",
     "fakeAnswers": [
-      "הגרינץ'",
-      "לביבה ענקית",
-      "רוח הרפאים של אנטיוכוס"
+      "ברלין",
+      "וינה",
+      "יפו"
     ],
-    "citation": "https://en.wikipedia.org/wiki/The_Hebrew_Hammer_(film)",
+    "citation": "https://www.encyclopedia.com/religion/encyclopedias-almanacs-transcripts-and-maps/maccabi-world-union",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1728,14 +1728,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-68": {
-    "questionText": "את דמי החנוכה מהשוקולד ייצרה לראשונה בשנות ה-20 חברת הממתקים האמריקאית $blank$",
-    "realAnswer": "לופטס",
+    "questionText": "את המילים של 'נר לי, נר לי דקיק' כתב לוין קיפניס, ואת המנגינה $blank$",
+    "realAnswer": "דניאל סמבורסקי",
     "fakeAnswers": [
-      "הרשי'ס",
-      "מארס",
-      "טוטסי רול"
+      "נעמי שמר",
+      "סשה ארגוב",
+      "מרדכי זעירא"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Hanukkah_gelt",
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_music",
     "lang": "he",
     "pack": "hanukkah"
   },
