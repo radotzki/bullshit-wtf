@@ -833,7 +833,9 @@ puts the questions of the repository's reviewed question files there itself, in 
   - `functions/data/thanksgiving-questions.json`, ids `thanksgiving-26-en-NN` (English only: the id
     rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below);
   - `functions/data/christmas-questions.json`, ids `christmas-26-en-NN` (English only), every
-    question with `pack: "christmas"` (see "Christmas and New Year pack" below).
+    question with `pack: "christmas"` (see "Christmas and New Year pack" below);
+  - `functions/data/kids-questions.json`, ids `kids-26-en-NN` and `kids-26-he-NN`, every question
+    with `pack: "kids"` (see "Kids are playing" below).
 - **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
   body is exactly those files. Every key must be an id of the file it stands in, and every value a
   whole question in that id's language with that file's fields and no other, or nothing is sent for
@@ -898,6 +900,38 @@ release adds the questions itself (see "Question files the release adds").
 
 How to read it: games by `campaign = 'seo-en-thanksgiving'` in `opened_games` for the page, and
 games with `pack = 'thanksgiving'` for the pack (test games out).
+
+## Kids are playing
+
+A switch on the Create page, "🧒 Kids are playing" ("🧒 ילדים משחקים"), under the game's length,
+off by default. Nothing to run before or after the merge: the release adds the questions itself
+(see "Question files the release adds"), and the analytics use the `pack` column that is already
+there.
+
+- **The questions:** 20 English and 20 Hebrew strange-but-true facts a child of 8 to 12 can
+  follow, in `functions/data/kids-questions.json`, ids `kids-26-en-01..20` and `kids-26-he-01..20`,
+  each with `pack: "kids"`, so none appears in a normal game. Sources are quoted in
+  `docs/kids-questions-sources.md`.
+- **A pack without a season.** `kids` in `questionPacks` (`game-model.ts`) has no `season`, so it is
+  never ticked by default and never chosen for a crew rematch; only the switch (or
+  `/create-game?pack=kids`) asks for it. Its `perGame` is 99: every question of the game is a kid
+  question nobody in the room has seen, as many as there are (`pickWithPack`). Once the room has
+  seen them all, the rest of the game comes from the normal bank, as for any pack; a kid question is
+  never repeated. A family playing 7-question games nightly gets about three evenings of kid
+  questions per language.
+- **With Special (the seasonal pack):** one pack a game. While the switch is on, the Special row
+  leaves the form and the game plays kid questions only; Hanukkah or Christmas questions are not
+  mixed in. Switched off, the Special row comes back as it was.
+- **What the table sees:** the line under the switch, while it is on, says what it does and that
+  after the 20 the usual questions follow. The lobby shows no pack line for a kids game, so nothing
+  on the table's screens promises kid questions in a game that has run out of them.
+- **Replay** keeps the switch (it carries the pack); a crew rematch does not (it takes the season's
+  pack, as before).
+- **Analytics:** `pack = 'kids'` on `opened_games` and `closed_games`, the column the Hanukkah pack
+  added. No new column. See `functions/bigquery/2026-11-kids.sql`.
+- **Until the first release after the merge has added the questions,** a kids game is a normal game.
+- Tested by `functions/test/kids-questions.test.js`, `game/test/kids-switch.test.js` and
+  `.github/scripts/load-pack-questions.test.js`.
 
 ## Christmas and New Year pack
 

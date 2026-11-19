@@ -33,7 +33,15 @@
                     </label>
                 </p>
 
-                <ng-container *ngIf="pack">
+                <label>{{ t.players }}</label>
+                <p class="control">
+                    <label class="checkbox vertical kids-option">
+                        <input type="checkbox" name="kids" [(ngModel)]="kids"> {{ t.kids }}
+                    </label>
+                </p>
+                <p class="kids-note" *ngIf="kids">{{ t.kidsNote }}</p>
+
+                <ng-container *ngIf="pack && !kids">
                     <label>{{ t.special }}</label>
                     <p class="control">
                         <label class="checkbox vertical pack-option">

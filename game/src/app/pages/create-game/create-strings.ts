@@ -18,6 +18,10 @@ export interface CreateStrings {
     /** The word after the number of questions: "7 questions". */
     questions: string;
     special: string;
+    /** The "Kids are playing" switch: its heading, its words, and the line under it while it is on. */
+    players: string;
+    kids: string;
+    kidsNote: string;
     create: string;
     error: string;
 }
@@ -33,6 +37,9 @@ const en: CreateStrings = {
     length: 'Length:',
     questions: 'questions',
     special: 'Special:',
+    players: 'Players:',
+    kids: '🧒 Kids are playing',
+    kidsNote: 'Questions kids of 8 to 12 get. After all 20, the usual questions.',
     create: 'CREATE',
     error: 'oops, something went wrong. Please try again',
 };
@@ -48,6 +55,9 @@ const he: CreateStrings = {
     length: 'אורך המשחק:',
     questions: 'שאלות',
     special: 'מיוחד:',
+    players: 'מי משחק:',
+    kids: '🧒 ילדים משחקים',
+    kidsNote: 'שאלות שילדים בני 8 עד 12 יבינו. אחרי כל ה־20, השאלות הרגילות.',
     create: 'פתיחת משחק',
     error: 'אופס, משהו השתבש. נסו שוב',
 };

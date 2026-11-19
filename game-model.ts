@@ -831,10 +831,12 @@ export function crewLeaderLine(crew: Crew, locale: string): string {
  * `seasonIn`, when set, are the only game languages that get the pack by default in its season
  * (default: every language it fits). In other languages it is still playable by link. Seasons may
  * overlap only for packs that no one language gets by default, so a game has one pack a day.
+ * A pack without `season` (kids) is never on by default: the create page's own switch asks for it.
  */
 export interface QuestionPack {
     perGame: number;
-    season: { from: string; to: string };
+    // No season: never on by default, only when asked for (the kids pack, by its own switch).
+    season?: { from: string; to: string };
     label: { en: string; he: string };
     locales?: string[];
     seasonIn?: string[];
@@ -872,7 +874,31 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         locales: ['en'],
         icon: '🎄',
     },
+    // "Kids are playing" (functions/data/kids-questions.json): 20 strange-but-true facts in each
+    // language that a child of 8 to 12 can follow. Not seasonal: the create page's own switch asks for
+    // it, and it takes the place of the seasonal pack in that game (one pack a game). Every question
+    // of a kids game is a kid question nobody in the room has seen; once the room has seen them all,
+    // the rest of the game comes from the normal bank (pickWithPack), as the switch's line says.
+    kids: {
+        perGame: 99,
+        label: { en: 'Kids are playing', he: 'ילדים משחקים' },
+        icon: '🧒',
+    },
 };
+
+/** The pack the create page's "Kids are playing" switch asks for. */
+export const KIDS_PACK = 'kids';
+
+/**
+ * The pack a game made on the create page asks for: kids when "Kids are playing" is on (it takes
+ * the seasonal pack's place, one pack a game), else the Special pack on offer if it is ticked.
+ */
+export function chosenPack(kids: boolean, usePack: boolean, offered: string): string | undefined {
+    if (kids) {
+        return KIDS_PACK;
+    }
+    return usePack && offered ? offered : undefined;
+}
 
 export function isPack(id: any): boolean {
     return typeof id === 'string' && Object.prototype.hasOwnProperty.call(questionPacks, id);
@@ -895,7 +921,7 @@ export function packIcon(id: any): string {
 /** Whether a game in `locale` gets pack `id` by default in its season. */
 export function packInSeasonFor(id: any, locale: any): boolean {
     const only = isPack(id) && questionPacks[id].seasonIn;
-    return packFits(id, locale) && (!only || only.indexOf(locale) >= 0);
+    return packFits(id, locale) && !!questionPacks[id].season && (!only || only.indexOf(locale) >= 0);
 }
 
 /**
@@ -907,7 +933,7 @@ export function seasonalPack(now: number = Date.now(), locale?: string): string 
     const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
     return Object.keys(questionPacks).find(id => {
         const s = questionPacks[id].season;
-        return day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
+        return !!s && day >= s.from && day <= s.to && (locale === undefined || packInSeasonFor(id, locale));
     });
 }
 
