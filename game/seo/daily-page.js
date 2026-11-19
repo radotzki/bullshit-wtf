@@ -11,6 +11,8 @@
 const fs = require('fs');
 const path = require('path');
 const strings = require('./daily-strings');
+// The page with the line of code that puts this puzzle on another site (embed-page.js).
+const embedWords = require('./embed-strings');
 // Where a visit started: the same note as every search page writes (see arrival-note.js), so a
 // puzzle player who goes on to start a game is counted by the site that sent them here.
 const { ARRIVAL_NOTE } = require('./arrival-note');
@@ -196,6 +198,8 @@ function render(lang) {
     .see-board, .other-group { margin: 12px 0 0; text-align: center; font-size: 15px; }
     .erased { margin: 18px 0 0; text-align: center; font-size: 13px; color: #6b5f59; }
     .send.score { margin-top: 18px; }
+    .embed-link { margin: 28px 0 0; text-align: center; font-size: 13px; }
+    .embed-link a { color: #7a5a4a; }
     body.hanukkah header { background: #24407e; }
     body.hanukkah h1.kicker, body.hanukkah h2 { color: #24407e; }
     body.hanukkah .answer { border-color: #24407e; }
@@ -220,6 +224,7 @@ function render(lang) {
     <p class="past-link"><a href="${s.path}/past">${esc(s.pastLink)}</a></p>
     <p class="foot" id="d-foot">${esc(s.foot)}</p>
     <noscript><p class="note">${esc(s.noscript)}</p></noscript>
+    <p class="embed-link"><a href="${embedWords[s.lang].path}">${esc(embedWords[s.lang].link)}</a></p>
   </main>
   <script>window.BSDaily = ${json(config)};</script>
   <script>

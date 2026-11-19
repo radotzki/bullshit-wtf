@@ -7,6 +7,8 @@ const path = require('path');
 const pages = require('./pages');
 // The daily puzzle (/daily, /he/daily) is written by build-daily.js; every page here links to it.
 const dailyWords = require('./daily-strings');
+// The page that hands out the daily puzzle's line of code (embed-page.js): linked from every footer.
+const embedWords = require('./embed-strings');
 
 const SITE = 'https://bullshit.wtf';
 const IMAGE = 'https://res.cloudinary.com/bullshit-wtf/image/upload/v1489440712/logo_y0uyd5.png';
@@ -166,7 +168,7 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
       <a href="${dailyWords[s.lang].path}?via=daily-seo">${esc(dailyWords[s.lang].seoLink)}</a>
     </nav>
   </main>
-  <footer>${esc(s.footer)}</footer>
+  <footer>${esc(s.footer)} <a href="${embedWords[s.lang].path}">${esc(embedWords[s.lang].link)}</a></footer>
   <script>
     // Keep a post's ?via= tag on every link of this page that stays on the site (the two buttons,
     // the logo, the links in the text, the other pages and the other language), so the game
