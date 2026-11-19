@@ -136,8 +136,27 @@ test('placement: under the first screen on both homes, in the home\'s language',
     const block = phone.slice(phone.indexOf('<ng-container *ngIf="picture">'), phone.indexOf('<ng-container *ngIf="!picture">'));
     assert.ok(block.indexOf('<app-demo-clip [lang]="t.lang">') > block.indexOf('*ngTemplateOutlet="join"'));
     assert.strictEqual((phone.match(/<app-demo-clip/g) || []).length, 1);
-    // Computer: right after the front door, before the rest.
+    // Computer: after the front door and after the season line and the row of search pages, which
+    // stay on the first screen of a 1280 x 720 computer; the clip starts just under it.
     assert.strictEqual((computer.match(/<app-demo-clip/g) || []).length, 1);
     const at = computer.indexOf('<app-demo-clip [lang]="t.lang">');
-    assert.ok(at > computer.indexOf('class="front-door"') && at < computer.indexOf('<div class="below">'));
+    assert.ok(at > computer.indexOf('class="front-door"'));
+    assert.ok(at > computer.indexOf('<div class="below">'));
+    assert.ok(at > computer.indexOf('class="season"') && at > computer.indexOf('class="search-links"'));
+});
+
+test('phone: the season line sits under Join, so Join Game stays on a small phone\'s first screen', () => {
+    // One season line, in a template placed right after Join in both menus.
+    assert.strictEqual((phone.match(/class="season"/g) || []).length, 1);
+    const tpl = phone.indexOf('<ng-template #season_line>');
+    assert.ok(tpl > 0 && phone.indexOf('class="season"') > tpl);
+    // Never played: Join, then the season line, then the clip.
+    const block = phone.slice(phone.indexOf('<ng-container *ngIf="picture">'), phone.indexOf('<ng-container *ngIf="!picture">'));
+    const join = block.indexOf('*ngTemplateOutlet="join"');
+    const line = block.indexOf('*ngTemplateOutlet="season_line"');
+    assert.ok(join > 0 && line > join && block.indexOf('<app-demo-clip') > line);
+    assert.ok(block.indexOf('*ngTemplateOutlet="create"') < join);
+    // Played before: after the two buttons (Create and Join, in either order).
+    const back = phone.slice(phone.indexOf('<ng-container *ngIf="!picture">'), phone.indexOf('<ng-template #join>'));
+    assert.ok(back.indexOf('*ngTemplateOutlet="season_line"') > back.lastIndexOf("first === 'create' ? join : create"));
 });
