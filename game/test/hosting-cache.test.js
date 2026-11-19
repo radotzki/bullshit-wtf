@@ -49,7 +49,13 @@ test('hashed scripts, styles, images and the function routes are left alone', ()
 });
 
 test('every function rewrite stays out of the no-cache rules', () => {
-    const fnPaths = hosting.rewrites.filter(r => r.function).map(r => r.source.replace('*', 'ABCD'));
+    // A rewrite by regex (the past daily puzzles) is tried on addresses it must match.
+    const samples = ['/daily/past', '/he/daily/past', '/daily/2026-11-18', '/he/daily/2026-11-18'];
+    const fnPaths = [].concat(...hosting.rewrites.filter(r => r.function).map(r => r.source
+        ? [r.source.replace('*', 'ABCD')]
+        : samples.filter(p => new RegExp(r.regex).test(p))));
+    assert.ok(hosting.rewrites.filter(r => r.regex && r.function).every(r => samples.some(p => new RegExp(r.regex).test(p))),
+        'each regex rewrite to a function has a sample address here');
     assert.ok(fnPaths.length >= 4);
     for (const p of fnPaths) {
         assert.strictEqual(cacheControl(p), null, p);

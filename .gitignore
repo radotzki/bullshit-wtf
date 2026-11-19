@@ -8,6 +8,7 @@ functions/src/name-flag.ts
 game/src/app/name-lists.ts
 functions/src/name-lists.ts
 game/src/app/daily-launch.ts
+functions/src/plain-scripts.ts
 
 # compiled output
 game/dist

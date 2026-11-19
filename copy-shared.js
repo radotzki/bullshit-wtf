@@ -7,6 +7,10 @@
 // the earliest `day` in functions/data/daily-questions.json, so the home's puzzle line
 // (pages/landing/daily-line.ts) shows from the same date as the puzzle, and none of the
 // questions or answers reach the game's bundle.
+// For the functions only, it writes plain-scripts.ts: the two scripts every plain page of the site
+// carries in <head> (the arrival note of game/seo/arrival-note.js, and the visit beacon between the
+// BS:VISIT markers of game/src/index.html), for the past daily puzzle pages the dailyPast function
+// serves (controllers/daily-past.ts), so those pages count visits and arrivals like the search pages.
 const fs = require('fs');
 const path = require('path');
 
@@ -34,4 +38,16 @@ if (path.resolve(dest).startsWith(path.join(__dirname, 'game') + path.sep)) {
         '// Made by copy-shared.js from functions/data/daily-questions.json. Do not edit.\n' +
         '// The daily puzzle\'s first day in each language (null: no question yet).\n' +
         'export const DAILY_FIRST_DAY: { en: string | null; he: string | null } = ' + JSON.stringify(first) + ';\n');
+}
+
+if (path.resolve(dest).startsWith(path.join(__dirname, 'functions') + path.sep)) {
+    const { ARRIVAL_NOTE } = require(path.join(__dirname, 'game', 'seo', 'arrival-note.js'));
+    const index = fs.readFileSync(path.join(__dirname, 'game', 'src', 'index.html'), 'utf8');
+    const m = /<!-- BS:VISIT:START -->\s*(<script>[\s\S]*?<\/script>)\s*<!-- BS:VISIT:END -->/.exec(index);
+    fs.writeFileSync(path.join(dest, 'plain-scripts.ts'),
+        '// Made by copy-shared.js from game/seo/arrival-note.js and game/src/index.html. Do not edit.\n' +
+        '/** The arrival note every plain page writes into <head>. */\n' +
+        'export const ARRIVAL_NOTE = ' + JSON.stringify(ARRIVAL_NOTE) + ';\n' +
+        '/** The visit beacon of the site\'s pages (empty if the game\'s page carries none). */\n' +
+        'export const VISIT_BEACON = ' + JSON.stringify(m ? m[1] : '') + ';\n');
 }

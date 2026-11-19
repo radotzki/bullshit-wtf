@@ -9,6 +9,14 @@
         "function": "daily"
       },
       {
+        "regex": "^/(he/)?daily/(past|\\d{4}-\\d{2}-\\d{2})/?$",
+        "function": "dailyPast"
+      },
+      {
+        "source": "/sitemap-daily.xml",
+        "function": "dailyPast"
+      },
+      {
         "source": "/_v",
         "function": "visit"
       },
