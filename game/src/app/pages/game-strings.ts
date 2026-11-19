@@ -63,6 +63,8 @@ export interface GameStrings {
     // Writing a lie.
     send: string;
     tooCloseToTruth: string;
+    // A lie made only of the truth's words ("Germany" for "Nazi Germany"): not the truth, but too close.
+    partOfTruth: string;
     answerSubmitted: string;
 
     // Picking an answer.
@@ -161,6 +163,7 @@ const en: GameStrings = {
 
     send: 'SEND',
     tooCloseToTruth: 'You entered the correct answer! Try something else',
+    partOfTruth: 'Too close to the truth! Try another lie',
     answerSubmitted: 'Your answer has been submitted',
 
     whatWasTheQuestion: 'WHAT WAS THE QUESTION AGAIN?',
@@ -245,6 +248,7 @@ const he: GameStrings = {
 
     send: 'שליחה',
     tooCloseToTruth: 'זאת התשובה הנכונה! נסו משהו אחר',
+    partOfTruth: 'קרוב מדי לתשובה הנכונה! נסו שקר אחר',
     answerSubmitted: 'התשובה נשלחה',
 
     whatWasTheQuestion: 'מה הייתה השאלה?',

@@ -92,10 +92,10 @@
             var message = function () {
                 var typed = core.tidy(lie.value);
                 var who = core.tidy(name.value);
-                var why = typed ? core.screenLie(typed, who, page.truth(), page.houseLies(), page.shared.isSameAnswer, page.shared.nameFlag)
+                var why = typed ? core.screenLie(typed, who, page.truth(), page.houseLies(), page.shared.isSameAnswer, page.shared.nameFlag, page.shared.isPartOfTruth)
                     : (who && (page.shared.nameFlag(who) || core.carriesContact(who)) ? 'refused' : null);
                 if (!why && typed && !who) { why = 'name'; }
-                say(why === 'truth' ? s.lieIsTruth : why === 'taken' ? s.lieIsTaken : why === 'refused' ? s.lieRefused : why === 'name' ? s.nameNeeded : '');
+                say(why === 'truth' ? s.lieIsTruth : why === 'close' ? s.lieTooClose : why === 'taken' ? s.lieIsTaken : why === 'refused' ? s.lieRefused : why === 'name' ? s.nameNeeded : '');
                 if (why) {
                     (why === 'name' ? name : lie).focus();
                     current = null;
@@ -398,11 +398,11 @@
                 var n = core.tidy(name.value);
                 var truth = r.board ? r.board.truth.text : (page.today() === r.day ? page.truth() : '');
                 var taken = r.taken || (page.today() === r.day ? page.houseLies() : []);
-                var why = l ? core.screenLie(l, n, truth, taken, page.shared.isSameAnswer, page.shared.nameFlag)
+                var why = l ? core.screenLie(l, n, truth, taken, page.shared.isSameAnswer, page.shared.nameFlag, page.shared.isPartOfTruth)
                     : (n && (page.shared.nameFlag(n) || core.carriesContact(n)) ? 'refused' : null);
                 if (!why && l && !n) { why = 'name'; }
                 if (!why && n && (r.names || []).some(function (x) { return x.toLowerCase() === n.toLowerCase(); })) { why = 'name-taken'; }
-                say(why === 'truth' ? s.lieIsTruth : why === 'taken' ? s.lieIsTaken : why === 'refused' ? s.lieRefused
+                say(why === 'truth' ? s.lieIsTruth : why === 'close' ? s.lieTooClose : why === 'taken' ? s.lieIsTaken : why === 'refused' ? s.lieRefused
                     : why === 'name' ? s.nameNeeded : why === 'name-taken' ? core.fill(s.nameTaken, { name: n }) : '');
                 if (why) {
                     (why === 'name' || why === 'name-taken' ? name : lie).focus();
