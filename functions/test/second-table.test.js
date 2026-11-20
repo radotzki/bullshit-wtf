@@ -309,3 +309,23 @@ test('newGame answers a press with the open second table (join), before and afte
     assert.match(body, /sitAtSecondTable\(req\.body\.secondOf, req\.body\.another\)[\s\S]*?return res\.send\(\{ pin: open\.pin, join: true \}\);[\s\S]*?await newGame\(/);
     assert.match(body, /const kept = await keepSecondTable\(req\.body\.secondOf, pin\);[\s\S]*?!kept && await sitAtSecondTable\([\s\S]*?return res\.send\(\{ pin: first\.pin, join: true \}\);/);
 });
+
+test('a second table that ended and rematched: a late colleague is sent to its rematch, not to a table of one', async () => {
+    // The Israeli office party walk-through: a phones-only second table of three ended before question 5 of
+    // the big-screen table, and the colleague who came in then was offered only START A SECOND TABLE.
+    const full = lobby({ locale: 'he' });
+    await fill(full);
+    const a = await startSecond(full, 'Sam', 'u-sam');
+    db.games[a.pin].state = { id: 6, timestamp: Date.now() };
+    assert.strictEqual(await openSecondTable(full), undefined, 'ended, no rematch yet');
+    const again = lobby({ locale: 'he' });
+    db.games[again].players = { h: { nickname: 'Sam', host: true, score: 0 } };
+    db.games[a.pin].fork = again;
+    assert.deepStrictEqual(await openSecondTable(full), { pin: again, host: 'Sam' });
+    assert.deepStrictEqual((await refusal(full, 'Inbal', 'u-inbal')).secondTable.join, { pin: again, host: 'Sam' });
+    // A rematch that ended or filled is not offered; nor is an odd fork value.
+    db.games[again].state = { id: 6, timestamp: Date.now() };
+    assert.strictEqual(await openSecondTable(full), undefined);
+    db.games[a.pin].fork = '../x';
+    assert.strictEqual(await openSecondTable(full), undefined);
+});

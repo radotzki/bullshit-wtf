@@ -115,11 +115,20 @@ export async function openSecondTable(fullPin: string, now: number = Date.now())
             return undefined;
         }
         const game = await readGame(kept.pin);
-        if (!isOpenTable(game, now)) {
-            return undefined;
+        if (isOpenTable(game, now)) {
+            const host = hostName(game);
+            return host ? { pin: kept.pin, host } : { pin: kept.pin };
         }
-        const host = hostName(game);
-        return host ? { pin: kept.pin, host } : { pin: kept.pin };
+        // A second table of a few phones, with no big screen, ends well before a big-screen table of 12
+        // (the Israeli office party walk-through: it ended before question 5 of 7). Its players then press
+        // REMATCH, and a colleague who comes late belongs in that rematch, not at a table of one.
+        const fork = game && typeof game.fork === 'string' && /^[A-Za-z0-9]{3,12}$/.test(game.fork) ? game.fork : null;
+        const next = fork && await readGame(fork);
+        if (next && isOpenTable(next, now)) {
+            const host = hostName(next);
+            return host ? { pin: fork, host } : { pin: fork };
+        }
+        return undefined;
     } catch (e) {
         console.error(`[PIN: ${fullPin}] open second table not read`, e && e.message);
         return undefined;
