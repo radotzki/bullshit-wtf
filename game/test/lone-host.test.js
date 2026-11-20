@@ -212,3 +212,20 @@ test('the nudge has its words in both languages', () => {
     assert.match(loneHostStrings('en').nudge, /send the link/i);
     assert.match(loneHostStrings('he').nudge, /שלחו את הקישור/);
 });
+
+test('a seasonal banner costs a computer host no height: a chip on the count\'s line, the line only on phones and the big screen', () => {
+    const dir = path.join(__dirname, '..', 'src', 'app', 'pages', 'game-staging');
+    const html = fs.readFileSync(path.join(dir, 'game-staging.component.html'), 'utf8');
+    const scss = fs.readFileSync(path.join(dir, 'game-staging.component.scss'), 'utf8');
+    // The chip sits inside the lobby's status, beside the count, never on the big screen.
+    const status = html.slice(html.indexOf('class="lobby-status"'), html.indexOf('class="pack-banner"'));
+    assert.match(status, /class="lobby-count-row"/);
+    assert.match(status, /\*ngIf="packBanner && !presenter" class="pack-chip"/);
+    // The words are the same as the line's, whatever the season (packBanner in lobby-host.ts).
+    assert.match(status, /\{\{ packIcon \}\} \{\{ packBanner \}\}/);
+    // On a computer the line is hidden and the chip shown, in px; on a phone the chip is hidden.
+    const wide = scss.slice(scss.indexOf('@media screen and (min-width: 769px) {\n    .pack-banner'));
+    assert.match(wide, /\.pack-banner:not\(\.presenter\) \{\s*display: none;/);
+    assert.match(wide, /\.pack-chip \{\s*display: inline-block;[\s\S]*?font-size: 16px;/);
+    assert.match(scss, /\n\.pack-chip \{\s*display: none;\s*\}/);
+});

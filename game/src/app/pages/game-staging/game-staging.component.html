@@ -13,9 +13,14 @@
     <div *ngIf="lobby && players?.length" class="lobby-status" [class.presenter]="presenter" [attr.dir]="lobby.rtl ? 'rtl' : null">
         <span class="lobby-message" [class.alone]="lobby.alone" [class.nudge]="nudge"> {{lobby.message}} </span>
         <span *ngIf="lobby.sub" class="lobby-sub"> {{lobby.sub}} </span>
-        <span *ngIf="lobby.count" class="lobby-count"> {{lobby.count}} </span>
+        <!-- On a computer the season's banner rides on the count's line as a chip (game-staging.component.scss). -->
+        <span *ngIf="lobby.count || (packBanner && !presenter)" class="lobby-count-row">
+            <span *ngIf="lobby.count" class="lobby-count"> {{lobby.count}} </span>
+            <span *ngIf="packBanner && !presenter" class="pack-chip" [attr.dir]="locale === 'he' ? 'rtl' : null"> {{ packIcon }} {{ packBanner }} </span>
+        </span>
     </div>
 
+    <!-- Phones and the big screen: the banner on its own line. A host's computer shows the chip above instead. -->
     <div *ngIf="packBanner" class="pack-banner" [class.presenter]="presenter" [attr.dir]="locale === 'he' ? 'rtl' : null">
         {{ packIcon }} {{ packBanner }}
     </div>

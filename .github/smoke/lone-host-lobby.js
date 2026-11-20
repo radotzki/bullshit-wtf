@@ -99,10 +99,13 @@ async function join(phone, base, pin, he) {
 // 1920), in both halves and before this change: that much is let through, so the check is about the help alone.
 const noSideScroll = (page) => page.evaluate(() => document.scrollingElement.scrollWidth <= window.innerWidth + (window.innerWidth >= 769 ? 12 : 1));
 
+/** A lobby's name in the summary and in ONLY=. */
+const lobbyTag = (l) => `${l.locale}-${l.testGame ? 'test' : l.wantNew ? 'new' : 'classic'}-${l.device}${l.noPack ? '-nopack' : ''}`;
+
 /** One lobby: a host on `device`, in `locale`, in the half asked for, then guests up to four players. */
-async function lobby(browser, base, { locale, wantNew, device, testGame }, problems) {
+async function lobby(browser, base, { locale, wantNew, device, testGame, noPack }, problems) {
     const he = locale === 'he';
-    const tag = `${locale}-${testGame ? 'test' : wantNew ? 'new' : 'classic'}-${device}`;
+    const tag = lobbyTag({ locale, wantNew, device, testGame, noPack });
     const check = (ok, text) => { if (!ok) problems.push(`${tag}: ${text}`); };
     const words = help.loneHostStrings(locale);
     const names = NAMES[locale];
@@ -124,7 +127,8 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
         let counter = await db('GET', 'gameCounter');
         while (half(pinOf(counter + 1)) !== wantNew) counter++;
         await db('PUT', 'gameCounter', counter);
-        await host.page.goto(`${base}/create-game${testGame ? '?via=test' : ''}`);
+        const query = [testGame ? 'via=test' : '', noPack ? 'pack=none' : ''].filter(Boolean).join('&');
+        await host.page.goto(`${base}/create-game${query ? '?' + query : ''}`);
         await host.page.locator('input[name="locale"]').nth(he ? 1 : 0).check();
         await host.page.locator('input[name="length"]').first().check();
         await host.page.locator('form button[type="submit"]').first().click();
@@ -150,6 +154,14 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
 
         // ---- alone ----
         check(await until('the invite', async () => (await visible(card)) || (await visible(inline))), 'no invite on the page of a host alone');
+        // The season's banner (a pack game, e.g. Thanksgiving in late November): a line of its own on a
+        // phone, a chip on the count's line on a computer, so it costs the card no height there.
+        await sleep(500);
+        const banner = await visible(page.locator('.pack-banner'));
+        const chip = await visible(page.locator('.pack-chip'));
+        result.banner = computer ? (chip ? 'chip' : 'none') : (banner ? 'line' : 'none');
+        check(computer ? !banner : !chip, `alone: the season's ${computer ? 'line' : 'chip'} shows on a ${device}`);
+        if (noPack) check(!banner && !chip, 'alone: a game with no pack shows the season\'s banner');
         check(await visible(tryAlone), 'alone: the "try alone" link is gone');
         check(!(await visible(start)), 'alone: START is in the header (today it waits behind the link)');
 
@@ -357,9 +369,10 @@ async function main() {
             }
         }
         lobbies.push({ locale: 'en', device: 'computer', wantNew: true, testGame: true });
+        // The same computer lobby with no seasonal pack: the card must fit with the banner and without.
+        lobbies.push({ locale: 'en', device: 'computer', wantNew: true, noPack: true });
         for (const l of lobbies) {
-            const tag = `${l.locale}-${l.testGame ? 'test' : l.wantNew ? 'new' : 'classic'}-${l.device}`;
-            if (only && !only.includes(tag)) continue;
+            if (only && !only.includes(lobbyTag(l))) continue;
             results.push(await lobby(browser, base, l, problems));
         }
         console.log('\nRESULT ' + JSON.stringify({ build: DIST, lobbies: results, problems }, null, 2));

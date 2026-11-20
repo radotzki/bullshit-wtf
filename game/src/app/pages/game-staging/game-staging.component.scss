@@ -194,6 +194,42 @@
     }
 }
 
+// A computer that isn't the big screen: the page's rem is a headline's size there
+// (styles/font-size.scss), so the banner on a line of its own took ~70 px and pushed the lone host's
+// invite card below a 1280x720 screen. There the banner becomes a slim chip on the count's line
+// ("1 player in"), which costs no height whatever the season's words. Phones and the big screen
+// keep the line above.
+.lobby-count-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: 14px;
+}
+
+.pack-chip {
+    display: none;
+}
+
+@media screen and (min-width: 769px) {
+    .pack-banner:not(.presenter) {
+        display: none;
+    }
+
+    .pack-chip {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 8px;
+        background: #1f3b73;
+        color: #f3d467;
+        // In px like the invite card: the page's rem is a headline's size on a computer.
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 1.4;
+        letter-spacing: .3px;
+    }
+}
+
 // Only on a phone whose nickname was swapped: a toast, not a dialog, so nothing has to be tapped.
 .name-toast {
     position: fixed;
