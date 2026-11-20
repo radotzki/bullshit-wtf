@@ -135,6 +135,10 @@ export interface GameScheme {
     // INVITE ANOTHER GROUP: the table each seat of this finished game made, so a second call from the
     // same seat (a reload, a second tap) gets the same table and link. Server only (createTable).
     tables?: { [pid: string]: string };
+    // START A SECOND TABLE: the second table a phone refused at this full table started (its PIN, and when),
+    // so the next refused phones are offered JOIN <host>'S SECOND TABLE while it waits in its lobby with a
+    // free seat. Server only (functions: second-table.ts); no rule opens it.
+    secondTable?: { pin: string; at: number };
     // The round-1 lie helper is on for this game. Set when the game is made: every game since
     // 13 November 2026, half of them in the 50/50 test before that.
     coach?: boolean;

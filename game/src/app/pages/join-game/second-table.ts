@@ -1,0 +1,125 @@
+/**
+ * START A SECOND TABLE: what the join page offers a phone refused at a full table (12 seats taken)
+ * instead of only "Sorry, game is full". One tap makes a new game like the full one (its language,
+ * length and seasonal pack, which the server sends with GAME_IS_FULL; functions' second-table.ts),
+ * joins it as the host under the name this phone typed, and lands on the lobby, where the invite is
+ * the screen. The phone then sends it to the others who didn't get a seat.
+ * On Monday 16 November a group of 15 met the limit: three phones were refused 20 times between them.
+ * Kept free of Angular so it can be tested in Node.
+ */
+import { isTestTag } from '../../services/join-source';
+
+/** The tag of a second table's game, so these tables can be counted (opened_games.campaign). */
+export const SECOND_TABLE_TAG = 'second-table';
+
+const LENGTHS = [5, 7, 9];
+
+/** The game to make for a refused phone. */
+export interface SecondTableOffer {
+    locale: 'he' | 'en';
+    count: number;
+    pack?: string;
+    campaign: string;
+    /**
+     * JOIN <host>'S SECOND TABLE: the second table a phone refused at this full table already started, while
+     * it waits in its lobby with a free seat (functions' openSecondTable). One tap joins it, so phones refused
+     * together play at one second table instead of each at a table of one. Absent: nobody started one yet.
+     */
+    join?: SecondTableJoin;
+}
+
+export interface SecondTableJoin {
+    pin: string;
+    /** Its host's name, when the host has joined. */
+    host?: string;
+}
+
+/** The open second table in the server's offer, or undefined when it has none or it looks wrong. */
+function readJoin(j: any): SecondTableJoin | undefined {
+    if (!j || typeof j !== 'object' || typeof j.pin !== 'string' || !/^[A-Za-z0-9]{3,12}$/.test(j.pin)) {
+        return undefined;
+    }
+    const join: SecondTableJoin = { pin: j.pin.toUpperCase() };
+    const host = typeof j.host === 'string' ? j.host.replace(/\s+/g, ' ').trim().slice(0, 20) : '';
+    if (host) {
+        join.host = host;
+    }
+    return join;
+}
+
+/**
+ * The second table in a failed join's answer: null unless the table was full. An older server sends
+ * GAME_IS_FULL alone: the second table is then in the page's own language, 7 questions, no pack.
+ */
+export function readSecondTable(err: any, pageLang: string): SecondTableOffer | null {
+    if (!err || err.code !== 'GAME_IS_FULL') {
+        return null;
+    }
+    const s = err.secondTable && typeof err.secondTable === 'object' ? err.secondTable : {};
+    const lang = s.locale === 'he' || s.locale === 'en' ? s.locale : pageLang;
+    const offer: SecondTableOffer = {
+        locale: lang === 'he' ? 'he' : 'en',
+        count: LENGTHS.indexOf(s.count) >= 0 ? s.count : 7,
+        campaign: typeof s.campaign === 'string' && /^[a-z0-9][a-z0-9-]{0,39}$/.test(s.campaign) ? s.campaign : SECOND_TABLE_TAG,
+    };
+    if (typeof s.pack === 'string' && /^[a-z0-9-]{1,40}$/.test(s.pack)) {
+        offer.pack = s.pack;
+    }
+    const join = readJoin(s.join);
+    if (join) {
+        offer.join = join;
+    }
+    return offer;
+}
+
+/**
+ * The tag the second table's game is made with: a play-test tab's own test tag (?via=test, test-<name>)
+ * wins, so a test stays out of every count; else the offer's (second-table, or the full test table's tag).
+ */
+export function secondTableCampaign(offer: SecondTableOffer, tabCampaign: string | null): string {
+    return isTestTag(tabCampaign) ? tabCampaign : offer.campaign;
+}
+
+export interface SecondTableStrings {
+    title: string;
+    text: string;
+    start: string;
+    again: string;
+    error: string;
+    /** With an open second table: the line under the title, its button, and START ANOTHER TABLE below it. */
+    joinText: (host?: string) => string;
+    join: (host?: string) => string;
+    another: string;
+}
+
+const en: SecondTableStrings = {
+    title: 'This table is full',
+    text: '12 players is the most one game holds. '
+        + 'One of you starts a second table and sends its link to the others who didn\'t get a seat.',
+    start: 'START A SECOND TABLE',
+    again: 'TRY THIS TABLE AGAIN',
+    error: 'Couldn\'t start a table. Try again.',
+    joinText: host => host
+        ? `${host} started a second table for those who didn't get a seat. Join it, and play there.`
+        : 'A second table is waiting for those who didn\'t get a seat. Join it, and play there.',
+    join: host => host ? `JOIN ${host.toUpperCase()}'S SECOND TABLE` : 'JOIN THE SECOND TABLE',
+    another: 'START ANOTHER TABLE',
+};
+
+const he: SecondTableStrings = {
+    title: 'השולחן הזה מלא',
+    text: 'במשחק אחד יש מקום ל-12 שחקנים לכל היותר. אחד מכם פותח שולחן שני ושולח את הקישור למי שלא קיבל מקום.',
+    start: 'פתיחת שולחן שני',
+    again: 'לנסות שוב את השולחן הזה',
+    error: 'לא הצלחנו לפתוח שולחן. נסו שוב.',
+    // Without a verb in the past (פתח/פתחה), so it fits a host of any gender.
+    joinText: host => host
+        ? `נפתח שולחן שני למי שלא קיבל מקום, אצל ${host}. הצטרפו ושחקו שם.`
+        : 'נפתח שולחן שני למי שלא קיבל מקום. הצטרפו ושחקו שם.',
+    join: host => host ? `להצטרף לשולחן השני של ${host}` : 'להצטרף לשולחן השני',
+    another: 'פתיחת שולחן נוסף',
+};
+
+export function secondTableWords(lang: string): SecondTableStrings {
+    return lang === 'he' ? he : en;
+}
