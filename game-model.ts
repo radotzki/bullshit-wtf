@@ -870,8 +870,10 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         icon: '🦃',
         // A Thanksgiving game opens with one an American family half knows, the kids too (the TV dinner,
         // the green bean casserole, the Lions, cranberries that float...), not with a 1967 folk song
-        // (from the Thanksgiving night walk). Not Big Bird's feathers: the Thanksgiving page gives it away.
-        openers: ['01', '02', '12', '15', '20', '26', '28', '31'].map(n => `thanksgiving-26-en-${n}`),
+        // (from the Thanksgiving night walk). Not Big Bird's feathers (the page used to give it away),
+        // and none that is a daily puzzle of the season: Sarah Josepha Hale's nursery rhyme (02) is
+        // also the daily puzzle on Thanksgiving Day itself, so Franklin's turkey (19) opens instead.
+        openers: ['01', '12', '15', '19', '20', '26', '28', '31'].map(n => `thanksgiving-26-en-${n}`),
     },
     // Christmas and New Year's Eve, English questions only (functions/data/christmas-questions.json).
     // By default in English games from 1 December, office party season, to 2 January: by the date
