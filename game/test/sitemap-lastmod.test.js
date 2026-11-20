@@ -60,6 +60,18 @@ test('the holiday pages are linked from the text of pages Google has, in their l
     inText('/free-jackbox-alternative', '/hanukkah-party-game');
 });
 
+// Google knew no page linking /he/school-break, /he/days-at-home or /he/friday-dinner on 20 November,
+// though all three are in every Hebrew menu: each is now linked in the text of a Hebrew page it has.
+test('the Hebrew break and Friday-dinner pages are linked from the text of indexed Hebrew pages', () => {
+    [['/he/hanukkah', '/he/school-break'], ['/he/hanukkah', '/he/days-at-home'],
+        ['/he/family-evening', '/he/friday-dinner']].forEach(([from, to]) => {
+        assert.ok(byPath[to], `${to} is a page`);
+        assert.strictEqual(byPath[from].site.lang, 'he', from);
+        assert.ok(byPath[from].body.includes(`href="${to}"`), `${from} links ${to} in its text`);
+        assert.ok(byPath[from].updated >= '2026-11-23', `${from} names the day its text changed`);
+    });
+});
+
 test('a page whose text changed names a day no earlier than its language\'s menu', () => {
     pages.filter(p => p.updated).forEach(p =>
         assert.ok(p.updated >= p.site.updated, `${p.path}: ${p.updated} is before its menu's ${p.site.updated}; leave it out`));
