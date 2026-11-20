@@ -112,10 +112,25 @@ test('the join page offers the open second table first, joins it with one tap, a
     const html = fs.readFileSync(path.join(page, 'join-game.component.html'), 'utf8');
     assert.match(html, /\*ngIf="fullTable\.join"[\s\S]*\(click\)="joinSecondTable\(\)"[\s\S]*\(click\)="startSecondTable\(\)"/);
     assert.match(ts_, /joinSecondTable\(\) \{[\s\S]*this\.goToLobby\(open\.pin\);\s*this\.join\(\);/);
-    assert.match(ts_, /createSecondTable\([^;]*secondTableCampaign\(offer, arrivalCampaign\(\)\), this\.pin\)/);
+    assert.match(ts_, /createSecondTable\([^;]*secondTableCampaign\(offer, arrivalCampaign\(\)\), this\.pin, !!offer\.join\)/);
     const api = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'services', 'api.service.ts'), 'utf8');
-    assert.match(api, /createSecondTable\([^)]*fullPin: string\): Promise<\{ pin: string \}> \{\s*this\.secondOf = fullPin;\s*return this\.createGame\(/);
-    assert.match(api, /arrival: newGameArrival\(\),[\s\S]*?\.\.\.this\.takeSecondOf\(\),[\s\S]*?\}\);\s*rememberHostKey/);
+    assert.match(api, /createSecondTable\([^)]*fullPin: string,\s*another = false\): Promise<\{ pin: string, join\?: boolean \}> \{\s*this\.secondOf = fullPin;\s*this\.secondAnother = another;\s*return this\.createGame\(/);
+    assert.match(api, /arrival: newGameArrival\(\),[\s\S]*?\.\.\.this\.takeSecondOf\(\),[\s\S]*?\}\);[\s\S]{0,200}rememberHostKey/);
     // createGame's own arguments don't carry it (Challenge adds an argument of its own there).
     assert.doesNotMatch(api.match(/async createGame\([^)]*\)/)[0], /secondOf/);
+});
+
+test('two phones refused together: the second press of START A SECOND TABLE sits down at the first table', () => {
+    // The Israeli office party walk-through (20 November): the 13th and 14th phones both saw START A SECOND
+    // TABLE and both pressed it; one colleague then sat alone in a lobby. The server now answers the second
+    // press with the first table (join: true), and the page joins it as a guest.
+    const ts_ = fs.readFileSync(path.join(page, 'join-game.component.ts'), 'utf8');
+    const start = ts_.slice(ts_.indexOf('async startSecondTable()'), ts_.indexOf('joinSecondTable() {'));
+    assert.match(start, /if \(resp\.join\) \{[\s\S]*?this\.goToLobby\(resp\.pin\);\s*this\.join\(\);\s*return;\s*\}\s*markHosted\(resp\.pin\);/);
+    const api = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'services', 'api.service.ts'), 'utf8');
+    // A guest at another phone's table keeps no host key for it.
+    assert.match(api, /if \(!\(resp && resp\.join\)\) \{\s*rememberHostKey\(resp && resp\.pin, hostKey\);\s*\}/);
+    // START ANOTHER TABLE (under a JOIN offer) says so, and the flag is taken once with secondOf.
+    assert.match(api, /return secondOf \? \{ secondOf, \.\.\.\(another \? \{ another: true \} : \{\}\) \} : \{\};/);
+    assert.match(api, /this\.secondOf = undefined;\s*this\.secondAnother = false;/);
 });

@@ -29,7 +29,7 @@ const stand = {
     'laugh': controller(['laugh']),
     'join-preview': controller(['joinPreviewPage', 'readPreviewGame']),
     // START A SECOND TABLE: newGame keeps the second table on the full one (see second-table.ts).
-    'second-table': controller(['keepSecondTable']),
+    'second-table': controller(['keepSecondTable', 'sitAtSecondTable']),
     // The old games' sweep runs beside the gameState trigger (see old-games.ts); it never rejects.
     'old-games': { sweepOldGames: async () => null },
     'analytics': Object.assign(controller(['onJoinGame', 'onShare', 'onStateChange', 'onFork']),

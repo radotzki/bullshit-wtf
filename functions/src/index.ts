@@ -10,7 +10,7 @@ import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
-import { keepSecondTable } from './controllers/second-table';
+import { keepSecondTable, sitAtSecondTable } from './controllers/second-table';
 import { fork } from './controllers/fork';
 import { sameTable } from './controllers/same-table';
 import { startGame, hostHere, hostToBigScreen } from './controllers/start';
@@ -304,6 +304,12 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const stagedReveal = req.body.stagedReveal === true;
             // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
             const aboutUs = req.body.aboutUs === true;
+            // START A SECOND TABLE pressed while another refused phone's second table is open: sit there.
+            const open = req.body.secondOf ? await sitAtSecondTable(req.body.secondOf, req.body.another) : undefined;
+            if (open) {
+                console.log('newGame: second table already open', JSON.stringify({ pin: open.pin }));
+                return res.send({ pin: open.pin, join: true });
+            }
             const pin = await newGame(locale, count, uid, {
                 pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
             });
@@ -311,7 +317,14 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             await analytics.recordArrival(pin, req.body.arrival);
             // Made from START A SECOND TABLE at a full table: the next phones refused there are offered it.
             if (req.body.secondOf) {
-                await keepSecondTable(req.body.secondOf, pin);
+                const kept = await keepSecondTable(req.body.secondOf, pin);
+                // Pressed in the same moment as another phone, which kept its table first: sit at that one.
+                // This game stays an empty lobby nobody is sent to, swept with the old games.
+                const first = !kept && await sitAtSecondTable(req.body.secondOf, req.body.another);
+                if (first && first.pin !== pin) {
+                    console.log('newGame: second table taken meanwhile', JSON.stringify({ pin: first.pin, made: pin }));
+                    return res.send({ pin: first.pin, join: true });
+                }
             }
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });

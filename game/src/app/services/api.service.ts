@@ -148,14 +148,14 @@ export class ApiService {
         return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
-    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
+    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string, join?: boolean }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating never waits long for sign-in:
         // without a uid the game is made all the same, and anyone may start it.
         // The host key marks the host either way, so the lobby knows it even without a uid.
         const { uid, waitedMs } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const hostKey = newHostKey();
-        const resp = await this.post<{ pin: string }>(`newGame`, {
+        const resp = await this.post<{ pin: string, join?: boolean }>(`newGame`, {
             // Where this visit started and whether this browser played before (see arrival.ts).
             arrival: newGameArrival(),
             // START A SECOND TABLE: the full table this game is for (createSecondTable), so its next refused phones come here.
@@ -168,7 +168,10 @@ export class ApiService {
             // This client can show the About questions, so the server may draw this game into their test.
             aboutUs: true,
         });
-        rememberHostKey(resp && resp.pin, hostKey);
+        // Sent to another phone's second table (join): this browser is a guest there, not its host.
+        if (!(resp && resp.join)) {
+            rememberHostKey(resp && resp.pin, hostKey);
+        }
         return resp;
     }
 
@@ -180,15 +183,26 @@ export class ApiService {
      * keeps on the full table, so the next phones refused there are offered JOIN <host>'S SECOND TABLE.
      * A method of its own, so createGame's arguments stay as they are.
      */
-    createSecondTable(locale: string, count: number, pack: string, campaign: string, fullPin: string): Promise<{ pin: string }> {
+    createSecondTable(locale: string, count: number, pack: string, campaign: string, fullPin: string,
+        another = false): Promise<{ pin: string, join?: boolean }> {
         this.secondOf = fullPin;
+        this.secondAnother = another;
         return this.createGame(locale, count, pack, campaign);
     }
 
-    private takeSecondOf(): { secondOf?: string } {
+    // START ANOTHER TABLE (under a JOIN offer) rather than the plain START A SECOND TABLE: see createSecondTable.
+    private secondAnother = false;
+
+    /**
+     * `another`: the phone chose START ANOTHER TABLE. Without it, the server may answer with the second
+     * table another refused phone started meanwhile, `join: true`: this phone then sits down there.
+     */
+    private takeSecondOf(): { secondOf?: string, another?: boolean } {
         const secondOf = this.secondOf;
+        const another = this.secondAnother;
         this.secondOf = undefined;
-        return secondOf ? { secondOf } : {};
+        this.secondAnother = false;
+        return secondOf ? { secondOf, ...(another ? { another: true } : {}) } : {};
     }
 
     /**

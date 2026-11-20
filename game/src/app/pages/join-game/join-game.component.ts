@@ -445,9 +445,17 @@ export class JoinGameComponent implements OnInit {
         try {
             // The full table's PIN: the server keeps this table on it, so the next phones refused there join it.
             const resp = await this.apiService.createSecondTable(offer.locale, offer.count, offer.pack,
-                secondTableCampaign(offer, arrivalCampaign()), this.pin);
+                secondTableCampaign(offer, arrivalCampaign()), this.pin, !!offer.join);
             if (!resp || !resp.pin) {
                 throw new Error('no pin');
+            }
+            if (resp.join) {
+                // Another refused phone started a second table in the same moment: sit down there, as a guest.
+                this.secondBusy = false;
+                this.fullTable = null;
+                this.goToLobby(resp.pin);
+                this.join();
+                return;
             }
             markHosted(resp.pin);
             markVisit('create');
