@@ -17,6 +17,15 @@ the site is unchanged.
 - **Routes.** The app routes by the hash (`/portal/crazygames#/game-staging/ABCD`), so a reload in the
   frame stays on the framed path. The portal has its own home (start a game, or join with a PIN);
   the site's menus, the big screen, how to play and crew pages are not there.
+- **A player who arrives alone.** Most CrazyGames players come alone from the game's tile. The
+  portal's home says at once that this is a party game for 2 to 12 players, each on their own phone
+  or computer, and how a round goes (three short lines), then two starts of the same size: **Play with
+  friends** (a 5-question game in the season's pack; a signed-in player's CrazyGames username joins it
+  at once, so one tap lands in the lobby with the invite link; a guest types a nickname first) and
+  **Try it alone** (the 5-question taste, started as soon as the player is in, ending on "Now try it
+  with friends" and INVITE FRIENDS). The create page's options are a small link below. The home is
+  sized in px so both starts are on the first screen from 360x640 to 1280x720 and in CrazyGames'
+  800x450 frame. In the lobby, "Try 5 quick questions alone" is a button, not a faint link.
 - **SDK.** CrazyGames' HTML5 SDK v3 loads on the portal path only, and the game never waits for it
   (8 s at most, then it plays on without it). Once ready: `loadingStart`/`loadingStop`,
   `gameplayStart` while a question is on and `gameplayStop` elsewhere, `updateRoom` with the PIN
@@ -24,7 +33,8 @@ the site is unchanged.
   `settings.muteAudio` mutes the game.
 - **Invites.** The lobby's WhatsApp, share, copy and QR use `inviteLink({ roomId: PIN })`. A friend
   who opens that link lands on the game's nickname step (`inviteParams.roomId`, and the join-room
-  listener). Instant Multiplayer opens a new 5-question game's lobby at once.
+  listener). Instant Multiplayer opens a new 5-question game's lobby at once (with a username, the
+  player is already in it; a guest types a nickname first).
 - **Usernames and language.** The nickname box starts with the CrazyGames username (cut to 9
   characters, as every nickname is). Hebrew when CrazyGames' locale is Hebrew, else English.
 - **No links out.** Links to the playable site are hidden (the text about the game, crews, next
