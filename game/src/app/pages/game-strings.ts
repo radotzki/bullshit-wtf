@@ -21,6 +21,8 @@ export interface GameStrings {
     pin: (pin: string) => string;
     round: (n: number) => string;
     questionOf: (n: number, total: number) => string;
+    /** A solo run has no set length: "QUESTION 7". */
+    questionNo: (n: number) => string;
     /** Big screen, in the lobby: "Join at", the address, "with Game PIN:", the PIN. */
     joinAt: string;
     withPin: string;
@@ -126,6 +128,7 @@ const en: GameStrings = {
     pin: pin => `PIN: ${pin}`,
     round: n => `ROUND ${n}`,
     questionOf: (n, total) => `${n} OF ${total}`,
+    questionNo: n => `QUESTION ${n}`,
     joinAt: 'Join at',
     withPin: 'with Game PIN:',
     leaveTitle: 'Don\'t leave us :(',
@@ -209,6 +212,7 @@ const he: GameStrings = {
     pin: pin => `קוד: ${pin}`,
     round: n => `סיבוב ${n}`,
     questionOf: (n, total) => `${n} מתוך ${total}`,
+    questionNo: n => `שאלה ${n}`,
     joinAt: 'הצטרפו באתר',
     // Short: the big screen shows it on one line, with the address and the PIN.
     withPin: 'עם הקוד:',

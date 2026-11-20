@@ -1,6 +1,8 @@
 <section class="game-container revael-the-truth" [class.is-presenter]="presenter" [class.is-staged]="staged"
     [class.many-rows]="manyRows" [attr.dir]="t.rtl ? 'rtl' : null" [attr.lang]="t.rtl ? 'he' : null">
     <app-game-header></app-game-header>
+    <!-- A solo run: lives, truths found, the streak (nothing in any other game). -->
+    <app-run-bar *ngIf="!presenter" [pin]="pin"></app-run-bar>
 
     <div class="game-main">
         <div *ngIf="!rows" class="screen-center">

@@ -14,9 +14,15 @@
  * In the usage rows a taste is a game with players = 1: opened_games and closed_games carry
  * questions = 5, and its question_results rows carry lies = 0 and total_q = 5. No column is new.
  *
+ * A solo run (SoloRun in game-model) is a taste its host started as one: it goes on until the player
+ * is fooled SOLO_RUN_LIVES times, with total_q = questions = SOLO_RUN_MAX in those rows.
+ *
  * This file is pure (no Firebase) so it can be unit tested.
  */
-import { GameScheme, GameStateInfo, RevealAnswer, Taste, TASTE_OPTIONS, TASTE_QUESTIONS, tasteOf } from '../game-model';
+import {
+    GameScheme, GameState, GameStateInfo, RevealAnswer, Taste, TASTE_OPTIONS, TASTE_QUESTIONS, tasteOf, newSoloRun, nextSoloRun,
+    soloRunOptions,
+} from '../game-model';
 import { shuffle, Random } from './question-picker';
 import { normalize } from './answer-options';
 
@@ -30,14 +36,27 @@ export function gameTaste(game: Partial<GameScheme> | null | undefined): Taste |
     return tasteOf(game && game.state);
 }
 
-/** What a taste starts with: nothing found yet, and the length the host chose kept for a Replay. */
+/**
+ * What a taste starts with: nothing found yet, and the length the host chose kept for a Replay.
+ * A game whose host started it as a solo run (soloRun, written by startGame) carries the run too.
+ */
 export function newTaste(game: Partial<GameScheme>): Taste {
     const length = Number(game && game.totalQ);
-    return { found: 0, length: isFinite(length) && length > 0 ? Math.floor(length) : TASTE_QUESTIONS };
+    const taste: Taste = { found: 0, length: isFinite(length) && length > 0 ? Math.floor(length) : TASTE_QUESTIONS };
+    if (game && game.soloRun === true) {
+        taste.run = newSoloRun();
+    }
+    return taste;
 }
 
-/** The house lies of one taste question: up to TASTE_OPTIONS - 1 of the question's fake answers. */
-export function tasteHouseLies(fakeAnswers: string[], realAnswer: string, random: Random = Math.random): string[] {
+/** How many answers a taste's question `qIndex` shows: TASTE_OPTIONS, or a run's (soloRunOptions). */
+export function tasteOptions(taste: Taste | null, qIndex: number): number {
+    return taste && taste.run ? soloRunOptions(qIndex) : TASTE_OPTIONS;
+}
+
+/** The house lies of one taste question: up to `options` - 1 (TASTE_OPTIONS - 1) of the question's fake answers. */
+export function tasteHouseLies(fakeAnswers: string[], realAnswer: string, random: Random = Math.random,
+    options = TASTE_OPTIONS): string[] {
     const real = normalize(realAnswer);
     const candidates: string[] = [];
     (fakeAnswers || []).forEach(text => {
@@ -46,7 +65,7 @@ export function tasteHouseLies(fakeAnswers: string[], realAnswer: string, random
             candidates.push(text);
         }
     });
-    return shuffle(candidates, random).slice(0, TASTE_OPTIONS - 1);
+    return shuffle(candidates, random).slice(0, Math.max(1, options - 1));
 }
 
 /** Was the truth picked on the question these reveal rows are for? */
@@ -60,13 +79,29 @@ export function truthFound(revealAnswers: RevealAnswer[] | null | undefined): bo
  * a question on which the truth was picked.
  */
 export function nextTaste(taste: Taste, update: Partial<GameScheme>): Taste {
-    const found = taste.found + (update && update.revealAnswers && truthFound(update.revealAnswers) ? 1 : 0);
-    return { found, length: taste.length };
+    const hit = !!(update && update.revealAnswers && truthFound(update.revealAnswers));
+    const next: Taste = { found: taste.found + (hit ? 1 : 0), length: taste.length };
+    if (taste.run) {
+        // A run counts each reveal: the truth found, or a life lost (fooled, or nothing picked in time).
+        const id = update && update.state ? update.state.id : null;
+        next.run = id === GameState.RevealTheTruth ? nextSoloRun(taste.run, hit)
+            : id === GameState.ShowAnswers ? withoutGain(taste.run) : Object.assign({}, taste.run);
+    }
+    return next;
+}
+
+/** The run as a new question carries it: a life given back shows on its reveal and scoreboard only. */
+function withoutGain(run: Taste['run']): Taste['run'] {
+    return { lives: run.lives, streak: run.streak, bestStreak: run.bestStreak };
 }
 
 /** The state with the taste on it. */
 export function withTaste(state: GameStateInfo, taste: Taste): GameStateInfo {
-    return Object.assign({}, state, { taste: { found: taste.found, length: taste.length } });
+    const copy: Taste = { found: taste.found, length: taste.length };
+    if (taste.run) {
+        copy.run = Object.assign({}, taste.run);
+    }
+    return Object.assign({}, state, { taste: copy });
 }
 
 /**

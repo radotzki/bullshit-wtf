@@ -7,6 +7,7 @@ import {
     ASK_TAGS, AskPlace, HostAskStrings, REMINDER_FILE, askContentType, askStrings, hanukkahEvening, reminderEvent,
     reminderNight,
 } from './host-ask';
+import { remindStepsAside } from './../hanukkah-night/hanukkah-night';
 
 /**
  * "Start your own game", shown to a guest when a game ends (the final screen) and to a late
@@ -43,6 +44,14 @@ export class HostAskComponent {
     /** Where tonight stands in Hanukkah, after a Hanukkah game (null otherwise). */
     get evening() {
         return hanukkahEvening(new Date(), this.pack);
+    }
+
+    /**
+     * On Hanukkah nights 1 to 7 the final screen has SAME TABLE TOMORROW (components/hanukkah-night),
+     * which saves the calendar entry: REMIND ME steps aside, so the screen has one calendar button.
+     */
+    get remindShown() {
+        return !remindStepsAside(new Date(), this.locale, this.pack, this.place);
     }
 
     get rtl() {

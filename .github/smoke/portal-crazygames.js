@@ -22,7 +22,8 @@
 // arrives alone (most of CrazyGames' players): the home says it is a party game, with both starts on the
 // first screen; "Try it alone" plays the 5-question taste in one tap and its INVITE FRIENDS opens a new
 // portal lobby; "Play with friends" puts a signed-in player in the lobby in one tap (a guest with no
-// username gets the nickname step).
+// username gets the nickname step). A CrazyGames username is checked whole before it is cut to 9: a
+// rude word past the 9th character is swapped, in English and Hebrew.
 //
 // Needs Java (database emulator), functions/ built, game/dist built, and the root's npm ci.
 // From the repository root:  node .github/smoke/portal-crazygames.js [dist] [--shots <dir>] [--size 1280x720]
@@ -200,14 +201,23 @@ async function newPhone(browser, base, name, opts = {}) {
         }
         if (url.origin === SITE) {
             if (url.pathname === '/_v') return route.fulfill({ status: 204, body: '' });
+            // Awaited inside the try: a page that moves on while a response is on its way disposes it,
+            // and an unawaited fulfill would then reject outside the catch and stop the whole run.
             try {
                 const response = await route.fetch({ url: `${base}${url.pathname}${url.search}` });
-                return route.fulfill({ response, headers: Object.assign({}, response.headers(), hostingHeaders(url.pathname)) });
+                return await route.fulfill({ response, headers: Object.assign({}, response.headers(), hostingHeaders(url.pathname)) });
             } catch (e) {
-                return route.abort('failed');
+                // Also when the phone was closed while the request was on its way.
+                return route.abort('failed').catch(() => { });
             }
+            return;
         }
         if (url.host === new URL(base).host) return route.continue();
+        if (phone.failStarts > 0 && /\/startGame$/.test(url.pathname)) {
+            // A START that fails on its way (the network, the server): the lobby must say so.
+            phone.failStarts--;
+            return route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"test: START failed"}' });
+        }
         const target = redirect(req.url());
         if (!target) {
             phone.outside.add(url.hostname);
@@ -215,9 +225,9 @@ async function newPhone(browser, base, name, opts = {}) {
         }
         try {
             const response = await route.fetch({ url: target });
-            return route.fulfill({ response });
+            return await route.fulfill({ response });
         } catch (e) {
-            return route.abort('failed');
+            return route.abort('failed').catch(() => { });
         }
     });
     await context.routeWebSocket((url) => /\/\.ws$/.test(url.pathname), (ws) => {
@@ -338,13 +348,34 @@ async function act(phone, game) {
         if (n > 0) {
             const question = await db('GET', `games/${game.pin}/questionIndex`);
             if (phone.picks[phone.picks.length - 1] !== question) {
-                await buttons.nth(Math.floor(Math.random() * n)).click().catch(() => { });
+                let i = Math.floor(Math.random() * n);
+                if (game.truthRate) {
+                    // A solo run: a player who finds the truth this often (about what tables do on house lies).
+                    if (!game.firstPick) game.firstPick = Date.now();
+                    const answers = (await db('GET', `games/${game.pin}/answers`)) || {};
+                    const truth = String((answers.truth && answers.truth.text) || '').trim().toUpperCase();
+                    const texts = await buttons.evaluateAll((els) => els.map((b) => b.innerText.trim().toUpperCase()));
+                    const t = texts.indexOf(truth);
+                    const others = texts.map((x, k) => k).filter((k) => k !== t);
+                    i = t >= 0 && Math.random() < game.truthRate ? t : others[Math.floor(Math.random() * others.length)];
+                    if (question === 6) await shot(phone, 'run-question-7');
+                    // A person reads the question and its answers before picking.
+                    if (game.thinkMs) await sleep(game.thinkMs);
+                }
+                await buttons.nth(i).click().catch(() => { });
                 phone.picks.push(question);
             }
         }
     } else if (screen === 'reveal-the-truth') {
         const next = frame.locator('button.next');
-        if (await visible(next)) await next.first().click().catch(() => { });
+        if (await visible(next)) {
+            // A person reads the reveal before NEXT (once per question).
+            if (game.thinkMs && game.readReveal !== phone.picks.length) {
+                game.readReveal = phone.picks.length;
+                await sleep(Math.round(game.thinkMs / 2));
+            }
+            await next.first().click().catch(() => { });
+        }
     } else if (screen === 'score-board-final') {
         phone.done = true;
     }
@@ -360,20 +391,82 @@ async function linksOut(frame) {
         .filter((h) => !(h.indexOf(location.origin + location.pathname + location.search + '#') === 0)));
 }
 
+/** Plays the solo game on the phone's screen to its final screen; returns the run as the database ends it. */
+async function playSolo(phone, game, problems, label) {
+    const by = Date.now() + GAME_TIMEOUT_MS;
+    phone.done = false;
+    phone.picks = [];
+    while (Date.now() < by && !phone.done) {
+        const frame = gameFrame(phone);
+        const pin = frame && (new URL(frame.url()).hash.split('/')[2] || '').split('?')[0].toUpperCase();
+        if (pin && pin !== game.pin && screenOf(frame) !== 'score-board-final') game.pin = pin;
+        await act(phone, game).catch(() => { });
+        await sleep(300);
+    }
+    const ended = Date.now();
+    const played = game.pin ? await db('GET', `games/${game.pin}`) : null;
+    const taste = played && played.state && played.state.taste;
+    const run = {
+        pin: game.pin, questions: played ? (played.questionIndex || 0) + 1 : null, found: taste ? taste.found : null,
+        lives: taste && taste.run ? taste.run.lives : null, seconds: game.firstPick ? Math.round((ended - game.firstPick) / 1000) : null,
+        totalQ: played && played.totalQ, campaign: played && played.campaign,
+    };
+    if (!phone.done) problems.push(`${label} did not reach the final screen: ${phone.screens.join(' > ')}`);
+    if (!taste || !taste.run || taste.run.lives !== 0) problems.push(`${label} was not a solo run that ended at no lives: ${JSON.stringify(run)}`);
+    return run;
+}
+
+/** The solo final screen: score, best, and the friends ask with both buttons on the first screen. */
+async function soloFinal(phone, problems, label) {
+    await sleep(1500);
+    const frame = gameFrame(phone);
+    const seen = await frame.evaluate(() => {
+        const bottom = (sel) => {
+            const el = document.querySelector(sel);
+            return el && el.offsetParent !== null ? Math.round(el.getBoundingClientRect().bottom) : null;
+        };
+        const text = (sel) => {
+            const el = document.querySelector(sel);
+            return el ? el.innerText.trim() : null;
+        };
+        return {
+            height: innerHeight, headline: text('.headline'), best: text('.run-best'), ask: bottom('.taste-ask-title'),
+            invite: bottom('.taste-invite'), again: bottom('.solo-again'), trophy: bottom('.trophy'),
+        };
+    });
+    for (const k of ['ask', 'invite', 'again']) {
+        if (!seen[k] || seen[k] > seen.height) problems.push(`${label}: ${k} is not on the first screen: ${JSON.stringify(seen)}`);
+    }
+    if (!seen.best) problems.push(`${label}: no best score line: ${JSON.stringify(seen)}`);
+    if (seen.trophy) problems.push(`${label}: the trophy card is back`);
+    const out = await linksOut(frame);
+    if (out.length) problems.push(`${label}: links out: ${out.join(', ')}`);
+    return seen;
+}
+
 /**
  * A player who arrives alone from the game's tile (most CrazyGames players): the home says it is a
- * party game and how it plays, with both starts on the first screen; "Try it alone" plays the
- * 5-question taste with one tap (no nickname step, no lobby to wait in) and ends on the invitation,
- * whose button opens a new portal game's lobby; "Play with friends" puts a signed-in player in the
- * lobby with one tap, its invite link and the try-alone button in view; a guest with no username gets
- * the nickname step first.
+ * party game and how it plays, with both starts on the first screen; "Try it alone" starts the solo
+ * run with one tap (no nickname step, no lobby to wait in): questions until fooled three times. Its
+ * final screen has the score, the best on this device, INVITE FRIENDS and PLAY AGAIN on the first
+ * screen; PLAY AGAIN starts another run at once, and INVITE FRIENDS opens a new portal game's lobby.
+ * A solo game whose START fails says so in its lobby, and its button starts it. "Play with friends"
+ * puts a signed-in player in the lobby with one tap, its invite link and the try-alone button in
+ * view; a guest with no username gets the nickname step first.
  */
 async function lonePlayer(browser, base, problems, summary) {
     const lone = summary.lone = {};
+    // A solo run needs a bank longer than the twelve test questions: sixty more, in English.
+    const more = {};
+    for (let i = 0; i < 60; i++) {
+        more[`enrun${i}`] = { lang: 'en', questionText: `Run question ${i}: the river of Testland is ___`, realAnswer: `river${i}`,
+            fakeAnswers: ['lie a', 'lie b', 'lie c', 'lie d'], citation: '' };
+    }
+    await db('PATCH', 'questions', more);
 
     // The taste alone, from the home.
     // joining: the test never types or presses on the nickname step: the username must get the player in.
-    const solo = await newPhone(browser, base, 'Solo', { shoot: true, joining: true });
+    const solo = await newPhone(browser, base, 'Solo', { joining: true });
     await solo.page.goto(`${CG}?cg_user=LoneWolf`);
     const sf = solo.page.frameLocator('#game');
     await sf.locator('.portal-solo').waitFor({ state: 'visible', timeout: 30000 });
@@ -392,38 +485,96 @@ async function lonePlayer(browser, base, problems, summary) {
     }
     delete lone.home.text;
     await sf.locator('.portal-solo').click();
-    const game = { solo: true };
-    const by = Date.now() + GAME_TIMEOUT_MS;
-    while (Date.now() < by && !solo.done) {
-        const frame = gameFrame(solo);
-        const pin = frame && (new URL(frame.url()).hash.split('/')[2] || '').split('?')[0].toUpperCase();
-        if (pin && !game.pin) game.pin = pin;
-        await act(solo, game).catch(() => { });
-        await sleep(300);
-    }
+    // A player who finds the truth 60% of the time (tables find it on ~57% of truth-or-house-lie picks).
+    // The first run at a person's pace (THINK_MS to read each question, half that for each reveal).
+    const game = { solo: true, truthRate: 0.6, thinkMs: Number(process.env.THINK_MS || 4000) };
+    lone.run1 = await playSolo(solo, game, problems, '"Try it alone"');
     lone.soloScreens = solo.screens.join(' > ');
-    const tasted = game.pin ? await db('GET', `games/${game.pin}`) : null;
-    lone.soloCampaign = tasted && tasted.campaign;
-    if (!solo.done) problems.push(`"Try it alone" did not reach the final screen: ${lone.soloScreens}`);
-    if (!tasted || tasted.campaign !== 'portal-crazygames') problems.push(`the taste's campaign is ${lone.soloCampaign}`);
-    await sleep(1500);
-    await shot(solo, 'lone-final');
+    lone.soloCampaign = lone.run1.campaign;
+    if (lone.run1.campaign !== 'portal-crazygames') problems.push(`the run's campaign is ${lone.soloCampaign}`);
+    await shot(solo, 'run-final');
+    lone.run1Final = await soloFinal(solo, problems, 'the first run\'s end');
+    // A new best is CrazyGames' happy time (the first run with a truth found is always one).
+    lone.happytime = (await calls(solo)).filter((c) => c.call === 'happytime').length;
+    if ((lone.run1.found || 0) > 0 && lone.happytime !== 1) problems.push(`happytime after a new best: ${lone.happytime} calls`);
+
+    // PLAY AGAIN: a new run at once, no lobby to wait in.
+    const firstPin = game.pin;
+    await gameFrame(solo).locator('.solo-again').first().click();
+    let until = Date.now() + 30000;
+    while (Date.now() < until && !['round-intro', 'show-answers'].includes(screenOf(gameFrame(solo)))) await sleep(200);
+    const game2 = { solo: true, truthRate: 0.6 };
+    lone.run2 = await playSolo(solo, game2, problems, 'PLAY AGAIN');
+    if (!game2.pin || game2.pin === firstPin) problems.push(`PLAY AGAIN made no new game: ${game2.pin}`);
+    if (lone.run2.campaign !== 'portal-crazygames') problems.push(`PLAY AGAIN's campaign is ${lone.run2.campaign}`);
+    await shot(solo, 'run-final-again');
+    lone.run2Final = await soloFinal(solo, problems, 'the second run\'s end');
+    const best = Math.max(lone.run1.found || 0, lone.run2.found || 0);
+    if (best > 0 && !(lone.run2Final.best || '').match(new RegExp(`NEW BEST|: ${best}`))) problems.push(`the best line after two runs says ${lone.run2Final.best}, best ${best}`);
+
     const invite = gameFrame(solo).locator('.taste-invite');
     if (!(await visible(invite))) {
-        problems.push('the taste\'s last screen has no INVITE FRIENDS');
+        problems.push('the run\'s last screen has no INVITE FRIENDS');
     } else {
-        lone.finalLinksOut = await linksOut(gameFrame(solo));
-        if (lone.finalLinksOut.length) problems.push(`links out after the taste: ${lone.finalLinksOut.join(', ')}`);
         await invite.first().click();
-        const until = Date.now() + 30000;
+        until = Date.now() + 30000;
         while (Date.now() < until && !['join-game', 'game-staging'].includes(screenOf(gameFrame(solo)))) await sleep(200);
         const npin = (new URL(gameFrame(solo).url()).hash.split('/')[2] || '').split('?')[0].toUpperCase();
-        const next = npin && npin !== game.pin ? await db('GET', `games/${npin}`) : null;
-        lone.afterTaste = { screen: screenOf(gameFrame(solo)), campaign: next && next.campaign };
-        if (!next || next.campaign !== 'portal-crazygames') problems.push(`INVITE FRIENDS after the taste opened no new portal game: ${JSON.stringify(lone.afterTaste)}`);
+        const next = npin && npin !== game2.pin ? await db('GET', `games/${npin}`) : null;
+        lone.afterRun = { screen: screenOf(gameFrame(solo)), campaign: next && next.campaign, totalQ: next && next.totalQ };
+        if (!next || next.campaign !== 'portal-crazygames') problems.push(`INVITE FRIENDS after the run opened no new portal game: ${JSON.stringify(lone.afterRun)}`);
     }
     solo.problems.forEach((x) => problems.push(`Solo: ${x}`));
     await solo.context.close();
+
+    // Hebrew: "Try it alone" is a run in Hebrew, its bar too.
+    const heb = await newPhone(browser, base, 'Hebrew-solo', { joining: true });
+    await heb.page.goto(`${CG}?cg_user=Dana&cg_locale=he-IL`);
+    const hbf = heb.page.frameLocator('#game');
+    await hbf.locator('.portal-solo').waitFor({ state: 'visible', timeout: 30000 });
+    await sleep(1500);
+    await hbf.locator('.portal-solo').click();
+    lone.hebrew = {};
+    try {
+        await hbf.locator('.run-bar').waitFor({ state: 'visible', timeout: 30000 });
+        await sleep(800);
+        lone.hebrew.bar = (await hbf.locator('.run-bar').innerText()).replace(/\s+/g, ' ').trim();
+        lone.hebrew.header = (await hbf.locator('app-game-header').innerText()).replace(/\s+/g, ' ').trim();
+        await shot(heb, 'hebrew-run');
+    } catch (e) {
+        lone.hebrew.error = String(e && e.message || e).slice(0, 200);
+    }
+    if (!/[\u0590-\u05FF]/.test(lone.hebrew.bar || '') || !/שאלה 1/.test(lone.hebrew.header || '')) problems.push(`the Hebrew run: ${JSON.stringify(lone.hebrew)}`);
+    heb.problems.forEach((x) => problems.push(`Hebrew-solo: ${x}`));
+    await heb.context.close();
+
+    // "Try it alone" whose START fails: the lobby says so, and its button starts the run.
+    const unlucky = await newPhone(browser, base, 'Unlucky', { joining: true, failStarts: 1 });
+    await unlucky.page.goto(`${CG}?cg_user=Unlucky`);
+    const uf = unlucky.page.frameLocator('#game');
+    await uf.locator('.portal-solo').waitFor({ state: 'visible', timeout: 30000 });
+    await sleep(800);
+    await uf.locator('.portal-solo').click();
+    lone.startFailed = {};
+    try {
+        await uf.locator('.solo-failed-start').waitFor({ state: 'visible', timeout: 30000 });
+        lone.startFailed.line = (await uf.locator('.solo-failed-line').innerText()).trim();
+        await shot(unlucky, 'start-failed');
+        await uf.locator('.solo-failed-start').click();
+        let by = Date.now() + 30000;
+        while (Date.now() < by && !['round-intro', 'show-answers'].includes(screenOf(gameFrame(unlucky)))) await sleep(200);
+        lone.startFailed.after = screenOf(gameFrame(unlucky));
+        const upin = (new URL(gameFrame(unlucky).url()).hash.split('/')[2] || '').split('?')[0].toUpperCase();
+        const ug = upin ? await db('GET', `games/${upin}`) : null;
+        lone.startFailed.run = !!(ug && ug.state && ug.state.taste && ug.state.taste.run);
+    } catch (e) {
+        lone.startFailed.error = String(e && e.message || e).slice(0, 200);
+    }
+    if (!lone.startFailed.line || !['round-intro', 'show-answers'].includes(lone.startFailed.after) || !lone.startFailed.run) {
+        problems.push(`a failed solo START: ${JSON.stringify(lone.startFailed)}`);
+    }
+    unlucky.problems.filter((x) => !/500|START failed|Failed to load resource/.test(x)).forEach((x) => problems.push(`Unlucky: ${x}`));
+    await unlucky.context.close();
 
     // With friends, signed in: one tap to the lobby.
     const host = await newPhone(browser, base, 'Friends', { shoot: true });
@@ -432,7 +583,7 @@ async function lonePlayer(browser, base, problems, summary) {
     await hf.locator('.portal-friends').waitFor({ state: 'visible', timeout: 30000 });
     await sleep(800);
     await hf.locator('.portal-friends').click();
-    let until = Date.now() + 30000;
+    until = Date.now() + 30000;
     while (Date.now() < until && screenOf(gameFrame(host)) !== 'game-staging') await sleep(200);
     await sleep(2000);
     await shot(host, 'lone-lobby');
@@ -651,6 +802,37 @@ async function main() {
             await shot(instant, 'instant-multiplayer');
             instant.problems.forEach((x) => problems.push(`Instant: ${x}`));
             await instant.context.close();
+        }
+
+        // ---- Long and rude CrazyGames usernames: the server checks the whole name before it cuts ----
+        // Instant Multiplayer sends the username at once. A rude word past the 9th character is
+        // swapped for a harmless name (cut first, "a cheap whore" got in as "a cheap w"); a clean long
+        // name, or a fair one with an allowed word, joins as its first 9 characters. In English and in Hebrew.
+        {
+            const SWAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'name-lists.json'), 'utf8')).swap_names;
+            const cases = [
+                { user: 'a cheap whore', locale: '', want: 'swap-en' },
+                { user: 'AVeryLongCrazyGamesName_12345', locale: '', want: 'AVeryLong' },
+                // A fair name with an allowed word ("cocktail"): not swapped now that the whole name is checked.
+                { user: 'Cocktail Hour', locale: '', want: 'Cocktail' },
+                { user: 'אבא שלי זונה', locale: 'he-IL', want: 'swap-he' },
+            ];
+            summary.usernames = [];
+            for (const c of cases) {
+                const phone = await newPhone(browser, base, 'Username', { shoot: false });
+                await phone.page.goto(`${CG}?cg_user=${encodeURIComponent(c.user)}&cg_instant=1${c.locale ? '&cg_locale=' + c.locale : ''}`);
+                const by = Date.now() + 30000;
+                while (Date.now() < by && screenOf(gameFrame(phone)) !== 'game-staging') await sleep(200);
+                const upin = gameFrame(phone) ? (new URL(gameFrame(phone).url()).hash.split('/')[2] || '').split('?')[0].toUpperCase() : '';
+                const ugame = upin ? await db('GET', `games/${upin}`) : null;
+                const got = ugame && ugame.players ? Object.values(ugame.players).map((x) => x.nickname) : [];
+                const pool = c.want === 'swap-en' ? SWAP.en : c.want === 'swap-he' ? SWAP.he : null;
+                const ok = got.length === 1 && (pool ? pool.includes(got[0]) : got[0] === c.want);
+                summary.usernames.push({ user: c.user, got, screen: screenOf(gameFrame(phone)), ok });
+                if (!ok) problems.push(`CrazyGames username "${c.user}" joined as ${JSON.stringify(got)}, wanted ${pool ? 'a swap name' : c.want}`);
+                phone.problems.forEach((x) => problems.push(`Username "${c.user}": ${x}`));
+                await phone.context.close();
+            }
         }
 
         // Hebrew: a Hebrew CrazyGames locale opens the portal's home in Hebrew.
