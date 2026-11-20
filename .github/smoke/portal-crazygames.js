@@ -201,12 +201,15 @@ async function newPhone(browser, base, name, opts = {}) {
         }
         if (url.origin === SITE) {
             if (url.pathname === '/_v') return route.fulfill({ status: 204, body: '' });
+            // Awaited inside the try: a page that moves on while a response is on its way disposes it,
+            // and an unawaited fulfill would then reject outside the catch and stop the whole run.
             try {
                 const response = await route.fetch({ url: `${base}${url.pathname}${url.search}` });
-                return route.fulfill({ response, headers: Object.assign({}, response.headers(), hostingHeaders(url.pathname)) });
+                await route.fulfill({ response, headers: Object.assign({}, response.headers(), hostingHeaders(url.pathname)) });
             } catch (e) {
-                return route.abort('failed');
+                await route.abort('failed').catch(() => { });
             }
+            return;
         }
         if (url.host === new URL(base).host) return route.continue();
         const target = redirect(req.url());
@@ -216,9 +219,9 @@ async function newPhone(browser, base, name, opts = {}) {
         }
         try {
             const response = await route.fetch({ url: target });
-            return route.fulfill({ response });
+            await route.fulfill({ response });
         } catch (e) {
-            return route.abort('failed');
+            await route.abort('failed').catch(() => { });
         }
     });
     await context.routeWebSocket((url) => /\/\.ws$/.test(url.pathname), (ws) => {
