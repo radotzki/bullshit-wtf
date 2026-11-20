@@ -178,6 +178,19 @@ test('a game takes 12 players; the 13th join is refused as full, and a full rema
     assert.deepStrictEqual([j.code, j.body.code], [400, 'GAME_IS_FULL']);
     assert.strictEqual(Object.keys(db.games.BIGG.players).length, 12);
 
+    // Two phones that join the eleventh-seat table at the same moment: one gets the 12th seat, the other is
+    // offered a second table; never a 13th seat (the seat is taken in a transaction with the count).
+    const ten = {};
+    for (let i = 0; i < 11; i++) ten['t' + i] = { nickname: 'T' + i, score: 0 };
+    seed({ RACE: game(Staging, now - 1000, { players: ten }) });
+    const both = await Promise.all([
+        call('join', { pin: 'RACE', nickname: 'Hannah', uid: 'u-h' }),
+        call('join', { pin: 'RACE', nickname: 'Greg', uid: 'u-g' }),
+    ]);
+    assert.deepStrictEqual(both.map(r => r.code).sort(), [200, 400]);
+    assert.strictEqual(both.find(r => r.code === 400).body.code, 'GAME_IS_FULL');
+    assert.strictEqual(Object.keys(db.games.RACE.players).length, 12);
+
     // A rematch lobby is offered to a late friend with 11 seats taken, and with 12 too: the full lobby's
     // join then offers a second table beside it, instead of "You missed it" while the table plays again.
     const eleven = {};

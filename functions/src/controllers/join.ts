@@ -134,12 +134,7 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     }
 
     if (Object.keys(game.players || {}).length >= MAX_PLAYERS) {
-        // Counted, to size the audience for a seat past the limit. Awaited (a function may stop once it
-        // answers); a BigQuery failure is logged and never changes the answer.
-        await onRefusedJoin(refusedJoin(pin, game)).catch(e => console.error('onRefusedJoin failed', pin, e && e.message));
-        // The phone is offered a second table like this one (second-table.ts), or the one a phone refused
-        // here already started, while it waits in its lobby with a free seat (never fails: see openSecondTable).
-        return Promise.reject(fullTableError(game, await openSecondTable(pin)));
+        return refuseFull(pin, game);
     }
 
     const playersRef = gamesRef.child(pin).child('players');
@@ -147,25 +142,67 @@ export async function join(pin: string, typed: string, uid: string, hostKey?: st
     const { nickname, swapped } = cleanNickname(typed, uid, pid, game.locale, game.players);
     const player: GamePlayer = { nickname, uid, score: 0 };
     const result: JoinResult = swapped ? { pid, nickname, swapped } : { pid, nickname };
+    // The host joined again (a refresh, a second tab): only the newest row is the host.
+    const isHost = !!(game.hostKey && hostKey && hostKey === game.hostKey);
+    if (isHost) {
+        player.host = true;
+    }
+    // The seat is taken in one transaction with the count, so phones that join at the same moment can't
+    // fill a 13th seat: on the remote office party walk-through 14 colleagues opened the link pasted in the
+    // call's chat within seconds, and the game sat 13 at a 12-seat table.
+    if (!(await takeSeat(playersRef, pid, player, isHost))) {
+        const now = await readGame(pin).catch(() => null);
+        return refuseFull(pin, now || game);
+    }
     const ua = cleanAgent(agent);
     if (ua) {
         await gamesRef.child(pin).child('agents').child(pid).set(ua);
     }
-
-    if (!game.hostKey || !hostKey || hostKey !== game.hostKey) {
-        await playersRef.child(pid).set(player);
-        await fullSince(pin, game);
-        return result;
+    if (isHost) {
+        await hostIsHere(pin, game);
     }
-
-    // The host joined again (a refresh, a second tab): only the newest row is the host.
-    player.host = true;
-    const update: { [path: string]: any } = { [pid]: player };
-    clearOtherHosts(game, pid, update);
-    await playersRef.update(update);
-    await hostIsHere(pin, game);
     await fullSince(pin, game);
     return result;
+}
+
+/** GAME_IS_FULL, with the second table to offer (second-table.ts). Counted first, to size the audience. */
+async function refuseFull(pin: string, game: GameScheme): Promise<never> {
+    // Awaited (a function may stop once it answers); a BigQuery failure is logged and never changes the answer.
+    await onRefusedJoin(refusedJoin(pin, game)).catch(e => console.error('onRefusedJoin failed', pin, e && e.message));
+    // The phone is offered a second table like this one, or the one a phone refused here already started,
+    // while it has a free seat (never fails: see openSecondTable).
+    return Promise.reject(fullTableError(game, await openSecondTable(pin)));
+}
+
+/**
+ * Adds the seat unless the table already has MAX_PLAYERS, in one transaction on the game's players.
+ * With `host`, every other seat stops being the host. Resolves to whether the seat was taken.
+ */
+function takeSeat(playersRef: any, pid: string, player: GamePlayer, host: boolean): Promise<boolean> {
+    let full = false;
+    return new Promise((resolve, reject) => {
+        playersRef.transaction(
+            (current: { [pid: string]: GamePlayer } | null) => {
+                const players = current || {};
+                full = !players[pid] && Object.keys(players).length >= MAX_PLAYERS;
+                if (full) {
+                    // Unchanged: nothing is written.
+                    return current;
+                }
+                const next: { [pid: string]: GamePlayer } = Object.assign({}, players, { [pid]: player });
+                if (host) {
+                    Object.keys(next).forEach(k => {
+                        if (k !== pid && next[k] && next[k].host) {
+                            next[k] = Object.assign({}, next[k]);
+                            delete next[k].host;
+                        }
+                    });
+                }
+                return next;
+            },
+            (error: any) => error ? reject(error) : resolve(!full),
+        );
+    });
 }
 
 /** Marks every other seat as no longer the host, in `update` (paths under players). */

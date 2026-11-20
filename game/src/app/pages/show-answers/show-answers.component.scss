@@ -74,10 +74,14 @@
             margin: 0 0 8px;
         }
 
+        // Bulma's 2.285em line under a desktop's larger type made each answer over 100 px tall.
         .answer {
             height: auto;
             min-height: 3rem;
             margin: 0;
+            line-height: 1.3;
+            padding-top: 0.6em;
+            padding-bottom: 0.6em;
         }
     }
 }
