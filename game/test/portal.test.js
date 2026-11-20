@@ -94,9 +94,12 @@ test('language: Hebrew for a Hebrew CrazyGames locale or the Hebrew path, else E
     assert.strictEqual(portal.portalLocale(undefined, '/portal/crazygames'), 'en');
 });
 
-test('the CrazyGames username becomes the nickname, cut as the join page cuts it', () => {
+test('the CrazyGames username goes to the join page whole: the server checks it, then cuts it', () => {
     assert.strictEqual(portal.portalNickname('  Cool   Cat '), 'Cool Cat');
-    assert.strictEqual(portal.portalNickname('SuperLongUsername'), 'SuperLong');
+    // Not cut to 9 here: "a cheap whore" cut first would pass the server's check as "a cheap w".
+    assert.strictEqual(portal.portalNickname('SuperLongUsername'), 'SuperLongUsername');
+    assert.strictEqual(portal.portalNickname('  a   cheap whore'), 'a cheap whore');
+    assert.strictEqual(Array.from(portal.portalNickname('x'.repeat(200))).length, 64);
     assert.strictEqual(portal.portalNickname(null), '');
 });
 

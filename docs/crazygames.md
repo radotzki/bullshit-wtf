@@ -35,8 +35,12 @@ the site is unchanged.
   who opens that link lands on the game's nickname step (`inviteParams.roomId`, and the join-room
   listener). Instant Multiplayer opens a new 5-question game's lobby at once (with a username, the
   player is already in it; a guest types a nickname first).
-- **Usernames and language.** The nickname box starts with the CrazyGames username (cut to 9
-  characters, as every nickname is). Hebrew when CrazyGames' locale is Hebrew, else English.
+- **Usernames and language.** The nickname box starts with the CrazyGames username. It shows the
+  first 9 characters, as every nickname box does, but the join sends the whole username, and the
+  server checks all of it for slurs and sex words before it cuts it to 9: a rude word past the 9th
+  character is swapped for a harmless name, not cut off (`game/src/app/pages/join-game/whole-name.ts`,
+  the same for a long name pasted on the main site). Hebrew when CrazyGames' locale is Hebrew, else
+  English.
 - **No links out.** Links to the playable site are hidden (the text about the game, crews, next
   week's night, the after-game asks, the daily puzzle, the big screen, "join at bullshit.wtf"), and a
   tap on any link to a page that is not CrazyGames' or WhatsApp's does nothing. Share texts and the
@@ -59,6 +63,10 @@ the site is unchanged.
 - `.github/smoke/smoke.js` loads both portal paths with CrazyGames' SDK refused: the portal plays on.
 - `node .github/smoke/portal-crazygames.js --shots <dir>` (local: Java, the emulators, both builds): a
   whole game inside a test page standing in for CrazyGames, with a stand-in SDK. See its header.
+  Every pull request runs it at 390x844 and 1280x720 (`.github/workflows/portal.yml`, "CrazyGames
+  portal"), about 3 minutes each, side by side.
+- `functions/test/whole-name-join.test.js`: long and rude names through the join page's box and the
+  server's join, a rude word before, at and after the 9th character, in English and Hebrew.
 
 ## Submitting (the owner's steps)
 
