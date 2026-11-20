@@ -1044,12 +1044,12 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-11": {
-    "questionText": "על סביבונים שנקנים בחוץ לארץ יש ש' במקום פ', ושם היא מסמנת את המילה $blank$",
+    "questionText": "על סביבון ישראלי כתוב 'נס גדול היה פה'. על סביבון מחוץ לארץ כתוב 'נס גדול היה $blank$'",
     "realAnswer": "שם",
     "fakeAnswers": [
-      "שמן",
-      "שמונה",
-      "שמחה"
+      "לנו",
+      "פעם",
+      "כאן"
     ],
     "citation": "https://en.wikipedia.org/wiki/Dreidel",
     "lang": "he",
@@ -1128,7 +1128,7 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-18": {
-    "questionText": "בפתיחת המכבייה הראשונה, ב-1932 בתל אביב, ראש העיר מאיר דיזנגוף הוביל את המצעד רכוב על $blank$",
+    "questionText": "בפתיחת המכבייה הראשונה, ב-1932 בתל אביב, ראש העיר מאיר דיזנגוף רכב בשיירה שבראש המצעד על $blank$",
     "realAnswer": "סוס לבן",
     "fakeAnswers": [
       "גמל",
@@ -1164,14 +1164,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-21": {
-    "questionText": "חיים נחמן ביאליק הציע לקרוא לסביבון $blank$, אבל המילה שלו לא נקלטה",
-    "realAnswer": "כרכר",
+    "questionText": "בחופשת חנוכה בתי הספר בישראל סגורים מהיום ה$blank$ של החג ועד היום האחרון",
+    "realAnswer": "שני",
     "fakeAnswers": [
-      "סובבון",
-      "סחרחר",
-      "גלגילון"
+      "שלישי",
+      "רביעי",
+      "ראשון"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Dreidel",
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1224,14 +1224,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-26": {
-    "questionText": "בית שמאי אמרו שבלילה הראשון מדליקים $blank$ נרות, ובכל לילה פוחתים אחד",
-    "realAnswer": "שמונה",
+    "questionText": "בשיר 'ימי החנוכה' שרים: 'ימי החנוכה, חנוכת מקדשנו, $blank$ ושמחה ממלאים את לבנו'",
+    "realAnswer": "גיל",
     "fakeAnswers": [
-      "אחד",
-      "שלושה",
-      "ארבעים וארבעה"
+      "אור",
+      "שיר",
+      "רינה"
     ],
-    "citation": "https://www.sefaria.org/Shabbat.21b",
+    "citation": "https://he.chabad.org/library/article_cdo/aid/217551",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1272,14 +1272,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-30": {
-    "questionText": "מתתיהו, אביו של יהודה המכבי, היה $blank$",
-    "realAnswer": "כוהן",
+    "questionText": "בשיר 'באנו חושך לגרש' שרים: 'באנו חושך לגרש, בידינו אור ו$blank$'",
+    "realAnswer": "אש",
     "fakeAnswers": [
-      "נפח",
-      "רועה צאן",
-      "גובה מסים"
+      "שמן",
+      "נר",
+      "חום"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Mattathias",
+    "citation": "https://he.chabad.org/library/article_cdo/aid/217551",
     "lang": "he",
     "pack": "hanukkah"
   },
@@ -1488,14 +1488,14 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-48": {
-    "questionText": "המנורה שעל מטבע 10 האגורות הועתקה ממטבע של המלך האחרון של בית $blank$",
-    "realAnswer": "חשמונאי",
+    "questionText": "בשיר 'נר לי' שרים: 'נר לי, נר לי, נר לי דקיק, בחנוכה נרי $blank$'",
+    "realAnswer": "אדליק",
     "fakeAnswers": [
-      "הורדוס",
-      "דוד",
-      "רומא"
+      "אניח",
+      "אשמור",
+      "אאיר"
     ],
-    "citation": "https://www.boi.org.il/en/bank-of-israel/education-and-visitors-center/the-currency-exhibit-development-of-money/part3",
+    "citation": "https://en.wikipedia.org/wiki/Hanukkah_music",
     "lang": "he",
     "pack": "hanukkah"
   },
