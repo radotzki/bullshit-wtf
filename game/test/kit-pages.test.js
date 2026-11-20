@@ -33,10 +33,19 @@ const alone = lang => {
 };
 
 // Phones join and start; a computer shows the short names of the home menu ("Present", "מסך").
+// The team pages also name the lobby's COPY LINK and USE AS THE BIG SCREEN, and a full table's second table.
+const bigScreenButton = lang => load('pages/game-staging/big-screen-host.ts').bigScreenStrings(lang).button;
+// START A SECOND TABLE and JOIN THE SECOND TABLE (no host named), read from the source: second-table.ts imports others.
+const secondTable = lang => {
+    const src = read('game/src/app/pages/join-game/second-table.ts');
+    const block = src.slice(src.indexOf(lang === 'he' ? 'const he: SecondTableStrings' : 'const en: SecondTableStrings'));
+    return [/\n    start: '([^']+)'/.exec(block)[1], /\n    join: host => host \? `[^`]+` : '([^']+)'/.exec(block)[1]];
+};
 function buttons(lang, p) {
     const home = homeStrings(lang);
     return [p.start.label, createStrings(lang).create, home.join, home.presentShort, gameStrings(lang).start,
-        finalStrings[lang].rematch, alone(lang)].map(s => s.toLowerCase());
+        finalStrings[lang].rematch, alone(lang), gameStrings(lang).copyLink, bigScreenButton(lang)]
+        .concat(secondTable(lang)).map(s => s.toLowerCase());
 }
 
 const kit = pages.filter(p => p.tag && p.tag.indexOf('kit-') === 0);
@@ -86,7 +95,7 @@ kit.forEach(p => {
         const known = buttons(lang, p);
         const named = [];
         const re = lang === 'he'
-            ? /(?:לוחצים על|לוחצים|בוחרים) "([^"]+)"/g
+            ? /(?:לוחצים על|לוחץ על|לוחצים|בוחרים) "([^"]+)"/g
             : /(?:tap|taps|click|clicks|press) "([^"]+)"/gi;
         p.body.replace(re, (all, name) => named.push(name));
         assert.ok(named.length >= 4, `names ${named.length} buttons`);
@@ -124,5 +133,22 @@ kit.forEach(p => {
 
     test(`${p.path}: the footer of every page in its language links to it`, () => {
         assert.ok(p.site.nav.some(n => n.href === p.path));
+    });
+});
+
+// The Israeli office party walk-through (20 November): the team pages told a host on a work laptop to make the
+// game on a phone and type its PIN on the computer, never named the one-press big screen or the call's chat
+// link, and said a 13th phone is only told the game is full, though it is now offered a second table.
+kit.filter(p => p.tag.indexOf('-teams') > 0).forEach(p => {
+    const lang = p.site.lang;
+    test(`${p.path}: a work laptop becomes the big screen in one press, the call gets the link, and the 13th gets a second table`, () => {
+        const body = p.body.toLowerCase();
+        const order = [gameStrings(lang).copyLink, bigScreenButton(lang), gameStrings(lang).start]
+            .map(b => body.indexOf(`"${b.toLowerCase()}"`));
+        order.forEach(i => assert.ok(i > 0, 'names the button'));
+        assert.ok(order[0] < order[1] && order[1] < order[2], 'copy the link before the screen takes over, start last');
+        secondTable(lang).forEach(b => assert.ok(body.indexOf(`"${b.toLowerCase()}"`) > 0, b));
+        assert.doesNotMatch(p.body, lang === 'he' ? /מקבל הודעה שהמשחק מלא/ : /is told the game is full/);
+        assert.match(p.body, lang === 'he' ? /טימס/ : /Teams/);
     });
 });
