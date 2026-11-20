@@ -313,19 +313,20 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const pin = await newGame(locale, count, uid, {
                 pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
             });
-            // Where the host's visit started, for the usage data (see controllers/arrival.ts).
-            await analytics.recordArrival(pin, req.body.arrival);
             // Made from START A SECOND TABLE at a full table: the next phones refused there are offered it.
             if (req.body.secondOf) {
                 const kept = await keepSecondTable(req.body.secondOf, pin);
                 // Pressed in the same moment as another phone, which kept its table first: sit at that one.
-                // This game stays an empty lobby nobody is sent to, swept with the old games.
+                // This game stays an empty lobby nobody is sent to, swept with the old games, and its arrival
+                // is not recorded, so it isn't counted as an opened second table.
                 const first = !kept && await sitAtSecondTable(req.body.secondOf, req.body.another);
                 if (first && first.pin !== pin) {
                     console.log('newGame: second table taken meanwhile', JSON.stringify({ pin: first.pin, made: pin }));
                     return res.send({ pin: first.pin, join: true });
                 }
             }
+            // Where the host's visit started, for the usage data (see controllers/arrival.ts).
+            await analytics.recordArrival(pin, req.body.arrival);
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {

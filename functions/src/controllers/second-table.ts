@@ -156,12 +156,14 @@ export async function keepSecondTable(secondOf: any, newPin: string, now: number
         if (!full || Object.keys(full.players || {}).length < MAX_PLAYERS || isGameOver(full, now)) {
             return false;
         }
+        // The table kept now, read first: if the check below finds it ended, full or gone, the new one may take
+        // its place. Read after that check, it could be another phone's table kept in between, which the
+        // transaction would then overwrite (found in the Engineer's look at #222 on the database emulator).
+        const before = await get<KeptSecondTable>(gamesRef.child(fullPin).child(SECOND_TABLE_KEY));
+        const closedPin = before && typeof before.pin === 'string' ? before.pin : null;
         if (await openSecondTable(fullPin, now)) {
             return false;
         }
-        // The table kept now, read as ended, full or gone just above: the new one may take its place.
-        const before = await get<KeptSecondTable>(gamesRef.child(fullPin).child(SECOND_TABLE_KEY));
-        const closedPin = before && typeof before.pin === 'string' ? before.pin : null;
         // In one transaction: two phones refused together can both press START A SECOND TABLE before either
         // table is kept (the Israeli office party walk-through, 20 November: the 13th and 14th phones made
         // two tables, and one colleague sat alone in a lobby). A table kept moments ago by another press wins.

@@ -329,3 +329,62 @@ test('a second table that ended and rematched: a late colleague is sent to its r
     db.games[a.pin].fork = '../x';
     assert.strictEqual(await openSecondTable(full), undefined);
 });
+
+/**
+ * Runs keepSecondTable(full, mine) while another phone's table `other` is kept at one forced moment: after the
+ * n-th read of games/<full>/secondTable, or (n = 'tx') just before the transaction. Resolves to what keep says.
+ */
+async function keepWhileOtherKeeps(full, mine, other, n) {
+    const realGames = fakeFirebase.gamesRef;
+    fakeFirebase.gamesRef = ref(['games']);
+    const realChild = fakeFirebase.gamesRef.child;
+    let reads = 0;
+    const keepOther = () => { db.games[full].secondTable = { pin: other, at: Date.now() }; };
+    fakeFirebase.gamesRef.child = (p) => {
+        const game = realChild(p);
+        const gameChild = game.child;
+        game.child = (k) => {
+            const r = gameChild(k);
+            if (p === full && k === 'secondTable') {
+                const realOnce = r.once;
+                r.once = async (...a) => {
+                    const v = await realOnce(...a);
+                    if (++reads === n) keepOther();
+                    return v;
+                };
+                const realTx = r.transaction;
+                r.transaction = (fn, done) => {
+                    if (n === 'tx') keepOther();
+                    return realTx(fn, done);
+                };
+            }
+            return r;
+        };
+        return game;
+    };
+    try {
+        return await keepSecondTable(full, mine);
+    } finally {
+        fakeFirebase.gamesRef = realGames;
+    }
+}
+
+test('two presses never split, whichever moment the other table is kept (the Engineer\'s look at #222)', async () => {
+    // Between the two reads of the kept table (after the first), and between the reads and the transaction.
+    for (const n of [1, 2, 'tx']) {
+        const full = lobby({ locale: 'he' });
+        await fill(full);
+        const other = lobby({ locale: 'he' });
+        db.games[other].players = { h: { nickname: 'Shiran', host: true, score: 0 } };
+        const mine = lobby({ locale: 'he' });
+        assert.strictEqual(await keepWhileOtherKeeps(full, mine, other, n), false, `kept over the other table (moment ${n})`);
+        assert.strictEqual(db.games[full].secondTable.pin, other, `the other table stays kept (moment ${n})`);
+        assert.deepStrictEqual(await sitAtSecondTable(full, undefined), { pin: other, host: 'Shiran' }, `sent to it (moment ${n})`);
+    }
+});
+
+test('the losing press records no arrival: newGame records it only for a game it hands out', () => {
+    const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'index.ts'), 'utf8');
+    const body = src.slice(src.indexOf('exports.newGame'), src.indexOf('exports.fork'));
+    assert.ok(body.indexOf('return res.send({ pin: first.pin, join: true });') < body.indexOf('analytics.recordArrival('));
+});
