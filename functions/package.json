@@ -9,7 +9,7 @@
     "test:questions": "npm run copy-model && rimraf dist-test && tsc -p tsconfig.test.json && node dist-test/test/question-picker.test.js && node dist-test/test/answer-options.test.js && node dist-test/test/house-lie.test.js && node dist-test/test/house-lie-cleanup.test.js && node dist-test/test/same-answer.test.js",
     "test:sleeping-phones": "npm run build && node test/sleeping-phones.js",
     "test:empty-seats": "npm run build && node test/empty-seat-game.js",
-    "test:picks": "npm run build && node test/stray-pick-game.js"
+    "test:picks": "npm run build && node test/pick-rules.js && node test/stray-pick-game.js"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.6.0",
