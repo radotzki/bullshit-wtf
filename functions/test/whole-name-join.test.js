@@ -131,6 +131,33 @@ test('a clean long name joins as its first 9 characters, as the box showed it', 
     }
 });
 
+// Fair long names that hold a word of the allow list ("cocktail", "nazir", "כוס קפה"): the allow list
+// applies word by word, so they join as their first 9 characters, with no swap and no toast.
+const FAIR = ['Cocktail Hour', 'Therapist Joe', 'Pussycat Dolls', 'Dickinson Emily', 'Moby Dick Fan', 'Dickens Fan',
+    'Cumin Spice', 'Cockroach Racer', 'Nazir Khan', 'Peacock Pete', 'כוס קפה בבוקר', 'כוס תה ועוגה', 'מזונות לכולם'];
+// A rude word beside an allowed one is still caught, and two words never make an allowed one.
+const BESIDE = ['Cocktail whore', 'whore cocktail', 'Therapist slut', 'Nazir nigger', 'nigger nazir', 'Moby Dick whore',
+    'Dickens dick', 'cumshot cumin', 'cum in me', 'kkk cocktail', 'כוס קפה זונה', 'זונה כוס תה', 'מזונות זונה'];
+
+test('a fair long name with an allowed word joins as its first 9 characters, not swapped', async () => {
+    db.games = { ENEN: { locale: 'en', players: {} }, HEHE: { locale: 'he', players: {} } };
+    for (const name of FAIR) {
+        assert.strictEqual(nameFlag(name), null, name);
+        const { shown, result } = await joinAs(/[\u0590-\u05FF]/.test(name) ? 'hehe' : 'enen', name);
+        assert.strictEqual(result.swapped, undefined, `${name} -> ${result.nickname}`);
+        assert.strictEqual(result.nickname, shown.trim(), name);
+    }
+});
+
+test('a rude word beside an allowed word is still swapped', async () => {
+    db.games = { ENEN: { locale: 'en', players: {} }, HEHE: { locale: 'he', players: {} } };
+    for (const name of BESIDE) {
+        assert.ok(nameFlag(name), `${name} is flagged`);
+        const { result } = await joinAs(/[\u0590-\u05FF]/.test(name) ? 'hehe' : 'enen', name);
+        assert.strictEqual(result.swapped, true, `${name} -> ${result.nickname}`);
+    }
+});
+
 test('the box sends what it shows once the player types over a long name', () => {
     const { shown, kept } = box.boxValue('a cheap whore');
     assert.strictEqual(box.nicknameToSend('Bob', kept), 'Bob');

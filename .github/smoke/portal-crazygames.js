@@ -660,12 +660,14 @@ async function main() {
         // ---- Long and rude CrazyGames usernames: the server checks the whole name before it cuts ----
         // Instant Multiplayer sends the username at once. A rude word past the 9th character is
         // swapped for a harmless name (cut first, "a cheap whore" got in as "a cheap w"); a clean long
-        // name joins as its first 9 characters. In English and in Hebrew.
+        // name, or a fair one with an allowed word, joins as its first 9 characters. In English and in Hebrew.
         {
             const SWAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'name-lists.json'), 'utf8')).swap_names;
             const cases = [
                 { user: 'a cheap whore', locale: '', want: 'swap-en' },
                 { user: 'AVeryLongCrazyGamesName_12345', locale: '', want: 'AVeryLong' },
+                // A fair name with an allowed word ("cocktail"): not swapped now that the whole name is checked.
+                { user: 'Cocktail Hour', locale: '', want: 'Cocktail' },
                 { user: 'אבא שלי זונה', locale: 'he-IL', want: 'swap-he' },
             ];
             summary.usernames = [];
