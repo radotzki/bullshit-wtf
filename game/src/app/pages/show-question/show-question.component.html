@@ -28,7 +28,8 @@
                 <p class="control">
                     <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text"
                         name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off"
-                        [attr.placeholder]="aboutMe ? aboutWords.placeholder : helper.placeholder">
+                        [attr.placeholder]="aboutMe ? aboutWords.placeholder : helper.placeholder"
+                        [attr.aria-label]="aboutMe ? aboutWords.placeholder : helper.placeholder">
                     <span *ngIf="enteredCorrectAnswer" class="help is-danger">{{t.tooCloseToTruth}}</span>
                 </p>
             </div>

@@ -62,6 +62,13 @@ Object.keys(added).forEach(p => {
     });
 });
 
+test('the holiday pages say their questions are in English only, not "English or Hebrew"', () => {
+    ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game'].forEach(p => {
+        assert.ok(!/English or Hebrew/.test(page(p).body), p);
+        assert.match(page(p).body, /in English only/, p);
+    });
+});
+
 test('the holiday pages start an English game with the Christmas and New Year pack', () => {
     ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game', '/virtual-holiday-party-game'].forEach(p => {
         assert.strictEqual(page(p).start.href, '/create-game?lang=en&pack=christmas', p);
@@ -109,6 +116,10 @@ test('the virtual party page walks a computer host to the big screen, shared in 
     assert.match(b, /"Use as the big screen"/);
     assert.match(b, /Share that browser window in the call/);
     assert.match(b, /"Join Game"/);
+    // On a call, the join link goes in the chat (the office party play-through, 20 Nov 2026), and a
+    // thirteenth phone is offered a second table, which the shared screen doesn't show.
+    assert.match(b, /join link in the call's chat/);
+    assert.match(b, /thirteenth person[^<]*second table/);
     // Linked from the office party page and the video call page.
     assert.match(page('/office-holiday-party-game').body, /href="\/virtual-holiday-party-game"/);
     assert.match(page('/video-call-party-game').body, /href="\/virtual-holiday-party-game"/);

@@ -37,8 +37,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     sound: Howl;
     private phoneTickStopped = false;
     panic: boolean;
-    // The round-1 lie helper (games with coach: true only).
-    helper: LieHelperView = { hint: null, placeholder: null, button: null };
+    // The lie helper: the box's name on every question; the hint and STUCK? in round 1 of a coach game.
+    helper: LieHelperView = lieHelperView(false, 0, 0, 'en', null, 0);
     private ideas: string[] = [];
     private ideasUsed = 0;
     private helperInfo: { coach: boolean; roundIndex: number; questionIndex: number; locale: string };
@@ -86,6 +86,10 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         this.aboutWords = aboutStrings(locale);
         this.missedLine = aboutMissedLine(this.aboutWords, this.missedView);
         this.pairWords = pairStrings(locale);
+        // The box's name in the game's language, before the helper's own read (and if it fails).
+        if (!this.helperInfo) {
+            this.helper = lieHelperView(false, 0, 0, locale, null, 0);
+        }
     }
 
     /**

@@ -329,8 +329,15 @@ export function hiddenTitle(playerCount: number, locale: string): string {
     return locale === 'he' ? `(${n}) מתחילים – בולשיט` : `(${n}) Start the game – Bullshit`;
 }
 
-/** The lobby line for a seasonal pack game, or null. */
+/** The lobby line for a pack game (a seasonal pack, or the kids switch), or null. */
 export function packBanner(pack: string, locale: string): string {
+    // "Kids are playing" on the create page: the lobby says the switch took. It says "first", since a
+    // room that has seen all 20 kid questions gets the usual ones (game-model.ts, questionPacks.kids).
+    if (pack === 'kids') {
+        return locale === 'he'
+            ? 'ילדים משחקים: קודם כל שאלות לגילאי 8 עד 12'
+            : 'Kids are playing: questions for ages 8 to 12 come first';
+    }
     if (pack === 'thanksgiving') {
         return 'Thanksgiving edition: new Thanksgiving questions in this game';
     }
