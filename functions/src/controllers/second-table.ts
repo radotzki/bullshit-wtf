@@ -28,9 +28,10 @@ export interface SecondTable {
     /** The tag of the second game: second-table, or the full table's own test tag. */
     campaign: string;
     /**
-     * JOIN <host>'S SECOND TABLE: the second table a phone refused here already started, while it waits in
-     * its lobby with a free seat. The next refused phones go there with one tap instead of each making a
-     * table of one (on 18 November two phones refused together made two tables of one player each).
+     * JOIN <host>'S SECOND TABLE: the second table a phone refused here already started, while it has a free
+     * seat and hasn't ended (in its lobby or under way: a latecomer sits down at 0 points). The next refused
+     * phones go there with one tap instead of each making a table of one (on 18 November two phones refused
+     * together made two tables of one player each).
      */
     join?: SecondTableJoin;
 }
@@ -78,9 +79,14 @@ export function fullTableError(game: GameScheme, join?: SecondTableJoin) {
     return { message: 'Sorry, game is full', code: 'GAME_IS_FULL', secondTable: offer };
 }
 
-/** A game a refused phone can still sit down in: in its lobby, not over, with a free seat. */
-export function isOpenLobby(game: GameScheme, now: number): boolean {
-    return !!game && !!game.state && game.state.id === GameState.GameStaging && !isGameOver(game, now)
+/**
+ * A game a refused phone can still sit down in: not over, with a free seat, in its lobby or already under
+ * way (a latecomer sits down at 0 points, as at any table). On the remote office party walk-through the
+ * manager came in at question 3, after the second table had started: he was offered START A SECOND TABLE
+ * and played a table of one, while three colleagues played the second table beside it.
+ */
+export function isOpenTable(game: GameScheme, now: number): boolean {
+    return !!game && !!game.state && game.state.id !== GameState.ScoreBoardFinal && !isGameOver(game, now)
         && Object.keys(game.players || {}).length < MAX_PLAYERS;
 }
 
@@ -103,7 +109,7 @@ export async function openSecondTable(fullPin: string, now: number = Date.now())
             return undefined;
         }
         const game = await readGame(kept.pin);
-        if (!isOpenLobby(game, now)) {
+        if (!isOpenTable(game, now)) {
             return undefined;
         }
         const host = hostName(game);

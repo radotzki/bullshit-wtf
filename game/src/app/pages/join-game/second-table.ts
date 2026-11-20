@@ -22,8 +22,9 @@ export interface SecondTableOffer {
     campaign: string;
     /**
      * JOIN <host>'S SECOND TABLE: the second table a phone refused at this full table already started, while
-     * it waits in its lobby with a free seat (functions' openSecondTable). One tap joins it, so phones refused
-     * together play at one second table instead of each at a table of one. Absent: nobody started one yet.
+     * it has a free seat and hasn't ended, in its lobby or under way (functions' openSecondTable). One tap
+     * joins it, so phones refused together play at one second table instead of each at a table of one.
+     * Absent: nobody started one yet.
      */
     join?: SecondTableJoin;
 }

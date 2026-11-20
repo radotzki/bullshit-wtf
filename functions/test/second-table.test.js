@@ -193,15 +193,18 @@ test('a later tap on "start another table" never replaces the open second table'
     assert.deepStrictEqual(err.secondTable.join, { pin: a.pin, host: 'Ann' });
 });
 
-test('once the second table starts, fills or ends, it is no longer offered, and the next one takes its place', async () => {
+test('a started second table is still offered (a latecomer sits down at 0 points); once it fills or ends, the next one takes its place', async () => {
     const full = lobby({ locale: 'en' });
     await fill(full);
     const a = await startSecond(full, 'Ann', 'u-ann');
-    db.games[a.pin].state = { id: 1, timestamp: Date.now() };
-    assert.strictEqual(await openSecondTable(full), undefined, 'started');
+    db.games[a.pin].state = { id: 2, timestamp: Date.now() };
+    assert.deepStrictEqual(await openSecondTable(full), { pin: a.pin, host: 'Ann' }, 'under way, with seats');
+    assert.strictEqual((await refusal(full, 'Cy', 'u-cy')).secondTable.join.pin, a.pin);
+    db.games[a.pin].state = { id: 6, timestamp: Date.now() };
+    assert.strictEqual(await openSecondTable(full), undefined, 'ended');
     assert.strictEqual((await refusal(full, 'Cy', 'u-cy')).secondTable.join, undefined);
     const b = await startSecond(full, 'Ben', 'u-ben');
-    assert.strictEqual(b.kept, true, 'a started table gives way to a new one');
+    assert.strictEqual(b.kept, true, 'an ended table gives way to a new one');
     assert.strictEqual((await refusal(full, 'Di', 'u-di')).secondTable.join.pin, b.pin);
     for (let i = 2; i <= MAX_PLAYERS; i++) db.games[b.pin].players['seat' + i] = { nickname: 's' + i, score: 0 };
     assert.strictEqual(count(b.pin), MAX_PLAYERS);
