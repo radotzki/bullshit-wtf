@@ -1,4 +1,5 @@
 import { normalizeName } from '../name-flag';
+import { NAME_LISTS } from '../name-lists';
 
 /**
  * The lie filter: is a player's lie one a clean game refuses? It runs only where a game asks for it
@@ -11,6 +12,10 @@ import { normalizeName } from '../name-flag';
  * "blue tits", "כוס קפה") is fine. History is fair game ("Hitler", "Nazi"); hate slogans are not.
  * "sex" on its own is not swearing ("Sex and the City", "sex education"), and neither is "bullshit",
  * the game's own name.
+ *
+ * The nickname filter's own lists (name-lists.json, `hate` and `sex`) are read here too, whole word and
+ * with simple plurals, so the lie filter refuses every slur and sex word that the nickname filter does,
+ * bar the few in NOT_FROM_NAME_LISTS. A repeated letter is also read once ("fuuuck", "זונהה").
  *
  * Every entry is normalized the way the lie is (name-flag.ts: lower case, look-alikes and digits mapped,
  * Hebrew final letters made regular), and only the letters a to z and Hebrew letters count.
@@ -54,7 +59,7 @@ export const LIE_WORDS = {
     // Consecutive words, also written as one ("kill the jews", "killthejews").
     phrase: ['heil hitler', 'sieg heil', 'seig heil', 'gas the jews', 'kill the jews', 'kill all jews', 'death to jews',
         'white power', 'white pride', 'son of a bitch', 'kiss my ass',
-        'כוס אמק', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
+        'כוס אמק', 'כוס אמאק', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
         'מוות לערבים', 'מוות ליהודים', 'ערבי מסריח', 'ערבים מסריחים'],
     // Typed as is (digits that the letters can't show).
     raw: ['1488'],
@@ -73,11 +78,16 @@ export const LIE_WORDS = {
         'cock a doodle doo', 'cock of the walk', 'weather cock', 'stop cock', 'cock robin', 'shuttle cock',
         'pussy cat', 'pussy willow', 'pussy riot', 'puss in boots', 'pussy galore',
         'anal retentive', 'boob tube', 'booby trap', 'piss artist',
-        'rio negro', 'negro river', 'maine coon', 'maine coons',
+        'rio negro', 'negro river', 'maine coon', 'maine coons', 'coon rapids', 'tom dick and harry', 'dick dastardly',
+        'dick van patten', 'anal fin', 'anal fins', 'horny toad', 'horny toads', 'spic and span', 'zona rosa',
+        'bin laden', 'osama bin laden', 'shiite', 'shiites',
+        'niggle', 'niggles', 'niggled', 'niggling', 'niggard', 'niggardly',
         // Hebrew: "כוס" alone is a cup, so only its swearing phrases are listed. These hold a listed word
         // after a prefix letter, or are the same letters as one: food, fed, weapons.
         'כלי זין', 'זינה', 'זינגר', 'מזין', 'מזינה', 'מזינים', 'מזינות', 'הזין את', 'הזינה', 'הזינו', 'להזין',
-        'מזונה', 'מזונות',
+        'מזונה', 'מזונות', 'מזיין', 'מזוין', 'מזויין', 'שפיכות', 'שפיכת',
+        // The Mongols, as a people: only "מונגול" alone is the slur.
+        'מונגולים', 'מונגולי', 'מונגולית', 'מונגוליה',
     ],
 };
 
@@ -95,22 +105,81 @@ const set = (list: string[]) => {
     list.forEach(e => out[words(e).join('')] = true);
     return out;
 };
+/**
+ * Words of the nickname lists (name-lists.json) that a lie may hold: history is fair game, and so are
+ * sex and a cup (finding 1 of Product's look at the CrazyGames version).
+ */
+export const NOT_FROM_NAME_LISTS = ['hitler', 'nazi', 'auschwitz', 'holocaust', 'sex', 'adolf',
+    'היטלר', 'נאצי', 'אושוויץ', 'סקס', 'כוס', 'אדולף'];
+// Endings that make a nickname list's word start ("cock", "cum", "pedo") a word of its own.
+const START_ENDINGS = ['', 's', 'es', 'head', 'heads', 'face', 'faces', 'sucker', 'suckers', 'hole', 'holes',
+    'shot', 'shots', 'slut', 'sluts', 'dump', 'dumps', 'bag', 'bags', 'wad', 'phile', 'philes', 'philia', 'ring'];
+
+const squashed = (e: string) => words(e).join('');
+const LATIN = /^[a-z]/;
+
+/** The word and its simple plurals: English s, es, ies; Hebrew ים, ות, ית, יות (זונה, זונות). */
+export function plurals(w: string): string[] {
+    if (LATIN.test(w)) {
+        const out = [w, w + 's', w + 'es'];
+        if (/[^aeiou]y$/.test(w)) {
+            out.push(w.slice(0, -1) + 'ies');
+        }
+        return out;
+    }
+    const out = [w, w + 'ים', w + 'ות', w + 'ית', w + 'יות'];
+    if (/ה$/.test(w)) {
+        out.push(w.slice(0, -1) + 'ות', w.slice(0, -1) + 'ים');
+    }
+    return out;
+}
+
+const NAME_HATE = (NAME_LISTS as any).hate || {};
+const NAME_SEX = (NAME_LISTS as any).sex || {};
+const KEPT = set(NOT_FROM_NAME_LISTS);
+const fromLists = (key: string) => [].concat(NAME_HATE[key] || [], NAME_SEX[key] || [])
+    .map(squashed).filter((e: string) => !!e && !KEPT[e]);
+
 const WORD = set(LIE_WORDS.word);
-const START = LIE_WORDS.start.map(e => words(e).join(''));
-const ANY = LIE_WORDS.any.map(e => words(e).join(''));
-const PHRASES = LIE_WORDS.phrase.map(words);
+// The nickname lists' whole words and anywhere-strings, read here as whole words, with plurals.
+fromLists('word').concat(fromLists('any')).forEach((e: string) => plurals(e).forEach(p => WORD[squashed(p)] = true));
+// Their word starts, as a word with a crude ending ("cockhead", "cumdump", "pedophiles").
+fromLists('start').forEach((e: string) => (LATIN.test(e) ? START_ENDINGS.map(x => e + x) : plurals(e))
+    .forEach(p => WORD[squashed(p)] = true));
+const START = LIE_WORDS.start.map(squashed);
+// Anywhere inside a word: the list's own, and the nickname lists' long anywhere-strings, which no fair
+// word holds ("pedophilia", "masturbation"). "retard" is left out: "fire retardant".
+const ANY = LIE_WORDS.any.map(squashed).concat(fromLists('any').filter((e: string) => e.length >= 7 && e !== 'retard'));
+// Written over two to four words ("white power", "כוס אמא שלך"): the nickname lists' anywhere-strings
+// of hate, and of Hebrew sex words, and the phrases above.
 const PHRASE_ONE = set(LIE_WORDS.phrase);
+[].concat(NAME_HATE.any || [], (NAME_SEX.any || []).filter((e: string) => HE_LETTER.test(squashed(e))))
+    .map(squashed).filter((e: string) => !KEPT[e]).forEach((e: string) => PHRASE_ONE[e] = true);
+const PHRASES = LIE_WORDS.phrase.map(words);
 const ALLOW_PHRASES = LIE_WORDS.allow.map(words).filter(p => p.length > 1);
 const ALLOW_ONE = set(LIE_WORDS.allow.filter(a => words(a).length === 1));
+// The nickname filter's allowed names that are one word ("cocktail", "therapist", "כוסברה").
+((NAME_LISTS as any).allow || []).forEach((a: string) => ALLOW_ONE[squashed(a)] = true);
 
-/** The word, and for a Hebrew word the word without one or two prefix letters ("והזונה" is "זונה"). */
+/** A run of one letter read once ("fuuuck", "זונהה"). */
+const fold = (w: string) => w.replace(/(.)\1+/g, '$1');
+
+/**
+ * The word, the word with its repeated letters read once, and for a Hebrew word each of those without
+ * one or two prefix letters ("והזונה" is "זונה").
+ */
 function forms(w: string): string[] {
-    const out = [w];
-    if (HE_LETTER.test(w)) {
-        for (let i = 0; i < 2 && w.length - i > 3 && HE_PREFIX.indexOf(w.charAt(i)) >= 0; i++) {
-            out.push(w.slice(i + 1));
+    const out: string[] = [];
+    [w, fold(w)].forEach(v => {
+        if (out.indexOf(v) < 0) {
+            out.push(v);
         }
-    }
+        if (HE_LETTER.test(v)) {
+            for (let i = 0; i < 2 && v.length - i > 3 && HE_PREFIX.indexOf(v.charAt(i)) >= 0; i++) {
+                out.push(v.slice(i + 1));
+            }
+        }
+    });
     return out;
 }
 
@@ -146,6 +215,16 @@ function wordsRefused(ws: string[]): boolean {
             p.forEach((__, j) => covered[i + j] = true);
         }
     }));
+    // A listed phrase written as two to four words ("white power", "כוס אמא שלך").
+    for (let i = 0; i < ws.length; i++) {
+        let joined = ws[i];
+        for (let j = i + 1; j < ws.length && j < i + 4 && !covered[i] && !covered[j]; j++) {
+            joined += ws[j];
+            if (PHRASE_ONE[joined]) {
+                return true;
+            }
+        }
+    }
     if (ws.some((w, i) => !covered[i] && wordRefused(w))) {
         return true;
     }

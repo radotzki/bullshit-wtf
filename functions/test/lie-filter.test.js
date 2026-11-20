@@ -52,3 +52,46 @@ test('common Hebrew swearing, slurs and sex words are refused, also with a prefi
         'כוס אמא שלך', 'כוסית', 'זין', 'על הזין', 'לך תזדיין', 'מזדיין', 'מניאק', 'הומו', 'כושי', 'מפגר',
         'מוות לערבים', 'זיון', 'ציצים', 'פורנו']);
 });
+
+// Product's look at #211 (reports: pr-211-product-look): the lie filter must refuse every slur and sex
+// word of the nickname lists, as #205's filter did, bar the history and the cup it lets through on purpose.
+const lists = require(path.join(__dirname, '..', '..', 'name-lists.json'));
+const { NOT_FROM_NAME_LISTS, plurals } = require(path.join(__dirname, '..', 'dist', 'controllers', 'lie-filter'));
+const { normalizeName } = require(path.join(__dirname, '..', 'dist', 'name-flag'));
+const squash = (e) => normalizeName(e).replace(/[^a-zא-ת]/g, '');
+
+test('every hate and sex entry of the nickname lists is refused: alone, in a sentence, and as a plural', () => {
+    const kept = NOT_FROM_NAME_LISTS.map(squash);
+    let n = 0;
+    for (const tier of [lists.hate, lists.sex]) {
+        for (const key of ['word', 'start', 'any']) {
+            for (const entry of tier[key] || []) {
+                const e = squash(entry);
+                if (!e || kept.includes(e)) continue;
+                const hebrew = /^[א-ת]/.test(e);
+                refused([entry, hebrew ? `הוא ${entry} גדול` : `he is a ${entry} really`]);
+                // Plurals that are fair words: "מונגולים" is the Mongols, a people (a shipped answer:
+                // "המונגולים תקפו"), and "שפיכות" is spilling ("שפיכות דמים", bloodshed).
+                if (e === 'מונגול' || e === 'שפיכ') continue;
+                for (const p of plurals(e).slice(1, 3)) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
+                n++;
+            }
+        }
+        refused(tier.raw || []);
+    }
+    assert.ok(n > 150, `${n} entries`);
+});
+
+test('the slurs and sex words Product found let through at 8c3d80a are refused', () => {
+    refused(['beaner', 'spick', 'kyke', 'jigaboo', 'nignog', 'niglet', 'porchmonkey', 'nibba', 'kneegrow', 'faggit',
+        'fagget', 'trannie', 'kushi', 'cushi', 'kushim', 'מונגול', 'zieghail', 'wetbacks', 'ragheads', 'towelheads',
+        'mongoloids', 'rapists', 'pedophiles', 'paedophiles', 'deepthroat', 'creampie', 'cumdump', 'orgasms', 'vaginas',
+        'milfs', 'handjobs', 'pussi', 'bigdick', 'anus', 'כוס אמאק', 'קוקסינלית', 'זונהה', 'kusumak', 'kusomak',
+        'kusamak', 'c0ckhead', 'fuuuck', 'shiiit', 'white power', 'kill the jews', 'כוס אמא שלך']);
+});
+
+test('the history and the cup that the nickname lists flag stay fair in a lie', () => {
+    fine(['Hitler', 'Nazi', 'Nazis', 'Auschwitz', 'the Holocaust', 'sex', 'Adolf', 'Adolf Hitler', 'היטלר', 'נאצי',
+        'אושוויץ', 'סקס', 'כוס', 'אדולף', 'Osama bin Laden', 'a fire retardant', 'Shiite', 'a niggling doubt',
+        'Tom Dick and Harry', 'Uranus', 'המונגולים תקפו', 'שפיכות דמים', 'cumulus clouds', 'a cocky rooster', 'therapists', 'כוסות', 'כוסברה']);
+});
