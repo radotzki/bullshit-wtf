@@ -6,6 +6,8 @@
 //   en-pair, he-pair      two phones in the decoy half. Checks: pair true at START; the first question's
 //                         card says how it plays; the writing screen offers decoy chips on every question
 //                         (the second phone at 320 px wide); the host taps a chip, the friend taps none;
+//                         the tapped chip, with the box still empty, brings a "write your own lie" line
+//                         and the cursor into the box; the line goes once a lie is typed;
 //                         each phone lists three answers, never its own lie or decoy, and no house lie is
 //                         on the table; a decoy that fooled shows its DECOY tag on the reveal and pays
 //                         half a lie's points; question_results rows say pair true and count decoy_picks.
@@ -134,7 +136,15 @@ async function act(phone, game, sitting) {
         let chosen = null;
         if (n && phone.role === 'host') {
             await chips.nth(n - 1).click();
-            chosen = (await chips.nth(n - 1).innerText()).trim();
+            chosen = (await chips.nth(n - 1).innerText()).trim().replace(/^✓\s*/, '');
+            // The box is still empty: the tap is a decoy, not a lie, so the screen says to write one
+            // and puts the cursor in the box (two live Hebrew tables tapped chips and never sent a lie).
+            const nudge = page.locator('.decoy-nudge');
+            const nudged = await visible(nudge);
+            const focused = await input.evaluate((el) => el === document.activeElement).catch(() => false);
+            seen.nudges.push({ phone: phone.name, q: index, nudged, focused, text: nudged ? (await nudge.innerText()).trim() : null });
+            if (!nudged) phone.problems.push(`${phone.name} q${index}: no "write your lie" line after a chip tap with an empty box`);
+            if (!focused) phone.problems.push(`${phone.name} q${index}: the lie box did not get the focus after a chip tap`);
             if (!phone.choseShot) {
                 phone.choseShot = true;
                 await shot(page, `${sitting.key}-writing-chosen-${phone.name}`);
@@ -147,6 +157,9 @@ async function act(phone, game, sitting) {
             return;
         }
         await input.fill(`${phone.name} lie ${index}`);
+        if (chosen && await visible(page.locator('.decoy-nudge'))) {
+            phone.problems.push(`${phone.name} q${index}: the "write your lie" line stays with a lie in the box`);
+        }
         await page.locator('form button[type="submit"]').first().click();
         phone.lies.push(index);
         phone.chosen[index] = chosen;
@@ -230,7 +243,7 @@ async function sitting(base, s) {
     await phones[1].page.setViewportSize({ width: 320, height: 640 });
     const screen = await newPhone(browser, base, 'big screen', 'screen');
     const all = phones.concat(screen);
-    const game = { seen: { intro: [], chips: [], answers: [], flash: [], results: [] } };
+    const game = { seen: { intro: [], chips: [], nudges: [], answers: [], flash: [], results: [] } };
     try {
         const host = phones[0];
         game.pin = await oneAtATime(async () => {
@@ -286,6 +299,9 @@ async function sitting(base, s) {
             const friendOf = (name) => phones.find((p) => p.name !== name).name;
             check(seen.chips.length === 10 && seen.chips.every((c) => c.chips === 2 && c.label === words.label(friendOf(c.phone))),
                 `the chooser on the writing screen: ${JSON.stringify(seen.chips)}`);
+            // Each chip tap with an empty box said to write the lie, in the game's words, and focused the box.
+            check(seen.nudges.length === 5 && seen.nudges.every((x) => x.nudged && x.focused && x.text === words.nudge),
+                `the "write your lie" line after a chip tap: ${JSON.stringify(seen.nudges)}`);
             // With one writer, the writer's phone lists the truth and the friend's decoy: two, never the truth alone.
             const listed = (a) => (s.silentQ === a.q && a.phone === phones[0].name ? 2 : 3);
             check(seen.answers.length === 10 && seen.answers.every((a) => a.buttons === listed(a) && !a.ownShown.length),
