@@ -246,7 +246,7 @@
         "realAnswer": "brothers",
         "fakeAnswers": [
             "cousins",
-            "neighbours",
+            "neighbors",
             "best friends"
         ],
         "citation": "https://en.wikipedia.org/wiki/Puma_(brand)",
@@ -300,7 +300,7 @@
         "questionText": "The name Crayola comes partly from the French word for $blank$",
         "realAnswer": "chalk",
         "fakeAnswers": [
-            "colour",
+            "color",
             "pencil",
             "rainbow"
         ],

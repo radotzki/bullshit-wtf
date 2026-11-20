@@ -147,6 +147,21 @@ const tests: { [name: string]: () => void } = {
         });
     },
 
+    'Thanksgiving openers are English questions of the Thanksgiving pack file, not the one its page gives away'() {
+        const file = require('../../data/thanksgiving-questions.json');
+        const openers: string[] = questionPacks.thanksgiving.openers;
+        assert.ok(openers.length >= 6, 'enough openers for the long weekend');
+        openers.forEach(id => {
+            assert.ok(file[id], `${id} is in thanksgiving-questions.json`);
+            assert.strictEqual(file[id].lang, 'en');
+            assert.strictEqual(file[id].pack, 'thanksgiving');
+        });
+        // The Thanksgiving page shows Big Bird's turkey feathers, truth and all.
+        assert.ok(openers.indexOf('thanksgiving-26-en-27') < 0);
+        // Not the 1967 folk song a first walk-through opened with.
+        assert.ok(openers.indexOf('thanksgiving-26-en-25') < 0);
+    },
+
     'pack game with a tiny normal bank tops up from the pack'() {
         const qids = pickWithPack(bank(2), ['h0', 'h1', 'h2', 'h3', 'h4'], [], 5, 2, seeded(3));
         assert.strictEqual(qids.length, 5);
