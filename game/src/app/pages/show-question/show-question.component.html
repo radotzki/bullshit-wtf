@@ -27,9 +27,10 @@
             <div class="field">
                 <p class="control">
                     <input class="input" [class.is-danger]="enteredCorrectAnswer" [class.rtl]="rtl" type="text"
-                        name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off"
+                        name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off" #lieBox
                         [attr.placeholder]="aboutMe ? aboutWords.placeholder : helper.placeholder">
                     <span *ngIf="enteredCorrectAnswer" class="help is-danger">{{t.tooCloseToTruth}}</span>
+                    <span *ngIf="showLieNudge && !enteredCorrectAnswer" class="help is-danger decoy-nudge" [class.rtl]="rtl">{{ pairWords.nudge }}</span>
                 </p>
             </div>
 
@@ -40,7 +41,8 @@
                 <div class="decoy-chips" role="radiogroup" [attr.aria-label]="pairWords.label(friendLabel)">
                     <button type="button" *ngFor="let offer of d.offers" class="button is-primary is-fullwidth decoy-chip"
                         role="radio" [attr.aria-checked]="offer === d.chosen" [class.is-outlined]="offer !== d.chosen"
-                        (click)="chooseDecoy(offer)">{{ offer | uppercase }}</button>
+                        [class.is-light]="offer === d.chosen" [class.chosen]="offer === d.chosen"
+                        (click)="chooseDecoy(offer, lieBox)">{{ offer | uppercase }}</button>
                 </div>
                 <p class="decoy-note">{{ pairWords.note(friendLabel) }}</p>
             </div>

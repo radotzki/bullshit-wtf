@@ -18,7 +18,7 @@ function load(file) {
 }
 
 const app = path.join(__dirname, '..', 'src', 'app');
-const { pairStrings, decoyView, friendName } = load(path.join(app, 'pages', 'pair-strings.ts'));
+const { pairStrings, decoyView, friendName, lieNudge } = load(path.join(app, 'pages', 'pair-strings.ts'));
 const { answersList } = load(path.join(app, 'services', 'answers-list.ts'));
 const { resultLines } = load(path.join(app, 'pages', 'reveal-the-truth', 'reveal-strings.ts'));
 const { gameStrings } = load(path.join(app, 'pages', 'game-strings.ts'));
@@ -98,4 +98,20 @@ test('result lines: a decoy that fooled gets its own line; a written lie\'s line
     assert.deepStrictEqual(resultLines('p2', rows, t, fooled).map(plain), [t.fellFor('Ana'), t.fooled('Ana', '+500')].map(plain));
     assert.deepStrictEqual(resultLines('p1', rows, t).map(plain), [t.fellFor('Ben'), t.nobodyFellForYours].map(plain),
         'without the decoy words, as before');
+});
+
+test('a tapped chip with an empty box asks for the lie, in both languages', () => {
+    assert.strictEqual(pairStrings('en').nudge, 'Now write your own lie in the box, then SEND.');
+    assert.strictEqual(pairStrings('he').nudge, 'עכשיו לכתוב שקר משלך בתיבה, ואז לשלוח.');
+    // Tapped, box empty or blank: the nudge shows.
+    assert.strictEqual(lieNudge('', true), true);
+    assert.strictEqual(lieNudge('   ', true), true);
+    assert.strictEqual(lieNudge(null, true), true);
+    assert.strictEqual(lieNudge(undefined, true), true);
+    // A lie in the box: no nudge, SEND is lit.
+    assert.strictEqual(lieNudge('a cow', true), false);
+    assert.strictEqual(lieNudge('פרה', true), false);
+    // No chip tapped yet (or the one-offer default): nothing to correct.
+    assert.strictEqual(lieNudge('', false), false);
+    assert.strictEqual(lieNudge('a cow', false), false);
 });
