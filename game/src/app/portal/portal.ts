@@ -71,8 +71,13 @@ export function portalLocale(sdkLocale: string | null | undefined, pathname: str
     return l.indexOf('he') === 0 || l.indexOf('iw') === 0 ? 'he' : 'en';
 }
 
-/** The CrazyGames username as a nickname: as the join page takes it (9 characters at most). */
-export function portalNickname(username: string | null | undefined, max = 9): string {
+/**
+ * The CrazyGames username as the join page receives it: spaces tidied, and kept whole (up to 64
+ * characters). The nickname box shows its first 9, and the server checks the whole name for slurs
+ * and sex words before it cuts it to 9 (join-game/whole-name.ts), so a rude word past the 9th
+ * character is swapped, not cut off.
+ */
+export function portalNickname(username: string | null | undefined, max = 64): string {
     const name = String(username || '').replace(/\s+/g, ' ').trim();
     return Array.from(name).slice(0, max).join('').trim();
 }
@@ -274,7 +279,7 @@ export function setPortalUsername(name: string | null | undefined) {
     username = portalNickname(name);
 }
 
-/** The nickname to prefill on the join page: the CrazyGames username, or ''. */
+/** The nickname to prefill on the join page: the whole CrazyGames username, or ''. */
 export function portalUsername(): string {
     return username;
 }

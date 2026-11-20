@@ -22,7 +22,8 @@
 // arrives alone (most of CrazyGames' players): the home says it is a party game, with both starts on the
 // first screen; "Try it alone" plays the 5-question taste in one tap and its INVITE FRIENDS opens a new
 // portal lobby; "Play with friends" puts a signed-in player in the lobby in one tap (a guest with no
-// username gets the nickname step).
+// username gets the nickname step). A CrazyGames username is checked whole before it is cut to 9: a
+// rude word past the 9th character is swapped, in English and Hebrew.
 //
 // Needs Java (database emulator), functions/ built, game/dist built, and the root's npm ci.
 // From the repository root:  node .github/smoke/portal-crazygames.js [dist] [--shots <dir>] [--size 1280x720]
@@ -200,6 +201,8 @@ async function newPhone(browser, base, name, opts = {}) {
         }
         if (url.origin === SITE) {
             if (url.pathname === '/_v') return route.fulfill({ status: 204, body: '' });
+            // Awaited inside the try: a page that moves on while a response is on its way disposes it,
+            // and an unawaited fulfill would then reject outside the catch and stop the whole run.
             try {
                 const response = await route.fetch({ url: `${base}${url.pathname}${url.search}` });
                 return await route.fulfill({ response, headers: Object.assign({}, response.headers(), hostingHeaders(url.pathname)) });
@@ -207,6 +210,7 @@ async function newPhone(browser, base, name, opts = {}) {
                 // Also when the phone was closed while the request was on its way.
                 return route.abort('failed').catch(() => { });
             }
+            return;
         }
         if (url.host === new URL(base).host) return route.continue();
         if (phone.failStarts > 0 && /\/startGame$/.test(url.pathname)) {
@@ -798,6 +802,37 @@ async function main() {
             await shot(instant, 'instant-multiplayer');
             instant.problems.forEach((x) => problems.push(`Instant: ${x}`));
             await instant.context.close();
+        }
+
+        // ---- Long and rude CrazyGames usernames: the server checks the whole name before it cuts ----
+        // Instant Multiplayer sends the username at once. A rude word past the 9th character is
+        // swapped for a harmless name (cut first, "a cheap whore" got in as "a cheap w"); a clean long
+        // name, or a fair one with an allowed word, joins as its first 9 characters. In English and in Hebrew.
+        {
+            const SWAP = JSON.parse(fs.readFileSync(path.join(ROOT, 'name-lists.json'), 'utf8')).swap_names;
+            const cases = [
+                { user: 'a cheap whore', locale: '', want: 'swap-en' },
+                { user: 'AVeryLongCrazyGamesName_12345', locale: '', want: 'AVeryLong' },
+                // A fair name with an allowed word ("cocktail"): not swapped now that the whole name is checked.
+                { user: 'Cocktail Hour', locale: '', want: 'Cocktail' },
+                { user: 'אבא שלי זונה', locale: 'he-IL', want: 'swap-he' },
+            ];
+            summary.usernames = [];
+            for (const c of cases) {
+                const phone = await newPhone(browser, base, 'Username', { shoot: false });
+                await phone.page.goto(`${CG}?cg_user=${encodeURIComponent(c.user)}&cg_instant=1${c.locale ? '&cg_locale=' + c.locale : ''}`);
+                const by = Date.now() + 30000;
+                while (Date.now() < by && screenOf(gameFrame(phone)) !== 'game-staging') await sleep(200);
+                const upin = gameFrame(phone) ? (new URL(gameFrame(phone).url()).hash.split('/')[2] || '').split('?')[0].toUpperCase() : '';
+                const ugame = upin ? await db('GET', `games/${upin}`) : null;
+                const got = ugame && ugame.players ? Object.values(ugame.players).map((x) => x.nickname) : [];
+                const pool = c.want === 'swap-en' ? SWAP.en : c.want === 'swap-he' ? SWAP.he : null;
+                const ok = got.length === 1 && (pool ? pool.includes(got[0]) : got[0] === c.want);
+                summary.usernames.push({ user: c.user, got, screen: screenOf(gameFrame(phone)), ok });
+                if (!ok) problems.push(`CrazyGames username "${c.user}" joined as ${JSON.stringify(got)}, wanted ${pool ? 'a swap name' : c.want}`);
+                phone.problems.forEach((x) => problems.push(`Username "${c.user}": ${x}`));
+                await phone.context.close();
+            }
         }
 
         // Hebrew: a Hebrew CrazyGames locale opens the portal's home in Hebrew.
