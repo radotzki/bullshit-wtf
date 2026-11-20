@@ -887,6 +887,11 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Christmas and New Year questions', he: 'שאלות חג המולד והשנה החדשה (באנגלית)' },
         locales: ['en'],
         icon: '🎄',
+        // A December game opens with one a mixed team half knows, from New York, London or Bangalore (twelve
+        // grapes, 364 gifts, the Sears misprint, Festivus, Auld Lang Syne, 108 bells...), not with whichever
+        // of the pack comes up first (an Italian witch, a Finnish fell, Kipling's radio speech): found on
+        // the remote office party walk-through, where the virtual party page's game opened with La Befana.
+        openers: ['01', '07', '11', '12', '14', '15', '17', '21', '27'].map(n => `christmas-26-en-${n}`),
     },
     // "Kids are playing" (functions/data/kids-questions.json): 20 strange-but-true facts in each
     // language that a child of 8 to 12 can follow. Not seasonal: the create page's own switch asks for

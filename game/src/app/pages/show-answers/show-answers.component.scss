@@ -53,3 +53,31 @@
         opacity: 0.85;
     }
 }
+
+// A player on a computer: a colleague on a video call with no phone at hand opens the link on the laptop
+// the call is on. One answer to a line, as on a phone, put a table's 12 answers about 1,000 px below a
+// 1366 x 768 screen (the remote office party walk-through). From tablet width up, two answers to a line,
+// each as tall as its words, so the list fits beside the call. Phones and the big screen are unchanged.
+@media screen and (min-width: 769px) {
+    .show-answers .game-main > div:not(.presenter):has(> .control > .answer) {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        column-gap: 12px;
+
+        > * {
+            flex: 0 0 100%;
+        }
+
+        > .control:has(> .answer) {
+            flex: 0 0 calc(50% - 6px);
+            margin: 0 0 8px;
+        }
+
+        .answer {
+            height: auto;
+            min-height: 3rem;
+            margin: 0;
+        }
+    }
+}
