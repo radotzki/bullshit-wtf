@@ -73,7 +73,7 @@ test('every hate and sex entry of the nickname lists is refused: alone, in a sen
                 // Plurals that are fair words: "מונגולים" is the Mongols, a people (a shipped answer:
                 // "המונגולים תקפו"), and "שפיכות" is spilling ("שפיכות דמים", bloodshed).
                 if (e === 'מונגול' || e === 'שפיכ') continue;
-                for (const p of plurals(e).slice(1, 3)) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
+                for (const p of plurals(e).slice(1)) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
                 n++;
             }
         }
@@ -93,5 +93,13 @@ test('the slurs and sex words Product found let through at 8c3d80a are refused',
 test('the history and the cup that the nickname lists flag stay fair in a lie', () => {
     fine(['Hitler', 'Nazi', 'Nazis', 'Auschwitz', 'the Holocaust', 'sex', 'Adolf', 'Adolf Hitler', 'היטלר', 'נאצי',
         'אושוויץ', 'סקס', 'כוס', 'אדולף', 'Osama bin Laden', 'a fire retardant', 'Shiite', 'a niggling doubt',
-        'Tom Dick and Harry', 'Uranus', 'המונגולים תקפו', 'שפיכות דמים', 'cumulus clouds', 'a cocky rooster', 'therapists', 'כוסות', 'כוסברה']);
+        'Tom Dick and Harry', 'the BBC', 'Uranus', 'המונגולים תקפו', 'שפיכות דמים', 'cumulus clouds', 'a cocky rooster', 'therapists', 'כוסות', 'כוסברה']);
+});
+
+test('doubled letters and "es" endings of fair words are not read as listed words (Product, objection 2)', () => {
+    fine(['rapper', 'a famous rapper', 'Eminem is a rapper', 'rappers', 'rapped', 'rapping', 'spices', 'salt and spices',
+        'annal', 'annals', 'the annals of history', 'dikes', 'the Dutch dikes', 'hommos', 'poorness', 'cushies',
+        'a wet back', 'Mississippi', 'Tennessee', 'coffee', 'assassin']);
+    refused(['fuuuck', 'shiiit', 'biiitch', 'זונהה', 'spics', 'wetbacks', 'porch monkey', 'kill the jews',
+        'kill jews', 'white power', 'מזיין שכל']);
 });

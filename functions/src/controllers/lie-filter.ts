@@ -15,7 +15,7 @@ import { NAME_LISTS } from '../name-lists';
  *
  * The nickname filter's own lists (name-lists.json, `hate` and `sex`) are read here too, whole word and
  * with simple plurals, so the lie filter refuses every slur and sex word that the nickname filter does,
- * bar the few in NOT_FROM_NAME_LISTS. A repeated letter is also read once ("fuuuck", "זונהה").
+ * bar the few in NOT_FROM_NAME_LISTS. A run of three or more of one letter is read once ("fuuuck").
  *
  * Every entry is normalized the way the lie is (name-flag.ts: lower case, look-alikes and digits mapped,
  * Hebrew final letters made regular), and only the letters a to z and Hebrew letters count.
@@ -45,7 +45,7 @@ export const LIE_WORDS = {
         // transliterated Hebrew and Arabic
         'zona', 'kus', 'kusemek', 'kusemak', 'kusummak', 'sharmuta', 'sharmouta', 'sharmota', 'manyak', 'maniak',
         // Hebrew
-        'זונה', 'זונות', 'שרמוטה', 'שרמוטות', 'כוסית', 'כוסיות', 'כוסאמק', 'כוסעמק', 'כוסאמא', 'כוסאמאשלך',
+        'זונה', 'זונות', 'זונהה', 'שרמוטה', 'שרמוטות', 'כוסית', 'כוסיות', 'כוסאמק', 'כוסעמק', 'כוסאמא', 'כוסאמאשלך',
         'זין', 'זיין', 'זיון', 'זיונים', 'לזיין', 'מזדיין', 'מזדיינת', 'מזדיינים', 'תזדיין', 'תזדייני', 'הזדיין', 'יזדיין',
         'חרא', 'חראות', 'מניאק', 'מניאקית', 'מניאקים', 'בנזונה', 'יבנזונה', 'שפיך', 'ציצים', 'פורנו', 'אונס', 'אנס',
         'חרמן', 'חרמנית', 'דגדגן', 'מציצה', 'פדופיל', 'הומו', 'הומואים', 'מתרומם', 'קוקסינל', 'מפגר', 'מפגרת',
@@ -59,6 +59,7 @@ export const LIE_WORDS = {
     // Consecutive words, also written as one ("kill the jews", "killthejews").
     phrase: ['heil hitler', 'sieg heil', 'seig heil', 'gas the jews', 'kill the jews', 'kill all jews', 'death to jews',
         'white power', 'white pride', 'son of a bitch', 'kiss my ass',
+        'kill jews', 'porch monkey', 'porch monkeys', 'sand nigger', 'מזיין שכל', 'מזיינת שכל',
         'כוס אמק', 'כוס אמאק', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
         'מוות לערבים', 'מוות ליהודים', 'ערבי מסריח', 'ערבים מסריחים'],
     // Typed as is (digits that the letters can't show).
@@ -107,12 +108,12 @@ const set = (list: string[]) => {
 };
 /**
  * Words of the nickname lists (name-lists.json) that a lie may hold: history is fair game, and so are
- * sex and a cup (finding 1 of Product's look at the CrazyGames version).
+ * sex and a cup (finding 1 of Product's look at the CrazyGames version), and the BBC is a broadcaster.
  */
-export const NOT_FROM_NAME_LISTS = ['hitler', 'nazi', 'auschwitz', 'holocaust', 'sex', 'adolf',
+export const NOT_FROM_NAME_LISTS = ['hitler', 'nazi', 'auschwitz', 'holocaust', 'sex', 'adolf', 'bbc',
     'היטלר', 'נאצי', 'אושוויץ', 'סקס', 'כוס', 'אדולף'];
 // Endings that make a nickname list's word start ("cock", "cum", "pedo") a word of its own.
-const START_ENDINGS = ['', 's', 'es', 'head', 'heads', 'face', 'faces', 'sucker', 'suckers', 'hole', 'holes',
+const START_ENDINGS = ['', 's', 'head', 'heads', 'face', 'faces', 'sucker', 'suckers', 'hole', 'holes',
     'shot', 'shots', 'slut', 'sluts', 'dump', 'dumps', 'bag', 'bags', 'wad', 'phile', 'philes', 'philia', 'ring'];
 
 const squashed = (e: string) => words(e).join('');
@@ -121,7 +122,11 @@ const LATIN = /^[a-z]/;
 /** The word and its simple plurals: English s, es, ies; Hebrew ים, ות, ית, יות (זונה, זונות). */
 export function plurals(w: string): string[] {
     if (LATIN.test(w)) {
-        const out = [w, w + 's', w + 'es'];
+        // "es" only where English puts it (spic: spics, not "spices").
+        const out = [w, w + 's'];
+        if (/(s|x|z|ch|sh)$/.test(w)) {
+            out.push(w + 'es');
+        }
         if (/[^aeiou]y$/.test(w)) {
             out.push(w.slice(0, -1) + 'ies');
         }
@@ -161,8 +166,11 @@ const ALLOW_ONE = set(LIE_WORDS.allow.filter(a => words(a).length === 1));
 // The nickname filter's allowed names that are one word ("cocktail", "therapist", "כוסברה").
 ((NAME_LISTS as any).allow || []).forEach((a: string) => ALLOW_ONE[squashed(a)] = true);
 
-/** A run of one letter read once ("fuuuck", "זונהה"). */
-const fold = (w: string) => w.replace(/(.)\1+/g, '$1');
+/**
+ * A run of three or more of one letter read once ("fuuuck", "shiiit"). A doubled letter stays as it is:
+ * "rapper", "annals" and "hommos" are words.
+ */
+const fold = (w: string) => w.replace(/(.)\1\1+/g, '$1');
 
 /**
  * The word, the word with its repeated letters read once, and for a Hebrew word each of those without
@@ -215,12 +223,13 @@ function wordsRefused(ws: string[]): boolean {
             p.forEach((__, j) => covered[i + j] = true);
         }
     }));
-    // A listed phrase written as two to four words ("white power", "כוס אמא שלך").
+    // A listed phrase written as three or four words ("kill the jews"), or a Hebrew one as two or more
+    // ("כוס אמא שלך"). Two English words are often fair ("a wet back"): their phrases are listed above.
     for (let i = 0; i < ws.length; i++) {
         let joined = ws[i];
         for (let j = i + 1; j < ws.length && j < i + 4 && !covered[i] && !covered[j]; j++) {
             joined += ws[j];
-            if (PHRASE_ONE[joined]) {
+            if (PHRASE_ONE[joined] && (j - i >= 2 || HE_LETTER.test(joined))) {
                 return true;
             }
         }
