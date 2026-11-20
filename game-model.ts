@@ -135,6 +135,10 @@ export interface GameScheme {
     // INVITE ANOTHER GROUP: the table each seat of this finished game made, so a second call from the
     // same seat (a reload, a second tap) gets the same table and link. Server only (createTable).
     tables?: { [pid: string]: string };
+    // START A SECOND TABLE: the second table a phone refused at this full table started (its PIN, and when),
+    // so the next refused phones are offered JOIN <host>'S SECOND TABLE while it waits in its lobby with a
+    // free seat. Server only (functions: second-table.ts); no rule opens it.
+    secondTable?: { pin: string; at: number };
     // The round-1 lie helper is on for this game. Set when the game is made: every game since
     // 13 November 2026, half of them in the 50/50 test before that.
     coach?: boolean;
@@ -883,6 +887,11 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Christmas and New Year questions', he: 'שאלות חג המולד והשנה החדשה (באנגלית)' },
         locales: ['en'],
         icon: '🎄',
+        // A December game opens with one a mixed team half knows, from New York, London or Bangalore (twelve
+        // grapes, 364 gifts, the Sears misprint, Festivus, Auld Lang Syne, 108 bells...), not with whichever
+        // of the pack comes up first (an Italian witch, a Finnish fell, Kipling's radio speech): found on
+        // the remote office party walk-through, where the virtual party page's game opened with La Befana.
+        openers: ['01', '07', '11', '12', '14', '15', '17', '21', '27'].map(n => `christmas-26-en-${n}`),
     },
     // "Kids are playing" (functions/data/kids-questions.json): 20 strange-but-true facts in each
     // language that a child of 8 to 12 can follow. Not seasonal: the create page's own switch asks for

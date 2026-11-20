@@ -1,4 +1,4 @@
-import { MAX_PLAYERS, GameScheme, GameState } from '../game-model';
+import { GameScheme, GameState } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 
@@ -46,8 +46,10 @@ export async function gameOverError(game: GameScheme, now: number): Promise<Game
     const error: GameOverError = { message: 'That game is over', code: 'GAME_OVER' };
     if (game.fork) {
         const rematch = await readGame(game.fork);
-        if (rematch && !isGameOver(rematch, now) && rematch.state && rematch.state.id === GameState.GameStaging
-            && Object.keys(rematch.players || {}).length < MAX_PLAYERS) {
+        // A full rematch lobby is offered too: its join answers with START A SECOND TABLE (second-table.ts),
+        // so the friends left out of a big table's rematch play beside it, not "You missed it" while their
+        // table plays again (found on the remote office party walk-through: 14 colleagues, 12 seats).
+        if (rematch && !isGameOver(rematch, now) && rematch.state && rematch.state.id === GameState.GameStaging) {
             error.rematch = game.fork;
         }
     }
