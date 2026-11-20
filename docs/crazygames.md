@@ -32,8 +32,13 @@ the site is unchanged.
   tap on any link to a page that is not CrazyGames' or WhatsApp's does nothing. Share texts and the
   results picture name CrazyGames, not bullshit.wtf.
 - **Players' lies.** CrazyGames asks for at least a profanity filter on what players write. In a
-  portal game a lie with a slur or a sex word (the nickname word list, `name-lists.json`, read word by
-  word) is refused, and the player writes another. Off the portal lies are not filtered.
+  portal game a lie with swearing, a slur or a sex word, in English or Hebrew, is refused, and the
+  player writes another (`functions/src/controllers/lie-filter.ts`: whole words, with an allowed list
+  for fair names like "Dick Van Dyke", "Homo sapiens" and "cum laude"; "כוס" alone is a cup). On the
+  main site only kids' games ("Kids are playing") filter lies; every other game takes any lie.
+- **The lobby on a computer.** In a wide frame the host's lobby shows the buttons and the QR code side by
+  side, so the code is on the first screen at 1280x720. Phones keep one column. The smoke run checks it:
+  `node .github/smoke/portal-crazygames.js --size 1280x720 --lone-host classic`.
 - **Counting.** Every game made in the portal carries campaign `portal-crazygames` (a `?via=test`
   play-test stays a test), Replay and PLAY AGAIN keep it, so portal groups count as weekly players and
   can be told apart: `opened_games.campaign = 'portal-crazygames'`.

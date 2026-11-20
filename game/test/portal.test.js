@@ -178,3 +178,17 @@ test('the site keeps its own links: ShareService changes only inside the portal'
     portal.setPortalForTest(null);
     assert.strictEqual(portal.inPortal(), false, 'Node has no window: not the portal');
 });
+
+test('on a computer the portal lobby puts the QR code beside the buttons; phones keep one column', () => {
+    const { PORTAL_CSS } = load(src('portal', 'portal-style.ts'));
+    const wide = PORTAL_CSS.match(/@media \(min-width: (\d+)px\) and \(orientation: landscape\) \{([\s\S]*)\}\s*$/);
+    assert.ok(wide, 'a wide, landscape media rule');
+    // A phone, even turned sideways (844 x 390 and the like), is narrower than the rule.
+    assert.ok(Number(wide[1]) > 844 && Number(wide[1]) <= 1024, wide[1]);
+    const rules = wide[2];
+    assert.match(rules, /html\.bs-portal \.invite-inline \{[^}]*display: grid !important/);
+    assert.match(rules, /\.invite-inline > \.qr \{[^}]*grid-column: 2/);
+    assert.match(rules, /\.invite-inline > \.button \{[^}]*grid-column: 1/);
+    // Nothing outside the media rule touches the invite.
+    assert.doesNotMatch(PORTAL_CSS.slice(0, wide.index), /invite-inline/);
+});
