@@ -71,3 +71,16 @@ test('an invite row of a test game is counted as before: only lobby-help looks a
     await onShare(cleanShare({ content_type: 'invite', method: 'copy', locale: 'en' }));
     assert.strictEqual(rows.length, 1);
 });
+
+test('Hanukkah night rows carry the game\'s PIN in capitals; a test game sends none', async () => {
+    assert.deepStrictEqual(SHARE_METHODS['hanukkah-night'], ['save', 'save-google']);
+    assert.ok(SHARE_METHODS['night-after'].indexOf('seen-hanukkah') >= 0);
+    assert.deepStrictEqual(cleanShare({ content_type: 'hanukkah-night', method: 'save', crew: 'abcd', locale: 'he', uid: 'u1' }),
+        { content_type: 'hanukkah-night', method: 'save', crew_id: 'ABCD', locale: 'he', uid: 'u1' });
+    assert.strictEqual(cleanShare({ content_type: 'hanukkah-night', method: 'save' }), null);
+    assert.strictEqual(cleanShare({ content_type: 'hanukkah-night', method: 'remind', crew: 'ABCD' }), null);
+    rows.length = 0;
+    await onShare(cleanShare({ content_type: 'hanukkah-night', method: 'save', crew: 'TESTA' }));
+    await onShare(cleanShare({ content_type: 'hanukkah-night', method: 'save-google', crew: 'REAL' }));
+    assert.deepStrictEqual(rows.map(r => [r.row.crew_id, r.row.method]), [['REAL', 'save-google']]);
+});

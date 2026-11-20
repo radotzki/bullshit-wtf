@@ -24,6 +24,7 @@ import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
 import { biggestBullshitters } from './biggest';
 import { INVITE_CONTENT, INVITE_HALF_KEY, candleEvening, inviteHalf } from './../../components/invite-group/invite-group';
 import { SIGN_IN_WAIT_MS } from './../../services/api.service';
+import { NightView, nightView } from './../../components/hanukkah-night/hanukkah-night';
 import {
     SEEN_KEY, SWAP_AFTER_MS, addSeen, bigScreenLine, buttonsSwap, parseSeen, seenMethod,
 } from './../../components/next-week/next-week';
@@ -99,7 +100,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
     /** The game's seasonal pack (the ask speaks of Hanukkah after a Hanukkah game). */
-    pack: string = null;
+    pack: string = undefined;
     /**
      * Someone else pressed REMATCH: the new game's pin. This phone stays on the final screen and its
      * REMATCH button becomes JOIN THE REMATCH (see rematchMove).
@@ -274,6 +275,28 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * On a Hanukkah night (components/hanukkah-night): the night's line, and SAME TABLE TOMORROW on a
+     * player's phone. Null on any other day, and until the players and the game's pack are known.
+     */
+    get hanukkahNight(): NightView | null {
+        if (!this.displayPlayers || this.pack === undefined) {
+            return null;
+        }
+        const view = nightView(new Date(), this.locale, this.pack, {
+            presenter: this.presenter, player: !!this.mine, soloTaste: !!this.soloTaste,
+            players: this.displayPlayers.length,
+        });
+        // One object while the night stays the same, so the screen does not redraw it every check.
+        if (!view) {
+            this.nightCache = null;
+        } else if (!this.nightCache || this.nightCache.night !== view.night || this.nightCache.button !== view.button) {
+            this.nightCache = view;
+        }
+        return this.nightCache;
+    }
+    private nightCache: NightView = null;
+
     /** This phone shows the new button (or its banner) in place of the save-crew offer. */
     get nextWeekOn(): boolean {
         return this.nextWeek === true && !this.presenter && !!this.mine && !this.soloTaste
@@ -400,7 +423,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     /** The ask is for a player of this game who did not host it. */
     private async setHostAsk(resp, user) {
-        this.pack = await this.apiService.getGamePack(this.pin).catch(() => null);
+        // Null once read, with or without a pack: undefined means not known yet (see hanukkahNight).
+        this.pack = (await this.apiService.getGamePack(this.pin).catch(() => null)) || null;
         const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
         const guest = showHostAsk({
             presenter: this.presenter,

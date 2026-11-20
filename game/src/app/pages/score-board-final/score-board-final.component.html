@@ -51,6 +51,8 @@
                 <p *ngIf="idle" class="idle-line">{{ t.idle }}</p>
                 <p *ngIf="myLine && !idle" class="my-line">{{ myLine }}</p>
                 <p *ngIf="nextWeekScreenLine" class="next-week-screen">{{ nextWeekScreenLine }}</p>
+                <!-- Hanukkah nights: which night it is, on every screen (components/hanukkah-night). -->
+                <app-hanukkah-night *ngIf="hanukkahNight" [view]="hanukkahNight" [locale]="locale" [pin]="pin" part="line"></app-hanukkah-night>
             </div>
 
             <div class="actions" *ngIf="!presenter" [class.next-week-first]="nextWeekOn && nextWeekFirst">
@@ -86,6 +88,9 @@
                     {{ rematchJoin }}
                 </button>
                 <p *ngIf="rematchPin" class="hint rematch-line" dir="auto">{{ rematchLine }}</p>
+                <!-- Hanukkah nights 1 to 7: SAME TABLE TOMORROW, saved to the calendar with the table's link. -->
+                <app-hanukkah-night *ngIf="hanukkahNight && hanukkahNight.button" [view]="hanukkahNight" [locale]="locale" [pin]="pin"
+                    part="button"></app-hanukkah-night>
                 <!-- A group's second game or later, in the new half of the test: one button sets next week's
                      date and sends it to the group; once it is set, every phone shows it here. -->
                 <app-next-week *ngIf="nextWeekOn" [pin]="pin" [locale]="locale" [crewId]="crewId" [myNickname]="myNickname"
