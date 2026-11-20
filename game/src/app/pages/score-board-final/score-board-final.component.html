@@ -30,7 +30,7 @@
             <div class="loader"> </div>
         </div>
 
-        <div *ngIf="displayPlayers" class="final" [class.lots]="!soloTaste && displayPlayers.length > 8">
+        <div *ngIf="displayPlayers" class="final" [class.lots]="!soloTaste && displayPlayers.length > 8" [class.solo]="soloTaste">
             <div class="confetti" aria-hidden="true">
                 <i *ngFor="let c of confetti" [class]="'c' + (c % 7)" [style.left.%]="(c * 37) % 100"
                     [style.animation-delay.ms]="(c * 173) % 1400"></i>
@@ -42,7 +42,12 @@
                 </svg>
                 <h1 class="headline" dir="auto">{{ headline }}</h1>
                 <p *ngIf="winners.length > 1" class="tied" [attr.dir]="rtl ? 'rtl' : 'auto'">{{ tiedNames }}</p>
-                <p class="winner-score" *ngIf="winners.length">{{ t.points(winners[0].score) }}</p>
+                <p class="winner-score" *ngIf="winners.length && !soloTaste">{{ t.points(winners[0].score) }}</p>
+                <!-- A solo run: the best on this device, and the longest streak. -->
+                <p *ngIf="soloRunEnd && runBest" class="run-best" [class.new-best]="runBest.isNew">
+                    {{ runBest.isNew ? runWords.newBest : runWords.best(runBest.best) }}
+                    <span *ngIf="taste.run.bestStreak >= 2" class="run-streak-line"> · {{ runWords.longestStreak(taste.run.bestStreak) }}</span>
+                </p>
                 <p *ngIf="idle" class="idle-line">{{ t.idle }}</p>
                 <p *ngIf="myLine && !idle" class="my-line">{{ myLine }}</p>
                 <p *ngIf="nextWeekScreenLine" class="next-week-screen">{{ nextWeekScreenLine }}</p>
@@ -51,13 +56,21 @@
             <div class="actions" *ngIf="!presenter" [class.next-week-first]="nextWeekOn && nextWeekFirst">
                 <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
                      and its lobby opens on the invite. -->
+                <!-- Beside it, the solo run: PLAY AGAIN after a run, KEEP GOING ALONE after the taste. -->
                 <div *ngIf="soloTaste && !rematchPin" class="taste-ask">
                     <h2 class="taste-ask-title">{{ tasteWords.askTitle }}</h2>
-                    <p class="taste-ask-text">{{ tasteWords.askText }}</p>
-                    <button class="button is-primary is-medium is-fullwidth rematch taste-invite" (click)="replay()"
-                        [class.is-loading]="loading">
-                        {{ tasteWords.invite }}
-                    </button>
+                    <p class="taste-ask-text">{{ soloRunEnd ? runWords.askText : tasteWords.askText }}</p>
+                    <div class="solo-buttons">
+                        <button class="button is-primary is-medium is-fullwidth rematch taste-invite" (click)="replay()"
+                            [class.is-loading]="loading" [disabled]="runStarting">
+                            {{ tasteWords.invite }}
+                        </button>
+                        <button class="button is-info is-medium is-fullwidth rematch solo-again" (click)="playSolo()"
+                            [class.is-loading]="runStarting" [disabled]="loading || !mine">
+                            <span class="solo-again-main">{{ soloRunEnd ? runWords.playAgain : runWords.keepGoing }}</span>
+                            <span *ngIf="!soloRunEnd" class="solo-again-sub">{{ runWords.keepGoingSub(runLives) }}</span>
+                        </button>
+                    </div>
                     <p class="hint">{{ tasteWords.inviteHint }}</p>
                     <!-- The daily puzzle: a plain link, the page is outside the app. -->
                     <a class="taste-daily" [href]="locale === 'he' ? '/he/daily?via=daily-game' : '/daily?via=daily-game'">{{ tasteWords.daily }}</a>

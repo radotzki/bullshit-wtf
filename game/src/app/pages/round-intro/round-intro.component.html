@@ -6,8 +6,11 @@
             <h1 class="final-title" *ngIf="final">{{t.finalQuestion}}</h1>
             <p class="final-gap" *ngIf="final && gap">{{gap}}</p>
             <!-- A taste (a game started alone): what the five questions are, and no line about lies. -->
-            <h1 class="taste-title" *ngIf="tasteIntro">{{tasteWords.introTitle(tasteQuestions)}}</h1>
-            <p class="taste-how" *ngIf="tasteIntro">{{tasteWords.introHow}}</p>
+            <h1 class="taste-title" *ngIf="tasteIntro && !run">{{tasteWords.introTitle(tasteQuestions)}}</h1>
+            <p class="taste-how" *ngIf="tasteIntro && !run">{{tasteWords.introHow}}</p>
+            <!-- A solo run: questions until fooled three times. -->
+            <h1 class="taste-title run-title" *ngIf="tasteIntro && run">{{runWords.introTitle}}</h1>
+            <p class="taste-how run-how" *ngIf="tasteIntro && run">{{runWords.introHow(runLives)}}</p>
             <p class="bullshit" *ngIf="pointsKnown && !taste">
                 {{t.points(points.bullshit)}}
                 <br>

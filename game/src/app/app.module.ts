@@ -1,3 +1,4 @@
+import { RunBarComponent } from './components/run-bar/run-bar.component';
 import { GameService } from './services/game.service';
 import { inject, provideAppInitializer } from '@angular/core';
 import { PortalHomeComponent } from './portal/portal-home.component';
@@ -82,6 +83,7 @@ import { StepComponent } from './pages/step/step.component';
         DemoClipComponent,
         CrewComponent,
         StepComponent,
+        RunBarComponent,
     ],
     imports: [
         BrowserModule,

@@ -196,7 +196,10 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
     'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change',
         'tell'],
-    'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
+    'invite': ['whatsapp', 'native', 'copy', 'solo-start',
+        // The solo run (SoloRun in game-model): the portal's "Try it alone", PLAY AGAIN after a run,
+        // KEEP GOING ALONE after the 5-question taste.
+        'solo-run-start', 'solo-run-again', 'solo-run-after-taste'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',
         // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).

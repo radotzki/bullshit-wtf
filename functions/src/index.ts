@@ -395,7 +395,7 @@ exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
 exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
     cors(req, res, async () => {
         try {
-            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey)));
+            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey), Date.now(), req.body.run === true));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
