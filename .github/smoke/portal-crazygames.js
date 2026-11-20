@@ -21,7 +21,11 @@
 // can't frame the portal, and how long the portal takes to draw on a 4x slower CPU.
 //
 // Needs Java (database emulator), functions/ built, game/dist built, and the root's npm ci.
-// From the repository root:  node .github/smoke/portal-crazygames.js [dist] [--shots <dir>]
+// From the repository root:  node .github/smoke/portal-crazygames.js [dist] [--shots <dir>] [--size 1280x720]
+// --size: every player's browser window (default 390x844, a phone). 1024 wide or more is a computer
+// (no touch, a desktop browser), and then the lobby's QR code must be on the first screen.
+// --lone-host classic|new: put every lobby in that half of the lone-host test (game-staging/lone-host.ts),
+// which otherwise follows the PIN, so a run can show either lobby.
 // EMULATORS=running uses emulators you already run (see emulator-game.js).
 
 'use strict';
@@ -37,7 +41,10 @@ const option = (name, fallback) => {
     const i = args.indexOf(name);
     return i >= 0 ? args[i + 1] : fallback;
 };
-const positional = args.filter((a, i) => !a.startsWith('--') && !['--shots'].includes(args[i - 1]));
+const positional = args.filter((a, i) => !a.startsWith('--') && !['--shots', '--size', '--lone-host'].includes(args[i - 1]));
+const SIZE = (option('--size', process.env.SIZE || '390x844')).split('x').map(Number);
+const COMPUTER = SIZE[0] >= 1024;
+const LONE_HOST = option('--lone-host', process.env.LONE_HOST || '');
 const DIST = path.resolve(positional[0] || path.join(ROOT, 'game', 'dist'));
 const SHOTS = option('--shots', process.env.SHOTS || '');
 const FUNCTIONS = `http://${HOST}:5001/${PROJECT}/us-central1`;
@@ -159,10 +166,20 @@ const ALLOWED_CONSOLE_ERRORS = [
 ];
 
 async function newPhone(browser, base, name, opts = {}) {
-    const context = await browser.newContext({
-        serviceWorkers: 'block', viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    const context = await browser.newContext(COMPUTER ? {
+        serviceWorkers: 'block', viewport: { width: SIZE[0], height: SIZE[1] }, deviceScaleFactor: 1, isMobile: false, hasTouch: false,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    } : {
+        serviceWorkers: 'block', viewport: { width: SIZE[0], height: SIZE[1] }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
         userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36',
     });
+    if (LONE_HOST) {
+        await context.addInitScript((half) => {
+            if (location.hostname === 'bullshit.wtf') {
+                try { localStorage.setItem('BS_LONE_HOST', half); } catch (e) { }
+            }
+        }, LONE_HOST);
+    }
     const phone = Object.assign({ name, context, problems: [], screens: [], lies: [], picks: [], refused: 0, done: false, outside: new Set() }, opts);
 
     await context.route(() => true, async (route) => {
@@ -425,6 +442,13 @@ async function main() {
         if (!summary.lobbyWhatsapp || summary.lobbyWhatsapp.indexOf(inviteUrl) < 0) problems.push(`the lobby's WhatsApp invite has no CrazyGames link: ${summary.lobbyWhatsapp}`);
         if (/bullshit\.wtf/i.test(summary.lobbyWhatsapp || '') || /bullshit\.wtf/i.test(invite.text)) problems.push('the lobby names bullshit.wtf');
         await shot(host, 'lobby-invite');
+        // On a computer, friends in the room scan the lobby's QR code: it must be on the first screen.
+        const qr = await gameFrame(host).evaluate(() => {
+            const el = Array.from(document.querySelectorAll('app-qr-code')).find(q => q.getBoundingClientRect().height > 0);
+            return el ? { bottom: Math.round(el.getBoundingClientRect().bottom), height: window.innerHeight } : null;
+        }).catch(() => null);
+        summary.lobbyQr = qr;
+        if (COMPUTER && (!qr || qr.bottom > qr.height)) problems.push(`on a ${SIZE.join('x')} computer the lobby's QR code is below the fold: ${JSON.stringify(qr)}`);
 
         // The friend opens the invite link (CrazyGames hands the game its roomId); the third types the PIN.
         await guest.page.goto(`${inviteUrl}&cg_user=GuestStar`);
