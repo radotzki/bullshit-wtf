@@ -17,4 +17,5 @@ test('from 769 px up, a player\'s answers go two to a line; the big screen\'s li
     assert.match(rule, /flex: 0 0 calc\(50% - 6px\)/);
     assert.match(rule, /height: auto;/);
     assert.match(rule, /line-height: 1\.3;/);
+    assert.match(rule, /font-size: 0\.75rem;/);
 });
