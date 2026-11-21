@@ -36,12 +36,12 @@
     "pack": "newyear"
   },
   "newyear-26-en-04": {
-    "questionText": "Mount Olive, North Carolina, home of a pickle factory, drops its New Year pickle at 7 pm, because that is midnight in $blank$",
+    "questionText": "Mount Olive, North Carolina, home of a pickle factory, drops its New Year pickle at 7 pm, because that is midnight by $blank$ Mean Time",
     "realAnswer": "greenwich",
     "fakeAnswers": [
-      "paris",
-      "rome",
-      "moscow"
+      "british",
+      "atlantic",
+      "european"
     ],
     "citation": "https://en.wikipedia.org/wiki/List_of_objects_dropped_on_New_Year%27s_Eve",
     "lang": "en",
@@ -328,7 +328,7 @@
     "realAnswer": "red",
     "fakeAnswers": [
       "gold",
-      "inside-out",
+      "silk",
       "borrowed"
     ],
     "citation": "https://en.wikipedia.org/wiki/New_Year%27s_Eve",
