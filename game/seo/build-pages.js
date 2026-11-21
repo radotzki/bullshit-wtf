@@ -194,9 +194,18 @@ ${p.body.trim().replace('<!--start-->', `<div class="cta top">${startButton(p)}<
 `;
 }
 
+// The day a page really last changed, for the sitemap's <lastmod>: its language's `updated` (the menu
+// and footer, which every page shows) or the page's own `updated`, whichever is later. Never the build
+// day, which tells search engines nothing, and never a day after the build (a page filed to go live
+// on a given day may be merged sooner): a wrong date makes them trust the field less.
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const buildDay = new Date().toISOString().slice(0, 10);
+function lastmod(p) {
+    const day = [p.site.updated, p.updated].filter(Boolean).sort().pop();
+    return day < buildDay ? day : buildDay;
+}
+
 function sitemap() {
-    // No <lastmod>: the build day on every page tells search engines nothing, and a wrong date makes
-    // them trust the field less. Leave it out until pages carry the day they really changed.
     // The two home pages: / and /he (dist/he.html, written by scripts/build-he.js). Each pair names the
     // English page as x-default too, as the pages' own <head> does (src/index.html, hreflang() above).
     const homes = ['/', '/he'].map(loc => `  <url>
@@ -209,6 +218,7 @@ function sitemap() {
         if (!p.twin) {
             return `  <url>
     <loc>${SITE}${p.path}</loc>
+    <lastmod>${lastmod(p)}</lastmod>
     <xhtml:link rel="alternate" hreflang="${p.site.lang}" href="${SITE}${p.path}"/>
   </url>`;
         }
@@ -216,6 +226,7 @@ function sitemap() {
         const he = p.site.lang === 'he' ? p : byPath[p.twin];
         return `  <url>
     <loc>${SITE}${p.path}</loc>
+    <lastmod>${lastmod(p)}</lastmod>
     <xhtml:link rel="alternate" hreflang="en" href="${SITE}${en.path}"/>
     <xhtml:link rel="alternate" hreflang="he" href="${SITE}${he.path}"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}${en.path}"/>
@@ -247,6 +258,9 @@ pages.forEach(p => {
     const t = byPath[p.twin];
     if (p.twin && (!t || t.twin !== p.path || t.site.lang === p.site.lang)) {
         throw new Error(`Page ${p.path} has no matching twin`);
+    }
+    if (!DAY.test(p.site.updated || '') || (p.updated && !DAY.test(p.updated))) {
+        throw new Error(`Page ${p.path} has no \`updated\` day (YYYY-MM-DD) for the sitemap`);
     }
     if (p.tag && !TAG.test(p.tag)) {
         throw new Error(`Page ${p.path} has a tag the game would drop: ${p.tag}`);
