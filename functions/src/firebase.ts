@@ -27,6 +27,9 @@ export const gameCounterRef = db.ref('gameCounter');
 export const questionsRef = db.ref('questions');
 export const seenQuestionsRef = db.ref('seenQuestions');
 export const crewsRef = db.ref('crews');
+// A Discord call's game: discord/<instance id> = { pin, time } (controllers/discord-table.ts).
+// A path of its own, so it has a rule of its own in database-rules.json: the server's alone.
+export const discordRef = db.ref('discord');
 
 export function get<T>(ref): Promise<T> {
     return ref.once('value').then(s => s.val());
