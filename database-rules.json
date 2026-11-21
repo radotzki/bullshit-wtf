@@ -19,6 +19,10 @@
                 "lang"
             ]
         },
+        "discord": {
+            ".read": "auth.uid == 'bl-service-worker'",
+            ".write": "auth.uid == 'bl-service-worker'"
+        },
         "crews": {
             "$id": {
                 ".read": "true",
