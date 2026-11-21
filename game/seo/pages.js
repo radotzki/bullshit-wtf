@@ -238,10 +238,10 @@ module.exports = [
 <p>Hanukkah has eight nights and most of them end with the family around a table. Bullshit gives that table a game: everyone on their own phone, the grandparents included, and nothing to set up or clean away.</p>
 <!--start-->
 <h2>How it works</h2>
-<p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 5 questions takes five to ten minutes.</p>
+<p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 7 questions takes about a quarter of an hour, and you can pick 5 for a shorter one.</p>
 <h2>Why it fits Hanukkah</h2>
 <ul>
-  <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, not know facts.</li>
+  <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, not know facts. Playing with kids of 8 to 12? Tick "Kids are playing" for questions they get (a kids game has no Hanukkah questions).</li>
   <li><strong>Up to 12 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
   <li><strong>Free, no app.</strong> Cousins who arrive late join with the PIN in seconds.</li>
   <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
@@ -260,10 +260,10 @@ module.exports = [
 <p>בחנוכה יש שמונה לילות, ורובם נגמרים עם המשפחה סביב השולחן. בולשיט נותן לשולחן הזה משחק: כל אחד מהטלפון שלו, גם סבא וסבתא, ובלי שום דבר לסדר או לאסוף אחר כך.</p>
 <!--start-->
 <h2>איך זה עובד</h2>
-<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 5 שאלות לוקח בין חמש לעשר דקות.</p>
+<p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 7 שאלות לוקח בערך רבע שעה, ואפשר לבחור 5 למשחק קצר יותר.</p>
 <h2>למה זה מתאים לחנוכה</h2>
 <ul>
-  <li><strong>מגיל 10 בערך</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות.</li>
+  <li><strong>מגיל 8</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות. משחקים עם ילדים בני 8 עד 12? מסמנים "ילדים משחקים" ומקבלים שאלות שהם יבינו (במשחק ילדים אין שאלות חנוכה).</li>
   <li><strong>עד 12 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
   <li><strong>חינם, בלי אפליקציה.</strong> בני דודים שמגיעים באיחור מצטרפים עם הקוד תוך שניות.</li>
   <li><strong>שאלות חנוכה.</strong> במשחק חנוכה יש שלוש שאלות חנוכה בכל משחק: האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג, ועוד.</li>

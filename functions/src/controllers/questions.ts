@@ -18,7 +18,8 @@ export async function randomQuestions(lang: string, count: number, uids: string[
     if (pack && isPack(pack)) {
         // A pack game opens with a pack question, as before.
         const packIds = all.filter(q => q.pack === pack && !isRetired(q.id)).map(q => q.id);
-        return pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame);
+        return pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame, Math.random,
+            questionPacks[pack].openers || []);
     }
 
     // Easy openers are kept for question 1 (see pickWithOpener).
