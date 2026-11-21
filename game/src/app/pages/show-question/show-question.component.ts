@@ -1,5 +1,6 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
+import { FLAGGED_LIE_TEXT } from '../../portal/portal';
 import { fadeOutAndUnload } from './../fade-out';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -186,6 +187,11 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
             })
             .catch(err => {
                 this.loading = false;
+                // A lie the word filter refused (the CrazyGames version, see portal/portal.ts): write another.
+                if (err && err.code === 'FLAGGED_LIE') {
+                    this.errorMsg = FLAGGED_LIE_TEXT[this.t.rtl ? 'he' : 'en'];
+                    return;
+                }
 
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;

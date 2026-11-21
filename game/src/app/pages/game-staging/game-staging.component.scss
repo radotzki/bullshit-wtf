@@ -281,3 +281,25 @@
         letter-spacing: .04em;
     }
 }
+
+// The solo game did not start by itself: one line and its button, at the top of the lobby.
+.solo-failed {
+    max-width: 480px;
+    margin: 10px auto 0;
+    padding: 0 12px;
+    text-align: center;
+
+    .solo-failed-line {
+        font-weight: bold;
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+
+    // In px: the page's rem grows with the window.
+    .solo-failed-start {
+        height: auto;
+        min-height: 54px;
+        font-size: 22px;
+        white-space: normal;
+    }
+}

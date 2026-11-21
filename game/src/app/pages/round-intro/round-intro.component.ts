@@ -7,7 +7,8 @@ import { Howl } from 'howler';
 import { gameStrings, GameStrings } from './../game-strings';
 import { isFinalQuestion, standing, gapLine, Standing } from './final-question';
 import { tasteStrings, TasteStrings } from './../taste-strings';
-import { TASTE_QUESTIONS } from './../../game-model';
+import { TASTE_QUESTIONS, SOLO_RUN_LIVES } from './../../game-model';
+import { runStrings, RunStrings } from './../run-strings';
 import { pairStrings, PairStrings } from './../pair-strings';
 
 const roundPoints = [
@@ -34,6 +35,10 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
     tasteIntro = false;
     tasteWords: TasteStrings = tasteStrings('en');
     tasteQuestions = TASTE_QUESTIONS;
+    /** A solo run (SoloRun in game-model): its first card says how it ends. */
+    run = false;
+    runWords: RunStrings = runStrings('en');
+    runLives = SOLO_RUN_LIVES;
     /** Everything this card shows has been read: until then its middle stays empty. */
     ready = false;
     /** The question that follows is the game's last. */
@@ -73,6 +78,7 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
             this.points = roundPoints[roundIndex] || {};
             this.taste = !!taste;
             this.tasteIntro = !!taste && questionIndex === 0;
+            this.run = !!taste && !!taste.run;
             this.pairIntro = pair === true && questionIndex === 0;
 
             if (!isFinalQuestion(questionIndex, totalQ)) {
@@ -99,6 +105,7 @@ export class RoundIntroComponent implements OnInit, OnDestroy {
     private useLocale(locale: string) {
         this.t = gameStrings(locale);
         this.tasteWords = tasteStrings(locale);
+        this.runWords = runStrings(locale);
         this.pairWords = pairStrings(locale);
     }
 

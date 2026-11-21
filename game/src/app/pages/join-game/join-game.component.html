@@ -13,6 +13,8 @@
         <!-- The week after a finished game, in the test's new half: the night's recap (night-after.ts). -->
         <div class="controls-wrapper" *ngIf="gameOver && recapShown && recap">
             <div class="controls night-after">
+                <!-- Opened by SAME TABLE TOMORROW's link on a Hanukkah night (components/hanukkah-night). -->
+                <p class="recap-hanukkah" *ngIf="hanukkahNight">🕎 {{ hn.recapLine(hanukkahNight) }}</p>
                 <!-- Same table tomorrow: this game's lobby is open, so it comes first (same-table.ts). -->
                 <div class="recap-ask recap-playing" *ngIf="ask === 'again-player' || ask === 'again-other'">
                     <p class="recap-ask-title">{{ n.againTitle }}</p>
@@ -117,7 +119,8 @@
                 <div class="field" *ngIf="nicknameState">
                     <p class="control">
                         <input class="input is-large pin-input" type="text" [placeholder]="t.nicknamePlaceholder"
-                            [(ngModel)]="nickname" name="nickname" appAutofocus maxlength="9">
+                            [ngModel]="nickname" (ngModelChange)="typedNickname($event, nicknameBox)" (paste)="pastedNickname($event, nicknameBox)"
+                            #nicknameBox name="nickname" appAutofocus maxlength="9">
                     </p>
                 </div>
 
