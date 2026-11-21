@@ -106,7 +106,8 @@ const LETTER = /^[a-zא-ת]$/;
 const WILD_SIGNS = '@$!';
 export type Piece = string | number;
 // An apostrophe and an English ending end a word ("Hooke's", "pen's", "who'd"): the apostrophe hides no letter.
-const ENDING = /['’`](s|d|t|m|re|ll|ve)$/i;
+// "'t" only after an n ("don't", "can't"): "sl't" still hides a letter.
+const ENDING = /(['’`](s|d|m|re|ll|ve)|n['’`]t)$/i;
 // A geresh after these Hebrew letters is part of the letter (ז'ן is Jean, צ'יפס is chips), not a hidden one.
 const GERESH = /([גזצץת])['׳’`]/g;
 const HE_ANY = /[א-ת]/;
@@ -118,7 +119,8 @@ const DIGIT = /[0-9]/;
  */
 export function hiddenPattern(token: string, wild: string = WILD_SIGNS): Piece[] | null {
     const pieces: Piece[] = [];
-    token = token.replace(ENDING, '').replace(GERESH, '$1');
+    token = token.replace(ENDING, m => /^n/i.test(m) ? 'n' : '').replace(GERESH, '$1');
+    let real = 0;
     const hebrew = HE_ANY.test(token);
     for (let i = 0; i < token.length; i++) {
         // A character outside the first plane (an emoji) is two UTF-16 units: one sign.
@@ -131,6 +133,9 @@ export function hiddenPattern(token: string, wild: string = WILD_SIGNS): Piece[]
         // In a Hebrew word a digit is no Latin letter but a hidden Hebrew one ("ז1ן").
         if (LETTER.test(n) && wild.indexOf(c) < 0 && !(hebrew && DIGIT.test(c))) {
             pieces.push(n);
+            if (!DIGIT.test(c) && WILD_SIGNS.indexOf(c) < 0) {
+                real++;
+            }
         } else if (typeof pieces[pieces.length - 1] === 'number') {
             pieces[pieces.length - 1] = Math.min(HIDDEN_MAX, (pieces[pieces.length - 1] as number) + 1);
         } else {
@@ -148,7 +153,8 @@ export function hiddenPattern(token: string, wild: string = WILD_SIGNS): Piece[]
     // Three or more letters one at a time between signs are initials ("C.S.I", "s.h.e"), or a word spelled out
     // (wordsRefused). Two are a word with one hidden letter ("ז*ן", "ח*א").
     const initials = pieces.every((p, j) => j === 0 || typeof p === 'number' || typeof pieces[j - 1] === 'number');
-    return hidden && !(initials && letters >= 3) && letters >= 2 && letters >= hidden ? pieces : null;
+    // Digits and signs alone are a number, a time or a date ("4.5", "4-5", "4:55", "25.9.23"), never a word.
+    return real && hidden && !(initials && letters >= 3) && letters >= 2 && letters >= hidden ? pieces : null;
 }
 
 /** Whether the pieces spell `t` exactly, or, with `start`, the beginning of a word that starts with `t`. */
@@ -179,7 +185,8 @@ export function spells(pieces: Piece[], t: string, start: boolean, p: number = 0
 function hiddenHits(t: Tier, raw: string): boolean {
     // In a name other signs join two parts ("Mary-Jane", "O'Neil", "dan_k", "AC/DC", a link), and so do digits
     // that look like no letter: they hide none. Stars, hashes and emoji do ("wh*re", "p#ssy").
-    return raw.split(/[\s!"$-)+-\/:-?\[-`{-~’2689]+/).some(token => {
+    // Spaces as JavaScript's \s lists them, bar U+FEFF, which hides inside a word.
+    return raw.split(/[ \t\n\r\f\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000!"$-)+-\/:-?\[-`{-~’2689]+/).some(token => {
         // "@", "$" and "!" are read as the letters they look like (normalizeName): "Ke$ha" and "Ni$$an" are names.
         const pieces = hiddenPattern(token, '');
         if (!pieces) {

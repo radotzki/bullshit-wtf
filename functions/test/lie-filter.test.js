@@ -170,3 +170,25 @@ test('the older gaps of Product\'s section 2 are refused', () => {
     fine(['a hole in the ground', 'Kos island', 'pass', 'class', 'assist', 'Assad', 'מוצץ', 'תמצוץ את הלימון', 'the A-Team',
         'a-ha', 'ביצה קשה', "ביצ'יקו", "ז'אן"]);
 });
+
+// Product's second look, at 1450761 (reports: kids-filter-226-check, second round): digits and signs alone
+// are a number, a time or a date. A wrong number is the most ordinary lie in a trivia game.
+test('numbers, ranges, times, fractions, prices and dates are never read as words', () => {
+    fine(['4.5', '4.5 million', '4.5 מיליון', '5.7 מיליון', '4-5 שעות', 'בין 4-5', '5-7 ימים', '4:55', '4/5', '$4.5',
+        '25.9.23', '455', '$455', '7175', '5.9.3', '4.55%']);
+    const sweep = [];
+    for (let i = 0; i < 100; i++) for (let j = 0; j < 100; j++) sweep.push(i + '.' + j);
+    for (let i = 0; i < 60; i++) for (let j = i + 1; j < i + 30; j++) sweep.push(i + '-' + j, i + '-' + j + ' שעות', i + ' to ' + j);
+    for (let h = 0; h < 24; h++) for (let m = 0; m < 60; m++) sweep.push(h + ':' + String(m).padStart(2, '0'));
+    for (let i = 1; i < 20; i++) for (let j = 1; j < 20; j++) sweep.push(i + '/' + j);
+    for (let d = 1; d <= 31; d++) for (let m = 1; m <= 12; m++) sweep.push(d + '.' + m + '.23', d + '/' + m + '/2023');
+    for (let i = 0; i < 10000; i++) if (String(i).indexOf('1488') < 0) sweep.push(String(i), '$' + i);
+    assert.deepStrictEqual(sweep.filter(t => lieRefused(t)), []);
+    // Beside a real letter, digits still stand for letters; 1488 is refused as typed.
+    refused(['sh1t', '5h1t', 'a55', 'a$$', 'b1tch', 'ז1ן', '4.5 shit', '1488']);
+});
+
+test('"\'t" ends a word only after an n, so "sl\'t" still hides a letter', () => {
+    fine(["don't", "can't", "won't", "isn't", "didn't", "it's", "they're", "we've", "I'm", "she'll", "who'd"]);
+    refused(["sl't", "tw't", "cl't", "sh't", "f'ck", "b'tch"]);
+});

@@ -123,6 +123,12 @@ const EDGE_SIGNS = /(^|[^0-9a-zA-Zא-ת@$!])[0-9@$!]+|[0-9@$!]+(?=[^0-9a-zA-Zא-
 // One-letter Hebrew prefixes: and, the, in, to, from, that, as.
 const HE_PREFIX = 'והבלמשכ';
 const HE_LETTER = /^[א-ת]/;
+// Any letter of any script as typed, or one that the normalising step reads from a fancy sign (🅵, ꜰ).
+const REAL_LETTER = /\p{L}/u;
+const LOOK_ALIKE = /[0-9@$!]/g;
+// Spaces between words: JavaScript's \s also holds U+FEFF, which hides inside a word ("f\uFEFFuck").
+const WORD_GAP = /[^\S\uFEFF]+/;
+const hasLetter = (t: string) => REAL_LETTER.test(t) || /[a-zא-ת]/.test(normalizeName(t.replace(LOOK_ALIKE, '')));
 
 // "!" at a word's end ends it ("cum laude!", "Kush!"): only inside a word is it an "i" ("b!tch").
 const END_BANGS = /!+(?![0-9a-zA-Zא-ת@$])/g;
@@ -286,7 +292,7 @@ const WORD_LIST = Object.keys(WORD).filter(w => !ALLOW_ONE[w]);
  * is read again with that word in its place, so an allowed phrase still covers it ("Pu$$y Riot").
  */
 function hiddenRefused(text: string): boolean {
-    const tokens = text.split(/\s+/);
+    const tokens = text.split(WORD_GAP);
     return tokens.some((token, i) => {
         const pieces = hiddenPattern(token);
         if (!pieces) {
@@ -305,13 +311,16 @@ export function lieRefused(text: string): boolean {
     if (LIE_WORDS.raw.some(e => raw.indexOf(e) >= 0) || BITCH_HE.test(raw) || ASS_SIGNS.test(raw)) {
         return true;
     }
-    const n = normalizeName(raw.replace(END_BANGS, ' '));
+    // A word with no letter typed in it is a number, a time, a price or a date ("455", "4.5", "7175", "$4"),
+    // not a word written in digits: only beside a real letter do digits stand for letters ("sh1t", "a55").
+    const typed = raw.split(WORD_GAP).filter(hasLetter).join(' ');
+    const n = normalizeName(typed.replace(END_BANGS, ' '));
     const split = n.split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the signs inside its words taken out, so "f*ck" and "dick-head" read as words.
     const joined = n.replace(INNER_SIGNS, '$1').replace(INNER_SIGNS, '$1').split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the look-alike signs at a word's edge read as a space: "!" is an "i" inside
     // "b!tch", but in "חרא!", "shit!!" or "זין1" it only ends the word (the Hebrew kids' play-through).
-    const edged = normalizeName(raw.replace(EDGE_SIGNS, (m: string, before: string) => (before || '') + ' '))
+    const edged = normalizeName(typed.replace(EDGE_SIGNS, (m: string, before: string) => (before || '') + ' '))
         .split(NOT_LETTERS).filter(w => !!w);
-    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged) || hiddenRefused(raw.replace(END_BANGS, ' '));
+    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged) || hiddenRefused(typed.replace(END_BANGS, ' '));
 }
