@@ -1,4 +1,4 @@
-// The kid-friendly questions (functions/data/kids-questions.json): 20 English and 50 Hebrew
+// The kid-friendly questions (functions/data/kids-questions.json): 50 English and 50 Hebrew
 // strange-but-true facts that a child of 8 to 12 can follow, for the "Kids are playing" switch on
 // the create page. Every question carries `pack: "kids"`, so it never turns up in a normal game.
 // The switch, the pack in game-model.ts and the release's load (load-pack-questions.js, FILES) are
@@ -50,8 +50,8 @@ test('every kids question is a playable question of the pack, in its id\'s langu
     }
 });
 
-test('20 in English and 50 in Hebrew, ids without gaps, none twice, none a repeat of a question kept in the repository', () => {
-    for (const [lang, count] of [['en', 20], ['he', 50]]) {
+test('50 in each language, ids without gaps, none twice, none a repeat of a question kept in the repository', () => {
+    for (const [lang, count] of [['en', 50], ['he', 50]]) {
         const nums = ids.filter(id => pack[id].lang === lang).map(id => +id.split('-')[3]).sort((a, b) => a - b);
         assert.strictEqual(nums.length, count, lang);
         nums.forEach((n, i) => assert.strictEqual(n, i + 1, `${lang}-${n}`));
