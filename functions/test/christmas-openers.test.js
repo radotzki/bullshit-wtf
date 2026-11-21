@@ -36,3 +36,11 @@ test('a Christmas game opens with an unseen opener; once a room has seen them al
     const qids = pickWithPack(bank, pack, [seen], 7, 3, Math.random, openers);
     assert.ok(pack.indexOf(qids[0]) >= 0 && openers.indexOf(qids[0]) < 0);
 });
+
+// The English Christmas night walk: a family in Ohio with an 8-year-old and the grandparents opened with
+// London's tree from Oslo. A family's first question is one the kids and the grandparents half know.
+test('a family Christmas game opens with one an American family half knows, never Oslo or the 108 bells', () => {
+    const openers = questionPacks.christmas.openers;
+    ['christmas-26-en-07', 'christmas-26-en-17'].forEach(id => assert.ok(openers.indexOf(id) < 0, id));
+    ['christmas-26-en-08', 'christmas-26-en-11', 'christmas-26-en-26'].forEach(id => assert.ok(openers.indexOf(id) >= 0, id));
+});

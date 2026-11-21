@@ -42,7 +42,7 @@ test('swap names fit the nickname limit, and the same uid gets the same one', ()
     const next = swapName('uidA', 'en', [first.toUpperCase()]);
     assert.notStrictEqual(next, first);
     assert.ok(swapToast('Angel', 'en').includes('tonight you\'re Angel'));
-    assert.ok(swapToast('סבתא', 'he').includes('קוראים לך סבתא'));
+    assert.ok(swapToast('מלאך', 'he').includes('קוראים לך מלאך'));
 });
 
 // ---- join, crews and analytics, against fakes ----
@@ -95,6 +95,7 @@ test('join swaps a flagged name, keeps normal names, and cuts names to 9 after c
     const long = await join('abcd', 'cucumbersandwich', 'u2');
     assert.strictEqual(long.nickname, 'cucumbers');
 
+
     const slur = await join('abcd', 'nigger123456', 'u3');
     assert.strictEqual(slur.swapped, true);
     assert.ok(SWAP_NAMES.en.includes(slur.nickname));
@@ -113,6 +114,30 @@ test('join swaps a flagged name, keeps normal names, and cuts names to 9 after c
     const heNormal = await join('hehe', 'כוס תה', 'u6');
     assert.strictEqual(heNormal.nickname, 'כוס תה');
     assert.strictEqual(heNormal.swapped, undefined);
+});
+
+// The English Christmas night walk: the grandparents' shared tablet typed "Grandma & Grandpa", and the
+// table read "Grandma &" (the join box holds 9 characters, so the phone sends that). No dangling joiner.
+test('a name cut at 9 characters, or typed that way, loses a dangling "&", "+", "-" or "and"', async () => {
+    const cases = [
+        ['Grandma & Grandpa', 'Grandma'],
+        ['Grandma &', 'Grandma'],
+        ['Nana and Pop', 'Nana'],
+        ['Nana and ', 'Nana'],
+        ['Gran&Pop', 'Gran&Pop'],
+        ['Mary-Jane Smith', 'Mary-Jane'],
+        ['Ann + Bob', 'Ann + Bob'],
+        ['Ann + Bobby', 'Ann + Bob'],
+        ['Ann and Bob', 'Ann and B'],
+        ['Andy', 'Andy'],
+        ['Jo-Jo', 'Jo-Jo'],
+        ['&&&&&&&&&&&&', '&&&&&&&&&'],
+    ];
+    for (let i = 0; i < cases.length; i++) {
+        const pin = `NM${String.fromCharCode(65 + i)}${String.fromCharCode(65 + i)}`;
+        db.games[pin] = { locale: 'en', players: {} };
+        assert.strictEqual((await join(pin.toLowerCase(), cases[i][0], `nm${i}`)).nickname, cases[i][1], cases[i][0]);
+    }
 });
 
 test('BigQuery keeps the typed name and logs name_flag on each join', async () => {
@@ -136,4 +161,51 @@ test('a crew name that is a slur or a sex word is refused in the game\'s languag
 test('old crews hide flagged members from the standings and the rematch chips', () => {
     const crew = { members: { a: { nickname: 'dana', wins: 1 }, b: { nickname: 'nigger', wins: 5 }, c: { nickname: 'cumshot' } } };
     assert.deepStrictEqual(crewStandings(crew).map(m => m.nickname), ['dana']);
+});
+
+// The Hanukkah and Christmas night walks: a teenager's rude name became "Grandma" at a table where the
+// real grandparents played, so the scores read "Grandma fooled Grandma & ...". No swap name is a family role.
+test('no swap name is a name a relative at the table goes by', () => {
+    const family = ['grandma', 'grandpa', 'granny', 'nana', 'mom', 'mum', 'dad', 'auntie', 'uncle',
+        'סבתא', 'סבא', 'אמא', 'אבא', 'דודה', 'דוד'];
+    for (const n of SWAP_NAMES.en.concat(SWAP_NAMES.he)) assert.ok(family.indexOf(n.toLowerCase()) < 0, n);
+});
+
+// The Engineer's look at #224: a listed word spelled out with spaces passes the whole-name check once
+// " and" (or "-x" past the ninth character) follows it, and the tidy or the cut then took that tail off.
+// Every such name is swapped now; the name a player sits under is never one the filter flags.
+test('the cut and the tidy never uncover a flagged name', async () => {
+    const lists = require('../../name-lists.json');
+    const words = [];
+    for (const tier of ['hate', 'sex']) {
+        for (const kind of ['any', 'start', 'word']) {
+            (lists[tier][kind] || []).forEach(w => words.push(w));
+        }
+    }
+    const names = [];
+    for (const w of words) {
+        const spaced = Array.from(w).join(' ');
+        for (const tail of [' and', ' y', ' et', ' und', ' ו', ' &', ' +', '-'.repeat(3) + 'x', ' ' + 'x'.repeat(9)]) {
+            names.push(spaced + tail);
+        }
+    }
+    let uncovered = 0;
+    let checked = 0;
+    for (let i = 0; i < names.length; i++) {
+        const pin = `UC${i}`;
+        db.games[pin] = { locale: 'en', players: {} };
+        const r = await join(pin.toLowerCase(), names[i], `uc${i}`);
+        checked++;
+        if (!r.swapped && nameFlag(r.nickname)) {
+            uncovered++;
+        }
+        assert.ok(r.swapped || !nameFlag(r.nickname), `seated under a flagged name: ${JSON.stringify(r.nickname)}`);
+    }
+    assert.ok(checked > 500);
+    assert.strictEqual(uncovered, 0);
+    // Fair names still read as before.
+    db.games.FAIR = { locale: 'en', players: {} };
+    assert.strictEqual((await join('fair', 'Grandma & Grandpa', 'f1')).nickname, 'Grandma');
+    assert.strictEqual((await join('fair', 'Nana and Pop', 'f2')).nickname, 'Nana');
+    assert.strictEqual((await join('fair', 'Gran&Pop', 'f3')).swapped, undefined);
 });
