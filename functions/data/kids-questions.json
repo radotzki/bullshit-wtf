@@ -197,7 +197,7 @@
     "fakeAnswers": [
       "magnetic",
       "fizzy",
-      "see-through"
+      "bouncy"
     ],
     "citation": "https://en.wikipedia.org/wiki/Banana_equivalent_dose",
     "lang": "en",
@@ -327,7 +327,7 @@
     "questionText": "Russia is so big that it has $blank$ time zones",
     "realAnswer": "eleven",
     "fakeAnswers": [
-      "two",
+      "four",
       "thirty",
       "a hundred"
     ],
@@ -460,7 +460,7 @@
     "realAnswer": "8 minutes",
     "fakeAnswers": [
       "1 second",
-      "a whole day",
+      "3 days",
       "a year"
     ],
     "citation": "https://en.wikipedia.org/wiki/Sunlight",
@@ -496,7 +496,7 @@
     "realAnswer": "a fifth",
     "fakeAnswers": [
       "a hundredth",
-      "half",
+      "all of it",
       "nine tenths"
     ],
     "citation": "https://en.wikipedia.org/wiki/Human_brain",
@@ -516,14 +516,14 @@
     "pack": "kids"
   },
   "kids-26-en-44": {
-    "questionText": "A chameleon's tongue can be up to $blank$ as long as its body",
-    "realAnswer": "twice",
+    "questionText": "The hottest planet in our solar system is $blank$, even though it is not the closest one to the Sun",
+    "realAnswer": "venus",
     "fakeAnswers": [
-      "half",
-      "ten times",
-      "a hundred times"
+      "mercury",
+      "mars",
+      "jupiter"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Chameleon",
+    "citation": "https://en.wikipedia.org/wiki/Venus",
     "lang": "en",
     "pack": "kids"
   },
@@ -533,7 +533,7 @@
     "fakeAnswers": [
       "bright red",
       "silver",
-      "pink"
+      "orange"
     ],
     "citation": "https://en.wikipedia.org/wiki/Reindeer",
     "lang": "en",

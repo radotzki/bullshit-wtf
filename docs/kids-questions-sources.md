@@ -86,7 +86,7 @@ Source says: Peanuts are "botanically ... not nuts"; family Fabaceae, "commonly 
 
 **en-17. radioactive** · https://en.wikipedia.org/wiki/Banana_equivalent_dose  
 Bananas are very slightly ____  
-House lies: magnetic, fizzy, see-through  
+House lies: magnetic, fizzy, bouncy  
 Source says: "Bananas contain naturally occurring radioactive isotopes, particularly potassium-40."
 
 **en-18. skull** · https://en.wikipedia.org/wiki/Woodpecker  
@@ -395,7 +395,7 @@ Source says: "In 1972, the International Tennis Federation introduced yellow bal
 
 **en-28. eleven** · https://en.wikipedia.org/wiki/Time_in_Russia  
 Russia is so big that it has ____ time zones  
-House lies: two, thirty, a hundred  
+House lies: four, thirty, a hundred  
 Source says: "There are 11 time zones in Russia, which currently observe times ranging from UTC+02:00 to UTC+12:00."
 
 **en-29. hide in the trees** · https://en.wikipedia.org/wiki/Sloth  
@@ -450,7 +450,7 @@ Source says: Hyperion "is the world's tallest known living tree"; species: coast
 
 **en-39. 8 minutes** · https://en.wikipedia.org/wiki/Sunlight  
 Light from the Sun takes about ____ to reach the Earth  
-House lies: 1 second, a whole day, a year  
+House lies: 1 second, 3 days, a year  
 Source says: "Sunlight takes about 8.3 minutes to reach Earth from the surface of the Sun."
 
 **en-40. your neck** · https://en.wikipedia.org/wiki/Cervical_vertebrae  
@@ -465,7 +465,7 @@ Source says: "Pucks are frozen before the game to reduce bouncing during play."
 
 **en-42. a fifth** · https://en.wikipedia.org/wiki/Human_brain  
 Your brain is only about 2% of your weight, but it uses about ____ of your body's energy  
-House lies: a hundredth, half, nine tenths  
+House lies: a hundredth, all of it, nine tenths  
 Source says: The brain "is about 2% of the total body weight"; "Whilst awake the brain consumes a fifth of the body's total energy needs."
 
 **en-43. tree trunks** · https://en.wikipedia.org/wiki/Venice  
@@ -473,14 +473,14 @@ The city of Venice in Italy is built on closely packed ____ pushed into the mud
 House lies: old boats, glass bottles, metal springs  
 Source says: Venetians "learned to build by driving closely spaced piles consisting of the trunks of alder trees" into "the mud and sand".
 
-**en-44. twice** · https://en.wikipedia.org/wiki/Chameleon  
-A chameleon's tongue can be up to ____ as long as its body  
-House lies: half, ten times, a hundred times  
-Source says: The tongue is "typically thought to be one and a half to two times the length of their bodies"; smaller chameleons "can project their tongues more than twice their body length". Hence "up to twice".
+**en-44. venus** · https://en.wikipedia.org/wiki/Venus  
+The hottest planet in our solar system is ____, even though it is not the closest one to the Sun  
+House lies: mercury, mars, jupiter  
+Source says: Venus has the densest atmosphere, "making it the hottest planet in the solar system". Mercury, the closest planet, is not the hottest, so it stands as a lie. Replaces a chameleon question whose "up to twice" was softer than its source, and whose frame and house lies were those of en-31.
 
 **en-45. deep blue** · https://en.wikipedia.org/wiki/Reindeer  
 In the dark Arctic winter, a reindeer's eyes change from gold to ____  
-House lies: bright red, silver, pink  
+House lies: bright red, silver, orange  
 Source says: "The tapetum lucidum of Arctic reindeer eyes changes in color from gold in summer to blue in winter to improve their vision during times of continuous darkness".
 
 **en-46. graphite** · https://en.wikipedia.org/wiki/Pencil  
