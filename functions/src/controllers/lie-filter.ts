@@ -44,6 +44,13 @@ export const LIE_WORDS = {
         'retard', 'retards', 'retarded', 'tard', 'mongoloid', 'kkk',
         // transliterated Hebrew and Arabic
         'zona', 'kus', 'kusemek', 'kusemak', 'kusummak', 'sharmuta', 'sharmouta', 'sharmota', 'manyak', 'maniak',
+        'kusima', 'kusit', 'benzona', 'benzonah', 'mefager', 'tizdayen', 'mizdayen', 'kibenimat', 'kibinimat',
+        // English swearing in Hebrew letters (ביץ', דיק, אסהול): Israeli kids type these
+        'דיק', 'דיקהד', 'אסהול', 'אסהולס', 'פאקיו', 'מאדרפאקר', 'מאתרפאקר', 'מאדפאקר',
+        'סאנאפאביצ', 'סנאפאביצ', 'סאנופאביצ',
+        // ביץ' is matched as typed (BITCH_HE): "ביצ" alone is how "ביצ'ה" or "ביצ'יקו" begins.
+        // Hebrew as kids misspell it, or with "ך" for "ק" (כוס אמך)
+        'כוסאמכ', 'כוסעמכ', 'כוסעמאק', 'כוסאמאק', 'בנזונא', 'זונע', 'שרמוטע', 'מזדין', 'תזדין', 'הזדין', 'להזדין',
         // Hebrew
         'זונה', 'זונות', 'זונהה', 'שרמוטה', 'שרמוטות', 'כוסית', 'כוסיות', 'כוסאמק', 'כוסעמק', 'כוסאמא', 'כוסאמאשלך',
         'זין', 'זיין', 'זיון', 'זיונים', 'לזיין', 'מזדיין', 'מזדיינת', 'מזדיינים', 'תזדיין', 'תזדייני', 'הזדיין', 'יזדיין',
@@ -52,7 +59,7 @@ export const LIE_WORDS = {
         'מפגרים', 'פאק', 'פאקינג', 'פאקין', 'כושי', 'כושית', 'כושים', 'כושון', 'ערבוש', 'ערבושים', 'פרענק', 'פרענקים', 'צחצח', 'צחצחים', 'אשכנאצי',
     ],
     // A word that starts with it: no fair word does.
-    start: ['fuck', 'motherf', 'cunt', 'nigg', 'cocksuck', 'shithead', 'jizz', 'whore', 'blowjob', 'gangbang', 'cumshot',
+    start: ['fuck', 'fvck', 'cvnt', 'motherf', 'cunt', 'nigg', 'cocksuck', 'shithead', 'jizz', 'whore', 'blowjob', 'gangbang', 'cumshot',
         'cumslut', 'masturbat', 'pornograph'],
     // Anywhere in a word ("clusterfuck", "dumbfuck").
     any: ['fuck', 'nigger', 'motherfuck', 'faggot'],
@@ -60,7 +67,7 @@ export const LIE_WORDS = {
     phrase: ['heil hitler', 'sieg heil', 'seig heil', 'gas the jews', 'kill the jews', 'kill all jews', 'death to jews',
         'white power', 'white pride', 'son of a bitch', 'kiss my ass',
         'kill jews', 'porch monkey', 'porch monkeys', 'sand nigger', 'מזיין שכל', 'מזיינת שכל',
-        'כוס אמק', 'כוס אמאק', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
+        'כוס אמק', 'כוס אמאק', 'כוס אמך', 'כוס עמך', 'כוס עמאק', 'בן זונא', 'בת זונא', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
         'מוות לערבים', 'מוות ליהודים', 'ערבי מסריח', 'ערבים מסריחים'],
     // Typed as is (digits that the letters can't show).
     raw: ['1488'],
@@ -87,12 +94,16 @@ export const LIE_WORDS = {
         // after a prefix letter, or are the same letters as one: food, fed, weapons.
         'כלי זין', 'זינה', 'זינגר', 'מזין', 'מזינה', 'מזינים', 'מזינות', 'הזין את', 'הזינה', 'הזינו', 'להזין',
         'מזונה', 'מזונות', 'מזיין', 'מזוין', 'מזויין', 'שפיכות', 'שפיכת',
+        // Hebrew names and words that hold one: Dick Van Dyke, Moby Dick, Homo sapiens, peepers and a straw.
+        'דיק ואן דייק', 'מובי דיק', 'הומו ספיינס', 'הומו סאפיינס', 'הומו ארקטוס', 'מציצים', 'קשית מציצה',
         // The Mongols, as a people: only "מונגול" alone is the slur.
         'מונגולים', 'מונגולי', 'מונגולית', 'מונגוליה',
     ],
 };
 
 const NOT_LETTERS = /[^a-zא-ת]+/;
+// "bitch" in Hebrew letters: ביץ, ביץ', ביצ', ביאץ', ביטץ' as a whole word, with a prefix letter or not.
+const BITCH_HE = /(^|[^א-ת])[והשלכ]?בי[אט]?(ץ['׳`"]?|צ['׳`])(?![א-ת])/;
 // Signs inside a word that hide a letter or split one ("f*ck", "sh.it"). A hyphen or an apostrophe
 // splits words as a space does ("dick-head" is "dick head"; "f-ck" is spelled out, see wordsRefused).
 const INNER_SIGNS = /([a-zא-ת])[*._"`~^#%&+]+(?=[a-zא-ת])/g;
@@ -103,6 +114,8 @@ const EDGE_SIGNS = /(^|[^0-9a-zA-Zא-ת@$!])[0-9@$!]+|[0-9@$!]+(?=[^0-9a-zA-Zא-
 const HE_PREFIX = 'והבלמשכ';
 const HE_LETTER = /^[א-ת]/;
 
+// "!" at a word's end ends it ("cum laude!", "Kush!"): only inside a word is it an "i" ("b!tch").
+const END_BANGS = /!+(?![0-9a-zA-Zא-ת@$])/g;
 const words = (s: string) => normalizeName(s).split(NOT_LETTERS).filter(w => !!w);
 const set = (list: string[]) => {
     const out: { [w: string]: boolean } = {};
@@ -174,6 +187,18 @@ const ALLOW_ONE = set(LIE_WORDS.allow.filter(a => words(a).length === 1));
  * "rapper", "annals" and "hommos" are words.
  */
 const fold = (w: string) => w.replace(/(.)\1\1+/g, '$1');
+/**
+ * Doubled letters read once, but only where fair English words rarely double them: "ii" and "uu"
+ * ("shiit", "fuuck", "biitch"), or every double in a word with three or more ("ffuucckk", "sshhiitt").
+ * "rapper", "annals", "hommos" and "Mississippi" keep their letters.
+ */
+function foldDoubles(w: string): string {
+    if (!LATIN.test(w)) {
+        return w;
+    }
+    const pairs = (w.match(/([a-z])\1/g) || []).length;
+    return pairs >= 3 ? w.replace(/([a-z])\1+/g, '$1') : w.replace(/([iu])\1+/g, '$1');
+}
 
 /**
  * The word, the word with its repeated letters read once, and for a Hebrew word each of those without
@@ -181,7 +206,7 @@ const fold = (w: string) => w.replace(/(.)\1\1+/g, '$1');
  */
 function forms(w: string): string[] {
     const out: string[] = [];
-    [w, fold(w)].forEach(v => {
+    [w, fold(w), foldDoubles(fold(w))].forEach(v => {
         if (out.indexOf(v) < 0) {
             out.push(v);
         }
@@ -244,13 +269,91 @@ function wordsRefused(ws: string[]): boolean {
     return ws.length > 1 && ws.every(w => w.length <= 2) && wordRefused(ws.join(''));
 }
 
+// Signs that hide one letter or more inside a word ("b*tch", "f@ck", "d#ck", "c.nt", "b🐝tch", "ז*ן"): any
+// sign at all, bar a space. A run of k signs stands for 1 to k letters (at most 3); "a**hole" is "asshole".
+const HIDDEN_MAX = 3;
+const LETTER = /^[a-zא-ת]$/;
+const WILD_SIGNS = '@$!';
+type Piece = string | number;
+
+/** One word, as letters and hidden-letter runs (numbers), or null if nothing is hidden inside it. */
+function hiddenPattern(token: string): Piece[] | null {
+    const pieces: Piece[] = [];
+    Array.from(token).forEach(c => {
+        const n = normalizeName(c);
+        if (!n) {
+            return;
+        }
+        if (LETTER.test(n) && WILD_SIGNS.indexOf(c) < 0) {
+            pieces.push(n);
+        } else if (typeof pieces[pieces.length - 1] === 'number') {
+            pieces[pieces.length - 1] = Math.min(HIDDEN_MAX, (pieces[pieces.length - 1] as number) + 1);
+        } else {
+            pieces.push(1);
+        }
+    });
+    while (typeof pieces[0] === 'number') {
+        pieces.shift();
+    }
+    while (typeof pieces[pieces.length - 1] === 'number') {
+        pieces.pop();
+    }
+    const letters = pieces.filter(p => typeof p === 'string').length;
+    const hidden = pieces.filter(p => typeof p === 'number').length;
+    // Three or more letters one at a time between signs are initials ("C.S.I", "s.h.e"), or a word spelled out
+    // (wordsRefused). Two are a word with one hidden letter ("ז*ן", "ח*א").
+    const initials = pieces.every((p, j) => j === 0 || typeof p === 'number' || typeof pieces[j - 1] === 'number');
+    return hidden && !(initials && letters >= 3) && letters >= 2 && letters >= hidden ? pieces : null;
+}
+
+/** Whether the pieces spell `t` exactly, or, with `start`, the beginning of a word that starts with `t`. */
+function spells(pieces: Piece[], t: string, start: boolean, p = 0, at = 0): boolean {
+    if (p === pieces.length) {
+        return at === t.length;
+    }
+    const piece = pieces[p];
+    if (typeof piece === 'string') {
+        if (t.charAt(at) !== piece) {
+            return false;
+        }
+        // A word start is matched once its last letter is typed: "mother-in-law" is not "motherf…".
+        return (start && at + 1 === t.length) || spells(pieces, t, start, p + 1, at + 1);
+    }
+    for (let k = 1; k <= piece && at + k < t.length + (start ? 0 : 1); k++) {
+        if (spells(pieces, t, start, p + 1, at + k)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+const WORD_LIST = Object.keys(WORD).filter(w => !ALLOW_ONE[w]);
+
+/**
+ * A word with letters hidden inside it that can only be a listed word ("b*tch", "a**hole", "ז*ן"). The lie
+ * is read again with that word in its place, so an allowed phrase still covers it ("Pu$$y Riot").
+ */
+function hiddenRefused(text: string): boolean {
+    const tokens = text.split(/\s+/);
+    return tokens.some((token, i) => {
+        const pieces = hiddenPattern(token);
+        if (!pieces) {
+            return false;
+        }
+        const first = pieces[0] as string;
+        const read = (w: string) => wordsRefused(words(tokens.slice(0, i).concat([w], tokens.slice(i + 1)).join(' ')));
+        return WORD_LIST.some(w => w.charAt(0) === first && spells(pieces, w, false) && read(w))
+            || START.some(e => e.charAt(0) === first && spells(pieces, e, true) && read(e));
+    });
+}
+
 /** A lie the filter refuses. */
 export function lieRefused(text: string): boolean {
     const raw = String(text == null ? '' : text);
-    if (LIE_WORDS.raw.some(e => raw.indexOf(e) >= 0)) {
+    if (LIE_WORDS.raw.some(e => raw.indexOf(e) >= 0) || BITCH_HE.test(raw)) {
         return true;
     }
-    const n = normalizeName(raw);
+    const n = normalizeName(raw.replace(END_BANGS, ' '));
     const split = n.split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the signs inside its words taken out, so "f*ck" and "dick-head" read as words.
     const joined = n.replace(INNER_SIGNS, '$1').replace(INNER_SIGNS, '$1').split(NOT_LETTERS).filter(w => !!w);
@@ -258,5 +361,5 @@ export function lieRefused(text: string): boolean {
     // "b!tch", but in "חרא!", "shit!!" or "זין1" it only ends the word (the Hebrew kids' play-through).
     const edged = normalizeName(raw.replace(EDGE_SIGNS, (m: string, before: string) => (before || '') + ' '))
         .split(NOT_LETTERS).filter(w => !!w);
-    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged);
+    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged) || hiddenRefused(raw.replace(END_BANGS, ' '));
 }

@@ -73,7 +73,8 @@ test('every hate and sex entry of the nickname lists is refused: alone, in a sen
                 // Plurals that are fair words: "מונגולים" is the Mongols, a people (a shipped answer:
                 // "המונגולים תקפו"), and "שפיכות" is spilling ("שפיכות דמים", bloodshed).
                 if (e === 'מונגול' || e === 'שפיכ') continue;
-                for (const p of plurals(e).slice(1)) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
+                // "מציצים" is peepers (and a TV show), not the plural of "מציצה", which is "מציצות".
+                for (const p of plurals(e).slice(1).filter(x => x !== 'מציצים')) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
                 n++;
             }
         }
@@ -110,4 +111,44 @@ test('a sign or a digit at the start or end of a word hides no swear word', () =
     refused(['חרא!', 'חרא!!', '!!!חרא', 'זין!', 'זין1', 'זונה!', 'בן זונה!!!', 'כוס אמק!', 'shit!', 'bitch!!', 'dick!',
         'shit1', 'a fucking dog!', 'פאק', 'וואט דה פאק', 'פאקינג כלב']);
     fine(['nice!', 'wow!!!', 'כלב!', 'שבע!', '42 שנה', 'פי 2', 'בננות!', '!שלום', 'b2b', 'R2D2', 'pakistan', 'פקיסטן', 'פאקיסטן']);
+});
+
+// Trying to beat the kids' filter as a 10 to 13 year old would (reports: kids-filter-break-in). Each of these
+// passed at cb2efc5 (#225).
+test('a hidden letter inside a word, also with "!" at its end, is read as the letter it hides', () => {
+    refused(['b*tch!', 'b#tch!', 'a b*tch!', 'it smelled like sh*t!', 'f@ck', 'f$ck', 'd*ck', 'c*nt', 'p*ssy', 'wh*re',
+        'sl*t', 'a**hole', 'b-tch', 'i love b*tches', 'a sonofab*tch', 'b🐝tch', 'ז*ן', 'ח*א', 'זו*ה', 'ז"ן']);
+    // Initials, contractions, names with signs, Hebrew acronyms and geresh words stay fine.
+    fine(['C.S.I', 's.h.e', 'x-ray', 't-shirt', 'mother-in-law', 'his mother-in-law', 'Pu$$y Riot', 'Ke$ha', 'Ca$h',
+        'A$AP Rocky', 'P!nk', 'AT&T', 'M&M\'s', "rock'n'roll", 'Wal-Mart', 'Spider-Man', 'R2-D2', 'C-3PO', 'bullshit.wtf',
+        'צה"ל', 'ת"א', 'ז"ל', 'ש"ח', 'עו"ד', 'יו"ר', 'ט"ו בשבט', "צ'יפס", "ג'ירפה", "ז'קט", "סנדוויץ'", "ביצ'ה", 'f***', 'sh**']);
+});
+
+test('"!" at the end of a word ends it, so allowed phrases and names with "!" stay fine', () => {
+    fine(['cum laude!', 'summa cum laude!', 'Homo sapiens!', 'Homo erectus!!', 'Dick Van Dyke!', 'Dick Van Dyke?',
+        'Dick Cheney!', 'Moby Dick!', 'Kush!', 'Hindu Kush!', 'blue tits!', 'Spotted Dick!', 'Yahoo!', 'Wham!']);
+    refused(['b!tch', 'sh!t', 'shit!', 'dick!', 'Dick!', 'cum!', 'homo!']);
+});
+
+test('doubled "i" or "u", or every letter doubled, is read once', () => {
+    refused(['fuuck', 'shiit', 'biitch', 'ffuucckk', 'sshhiitt']);
+    fine(['shiitake', 'Hawaii', 'skiing', 'vacuum', 'rapper', 'hommos', 'Mississippi', 'coffee', 'bookkeeper', 'Tennessee']);
+});
+
+test('fancy letters, accents and look-alikes do not hide a word', () => {
+    refused(['ꜰᴜᴄᴋ', '🅵🆄🅲🅺', '🅕🅤🅒🅚', '🇫🇺🇨🇰', 'fúck', 'f́uck', 'fück', 'ѕhit', 'fvck', 'cvnt']);
+    fine(['café', 'Zoë', 'José', 'Pokémon', 'naïve', 'Beyoncé']);
+});
+
+test('English swearing in Hebrew letters, and Hebrew as kids misspell it, is refused', () => {
+    refused(["ביץ'", "ביצ'", 'ביץ', "ביטץ'", "ביאץ'", "יא ביץ'", 'דיק', 'דיקהד', 'אסהול', 'פאקיו', 'מאדרפאקר',
+        'מאתרפאקר', "סאנאפאביץ'", 'כוסאמך', 'כוס אמך', 'כוס עמאק', 'בן זונא', 'בנזונא', 'זונע', 'שרמוטע', 'מזדין',
+        'תזדין', 'לך תזדין']);
+    fine(['ביצה', 'ביצים', 'ביצות', 'דיקן', 'דיקלה', 'דיק ואן דייק', 'מובי דיק', 'הומו ספיינס', 'מציצים', 'קשית מציצה',
+        'שיט', 'שיטה', 'פאקיסטן', 'קאנט', 'דיאן פוסי', 'גרין ביי פאקרס']);
+});
+
+test('Hebrew swearing written in English letters is refused', () => {
+    refused(['kusima', 'kusit', 'benzona', 'ben zona', 'mefager', 'tizdayen', 'lech tizdayen', 'mizdayen', 'kibenimat']);
+    fine(['Zayn Malik', 'Zain', 'Sahara', 'Hara-kiri', 'Arizona', 'Kuskus', 'couscous', 'Kushner']);
 });

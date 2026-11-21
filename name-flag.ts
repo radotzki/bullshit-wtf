@@ -13,25 +13,43 @@ const CHAR_MAP: { [c: string]: string } = {
     '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '@': 'a', '$': 's', '!': 'i',
     // Hebrew final letters
     'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ',
-    // Cyrillic look-alikes: а е о р с х і у
-    'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'і': 'i', 'у': 'y',
+    // Cyrillic look-alikes: а е о р с х і у ѕ ј
+    'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x', 'і': 'i', 'у': 'y', 'ѕ': 's', 'ј': 'j',
+    // Small capitals, as "fancy text" keyboards type them (ꜰᴜᴄᴋ); NFKC leaves them as they are.
+    'ᴀ': 'a', 'ʙ': 'b', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ꜰ': 'f', 'ɢ': 'g', 'ʜ': 'h', 'ɪ': 'i', 'ᴊ': 'j',
+    'ᴋ': 'k', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u',
+    'ᴠ': 'v', 'ᴡ': 'w', 'ʏ': 'y', 'ᴢ': 'z',
 };
+// Letters in boxes and circles that NFKC leaves as they are (🅵🆄🅲🅺, 🅕🅤🅒🅚, 🇫🇺🇨🇰): two UTF-16 units each,
+// the first 0xD83C, the second in one of these runs of 26, A to Z.
+const BOXED_LOW = [0xDD50, 0xDD70, 0xDDE6];
+// Accents and other marks on a letter ("fúck"), once NFKD has taken them off it.
+const MARKS = /[\u0300-\u036f]/g;
 
 // Hebrew niqqud and cantillation, and invisible characters.
 const STRIP = /[֑-ׇ​-‏‪-‮⁠﻿]/g;
 const NOT_LETTER = /[^a-zא-ת]/g;
 const NOT_LETTERS = /[^a-zא-ת]+/;
 
-/** Step 1 of the spec: NFKC, lower case, no marks or invisible characters, look-alikes mapped. */
+/** Step 1 of the spec: NFKC with accents taken off, lower case, no marks or invisible characters, look-alikes mapped. */
 export function normalizeName(s: string): string {
     s = String(s == null ? '' : s);
     if (typeof (s as any).normalize === 'function') {
-        s = (s as any).normalize('NFKC');
+        s = (s as any).normalize('NFKD').replace(MARKS, '').normalize('NFKC');
     }
     s = s.toLowerCase().replace(STRIP, '');
     let out = '';
     for (let i = 0; i < s.length; i++) {
         const c = s.charAt(i);
+        if (s.charCodeAt(i) === 0xD83C && i + 1 < s.length) {
+            const low = s.charCodeAt(i + 1);
+            const run = BOXED_LOW.filter(b => low >= b && low < b + 26)[0];
+            if (run) {
+                out += String.fromCharCode(97 + low - run);
+                i++;
+                continue;
+            }
+        }
         out += Object.prototype.hasOwnProperty.call(CHAR_MAP, c) ? CHAR_MAP[c] : c;
     }
     return out;

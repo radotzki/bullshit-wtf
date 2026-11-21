@@ -137,3 +137,10 @@ test('old crews hide flagged members from the standings and the rematch chips', 
     const crew = { members: { a: { nickname: 'dana', wins: 1 }, b: { nickname: 'nigger', wins: 5 }, c: { nickname: 'cumshot' } } };
     assert.deepStrictEqual(crewStandings(crew).map(m => m.nickname), ['dana']);
 });
+
+// The kids' filter break-in (reports: kids-filter-break-in): fancy-text keyboards and accents.
+test('small capitals, boxed letters and accents do not hide a word in a name', () => {
+    for (const n of ['ᴄᴏᴄᴋ', '🅒🅞🅒🅚', 'cóck', 'ᴘᴜssʏ', 'pórn', 'ѕlut']) assert.strictEqual(nameFlag(n), 'sex', n);
+    assert.strictEqual(nameFlag('ɴɪɢɢᴇʀ'), 'hate');
+    for (const n of ['Zoë', 'José', 'Renée', 'Müller', 'Chloé']) assert.strictEqual(nameFlag(n), null, n);
+});
