@@ -17,6 +17,7 @@
     "@angular/forms": "^22.2.6",
     "@angular/platform-browser": "^22.2.6",
     "@angular/router": "^22.2.6",
+    "@discord/embedded-app-sdk": "2.5.0",
     "bulma": "^0.9.3",
     "firebase": "^13.3.0",
     "howler": "^2.2.3",
@@ -45,6 +46,9 @@
   "overrides": {
     "jsonwebtoken": "^9.0.2",
     "@grpc/grpc-js": "^1.14.0",
-    "minimatch": "^11.0.8"
+    "minimatch": "^11.0.8",
+    "@discord/embedded-app-sdk": {
+      "zod": "4.6.7"
+    }
   }
 }

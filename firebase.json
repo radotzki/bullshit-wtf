@@ -43,6 +43,14 @@
       {
         "regex": "^/(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/]+/?$",
         "destination": "/index.html"
+      },
+      {
+        "regex": "^/portal/crazygames/?$",
+        "destination": "/index.html"
+      },
+      {
+        "regex": "^/he/portal/crazygames/?$",
+        "destination": "/he.html"
       }
     ],
     "headers": [
@@ -85,6 +93,23 @@
       {
         "regex": "^/(he/)?(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/.]+/?$",
         "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "regex": "^/(he/)?portal/crazygames/?$",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "frame-ancestors 'self' https://crazygames.com https://*.crazygames.com capacitor://*.crazygames.com"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          },
           {
             "key": "Cache-Control",
             "value": "no-cache"

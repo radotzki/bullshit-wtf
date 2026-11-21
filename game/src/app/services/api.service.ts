@@ -20,8 +20,15 @@ import { environment } from '../../environments/environment';
 import firebaseCompat from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/database';
+import { forceWebSockets } from 'firebase/database';
 
 const firebase = firebaseCompat.initializeApp(environment.firebaseConfig);
+// Inside Discord (src/discord/boot.ts patched the page for its proxy) the database must stay on its
+// WebSocket: its fallback, long polling, loads <script> tags from firebaseio.com, which Discord's
+// content policy blocks and its proxy can't map. Called before any database use, as Firebase requires.
+if (typeof window !== 'undefined' && (window as any).bsDiscordProxy === true) {
+    forceWebSockets();
+}
 
 /** The page's one reconnect nudge (see reconnect-nudge.ts), started with the first ApiService. */
 let nudging = false;
@@ -163,6 +170,27 @@ export class ApiService {
             aboutUs: true,
         });
         rememberHostKey(resp && resp.pin, hostKey);
+        return resp;
+    }
+
+    /**
+     * The Discord Activity (portal/discord.ts): the game of the Discord call `instanceId`, made for the
+     * call if it has none that can be played (functions' discordTable). The phone that makes it hosts
+     * it, as createGame's does. `ended`: the call's game just finished and has no rematch yet.
+     */
+    async discordTable(instanceId: string, locale: string, campaign?: string): Promise<{ pin: string; created: boolean; ended?: boolean }> {
+        const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
+        const hostKey = newHostKey();
+        const resp = await this.post<{ pin: string; created: boolean; ended?: boolean }>(`discordTable`, {
+            instanceId, locale, uid, hostKey, campaign: campaign || null,
+            arrival: newGameArrival(),
+            serverStart: true,
+            stagedReveal: true,
+            aboutUs: true,
+        });
+        if (resp && resp.created) {
+            rememberHostKey(resp.pin, hostKey);
+        }
         return resp;
     }
 

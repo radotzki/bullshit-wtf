@@ -4,6 +4,8 @@ import { ShareService } from './../../services/share.service';
 import { CardPlayer, ResultsCardService } from './../../services/results-card.service';
 import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { inDiscordActivity } from './../../portal/portal';
+import { canShareMoment, shareMoment } from './../../portal/discord';
 
 const sheetStrings = {
     en: { shareResults: 'SHARE RESULTS', share: 'SHARE', whatsapp: 'WHATSAPP', saveImage: 'SAVE IMAGE', done: 'DONE',
@@ -108,6 +110,11 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
     }
 
     async openSheet() {
+        // The Discord Activity: the picture goes to the channel with Discord's share-moment dialog
+        // (portal/discord.ts). It needs the player's Discord sign-in; until then the button is hidden.
+        if (inDiscordActivity()) {
+            return this.shareToDiscord();
+        }
         this.open = true;
         this.sheet.emit(true);
         this.copied = false;
@@ -126,6 +133,24 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
             }
             this.loading = false;
         }
+    }
+
+    private async shareToDiscord() {
+        if (!canShareMoment() || this.loading) {
+            return;
+        }
+        this.loading = true;
+        try {
+            const picture = this.blob || await this.resultsCardService.render(this.players || [], this.me, this.locale, this.pack,
+                this.myIndex(this.players || [], this.me));
+            this.blob = picture;
+            if (await shareMoment(picture, (url, init) => fetch(url, init))) {
+                this.apiService.logShare('results', 'discord', { locale: this.locale === 'he' ? 'he' : 'en' });
+            }
+        } catch (e) {
+            console.log(e);
+        }
+        this.loading = false;
     }
 
     close() {

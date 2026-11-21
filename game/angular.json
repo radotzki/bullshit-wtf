@@ -19,6 +19,7 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
+              "src/discord/boot.ts",
               "zone.js"
             ],
             "tsConfig": "src/tsconfig.app.json",

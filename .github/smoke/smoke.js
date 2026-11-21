@@ -45,6 +45,10 @@ const APP_PAGES = [
     '/he/join-game',
     '/he/join-game/ABCD',
     '/he/c/smoke-test',
+    // The CrazyGames version (game/src/app/portal): its SDK's host is refused here, so this also
+    // checks that the portal plays on without the SDK.
+    '/portal/crazygames',
+    '/he/portal/crazygames',
 ];
 
 // A page's address with a slash on the end, as a link can gain one on the way: it must reach the
