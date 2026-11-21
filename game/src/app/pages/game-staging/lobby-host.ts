@@ -344,6 +344,11 @@ export function packBanner(pack: string, locale: string): string {
     if (pack === 'christmas') {
         return 'Holiday edition: new Christmas and New Year questions in this game';
     }
+    if (pack === 'party') {
+        return locale === 'he'
+            ? 'מהדורת מסיבה: יש במשחק הזה שאלות על חתונות, ימי הולדת, טיולים ובילויים'
+            : 'Party edition: this game has questions about weddings, birthdays, trips and nights out';
+    }
     if (pack !== 'hanukkah') {
         return null;
     }
