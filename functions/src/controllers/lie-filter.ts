@@ -49,7 +49,7 @@ export const LIE_WORDS = {
         'זין', 'זיין', 'זיון', 'זיונים', 'לזיין', 'מזדיין', 'מזדיינת', 'מזדיינים', 'תזדיין', 'תזדייני', 'הזדיין', 'יזדיין',
         'חרא', 'חראות', 'מניאק', 'מניאקית', 'מניאקים', 'בנזונה', 'יבנזונה', 'שפיך', 'ציצים', 'פורנו', 'אונס', 'אנס',
         'חרמן', 'חרמנית', 'דגדגן', 'מציצה', 'פדופיל', 'הומו', 'הומואים', 'מתרומם', 'קוקסינל', 'מפגר', 'מפגרת',
-        'מפגרים', 'כושי', 'כושית', 'כושים', 'כושון', 'ערבוש', 'ערבושים', 'פרענק', 'פרענקים', 'צחצח', 'צחצחים', 'אשכנאצי',
+        'מפגרים', 'פאק', 'פאקינג', 'פאקין', 'כושי', 'כושית', 'כושים', 'כושון', 'ערבוש', 'ערבושים', 'פרענק', 'פרענקים', 'צחצח', 'צחצחים', 'אשכנאצי',
     ],
     // A word that starts with it: no fair word does.
     start: ['fuck', 'motherf', 'cunt', 'nigg', 'cocksuck', 'shithead', 'jizz', 'whore', 'blowjob', 'gangbang', 'cumshot',
@@ -96,6 +96,9 @@ const NOT_LETTERS = /[^a-zא-ת]+/;
 // Signs inside a word that hide a letter or split one ("f*ck", "sh.it"). A hyphen or an apostrophe
 // splits words as a space does ("dick-head" is "dick head"; "f-ck" is spelled out, see wordsRefused).
 const INNER_SIGNS = /([a-zא-ת])[*._"`~^#%&+]+(?=[a-zא-ת])/g;
+// Digits and the signs that normalizeName reads as letters (name-flag.ts: 1 is i, ! is i, @ is a, $ is s),
+// at the start or the end of a word, where they hide no letter.
+const EDGE_SIGNS = /(^|[^0-9a-zA-Zא-ת@$!])[0-9@$!]+|[0-9@$!]+(?=[^0-9a-zA-Zא-ת@$!]|$)/g;
 // One-letter Hebrew prefixes: and, the, in, to, from, that, as.
 const HE_PREFIX = 'והבלמשכ';
 const HE_LETTER = /^[א-ת]/;
@@ -251,5 +254,9 @@ export function lieRefused(text: string): boolean {
     const split = n.split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the signs inside its words taken out, so "f*ck" and "dick-head" read as words.
     const joined = n.replace(INNER_SIGNS, '$1').replace(INNER_SIGNS, '$1').split(NOT_LETTERS).filter(w => !!w);
-    return wordsRefused(split) || wordsRefused(joined);
+    // The same lie with the look-alike signs at a word's edge read as a space: "!" is an "i" inside
+    // "b!tch", but in "חרא!", "shit!!" or "זין1" it only ends the word (the Hebrew kids' play-through).
+    const edged = normalizeName(raw.replace(EDGE_SIGNS, (m: string, before: string) => (before || '') + ' '))
+        .split(NOT_LETTERS).filter(w => !!w);
+    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged);
 }

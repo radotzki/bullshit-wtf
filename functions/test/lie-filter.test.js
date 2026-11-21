@@ -103,3 +103,11 @@ test('doubled letters and "es" endings of fair words are not read as listed word
     refused(['fuuuck', 'shiiit', 'biiitch', 'זונהה', 'spics', 'wetbacks', 'porch monkey', 'kill the jews',
         'kill jews', 'white power', 'מזיין שכל']);
 });
+
+// The Hebrew kids' play-through (reports: hebrew-kids-break): an exclamation mark or a digit at the end
+// of a word is read as the letter it looks like ("!" as i, "1" as i), so "חרא!" passed while "חרא" did not.
+test('a sign or a digit at the start or end of a word hides no swear word', () => {
+    refused(['חרא!', 'חרא!!', '!!!חרא', 'זין!', 'זין1', 'זונה!', 'בן זונה!!!', 'כוס אמק!', 'shit!', 'bitch!!', 'dick!',
+        'shit1', 'a fucking dog!', 'פאק', 'וואט דה פאק', 'פאקינג כלב']);
+    fine(['nice!', 'wow!!!', 'כלב!', 'שבע!', '42 שנה', 'פי 2', 'בננות!', '!שלום', 'b2b', 'R2D2', 'pakistan', 'פקיסטן', 'פאקיסטן']);
+});
