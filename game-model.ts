@@ -132,6 +132,9 @@ export interface GameScheme {
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
     // except a test tag (see isTestCampaign), which every Replay and crew rematch of a test game keeps.
     campaign?: string;
+    // Players' lies go through the word filter (functions/src/controllers/portal.ts): set on every game
+    // of a Discord call, play-tests included (their campaign is a test tag), and kept by every Replay.
+    filterLies?: boolean;
     // INVITE ANOTHER GROUP: the table each seat of this finished game made, so a second call from the
     // same seat (a reload, a second tap) gets the same table and link. Server only (createTable).
     tables?: { [pid: string]: string };

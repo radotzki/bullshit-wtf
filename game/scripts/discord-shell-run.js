@@ -84,7 +84,7 @@ addEventListener('message', function (e) {
             data: { v: 1, config: { cdn_host: 'cdn.discordapp.com', api_endpoint: '//discord.com/api', environment: 'production' } } }], '*');
     } else if (op === 1 && p.cmd) {
         window.__commands.push({ cmd: p.cmd, args: p.args });
-        e.source.postMessage([1, { cmd: p.cmd, nonce: p.nonce, evt: null, data: p.cmd === 'OPEN_EXTERNAL_LINK' ? { opened: true } : {} }], '*');
+        e.source.postMessage([1, { cmd: p.cmd, nonce: p.nonce, evt: null, data: p.cmd === 'OPEN_EXTERNAL_LINK' ? { opened: true } : p.cmd === 'SUBSCRIBE' ? { evt: p.args && p.args.evt || p.evt } : {} }], '*');
     }
 });
 var f = document.createElement('iframe');

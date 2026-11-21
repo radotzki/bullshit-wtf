@@ -224,6 +224,8 @@ export async function discordTable(instanceId: any, locale: any, options: Discor
             await newGame(lang, DISCORD_GAME_LENGTH, options.uid, {
                 pin,
                 campaign,
+                // Lies are filtered in every game of a call, a play-test's too (portal.ts).
+                filterLies: true,
                 pack: seasonalPack(Date.now(), lang),
                 hostKey: options.hostKey,
                 serverStart: options.serverStart === true,

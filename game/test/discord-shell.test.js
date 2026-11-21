@@ -352,3 +352,87 @@ test('the real SDK, with Discord\'s launch parameters faked: it reads the same i
         global.document = saved.document;
     }
 });
+
+// ---------- the layout in Discord (spec row 6) ----------
+
+/** The selectors of a stylesheet's rules, @media blocks opened up (enough for the shell's own CSS). */
+function selectorsOf(css) {
+    const out = [];
+    const body = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const re = /([^{}]+)\{([^{}]*)\}/g;
+    let m;
+    while ((m = re.exec(body))) {
+        const sel = m[1].replace(/@media[^{]*$/, '').trim().replace(/^.*@media[^{]*\{/, '').trim();
+        if (sel) sel.split(',').forEach(s => out.push(s.trim()));
+    }
+    return out;
+}
+
+test('the Discord layout touches only a page marked bs-discord: the site and CrazyGames look as before', () => {
+    const css = discord.DISCORD_LAYOUT_CSS;
+    const selectors = selectorsOf(css);
+    assert.ok(selectors.length >= 8, `rules found: ${selectors.length}`);
+    for (const s of selectors) {
+        assert.ok(/^html\.bs-discord(\.bs-discord-pip)?(\s|$)/.test(s), `a rule outside Discord: ${s}`);
+    }
+    // The class is only ever set by DiscordService.start, behind the switch (CrazyGames gets bs-portal alone).
+    const service = read('app', 'portal', 'discord.service.ts');
+    assert.ok(/if \(this\.started \|\| !inDiscordActivity\(\)\) \{\s*return;\s*\}/.test(service));
+    assert.ok(service.indexOf("classList.add('bs-portal', 'bs-discord')") > service.indexOf('!inDiscordActivity()'));
+    assert.ok(/style\.textContent = PORTAL_CSS \+ DISCORD_CSS \+ DISCORD_LAYOUT_CSS;/.test(service));
+    const elsewhere = [];
+    const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach(e => {
+        const p = path.join(dir, e.name);
+        if (e.isDirectory()) return walk(p);
+        if (/\.(ts|html|scss)$/.test(e.name) && !/portal[\\/]discord(\.service)?\.ts$/.test(p) && /bs-discord/.test(fs.readFileSync(p, 'utf8'))) elsewhere.push(p);
+    });
+    walk(src('app'));
+    walk(src('styles'));
+    assert.deepStrictEqual(elsewhere, [], 'no other file sets or styles bs-discord');
+    // The CrazyGames version's own look carries nothing of it.
+    assert.ok(!/bs-discord|safe-area/.test(load(src('app', 'portal', 'portal-style.ts')).PORTAL_CSS));
+});
+
+test('the Discord layout: a centred phone-width column, a phone\'s text size, Discord\'s safe areas', () => {
+    const css = discord.DISCORD_LAYOUT_CSS;
+    assert.strictEqual(discord.DISCORD_COLUMN, '30rem');
+    assert.ok(/html\.bs-discord \.game-container \{[^}]*max-width: 30rem; margin: 0 auto;/.test(css));
+    // The site's text grows with the frame's width (font-size.scss, up to 38px for a TV): not in Discord.
+    assert.ok(/html\.bs-discord \{[^}]*font-size: 14px !important;/.test(css));
+    assert.ok(/min-width: 600px\) \{\s*html\.bs-discord \{ font-size: 16px !important; \}/.test(css));
+    // Discord's variables first, the browser's after (Discord's mobile guide, "Mobile Safe Areas").
+    for (const [v, side] of [['sait', 'top'], ['saib', 'bottom'], ['sail', 'left'], ['sair', 'right']]) {
+        assert.ok(css.indexOf(`--${v}: var(--discord-safe-area-inset-${side}, env(safe-area-inset-${side}, 0px));`) >= 0, v);
+    }
+    assert.ok(/\.game-container \{\s*top: var\(--sait\); bottom: var\(--saib\); left: var\(--sail\); right: var\(--sair\);/.test(css));
+    // The join step's white words keep a dark ground when its picture can't load through the proxy.
+    assert.ok(/html\.bs-discord \.arcade-form \{[^}]*background-color: #3b2a35;/.test(css));
+});
+
+test('picture-in-picture and the grid show "tap to open"; focused plays; a phone asks for portrait', () => {
+    assert.strictEqual(discord.smallLayout(discord.LAYOUT_MODE.PIP), true);
+    assert.strictEqual(discord.smallLayout(discord.LAYOUT_MODE.GRID), true);
+    assert.strictEqual(discord.smallLayout(discord.LAYOUT_MODE.FOCUSED), false);
+    assert.strictEqual(discord.smallLayout(discord.LAYOUT_MODE.UNHANDLED), false);
+    assert.strictEqual(discord.smallLayout(undefined), false);
+    assert.deepStrictEqual(discord.orientationLockFor('mobile'), { lock_state: 2 });
+    assert.strictEqual(discord.orientationLockFor('desktop'), null);
+    assert.strictEqual(discord.orientationLockFor(''), null);
+    assert.strictEqual(discord.orientationLockFor(null), null);
+    // The card is hidden unless html carries bs-discord-pip.
+    const css = discord.DISCORD_LAYOUT_CSS;
+    assert.ok(/html\.bs-discord \.bs-discord-pip-card \{ display: none; \}/.test(css));
+    assert.ok(/html\.bs-discord\.bs-discord-pip \.bs-discord-pip-card \{\s*display: flex;/.test(css));
+    for (const lang of ['en', 'he']) assert.ok(discord.DISCORD_STRINGS[lang].pipLine, lang);
+    // The numbers are the SDK's own (Common.LayoutModeTypeObject, Common.OrientationLockStateTypeObject).
+    const common = fs.readFileSync(path.join(__dirname, '..', 'node_modules', '@discord', 'embedded-app-sdk', 'output', 'schema', 'common.d.ts'), 'utf8');
+    const block = (name) => /\{([^}]*)\}/.exec(common.slice(common.indexOf(`export declare const ${name}`)))[1];
+    for (const [k, v] of Object.entries(discord.LAYOUT_MODE)) assert.ok(new RegExp(`readonly ${k}: ${v};`).test(block('LayoutModeTypeObject')), k);
+    for (const [k, v] of Object.entries(discord.ORIENTATION_LOCK)) assert.ok(new RegExp(`readonly ${k}: ${v};`).test(block('OrientationLockStateTypeObject')), k);
+    // The service follows Discord's event, and asks for the lock by the launch's platform; neither can stop the game.
+    const service = read('app', 'portal', 'discord.service.ts');
+    assert.ok(/sdk\.subscribe\('ACTIVITY_LAYOUT_MODE_UPDATE', \(data: any\) => set\(data && data\.layout_mode\)\)/.test(service));
+    assert.ok(/classList\.toggle\('bs-discord-pip', smallLayout\(mode\)\)/.test(service));
+    assert.ok(/orientationLockFor\(launchFrom\(launchSearch\(\)\)\.platform\)/.test(service));
+    assert.ok(/setOrientationLockState\(lock\)\.catch\(/.test(service));
+});
