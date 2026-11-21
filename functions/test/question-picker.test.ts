@@ -135,16 +135,41 @@ const tests: { [name: string]: () => void } = {
         assert.ok(none.indexOf('h3') < 0 && none.indexOf('h7') < 0);
     },
 
-    'Hanukkah openers are Hebrew questions of the Hanukkah pack file'() {
+    'Hanukkah openers are questions of the Hanukkah pack file, enough in Hebrew and in English'() {
         // From dist-test/test/ the repository's functions/data is two folders up.
         const file = require('../../data/hanukkah-questions.json');
         const openers: string[] = questionPacks.hanukkah.openers;
-        assert.ok(openers.length >= 8, 'enough openers for a family\'s nights');
         openers.forEach(id => {
             assert.ok(file[id], `${id} is in hanukkah-questions.json`);
-            assert.strictEqual(file[id].lang, 'he');
+            assert.ok(file[id].lang === 'he' || file[id].lang === 'en', id);
             assert.strictEqual(file[id].pack, 'hanukkah');
         });
+        // Eight nights, often two games a night: enough that a family's first nights each open with a new one.
+        assert.ok(openers.filter(id => file[id].lang === 'he').length >= 8, 'Hebrew openers');
+        assert.ok(openers.filter(id => file[id].lang === 'en').length >= 8, 'English openers');
+    },
+
+    'an English Hanukkah game opens with one a Jewish family abroad half knows, never a gory one'() {
+        // From the English Hanukkah night walk: English games had no openers, so question 1 was any pack
+        // question (Apphus, twenty cubits, Nicanor's head and right hand) in front of a 9-year-old and Nana.
+        const file = require('../../data/hanukkah-questions.json');
+        const openers: string[] = questionPacks.hanukkah.openers;
+        const english = Object.keys(file).filter(id => file[id].lang === 'en');
+        const gory = ['19', '23', '54', '74', '76'].map(n => `hanukkah-26-en-${n}`);
+        gory.forEach(id => {
+            assert.ok(file[id], `${id} is still in the file`);
+            assert.ok(openers.indexOf(id) < 0, `${id} does not open a game`);
+        });
+        const regular = bank(60);
+        for (let seed = 1; seed <= 40; seed++) {
+            const qids = pickWithPack(regular, english, [], 7, 3, seeded(seed), openers);
+            assert.ok(openers.indexOf(qids[0]) >= 0 && file[qids[0]].lang === 'en', `game ${seed} opens with ${qids[0]}`);
+        }
+        // A room that saw every English opener still gets a pack question first, as before.
+        const seenAll: SeenRecord = {};
+        openers.filter(id => file[id].lang === 'en').forEach((id, i) => seenAll[id] = i + 1);
+        const late = pickWithPack(regular, english, [seenAll], 7, 3, seeded(41), openers);
+        assert.ok(english.indexOf(late[0]) >= 0 && !(late[0] in seenAll));
     },
 
     'pack game with a tiny normal bank tops up from the pack'() {
