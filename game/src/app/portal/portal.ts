@@ -71,8 +71,13 @@ export function portalLocale(sdkLocale: string | null | undefined, pathname: str
     return l.indexOf('he') === 0 || l.indexOf('iw') === 0 ? 'he' : 'en';
 }
 
-/** The CrazyGames username as a nickname: as the join page takes it (9 characters at most). */
-export function portalNickname(username: string | null | undefined, max = 9): string {
+/**
+ * The CrazyGames username as the join page receives it: spaces tidied, and kept whole (up to 64
+ * characters). The nickname box shows its first 9, and the server checks the whole name for slurs
+ * and sex words before it cuts it to 9 (join-game/whole-name.ts), so a rude word past the 9th
+ * character is swapped, not cut off.
+ */
+export function portalNickname(username: string | null | undefined, max = 64): string {
     const name = String(username || '').replace(/\s+/g, ' ').trim();
     return Array.from(name).slice(0, max).join('').trim();
 }
@@ -255,7 +260,7 @@ export function setPortalUsername(name: string | null | undefined) {
     username = portalNickname(name);
 }
 
-/** The nickname to prefill on the join page: the CrazyGames username, or ''. */
+/** The nickname to prefill on the join page: the whole CrazyGames username, or ''. */
 export function portalUsername(): string {
     return username;
 }
@@ -276,4 +281,80 @@ export function onPortalLocale(listener: (locale: 'he' | 'en') => void): () => v
 
 export function announcePortalLocale(locale: 'he' | 'en') {
     localeListeners.slice().forEach(l => l(locale));
+}
+
+// ---------- the portal's home, for a player who arrives alone ----------
+// Most CrazyGames players come alone, from the game's tile. The home says at once that this is a
+// party game for friends, how a round goes, and offers two starts of the same size (CrazyGames:
+// "Playing alone is as prominent as playing with friends"): a game with friends, its lobby and
+// invite link one tap away, and the 5-question taste alone, which needs no one.
+
+export interface PortalHomeStrings {
+    pitch: string;
+    how: string[];
+    needs: string;
+    friends: string;
+    friendsSub: string;
+    solo: string;
+    soloSub: string;
+    options: string;
+}
+
+export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings } = {
+    en: {
+        pitch: 'Fool your friends with made-up answers to strange-but-true trivia.',
+        how: [
+            'Everyone gets the same trivia question',
+            'Write a fake answer that sounds true',
+            'Find the real one, and score for every friend who picks your lie',
+        ],
+        needs: 'A party game for 2 to 12 players, each on their own phone or computer.',
+        friends: 'Play with friends',
+        friendsSub: 'You get a link to send them',
+        solo: 'Try it alone',
+        soloSub: '5 quick questions, no one needed',
+        options: 'More options: language, length, kids',
+    },
+    he: {
+        pitch: 'עובדים על החברים עם תשובות מומצאות לשאלות טריוויה מוזרות אבל נכונות.',
+        how: [
+            'כולם מקבלים את אותה שאלת טריוויה',
+            'כותבים תשובה מומצאת שנשמעת אמיתית',
+            'מוצאים את התשובה הנכונה, ומקבלים נקודות על כל חבר שבחר בשקר שלכם',
+        ],
+        needs: 'משחק חברה ל-2 עד 12 שחקנים, כל אחד מהטלפון או מהמחשב שלו.',
+        friends: 'לשחק עם חברים',
+        friendsSub: 'מקבלים קישור לשלוח להם',
+        solo: 'לנסות לבד',
+        soloSub: '5 שאלות מהירות, בלי אף אחד',
+        options: 'עוד אפשרויות: שפה, אורך, ילדים',
+    },
+};
+
+export function portalHomeStrings(locale: string | null | undefined): PortalHomeStrings {
+    return locale === 'he' ? PORTAL_HOME_STRINGS.he : PORTAL_HOME_STRINGS.en;
+}
+
+/**
+ * A game the portal's home (or Instant Multiplayer) just made: its PIN, whether the player's
+ * CrazyGames username joins it at once (no nickname step), and whether it starts alone at once
+ * (the taste). Kept for the one game only.
+ */
+export interface QuickStart {
+    pin: string;
+    solo: boolean;
+    /** The username was sent on the join step already. */
+    sent?: boolean;
+}
+
+/** Whether a route is the join step of the quick-start game, where the username is sent at once. */
+export function autoJoinDue(quick: QuickStart | null, route: string, name: string): boolean {
+    const m = /^\/join-game\/([A-Za-z]+)$/.exec(routePath(route));
+    return !!quick && !quick.sent && !!m && m[1].toUpperCase() === quick.pin && !!name;
+}
+
+/** Whether a route is the lobby of the quick-start game played alone: the taste starts at once. */
+export function soloStartDue(quick: QuickStart | null, route: string): boolean {
+    const m = /^\/game-staging\/([A-Za-z]+)$/.exec(routePath(route));
+    return !!quick && quick.solo && !!m && m[1].toUpperCase() === quick.pin;
 }

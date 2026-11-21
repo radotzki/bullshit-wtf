@@ -3,7 +3,9 @@
  * only. It hides what leads out of the game to the playable site, or to pages the portal doesn't
  * have: the text about the game and its search links, crews, next week's game night, the after-game
  * asks to host a game on the site, the daily puzzle link, the big screen, and "join at bullshit.wtf".
- * Text is not selectable, as CrazyGames asks, except in the boxes a player types in.
+ * Text is not selectable, as CrazyGames asks, except in the boxes a player types in. The lobby's
+ * "Try 5 quick questions alone" is a button here, not a faint link: CrazyGames asks that playing alone
+ * be as easy to find as playing with friends.
  *
  * On a computer (a wide, landscape frame) the lobby's invite, while the host waits for friends, is two
  * columns: the buttons on one side, the QR code with its PIN on the other, so the code is on the first
@@ -26,6 +28,10 @@ html.bs-portal .big-screen-offer,
 html.bs-portal .registration { display: none !important; }
 html.bs-portal body { -webkit-user-select: none; user-select: none; }
 html.bs-portal input, html.bs-portal textarea { -webkit-user-select: text; user-select: text; }
+html.bs-portal .start-alone-link {
+  display: inline-block; padding: 6px 18px; border: 2px solid #502440; border-radius: 4px; color: #502440 !important;
+  font-size: 16px !important; font-weight: bold; text-decoration: none !important; cursor: pointer;
+}
 @media (min-width: 900px) and (orientation: landscape) {
   html.bs-portal .invite-inline {
     display: grid !important; grid-template-columns: minmax(0, 400px) auto; justify-content: center;

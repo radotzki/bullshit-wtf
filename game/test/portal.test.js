@@ -94,9 +94,12 @@ test('language: Hebrew for a Hebrew CrazyGames locale or the Hebrew path, else E
     assert.strictEqual(portal.portalLocale(undefined, '/portal/crazygames'), 'en');
 });
 
-test('the CrazyGames username becomes the nickname, cut as the join page cuts it', () => {
+test('the CrazyGames username goes to the join page whole: the server checks it, then cuts it', () => {
     assert.strictEqual(portal.portalNickname('  Cool   Cat '), 'Cool Cat');
-    assert.strictEqual(portal.portalNickname('SuperLongUsername'), 'SuperLong');
+    // Not cut to 9 here: "a cheap whore" cut first would pass the server's check as "a cheap w".
+    assert.strictEqual(portal.portalNickname('SuperLongUsername'), 'SuperLongUsername');
+    assert.strictEqual(portal.portalNickname('  a   cheap whore'), 'a cheap whore');
+    assert.strictEqual(Array.from(portal.portalNickname('x'.repeat(200))).length, 64);
     assert.strictEqual(portal.portalNickname(null), '');
 });
 
@@ -191,4 +194,59 @@ test('on a computer the portal lobby puts the QR code beside the buttons; phones
     assert.match(rules, /\.invite-inline > \.button \{[^}]*grid-column: 1/);
     // Nothing outside the media rule touches the invite.
     assert.doesNotMatch(PORTAL_CSS.slice(0, wide.index), /invite-inline/);
+});
+
+test('the portal home tells a lone player it is a party game, in both languages, with no link out', () => {
+    for (const lang of ['en', 'he']) {
+        const p = portal.portalHomeStrings(lang);
+        assert.strictEqual(p.how.length, 3, lang);
+        for (const key of ['pitch', 'needs', 'friends', 'friendsSub', 'solo', 'soloSub', 'options']) {
+            assert.ok(typeof p[key] === 'string' && p[key].length > 0, `${lang}.${key}`);
+        }
+        const all = [p.pitch, p.needs, p.friends, p.friendsSub, p.solo, p.soloSub, p.options].concat(p.how).join(' ');
+        assert.ok(!/bullshit\.wtf|https?:/i.test(all), all);
+        assert.match(p.needs, /2/);
+        assert.match(p.needs, /12/);
+    }
+    assert.match(portal.portalHomeStrings('en').needs, /party game/i);
+    assert.strictEqual(portal.portalHomeStrings('xx'), portal.PORTAL_HOME_STRINGS.en);
+    assert.strictEqual(portal.portalHomeStrings('he'), portal.PORTAL_HOME_STRINGS.he);
+});
+
+test('the home\'s two starts: the username joins at once on that game\'s join step, the taste starts on its lobby', () => {
+    const quick = { pin: 'ABCD', solo: false };
+    assert.strictEqual(portal.autoJoinDue(quick, '/join-game/ABCD', 'Neo'), true);
+    assert.strictEqual(portal.autoJoinDue(quick, '/join-game/abcd?lang=he', 'Neo'), true);
+    // No username (a CrazyGames guest): the nickname step stays.
+    assert.strictEqual(portal.autoJoinDue(quick, '/join-game/ABCD', ''), false);
+    // Once only, and only for the game the home made.
+    assert.strictEqual(portal.autoJoinDue(Object.assign({}, quick, { sent: true }), '/join-game/ABCD', 'Neo'), false);
+    assert.strictEqual(portal.autoJoinDue(quick, '/join-game/WXYZ', 'Neo'), false);
+    assert.strictEqual(portal.autoJoinDue(null, '/join-game/ABCD', 'Neo'), false);
+    assert.strictEqual(portal.autoJoinDue(quick, '/game-staging/ABCD', 'Neo'), false);
+
+    assert.strictEqual(portal.soloStartDue({ pin: 'ABCD', solo: true }, '/game-staging/ABCD'), true);
+    assert.strictEqual(portal.soloStartDue({ pin: 'ABCD', solo: true }, '/game-staging/abcd/'), true);
+    assert.strictEqual(portal.soloStartDue({ pin: 'ABCD', solo: false }, '/game-staging/ABCD'), false);
+    assert.strictEqual(portal.soloStartDue({ pin: 'ABCD', solo: true }, '/game-staging/WXYZ'), false);
+    assert.strictEqual(portal.soloStartDue({ pin: 'ABCD', solo: true }, '/join-game/ABCD'), false);
+    assert.strictEqual(portal.soloStartDue(null, '/game-staging/ABCD'), false);
+});
+
+test('the home\'s starts are on the first screen of small frames: sized in px, two columns from 600 px wide', () => {
+    const home = fs.readFileSync(src('portal', 'portal-home.component.ts'), 'utf8');
+    const styles = home.slice(home.indexOf('styles: [`'));
+    // The page's rem grows with the window: the home is sized in px, so 1280x720 and 800x450 both fit.
+    assert.doesNotMatch(styles, /\d(\.\d+)?rem/);
+    assert.match(styles, /@media \(min-width: 600px\) \{\s*\.portal-starts \{ flex-direction: row; \}/);
+    assert.match(home, /class="button is-primary portal-start portal-friends"/);
+    assert.match(home, /class="button is-info portal-start portal-solo"/);
+});
+
+test('in the portal the lobby\'s "Try 5 quick questions alone" is a button, outside the wide-screen rule', () => {
+    const { PORTAL_CSS } = load(src('portal', 'portal-style.ts'));
+    const wide = PORTAL_CSS.indexOf('@media');
+    const rule = PORTAL_CSS.indexOf('html.bs-portal .start-alone-link');
+    assert.ok(rule > 0 && rule < wide, 'one rule for every size');
+    assert.match(PORTAL_CSS, /\.start-alone-link \{[^}]*border: 2px solid/);
 });

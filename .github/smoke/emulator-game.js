@@ -187,9 +187,11 @@ async function newPhone(browser, base, name, role, userAgent) {
         if (phone.away) return route.abort('internetdisconnected');
         try {
             const response = await route.fetch({ url: target });
-            return route.fulfill({ response });
+            // Awaited inside the try, so a response disposed by a page that moved on fails alone.
+            await route.fulfill({ response });
+            return;
         } catch (e) {
-            return route.abort('failed');
+            return route.abort('failed').catch(() => { });
         }
     });
     // The database's WebSocket: Playwright stands in for the server, and this pipes each frame to and

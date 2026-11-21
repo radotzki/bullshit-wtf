@@ -1,4 +1,4 @@
-import { normalizeName } from '../name-flag';
+import { normalizeName, hiddenPattern, spells } from '../name-flag';
 import { NAME_LISTS } from '../name-lists';
 
 /**
@@ -44,6 +44,18 @@ export const LIE_WORDS = {
         'retard', 'retards', 'retarded', 'tard', 'mongoloid', 'kkk',
         // transliterated Hebrew and Arabic
         'zona', 'kus', 'kusemek', 'kusemak', 'kusummak', 'sharmuta', 'sharmouta', 'sharmota', 'manyak', 'maniak',
+        'kusima', 'kusit', 'benzona', 'benzonah', 'mefager', 'tizdayen', 'mizdayen', 'kibenimat', 'kibinimat',
+        'kusomo', 'kosemek', 'kossemek', 'sharmoota', 'sharmootah',
+        // "ass" and its spellings (a$$, @ss, a55), for kids: a milder word, but not on a family screen
+        'ass', 'badass', 'fukc', 'fcuk', 'fawk', 'slvt', 'biotch',
+        // English swearing in Hebrew letters (ביץ', דיק, אסהול): Israeli kids type these
+        'דיק', 'דיקהד', 'אסהול', 'אסהולס', 'פאקיו', 'מאדרפאקר', 'מאתרפאקר', 'מאדפאקר',
+        'סאנאפאביצ', 'סנאפאביצ', 'סאנופאביצ',
+        // ביץ' is matched as typed (BITCH_HE): "ביצ" alone is how "ביצ'ה" or "ביצ'יקו" begins.
+        // Hebrew as kids misspell it, or with "ך" for "ק" (כוס אמך)
+        'כוסאמכ', 'כוסעמכ', 'כוסעמאק', 'כוסאמאק', 'בנזונא', 'זונע', 'שרמוטע', 'מזדין', 'תזדין', 'הזדין', 'להזדין',
+        'אחושרמוטה', 'אחושרמוטא', 'אחשרמוטה', 'קוסאמק', 'קוסאמאק', 'קוסעמק', 'חארה', 'חארא', 'תזדיינו', 'כוסאמו',
+        'כוסעומק', 'שרמוטא', 'מאניאק', 'מנייאק', 'זיינתי',
         // Hebrew
         'זונה', 'זונות', 'זונהה', 'שרמוטה', 'שרמוטות', 'כוסית', 'כוסיות', 'כוסאמק', 'כוסעמק', 'כוסאמא', 'כוסאמאשלך',
         'זין', 'זיין', 'זיון', 'זיונים', 'לזיין', 'מזדיין', 'מזדיינת', 'מזדיינים', 'תזדיין', 'תזדייני', 'הזדיין', 'יזדיין',
@@ -52,7 +64,7 @@ export const LIE_WORDS = {
         'מפגרים', 'פאק', 'פאקינג', 'פאקין', 'כושי', 'כושית', 'כושים', 'כושון', 'ערבוש', 'ערבושים', 'פרענק', 'פרענקים', 'צחצח', 'צחצחים', 'אשכנאצי',
     ],
     // A word that starts with it: no fair word does.
-    start: ['fuck', 'motherf', 'cunt', 'nigg', 'cocksuck', 'shithead', 'jizz', 'whore', 'blowjob', 'gangbang', 'cumshot',
+    start: ['fuck', 'fvck', 'cvnt', 'motherf', 'cunt', 'nigg', 'cocksuck', 'shithead', 'jizz', 'whore', 'blowjob', 'gangbang', 'cumshot',
         'cumslut', 'masturbat', 'pornograph'],
     // Anywhere in a word ("clusterfuck", "dumbfuck").
     any: ['fuck', 'nigger', 'motherfuck', 'faggot'],
@@ -60,7 +72,8 @@ export const LIE_WORDS = {
     phrase: ['heil hitler', 'sieg heil', 'seig heil', 'gas the jews', 'kill the jews', 'kill all jews', 'death to jews',
         'white power', 'white pride', 'son of a bitch', 'kiss my ass',
         'kill jews', 'porch monkey', 'porch monkeys', 'sand nigger', 'מזיין שכל', 'מזיינת שכל',
-        'כוס אמק', 'כוס אמאק', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
+        'כוס אמק', 'כוס אמאק', 'כוס אמך', 'כוס אמו', 'קוס אמק', 'קוס אמאק', 'קוס אמא', 'קוס עמק', 'לך תמצוץ',
+        'תמצוץ לי', 'kos emek', 'koss emek', 'kus emek', 'כוס עמך', 'כוס עמאק', 'בן זונא', 'בת זונא', 'כוס אמא', 'כוס אמא שלך', 'כוס אחותך', 'כוס עמק', 'בן זונה', 'בת זונה', 'יא בן זונה', 'לך תזדיין',
         'מוות לערבים', 'מוות ליהודים', 'ערבי מסריח', 'ערבים מסריחים'],
     // Typed as is (digits that the letters can't show).
     raw: ['1488'],
@@ -87,12 +100,20 @@ export const LIE_WORDS = {
         // after a prefix letter, or are the same letters as one: food, fed, weapons.
         'כלי זין', 'זינה', 'זינגר', 'מזין', 'מזינה', 'מזינים', 'מזינות', 'הזין את', 'הזינה', 'הזינו', 'להזין',
         'מזונה', 'מזונות', 'מזיין', 'מזוין', 'מזויין', 'שפיכות', 'שפיכת',
+        // Hebrew names and words that hold one: Dick Van Dyke, Moby Dick, Homo sapiens, peepers and a straw.
+        "דיק צ'ייני", "דיק צ'ני", 'דיק קלארק', 'דיק טרייסי', 'פיליפ ק דיק', 'פיליפ דיק', 'דיק ואן פאטן', 'fromage rape',
+        'דיק ואן דייק', 'מובי דיק', 'הומו ספיינס', 'הומו סאפיינס', 'הומו ארקטוס', 'מציצים', 'קשית מציצה',
         // The Mongols, as a people: only "מונגול" alone is the slur.
         'מונגולים', 'מונגולי', 'מונגולית', 'מונגוליה',
     ],
 };
 
 const NOT_LETTERS = /[^a-zא-ת]+/;
+// "bitch" in Hebrew letters: ביץ, ביץ', ביצ', ביאץ', ביטץ' as a whole word, with a prefix letter or not.
+const BITCH_HE = /(^|[^א-ת])[והשלכ]?ביי?[אט]?(ץ['׳`"]?|צ['׳`][סז]?)(?![א-ת])/;
+// "a-hole" and "a**" as typed: "a hole" with a space is fair, and stars only at a word's end spell nothing.
+const ASS_SIGNS = /(^|[^a-z])a(-holes?|\*\*|\*\*holes?)(?![a-z])/i;
+
 // Signs inside a word that hide a letter or split one ("f*ck", "sh.it"). A hyphen or an apostrophe
 // splits words as a space does ("dick-head" is "dick head"; "f-ck" is spelled out, see wordsRefused).
 const INNER_SIGNS = /([a-zא-ת])[*._"`~^#%&+]+(?=[a-zא-ת])/g;
@@ -102,7 +123,16 @@ const EDGE_SIGNS = /(^|[^0-9a-zA-Zא-ת@$!])[0-9@$!]+|[0-9@$!]+(?=[^0-9a-zA-Zא-
 // One-letter Hebrew prefixes: and, the, in, to, from, that, as.
 const HE_PREFIX = 'והבלמשכ';
 const HE_LETTER = /^[א-ת]/;
+// Any letter of any script as typed, or one that the normalising step reads from a fancy sign (🅵, ꜰ).
+const REAL_LETTER = /\p{L}/u;
+const LOOK_ALIKE = /[0-9@$!]/g;
+// Spaces between words: JavaScript's \s also holds U+FEFF, which hides inside a word ("f\uFEFFuck").
+const WORD_GAP = /[^\S\uFEFF]+/;
+const hasLetter = (t: string) => REAL_LETTER.test(t) || /[a-zא-ת]/.test(normalizeName(t.replace(LOOK_ALIKE, '')));
 
+// "!" at a word's end ends it ("cum laude!", "Kush!"): only inside a word is it an "i" ("b!tch").
+// A letter later in the same word keeps it an "i" ("s.h.!.t", "s-h-!-t").
+const END_BANGS = /!+(?![^\s]*[0-9a-zA-Zא-ת@$])/g;
 const words = (s: string) => normalizeName(s).split(NOT_LETTERS).filter(w => !!w);
 const set = (list: string[]) => {
     const out: { [w: string]: boolean } = {};
@@ -174,6 +204,18 @@ const ALLOW_ONE = set(LIE_WORDS.allow.filter(a => words(a).length === 1));
  * "rapper", "annals" and "hommos" are words.
  */
 const fold = (w: string) => w.replace(/(.)\1\1+/g, '$1');
+/**
+ * Doubled letters read once, but only where fair English words rarely double them: "ii" and "uu"
+ * ("shiit", "fuuck", "biitch"), or every double in a word with three or more ("ffuucckk", "sshhiitt").
+ * "rapper", "annals", "hommos" and "Mississippi" keep their letters.
+ */
+function foldDoubles(w: string): string {
+    if (!LATIN.test(w)) {
+        return w;
+    }
+    const pairs = (w.match(/([a-z])\1/g) || []).length;
+    return pairs >= 3 ? w.replace(/([a-z])\1+/g, '$1') : w.replace(/([iu])\1+/g, '$1');
+}
 
 /**
  * The word, the word with its repeated letters read once, and for a Hebrew word each of those without
@@ -181,7 +223,7 @@ const fold = (w: string) => w.replace(/(.)\1\1+/g, '$1');
  */
 function forms(w: string): string[] {
     const out: string[] = [];
-    [w, fold(w)].forEach(v => {
+    [w, fold(w), foldDoubles(fold(w))].forEach(v => {
         if (out.indexOf(v) < 0) {
             out.push(v);
         }
@@ -244,19 +286,60 @@ function wordsRefused(ws: string[]): boolean {
     return ws.length > 1 && ws.every(w => w.length <= 2) && wordRefused(ws.join(''));
 }
 
+const WORD_LIST = Object.keys(WORD).filter(w => !ALLOW_ONE[w]);
+
+/**
+ * A word with letters hidden inside it that can only be a listed word ("b*tch", "a**hole", "ז*ן"). The lie
+ * is read again with that word in its place, so an allowed phrase still covers it ("Pu$$y Riot").
+ */
+function hiddenRefused(text: string): boolean {
+    const tokens = text.split(WORD_GAP);
+    return tokens.some((token, i) => {
+        const pieces = hiddenPattern(token);
+        if (!pieces) {
+            return false;
+        }
+        const first = pieces[0] as string;
+        const read = (w: string) => wordsRefused(words(tokens.slice(0, i).concat([w], tokens.slice(i + 1)).join(' ')));
+        return WORD_LIST.some(w => w.charAt(0) === first && spells(pieces, w, false) && read(w))
+            || START.some(e => e.charAt(0) === first && spells(pieces, e, true) && read(e));
+    });
+}
+
 /** A lie the filter refuses. */
 export function lieRefused(text: string): boolean {
     const raw = String(text == null ? '' : text);
-    if (LIE_WORDS.raw.some(e => raw.indexOf(e) >= 0)) {
+    if (LIE_WORDS.raw.some(e => raw.indexOf(e) >= 0) || BITCH_HE.test(raw) || ASS_SIGNS.test(raw)) {
         return true;
     }
-    const n = normalizeName(raw);
+    // A word with no letter typed in it is a number, a time, a price or a date ("455", "4.5", "7175", "$4"),
+    // not a word written in digits: only beside a real letter do digits stand for letters ("sh1t", "a55").
+    // A run of one-character words with a real letter among them is a word spelled out ("5 h i t",
+    // "n 1 g g e r", "s h ! t"): its lone digits and signs are letters, and stay. Alone they are numbers.
+    const tokens = raw.split(WORD_GAP);
+    const one = tokens.map(t => Array.from(t).length === 1);
+    const kept = tokens.map(hasLetter);
+    for (let i = 0; i < tokens.length;) {
+        let j = i;
+        while (j < tokens.length && one[j]) {
+            j++;
+        }
+        if (j - i > 1 && kept.slice(i, j).some(k => k)) {
+            for (let k = i; k < j; k++) {
+                kept[k] = true;
+                tokens[k] = tokens[k] === '!' ? 'i' : tokens[k];
+            }
+        }
+        i = Math.max(j, i + 1);
+    }
+    const typed = tokens.filter((_, i) => kept[i]).join(' ');
+    const n = normalizeName(typed.replace(END_BANGS, ' '));
     const split = n.split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the signs inside its words taken out, so "f*ck" and "dick-head" read as words.
     const joined = n.replace(INNER_SIGNS, '$1').replace(INNER_SIGNS, '$1').split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the look-alike signs at a word's edge read as a space: "!" is an "i" inside
     // "b!tch", but in "חרא!", "shit!!" or "זין1" it only ends the word (the Hebrew kids' play-through).
-    const edged = normalizeName(raw.replace(EDGE_SIGNS, (m: string, before: string) => (before || '') + ' '))
+    const edged = normalizeName(typed.replace(EDGE_SIGNS, (m: string, before: string) => (before || '') + ' '))
         .split(NOT_LETTERS).filter(w => !!w);
-    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged);
+    return wordsRefused(split) || wordsRefused(joined) || wordsRefused(edged) || hiddenRefused(typed.replace(END_BANGS, ' '));
 }
