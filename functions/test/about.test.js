@@ -228,6 +228,34 @@ test('every prompt: both languages, one name and one blank, four or more house a
     assert.ok(aboutPrompts.length >= 20);
 });
 
+// The Hebrew kids' play-through (reports: hebrew-kids-break): a kids' game asked a 10-year-old for "the cartoon
+// he loved as a kid". A kids' game leaves out the prompts written for grown-ups; every other game keeps them all.
+test('a kids game plays only the prompts a child can answer; other games keep them all', () => {
+    const grown = aboutPrompts.filter(p => p.notForKids).map(p => p.id).sort();
+    assert.deepStrictEqual(grown, ['cartoon', 'day-off', 'fire', 'secret-show']);
+    assert.ok(aboutPrompts.filter(p => !p.notForKids).length >= 15, 'enough prompts left for a kids game');
+    const used = (pack) => {
+        const seen = new Set();
+        for (let i = 0; i < 400; i++) {
+            const plan = about.planAbout(9, [], Math.random, pack);
+            Object.keys(plan).forEach(k => seen.add(plan[k].prompt));
+        }
+        return seen;
+    };
+    const kids = used('kids');
+    grown.forEach(id => assert.ok(!kids.has(id), `${id} in a kids game`));
+    assert.ok(kids.size >= 15);
+    const all = used(undefined);
+    grown.forEach(id => assert.ok(all.has(id), `${id} still in other games`));
+    const hanukkah = used('hanukkah');
+    grown.forEach(id => assert.ok(hanukkah.has(id), `${id} still in a Hanukkah game`));
+    // A kids game with a room that has seen every kid-safe prompt still gets its About questions.
+    const seenAll = [Object.fromEntries(aboutPrompts.filter(p => !p.notForKids).map(p => ['about-' + p.id, 1]))];
+    const late = about.planAbout(7, seenAll, Math.random, 'kids');
+    assert.strictEqual(Object.keys(late).length, 2);
+    Object.keys(late).forEach(k => assert.ok(grown.indexOf(late[k].prompt) < 0));
+});
+
 test('the named player is one who plays, not named twice while another is left; too few players skips', () => {
     const g = { players: { a: {}, b: {}, c: {}, d: {} }, played: { a: true, b: true, c: true }, playedFrom: 0, aboutQs: { q1: { prompt: 'fire', pid: 'a' } } };
     for (let i = 0; i < 30; i++) assert.ok(['b', 'c'].indexOf(about.nameFor(g)) >= 0, 'd never played; a was named');

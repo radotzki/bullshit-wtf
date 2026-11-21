@@ -841,6 +841,9 @@ export interface QuestionPack {
     locales?: string[];
     seasonIn?: string[];
     icon?: string;
+    // Pack questions that open a pack game while the room hasn't seen them (pickWithPack): ones most
+    // players of that language already half know, so the first question of the night is an easy one.
+    openers?: string[];
 }
 
 export const questionPacks: { [id: string]: QuestionPack } = {
@@ -851,6 +854,9 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         // English games get the Christmas pack by default in December; Hanukkah stays one tap
         // away for them with ?pack=hanukkah (the Hanukkah page's Start button).
         seasonIn: ['he'],
+        // Hebrew games open with one an Israeli family half knows (the doughnut's name, the dreidel's
+        // letters, 44 candles, Levin Kipnis...), not with American trivia (from the Hanukkah night walk).
+        openers: ['03', '05', '06', '12', '20', '22', '26', '30', '48', '56', '58', '59'].map(n => `hanukkah-26-he-${n}`),
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
