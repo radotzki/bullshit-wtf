@@ -17,7 +17,11 @@
 //   says so (`tablePlaying`, see lateTable) and CATCH THE NEXT ROUND asks with `wait`, so it is told
 //   TABLE_PLAYING instead of opening a lobby alone. Once that game is over and its Replay opened the next
 //   lobby, any press of a player of this game joins that lobby (one hop), as a guest: the key stays theirs.
-import { GameScheme, GameState, GamePlayers, MAX_PLAYERS } from '../game-model';
+// - Hanukkah night (game/: components/hanukkah-night): a press from the link SAME TABLE TOMORROW saved
+//   (?via=hanukkah-night-N) tags the lobby it opens with that campaign, so tables that come back on
+//   another Hanukkah night can be counted (bigquery/2026-12-hanukkah-nights.sql). No other tag is taken
+//   from the client here, and a test game's lobby keeps its test tag.
+import { GameScheme, GameState, GamePlayers, MAX_PLAYERS, isTestCampaign } from '../game-model';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { incGameCounter, generateGameName } from './new-game';
@@ -30,6 +34,11 @@ import { nightAfter } from './night-after';
 import { createFork, joinNext } from './fork';
 
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+/** The campaign a press may give the lobby it opens: `hanukkah-night-<2..8>`, else none. */
+export function tableCampaign(tag: any): string | undefined {
+    return typeof tag === 'string' && /^hanukkah-night-[2-8]$/.test(tag) ? tag : undefined;
+}
 
 /** How many times a tap that lost a race looks again before it gives up. */
 const TRIES = 4;
@@ -140,7 +149,7 @@ function seatOfPresser(game: GameScheme, uid?: string, pid?: string): string | u
  * NEXT ROUND): while the table's lobby is mid-game, TABLE_PLAYING instead of a new lobby.
  */
 export async function sameTable(pin: string, creator?: string, hostPid?: string, hostKey?: string,
-    stagedReveal = false, aboutUs = false, wait = false): Promise<SameTableResult> {
+    stagedReveal = false, aboutUs = false, wait = false, campaign?: string): Promise<SameTableResult> {
     pin = String(pin || '').toUpperCase();
     const game = await readGame(pin);
     if (!game) {
@@ -169,7 +178,7 @@ export async function sameTable(pin: string, creator?: string, hostPid?: string,
         const fresh = generateGameName(await incGameCounter());
         const claimed = await reclaimFork(pin, held || null, fresh);
         if (claimed === fresh) {
-            return await openTable(pin, game, fresh, seat, creator, hostKey, stagedReveal, aboutUs);
+            return await openTable(pin, game, fresh, seat, creator, hostKey, stagedReveal, aboutUs, tableCampaign(campaign));
         }
         // Another tap took the claim between our read and our write: look again, and go to its lobby.
     }
@@ -178,7 +187,7 @@ export async function sameTable(pin: string, creator?: string, hostPid?: string,
 
 /** This tap holds the claim: the crew's open lobby, if the crew page opened one, or a new game. */
 async function openTable(pin: string, game: GameScheme, fresh: string, seat: string, creator: string,
-    hostKey: string, stagedReveal: boolean, aboutUs: boolean): Promise<SameTableResult> {
+    hostKey: string, stagedReveal: boolean, aboutUs: boolean, campaign?: string): Promise<SameTableResult> {
     if (game.crew) {
         const lobby = await crewLobbyFor(game.crew, Date.now() - REMATCH_REUSE_MS, fresh, REMATCH_REUSE_MS)
             .catch(e => { console.error('crewLobbyFor failed', pin, e && e.message); return null; });
@@ -199,6 +208,10 @@ async function openTable(pin: string, game: GameScheme, fresh: string, seat: str
     const lobby = createFork(pin, table, questions, creator || game.players[seat].uid, seat, hostKey,
         stagedReveal, fresh, aboutUs);
     lobby.origin = 'table';
+    // A test game's lobby stays a test game (createFork); any other takes the Hanukkah night's tag.
+    if (campaign && !isTestCampaign(lobby.campaign)) {
+        lobby.campaign = campaign;
+    }
 
     await gamesRef.child(fresh).set(lobby);
     await gamesRef.child(pin).child('fork').set(fresh);

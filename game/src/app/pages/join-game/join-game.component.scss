@@ -27,6 +27,17 @@
 .night-after {
     text-align: center;
 
+    .recap-hanukkah {
+        display: inline-block;
+        margin-bottom: 0.75rem;
+        padding: 2px 12px;
+        border-radius: 999px;
+        background: #fff8dc;
+        box-shadow: 0 0 0 2px #f3d467;
+        color: #363636;
+        font-weight: bold;
+    }
+
     .recap-heading {
         font-size: 1.5rem;
         font-weight: bold;

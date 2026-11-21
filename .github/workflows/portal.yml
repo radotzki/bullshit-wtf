@@ -1,0 +1,105 @@
+# The CrazyGames check for every pull request: .github/smoke/portal-crazygames.js plays the portal
+# (game/src/app/portal) whole inside a test frame that stands in for CrazyGames and its SDK, against
+# the Firebase emulators: a game with friends to the final scoreboard, invite links, the lie filter,
+# Instant Multiplayer, long and rude CrazyGames usernames, the Hebrew home, and the lone player's two
+# starts. Once on a phone (390x844) and once on a laptop (1280x720), side by side.
+#
+# Needs no secrets and touches no Firebase project: the emulators run under the demo-bullshit
+# project, the browser resolves no host but 127.0.0.1, and every request the built game makes to
+# Firebase is sent to the emulators (see emulator-game.js). CrazyGames' real SDK is never loaded.
+#
+# It lives apart from ci.yml on purpose, as night-after.yml does: deploy.yml calls ci.yml before a
+# release, and this run is a pull request check only, so it adds nothing to a release.
+name: CrazyGames portal
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portal:
+    name: CrazyGames portal (emulators, ${{ matrix.size }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [390x844, 1280x720]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          # 22, the functions' Cloud runtime: the functions emulator runs them on this Node.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            game/package-lock.json
+            functions/package-lock.json
+            .github/smoke/package-lock.json
+      # The database emulator is a Java program.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install firebase-tools (the root's lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Build the functions
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Build the game
+        working-directory: game
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Install the smoke test
+        working-directory: .github/smoke
+        run: npm ci --no-audit --no-fund
+
+      - name: Cache the browser and the emulators
+        id: tool-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/firebase/emulators
+          key: portal-${{ runner.os }}-${{ hashFiles('.github/smoke/package-lock.json', 'package-lock.json') }}
+      - name: Download the browser
+        if: steps.tool-cache.outputs.cache-hit != 'true'
+        working-directory: .github/smoke
+        run: npx playwright install --only-shell chromium
+
+      - name: Run the CrazyGames check
+        timeout-minutes: 15
+        env:
+          SHOTS: ${{ runner.temp }}/portal-shots
+        run: node .github/smoke/portal-crazygames.js game/dist --size ${{ matrix.size }}
+
+      # On a failure: the screenshots of the run and the emulators' log, to see what the page showed.
+      - name: Keep the screenshots and the emulators' log
+        if: failure()
+        run: |
+          mkdir -p "$RUNNER_TEMP/portal-shots"
+          for f in /tmp/bs-emulators-*/emulators.log; do
+            [ -f "$f" ] && cp "$f" "$RUNNER_TEMP/portal-shots/$(basename "$(dirname "$f")").log"
+          done
+          true
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: portal-failure-${{ matrix.size }}
+          path: ${{ runner.temp }}/portal-shots
+          retention-days: 7
+          if-no-files-found: ignore

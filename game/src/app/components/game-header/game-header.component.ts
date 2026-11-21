@@ -91,7 +91,7 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     /** "ROUND 2" before a round, "3 OF 7" during a question. */
     get text(): string {
         if (this.questionOf) {
-            return this.t.questionOf(this.questionOf[0], this.questionOf[1]);
+            return this.questionOf[1] ? this.t.questionOf(this.questionOf[0], this.questionOf[1]) : this.t.questionNo(this.questionOf[0]);
         }
         return this.round !== null ? this.t.round(this.round) : undefined;
     }
@@ -134,10 +134,12 @@ export class GameHeaderComponent implements OnInit, OnDestroy {
     getCurrentQuestionIndex() {
         const qidxPromise = this.apiService.getQuestionIndex(this.pin);
         const totalQPromise = this.apiService.getTotalQuestions(this.pin);
+        // A solo run (SoloRun in game-model) has no set length: "QUESTION 7", not "7 OF 60".
+        const runPromise = this.apiService.getTaste(this.pin).then(taste => !!taste && !!taste.run, () => false);
 
         Promise
-            .all([qidxPromise, totalQPromise])
-            .then(([qidx, totalQ]) => this.questionOf = [qidx + 1, totalQ]);
+            .all([qidxPromise, totalQPromise, runPromise])
+            .then(([qidx, totalQ, run]) => this.questionOf = [qidx + 1, run ? 0 : totalQ]);
     }
 
     getCurrentRoundIndex() {

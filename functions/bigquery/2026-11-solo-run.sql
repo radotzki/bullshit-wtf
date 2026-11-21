@@ -1,0 +1,69 @@
+-- The solo run: a lone player's questions against the house's lies until fooled three times
+-- (SoloRun in game-model.ts, functions/src/controllers/taste.ts). NO SCHEMA CHANGE: there is
+-- nothing to run in this file. It holds only read-only queries (in comments, like the other files here).
+--
+-- A run is a taste (one player, no big screen, nothing written) that its host started as a run.
+-- It is told from a 5-question taste and from a table's game by columns that already exist:
+--   question_results   players = 1, lies = 0, total_q = 60 (SOLO_RUN_MAX): one row per question played
+--   opened_games, closed_games   players = 1, presenter = false, questions = 60
+-- truth_picks = 1 on a question whose truth the player found; a run ends at its third miss, so
+-- found = SUM(truth_picks) and misses = COUNT(*) - SUM(truth_picks) (3 unless the bank ran out).
+-- A friend who joins a running run: its later rows have players = 2. Leave those games out.
+-- The starts are counted in shares (content_type = 'invite'):
+--   solo-run-start        the portal's "Try it alone"
+--   solo-run-again        PLAY AGAIN on a run's final screen
+--   solo-run-after-taste  KEEP GOING ALONE on the 5-question taste's final screen
+-- The 5-question taste (the lobby's "Try 5 quick questions alone") is unchanged: total_q = 5.
+-- Replace <from> and <to>; put test_pins from 2026-11-test-mark.sql first.
+
+-- ---------------------------------------------------------------------------
+-- 1. Runs per day: how many, by how many browsers, questions and truths per run, and minutes per run
+--    (first question row to last, plus about 15 s for the last question).
+-- WITH test_pins AS (... see 2026-11-test-mark.sql ...),
+-- runs AS (
+--   SELECT id, ANY_VALUE(locale) AS locale, COUNT(*) AS questions, SUM(truth_picks) AS found,
+--     TIMESTAMP_DIFF(MAX(time), MIN(time), SECOND) + 15 AS seconds, MIN(time) AS started
+--   FROM `bullshit-wtf-prod.analytics.question_results`
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP('<to>') AND total_q = 60 AND lies = 0
+--     AND id NOT IN (SELECT pin FROM test_pins)
+--   GROUP BY id HAVING MAX(players) = 1)
+-- SELECT DATE(r.started) AS day, r.locale, COUNT(*) AS runs, COUNT(DISTINCT o.creator_uid) AS browsers,
+--   ROUND(AVG(r.questions), 1) AS avg_questions, APPROX_QUANTILES(r.questions, 2)[OFFSET(1)] AS median_questions,
+--   ROUND(AVG(r.found), 1) AS avg_found, ROUND(AVG(r.seconds) / 60, 1) AS avg_minutes
+-- FROM runs r LEFT JOIN `bullshit-wtf-prod.analytics.opened_games` o USING (id)
+-- GROUP BY day, r.locale ORDER BY day, r.locale;
+
+-- ---------------------------------------------------------------------------
+-- 2. A lone player's whole sitting: runs per browser per day and the minutes they add up to.
+--    CrazyGames judges average play time; this is the part a lone player plays alone.
+-- (runs as in 1)
+-- SELECT DATE(r.started) AS day, o.campaign, COUNT(DISTINCT o.creator_uid) AS browsers,
+--   ROUND(COUNT(*) / COUNT(DISTINCT o.creator_uid), 2) AS runs_per_browser,
+--   ROUND(SUM(r.seconds) / 60 / COUNT(DISTINCT o.creator_uid), 1) AS solo_minutes_per_browser
+-- FROM runs r JOIN `bullshit-wtf-prod.analytics.opened_games` o USING (id)
+-- GROUP BY day, o.campaign ORDER BY day;
+
+-- ---------------------------------------------------------------------------
+-- 3. From solo to friends: of the browsers that played a run, how many made a game that started
+--    with two or more players within 7 days, and how many of those came straight from a run's
+--    INVITE FRIENDS (a Replay whose parent is the run). Read it only for runs 7 days old.
+-- (runs as in 1)
+-- , tbl AS (SELECT id, creator_uid, parent_pin, time FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= TIMESTAMP('<from>') AND time < TIMESTAMP_ADD(TIMESTAMP('<to>'), INTERVAL 7 DAY)
+--     AND players >= 2 AND id NOT IN (SELECT pin FROM test_pins))
+-- SELECT COUNT(DISTINCT o.creator_uid) AS run_browsers,
+--   COUNT(DISTINCT IF(b.id IS NOT NULL, o.creator_uid, NULL)) AS hosted_a_table_within_7_days,
+--   COUNT(DISTINCT IF(b.parent_pin = r.id, o.creator_uid, NULL)) AS by_invite_friends
+-- FROM runs r JOIN `bullshit-wtf-prod.analytics.opened_games` o USING (id)
+-- LEFT JOIN tbl b ON b.creator_uid = o.creator_uid AND b.time > o.time AND b.time < TIMESTAMP_ADD(o.time, INTERVAL 7 DAY);
+--
+-- Note: a Replay from INVITE FRIENDS is created when it is pressed, and counts above only once a
+-- friend joined it (players >= 2): presses alone are the Replay games with parent_pin = a run's id.
+
+-- ---------------------------------------------------------------------------
+-- 4. The starts: which button began each run, per day.
+-- SELECT DATE(time) AS day, method, COUNT(*) AS starts, COUNT(DISTINCT uid) AS browsers
+-- FROM `bullshit-wtf-prod.analytics.shares`
+-- WHERE content_type = 'invite' AND method IN ('solo-run-start', 'solo-run-again', 'solo-run-after-taste')
+--   AND IFNULL(uid, '') NOT IN (SELECT uid FROM `bullshit-wtf-prod.analytics.users` WHERE via = 'test' AND uid IS NOT NULL)
+-- GROUP BY day, method ORDER BY day, method;

@@ -8,12 +8,14 @@ import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
 import { cleanCode } from '../../services/game-code';
+import { WholeName, boxValue, nicknameToSend, pastedName } from './whole-name';
 import { StorageService } from '../../services/storage.service';
 import { GameService } from '../../services/game.service';
 import {
     NIGHT_AFTER_CONTENT, NIGHT_AFTER_KEY, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
     readRecap, recapAsk, seenMethod, shownHalf, whenWas,
 } from './night-after';
+import { HanukkahNightStrings, nightStrings, nightTag, tagNight } from '../../components/hanukkah-night/hanukkah-night';
 
 @Component({
     standalone: false,
@@ -29,6 +31,9 @@ export class JoinGameComponent implements OnInit {
     private lang: string;
     pin: string;
     nickname: string;
+    // A name longer than the box, kept whole while the box shows its beginning (whole-name.ts).
+    private wholeNickname: WholeName | null = null;
+    private pastedWhole: string | null = null;
     loading: boolean;
     errorMsg: string;
     nicknameState: boolean;
@@ -47,6 +52,12 @@ export class JoinGameComponent implements OnInit {
     againError: string;
     // The PIN whose seen- row this page load sent, so a second GAME_OVER answer sends no second one.
     private recapCounted: string;
+    /**
+     * The link SAME TABLE TOMORROW saved on a Hanukkah night (?via=hanukkah-night-N, components/hanukkah-night):
+     * the night it is for, and the PIN it came with. That game's recap shows in either half, says which night
+     * it is, and the lobby its PLAY AGAIN, SAME TABLE opens carries the tag.
+     */
+    private hanukkah: { pin: string; night: number } = null;
     // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
     seatTaken: boolean;
 
@@ -70,6 +81,8 @@ export class JoinGameComponent implements OnInit {
         this.seatTaken = !!this.pin && (this.activatedRoute.snapshot.queryParams || {})['taken'] === '1';
 
         if (this.pin) {
+            const night = tagNight((this.activatedRoute.snapshot.queryParams || {})['via']);
+            this.hanukkah = night ? { pin: this.pin.toUpperCase(), night } : null;
             this.pinInUrl = true;
             this.nicknameState = true;
             this.loadCrew();
@@ -116,12 +129,15 @@ export class JoinGameComponent implements OnInit {
         try {
             forced = this.storageService.getItem(NIGHT_AFTER_KEY);
         } catch (e) { }
-        const half = shownHalf(recap, forced);
+        const tagged = !!this.hanukkahNight;
+        // The Hanukkah link shows the recap in either half; its visits are counted apart (seen-hanukkah),
+        // so the test's halves still compare the same visits.
+        const half = tagged ? 'new' : shownHalf(recap, forced);
         this.recapShown = half === 'new';
         if (this.recapCounted !== pin) {
             this.recapCounted = pin;
             // None beside an open rematch, in either half (seenMethod).
-            const seen = seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
+            const seen = tagged ? 'seen-hanukkah' : seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
             if (seen) {
                 this.countRecap(seen);
             }
@@ -134,6 +150,15 @@ export class JoinGameComponent implements OnInit {
             return;
         }
         this.apiService.logShare(NIGHT_AFTER_CONTENT, method, { crew: this.recapPin, locale: this.t.lang });
+    }
+
+    /** The Hanukkah night the link was saved for, while the page shows that link's game; else 0. */
+    get hanukkahNight(): number {
+        return this.hanukkah && this.recapPin === this.hanukkah.pin ? this.hanukkah.night : 0;
+    }
+
+    get hn(): HanukkahNightStrings {
+        return nightStrings(this.t.lang);
     }
 
     get n(): NightAfterStrings {
@@ -192,7 +217,7 @@ export class JoinGameComponent implements OnInit {
         this.countRecap(late ? (wait ? 'catch-next' : 'new-table')
             : this.gameOver && this.gameOver.rematch ? 'same-table-open' : 'same-table');
         try {
-            const r = await this.apiService.sameTable(pin, late && wait);
+            const r = await this.apiService.sameTable(pin, late && wait, nightTag(this.hanukkahNight) || undefined);
             if (!r || !r.pin) {
                 throw new Error('no table');
             }
@@ -304,6 +329,35 @@ export class JoinGameComponent implements OnInit {
         this.nickname = nickname;
     }
 
+    /**
+     * The nickname box changed. A value longer than the box (the portal's CrazyGames username, a
+     * paste, an autofill) shows its first 9 characters and is kept whole, so the server checks every
+     * character of it before it cuts (whole-name.ts).
+     */
+    typedNickname(value: string, box: HTMLInputElement) {
+        const pasted = this.pastedWhole;
+        this.pastedWhole = null;
+        const { shown, kept } = boxValue(value);
+        this.nickname = shown;
+        if (box && box.value !== shown) {
+            box.value = shown;
+        }
+        if (kept) {
+            this.wholeNickname = kept;
+        } else if (pasted && pasted.indexOf(shown) === 0 && shown.trim()) {
+            // The browser cut the paste to the box: what it shows is the start of the whole name.
+            this.wholeNickname = { whole: pasted, shown };
+        } else {
+            this.wholeNickname = null;
+        }
+    }
+
+    /** A paste: the whole name it makes, before the box's maxlength cuts it. */
+    pastedNickname(event: ClipboardEvent, box: HTMLInputElement) {
+        const text = event && event.clipboardData ? event.clipboardData.getData('text') : '';
+        this.pastedWhole = box ? pastedName(box.value, box.selectionStart, box.selectionEnd, text) : null;
+    }
+
     submit() {
         if (!this.nicknameState) {
             this.validateGameName();
@@ -351,10 +405,12 @@ export class JoinGameComponent implements OnInit {
 
         // signInAnonymously waits at most about 1.5 s and resolves to undefined if sign-in is slower or fails.
         const via = takeJoinSource(this.pin, this.activatedRoute.snapshot.queryParams['via'], this.pinInUrl);
-        const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
+        // The whole name when the box shows only its beginning: the server checks it whole, then cuts.
+        const typed = nicknameToSend(this.nickname, this.wholeNickname);
+        const user = await this.apiService.signInAnonymously(this.pin, typed, via);
         const uid: any = user ? user.uid : 0;
 
-        this.apiService.join(this.pin, this.nickname, uid)
+        this.apiService.join(this.pin, typed, uid)
             .then(({ pid, nickname, swapped }) => {
                 // Keep the name the server stored, so Replay and the crew never send the typed one back.
                 this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };

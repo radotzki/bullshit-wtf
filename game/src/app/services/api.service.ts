@@ -574,10 +574,11 @@ export class ApiService {
      * START in the lobby. The server checks that this phone may start the game: in a game with a
      * host key, only the phone that brings that key may, big screen or not.
      */
-    startGame(pin: string) {
+    /** START. `run`: a host alone gets the solo run (SoloRun in game-model) in place of the 5-question taste. */
+    startGame(pin: string, run = false) {
         pin = pin.toUpperCase();
         const hostKey = hostKeyFor(pin) || null;
-        return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
+        return this.post<{ started: boolean }>(`startGame`, run ? { pin, hostKey, run: true } : { pin, hostKey });
     }
 
     /**
@@ -811,15 +812,19 @@ export class ApiService {
      * PLAY AGAIN, SAME TABLE on a finished game's recap (functions' same-table.ts, through `fork`): the
      * game's one open lobby, or a new one this phone hosts. Like Replay, with a new host key.
      */
-    /** `wait`: CATCH THE NEXT ROUND; while the table still plays the server answers TABLE_PLAYING. */
-    async sameTable(pin: string, wait = false) {
+    /**
+     * `wait`: CATCH THE NEXT ROUND; while the table still plays the server answers TABLE_PLAYING.
+     * `campaign`: the Hanukkah night's tag of the link the page came by (hanukkah-night-N), for the lobby it opens.
+     */
+    async sameTable(pin: string, wait = false, campaign?: string) {
         pin = pin.toUpperCase();
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const user = this.sessionService.user;
         const pid = user && typeof user.pid === 'string' ? user.pid : null;
         const hostKey = newHostKey();
         const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
-            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, ...(wait ? { wait: true } : {}) });
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, ...(wait ? { wait: true } : {}),
+                ...(campaign ? { campaign } : {}) });
         if (resp && resp.pin && resp.host !== false) {
             rememberHostKey(resp.pin, resp.hostKey || hostKey);
         }

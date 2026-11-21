@@ -1,5 +1,6 @@
 import { replayLength, gameTaste } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
+import { isPortalCampaign } from './portal';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { incGameCounter, generateGameName } from './new-game';
@@ -174,8 +175,9 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.pack = game.pack;
     }
 
-    // A Replay of a test game is a test game (other campaign tags count the first game only).
-    if (isTestCampaign(game.campaign)) {
+    // A Replay of a test game is a test game, and of a portal game a portal game (portal.ts); other
+    // campaign tags count the first game only.
+    if (isTestCampaign(game.campaign) || isPortalCampaign(game.campaign)) {
         forked.campaign = game.campaign;
     }
 

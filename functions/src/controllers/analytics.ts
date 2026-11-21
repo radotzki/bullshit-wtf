@@ -144,8 +144,14 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     seen-new-phone, seen-new-computer          the lobby first held one or two players, and showed the
 //                                                new help on a phone or a computer (once per lobby and browser)
 //     seen-classic-phone, seen-classic-computer  the same moment in the other half, which showed today's lobby
+//     seen-all-computer                          from 19 Nov 2026: a computer host, who gets the card whatever the
+//                                                PIN's half (the split ended for computers; phones keep it)
 //     whatsapp, native, copy                     the host's invite sends from this lobby, in either half and
 //                                                with any number of players in (each is an "invite" row too)
+//     share-tap                                  the host tapped SHARE LINK (the share sheet), whatever came of it:
+//                                                a press, where native counts only a send
+//     nudge-phone, nudge-computer                the host had been alone 20 s and pressed no invite, so the lobby
+//                                                said "Now send the link to 3 friends" (once per lobby and browser)
 //   results     the final screen's SHARE RESULTS sheet (the results card):
 //     whatsapp           tapped WHATSAPP
 //     native             sent through the phone's share sheet (SHARE)
@@ -184,6 +190,14 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
 //     mute               tapped it to silence the game
 //     unmute             tapped it again
+//   hanukkah-night SAME TABLE TOMORROW on the final screen, on Hanukkah nights 1 to 7 (game/: components/
+//               hanukkah-night). Every row carries the game's PIN, in capitals, in crew_id. A test game sends none:
+//     save                 pressed it: saved tomorrow evening as a calendar file, with the table's tagged link
+//     save-google          then tapped "Or add it to Google Calendar"
+//   night-after, one more (Hanukkah night):
+//     seen-hanukkah        the link SAME TABLE TOMORROW saved (?via=hanukkah-night-N) opened the page: the
+//                          recap shows in either half, so this row stands in for seen-player/seen-other and the
+//                          test's halves still compare the same visits
 /** The lone-host help's rows: their crew_id is the lobby's PIN. */
 export const LOBBY_HELP = 'lobby-help';
 /** The night-after rows: their crew_id is the finished game's PIN. */
@@ -196,11 +210,20 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
     'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change',
         'tell'],
-    'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
+    'invite': ['whatsapp', 'native', 'copy', 'solo-start',
+        // The solo run (SoloRun in game-model): the portal's "Try it alone", PLAY AGAIN after a run,
+        // KEEP GOING ALONE after the 5-question taste.
+        'solo-run-start', 'solo-run-again', 'solo-run-after-taste'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
+        // From 19 Nov 2026 every computer host gets the card, outside the 50/50 split: its own arm.
+        'seen-all-computer',
         'whatsapp', 'native', 'copy',
         // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
-        'big-screen'],
+        'big-screen',
+        // The host alone 20 s with no invite pressed: "Now send the link to 3 friends" showed (lone-host.ts: nudgeDue).
+        'nudge-phone', 'nudge-computer',
+        // The host tapped SHARE LINK (the phone's share sheet), whatever came of it.
+        'share-tap'],
     'results': ['whatsapp', 'native', 'copy', 'download'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],
@@ -208,8 +231,14 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'sound': ['mute', 'unmute'],
     'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew', 'same-table', 'same-table-open', 'join-them',
         // A player came late, the table mid-game: CATCH THE NEXT ROUND, or START A NEW TABLE NOW.
-        'catch-next', 'new-table'],
+        'catch-next', 'new-table',
+        // Opened by SAME TABLE TOMORROW's link, on a Hanukkah night.
+        'seen-hanukkah'],
+    'hanukkah-night': ['save', 'save-google'],
 };
+
+/** The Hanukkah night rows: their crew_id is the finished game's PIN, as night-after's is. */
+export const HANUKKAH_NIGHT = 'hanukkah-night';
 
 export interface ShareRow {
     content_type: string;
@@ -238,6 +267,12 @@ export function cleanShare(body: any): ShareRow | null {
         }
         crew = body.crew.toUpperCase();
     }
+    if (contentType === HANUKKAH_NIGHT) {
+        if (typeof body.crew !== 'string' || !/^[A-Za-z]{1,12}$/.test(body.crew)) {
+            return null;
+        }
+        crew = body.crew.toUpperCase();
+    }
     const locale = body.locale === 'he' || body.locale === 'en' ? body.locale : null;
     const uid = typeof body.uid === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(body.uid) ? body.uid : null;
     return { content_type: contentType, method, crew_id: crew, locale, uid };
@@ -246,6 +281,9 @@ export function cleanShare(body: any): ShareRow | null {
 /** A test game leaves no lobby-help or night-after row: shares has no campaign column to leave it out by later. */
 export async function onShare(row: ShareRow, testGame: (pin: string) => Promise<boolean> = isTestGame) {
     if ((row.content_type === LOBBY_HELP || row.content_type === NIGHT_AFTER) && await testGame(row.crew_id)) {
+        return;
+    }
+    if (row.content_type === HANUKKAH_NIGHT && await testGame(row.crew_id)) {
         return;
     }
     return insert('shares', { ...row, time: new Date() });

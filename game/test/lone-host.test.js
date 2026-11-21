@@ -119,13 +119,41 @@ test('what is counted names the half and the device', () => {
     assert.strictEqual(help({ override: 'classic', userAgent: ANDROID, width: 412 }).seen, 'seen-classic-phone');
 });
 
-test('without the tester\'s switch the half follows the PIN; any other stored value is ignored', () => {
+test('without the tester\'s switch a phone\'s half follows the PIN; any other stored value is ignored', () => {
     for (const pin of ['ABCD', 'XKQZ', 'HELLO', 'BSWTF', 'QQQQ', 'LMNOP']) {
         const want = loneHostHalf(pin) ? 'new' : 'classic';
-        assert.strictEqual(help({ pin, override: null }).half, want);
-        assert.strictEqual(help({ pin, override: 'yes' }).half, want);
-        assert.strictEqual(help({ pin, override: undefined }).half, want);
+        const phone = { pin, userAgent: IPHONE, width: 390 };
+        assert.strictEqual(help({ ...phone, override: null }).half, want);
+        assert.strictEqual(help({ ...phone, override: 'yes' }).half, want);
+        assert.strictEqual(help({ ...phone, override: undefined }).half, want);
     }
+});
+
+test('every computer host gets the card, whatever the PIN, and is counted as its own arm', () => {
+    for (const pin of ['ABCD', 'XKQZ', 'HELLO', 'BSWTF', 'QQQQ', 'LMNOP']) {
+        for (const [userAgent, width] of [[MAC, 1440], [WINDOWS, 1280], [WINDOWS, 700]]) {
+            const h = help({ pin, userAgent, width, override: null });
+            assert.deepStrictEqual([h.half, h.device, h.show, h.seen], ['all', 'computer', true, 'seen-all-computer'], `${pin} ${width}`);
+        }
+    }
+    // HELLO is in the PIN's classic half: on a computer it gets the card, not the green WhatsApp bar.
+    assert.strictEqual(loneHostHalf('HELLO'), false);
+    assert.deepStrictEqual([1, 2, 3].map(n => help({ pin: 'HELLO', override: null, playerCount: n }).show), [true, true, false]);
+    // A narrow window on a computer is a phone, and stays in the split.
+    assert.strictEqual(help({ pin: 'HELLO', override: null, userAgent: WINDOWS, width: 699 }).half, 'classic');
+    // The tester's switch still picks a half on a computer.
+    assert.strictEqual(help({ pin: 'HELLO', override: 'classic' }).show, false);
+    assert.strictEqual(help({ pin: 'HELLO', override: 'new' }).seen, 'seen-new-computer');
+    // Not the host's own page: still out of it.
+    assert.strictEqual(help({ pin: 'HELLO', override: null, isHost: false }).show, false);
+});
+
+test('a press is kept per lobby across a reload, under a key of its own', () => {
+    const { INVITE_PRESSED_KEY } = load('pages', 'game-staging', 'lone-host.ts');
+    assert.strictEqual(INVITE_PRESSED_KEY, 'BS_LOBBY_PRESSED_');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'pages', 'game-staging', 'game-staging.component.ts'), 'utf8');
+    assert.match(src, /sessionStorage\.setItem\(INVITE_PRESSED_KEY \+ this\.pinKey\(\)/);
+    assert.match(src, /stored\(\(\) => sessionStorage, INVITE_PRESSED_KEY \+ this\.pinKey\(\)\)/);
 });
 
 test('the lobby marks the host\'s own page, and only that', () => {
@@ -160,4 +188,44 @@ test('the words: both languages, every line, and the number the line names', () 
     for (const line of [en.best, en.bestWithOne, he.best, he.bestWithOne]) {
         assert.ok(line.includes(String(BEST_WITH)), line);
     }
+});
+
+test('the nudge: alone 20 s, nothing pressed, page on screen', () => {
+    const { nudgeDue, nudgeSeen, NUDGE_AFTER_MS } = load('pages', 'game-staging', 'lone-host.ts');
+    assert.strictEqual(NUDGE_AFTER_MS, 20000);
+    const base = { alone: true, aloneSince: 1000, now: 1000 + NUDGE_AFTER_MS, pressed: false, hidden: false };
+    assert.strictEqual(nudgeDue(base), true);
+    assert.strictEqual(nudgeDue({ ...base, now: 1000 + NUDGE_AFTER_MS - 1 }), false, 'not before 20 s');
+    assert.strictEqual(nudgeDue({ ...base, pressed: true }), false, 'not once an invite was pressed');
+    assert.strictEqual(nudgeDue({ ...base, hidden: true }), false, 'not while the page is hidden');
+    assert.strictEqual(nudgeDue({ ...base, alone: false }), false, 'not once a guest is in');
+    assert.strictEqual(nudgeDue({ ...base, aloneSince: null }), false);
+    assert.strictEqual(nudgeSeen('phone'), 'nudge-phone');
+    assert.strictEqual(nudgeSeen('computer'), 'nudge-computer');
+});
+
+test('the nudge has its words in both languages', () => {
+    for (const locale of ['en', 'he']) {
+        const s = loneHostStrings(locale);
+        assert.ok(s.nudge && s.nudgeSub, locale);
+    }
+    assert.match(loneHostStrings('en').nudge, /send the link/i);
+    assert.match(loneHostStrings('he').nudge, /שלחו את הקישור/);
+});
+
+test('a seasonal banner costs a computer host no height: a chip on the count\'s line, the line only on phones and the big screen', () => {
+    const dir = path.join(__dirname, '..', 'src', 'app', 'pages', 'game-staging');
+    const html = fs.readFileSync(path.join(dir, 'game-staging.component.html'), 'utf8');
+    const scss = fs.readFileSync(path.join(dir, 'game-staging.component.scss'), 'utf8');
+    // The chip sits inside the lobby's status, beside the count, never on the big screen.
+    const status = html.slice(html.indexOf('class="lobby-status"'), html.indexOf('class="pack-banner"'));
+    assert.match(status, /class="lobby-count-row"/);
+    assert.match(status, /\*ngIf="packBanner && !presenter" class="pack-chip"/);
+    // The words are the same as the line's, whatever the season (packBanner in lobby-host.ts).
+    assert.match(status, /\{\{ packIcon \}\} \{\{ packBanner \}\}/);
+    // On a computer the line is hidden and the chip shown, in px; on a phone the chip is hidden.
+    const wide = scss.slice(scss.indexOf('@media screen and (min-width: 769px) {\n    .pack-banner'));
+    assert.match(wide, /\.pack-banner:not\(\.presenter\) \{\s*display: none;/);
+    assert.match(wide, /\.pack-chip \{\s*display: inline-block;[\s\S]*?font-size: 16px;/);
+    assert.match(scss, /\n\.pack-chip \{\s*display: none;\s*\}/);
 });
