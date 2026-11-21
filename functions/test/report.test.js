@@ -19,6 +19,7 @@ const stand = {
     'new-game': controller(['newGame']),
     'on-answer-selection': controller(['onAnswerSelection']),
     'on-reveal-done': controller(['onRevealDone']),
+    'seat-gone': controller(['onSeatGone']),
     'join': controller(['join']),
     'fork': controller(['fork']),
     'same-table': controller(['sameTable']),
@@ -149,7 +150,7 @@ test('every HTTP function with a catch reports its fault under its own name', as
 
 test('a fault that escapes a trigger is reported as unhandled, and the trigger still fails', async () => {
     for (const [name, step] of [['tick', 'tick'], ['phaseTimer', 'onPhaseStart'], ['onAnswerSelection', 'onAnswerSelection'],
-        ['onRevealDone', 'onRevealDone'], ['gameState', 'onStateChange'], ['onFork', 'onFork']]) {
+        ['onRevealDone', 'onRevealDone'], ['onSeatGone', 'onSeatGone'], ['gameState', 'onStateChange'], ['onFork', 'onFork']]) {
         fresh();
         const fault = boom();
         steps[step] = async () => { throw fault; };

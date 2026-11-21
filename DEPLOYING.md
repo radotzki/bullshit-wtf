@@ -357,7 +357,7 @@ need the owner's Firebase sign-in (`npx firebase login`); use them only when Git
 Mind the order: the `prod:deploy` script runs the site before the rules, so run the three one by one.
 
 ```sh
-npm run prod:deploy-functions   # 22 functions (11 + phaseTimer + onRevealDone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh + hostToBigScreen), 1st gen, Node 22, us-central1
+npm run prod:deploy-functions   # 23 functions (11 + phaseTimer + onRevealDone + onSeatGone + createCrew + crewRematch + crewNight + onShare + startGame + hostHere + visit + laugh + hostToBigScreen), 1st gen, Node 22, us-central1
 npm run prod:deploy-rules       # needed: games/$pin/creator and games/$pin/hostSeen readable (host-only START, host gone), games/$pin/revealDone writable (reveal NEXT), crews/$id and games/$pin/crew readable (saved crews), games/$pin/coach and games/$pin/ideas/$pid readable (round-1 lie helper)
 npm run prod:deploy-game        # hosting
 ```
@@ -1757,6 +1757,44 @@ change is really about. No table holds when an answer came in. It needs the two 
 pull request 47 (`lie_span_s` and `pick_span_s` on `question_results`), which is not merged and
 whose columns wait for the owner; until then the only sign of a shorter wait is the two shares
 above.
+
+## A player who left: no seat in the rematch, and no question waits for them
+
+A guest who said goodnight kept their seat: REMATCH copied every seat that sent something on the last
+question, and a player who walked off mid-game was waited for to the end of every question, because
+the empty seats rule only leaves out seats that never played. On the New Year's Eve play-through of
+21 November the rematch took 8.5 minutes against 7.1 for the first game, each question running out its
+clock for two empty seats.
+
+- Functions only. One new function, `onSeatGone` (a database trigger on `games/{pin}/seen/{pid}`,
+  1st gen, 120 s timeout, 128 MB). No rule change: phones already write their own `seen` mark
+  (see "Seat back by name"), and nothing new is readable. No BigQuery change. No site change.
+- Gone: a seat whose page the database has marked away (`seen` is a time, not `true`) for 20 seconds
+  or more (`GONE_MS` in `functions/src/controllers/seats.ts`). In a Replay, a carried-over seat whose
+  phone never opened the new game also counts as gone, once the Replay has been open 20 seconds and
+  other seats there are marked. A seat with no mark in a game where nobody is marked (an older page)
+  is never gone.
+- REMATCH (`fork.ts`, `seatsForReplay`): a seat that is gone when REMATCH is pressed gets no seat,
+  whatever it sent on the last question. The phone that pressed REMATCH always keeps its seat. A phone
+  that only slept comes back to the final screen, finds the rematch, and joins it like any late phone,
+  in the lobby or after it has started (score-board-final's `takeSeat`, and pull request 204's fix for
+  a seat taken while the scoreboard step runs).
+- During any game, question 1 included: the lies, the picks and NEXT on the reveal stop waiting for a
+  gone seat. The 20-second guard of the empty seats rule (10 s for picks and NEXT) applies while one is
+  left out, so a phone that is back gets time to send. A phone that comes back sets its mark to `true`
+  and is waited for again at once.
+- `onSeatGone` covers the one case nothing else would: everyone else had already sent when the seat
+  went. It waits until the seat has been gone 20 seconds, reads the game, and ends the phase if
+  everyone still waited for is in (waiting out the guard or the reveal's last row, at most a minute).
+  It runs on every write of a `seen` mark; a mark of `true` returns at once.
+- Known leftover: phones cannot read `seen`, so the "Waiting for …" row still names a gone seat for
+  the few seconds before the phase ends.
+
+To check it after the release: the Analyst's read of games per player and the length of rematches
+(the second and later games of a sitting) against the week before. Locally:
+`cd .github/smoke && node emulator-rematch-leavers.js` plays a game and its rematch on the emulators
+with a guest who leaves before REMATCH, a phone that sleeps 50 seconds, a player who leaves mid-game
+and one who comes back to the rematch in progress.
 
 ## Lies sent at the same moment end the question at once
 
