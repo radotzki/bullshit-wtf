@@ -81,5 +81,7 @@ test('the lobby names a party game in its language', () => {
     assert.match(packBanner('party', 'he'), /^מהדורת מסיבה: /);
     // Other packs keep their lines.
     assert.match(packBanner('christmas', 'en'), /Christmas/);
-    assert.strictEqual(packBanner('kids', 'en'), null);
+    // The kids switch has its own lobby line (#215; kids-switch.test.js checks its words).
+    assert.match(packBanner('kids', 'en'), /^Kids are playing/);
+    assert.strictEqual(packBanner(null, 'en'), null);
 });
