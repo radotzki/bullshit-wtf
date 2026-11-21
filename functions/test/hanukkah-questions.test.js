@@ -81,3 +81,12 @@ test('English house lies sound like a relative wrote them, not like a joke nobod
     // Israeli dreidels say "here"; every dreidel abroad says "there": the lie a family abroad will pick.
     assert.ok(pack['hanukkah-26-en-11'].fakeAnswers.includes('there'));
 });
+
+test('no English house lie is true: Handel\'s tune is also Advent\'s and Palm Sunday\'s "Tochter Zion"', () => {
+    // From the Engineer's look at #223: a lie that is true tells the one player who knows that they were fooled.
+    const hymn = pack['hanukkah-26-en-41'].fakeAnswers;
+    ['christmas', 'palm sunday', 'advent'].forEach(day => assert.ok(!hymn.includes(day), day));
+    // The 1611 King James Bible prints the Books of Maccabees; Billings' neighbors may well have marched.
+    assert.ok(!pack['hanukkah-26-en-36'].fakeAnswers.includes('protestant bible'));
+    assert.ok(!pack['hanukkah-26-en-48'].fakeAnswers.includes('held a candlelight march'));
+});

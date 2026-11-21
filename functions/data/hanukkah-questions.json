@@ -425,7 +425,7 @@
     "fakeAnswers": [
       "quran",
       "book of mormon",
-      "protestant bible"
+      "dead sea scrolls"
     ],
     "citation": "https://en.wikipedia.org/wiki/1_Maccabees",
     "lang": "en",
@@ -483,8 +483,8 @@
     "questionText": "A tune from an 18th-century oratorio about Judah Maccabee became a famous Christian hymn for $blank$",
     "realAnswer": "easter",
     "fakeAnswers": [
-      "christmas",
-      "palm sunday",
+      "pentecost",
+      "all saints' day",
       "new year's eve"
     ],
     "citation": "https://en.wikipedia.org/wiki/Thine_Be_the_Glory",
@@ -569,7 +569,7 @@
     "fakeAnswers": [
       "spun dreidels in the street",
       "fried latkes at city hall",
-      "held a candlelight march"
+      "painted their doors blue"
     ],
     "citation": "https://www.niot.org/nios-video/not-our-town",
     "lang": "en",
