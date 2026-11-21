@@ -73,7 +73,8 @@ test('every hate and sex entry of the nickname lists is refused: alone, in a sen
                 // Plurals that are fair words: "מונגולים" is the Mongols, a people (a shipped answer:
                 // "המונגולים תקפו"), and "שפיכות" is spilling ("שפיכות דמים", bloodshed).
                 if (e === 'מונגול' || e === 'שפיכ') continue;
-                for (const p of plurals(e).slice(1)) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
+                // "מציצים" is peepers (and a TV show), not the plural of "מציצה", which is "מציצות".
+                for (const p of plurals(e).slice(1).filter(x => x !== 'מציצים')) refused([p, hebrew ? `כל ה${p} האלה` : `all the ${p} there`]);
                 n++;
             }
         }
@@ -110,4 +111,84 @@ test('a sign or a digit at the start or end of a word hides no swear word', () =
     refused(['חרא!', 'חרא!!', '!!!חרא', 'זין!', 'זין1', 'זונה!', 'בן זונה!!!', 'כוס אמק!', 'shit!', 'bitch!!', 'dick!',
         'shit1', 'a fucking dog!', 'פאק', 'וואט דה פאק', 'פאקינג כלב']);
     fine(['nice!', 'wow!!!', 'כלב!', 'שבע!', '42 שנה', 'פי 2', 'בננות!', '!שלום', 'b2b', 'R2D2', 'pakistan', 'פקיסטן', 'פאקיסטן']);
+});
+
+// Trying to beat the kids' filter as a 10 to 13 year old would (reports: kids-filter-break-in). Each of these
+// passed at cb2efc5 (#225).
+test('a hidden letter inside a word, also with "!" at its end, is read as the letter it hides', () => {
+    refused(['b*tch!', 'b#tch!', 'a b*tch!', 'it smelled like sh*t!', 'f@ck', 'f$ck', 'd*ck', 'c*nt', 'p*ssy', 'wh*re',
+        'sl*t', 'a**hole', 'b-tch', 'i love b*tches', 'a sonofab*tch', 'b🐝tch', 'ז*ן', 'ח*א', 'זו*ה', 'ז"ן']);
+    // Initials, contractions, names with signs, Hebrew acronyms and geresh words stay fine.
+    fine(['C.S.I', 's.h.e', 'x-ray', 't-shirt', 'mother-in-law', 'his mother-in-law', 'Pu$$y Riot', 'Ke$ha', 'Ca$h',
+        'A$AP Rocky', 'P!nk', 'AT&T', 'M&M\'s', "rock'n'roll", 'Wal-Mart', 'Spider-Man', 'R2-D2', 'C-3PO', 'bullshit.wtf',
+        'צה"ל', 'ת"א', 'ז"ל', 'ש"ח', 'עו"ד', 'יו"ר', 'ט"ו בשבט', "צ'יפס", "ג'ירפה", "ז'קט", "סנדוויץ'", "ביצ'ה", 'f***', 'sh**']);
+});
+
+test('"!" at the end of a word ends it, so allowed phrases and names with "!" stay fine', () => {
+    fine(['cum laude!', 'summa cum laude!', 'Homo sapiens!', 'Homo erectus!!', 'Dick Van Dyke!', 'Dick Van Dyke?',
+        'Dick Cheney!', 'Moby Dick!', 'Kush!', 'Hindu Kush!', 'blue tits!', 'Spotted Dick!', 'Yahoo!', 'Wham!']);
+    refused(['b!tch', 'sh!t', 'shit!', 'dick!', 'Dick!', 'cum!', 'homo!']);
+});
+
+test('doubled "i" or "u", or every letter doubled, is read once', () => {
+    refused(['fuuck', 'shiit', 'biitch', 'ffuucckk', 'sshhiitt']);
+    fine(['shiitake', 'Hawaii', 'skiing', 'vacuum', 'rapper', 'hommos', 'Mississippi', 'coffee', 'bookkeeper', 'Tennessee']);
+});
+
+test('fancy letters, accents and look-alikes do not hide a word', () => {
+    refused(['ƒuck', '¢unt', '©unt', 'ꜰᴜᴄᴋ', '🅵🆄🅲🅺', '🅕🅤🅒🅚', '🇫🇺🇨🇰', 'fúck', 'f́uck', 'fück', 'ѕhit', 'fvck', 'cvnt']);
+    fine(['café', 'Zoë', 'José', 'Pokémon', 'naïve', 'Beyoncé']);
+});
+
+test('English swearing in Hebrew letters, and Hebrew as kids misspell it, is refused', () => {
+    refused(["ביץ'", "ביצ'", 'ביץ', "ביטץ'", "ביאץ'", "יא ביץ'", 'דיק', 'דיקהד', 'אסהול', 'פאקיו', 'מאדרפאקר',
+        'מאתרפאקר', "סאנאפאביץ'", 'כוסאמך', 'כוס אמך', 'כוס עמאק', 'בן זונא', 'בנזונא', 'זונע', 'שרמוטע', 'מזדין',
+        'תזדין', 'לך תזדין']);
+    fine(['ביצה', 'ביצים', 'ביצות', 'דיקן', 'דיקלה', 'דיק ואן דייק', 'מובי דיק', 'הומו ספיינס', 'מציצים', 'קשית מציצה',
+        'שיט', 'שיטה', 'פאקיסטן', 'קאנט', 'דיאן פוסי', 'גרין ביי פאקרס']);
+});
+
+test('Hebrew swearing written in English letters is refused', () => {
+    refused(['kusima', 'kusit', 'benzona', 'ben zona', 'mefager', 'tizdayen', 'lech tizdayen', 'mizdayen', 'kibenimat']);
+    fine(['Zayn Malik', 'Zain', 'Sahara', 'Hara-kiri', 'Arizona', 'Kuskus', 'couscous', 'Kushner']);
+});
+
+// Product's look at e7d8823 (reports: kids-filter-226-check): an apostrophe and an English ending end a
+// word, and a Hebrew geresh is part of its letter, so possessives and Hebrew names are not hidden letters.
+test('possessives, contractions and geresh names are not read as hidden letters', () => {
+    fine(["Hooke's law", "the pen's cap", "my chin's itchy", "Chin's restaurant", "pi's first digit", "rap's biggest star",
+        "the goo's green", "the crowd's boo's", "the coo's sound", "Fu's noodles", "Kik's app", "rap'd", "ti's", "fa's",
+        "hom's", "pak's", "k's", "c'mon", "who'd", "o'clock", "y'all", "s'mores", "ז'ן ולז'ן", "דיק צ'ייני", 'fromage râpé']);
+    refused(["b'tch", "b*tch's", "f'ck", "the d*ck's", "ז*ן"]);
+});
+
+test('the older gaps of Product\'s section 2 are refused', () => {
+    refused(['אחושרמוטה', 'קוס אמק', 'קוסאמק', 'חארה', 'תזדיינו', 'לכו תזדיינו', 'כוס אמו', 'כוסאמו', 'כוסעומק', 'שרמוטא',
+        'מאניאק', 'מנייאק', 'לך תמצוץ', 'זיינתי', "בייץ'", "ביצ'ס", 'ז1ן', 'ass', 'a$$', '@ss', 'a55', 'a**', 'kiss my a**',
+        'badass', 'a-hole', 'what an a-hole', 'fukc', 'fcuk', 'slvt', 'biotch', 'kos emek', 'koss emek', 'kusomo',
+        'sharmoota', 'sharmootah']);
+    fine(['a hole in the ground', 'Kos island', 'pass', 'class', 'assist', 'Assad', 'מוצץ', 'תמצוץ את הלימון', 'the A-Team',
+        'a-ha', 'ביצה קשה', "ביצ'יקו", "ז'אן"]);
+});
+
+// Product's second look, at 1450761 (reports: kids-filter-226-check, second round): digits and signs alone
+// are a number, a time or a date. A wrong number is the most ordinary lie in a trivia game.
+test('numbers, ranges, times, fractions, prices and dates are never read as words', () => {
+    fine(['4.5', '4.5 million', '4.5 מיליון', '5.7 מיליון', '4-5 שעות', 'בין 4-5', '5-7 ימים', '4:55', '4/5', '$4.5',
+        '25.9.23', '455', '$455', '7175', '5.9.3', '4.55%']);
+    const sweep = [];
+    for (let i = 0; i < 100; i++) for (let j = 0; j < 100; j++) sweep.push(i + '.' + j);
+    for (let i = 0; i < 60; i++) for (let j = i + 1; j < i + 30; j++) sweep.push(i + '-' + j, i + '-' + j + ' שעות', i + ' to ' + j);
+    for (let h = 0; h < 24; h++) for (let m = 0; m < 60; m++) sweep.push(h + ':' + String(m).padStart(2, '0'));
+    for (let i = 1; i < 20; i++) for (let j = 1; j < 20; j++) sweep.push(i + '/' + j);
+    for (let d = 1; d <= 31; d++) for (let m = 1; m <= 12; m++) sweep.push(d + '.' + m + '.23', d + '/' + m + '/2023');
+    for (let i = 0; i < 10000; i++) if (String(i).indexOf('1488') < 0) sweep.push(String(i), '$' + i);
+    assert.deepStrictEqual(sweep.filter(t => lieRefused(t)), []);
+    // Beside a real letter, digits still stand for letters; 1488 is refused as typed.
+    refused(['sh1t', '5h1t', 'a55', 'a$$', 'b1tch', 'ז1ן', '4.5 shit', '1488']);
+});
+
+test('"\'t" ends a word only after an n, so "sl\'t" still hides a letter', () => {
+    fine(["don't", "can't", "won't", "isn't", "didn't", "it's", "they're", "we've", "I'm", "she'll", "who'd"]);
+    refused(["sl't", "tw't", "cl't", "sh't", "f'ck", "b'tch"]);
 });
