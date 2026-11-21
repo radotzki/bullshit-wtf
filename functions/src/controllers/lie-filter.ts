@@ -131,7 +131,8 @@ const WORD_GAP = /[^\S\uFEFF]+/;
 const hasLetter = (t: string) => REAL_LETTER.test(t) || /[a-zא-ת]/.test(normalizeName(t.replace(LOOK_ALIKE, '')));
 
 // "!" at a word's end ends it ("cum laude!", "Kush!"): only inside a word is it an "i" ("b!tch").
-const END_BANGS = /!+(?![0-9a-zA-Zא-ת@$])/g;
+// A letter later in the same word keeps it an "i" ("s.h.!.t", "s-h-!-t").
+const END_BANGS = /!+(?![^\s]*[0-9a-zA-Zא-ת@$])/g;
 const words = (s: string) => normalizeName(s).split(NOT_LETTERS).filter(w => !!w);
 const set = (list: string[]) => {
     const out: { [w: string]: boolean } = {};
@@ -313,7 +314,25 @@ export function lieRefused(text: string): boolean {
     }
     // A word with no letter typed in it is a number, a time, a price or a date ("455", "4.5", "7175", "$4"),
     // not a word written in digits: only beside a real letter do digits stand for letters ("sh1t", "a55").
-    const typed = raw.split(WORD_GAP).filter(hasLetter).join(' ');
+    // A run of one-character words with a real letter among them is a word spelled out ("5 h i t",
+    // "n 1 g g e r", "s h ! t"): its lone digits and signs are letters, and stay. Alone they are numbers.
+    const tokens = raw.split(WORD_GAP);
+    const one = tokens.map(t => Array.from(t).length === 1);
+    const kept = tokens.map(hasLetter);
+    for (let i = 0; i < tokens.length;) {
+        let j = i;
+        while (j < tokens.length && one[j]) {
+            j++;
+        }
+        if (j - i > 1 && kept.slice(i, j).some(k => k)) {
+            for (let k = i; k < j; k++) {
+                kept[k] = true;
+                tokens[k] = tokens[k] === '!' ? 'i' : tokens[k];
+            }
+        }
+        i = Math.max(j, i + 1);
+    }
+    const typed = tokens.filter((_, i) => kept[i]).join(' ');
     const n = normalizeName(typed.replace(END_BANGS, ' '));
     const split = n.split(NOT_LETTERS).filter(w => !!w);
     // The same lie with the signs inside its words taken out, so "f*ck" and "dick-head" read as words.
