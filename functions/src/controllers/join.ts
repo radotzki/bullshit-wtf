@@ -34,16 +34,13 @@ export function cleanNickname(typed: any, uid: string, pid: string, locale: stri
 }
 
 /**
- * A name cut to NICKNAME_MAX characters, without a dangling "&", "+", "-", "," or "and" at the cut, so
+ * A name cut to NICKNAME_MAX characters, without a dangling "&", "+", "-", "," or "and" at its end, so
  * "Grandma & Grandpa" sits at the table as "Grandma", not "Grandma &" (and "Grandma &'s excuse" in an
- * About question): from the English Christmas night walk. A name that is nothing but those keeps its cut.
+ * About question): from the English Christmas night walk. The join box already holds 9 characters, so
+ * the phone sends "Grandma &" itself. A name that is nothing but those keeps its cut.
  */
 export function cutNickname(name: string): string {
-    const all = Array.from(name);
-    const cut = all.slice(0, NICKNAME_MAX).join('').trim();
-    if (all.length <= NICKNAME_MAX) {
-        return cut;
-    }
+    const cut = Array.from(name).slice(0, NICKNAME_MAX).join('').trim();
     const tidy = cut.replace(/(?:[\s&+,\-\/]+|\s+(?:and|und|et|y|ו))+$/i, '').trim();
     return tidy || cut;
 }

@@ -95,16 +95,6 @@ test('join swaps a flagged name, keeps normal names, and cuts names to 9 after c
     const long = await join('abcd', 'cucumbersandwich', 'u2');
     assert.strictEqual(long.nickname, 'cucumbers');
 
-    // The English Christmas night walk: the grandparents' shared tablet typed "Grandma & Grandpa".
-    const grand = await join('abcd', 'Grandma & Grandpa', 'u7');
-    assert.strictEqual(grand.nickname, 'Grandma');
-    assert.strictEqual((await join('abcd', 'Nana and Pop', 'u8')).nickname, 'Nana');
-    assert.strictEqual((await join('abcd', 'Gran&Pop', 'u9')).nickname, 'Gran&Pop');
-    assert.strictEqual((await join('abcd', 'Mary-Jane Smith', 'u10')).nickname, 'Mary-Jane');
-    assert.strictEqual((await join('abcd', 'Ann + Bob', 'u11')).nickname, 'Ann + Bob');
-    assert.strictEqual((await join('abcd', 'Ann + Bobby', 'u12')).nickname, 'Ann + Bob');
-    assert.strictEqual((await join('abcd', 'Ann and Bob', 'u14')).nickname, 'Ann and B');
-    assert.strictEqual((await join('abcd', '&&&&&&&&&&&&', 'u13')).nickname, '&&&&&&&&&');
 
     const slur = await join('abcd', 'nigger123456', 'u3');
     assert.strictEqual(slur.swapped, true);
@@ -124,6 +114,30 @@ test('join swaps a flagged name, keeps normal names, and cuts names to 9 after c
     const heNormal = await join('hehe', 'כוס תה', 'u6');
     assert.strictEqual(heNormal.nickname, 'כוס תה');
     assert.strictEqual(heNormal.swapped, undefined);
+});
+
+// The English Christmas night walk: the grandparents' shared tablet typed "Grandma & Grandpa", and the
+// table read "Grandma &" (the join box holds 9 characters, so the phone sends that). No dangling joiner.
+test('a name cut at 9 characters, or typed that way, loses a dangling "&", "+", "-" or "and"', async () => {
+    const cases = [
+        ['Grandma & Grandpa', 'Grandma'],
+        ['Grandma &', 'Grandma'],
+        ['Nana and Pop', 'Nana'],
+        ['Nana and ', 'Nana'],
+        ['Gran&Pop', 'Gran&Pop'],
+        ['Mary-Jane Smith', 'Mary-Jane'],
+        ['Ann + Bob', 'Ann + Bob'],
+        ['Ann + Bobby', 'Ann + Bob'],
+        ['Ann and Bob', 'Ann and B'],
+        ['Andy', 'Andy'],
+        ['Jo-Jo', 'Jo-Jo'],
+        ['&&&&&&&&&&&&', '&&&&&&&&&'],
+    ];
+    for (let i = 0; i < cases.length; i++) {
+        const pin = `NM${String.fromCharCode(65 + i)}${String.fromCharCode(65 + i)}`;
+        db.games[pin] = { locale: 'en', players: {} };
+        assert.strictEqual((await join(pin.toLowerCase(), cases[i][0], `nm${i}`)).nickname, cases[i][1], cases[i][0]);
+    }
 });
 
 test('BigQuery keeps the typed name and logs name_flag on each join', async () => {
