@@ -76,7 +76,6 @@ test('the page names the buttons the game has, and the night\'s real steps', () 
     assert.match(page.body, /"Use as the big screen"/);
     assert.match(page.body, /"Join Game"/);
     assert.match(page.body, /REMATCH/);
-    assert.match(page.body, /JOIN THE REMATCH/);
     // The video call, the latecomer, the sleeping phone, the guest who leaves at midnight.
     assert.match(text, /video call/);
     assert.match(text, /at 0 points/);

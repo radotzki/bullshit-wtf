@@ -73,7 +73,7 @@ ${example('In Ecuador, families see the new year in by burning life-size ____ in
   <li><strong>Friends on a video call.</strong> Share the laptop's screen in the call (Zoom, FaceTime, Google Meet), so they see the questions, and send them the link. They play on their own phone or laptop. The call runs a second or two behind, but every phone has its own copy of the question and the clock. Friends in London hit midnight five hours before New York: they can play the first games and say goodnight.</li>
   <li><strong>Someone arrives late.</strong> They open the same link, or type the PIN under "Join Game", and join the game under way, at 0 points.</li>
   <li><strong>A phone goes to sleep</strong> while its owner fetches a drink. Wake it up and the game comes back where the room is. Nobody waits for it: the clock runs, and that player just misses the question.</li>
-  <li><strong>Someone leaves at midnight.</strong> The game carries on without them. REMATCH starts the next game with whoever presses JOIN THE REMATCH.</li>
+  <li><strong>Someone leaves at midnight.</strong> The game carries on without them. Their seat stays, and REMATCH keeps it too, so each question waits out the clock for them: a minute or so longer a game, and their name sits at the bottom with 0.</li>
 </ul>
 <h2>A grown-up table</h2>
 <ul>
