@@ -856,7 +856,12 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         seasonIn: ['he'],
         // Hebrew games open with one an Israeli family half knows (the doughnut's name, the dreidel's
         // letters, 44 candles, Levin Kipnis...), not with American trivia (from the Hanukkah night walk).
-        openers: ['03', '05', '06', '12', '20', '22', '26', '30', '48', '56', '58', '59'].map(n => `hanukkah-26-he-${n}`),
+        openers: ['03', '05', '06', '12', '20', '22', '26', '30', '48', '56', '58', '59'].map(n => `hanukkah-26-he-${n}`)
+            // English games, played mostly by Jewish families in the US and UK, open with one they learned in
+            // Hebrew school or hear every December (the dreidel song's clay, gimel takes the pot, 44 candles,
+            // the shamash, Rock of Ages, Eight Crazy Nights...), not with a random pack question (Apphus,
+            // twenty cubits, Nicanor's head): from the English Hanukkah night walk. No gory one opens.
+            .concat(['04', '05', '13', '17', '21', '24', '25', '26', '33', '50', '68'].map(n => `hanukkah-26-en-${n}`)),
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
