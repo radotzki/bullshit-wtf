@@ -28,6 +28,7 @@ const stand = {
     'crew-night': controller(['crewNight']),
     'laugh': controller(['laugh']),
     'join-preview': controller(['joinPreviewPage', 'readPreviewGame']),
+    'discord-table': controller(['discordTable']),
     // The old games' sweep runs beside the gameState trigger (see old-games.ts); it never rejects.
     'old-games': { sweepOldGames: async () => null },
     'analytics': Object.assign(controller(['onJoinGame', 'onShare', 'onStateChange', 'onFork']),
@@ -134,10 +135,10 @@ test('a fault in an HTTP function: the same answer as before, and one report', a
 });
 
 test('every HTTP function with a catch reports its fault under its own name', async () => {
-    const bodies = { newGame: { locale: 'en', count: 5 }, crewRematch: { crew: 'c1' } };
+    const bodies = { newGame: { locale: 'en', count: 5 }, crewRematch: { crew: 'c1' }, discordTable: { locale: 'en', instanceId: 'i-1234567890123456789-gc-1-2' } };
     for (const [name, step] of [['newGame', 'newGame'], ['fork', 'fork'], ['createCrew', 'createCrew'], ['crewRematch', 'crewRematch'],
         ['startGame', 'startGame'], ['hostHere', 'hostHere'], ['hostToBigScreen', 'hostToBigScreen'], ['answer', 'answer'], ['join', 'join'], ['validateGameName', 'validateGameName'],
-        ['onJoinGame', 'onJoinGame'], ['onShare', 'onShare'], ['laugh', 'laugh']]) {
+        ['onJoinGame', 'onJoinGame'], ['onShare', 'onShare'], ['laugh', 'laugh'], ['discordTable', 'discordTable']]) {
         fresh();
         steps[step] = async () => { throw boom(); };
         const res = await call(name, bodies[name] || { pin: 'abcd', content_type: 'x' });
