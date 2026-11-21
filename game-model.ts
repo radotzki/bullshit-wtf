@@ -175,6 +175,14 @@ export interface GameScheme {
     // Server time each player's lie and pick arrived, for measuring the wait (question_results).
     // Server only: no rule opens it, so no phone can read or write it.
     answerTimes?: AnswerTimes;
+    // CHALLENGE ANOTHER GROUP (challenge.ts in the functions). On a finished game: a player of it pressed
+    // CHALLENGE ANOTHER GROUP, so its link may show its table's score to another group for CHALLENGE_MS.
+    // Server only: no rule opens it.
+    challengeOpen?: boolean;
+    // On a game made from a challenge link: the other table as it finished (its PIN, host, scores), copied
+    // by the server when this game was made. Its questions are that game's, in the same order. Server
+    // only: no rule opens it; the final screen gets it through validateGameName. Not carried by Replay.
+    challenge?: ChallengeCard;
     // "Pick a decoy", a 50/50 test on two-player games, set at START (see pair.ts in the functions).
     // true: each player also picks a decoy, one of two house lies offered only to them, and the game has
     // no neutral house lies. false: in the test, plays as before. Absent: not in the test (not two
@@ -183,6 +191,34 @@ export interface GameScheme {
     // A pair game's decoy each player chose with their lie for the current question. Server only: no
     // rule opens it, so the friend never learns it before the answers are on the table.
     decoys?: { [pid: string]: string };
+}
+
+/** One row of a challenged table's final scores, as another group sees it. */
+export interface ChallengeRow {
+    name: string;
+    score: number;
+    place: number;
+}
+
+/**
+ * A finished table that another group may play against (CHALLENGE ANOTHER GROUP): built by the server
+ * from the game's own record, never from anything in a link, so a link cannot change a name or a score.
+ */
+export interface ChallengeCard {
+    /** The challenged game's PIN. */
+    from: string;
+    /** Its host's nickname as a link preview may show it, or ''. */
+    host: string;
+    locale: 'en' | 'he';
+    questions: number;
+    /** Players at that table. */
+    played: number;
+    /** The table's best score (its winner's). */
+    top: number;
+    /** Its final scores, best first, at most CHALLENGE_ROWS. */
+    rows: ChallengeRow[];
+    /** The other table was a test game: rows are not counted. */
+    test?: boolean;
 }
 
 /** When one player's lie or pick arrived (server time, ms), and for which question. */

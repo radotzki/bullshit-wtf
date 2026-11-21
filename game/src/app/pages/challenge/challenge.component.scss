@@ -1,0 +1,61 @@
+// A challenge link's page, on a phone first (320 px and up).
+.challenge-card {
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+
+    .loader {
+        margin: 30px auto;
+    }
+
+    .challenge-title {
+        font-size: 1.6rem;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+
+    .challenge-table {
+        margin-top: 10px;
+        font-size: 1.1rem;
+        overflow-wrap: anywhere;
+    }
+
+    .challenge-top {
+        font-size: 3.2rem;
+        font-weight: bold;
+        line-height: 1.1;
+    }
+
+    .challenge-to-beat {
+        font-size: .95rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+    }
+
+    .challenge-facts {
+        margin-top: 6px;
+        font-size: .9rem;
+        opacity: .9;
+    }
+
+    .challenge-text {
+        margin: 12px 0 16px;
+        line-height: 1.35;
+    }
+
+    .challenge-hint {
+        margin-top: 6px;
+        font-size: .85rem;
+        opacity: .9;
+    }
+
+    .notification {
+        margin-top: 10px;
+        text-shadow: none;
+    }
+}
+
+// Under the arcade picture: the white words stay readable while it loads, or where it never does.
+.challenge-page {
+    background-color: #4a3b5c;
+}
