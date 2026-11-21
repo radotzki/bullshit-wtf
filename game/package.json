@@ -46,6 +46,9 @@
   "overrides": {
     "jsonwebtoken": "^9.0.2",
     "@grpc/grpc-js": "^1.14.0",
-    "minimatch": "^11.0.8"
+    "minimatch": "^11.0.8",
+    "@discord/embedded-app-sdk": {
+      "zod": "4.6.7"
+    }
   }
 }
