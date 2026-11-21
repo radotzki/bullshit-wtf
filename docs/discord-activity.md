@@ -17,7 +17,7 @@ and before the app's main bundle. Inside Discord it:
 
 - wraps `fetch`, `WebSocket` and `XMLHttpRequest.open` so a request to an outside host goes to that host's
   URL mapping on the Activity's own host, as the Embedded App SDK's `patchUrlMappings` does (same
-  addresses; `game/test/discord-proxy.test.js` checks them against SDK 2.5.0). It has to run first:
+  addresses; `game/test/discord-proxy.test.js` checks them against a copy of SDK 2.5.0's rewrite). It has to run first:
   Firebase's database code keeps its own copy of `WebSocket` the moment its module loads;
 - turns the game's stylesheet on (the build does that with an inline script, which Discord's content
   policy may refuse);

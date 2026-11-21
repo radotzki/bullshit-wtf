@@ -1,7 +1,7 @@
 // Tests for the Discord proxy rewrite (src/discord/proxy.ts and boot.ts): inside Discord every request
 // of the page goes to a mapped path on the Activity's own host; anywhere else nothing is touched.
-// The rewrite is checked against the Embedded App SDK's own attemptRemap (a dev dependency), so the
-// addresses the page asks for are the ones Discord's proxy expects.
+// The rewrite is checked against the Embedded App SDK's own attemptRemap (a copy of SDK 2.5.0's code in
+// test/fixtures), so the addresses the page asks for are the ones Discord's proxy expects.
 // Run: npm test (from game/). Needs Node 20+.
 const test = require('node:test');
 const assert = require('node:assert');
@@ -44,16 +44,12 @@ test('each outside address goes to its mapped path on the Activity host', () => 
 });
 
 test('the rewrite gives the same address as the Embedded App SDK', () => {
-    // The SDK reads window.location for the host; give it the Activity's.
-    global.window = { location: new URL(PAGE) };
-    try {
-        const sdk = require('@discord/embedded-app-sdk');
-        for (const [from] of ADDRESSES) {
-            const theirs = sdk.attemptRemap({ url: new URL(from), mappings: URL_MAPPINGS }).toString();
-            assert.strictEqual(remap(from, HOST, PAGE), theirs, from);
-        }
-    } finally {
-        delete global.window;
+    const sdk = require('./fixtures/embedded-app-sdk-url');
+    // The SDK reads window.location for the host: the Activity's.
+    const win = { location: new URL(PAGE) };
+    for (const [from] of ADDRESSES) {
+        const theirs = sdk.attemptRemap({ url: new URL(from), mappings: URL_MAPPINGS }, win).toString();
+        assert.strictEqual(remap(from, HOST, PAGE), theirs, from);
     }
 });
 
