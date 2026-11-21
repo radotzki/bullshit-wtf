@@ -33,7 +33,7 @@
         "destination": "/he.html"
       },
       {
-        "regex": "^/he/(join-game/?|c/[^/]+/?)$",
+        "regex": "^/he/(join-game/?|c/[^/]+/?|challenge/[^/]+/?)$",
         "destination": "/he.html"
       },
       {
@@ -41,13 +41,13 @@
         "destination": "/index.html"
       },
       {
-        "regex": "^/(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/]+/?$",
+        "regex": "^/(present-game|c|challenge|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/]+/?$",
         "destination": "/index.html"
       }
     ],
     "headers": [
       {
-        "regex": "^/(m|d|create-game|join-game|present-game|learn|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step|he/join-game|he/c)(/.*)?$",
+        "regex": "^/(m|d|create-game|join-game|present-game|learn|c|challenge|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step|he/join-game|he/c|he/challenge)(/.*)?$",
         "headers": [
           {
             "key": "X-Robots-Tag",
@@ -83,7 +83,7 @@
         ]
       },
       {
-        "regex": "^/(he/)?(present-game|c|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/.]+/?$",
+        "regex": "^/(he/)?(present-game|c|challenge|game-staging|round-intro|show-question|show-answers|reveal-the-truth|score-board|score-board-final|step)/[^/.]+/?$",
         "headers": [
           {
             "key": "Cache-Control",

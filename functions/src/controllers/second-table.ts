@@ -50,6 +50,12 @@ export interface SecondTableJoin {
  */
 export const SECOND_TABLE_KEY = 'secondTable';
 
+/**
+ * How long a just-kept second table holds its place against another press of START A SECOND TABLE at the
+ * same full table, whatever that table's state reads (a new lobby may not be readable yet).
+ */
+export const CLAIM_MS = 2 * 60 * 1000;
+
 export interface KeptSecondTable {
     pin: string;
     at: number;
@@ -109,11 +115,20 @@ export async function openSecondTable(fullPin: string, now: number = Date.now())
             return undefined;
         }
         const game = await readGame(kept.pin);
-        if (!isOpenTable(game, now)) {
-            return undefined;
+        if (isOpenTable(game, now)) {
+            const host = hostName(game);
+            return host ? { pin: kept.pin, host } : { pin: kept.pin };
         }
-        const host = hostName(game);
-        return host ? { pin: kept.pin, host } : { pin: kept.pin };
+        // A second table of a few phones, with no big screen, ends well before a big-screen table of 12
+        // (the Israeli office party walk-through: it ended before question 5 of 7). Its players then press
+        // REMATCH, and a colleague who comes late belongs in that rematch, not at a table of one.
+        const fork = game && typeof game.fork === 'string' && /^[A-Za-z0-9]{3,12}$/.test(game.fork) ? game.fork : null;
+        const next = fork && await readGame(fork);
+        if (next && isOpenTable(next, now)) {
+            const host = hostName(next);
+            return host ? { pin: fork, host } : { pin: fork };
+        }
+        return undefined;
     } catch (e) {
         console.error(`[PIN: ${fullPin}] open second table not read`, e && e.message);
         return undefined;
@@ -141,15 +156,51 @@ export async function keepSecondTable(secondOf: any, newPin: string, now: number
         if (!full || Object.keys(full.players || {}).length < MAX_PLAYERS || isGameOver(full, now)) {
             return false;
         }
+        // The table kept now, read first: if the check below finds it ended, full or gone, the new one may take
+        // its place. Read after that check, it could be another phone's table kept in between, which the
+        // transaction would then overwrite (found in the Engineer's look at #222 on the database emulator).
+        const before = await get<KeptSecondTable>(gamesRef.child(fullPin).child(SECOND_TABLE_KEY));
+        const closedPin = before && typeof before.pin === 'string' ? before.pin : null;
         if (await openSecondTable(fullPin, now)) {
             return false;
         }
+        // In one transaction: two phones refused together can both press START A SECOND TABLE before either
+        // table is kept (the Israeli office party walk-through, 20 November: the 13th and 14th phones made
+        // two tables, and one colleague sat alone in a lobby). A table kept moments ago by another press wins.
         const kept: KeptSecondTable = { pin: newPin, at: now };
-        await gamesRef.child(fullPin).child(SECOND_TABLE_KEY).set(kept);
+        const won = await new Promise<boolean>((resolve, reject) => {
+            let taken = false;
+            gamesRef.child(fullPin).child(SECOND_TABLE_KEY).transaction(
+                (current: KeptSecondTable | null) => {
+                    taken = !!current && typeof current.pin === 'string' && !!current.pin && current.pin !== newPin
+                        && current.pin !== closedPin && typeof current.at === 'number' && now - current.at < CLAIM_MS;
+                    return taken ? undefined : kept;
+                },
+                (error: any) => error ? reject(error) : resolve(!taken),
+            );
+        });
+        if (!won) {
+            return false;
+        }
         console.log(`[PIN: ${fullPin}] second table ${newPin} kept for the next refused phones`);
         return true;
     } catch (e) {
         console.error(`[PIN: ${fullPin}] second table not kept`, e && e.message);
         return false;
     }
+}
+
+/**
+ * START A SECOND TABLE (the plain button, not START ANOTHER TABLE): the second table this phone should sit
+ * down at instead of making a new one, when another refused phone started one meanwhile. Both phones saw
+ * the plain button, since neither table existed when they were refused; the second press now joins the
+ * first table. `another`: the phone chose START ANOTHER TABLE under a JOIN offer, so it gets its own.
+ * Never rejects: on a failed read the phone makes its table, as before.
+ */
+export async function sitAtSecondTable(secondOf: any, another: any, now: number = Date.now()): Promise<SecondTableJoin | undefined> {
+    const fullPin = cleanPin(secondOf);
+    if (!fullPin || another === true) {
+        return undefined;
+    }
+    return openSecondTable(fullPin, now);
 }

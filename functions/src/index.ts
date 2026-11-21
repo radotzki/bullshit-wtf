@@ -6,11 +6,12 @@ import { tick } from './controllers/tick';
 import { onPhaseStart } from './controllers/phase-timer';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
+import { openChallenge } from './controllers/challenge';
 import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
 import { join } from './controllers/join';
-import { keepSecondTable } from './controllers/second-table';
+import { keepSecondTable, sitAtSecondTable } from './controllers/second-table';
 import { fork } from './controllers/fork';
 import { sameTable } from './controllers/same-table';
 import { startGame, hostHere, hostToBigScreen } from './controllers/start';
@@ -46,6 +47,14 @@ function errorBody(e: any) {
         // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
         if (e.nightAfter && typeof e.nightAfter === 'object') {
             body.nightAfter = e.nightAfter;
+        }
+        // GAME_OVER: the challenge card of a game whose challenge is open, and the other table of a game
+        // played against one (see challenge.ts).
+        if (e.challenge && typeof e.challenge === 'object') {
+            body.challenge = e.challenge;
+        }
+        if (e.versus && typeof e.versus === 'object') {
+            body.versus = e.versus;
         }
         return body;
     }
@@ -304,18 +313,37 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const stagedReveal = req.body.stagedReveal === true;
             // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
             const aboutUs = req.body.aboutUs === true;
+            // START A SECOND TABLE pressed while another refused phone's second table is open: sit there.
+            const open = req.body.secondOf ? await sitAtSecondTable(req.body.secondOf, req.body.another) : undefined;
+            if (open) {
+                console.log('newGame: second table already open', JSON.stringify({ pin: open.pin }));
+                return res.send({ pin: open.pin, join: true });
+            }
+            // challenge: the PIN of a finished game to play against (CHALLENGE ANOTHER GROUP, challenge.ts).
+            const challenge = typeof req.body.challenge === 'string' ? req.body.challenge : undefined;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
+                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs, challenge,
             });
-            // Where the host's visit started, for the usage data (see controllers/arrival.ts).
-            await analytics.recordArrival(pin, req.body.arrival);
             // Made from START A SECOND TABLE at a full table: the next phones refused there are offered it.
             if (req.body.secondOf) {
-                await keepSecondTable(req.body.secondOf, pin);
+                const kept = await keepSecondTable(req.body.secondOf, pin);
+                // Pressed in the same moment as another phone, which kept its table first: sit at that one.
+                // This game stays an empty lobby nobody is sent to, swept with the old games, and its arrival
+                // is not recorded, so it isn't counted as an opened second table.
+                const first = !kept && await sitAtSecondTable(req.body.secondOf, req.body.another);
+                if (first && first.pin !== pin) {
+                    console.log('newGame: second table taken meanwhile', JSON.stringify({ pin: first.pin, made: pin }));
+                    return res.send({ pin: first.pin, join: true });
+                }
             }
+            // Where the host's visit started, for the usage data (see controllers/arrival.ts).
+            await analytics.recordArrival(pin, req.body.arrival);
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {
+            if (e && e.code === 'CHALLENGE_OVER') {
+                return res.status(400).send(errorBody(e));
+            }
             console.error('newGame failed', e);
             caught(e);
             return res.status(500).send(errorBody(e));
@@ -495,6 +523,11 @@ exports.validateGameName = functions.https.onRequest(http('validateGameName', (r
         const pin = req.body.pin;
 
         try {
+            // openChallenge: CHALLENGE ANOTHER GROUP pressed on the final screen, through this function so no
+            // new function has to be deployed (challenge.ts). Only a player of the game may open it.
+            if (req.body.openChallenge === true) {
+                return res.status(200).send(await openChallenge(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
+            }
             // uid and pid: the join page's sign-in and last seat, so a finished game's recap knows a player.
             return res.status(200).send(await validateGameName(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
         } catch (e) {

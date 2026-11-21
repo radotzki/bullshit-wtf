@@ -66,7 +66,7 @@ Module._load = function (request) {
 
 const dist = path.join(__dirname, '..', 'dist', 'controllers');
 const { join } = require(path.join(dist, 'join'));
-const { secondTable, fullTableError, SECOND_TABLE_CAMPAIGN, keepSecondTable, openSecondTable, hostName } = require(path.join(dist, 'second-table'));
+const { secondTable, fullTableError, SECOND_TABLE_CAMPAIGN, keepSecondTable, openSecondTable, hostName, sitAtSecondTable, CLAIM_MS } = require(path.join(dist, 'second-table'));
 const { cleanCampaign, isTestCampaign, MAX_PLAYERS } = require(path.join(__dirname, '..', 'dist', 'game-model'));
 console.log = () => {};
 console.error = () => {};
@@ -246,4 +246,145 @@ test('the offer names the host only once one has joined; a seated phone still ge
 test('newGame keeps the second table when the page names the full table', () => {
     const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'index.ts'), 'utf8');
     assert.match(src, /keepSecondTable\(req\.body\.secondOf, pin\)/);
+});
+
+// ---- Two phones refused in the same moment both press START A SECOND TABLE (Israeli office party walk, 20 November) ----
+
+test('a press of START A SECOND TABLE sits down at a second table another phone opened meanwhile', async () => {
+    const full = lobby({ locale: 'he' });
+    await fill(full);
+    assert.strictEqual(await sitAtSecondTable(full, undefined), undefined, 'none open yet: make one');
+    const a = await startSecond(full, 'Gilad', 'u-gilad');
+    assert.strictEqual(a.kept, true);
+    // Avi saw the plain button too, since no table existed when he was refused: his press goes to Gilad's.
+    assert.deepStrictEqual(await sitAtSecondTable(full, undefined), { pin: a.pin, host: 'Gilad' });
+    assert.deepStrictEqual(await sitAtSecondTable(full.toLowerCase(), false), { pin: a.pin, host: 'Gilad' });
+    // START ANOTHER TABLE, under a JOIN offer, is a choice: it makes its own.
+    assert.strictEqual(await sitAtSecondTable(full, true), undefined);
+    assert.strictEqual(await sitAtSecondTable('../x', undefined), undefined);
+    assert.strictEqual(await sitAtSecondTable(undefined, undefined), undefined);
+});
+
+test('two tables made in the same moment: only the first is kept', async () => {
+    const full = lobby({ locale: 'he' });
+    await fill(full);
+    const a = lobby({ locale: 'he' });
+    const b = lobby({ locale: 'he' });
+    // Both presses read "no second table yet"; the first is kept between the second's reads and its write.
+    const realGames = fakeFirebase.gamesRef;
+    fakeFirebase.gamesRef = ref(['games']);
+    const realChild = fakeFirebase.gamesRef.child;
+    fakeFirebase.gamesRef.child = (p) => {
+        const game = realChild(p);
+        const gameChild = game.child;
+        game.child = (k) => {
+            const r = gameChild(k);
+            if (p === full && k === 'secondTable') {
+                const realTx = r.transaction;
+                r.transaction = (fn, done) => {
+                    db.games[full].secondTable = { pin: a, at: Date.now() };
+                    return realTx(fn, done);
+                };
+            }
+            return r;
+        };
+        return game;
+    };
+    try {
+        assert.strictEqual(await keepSecondTable(full, b), false, 'a table kept a moment ago holds its place');
+    } finally {
+        fakeFirebase.gamesRef = realGames;
+    }
+    assert.strictEqual(db.games[full].secondTable.pin, a);
+    // A table kept long ago that never opened gives way.
+    delete db.games[a].state;
+    db.games[full].secondTable.at = Date.now() - CLAIM_MS - 1000;
+    assert.strictEqual(await keepSecondTable(full, b), true);
+    assert.strictEqual(db.games[full].secondTable.pin, b);
+});
+
+test('newGame answers a press with the open second table (join), before and after making a game', () => {
+    const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'index.ts'), 'utf8');
+    const body = src.slice(src.indexOf('exports.newGame'), src.indexOf('exports.fork'));
+    assert.match(body, /sitAtSecondTable\(req\.body\.secondOf, req\.body\.another\)[\s\S]*?return res\.send\(\{ pin: open\.pin, join: true \}\);[\s\S]*?await newGame\(/);
+    assert.match(body, /const kept = await keepSecondTable\(req\.body\.secondOf, pin\);[\s\S]*?!kept && await sitAtSecondTable\([\s\S]*?return res\.send\(\{ pin: first\.pin, join: true \}\);/);
+});
+
+test('a second table that ended and rematched: a late colleague is sent to its rematch, not to a table of one', async () => {
+    // The Israeli office party walk-through: a phones-only second table of three ended before question 5 of
+    // the big-screen table, and the colleague who came in then was offered only START A SECOND TABLE.
+    const full = lobby({ locale: 'he' });
+    await fill(full);
+    const a = await startSecond(full, 'Sam', 'u-sam');
+    db.games[a.pin].state = { id: 6, timestamp: Date.now() };
+    assert.strictEqual(await openSecondTable(full), undefined, 'ended, no rematch yet');
+    const again = lobby({ locale: 'he' });
+    db.games[again].players = { h: { nickname: 'Sam', host: true, score: 0 } };
+    db.games[a.pin].fork = again;
+    assert.deepStrictEqual(await openSecondTable(full), { pin: again, host: 'Sam' });
+    assert.deepStrictEqual((await refusal(full, 'Inbal', 'u-inbal')).secondTable.join, { pin: again, host: 'Sam' });
+    // A rematch that ended or filled is not offered; nor is an odd fork value.
+    db.games[again].state = { id: 6, timestamp: Date.now() };
+    assert.strictEqual(await openSecondTable(full), undefined);
+    db.games[a.pin].fork = '../x';
+    assert.strictEqual(await openSecondTable(full), undefined);
+});
+
+/**
+ * Runs keepSecondTable(full, mine) while another phone's table `other` is kept at one forced moment: after the
+ * n-th read of games/<full>/secondTable, or (n = 'tx') just before the transaction. Resolves to what keep says.
+ */
+async function keepWhileOtherKeeps(full, mine, other, n) {
+    const realGames = fakeFirebase.gamesRef;
+    fakeFirebase.gamesRef = ref(['games']);
+    const realChild = fakeFirebase.gamesRef.child;
+    let reads = 0;
+    const keepOther = () => { db.games[full].secondTable = { pin: other, at: Date.now() }; };
+    fakeFirebase.gamesRef.child = (p) => {
+        const game = realChild(p);
+        const gameChild = game.child;
+        game.child = (k) => {
+            const r = gameChild(k);
+            if (p === full && k === 'secondTable') {
+                const realOnce = r.once;
+                r.once = async (...a) => {
+                    const v = await realOnce(...a);
+                    if (++reads === n) keepOther();
+                    return v;
+                };
+                const realTx = r.transaction;
+                r.transaction = (fn, done) => {
+                    if (n === 'tx') keepOther();
+                    return realTx(fn, done);
+                };
+            }
+            return r;
+        };
+        return game;
+    };
+    try {
+        return await keepSecondTable(full, mine);
+    } finally {
+        fakeFirebase.gamesRef = realGames;
+    }
+}
+
+test('two presses never split, whichever moment the other table is kept (the Engineer\'s look at #222)', async () => {
+    // Between the two reads of the kept table (after the first), and between the reads and the transaction.
+    for (const n of [1, 2, 'tx']) {
+        const full = lobby({ locale: 'he' });
+        await fill(full);
+        const other = lobby({ locale: 'he' });
+        db.games[other].players = { h: { nickname: 'Shiran', host: true, score: 0 } };
+        const mine = lobby({ locale: 'he' });
+        assert.strictEqual(await keepWhileOtherKeeps(full, mine, other, n), false, `kept over the other table (moment ${n})`);
+        assert.strictEqual(db.games[full].secondTable.pin, other, `the other table stays kept (moment ${n})`);
+        assert.deepStrictEqual(await sitAtSecondTable(full, undefined), { pin: other, host: 'Shiran' }, `sent to it (moment ${n})`);
+    }
+});
+
+test('the losing press records no arrival: newGame records it only for a game it hands out', () => {
+    const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'index.ts'), 'utf8');
+    const body = src.slice(src.indexOf('exports.newGame'), src.indexOf('exports.fork'));
+    assert.ok(body.indexOf('return res.send({ pin: first.pin, join: true });') < body.indexOf('analytics.recordArrival('));
 });

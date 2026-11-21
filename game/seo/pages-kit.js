@@ -107,15 +107,17 @@ const teamEn = `
 </ul>
 <h2>Putting it on the big screen</h2>
 <ol>
-  <li>On your phone, tap "Start a team game" on this page, choose the language of the questions and how many questions, and tap "Create". Type a nickname, and you are in the lobby with the game's four-letter PIN.</li>
-  <li>On the computer connected to the screen, open <bdi dir="ltr">bullshit.wtf</bdi>, click "Present" and type the PIN. The screen now shows the lobby, with the PIN and a QR code.</li>
-  <li>Everyone scans the QR code, or opens <bdi dir="ltr">bullshit.wtf</bdi> on a phone, taps "Join Game" and types the PIN, then picks a nickname of up to 9 letters.</li>
-  <li>When everyone is in, tap "Start" on your phone. Only the phone that opened the game can start it.</li>
+  <li>On the computer connected to the screen or projector (or the one you share on the call), click "Start a team game" on this page, choose the language of the questions and how many questions, and click "Create". Type a nickname, and you are in the lobby.</li>
+  <li>Someone joining from home, on Teams or Zoom? Click "Copy link" in the lobby and paste it into the call's chat.</li>
+  <li>Click "Use as the big screen" in the lobby. The screen now shows the game's four-letter PIN and a QR code, and you join from your phone like everyone else.</li>
+  <li>Everyone scans the QR code, opens the link from the chat, or opens <bdi dir="ltr">bullshit.wtf</bdi> on a phone, taps "Join Game" and types the PIN, then picks a nickname of up to 9 letters.</li>
+  <li>When everyone is in, click "Start" on the big screen's computer.</li>
 </ol>
+<p>Made the game on your phone instead? That works too: on the computer connected to the screen, open <bdi dir="ltr">bullshit.wtf</bdi>, click "Present" and type the PIN, and start the game from the phone that opened it.</p>
 <p>The big screen shows the question, all the answers, who picked what, and the scores, and plays sounds: music in the lobby, a ticking clock, a sound for each answer revealed. Phones are only for writing and picking.</p>
-<p><strong>On a video call?</strong> Everyone can join with the PIN from wherever they are. The person who shares their screen opens the big screen view as above, so the whole call sees the same questions and scores.</p>
+<p><strong>Some in the room, some at home?</strong> The people at home watch the big screen through the call's screen share and play from their own phone or computer with the link or the PIN. A shared screen arrives a few seconds late, but every player has their own clock, so nobody misses a question. Someone who arrives mid-game joins with the same link and starts at 0 points.</p>
 <h2>More than 12 people</h2>
-<p>A game takes 12 phones at most, and the phone that opens it is one of the 12. A thirteenth phone is told the game is full.</p>
+<p>A game takes 12 phones at most. The thirteenth phone sees "This table is full" and taps "Start a second table": another game in the same language and length, with the same holiday questions, played on the phones with no big screen. Everyone who comes after, even mid-game, taps "Join the second table" and sits down there. The second table is not on the big screen, so it suits the people joining from home, or a table in the corner of the room.</p>
 <ul>
   <li><strong>Up to about 40: pairs or small teams on one phone.</strong> Up to 12 teams of two to four, one phone each, all in one game on one screen. Mixing people who rarely work together is the point.</li>
   <li><strong>Several tables, one game each.</strong> Each table of up to 12 opens its own game and gets its own PIN; only one of them can be on the big screen. Each table's winner then plays a final on the big screen.</li>
@@ -146,15 +148,17 @@ const teamHe = `
 </ul>
 <h2>איך מציגים על המסך הגדול</h2>
 <ol>
-  <li>בטלפון שלכם לוחצים על "פותחים משחק לצוות" בעמוד הזה, בוחרים את שפת השאלות ואת מספר השאלות, ולוחצים על "פתיחת משחק". מקלידים כינוי, ונכנסים ללובי, שבו מופיע קוד המשחק בן ארבע האותיות.</li>
-  <li>במחשב שמחובר למסך פותחים את <bdi dir="ltr">bullshit.wtf/he</bdi>, לוחצים על "מסך" ומקלידים את קוד המשחק. עכשיו המסך מציג את הלובי, עם הקוד וקוד QR.</li>
-  <li>כולם סורקים את קוד ה-QR, או פותחים בטלפון את <bdi dir="ltr">bullshit.wtf/he</bdi>, בוחרים "הצטרפות למשחק", מקלידים את הקוד ובוחרים כינוי של עד 9 אותיות.</li>
-  <li>כשכולם בפנים, לוחצים בטלפון שלכם על "מתחילים". רק הטלפון שפתח את המשחק יכול להתחיל אותו.</li>
+  <li>במחשב שמחובר למסך או למקרן (או במחשב שממנו משתפים מסך בשיחה) לוחצים על "פותחים משחק לצוות" בעמוד הזה, בוחרים את שפת השאלות ואת מספר השאלות, ולוחצים על "פתיחת משחק". מקלידים כינוי ונכנסים ללובי.</li>
+  <li>יש מי שמצטרפים מהבית, בטימס או בזום? לוחצים בלובי על "העתקת הקישור" ומדביקים אותו בצ'אט של השיחה.</li>
+  <li>לוחצים בלובי על "להפוך למסך הגדול". עכשיו המסך מציג את קוד המשחק בן ארבע האותיות וקוד QR, ואתם מצטרפים מהטלפון כמו כולם.</li>
+  <li>כולם סורקים את קוד ה-QR, פותחים את הקישור מהצ'אט, או פותחים בטלפון את <bdi dir="ltr">bullshit.wtf/he</bdi>, בוחרים "הצטרפות למשחק", מקלידים את הקוד ובוחרים כינוי של עד 9 אותיות.</li>
+  <li>כשכולם בפנים, לוחצים על "מתחילים" במחשב של המסך הגדול.</li>
 </ol>
+<p>פתחתם את המשחק בטלפון? גם זה עובד: במחשב שמחובר למסך פותחים את <bdi dir="ltr">bullshit.wtf/he</bdi>, לוחצים על "מסך" ומקלידים את קוד המשחק, ואת המשחק מתחילים מהטלפון שפתח אותו.</p>
 <p>המסך הגדול מציג את השאלה, את כל התשובות, מי בחר במה ואת הניקוד, ומשמיע צלילים: מוזיקה בלובי, שעון מתקתק וצליל לכל תשובה שנחשפת. הטלפונים משמשים רק לכתיבה ולבחירה.</p>
-<p><strong>בשיחת וידאו?</strong> כל אחד יכול להצטרף עם הקוד מאיפה שהוא נמצא. מי שמשתף מסך פותח את תצוגת המסך הגדול כמו למעלה, וכך כל המשתתפים בשיחה רואים את אותן שאלות ואותו ניקוד.</p>
+<p><strong>חלק בחדר וחלק בבית?</strong> מי שבבית רואים את המסך הגדול דרך שיתוף המסך בשיחה, ומשחקים מהטלפון או מהמחשב שלהם עם הקישור או עם הקוד. שיתוף מסך מגיע באיחור של כמה שניות, אבל לכל אחד יש שעון משלו, ואף אחד לא מפספס שאלה. מי שהגיע באמצע המשחק מצטרף עם אותו קישור ומתחיל מאפס נקודות.</p>
 <h2>יותר מ-12 אנשים</h2>
-<p>במשחק אחד יש מקום ל-12 טלפונים לכל היותר, והטלפון שפותח את המשחק הוא אחד מהם. הטלפון ה-13 מקבל הודעה שהמשחק מלא.</p>
+<p>במשחק אחד יש מקום ל-12 טלפונים לכל היותר. הטלפון ה-13 רואה "השולחן הזה מלא" ולוחץ על "פתיחת שולחן שני": משחק נוסף באותה שפה ובאותו אורך, עם אותן שאלות חג, שמשחקים בו מהטלפונים בלי מסך גדול. כל מי שמגיע אחריו, גם באמצע המשחק, לוחץ על "להצטרף לשולחן השני" ומצטרף אליו. השולחן השני לא מופיע על המסך הגדול, אז כדאי שיהיו בו מי שמשחקים מהבית, או שולחן בפינה של החדר.</p>
 <ul>
   <li><strong>עד כ-40: זוגות או צוותים קטנים על טלפון אחד.</strong> עד 12 צוותים של שניים עד ארבעה, טלפון אחד לכל צוות, כולם במשחק אחד על מסך אחד. זו גם הזדמנות לערבב אנשים שלא עובדים יחד בדרך כלל.</li>
   <li><strong>כמה שולחנות, משחק לכל שולחן.</strong> כל שולחן של עד 12 פותח משחק משלו ומקבל קוד משלו, ורק אחד מהם יכול להיות על המסך הגדול. בסוף, המנצחים של כל שולחן משחקים גמר על המסך הגדול.</li>
