@@ -1,6 +1,6 @@
 // One game per Discord call, on the Realtime Database emulator, with the real database rules and the
 // real firebase-admin (the server's access is the rules' bl-service-worker): eight phones at once get
-// one game, a rematch moves the call, and phones can neither read nor write discord/.
+// one game, a phone on the final scoreboard stays with the group, a rematch moves the call, and phones can neither read nor write discord/.
 // Start the emulator first, then run it:
 //   firebase emulators:start --only database --project demo-bullshit
 //   npm run build && node test/discord-table-emulator.js
@@ -41,16 +41,21 @@ async function main() {
     assert.strictEqual((await rest('PUT', `discord/${id}`, { pin: 'AAAA', time: 1 }, signedIn('u1'))).status, 401);
     assert.strictEqual((await rest('GET', 'discord', undefined, signedIn('u1'))).status, 401);
 
-    // REMATCH: the call follows the finished game's fork.
+    // A phone opening on the final scoreboard, before REMATCH, stays with the group (no new game).
     const pid = (await join(pins[0], 'p1', 'u1')).pid;
     await rest('PUT', `games/${pins[0]}/state`, { id: 6, timestamp: Date.now() }, owner);
+    const late = await discordTable(id, 'en', { uid: 'u9' });
+    assert.deepStrictEqual(late, { pin: pins[0], created: false, ended: true });
+    assert.strictEqual(Object.keys((await rest('GET', 'games', undefined, owner)).json).length, 1, 'no game made on the scoreboard');
+
+    // REMATCH: the call follows the finished game's fork.
     const rematch = await fork(pins[0], 'u1', pid);
     const after = await Promise.all([1, 2, 3].map(() => discordTable(id, 'en')));
     after.forEach(r => assert.deepStrictEqual(r, { pin: rematch.pin, created: false }));
     assert.strictEqual((await rest('GET', `discord/${id}/pin`, undefined, owner)).json, rematch.pin);
 
-    // The rematch ends with no rematch of its own: six phones at once get one new game, not six.
-    await rest('PUT', `games/${rematch.pin}/state`, { id: 6, timestamp: Date.now() }, owner);
+    // The rematch ended over 30 minutes ago with no rematch of its own: six phones at once get one new game.
+    await rest('PUT', `games/${rematch.pin}/state`, { id: 6, timestamp: Date.now() - 31 * 60 * 1000 }, owner);
     const fresh = await Promise.all([1, 2, 3, 4, 5, 6].map(i => discordTable(id, 'en', { uid: 'u' + i })));
     const next = [...new Set(fresh.map(r => r.pin))];
     assert.strictEqual(next.length, 1, `one new game, got ${next.join(', ')}`);

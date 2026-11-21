@@ -82,7 +82,7 @@ const { newGame } = require(path.join(dist, 'new-game'));
 const { fork } = require(path.join(dist, 'fork'));
 const { join } = require(path.join(dist, 'join'));
 const { NEXT_GAME_WAIT_MS } = require(path.join(dist, 'next-game'));
-const { STALE_MS } = require(path.join(dist, 'game-over'));
+const { STALE_MS, JUST_ENDED_MS } = require(path.join(dist, 'game-over'));
 
 const GameStaging = 0, RoundIntro = 1, ScoreBoardFinal = 6;
 const log = console.log;
@@ -141,10 +141,10 @@ test('two calls get two games', async () => {
     assert.notStrictEqual(a.pin, b.pin);
 });
 
-test('a finished game with no rematch does not trap the call: a new game is made', async () => {
+test('a game that ended over JUST_ENDED_MS ago with no rematch does not trap the call: a new game is made', async () => {
     const id = call();
     const first = await discordTable(id, 'en');
-    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - 60 * 1000 };
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - JUST_ENDED_MS - 1000 };
     const next = await discordTable(id, 'en');
     assert.strictEqual(next.created, true);
     assert.notStrictEqual(next.pin, first.pin);
@@ -197,16 +197,60 @@ test('two rematches in a row are followed to the latest', async () => {
     assert.deepStrictEqual(await discordTable(id, 'en'), { pin: third.pin, created: false });
 });
 
-test('a rematch that is over too: a new game', async () => {
+test('a rematch that is over too, long enough ago: a new game', async () => {
     const id = call();
     const first = await discordTable(id, 'en', { uid: 'u1' });
     const pid = (await join(first.pin, 'p1', 'u1')).pid;
     db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
     const second = await fork(first.pin, 'u1', pid);
-    db.games[second.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+    db.games[second.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - JUST_ENDED_MS - 1000 };
     const next = await discordTable(id, 'en');
     assert.strictEqual(next.created, true);
     assert.ok(next.pin !== first.pin && next.pin !== second.pin);
+});
+
+test('a phone opening on the final scoreboard, before REMATCH, stays with the group and follows it into the rematch', async () => {
+    const id = call();
+    const first = await discordTable(id, 'en', { uid: 'u1' });
+    const pids = {};
+    for (const i of [1, 2, 3]) pids[i] = (await join(first.pin, 'p' + i, 'u' + i)).pid;
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() };
+
+    const before = games().length;
+    const late = await discordTable(id, 'en', { uid: 'u4' });
+    assert.deepStrictEqual(late, { pin: first.pin, created: false, ended: true }, 'the late phone is on the group\'s scoreboard');
+    assert.strictEqual(db.discord[id].pin, first.pin, 'the call still points at the group\'s game');
+    assert.strictEqual(games().length, before, 'no game was made');
+
+    const rematch = await fork(first.pin, 'u2', pids[2]);
+    const again = await Promise.all([4, 5].map(i => discordTable(id, 'en', { uid: 'u' + i })));
+    again.forEach(r => assert.deepStrictEqual(r, { pin: rematch.pin, created: false }, 'every later call gets the group\'s rematch'));
+    assert.strictEqual(db.discord[id].pin, rematch.pin);
+});
+
+test('the final scoreboard, five phones at once before REMATCH: no game made, then all follow the rematch', async () => {
+    const id = call();
+    const first = await discordTable(id, 'en', { uid: 'u1' });
+    const pid = (await join(first.pin, 'p1', 'u1')).pid;
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: Date.now() - JUST_ENDED_MS + 60 * 1000 };
+    const before = games().length;
+    const at = await Promise.all([1, 2, 3, 4, 5].map(() => discordTable(id, 'en')));
+    at.forEach(r => assert.deepStrictEqual(r, { pin: first.pin, created: false, ended: true }));
+    assert.strictEqual(games().length, before);
+    const [rematch, ...after] = await Promise.all([fork(first.pin, 'u1', pid), discordTable(id, 'en'), discordTable(id, 'en')]);
+    // A call that read the row before the fork was written may still see the scoreboard; one more ask gets the rematch.
+    after.forEach(r => assert.ok(r.pin === rematch.pin || (r.pin === first.pin && r.ended), JSON.stringify(r)));
+    assert.deepStrictEqual(await discordTable(id, 'en'), { pin: rematch.pin, created: false });
+});
+
+test('a game stale on its scoreboard (its end older than STALE_MS) is replaced', async () => {
+    const id = call();
+    const first = await discordTable(id, 'en');
+    const old = Date.now() - STALE_MS - 1000;
+    db.games[first.pin].state = { id: ScoreBoardFinal, timestamp: old };
+    db.games[first.pin].timestamp = old;
+    const next = await discordTable(id, 'en');
+    assert.strictEqual(next.created, true);
 });
 
 test('a claim whose game is being written is waited for, not replaced', async () => {

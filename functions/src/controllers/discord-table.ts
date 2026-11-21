@@ -1,7 +1,7 @@
-import { GameScheme, seasonalPack, isTestCampaign } from '../game-model';
+import { GameScheme, GameState, seasonalPack, isTestCampaign } from '../game-model';
 import { get, gamesRef, discordRef } from '../firebase';
 import { newGame, incGameCounter, generateGameName } from './new-game';
-import { isGameOver } from './game-over';
+import { isGameOver, JUST_ENDED_MS } from './game-over';
 import { NEXT_GAME_WAIT_MS } from './next-game';
 
 /**
@@ -20,8 +20,13 @@ import { NEXT_GAME_WAIT_MS } from './next-game';
  * - REMATCH: the finished game's `fork` (set by Replay, PLAY AGAIN, SAME TABLE or a crew lobby) is
  *   followed, and the call is moved to it in one transaction, only if the call still points where
  *   it was read: a phone opening the Activity after the rematch lands in the rematch's lobby.
- * - A finished game with no rematch, a game that sat still for STALE_MS, a claim whose game was
- *   never written, or a game that was erased: the call gets a new game; the old one traps nobody.
+ * - A game on its final scoreboard with no rematch yet, ended less than JUST_ENDED_MS ago: the call
+ *   stays on it, answered with `ended: true`, so a phone that opens the Activity then joins the
+ *   group on the scoreboard and follows them into the rematch (the shell asks again, or presses
+ *   REMATCH itself). Making it a new game there split the call from the group's rematch.
+ * - A game that ended longer ago with no rematch, a game that sat still for STALE_MS, a claim whose
+ *   game was never written, or a game that was erased: the call gets a new game; the old one traps
+ *   nobody.
  *
  * The instance id is long and hard to guess, but Discord's instance API (which would prove it) needs
  * a bot token: that check waits for stage 2. Until then the id is only checked for its form, so it
@@ -55,6 +60,13 @@ export interface DiscordTable {
     pin: string;
     /** This phone made the game (and holds its host key, when it sent one). */
     created: boolean;
+    /** The game is on its final scoreboard with no rematch yet: wait for the group's REMATCH. */
+    ended?: boolean;
+}
+
+interface LiveGame {
+    pin: string;
+    ended?: boolean;
 }
 
 interface CallRow {
@@ -99,10 +111,11 @@ async function readHead(pin: string): Promise<GameScheme | null> {
 
 /**
  * The game the call should be in now, from the PIN it points to: that game while it is not over,
- * else its rematch (and that one's, and so on). Null when there is none: a game over with no rematch,
- * a PIN never written once its claim is NEXT_GAME_WAIT_MS old, or a chain that goes round.
+ * else its rematch (and that one's, and so on), or a game that has just ended and has no rematch yet
+ * (`ended`). Null when there is none: a game over longer than JUST_ENDED_MS ago with no rematch, a
+ * stale game, a PIN never written once its claim is NEXT_GAME_WAIT_MS old, or a chain that goes round.
  */
-export async function liveGameOf(pin: string, claimedAt: number, now = Date.now()): Promise<string | null> {
+export async function liveGameOf(pin: string, claimedAt: number, now = Date.now()): Promise<LiveGame | null> {
     const seen: { [pin: string]: boolean } = {};
     let current = pin;
     for (let hop = 0; hop < MAX_HOPS && current && !seen[current]; hop++) {
@@ -116,10 +129,19 @@ export async function liveGameOf(pin: string, claimedAt: number, now = Date.now(
         if (!game) {
             return null;
         }
-        if (!isGameOver(game, Math.max(now, Date.now()))) {
-            return current;
+        const at = Math.max(now, Date.now());
+        if (!isGameOver(game, at)) {
+            return { pin: current };
         }
-        current = typeof game.fork === 'string' ? game.fork.toUpperCase() : null;
+        if (typeof game.fork === 'string' && game.fork) {
+            current = game.fork.toUpperCase();
+            continue;
+        }
+        // Just ended, no rematch yet: the group may still press it. Keep the call with them.
+        if (game.state.id === GameState.ScoreBoardFinal && at - (Number(game.state.timestamp) || 0) <= JUST_ENDED_MS) {
+            return { pin: current, ended: true };
+        }
+        return null;
     }
     return null;
 }
@@ -177,15 +199,16 @@ export async function discordTable(instanceId: any, locale: any, options: Discor
         const from = row && typeof row.pin === 'string' ? row.pin : null;
         const live = from ? await liveGameOf(from, row.time || 0, now) : null;
 
-        if (live && live === from) {
-            return { pin: live, created: false };
+        const answer = (g: LiveGame): DiscordTable => g.ended ? { pin: g.pin, created: false, ended: true } : { pin: g.pin, created: false };
+        if (live && live.pin === from) {
+            return answer(live);
         }
         if (live) {
             // The call's game was rematched: move the call to the rematch, once.
-            const result = await moveCall(id, from, live, Date.now());
+            const result = await moveCall(id, from, live.pin, Date.now());
             if (result.moved) {
-                console.log('discordTable moved', JSON.stringify({ from, pin: live }));
-                return { pin: live, created: false };
+                console.log('discordTable moved', JSON.stringify({ from, pin: live.pin }));
+                return answer(live);
             }
             continue; // another phone moved it first: read again
         }
