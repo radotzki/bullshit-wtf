@@ -355,3 +355,155 @@ Source says: "The femur is the only bone in the upper leg and the longest bone i
 פילים הם חיות חזקות מאוד, אבל הם לא מסוגלים ____  
 House lies: לשחות, לשכב, לטפס בעלייה  
 Source says: Elephants "are incapable of trotting, jumping, or galloping." Kept out of the lies: running (elephants walk fast but do not truly run); they can swim and lie down.
+
+Added 21 November 2026 for the US and UK winter school break: en-21 to en-50. Every page was read on 21 November 2026, and each house lie checked against it. The English is plain and reads the same to American and British children: no words that differ between them (no mum or mom, candy or sweets, colour or color), and no miles or kilometres.
+
+**en-21. three** · https://en.wikipedia.org/wiki/Octopus  
+An octopus has ____ hearts  
+House lies: two, five, eight  
+Source says: "They have three hearts; a systemic or main heart that circulates blood around the body" and "two branchial or gill hearts". Kept out of the lies: none of two, five or eight is a count of hearts (eight is the arms).
+
+**en-22. waggle dance** · https://en.wikipedia.org/wiki/Waggle_dance  
+Honeybees show each other where to find flowers by doing a ____  
+House lies: loud buzzing song, headstand, drawing in the dirt  
+Source says: Honeybees "can share information about the direction and distance to patches of flowers yielding nectar and pollen" by the waggle dance.
+
+**en-23. 100,000** · https://health.clevelandclinic.org/facts-about-the-heart  
+Your heart beats about ____ times every day  
+House lies: 1,000, 10,000, 10 million  
+Source says: "Your heart beats about 100,000 times per day." (Cleveland Clinic)
+
+**en-24. ice** · https://en.wikipedia.org/wiki/Rings_of_Saturn  
+Saturn's rings are made almost entirely of chunks of ____  
+House lies: gold, glass, metal  
+Source says: The rings "are made almost entirely of water ice, with a trace component of rocky material." Kept out of the lies: rock and dust.
+
+**en-25. queen** · https://en.wikipedia.org/wiki/Pizza_Margherita  
+Pizza Margherita is said to be named after an Italian ____  
+House lies: famous chef, racehorse, ship  
+Source says: "A popular legend holds that the archetypal pizza Margherita was invented on 10 June 1889" ... "Supposedly, this type of pizza was then named after the queen." Hence "is said to be": the page adds that later research cast doubt on the legend.
+
+**en-26. 15** · https://en.wikipedia.org/wiki/Chester_Greenwood  
+Earmuffs were invented in 1873 by Chester Greenwood, when he was just ____ years old  
+House lies: 6, 40, 92  
+Source says: Chester Greenwood is "known for inventing the earmuffs in 1873"; "In 1873, aged 15, while he was testing a new pair of ice skates".
+
+**en-27. people watching on tv** · https://en.wikipedia.org/wiki/Tennis_ball  
+In 1972, tennis balls were changed to yellow so that ____ could see them better  
+House lies: the ball boys, dogs, players at night  
+Source says: "In 1972, the International Tennis Federation introduced yellow balls, as these were easier to see on television".
+
+**en-28. eleven** · https://en.wikipedia.org/wiki/Time_in_Russia  
+Russia is so big that it has ____ time zones  
+House lies: two, thirty, a hundred  
+Source says: "There are 11 time zones in Russia, which currently observe times ranging from UTC+02:00 to UTC+12:00."
+
+**en-29. hide in the trees** · https://en.wikipedia.org/wiki/Sloth  
+Sloths move so slowly that tiny green algae grow in their fur and help them ____  
+House lies: smell nice, stay dry, glow at night  
+Source says: "The shaggy coat has grooved hair that is host to symbiotic green algae which camouflage the animal in the trees"; "Sloths move only when necessary and even then, very slowly."
+
+**en-30. 270** · https://en.wikipedia.org/wiki/Human_skeleton  
+Babies are born with around ____ bones, and some of them join together as they grow up  
+House lies: 50, 600, 2,000  
+Source says: The skeleton is "composed of around 270 bones at birth" and this "decreases to around 206 bones by adulthood". Kept out of the lies: 206 and 300 (300 is a figure often quoted).
+
+**en-31. two and a half times** · https://en.wikipedia.org/wiki/Olympus_Mons  
+Olympus Mons, a volcano on Mars, is about ____ as tall as Mount Everest  
+House lies: half, ten times, a hundred times  
+Source says: Olympus Mons is "21.287 kilometres (69,840 ft) high, about 2.5 times the elevation of Mount Everest above sea level".
+
+**en-32. nothing at all** · https://en.wikipedia.org/wiki/Emperor_penguin  
+A male emperor penguin keeps his egg warm on his feet for more than 60 days, and in all that time he eats ____  
+House lies: one fish a day, seaweed, krill his mate brings  
+Source says: The male "balances it on the tops of his feet" for "around 65–75 days until hatching", "eating nothing during this time". Kept out of the lies: snow.
+
+**en-33. name** · https://en.wikipedia.org/wiki/Signature_whistle  
+Each bottlenose dolphin has its own whistle, and the others use it like a ____  
+House lies: song, alarm clock, secret password  
+Source says: "Each dolphin has a distinct signature whistle that other members of its social group use"; "They are believed to be the most name-like signal found."
+
+**en-34. melted** · https://en.wikipedia.org/wiki/Percy_Spencer  
+The story goes that the microwave oven was invented after an engineer found that the chocolate bar in his pocket had ____  
+House lies: turned to stone, started to glow, doubled in size  
+Source says: "According to legend, ... Spencer ... noticed the candy bar he had in his pocket melted" Hence "The story goes".
+
+**en-35. running race** · https://en.wikipedia.org/wiki/Ancient_Olympic_Games  
+For the first thirteen ancient Olympic Games in Greece, there was only one event: a ____  
+House lies: chariot race, wrestling match, swimming race  
+Source says: "The only event recorded at the first thirteen games was the stade" (a foot race); Pausanias: "the only competition held at first was the stadion".
+
+**en-36. antarctica** · https://en.wikipedia.org/wiki/Desert  
+The biggest desert in the world is ____  
+House lies: the sahara, the gobi, australia  
+Source says: "Antarctica is the world's largest cold desert"; the page's table of the largest deserts ranks the Antarctic Desert first (14,200,000 km2).
+
+**en-37. grow a new one** · https://en.wikipedia.org/wiki/Axolotl  
+If an axolotl, a kind of salamander, loses a leg, it can ____  
+House lies: glue it back on, swap it for a fin, borrow one from a friend  
+Source says: "Entire lost appendages, such as the limbs and tail, can regrow over a period of months."
+
+**en-38. hyperion** · https://en.wikipedia.org/wiki/Hyperion_(tree)  
+The world's tallest known living tree is a coast redwood in California called ____  
+House lies: big tom, sky reacher, old goliath  
+Source says: Hyperion "is the world's tallest known living tree"; species: coast redwood (Sequoia sempervirens).
+
+**en-39. 8 minutes** · https://en.wikipedia.org/wiki/Sunlight  
+Light from the Sun takes about ____ to reach the Earth  
+House lies: 1 second, a whole day, a year  
+Source says: "Sunlight takes about 8.3 minutes to reach Earth from the surface of the Sun."
+
+**en-40. your neck** · https://en.wikipedia.org/wiki/Cervical_vertebrae  
+A giraffe's long neck has the same number of bones as ____  
+House lies: a whole snake, a dinosaur's tail, your whole spine  
+Source says: "Most mammals have seven cervical vertebrae"; the human neck "consists of 7 bones, from top to bottom, C1 ... C7". The Giraffe article: the long neck comes from "lengthening of the cervical vertebrae", "not from the addition of more vertebrae".
+
+**en-41. frozen** · https://en.wikipedia.org/wiki/Hockey_puck  
+Before an ice hockey game, the pucks are ____ so they hop around less on the ice  
+House lies: warmed up, polished, soaked in milk  
+Source says: "Pucks are frozen before the game to reduce bouncing during play."
+
+**en-42. a fifth** · https://en.wikipedia.org/wiki/Human_brain  
+Your brain is only about 2% of your weight, but it uses about ____ of your body's energy  
+House lies: a hundredth, half, nine tenths  
+Source says: The brain "is about 2% of the total body weight"; "Whilst awake the brain consumes a fifth of the body's total energy needs."
+
+**en-43. tree trunks** · https://en.wikipedia.org/wiki/Venice  
+The city of Venice in Italy is built on closely packed ____ pushed into the mud  
+House lies: old boats, glass bottles, metal springs  
+Source says: Venetians "learned to build by driving closely spaced piles consisting of the trunks of alder trees" into "the mud and sand".
+
+**en-44. twice** · https://en.wikipedia.org/wiki/Chameleon  
+A chameleon's tongue can be up to ____ as long as its body  
+House lies: half, ten times, a hundred times  
+Source says: The tongue is "typically thought to be one and a half to two times the length of their bodies"; smaller chameleons "can project their tongues more than twice their body length". Hence "up to twice".
+
+**en-45. deep blue** · https://en.wikipedia.org/wiki/Reindeer  
+In the dark Arctic winter, a reindeer's eyes change from gold to ____  
+House lies: bright red, silver, pink  
+Source says: "The tapetum lucidum of Arctic reindeer eyes changes in color from gold in summer to blue in winter to improve their vision during times of continuous darkness".
+
+**en-46. graphite** · https://en.wikipedia.org/wiki/Pencil  
+There is no lead in a pencil: its dark middle is mostly ____  
+House lies: coal dust, squid ink, burnt toast  
+Source says: "Most pencil cores are made of graphite powder mixed with a clay binder"; the core "never contained the element lead". Kept out of the lies: charcoal and carbon.
+
+**en-47. jump** · https://en.wikipedia.org/wiki/Elephant  
+Elephants are very strong, but they can't ____  
+House lies: swim, lie down, walk uphill  
+Source says: Elephants "are incapable of trotting, jumping, or galloping." They swim, lie down and climb slopes, so the lies are wrong.
+
+**en-48. sound** · https://howthingsfly.si.edu/ask-an-explainer/how-does-sound-travel-space  
+There is no ____ in space, because there is no air to carry it  
+House lies: light, gravity, time  
+Source says: "Sound does not travel in space." (Smithsonian National Air and Space Museum). Light and gravity do reach through space.
+
+**en-49. birds** · https://en.wikipedia.org/wiki/Bird  
+Scientists say some dinosaurs are still alive today: they are the ____  
+House lies: lizards, sharks, turtles  
+Source says: Birds "constitute the only known living dinosaurs"; "Birds are the only extant members of Dinosauria". Kept out of the lies: crocodiles (the closest living relatives, not dinosaurs).
+
+**en-50. water** · https://en.wikipedia.org/wiki/Popcorn  
+A popcorn kernel pops because the tiny bit of ____ inside it turns into steam  
+House lies: sugar, salt, electricity  
+Source says: "As the oil and water in the kernel are heated, they turn into steam." Kept out of the lies: oil and air.
