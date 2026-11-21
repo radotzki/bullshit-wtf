@@ -16,21 +16,25 @@ export interface JoinResult {
 }
 
 /**
- * The nickname a player joins under. The whole typed name is checked first, then cut to
- * NICKNAME_MAX characters (cutting first could turn "nigger123456" into something that passes).
+ * The nickname a player joins under. The whole typed name is checked, and so is the name it is cut
+ * and tidied to (cutNickname): checking only the cut could turn "nigger123456" into something that
+ * passes, and checking only the whole name lets the cut uncover a word it hid.
  * A flagged name becomes a sweet name from the game's language, picked by the player's uid.
  */
 export function cleanNickname(typed: any, uid: string, pid: string, locale: string, players: GameScheme['players'])
     : { nickname: string; swapped: boolean } {
     const name = String(typed == null ? '' : typed).replace(/\s+/g, ' ').trim();
-    if (nameFlag(name)) {
+    const shown = cutNickname(name);
+    // The name the table would see is checked too: the cut and the tidy can uncover a flagged word
+    // that the whole name hid (a word spelled out with spaces, then " and" or "-x" past the cut).
+    if (nameFlag(name) || nameFlag(shown)) {
         // The same phone joining again (a refresh) keeps its name; anyone else's is taken.
         const taken = Object.keys(players || {})
             .filter(k => players[k] && !(uid && players[k].uid === uid))
             .map(k => players[k].nickname);
         return { nickname: swapName(uid || pid, locale, taken), swapped: true };
     }
-    return { nickname: cutNickname(name), swapped: false };
+    return { nickname: shown, swapped: false };
 }
 
 /**

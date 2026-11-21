@@ -170,3 +170,42 @@ test('no swap name is a name a relative at the table goes by', () => {
         'סבתא', 'סבא', 'אמא', 'אבא', 'דודה', 'דוד'];
     for (const n of SWAP_NAMES.en.concat(SWAP_NAMES.he)) assert.ok(family.indexOf(n.toLowerCase()) < 0, n);
 });
+
+// The Engineer's look at #224: a listed word spelled out with spaces passes the whole-name check once
+// " and" (or "-x" past the ninth character) follows it, and the tidy or the cut then took that tail off.
+// Every such name is swapped now; the name a player sits under is never one the filter flags.
+test('the cut and the tidy never uncover a flagged name', async () => {
+    const lists = require('../../name-lists.json');
+    const words = [];
+    for (const tier of ['hate', 'sex']) {
+        for (const kind of ['any', 'start', 'word']) {
+            (lists[tier][kind] || []).forEach(w => words.push(w));
+        }
+    }
+    const names = [];
+    for (const w of words) {
+        const spaced = Array.from(w).join(' ');
+        for (const tail of [' and', ' y', ' et', ' und', ' ו', ' &', ' +', '-'.repeat(3) + 'x', ' ' + 'x'.repeat(9)]) {
+            names.push(spaced + tail);
+        }
+    }
+    let uncovered = 0;
+    let checked = 0;
+    for (let i = 0; i < names.length; i++) {
+        const pin = `UC${i}`;
+        db.games[pin] = { locale: 'en', players: {} };
+        const r = await join(pin.toLowerCase(), names[i], `uc${i}`);
+        checked++;
+        if (!r.swapped && nameFlag(r.nickname)) {
+            uncovered++;
+        }
+        assert.ok(r.swapped || !nameFlag(r.nickname), `seated under a flagged name: ${JSON.stringify(r.nickname)}`);
+    }
+    assert.ok(checked > 500);
+    assert.strictEqual(uncovered, 0);
+    // Fair names still read as before.
+    db.games.FAIR = { locale: 'en', players: {} };
+    assert.strictEqual((await join('fair', 'Grandma & Grandpa', 'f1')).nickname, 'Grandma');
+    assert.strictEqual((await join('fair', 'Nana and Pop', 'f2')).nickname, 'Nana');
+    assert.strictEqual((await join('fair', 'Gran&Pop', 'f3')).swapped, undefined);
+});
