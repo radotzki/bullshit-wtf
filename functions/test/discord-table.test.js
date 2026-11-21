@@ -115,6 +115,7 @@ test('the first phone in a call makes the game; every phone after gets the same 
     assert.strictEqual(game.locale, 'en');
     assert.strictEqual(game.campaign, DISCORD_CAMPAIGN);
     assert.strictEqual(game.campaign, 'discord-activity');
+    assert.strictEqual(game.filterLies, true, 'a call\'s lies go through the word filter');
     assert.strictEqual(game.hostKey, KEY, 'the phone that made it hosts it');
     assert.strictEqual(game.creator, 'u1');
     assert.strictEqual(game.qids.length, 7);
@@ -282,6 +283,8 @@ test('a rematch chain that goes round ends, with a new game', async () => {
 test('only a play-test tag is taken from the phone; any other tag is discord-activity', async () => {
     const t = await discordTable(call(), 'en', { campaign: 'test-discord' });
     assert.strictEqual(db.games[t.pin].campaign, 'test-discord');
+    // A play-test's lies are filtered as a real call's are (portal.ts, filtersLies).
+    assert.strictEqual(db.games[t.pin].filterLies, true);
     const other = await discordTable(call(), 'en', { campaign: 'after-game' });
     assert.strictEqual(db.games[other.pin].campaign, 'discord-activity');
 });

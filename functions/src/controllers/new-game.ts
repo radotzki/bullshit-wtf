@@ -22,6 +22,8 @@ export interface NewGameOptions {
     stagedReveal?: boolean;
     // The creating phone can show the About questions, so this game is in their 50/50 test (see about.ts).
     aboutUs?: boolean;
+    // Players' lies go through the word filter (a Discord call's game, see portal.ts).
+    filterLies?: boolean;
     // A pin claimed already (a crew's lobby, see next-game.ts): the game is made under it.
     pin?: string;
 }
@@ -42,6 +44,10 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         const campaign = cleanCampaign(options.campaign);
         if (campaign) {
             game.campaign = campaign;
+        }
+
+        if (options.filterLies === true) {
+            game.filterLies = true;
         }
 
         // The round-1 lie helper, on for every game (crew rematches included). Logged as coach.

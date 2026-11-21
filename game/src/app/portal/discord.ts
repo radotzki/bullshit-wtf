@@ -161,7 +161,11 @@ export interface DiscordSdkLike {
         openInviteDialog(): Promise<any>;
         openExternalLink(args: { url: string }): Promise<{ opened: boolean | null }>;
         openShareMomentDialog(args: { mediaUrl: string }): Promise<any>;
+        setOrientationLockState?(args: {
+            lock_state: number; picture_in_picture_lock_state?: number | null; grid_lock_state?: number | null;
+        }): Promise<any>;
     };
+    subscribe?(event: string, listener: (data: any) => unknown): Promise<any>;
 }
 
 let sdk: DiscordSdkLike | null = null;
@@ -302,6 +306,7 @@ export const DISCORD_STRINGS = {
         howToPlay: 'How to play',
         invite: 'INVITE TO THIS CALL',
         inviteHint: 'Everyone in this call can join: they tap Join Activity.',
+        pipLine: 'Tap to open the game',
     },
     he: {
         dir: 'rtl', lang: 'he',
@@ -318,6 +323,7 @@ export const DISCORD_STRINGS = {
         howToPlay: 'איך משחקים',
         invite: 'להזמין לשיחה',
         inviteHint: 'כל מי שבשיחה יכול להצטרף: לוחצים על Join Activity.',
+        pipLine: 'לחצו כדי לפתוח את המשחק',
     },
 };
 
@@ -338,4 +344,85 @@ html.bs-discord app-invite > :not(.invite-discord),
 html.bs-discord app-qr-code,
 html.bs-discord .whatsapp,
 html.bs-discord:not(.bs-discord-share) app-share-results { display: none !important; }
+`;
+
+// ---------- the layout in Discord (spec row 6) ----------
+// Discord shows an Activity full screen ("focused"), as a small picture-in-picture window, or as a
+// tile in the call's grid. On a computer everyone plays in a wide frame; the game's screens are made
+// for a phone. So in Discord, and only there (html.bs-discord, set by DiscordService):
+// - the play screens are one phone-width column in the middle of the frame, at a phone's text size
+//   (the site's text grows with the screen's width, for the big screen; Discord's frame is no TV),
+//   in the site's own colours, on a soft margin;
+// - the join step keeps a dark ground under its white words if its arcade picture can't load (the
+//   picture's host isn't mapped through Discord's proxy yet);
+// - the column keeps clear of a phone's notch and home bar: Discord's own safe-area variables, or the
+//   browser's (Discord's mobile layout guide, "Mobile Safe Areas");
+// - in picture-in-picture and in the grid the frame is too small to play in: a "tap to open" card
+//   covers it in place of a squashed screen (the game goes on underneath: nothing is lost);
+// - on phones the SDK locks portrait (setOrientationLockState), the only way the game is laid out.
+
+/** Discord's layout modes (Common.LayoutModeTypeObject, @discord/embedded-app-sdk 2.5.0). */
+export const LAYOUT_MODE = { UNHANDLED: -1, FOCUSED: 0, PIP: 1, GRID: 2 };
+/** Discord's orientation lock states (Common.OrientationLockStateTypeObject). */
+export const ORIENTATION_LOCK = { UNHANDLED: -1, UNLOCKED: 1, PORTRAIT: 2, LANDSCAPE: 3 };
+
+/** Whether a layout mode is too small to play in (the "tap to open" card shows). */
+export function smallLayout(mode: any): boolean {
+    return mode === LAYOUT_MODE.PIP || mode === LAYOUT_MODE.GRID;
+}
+
+/**
+ * The orientation lock to ask Discord for, by the launch parameters' platform: portrait on a phone
+ * (picture-in-picture and the grid follow it, as Discord's layout guide says when they are left out).
+ * null on a computer, where Discord has no orientation to lock.
+ */
+export function orientationLockFor(platform: string | null | undefined): { lock_state: number } | null {
+    return String(platform || '').toLowerCase() === 'mobile' ? { lock_state: ORIENTATION_LOCK.PORTRAIT } : null;
+}
+
+/** The column's width: a large phone's. */
+export const DISCORD_COLUMN = '30rem';
+
+/**
+ * The Discord look of the play screens. Every rule starts with html.bs-discord: the site and the
+ * CrazyGames version never carry that class, so they look exactly as before.
+ */
+export const DISCORD_LAYOUT_CSS = `
+html.bs-discord {
+  --sait: var(--discord-safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --saib: var(--discord-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --sail: var(--discord-safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --sair: var(--discord-safe-area-inset-right, env(safe-area-inset-right, 0px));
+  font-size: 14px !important;
+}
+@media screen and (min-width: 600px) {
+  html.bs-discord { font-size: 16px !important; }
+  html.bs-discord, html.bs-discord body { background-color: #ece5df; }
+}
+html.bs-discord .game-container {
+  top: var(--sait); bottom: var(--saib); left: var(--sail); right: var(--sair);
+  width: auto; height: auto; min-height: calc(100% - var(--sait) - var(--saib));
+  max-width: ${DISCORD_COLUMN}; margin: 0 auto; background-color: #fff;
+}
+@media screen and (min-width: 600px) {
+  html.bs-discord .game-container { box-shadow: 0 0 1.5rem rgba(43, 37, 35, .18); }
+}
+html.bs-discord .arcade-form {
+  width: 100%; background-color: #3b2a35;
+  padding: var(--sait) var(--sair) var(--saib) var(--sail);
+}
+html.bs-discord .arcade-form > form { display: block; max-width: ${DISCORD_COLUMN}; margin: 0 auto; }
+html.bs-discord .discord-home { padding-top: calc(3rem + var(--sait)); padding-bottom: calc(1.5rem + var(--saib)); }
+html.bs-discord .bs-discord-pip-card { display: none; }
+html.bs-discord.bs-discord-pip .bs-discord-pip-card {
+  display: flex; position: fixed; inset: 0; z-index: 10000; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; cursor: pointer;
+  background-color: #502440; color: #f4fcca; padding: .5rem;
+}
+html.bs-discord.bs-discord-pip .bs-discord-pip-title {
+  font-family: 'Luckiest Guy', 'Suez One', cursive; color: #f3d467; letter-spacing: .05em;
+  font-size: min(18vw, 30vh, 3rem); line-height: 1.1;
+}
+html.bs-discord.bs-discord-pip .bs-discord-pip-line { font-size: min(7vw, 11vh, 1.2rem); margin-top: .4em; }
+html.bs-discord.bs-discord-pip body { overflow: hidden; }
 `;

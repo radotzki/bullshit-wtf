@@ -181,6 +181,11 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.campaign = game.campaign;
     }
 
+    // A game whose lies are filtered (a Discord call's, a play-test's too) keeps the filter.
+    if (game.filterLies === true) {
+        forked.filterLies = true;
+    }
+
     return forked;
 }
 

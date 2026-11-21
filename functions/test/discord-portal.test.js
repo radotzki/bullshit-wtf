@@ -68,7 +68,7 @@ console.log = () => {};
 
 let n = 0;
 /** A game on its first question, with two players (so one lie does not end the question). */
-function question(campaign) {
+function question(campaign, extra) {
     const pin = 'P' + String(++n).padStart(3, 'A').replace(/\d/g, d => 'ABCDEFGHIJ'[d]);
     db.questions = { q1: { question: 'The honorary mayor of Talkeetna was ___', realAnswer: 'a cat', fakeAnswers: ['a dog'] } };
     db.games = db.games || {};
@@ -76,7 +76,7 @@ function question(campaign) {
         state: { id: 2, timestamp: Date.now() }, locale: 'en', timestamp: Date.now(),
         roundIndex: 0, questionIndex: 0, totalQ: 5, qids: ['q1'], tick: 0, presenter: false,
         players: { p1: { nickname: 'ann', uid: 'u1' }, p2: { nickname: 'bob', uid: 'u2' } },
-    }, campaign ? { campaign } : {});
+    }, campaign ? { campaign } : {}, extra || {});
     return pin;
 }
 
@@ -94,6 +94,30 @@ test('a Discord game refuses a flagged lie; a clean one is taken', async () => {
     assert.strictEqual(at(['games', pin, 'answers', 'p1']), null);
     await answer(pin, 'p1', 'a fox');
     assert.strictEqual(at(['games', pin, 'answers', 'p1', 'text']), 'a fox');
+});
+
+test('a play-test in a Discord call is filtered too: the call marks its games filterLies, whatever the tag', async () => {
+    assert.strictEqual(filtersLies({ campaign: 'test', filterLies: true }), true);
+    assert.strictEqual(filtersLies({ campaign: 'test-discord', filterLies: true }), true);
+    assert.strictEqual(filtersLies({ filterLies: false }), false);
+    const pin = question('test', { filterLies: true });
+    await assert.rejects(answer(pin, 'p1', 'a c u n t'), e => e.code === 'FLAGGED_LIE');
+    assert.strictEqual(at(['games', pin, 'answers', 'p1']), null);
+    await answer(pin, 'p1', 'a fox');
+    assert.strictEqual(at(['games', pin, 'answers', 'p1', 'text']), 'a fox');
+    // A site game with the same test tag and no mark: no filter, as before.
+    const site = question('test');
+    await answer(site, 'p1', 'a whore');
+    assert.strictEqual(at(['games', site, 'answers', 'p1', 'text']), 'a whore');
+});
+
+test('REMATCH keeps the filter mark, a play-test\'s too; a game without it gets none', () => {
+    const game = { locale: 'en', players: { p1: { nickname: 'ann', uid: 'u1' } }, campaign: 'test', filterLies: true };
+    const forked = createFork('OLD2', game, ['q1'], 'u1', 'p1', undefined, false, 'NEW2');
+    assert.strictEqual(forked.filterLies, true);
+    assert.strictEqual(forked.campaign, 'test');
+    const plain = createFork('OLD3', { locale: 'en', players: game.players }, ['q1'], 'u1', 'p1', undefined, false, 'NEW3');
+    assert.strictEqual(plain.filterLies, undefined);
 });
 
 test('REMATCH in a Discord call keeps the discord-activity tag', () => {

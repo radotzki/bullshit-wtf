@@ -208,6 +208,8 @@ async function main() {
         const unexpected = blocks.filter((b) => !EXPECTED_BLOCKS.some((re) => re.test(b.blocked)));
         const styled = await host.page.evaluate(() => Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
             .filter((l) => /styles-[^/]*\.css$/.test(l.href)).every((l) => l.media === 'all' || l.media === '')).catch(() => false);
+        // The app id is a placeholder in this build, so the page in Discord is the site: no Discord look yet.
+        const look = await host.page.evaluate(() => ({ classes: document.documentElement.className, card: !!document.querySelector('.bs-discord-pip-card') })).catch(() => null);
         const kinds = {};
         proxy.events.forEach((e) => { const k = `${e.method === 'WEBSOCKET' ? 'ws' : 'http'} ${e.kind}`; kinds[k] = (kinds[k] || 0) + 1; });
         const longPolls = proxy.events.filter((e) => e.kind === 'fb' && /\/\.lp$/.test(e.path));
@@ -251,6 +253,7 @@ async function main() {
         if (failed.length) problems.push(`${failed.length} requests through the stand-in failed: ${failed.slice(0, 3).map((e) => `${e.kind} ${e.path} ${e.status}`).join(', ')}`);
         if (!styled) problems.push('the game\'s stylesheet is not on inside Discord');
         if (!offDiscord) problems.push('off Discord the page was patched');
+        if (!look || /bs-discord/.test(look.classes) || look.card) problems.push(`the shell's Discord look is on with the app id's placeholder: ${JSON.stringify(look)}`);
         unexpected.forEach((b) => problems.push(`${b.player}: the content policy refused ${b.blocked} (${b.directive}, ${b.source}:${b.line})`));
         players.forEach((p) => {
             Array.from(new Set(p.escaped)).forEach((u) => {

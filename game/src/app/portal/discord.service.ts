@@ -2,8 +2,10 @@ import { Injectable, NgZone } from '@angular/core';
 import { reportError } from '../sentry/sentry.module';
 import { PORTAL_CSS } from './portal-style';
 import { discordClientId, inDiscordActivity, launchSearch } from './portal';
+import { preferredLocale } from '../services/join-source';
 import {
-    DISCORD_CSS, DiscordSdkLike, READY_WAIT_MS, canShareMoment, discordLink, launchFrom, onDiscordChange, openOutside, setDiscordSdk,
+    DISCORD_CSS, DISCORD_LAYOUT_CSS, DiscordSdkLike, READY_WAIT_MS, canShareMoment, discordLink, discordStrings, launchFrom,
+    onDiscordChange, openOutside, orientationLockFor, setDiscordSdk, smallLayout,
 } from './discord';
 
 /**
@@ -31,8 +33,9 @@ export class DiscordService {
         try {
             document.documentElement.classList.add('bs-portal', 'bs-discord');
             const style = document.createElement('style');
-            style.textContent = PORTAL_CSS + DISCORD_CSS;
+            style.textContent = PORTAL_CSS + DISCORD_CSS + DISCORD_LAYOUT_CSS;
             document.head.appendChild(style);
+            this.addPipCard();
             onDiscordChange(() => document.documentElement.classList.toggle('bs-discord-share', canShareMoment()));
         } catch (e) { }
         this.guardLinks();
@@ -43,11 +46,60 @@ export class DiscordService {
                 clearTimeout(timer);
                 this.zone.run(() => setDiscordSdk(sdk));
                 this.settle(!!sdk);
+                if (sdk) {
+                    this.zone.runOutsideAngular(() => this.followLayout(sdk));
+                }
             }, err => {
                 clearTimeout(timer);
                 reportError(err, 'discordSdk', {});
                 this.settle(false);
             });
+    }
+
+    /**
+     * The "tap to open" card of picture-in-picture and the grid (DISCORD_LAYOUT_CSS shows it only while
+     * html carries bs-discord-pip). Outside Angular: it covers whatever screen is on.
+     */
+    private addPipCard() {
+        const t = discordStrings(preferredLocale());
+        const card = document.createElement('div');
+        card.className = 'bs-discord-pip-card';
+        card.setAttribute('dir', t.dir);
+        card.setAttribute('lang', t.lang);
+        const title = document.createElement('div');
+        title.className = 'bs-discord-pip-title';
+        title.textContent = t.title;
+        const line = document.createElement('div');
+        line.className = 'bs-discord-pip-line';
+        line.textContent = t.pipLine;
+        card.appendChild(title);
+        card.appendChild(line);
+        document.body.appendChild(card);
+    }
+
+    /**
+     * Discord's layout mode (focused, picture-in-picture, grid) and, on a phone, the portrait lock.
+     * Neither may stop the game: an older Discord client without the event, or a refused lock, is
+     * reported and the game goes on as it is.
+     */
+    private followLayout(sdk: DiscordSdkLike) {
+        const set = (mode: any) => {
+            try {
+                document.documentElement.classList.toggle('bs-discord-pip', smallLayout(mode));
+            } catch (e) { }
+        };
+        try {
+            if (sdk.subscribe) {
+                sdk.subscribe('ACTIVITY_LAYOUT_MODE_UPDATE', (data: any) => set(data && data.layout_mode))
+                    .catch(err => reportError(err, 'discordLayoutMode', {}));
+            }
+            const lock = orientationLockFor(launchFrom(launchSearch()).platform);
+            if (lock && sdk.commands.setOrientationLockState) {
+                sdk.commands.setOrientationLockState(lock).catch(err => reportError(err, 'discordOrientationLock', {}));
+            }
+        } catch (e) {
+            reportError(e, 'discordLayout', {});
+        }
     }
 
     /** The call's instance id: the SDK's, from the address Discord opened the Activity at. */

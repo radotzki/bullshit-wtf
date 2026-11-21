@@ -416,8 +416,15 @@ async function main() {
         await sleep(1500);
         const invite = await gameFrame(host).evaluate(() => {
             const wa = document.querySelector('a.whatsapp');
-            return { whatsapp: wa ? wa.getAttribute('href') : null, text: document.body.innerText };
+            const box = document.querySelector('.game-container');
+            return {
+                whatsapp: wa ? wa.getAttribute('href') : null, text: document.body.innerText,
+                // The Discord look (discord.ts, DISCORD_LAYOUT_CSS) is Discord's alone: the lobby fills the frame here.
+                look: { classes: document.documentElement.className, column: box ? getComputedStyle(box).maxWidth : null },
+            };
         });
+        summary.lobbyLook = invite.look;
+        if (/bs-discord/.test(invite.look.classes) || invite.look.column !== 'none') problems.push(`the CrazyGames lobby has the Discord look: ${JSON.stringify(invite.look)}`);
         summary.hostNickname = host.prefilled;
         summary.lobbyWhatsapp = invite.whatsapp && decodeURIComponent(invite.whatsapp);
         const inviteUrl = `${CG}?roomId=${game.pin}`;

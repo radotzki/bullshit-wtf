@@ -18,9 +18,13 @@ export function isPortalCampaign(tag: any): boolean {
     return typeof tag === 'string' && PORTAL_CAMPAIGNS.indexOf(tag) >= 0;
 }
 
-/** Whether a game's lies go through the word filter. */
-export function filtersLies(game: { campaign?: string } | null | undefined): boolean {
-    return !!game && isPortalCampaign(game.campaign);
+/**
+ * Whether a game's lies go through the word filter: a portal game by its tag, or a game marked
+ * filterLies (every game of a Discord call, discord-table.ts, so a play-test in a call, tagged test,
+ * is filtered like the real thing).
+ */
+export function filtersLies(game: { campaign?: string; filterLies?: boolean } | null | undefined): boolean {
+    return !!game && (isPortalCampaign(game.campaign) || game.filterLies === true);
 }
 
 // The nickname filter's allowed names, as it compares them: letters only ("Moby Dick" is "mobydick").
