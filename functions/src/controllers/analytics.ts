@@ -196,12 +196,13 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-save': ['repeat-offer', 'bottom', 'next-week'],
     'next-week': ['seen-card', 'seen-control', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'in', 'change',
         'tell'],
-    'invite': ['whatsapp', 'native', 'copy', 'solo-start'],
+    // discord: the Discord Activity's INVITE TO THIS CALL (game/src/app/portal/discord.ts).
+    'invite': ['whatsapp', 'native', 'copy', 'solo-start', 'discord'],
     'lobby-help': ['seen-new-phone', 'seen-new-computer', 'seen-classic-phone', 'seen-classic-computer',
         'whatsapp', 'native', 'copy',
         // The computer host pressed "use this as the big screen" (game-staging: big-screen-host.ts).
         'big-screen'],
-    'results': ['whatsapp', 'native', 'copy', 'download'],
+    'results': ['whatsapp', 'native', 'copy', 'download', 'discord'],
     'after-game': ['create', 'remind', 'remind-google'],
     'game-over': ['create', 'remind', 'remind-google'],
     'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],

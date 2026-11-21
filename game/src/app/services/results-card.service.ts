@@ -24,7 +24,7 @@ const labels = {
 };
 
 // Here, not at the top, to stay clear of the labels' lines that other changes edit.
-import { PORTAL_CARD_FOOTER, inPortal } from '../portal/portal';
+import { inPortal, portalCardFooter } from '../portal/portal';
 
 /**
  * Draws a square, shareable picture of the final scoreboard.
@@ -155,8 +155,8 @@ export class ResultsCardService {
         ctx.font = `46px ${FONT}`;
         ctx.fillStyle = PRIMARY;
         (ctx as any).direction = locale === 'he' ? 'rtl' : 'ltr';
-        // The CrazyGames version names no playable site on its picture (portal/portal.ts).
-        ctx.fillText(inPortal() ? PORTAL_CARD_FOOTER[locale === 'he' ? 'he' : 'en'] : t.footer, SIZE / 2, 1020);
+        // A portal version (CrazyGames, Discord) names no playable site on its picture (portal/portal.ts).
+        ctx.fillText(inPortal() ? portalCardFooter(locale) : t.footer, SIZE / 2, 1020);
 
         return new Promise<Blob>((resolve, reject) =>
             canvas.toBlob(b => b ? resolve(b) : reject(new Error('Could not draw results')), 'image/png')

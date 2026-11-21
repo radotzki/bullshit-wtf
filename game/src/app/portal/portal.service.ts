@@ -5,7 +5,7 @@ import { ApiService } from '../services/api.service';
 import { markHosted, markVisit, setPreferredLocale } from '../services/join-source';
 import { reportError } from '../sentry/sentry.module';
 import {
-    PORTAL_TAG, announcePortalLocale, blockedLink, gameplayFor, inPortal, invitePin, portalCampaign, portalLocale, roomFor,
+    PORTAL_TAG, announcePortalLocale, blockedLink, gameplayFor, inCrazyGames, invitePin, portalCampaign, portalLocale, roomFor,
     portalUsername, setInviteMaker, setPortalGameLink, setPortalUsername,
 } from './portal';
 import { PORTAL_CSS } from './portal-style';
@@ -32,7 +32,7 @@ export class PortalService {
     constructor(private router: Router, private zone: NgZone, private api: ApiService) { }
 
     start() {
-        if (this.started || !inPortal()) {
+        if (this.started || !inCrazyGames()) {
             return;
         }
         this.started = true;

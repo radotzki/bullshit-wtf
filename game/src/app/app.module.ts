@@ -2,6 +2,8 @@ import { GameService } from './services/game.service';
 import { inject, provideAppInitializer } from '@angular/core';
 import { PortalHomeComponent } from './portal/portal-home.component';
 import { PortalService } from './portal/portal.service';
+import { DiscordHomeComponent } from './portal/discord-home.component';
+import { DiscordService } from './portal/discord.service';
 import { SentryModule } from './sentry/sentry.module';
 import { ApiService } from './services/api.service';
 import { StorageService } from './services/storage.service';
@@ -52,6 +54,7 @@ import { StepComponent } from './pages/step/step.component';
     declarations: [
         AppComponent,
         PortalHomeComponent,
+        DiscordHomeComponent,
         MobileLandingComponent,
         DesktopLandingComponent,
         CreateGameComponent,
@@ -101,6 +104,8 @@ import { StepComponent } from './pages/step/step.component';
         SoundService,
         // The CrazyGames version (portal/portal.ts); does nothing off the portal path.
         provideAppInitializer(() => inject(PortalService).start()),
+        // The Discord Activity (portal/discord.ts); does nothing off Discord.
+        provideAppInitializer(() => inject(DiscordService).start()),
     ],
     bootstrap: [AppComponent]
 })

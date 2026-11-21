@@ -3,6 +3,8 @@ import { ShareService } from './../../services/share.service';
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
 import { loneHostStrings, LoneHostStrings } from './../../pages/game-staging/lone-host';
+import { inDiscordActivity } from './../../portal/portal';
+import { canInviteToCall, discordStrings, inviteToCall } from './../../portal/discord';
 
 /**
  * Lobby invite: a QR code and a shareable join link for the game PIN.
@@ -42,6 +44,8 @@ export class InviteComponent implements OnInit {
     g: GameStrings = gameStrings('en');
     /** Shown once the game's language is known, so a Hebrew game never flashes English. */
     ready = false;
+    /** The Discord Activity (portal/discord.ts): the invite is Discord's own dialog, nothing else. */
+    discord = inDiscordActivity();
 
     constructor(
         private apiService: ApiService,
@@ -63,6 +67,23 @@ export class InviteComponent implements OnInit {
                 this.shareService.warmInvite(this.pin, this.locale);
             }
         }, () => this.ready = true);
+    }
+
+    /** The Discord invite's words, in the game's language. */
+    get d() {
+        return discordStrings(this.locale);
+    }
+
+    /** Discord's invite dialog can open here (the SDK is ready, in a server's voice channel). */
+    get canInviteToCall() {
+        return canInviteToCall();
+    }
+
+    /** INVITE TO THIS CALL: Discord's own invite dialog. Counted as an invite share, by "discord". */
+    async inviteToCall() {
+        if (await inviteToCall()) {
+            this.apiService.logShare('invite', 'discord', { locale: this.locale === 'he' ? 'he' : 'en' });
+        }
     }
 
     get pinUpper() {

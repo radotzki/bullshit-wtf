@@ -1,3 +1,12 @@
+<!-- The Discord Activity: Discord's own invite dialog (the QR, WhatsApp, share and copy are hidden there). -->
+<div *ngIf="discord && !presenter && ready" class="invite-discord" [attr.dir]="g.rtl ? 'rtl' : null">
+    <button *ngIf="canInviteToCall" class="button is-primary is-fullwidth invite-call" type="button" (click)="inviteToCall()">
+        <span class="icon"><i class="fa fa-user-plus"></i></span>
+        <span> {{d.invite}} </span>
+    </button>
+    <p class="invite-call-hint"> {{d.inviteHint}} </p>
+</div>
+
 <!-- Presenter (TV / laptop): always-visible scan-to-join card -->
 <div *ngIf="presenter && ready" class="invite-presenter box" [attr.dir]="g.rtl ? 'rtl' : null">
     <app-qr-code class="qr" [data]="qrUrl" [label]="g.scanLabel(pinUpper)"></app-qr-code>

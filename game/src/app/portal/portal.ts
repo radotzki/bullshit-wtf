@@ -1,13 +1,23 @@
 /**
- * The CrazyGames version of the game: the same app, opened at /portal/crazygames (or
- * /he/portal/crazygames) inside CrazyGames' frame. Everything that differs from the playable site is
- * decided here, kept free of Angular so it can be tested in Node (test/portal.test.js):
+ * The portal versions of the game: the same app, opened inside another company's frame. This file is
+ * the "where am I running" switch (runningIn: the site, CrazyGames or Discord) and everything a portal
+ * version changes, kept free of Angular and of imports so it can be tested in Node (test/portal.test.js,
+ * test/discord-shell.test.js).
+ *
+ * CrazyGames: opened at /portal/crazygames (or /he/portal/crazygames) inside CrazyGames' frame.
  * - the app routes by the address's hash (#/game-staging/ABCD), so the address the frame loads stays
  *   /portal/crazygames, the one path firebase.json lets CrazyGames frame;
  * - every game it creates carries the campaign tag `portal-crazygames` (a play-test tag wins);
  * - invites use CrazyGames' invite links, never a bullshit.wtf address;
  * - no link leaves for the playable site (CrazyGames' rules: no links to a playable web version).
- * Off the portal path nothing here changes anything.
+ *
+ * Discord: the game as a Discord Activity (discord.ts), served at https://<app id>.discordsays.com.
+ * It shares the portal way (hash routing, its own route list, links out handled), with its own home
+ * that sends everyone in a call to the call's one game. It is on only once the build carries the
+ * Discord app's id (environment.discordClientId, see where.ts): until then the page in Discord is the
+ * site, behind Discord's proxy (src/discord/boot.ts), as before.
+ *
+ * On the site nothing here changes anything.
  */
 
 export const PORTAL_TAG = 'portal-crazygames';
@@ -19,23 +29,100 @@ export function isPortalPath(pathname: string | null | undefined): boolean {
     return PORTAL_PATH.test(String(pathname || ''));
 }
 
-let active: boolean | null = null;
+export type RunningIn = 'site' | 'crazygames' | 'discord';
 
-/** Whether this page is the CrazyGames version. Decided once, from the address the page loaded at. */
-export function inPortal(): boolean {
+/** The host Discord serves every Activity from (the same rule as inDiscord in src/discord/proxy.ts). */
+const DISCORD_HOST = /^[a-z0-9-]+\.discordsays\.com$/i;
+
+/**
+ * Discord's launch parameters, as Discord adds them to the Activity's address (and the Embedded App
+ * SDK reads them): frame_id and instance_id always, platform desktop or mobile.
+ */
+export function hasDiscordLaunch(search: string | null | undefined): boolean {
+    const q = String(search || '');
+    return /[?&]frame_id=[^&#]+/.test(q) && /[?&]instance_id=[^&#]+/.test(q);
+}
+
+/** A Discord app's id: a snowflake, 17 to 20 digits. The build's placeholder is not one. */
+export function discordIdReady(id: string | null | undefined): boolean {
+    return /^\d{17,20}$/.test(String(id || ''));
+}
+
+/**
+ * Where the page runs, from the address it loaded at. Discord: the host is the Activity's
+ * (*.discordsays.com) or Discord's launch parameters are there, and the build has the app's id.
+ */
+export function runningInFrom(loc: { hostname?: string; pathname?: string; search?: string } | null | undefined,
+    appId?: string | null): RunningIn {
+    const l = loc || {};
+    if ((DISCORD_HOST.test(l.hostname || '') || hasDiscordLaunch(l.search)) && discordIdReady(appId)) {
+        return 'discord';
+    }
+    if (isPortalPath(l.pathname)) {
+        return 'crazygames';
+    }
+    return 'site';
+}
+
+let active: RunningIn | null = null;
+let discordId = '';
+let firstSearch: string | null = null;
+
+/**
+ * The query string the page loaded with, kept from the first look. Discord's launch parameters are
+ * there (instance_id, frame_id, platform...), and the hash router drops the query string from the
+ * address on its first navigation (Angular's HashLocationStrategy replaces '' with the bare path).
+ */
+export function launchSearch(): string {
+    if (firstSearch === null) {
+        try {
+            firstSearch = typeof window !== 'undefined' ? String(window.location.search || '') : '';
+        } catch (e) {
+            firstSearch = '';
+        }
+    }
+    return firstSearch;
+}
+
+/** The Discord app's id of this build (where.ts sets it from the environment, before the app starts). */
+export function useDiscordClientId(id: string | null | undefined) {
+    discordId = typeof id === 'string' ? id : '';
+    active = null;
+}
+
+export function discordClientId(): string {
+    return discordId;
+}
+
+/** Where this page runs. Decided once, from the address the page loaded at. */
+export function runningIn(): RunningIn {
     if (active === null) {
         try {
-            active = typeof window !== 'undefined' && isPortalPath(window.location.pathname);
+            const loc = typeof window !== 'undefined' ? window.location : null;
+            active = loc ? runningInFrom({ hostname: loc.hostname, pathname: loc.pathname, search: launchSearch() }, discordId) : 'site';
         } catch (e) {
-            active = false;
+            active = 'site';
         }
     }
     return active;
 }
 
-/** For tests only. */
-export function setPortalForTest(on: boolean | null) {
-    active = on;
+/** Whether this page is a portal version (CrazyGames or Discord): hash routing, its own home. */
+export function inPortal(): boolean {
+    return runningIn() !== 'site';
+}
+
+export function inCrazyGames(): boolean {
+    return runningIn() === 'crazygames';
+}
+
+export function inDiscordActivity(): boolean {
+    return runningIn() === 'discord';
+}
+
+/** For tests only: true is CrazyGames, false the site, null decides again from the address. */
+export function setPortalForTest(on: boolean | RunningIn | null) {
+    active = on === null ? null : on === true ? 'crazygames' : on === false ? 'site' : on;
 }
 
 /** A play-test tag (`test`, `test-<name>`): the same rule as isTestTag in join-source.ts. */
@@ -172,6 +259,18 @@ export const PORTAL_CARD_FOOTER = {
     en: 'PLAY BULLSHIT ON CRAZYGAMES',
     he: 'שחקו בולשיט ב-CRAZYGAMES',
 };
+
+/** The same in Discord. */
+export const DISCORD_CARD_FOOTER = {
+    en: 'PLAY BULLSHIT IN DISCORD',
+    he: 'שחקו בולשיט בדיסקורד',
+};
+
+/** The results picture's last line where this page runs, in a portal version. */
+export function portalCardFooter(locale: string): string {
+    const lang = locale === 'he' ? 'he' : 'en';
+    return inDiscordActivity() ? DISCORD_CARD_FOOTER[lang] : PORTAL_CARD_FOOTER[lang];
+}
 
 /** A refused lie (the server's FLAGGED_LIE): the player writes another. */
 export const FLAGGED_LIE_TEXT = {

@@ -3,14 +3,16 @@ import { NAME_LISTS } from '../name-lists';
 
 /**
  * Games played in a portal version of the game (game/src/app/portal/portal.ts): the CrazyGames
- * version tags every game it creates `portal-crazygames`.
+ * version tags every game it creates `portal-crazygames`, and every game of a Discord call
+ * (discord-table.ts) is tagged `discord-activity`.
  * - Replay and PLAY AGAIN keep the tag (fork.ts), so a portal group's later games still count as the
  *   portal's, and keep its rules.
  * - Players' lies go through the nickname word filter (name-flag.ts): CrazyGames asks for at least a
- *   profanity filter on what players write. A flagged lie is refused and the player writes another.
+ *   profanity filter on what players write, and a Discord call's lies are seen in a server's channel
+ *   too. A flagged lie is refused and the player writes another.
  *   Off the portal, lies are not filtered (yet).
  */
-export const PORTAL_CAMPAIGNS = ['portal-crazygames'];
+export const PORTAL_CAMPAIGNS = ['portal-crazygames', 'discord-activity'];
 
 export function isPortalCampaign(tag: any): boolean {
     return typeof tag === 'string' && PORTAL_CAMPAIGNS.indexOf(tag) >= 0;

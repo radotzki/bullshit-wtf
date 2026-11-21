@@ -174,6 +174,27 @@ export class ApiService {
     }
 
     /**
+     * The Discord Activity (portal/discord.ts): the game of the Discord call `instanceId`, made for the
+     * call if it has none that can be played (functions' discordTable). The phone that makes it hosts
+     * it, as createGame's does. `ended`: the call's game just finished and has no rematch yet.
+     */
+    async discordTable(instanceId: string, locale: string, campaign?: string): Promise<{ pin: string; created: boolean; ended?: boolean }> {
+        const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
+        const hostKey = newHostKey();
+        const resp = await this.post<{ pin: string; created: boolean; ended?: boolean }>(`discordTable`, {
+            instanceId, locale, uid, hostKey, campaign: campaign || null,
+            arrival: newGameArrival(),
+            serverStart: true,
+            stagedReveal: true,
+            aboutUs: true,
+        });
+        if (resp && resp.created) {
+            rememberHostKey(resp.pin, hostKey);
+        }
+        return resp;
+    }
+
+    /**
      * Start signing this browser in anonymously, once. Pages call this when they open,
      * so sign-in is usually done by the time a player taps. Where Google's sign-in
      * script fails to load, this takes 20 to 30 seconds and resolves to undefined.

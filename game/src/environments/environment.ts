@@ -14,5 +14,9 @@ export const environment = {
         storageBucket: 'bullshit-wtf-dev.appspot.com',
         messagingSenderId: '351075272123'
     },
+    // The Discord Activity's app id (Discord Developer Portal > the app > General Information >
+    // Application ID). A public id, not a secret. While it is the placeholder the game in Discord is
+    // the site behind Discord's proxy, without the Activity's shell (app/portal/discord.ts).
+    discordClientId: 'DISCORD_APP_ID_PLACEHOLDER',
     sentry: 'https://9fd70ebdc2c744569ccb0000896cb0ca@sentry.io/285990'
 };

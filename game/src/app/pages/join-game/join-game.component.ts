@@ -1,4 +1,5 @@
 import { reportError } from './../../sentry/sentry.module';
+import { inDiscordActivity } from '../../portal/portal';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
@@ -371,6 +372,12 @@ export class JoinGameComponent implements OnInit {
                     return this.showGameOver(err);
                 }
                 this.loading = false;
+                // The Discord Activity: the call's game filled up meanwhile. Its home says so, and waits
+                // for the call's next game (portal/discord.ts, shellStep).
+                if (err && err.code === 'GAME_IS_FULL' && inDiscordActivity()) {
+                    this.router.navigate(['/'], { replaceUrl: true });
+                    return;
+                }
                 this.errorMsg = this.t.error(err && err.code, err && err.message);
                 // Wrong PIN, full game and finished game are expected; report anything else.
                 if (!this.isExpected(err)) {
