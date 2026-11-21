@@ -136,7 +136,7 @@ test('doubled "i" or "u", or every letter doubled, is read once', () => {
 });
 
 test('fancy letters, accents and look-alikes do not hide a word', () => {
-    refused(['ꜰᴜᴄᴋ', '🅵🆄🅲🅺', '🅕🅤🅒🅚', '🇫🇺🇨🇰', 'fúck', 'f́uck', 'fück', 'ѕhit', 'fvck', 'cvnt']);
+    refused(['ƒuck', '¢unt', '©unt', 'ꜰᴜᴄᴋ', '🅵🆄🅲🅺', '🅕🅤🅒🅚', '🇫🇺🇨🇰', 'fúck', 'f́uck', 'fück', 'ѕhit', 'fvck', 'cvnt']);
     fine(['café', 'Zoë', 'José', 'Pokémon', 'naïve', 'Beyoncé']);
 });
 

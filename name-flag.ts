@@ -19,6 +19,8 @@ const CHAR_MAP: { [c: string]: string } = {
     'ᴀ': 'a', 'ʙ': 'b', 'ᴄ': 'c', 'ᴅ': 'd', 'ᴇ': 'e', 'ꜰ': 'f', 'ɢ': 'g', 'ʜ': 'h', 'ɪ': 'i', 'ᴊ': 'j',
     'ᴋ': 'k', 'ʟ': 'l', 'ᴍ': 'm', 'ɴ': 'n', 'ᴏ': 'o', 'ᴘ': 'p', 'ʀ': 'r', 'ꜱ': 's', 'ᴛ': 't', 'ᴜ': 'u',
     'ᴠ': 'v', 'ᴡ': 'w', 'ʏ': 'y', 'ᴢ': 'z',
+    // Signs that are drawn as a letter: ƒ (florin), ¢ (cent), © (copyright)
+    'ƒ': 'f', '¢': 'c', '©': 'c',
 };
 // Letters in boxes and circles that NFKC leaves as they are (🅵🆄🅲🅺, 🅕🅤🅒🅚, 🇫🇺🇨🇰): two UTF-16 units each,
 // the first 0xD83C, the second in one of these runs of 26, A to Z.
