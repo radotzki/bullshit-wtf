@@ -66,8 +66,9 @@ test('the logo goes to the page\'s own home, and the language link to the other 
                 assert.strictEqual(lang, p.twin, p.path + ': a twin has its own tag');
             } else {
                 oneLanguage++;
-                const other = p.site.lang === 'he' ? '/' : '/he';
-                assert.strictEqual(lang, other + '?via=' + p.tag, p.path + ': the language link');
+                // From Hebrew, ?lang=en keeps the English home in English (test/english-from-hebrew.test.js).
+                const other = p.site.lang === 'he' ? '/?lang=en&' : '/he?';
+                assert.strictEqual(lang, other + 'via=' + p.tag, p.path + ': the language link');
             }
         });
         assert.ok(oneLanguage > 0, 'some pages are in one language only');

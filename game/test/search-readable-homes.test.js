@@ -77,7 +77,8 @@ test('both home pages carry real text, headings and links to the search pages, i
         assert.ok(/<ol>[\s\S]*<li>[\s\S]*<li>[\s\S]*<li>/.test(text), 'three steps');
         // Not only for people with JavaScript off: the text is outside <noscript>.
         assert.ok(words(text.replace(/<noscript>[\s\S]*?<\/noscript>/g, '')).length >= min - 20);
-        links(text).forEach(l => assert.ok(paths.includes(l), 'a page that exists: ' + l));
+        // /he's English link saves English for the menu: /?lang=en (test/english-from-hebrew.test.js).
+        links(text).forEach(l => assert.ok(paths.includes(l === '/?lang=en' ? '/' : l), 'a page that exists: ' + l));
     }
     assert.ok(!/[א-ת]/.test(words(en).filter(w => !/hreflang|lang=/.test(w)).join(' ').replace(/בולשיט בעברית/, '')), 'English text in English');
     assert.ok(links(he).filter(l => l.startsWith('/he/')).length >= 5);
