@@ -18,16 +18,23 @@ function load() {
 
 const { lieHelperView, nextIdea, lieHelperStrings } = load();
 const ideas = ['reverse paradise', 'gloom atoll'];
-const none = { hint: null, placeholder: null, button: null };
 
-test('games without the helper keep the plain screen', () => {
-    assert.deepStrictEqual(lieHelperView(false, 0, 0, 'en', ideas, 0), none);
-    assert.deepStrictEqual(lieHelperView(undefined, 0, 0, 'he', ideas, 0), none);
+test('games without the helper: no hint, no button, but the box keeps its name', () => {
+    assert.deepStrictEqual(lieHelperView(false, 0, 0, 'en', ideas, 0), { hint: null, placeholder: 'Your lie', button: null });
+    assert.deepStrictEqual(lieHelperView(undefined, 2, 6, 'he', ideas, 0), { hint: null, placeholder: 'השקר שלך', button: null });
 });
 
-test('rounds 2 and 3 keep the plain screen', () => {
-    assert.deepStrictEqual(lieHelperView(true, 1, 3, 'en', ideas, 0), none);
-    assert.deepStrictEqual(lieHelperView(true, 2, 6, 'en', ideas, 0), none);
+test('rounds 2 and 3: no hint and no STUCK? (round 1 only, by design), but the box keeps its name', () => {
+    // A 5-question game: question 3 is round 2's first. The kids and Christmas play-test found the box unnamed here.
+    assert.deepStrictEqual(lieHelperView(true, 1, 2, 'en', ideas, 0), { hint: null, placeholder: 'Your lie', button: null });
+    assert.deepStrictEqual(lieHelperView(true, 2, 6, 'en', ideas, 0), { hint: null, placeholder: 'Your lie', button: null });
+    assert.deepStrictEqual(lieHelperView(true, 1, 3, 'he', ideas, 0), { hint: null, placeholder: 'השקר שלך', button: null });
+});
+
+test('the writing screen names the box for a screen reader on every question', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'pages', 'show-question', 'show-question.component.html'), 'utf8');
+    assert.match(html, /\[attr\.aria-label\]="aboutMe \? aboutWords\.placeholder : helper\.placeholder"/);
+    const ts = fs.readFileSync(path.join(__dirname, '..', 'src', 'app', 'pages', 'show-question', 'show-question.component.ts'), 'utf8');
 });
 
 test('questions 1 and 2 show the line, the placeholder and the button', () => {

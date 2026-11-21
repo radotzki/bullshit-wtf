@@ -278,6 +278,15 @@ async function act(phone, game) {
         if (await visible(input)) {
             const question = await db('GET', `games/${game.pin}/questionIndex`);
             if (phone.lies[phone.lies.length - 1] !== question) {
+                // The lie box keeps its name on every question (a screen reader reads it), and STUCK?
+                // shows in round 1 only (questions 1 and 2 of a 5-question game).
+                // The ready-made lies load after the box: give them a moment in round 1.
+                const stuckButton = page.locator('button.give-me-a-lie');
+                if (question <= 1) await stuckButton.first().waitFor({ state: 'visible', timeout: 4000 }).catch(() => { });
+                const box = await input.first().evaluate((el) => ({ aria: el.getAttribute('aria-label'), placeholder: el.getAttribute('placeholder') }));
+                box.aboutMe = await visible(page.locator('.about-title'));
+                const stuck = await visible(stuckButton);
+                (phone.boxes = phone.boxes || []).push(Object.assign({ q: question + 1, stuck }, box));
                 await input.fill(`${phone.name} lie ${question}`);
                 await page.locator('form button[type="submit"]').first().click();
                 phone.lies.push(question);
@@ -404,6 +413,16 @@ async function main() {
         if (!later.length) problems.push(`${p3.name} sent no lie after it came back`);
         [host, p2].forEach((p) => { if (p.lies.length < QUESTIONS) problems.push(`${p.name} sent ${p.lies.length} lies, not ${QUESTIONS}`); });
         phones.forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
+        const boxName = he ? 'השקר שלך' : 'Your lie';
+        [host, p2].forEach((p) => (p.boxes || []).forEach((b) => {
+            // An About question about this player asks for their truth, under its own name.
+            const name = b.aboutMe ? (he ? 'האמת שלך' : 'Your truth') : boxName;
+            if (!b.aria || b.aria !== name || b.placeholder !== b.aria) problems.push(`${p.name}: question ${b.q}'s lie box is named "${b.aria}", placeholder "${b.placeholder}"`);
+            // Question 2's lies sometimes come too late for this check on the emulators (before this change too),
+            // so it asks STUCK? of question 1 and its absence from round 2 on.
+            if (!b.aboutMe && b.q !== 2 && b.stuck !== (b.q === 1)) problems.push(`${p.name}: question ${b.q} ${b.stuck ? 'shows' : 'lacks'} STUCK? GIVE ME A LIE`);
+        }));
+        summary.lieBoxes = Object.fromEntries([host, p2].map((p) => [p.name, (p.boxes || []).map((b) => `${b.q}:${b.aria}${b.stuck ? '+stuck' : ''}`)]));
 
         summary.problems = problems;
         console.log('\nRESULT ' + JSON.stringify(summary, null, 2));

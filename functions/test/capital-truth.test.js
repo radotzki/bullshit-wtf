@@ -211,6 +211,19 @@ test('a lie that is the truth apart from case is still refused, as before', asyn
     assert.strictEqual(game(pin).answers, undefined, 'nothing was put on the table');
 });
 
+test('a part of the truth is refused as too close, with the same code; a lie that drops "half" or "no" goes in', async () => {
+    const HALF = { lang: 'en', questionText: 'Ready in $blank$', realAnswer: 'Half an hour', fakeAnswers: ['a day'], citation: '' };
+    const LO = { lang: 'he', questionText: 'בשבת הן $blank$', realAnswer: 'לא עובדות', fakeAnswers: ['נחות'], citation: '' };
+    for (const [q, part, fair] of [[HALF, 'half', 'an hour'], [LO, 'לא', 'עובדות']]) {
+        const pin = newGame([q, ORDINARY, ORDINARY]);
+        await next(pin);
+        await assert.rejects(() => answer(pin, 'p1', part), e => e.code === 'CORRECT_ANSWER' && e.part === true, `"${part}" is a part of the truth`);
+        await assert.rejects(() => answer(pin, 'p1', q.realAnswer), e => e.code === 'CORRECT_ANSWER' && !e.part, 'the truth itself keeps its message');
+        await answer(pin, 'p2', fair);
+        assert.strictEqual(game(pin).answers.p2.text, fair.toLowerCase(), `"${fair}" is a lie`);
+    }
+});
+
 test('a house lie written with capitals is a house lie when picked', async () => {
     const pin = newGame([ORDINARY, CAPITAL_HOUSE_LIE, ORDINARY]);
 

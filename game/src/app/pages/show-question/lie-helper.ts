@@ -1,10 +1,13 @@
 /**
- * The round-1 lie helper on the writing screen, in the game's language.
- * Only games with coach: true get it, and only in round 1:
- *   - questions 1 and 2: a line above the box that says what to write;
- *   - all of round 1: "Your lie" in the box, and STUCK? GIVE ME A LIE under SEND, which fills the box
- *     with a ready-made lie. A second tap swaps in a second one; then the button goes away.
- * Rounds 2 and 3, and games without the helper, keep the plain screen.
+ * The lie helper on the writing screen, in the game's language.
+ *   - Every game, every question: "Your lie" in the box. It is also the box's accessible name
+ *     (aria-label), so a screen reader names the box on every question, not only while it is empty.
+ *   - Games with coach: true, questions 1 and 2: a line above the box that says what to write.
+ *   - Games with coach: true, round 1 only: STUCK? GIVE ME A LIE under SEND, which fills the box
+ *     with a ready-made lie. A second tap swaps in a second one; then the button goes away. Round 1
+ *     only by design: in the 50/50 test the lie drop after round 1 was the same with the helper and
+ *     without it, so later rounds keep the plain screen (bar the box's name).
+ *   Until 20 November 2026 the box had no name from round 2 on (question 3 of a 5-question game).
  * Kept free of Angular so it can be tested in Node.
  */
 
@@ -33,8 +36,8 @@ export function lieHelperStrings(locale: string): LieHelperStrings {
 export interface LieHelperView {
     /** The line above the box, or null. */
     hint: string | null;
-    /** The box's placeholder, or null for none. */
-    placeholder: string | null;
+    /** The box's placeholder and accessible name. */
+    placeholder: string;
     /** The give-me-a-lie button's text, or null when there is no button. */
     button: string | null;
 }
@@ -51,14 +54,15 @@ export function lieHelperView(
     ideas: string[] | null | undefined,
     used: number,
 ): LieHelperView {
+    const s = lieHelperStrings(locale);
     if (!coach || (roundIndex || 0) !== 0) {
-        return { hint: null, placeholder: null, button: null };
+        return { hint: null, placeholder: s.placeholder, button: null };
     }
 
-    const s = lieHelperStrings(locale);
     const left = (ideas || []).length - (used || 0);
 
     return {
+        // Only the first two questions of the game: by then a player knows what to write.
         hint: (questionIndex || 0) <= 1 ? s.hint : null,
         placeholder: s.placeholder,
         button: left > 0 ? s.giveMeALie : null,

@@ -15,7 +15,7 @@ const example = (q, story) => `<div class="example">
 
 const howToStart = (button) => `<h2>How to start</h2>
 <ol>
-  <li>Tap "${button}" on this page, choose English or Hebrew questions and 5, 7 or 9 questions, and tap "Create".</li>
+  <li>Tap "${button}" on this page. The game is set to English with the Christmas and New Year questions on (they are in English only). Choose 5, 7 or 9 questions and tap "Create".</li>
   <li>The game shows a four-letter PIN and an invite link. Send the link to the family or the group chat, or everyone opens bullshit.wtf on their phone, taps "Join Game" and types the PIN.</li>
   <li>Everyone picks a nickname. When everyone is in, the person who opened the game taps "Start".</li>
 </ol>`;
@@ -93,7 +93,7 @@ const remote = `
   <li>On the computer you will share, click "Start a virtual party game" on this page, choose 5, 7 or 9 questions, and click "Create". The Christmas and New Year questions are on.</li>
   <li>Type your nickname. In the lobby, click "Use as the big screen". This computer is now the game's big screen: it shows the PIN, a QR code and the START button.</li>
   <li>Share that browser window in the call, with its sound if your app offers it, so everyone hears the music and the clock.</li>
-  <li>Everyone, you too, scans the QR code from the shared screen, or opens bullshit.wtf on their phone, taps "Join Game" and types the PIN.</li>
+  <li>Paste the join link in the call's chat: it is the address under the QR code on the shared screen, bullshit.wtf/join-game/ and the PIN. Everyone, you too, opens it on their phone, or on their laptop if that is all they have. Or they scan the QR code from the shared screen, or open bullshit.wtf, tap "Join Game" and type the PIN.</li>
   <li>When everyone is in, click START on the big screen. The game moves on by itself from there.</li>
 </ol>
 <p>The shared screen shows each question, every answer, who picked what and the scores. Phones are for writing and picking. A call runs a second or two behind, but every phone has its own copy of the question and the clock, so nobody loses time to a slow connection.</p>
@@ -110,7 +110,8 @@ ${example('Before it was called Google, the search engine was called ____',
   <li><strong>It ends with a winner.</strong> The last screen shows each player's best lie and crowns the biggest bullshitter of the party.</li>
 </ul>
 <h2>More than 12 people</h2>
-<p>A game takes 12 phones at most. For a bigger team, use breakout rooms: in each room one person opens a game and shares its big screen, and each room plays its own. Then everyone comes back to the main room, and the winners of each room play a final on one shared screen.</p>
+<p>A game takes 12 phones at most. If a thirteenth person opens the link, their phone is offered a second table: a game of its own, played on the phones, with the question, the answers and the scores on each screen. The call's shared screen keeps showing the first table only, so give the second table a breakout room, or let its host share a second screen.</p>
+<p>For a team that is bigger from the start, plan breakout rooms: in each room one person opens a game and shares its big screen, and each room plays its own. Then everyone comes back to the main room, and the winners of each room play a final on one shared screen.</p>
 <h2>Before the party</h2>
 <ul>
   <li><strong>Try it once yourself.</strong> Open a game, and in the empty lobby click "Try 5 quick questions alone" to see five of the game's questions.</li>

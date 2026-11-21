@@ -94,8 +94,11 @@
         white-space: nowrap;
     }
 
+    // The box wraps by its basis (120px), then grows to 170px: Join stays beside it in a narrow
+    // column too, in Hebrew, whose words are wider (it fell to a second line, 20 Nov 2026).
     .code-input {
-        flex: 0 1 170px;
+        flex: 1 1 120px;
+        max-width: 170px;
         min-width: 0;
         height: 40px;
         padding: 0 12px;
@@ -130,6 +133,7 @@
         color: #f4fcca;
         font-size: 17px;
         font-weight: 700;
+        white-space: nowrap;
         cursor: pointer;
 
         &:hover,
@@ -382,6 +386,7 @@ app-demo-clip {
 
         .code-input {
             flex: 1 1 0;
+            max-width: none;
         }
     }
 

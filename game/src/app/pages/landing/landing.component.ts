@@ -18,11 +18,12 @@ export class LandingComponent implements OnInit {
     ngOnInit() {
         this.sessionService.presenter = undefined;
 
-        if (isMobile()) {
-            this.router.navigate(['m']);
-        } else {
-            this.router.navigate(['d']);
-        }
+        // The home address (/ or /he) moves on to the phone menu (/m) or the computer menu (/d), in place
+        // of it in the history: with a new entry, Back went to / (or /he), which moved on to the menu
+        // again, so Back could never leave the site's home (seen 20 Nov 2026). The query (?via=) is
+        // read at start-up, before this runs (join-source.ts, the visit beacon in index.html), so the
+        // counts don't need it in the address.
+        this.router.navigate([isMobile() ? 'm' : 'd'], { replaceUrl: true });
     }
 
 }

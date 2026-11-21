@@ -38,7 +38,7 @@ function compiled(file) {
 }
 
 /**
- * The script that defines window.BSDailyShared = { isSameAnswer, nameFlag }: the two compiled
+ * The script that defines window.BSDailyShared = { isSameAnswer, isPartOfTruth, nameFlag }: the two compiled
  * modules, each run as a function with its own `exports`, and the word lists as data.
  */
 function sharedScript() {
@@ -53,11 +53,11 @@ var same = {};
 (function (exports, require) {
 ${compiled(path.join('functions', 'src', 'controllers', 'same-answer.ts'))}
 })(same, function () { return {}; });
-root.BSDailyShared = { isSameAnswer: same.isSameAnswer, nameFlag: flag.nameFlag };
+root.BSDailyShared = { isSameAnswer: same.isSameAnswer, isPartOfTruth: same.isPartOfTruth, nameFlag: flag.nameFlag };
 })(typeof window !== 'undefined' ? window : globalThis);`;
 }
 
-/** The same two checks for the tests in Node: { isSameAnswer, nameFlag }. */
+/** The same checks for the tests in Node: { isSameAnswer, isPartOfTruth, nameFlag }. */
 function loadShared() {
     const root = {};
     new Function('window', sharedScript())(root);

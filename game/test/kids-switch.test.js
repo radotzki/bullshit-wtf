@@ -76,13 +76,14 @@ test('the pack sent: kids when the switch is on, even in Hanukkah; else Special 
     assert.strictEqual(model.chosenPack(false, true, null), undefined);
 });
 
-test('the lobby makes no promise for a kids game', () => {
+test('the lobby says the kids switch took: kid questions first', () => {
     const { packBanner } = loadPlain(path.join(root, 'game', 'src', 'app', 'pages', 'game-staging', 'lobby-host.ts'), name => {
         if (name.startsWith('.')) {
             return loadPlain(path.join(root, 'game', 'src', 'app', 'pages', 'game-staging', name + '.ts'), () => ({}));
         }
         return require(name);
     });
-    assert.strictEqual(packBanner('kids', 'en'), null);
-    assert.strictEqual(packBanner('kids', 'he'), null);
+    assert.strictEqual(packBanner('kids', 'en'), 'Kids are playing: questions for ages 8 to 12 come first');
+    assert.strictEqual(packBanner('kids', 'he'), 'ילדים משחקים: קודם כל שאלות לגילאי 8 עד 12');
+    assert.strictEqual(packBanner(undefined, 'en'), null);
 });

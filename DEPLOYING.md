@@ -859,7 +859,9 @@ puts the questions of the repository's reviewed question files there itself, in 
   - `functions/data/kids-questions.json`, ids `kids-26-en-NN` and `kids-26-he-NN`, every question
     with `pack: "kids"` (see "Kids are playing" below);
   - `functions/data/everyday-questions-2026-11.json`, ids `everyday-26-en-NN` and `everyday-26-he-NN`,
-    questions of the normal bank like the strange facts (see "Everyday questions: 100 more" above).
+    questions of the normal bank like the strange facts (see "Everyday questions: 100 more" above);
+  - `functions/data/party-questions.json`, ids `party-26-en-NN` and `party-26-he-NN`, every question
+    with `pack: "party"` (see "Party night pack" below).
 - **What it sends:** one update (`PATCH`) to `questions.json` at the database's own address, whose
   body is exactly those files. Every key must be an id of the file it stands in, and every value a
   whole question in that id's language with that file's fields and no other, or nothing is sent for
@@ -956,6 +958,41 @@ there.
 - **Until the first release after the merge has added the questions,** a kids game is a normal game.
 - Tested by `functions/test/kids-questions.test.js`, `game/test/kids-switch.test.js` and
   `.github/scripts/load-pack-questions.test.js`.
+
+## Party night pack
+
+Questions for the nights a whole group gathers: a bachelorette or bachelor party, a grown-up
+birthday, a weekend away, a night out. Nothing to run before or after the merge: the release adds
+the questions itself (see "Question files the release adds"), and the analytics use the `pack`
+column that is already there.
+
+- **The questions:** 40 English and 40 Hebrew true facts about weddings and bachelor and
+  bachelorette customs, birthdays, trips and weekends away, and nights out, in
+  `functions/data/party-questions.json`, ids `party-26-en-01..40` and `party-26-he-01..40`, each
+  with `pack: "party"`, so none appears in another game. Adult but not explicit. The Hebrew ones are
+  their own facts, written in Hebrew, not translations. Each truth's page and what it says are in
+  `docs/party-questions-sources.md`.
+- **Who gets it:** only games started from the six party-night pages (`game/seo/pages-party-nights.js`:
+  `/he/bachelorette`, `/he/adult-birthday`, `/he/friends-weekend`, `/bachelorette-party-game`,
+  `/adult-birthday-party-game`, `/weekend-away-games`). Their Start buttons open
+  `/create-game?lang=..&pack=party` (plus the page's `via=party-*` tag), so the Create page shows
+  "🎉 Party night questions" ("🎉 שאלות למסיבה") ticked, the way the holiday pages show their pack.
+  The host can untick it. No season: never ticked by default, never chosen for a crew rematch.
+- **How many:** `perGame` 4. A party game opens with a party question nobody in the room has seen,
+  and up to 4 are spread through it; the rest are the usual questions (`pickWithPack`). A party
+  question is never repeated to the same room, so 40 a language last about ten games. **Rematch**
+  keeps the pack.
+- **The lobby** says "🎉 Party edition: this game has questions about weddings, birthdays, trips and
+  nights out" (in Hebrew in a Hebrew game).
+- **Analytics:** `pack = 'party'` on `opened_games` and `closed_games`. No new column. See
+  `functions/bigquery/2026-11-party.sql`.
+- **Until the first release after the merge has added the questions,** a party game is a normal
+  game (no pack question exists to pick), with the party line in the lobby.
+- Tested by `functions/test/party-questions.test.js` (the questions, and a whole game from a party
+  page on the in-memory database), `game/test/party-pack.test.js` (the pages' Start buttons, the
+  Create page's pick, the lobby line) and `.github/scripts/load-pack-questions.test.js`. A whole
+  game from a party page on the emulators, in each language: `node .github/smoke/emulator-party.js
+  --locale he` (or `en`), with functions/ and game/ built.
 
 ## Christmas and New Year pack
 
