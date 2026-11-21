@@ -478,5 +478,365 @@
     "citation": "https://en.wikipedia.org/wiki/Giraffe",
     "lang": "he",
     "pack": "kids"
+  },
+  "kids-26-he-21": {
+    "questionText": "גוזלי פלמינגו בוקעים מהביצה בצבע אפור, והם נהיים ורודים בזכות $blank$",
+    "realAnswer": "האוכל שהם אוכלים",
+    "fakeAnswers": [
+      "השמש החזקה",
+      "המים המלוחים",
+      "זה שהם מתביישים"
+    ],
+    "citation": "https://www.britannica.com/story/why-are-flamingos-pink",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-22": {
+    "questionText": "הקוליברי הוא הציפור היחידה שיודעת לעוף $blank$",
+    "realAnswer": "אחורה",
+    "fakeAnswers": [
+      "הפוך על הגב",
+      "בעיניים עצומות",
+      "בלי לנפנף בכנפיים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Backward_flying",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-23": {
+    "questionText": "לכוכב ים יש עין קטנה בקצה של כל $blank$",
+    "realAnswer": "זרוע",
+    "fakeAnswers": [
+      "קוץ",
+      "שן",
+      "סנפיר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Starfish",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-24": {
+    "questionText": "בשלד של כריש אין אף $blank$",
+    "realAnswer": "עצם",
+    "fakeAnswers": [
+      "סחוס",
+      "חוליה",
+      "לסת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Shark",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-25": {
+    "questionText": "הינשוף לא יכול להזיז את $blank$ שלו, ולכן הוא מסובב את כל הראש",
+    "realAnswer": "העיניים",
+    "fakeAnswers": [
+      "הכנפיים",
+      "הרגליים",
+      "המקור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Owl",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-26": {
+    "questionText": "סוסים יכולים לנמנם $blank$",
+    "realAnswer": "בעמידה",
+    "fakeAnswers": [
+      "בזמן ריצה",
+      "על עץ",
+      "מתחת למים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stay_apparatus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-27": {
+    "questionText": "צפרדעים לא שותות כמונו. הן סופגות מים דרך $blank$",
+    "realAnswer": "העור",
+    "fakeAnswers": [
+      "האוזניים",
+      "הזנב",
+      "הלשון"
+    ],
+    "citation": "https://www.burkemuseum.org/blog/all-about-frogs",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-28": {
+    "questionText": "לנמלים אין $blank$. הן נושמות דרך חורים קטנטנים בגוף",
+    "realAnswer": "ריאות",
+    "fakeAnswers": [
+      "פה",
+      "מוח",
+      "רגליים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ant",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-29": {
+    "questionText": "הקיבה של פרה מחולקת ל$blank$",
+    "realAnswer": "ארבעה חלקים",
+    "fakeAnswers": [
+      "שני חלקים",
+      "שבעה חלקים",
+      "עשרה חלקים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ruminant",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-30": {
+    "questionText": "הלב שלנו פועם בערך $blank$ פעמים ביום",
+    "realAnswer": "מאה אלף",
+    "fakeAnswers": [
+      "אלף",
+      "חמשת אלפים",
+      "עשרה מיליון"
+    ],
+    "citation": "https://health.clevelandclinic.org/facts-about-the-heart",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-31": {
+    "questionText": "השיער על הראש גדל בערך $blank$ בחודש",
+    "realAnswer": "סנטימטר אחד",
+    "fakeAnswers": [
+      "מילימטר אחד",
+      "עשרה סנטימטרים",
+      "חצי מטר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_hair_growth",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-32": {
+    "questionText": "רוב האנשים לא מצליחים לדגדג $blank$",
+    "realAnswer": "את עצמם",
+    "fakeAnswers": [
+      "את הכלב שלהם",
+      "את סבא",
+      "תינוקות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tickling",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-33": {
+    "questionText": "בחלל אין $blank$, כי אין שם אוויר שיעביר אותו",
+    "realAnswer": "קול",
+    "fakeAnswers": [
+      "אור",
+      "כוח משיכה",
+      "זמן"
+    ],
+    "citation": "https://howthingsfly.si.edu/ask-an-explainer/how-does-sound-travel-space",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-34": {
+    "questionText": "הירח מתרחק מכדור הארץ בכל שנה בערך $blank$",
+    "realAnswer": "4 סנטימטרים",
+    "fakeAnswers": [
+      "קילומטר",
+      "מטר",
+      "מילימטר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Orbit_of_the_Moon",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-35": {
+    "questionText": "יום אחד על כוכב הלכת צדק נמשך בערך $blank$",
+    "realAnswer": "עשר שעות",
+    "fakeAnswers": [
+      "שעה אחת",
+      "ארבעים שעות",
+      "שבוע שלם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jupiter",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-36": {
+    "questionText": "כוכב הלכת החם ביותר במערכת השמש הוא $blank$, אף שהוא לא הכי קרוב לשמש",
+    "realAnswer": "נוגה",
+    "fakeAnswers": [
+      "מאדים",
+      "צדק",
+      "כדור הארץ"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-37": {
+    "questionText": "גרעין תירס מתפוצץ לפופקורן בגלל $blank$ שיש בתוכו",
+    "realAnswer": "טיפות מים",
+    "fakeAnswers": [
+      "חשמל סטטי",
+      "סוכר",
+      "אבקת אפייה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Popcorn",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-38": {
+    "questionText": "התפוח שייך לאותה משפחה של צמחים כמו $blank$",
+    "realAnswer": "הוורד",
+    "fakeAnswers": [
+      "הבננה",
+      "התפוז",
+      "הגזר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rosaceae",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-39": {
+    "questionText": "בעיפרון אין בכלל עופרת: הליבה שלו עשויה $blank$ מעורבב בחימר",
+    "realAnswer": "גרפיט",
+    "fakeAnswers": [
+      "ברזל",
+      "גיר",
+      "פלסטיק שחור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pencil",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-40": {
+    "questionText": "ב-1972 החליפו את כדורי הטניס לצהובים, כדי ש$blank$ יראו אותם טוב יותר",
+    "realAnswer": "הצופים בטלוויזיה",
+    "fakeAnswers": [
+      "השחקנים בלילה",
+      "הכלבים",
+      "הציפורים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tennis_ball",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-41": {
+    "questionText": "את המונדיאל הראשון, ב-1930, אירחה $blank$, והיא גם זכתה בו",
+    "realAnswer": "אורוגוואי",
+    "fakeAnswers": [
+      "ברזיל",
+      "אנגליה",
+      "איטליה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/1930_FIFA_World_Cup",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-42": {
+    "questionText": "ב-1966 התחילה חברת נטפים מקיבוץ חצרים למכור מתקן השקיה ראשון מסוגו בעולם, שמשקה צמחים $blank$",
+    "realAnswer": "טיפה אחר טיפה",
+    "fakeAnswers": [
+      "רק בלילה",
+      "במי ים",
+      "בבועות סבון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Netafim",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-43": {
+    "questionText": "דגים לא יכולים לחיות בים המלח, כי $blank$",
+    "realAnswer": "המים מלוחים מדי",
+    "fakeAnswers": [
+      "המים חמים מדי",
+      "אין שם אור",
+      "הגלים חזקים מדי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dead_Sea",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-44": {
+    "questionText": "בכל שנה נמכרים בישראל בערך $blank$ קרמבו, ורק מאוקטובר עד פברואר",
+    "realAnswer": "50 מיליון",
+    "fakeAnswers": [
+      "חצי מיליון",
+      "5 מיליון",
+      "מיליארד"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Krembo",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-45": {
+    "questionText": "הברווזן, שנקרא גם פלטיפוס, הוא יונק, אבל הוא $blank$",
+    "realAnswer": "מטיל ביצים",
+    "fakeAnswers": [
+      "נושם רק מתחת למים",
+      "יודע לעוף",
+      "חי בלי לב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Platypus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-46": {
+    "questionText": "לפי המדענים, יש דינוזאורים שחיים איתנו גם היום: $blank$",
+    "realAnswer": "הציפורים",
+    "fakeAnswers": [
+      "הלטאות",
+      "הכרישים",
+      "הצבים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bird",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-47": {
+    "questionText": "הדובי 'טדי' קיבל את השם שלו מ$blank$",
+    "realAnswer": "נשיא ארצות הברית",
+    "fakeAnswers": [
+      "דוב בגן חיות",
+      "ספר ילדים",
+      "הכלב של הממציא"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Teddy_bear",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-48": {
+    "questionText": "שנה אחת על כוכב חמה, הכוכב הקרוב ביותר לשמש, נמשכת רק $blank$ ימים שלנו",
+    "realAnswer": "88",
+    "fakeAnswers": [
+      "3",
+      "12",
+      "1000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mercury_(planet)",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-49": {
+    "questionText": "העצם הכי ארוכה בגוף שלנו נמצאת ב$blank$",
+    "realAnswer": "ירך",
+    "fakeAnswers": [
+      "גב",
+      "זרוע",
+      "חזה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Femur",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-50": {
+    "questionText": "פילים הם חיות חזקות מאוד, אבל הם לא מסוגלים $blank$",
+    "realAnswer": "לקפוץ",
+    "fakeAnswers": [
+      "לשחות",
+      "לשכב",
+      "לטפס בעלייה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Elephant",
+    "lang": "he",
+    "pack": "kids"
   }
 }

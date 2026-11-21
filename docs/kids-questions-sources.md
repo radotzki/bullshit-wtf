@@ -203,3 +203,155 @@ Source says: The humps are "reservoirs of fatty tissue ... not water".
 בצוואר הארוך של הג'ירפה יש רק ____ חוליות, בדיוק כמו אצל רוב היונקים  
 House lies: שלושים, עשרים, חמישים  
 Source says: The neck grew by "lengthening of the cervical vertebrae, not ... the addition of more vertebrae"; "the mammalian limit of seven cervical vertebrae".
+
+Added 21 November 2026 for the Hanukkah school break: he-21 to he-50. Every page was read on 21 November 2026, and each house lie checked against it.
+
+**he-21. האוכל שהם אוכלים** · https://www.britannica.com/story/why-are-flamingos-pink  
+גוזלי פלמינגו בוקעים מהביצה בצבע אפור, והם נהיים ורודים בזכות ____  
+House lies: השמש החזקה, המים המלוחים, זה שהם מתביישים  
+Source says: "The birds are in fact born a dull gray." / "The bright pink color of flamingos comes from beta carotene ... within the algae, larvae, and brine shrimp that flamingos eat." (Britannica)
+
+**he-22. אחורה** · https://en.wikipedia.org/wiki/Backward_flying  
+הקוליברי הוא הציפור היחידה שיודעת לעוף ____  
+House lies: הפוך על הגב, בעיניים עצומות, בלי לנפנף בכנפיים  
+Source says: "there is only one family, Trochilidae (hummingbirds) where the backward flying phenomenon can be found."
+
+**he-23. זרוע** · https://en.wikipedia.org/wiki/Starfish  
+לכוכב ים יש עין קטנה בקצה של כל ____  
+House lies: קוץ, שן, סנפיר  
+Source says: "There are eyespots at the ends of the arms". Kept out of the lies: anything about spines (sea stars have spines, but no eyes on them).
+
+**he-24. עצם** · https://en.wikipedia.org/wiki/Shark  
+בשלד של כריש אין אף ____  
+House lies: סחוס, חוליה, לסת  
+Source says: "Sharks and other cartilaginous fish (skates and rays) have skeletons made of cartilage and connective tissue." Kept out of the lies: ribs and teeth.
+
+**he-25. העיניים** · https://en.wikipedia.org/wiki/Owl  
+הינשוף לא יכול להזיז את ____ שלו, ולכן הוא מסובב את כל הראש  
+House lies: הכנפיים, הרגליים, המקור  
+Source says: "Since the eyes are fixed into these sclerotic tubes, they are unable to move the eyes in any direction." / "Instead of moving their eyes, owls swivel their heads".
+
+**he-26. בעמידה** · https://en.wikipedia.org/wiki/Stay_apparatus  
+סוסים יכולים לנמנם ____  
+House lies: בזמן ריצה, על עץ, מתחת למים  
+Source says: "the mechanism by which horses can enter a light sleep while still standing up." Hence "לנמנם" (doze), not deep sleep.
+
+**he-27. העור** · https://www.burkemuseum.org/blog/all-about-frogs  
+צפרדעים לא שותות כמונו. הן סופגות מים דרך ____  
+House lies: האוזניים, הזנב, הלשון  
+Source says: "Frogs do not drink like we do; they absorb water directly through their skin." (Burke Museum)
+
+**he-28. ריאות** · https://en.wikipedia.org/wiki/Ant  
+לנמלים אין ____. הן נושמות דרך חורים קטנטנים בגוף  
+House lies: פה, מוח, רגליים  
+Source says: "Insects do not have lungs"; gases "pass through their exoskeleton via tiny valves called spiracles." Kept out of the lies: eyes (a few underground ants are blind).
+
+**he-29. ארבעה חלקים** · https://en.wikipedia.org/wiki/Ruminant  
+הקיבה של פרה מחולקת ל____  
+House lies: שני חלקים, שבעה חלקים, עשרה חלקים  
+Source says: "ruminants' stomachs have four compartments": rumen, reticulum, omasum, abomasum.
+
+**he-30. מאה אלף** · https://health.clevelandclinic.org/facts-about-the-heart  
+הלב שלנו פועם בערך ____ פעמים ביום  
+House lies: אלף, חמשת אלפים, עשרה מיליון  
+Source says: "Your heart beats about 100,000 times per day." (Cleveland Clinic)
+
+**he-31. סנטימטר אחד** · https://en.wikipedia.org/wiki/Human_hair_growth  
+השיער על הראש גדל בערך ____ בחודש  
+House lies: מילימטר אחד, עשרה סנטימטרים, חצי מטר  
+Source says: "It is commonly stated that hair grows about 1 cm per month on average." (Reported range 0.6 to 3.36 cm, far from every lie.)
+
+**he-32. את עצמם** · https://en.wikipedia.org/wiki/Tickling  
+רוב האנשים לא מצליחים לדגדג ____  
+House lies: את הכלב שלהם, את סבא, תינוקות  
+Source says: "most people cannot effectively tickle themselves." Hence "רוב האנשים".
+
+**he-33. קול** · https://howthingsfly.si.edu/ask-an-explainer/how-does-sound-travel-space  
+בחלל אין ____, כי אין שם אוויר שיעביר אותו  
+House lies: אור, כוח משיכה, זמן  
+Source says: "Sound does not travel in space." / "Sound requires molecules to travel through, and there are none in space because space is a vacuum." (Smithsonian National Air and Space Museum). Light and gravity do reach through space (NASA: "a small amount of gravity can be found everywhere in space").
+
+**he-34. 4 סנטימטרים** · https://en.wikipedia.org/wiki/Orbit_of_the_Moon  
+הירח מתרחק מכדור הארץ בכל שנה בערך ____  
+House lies: קילומטר, מטר, מילימטר  
+Source says: "The Moon is gradually receding from Earth" ... "at approximately 38 millimetres per year" (3.8 cm, "בערך 4").
+
+**he-35. עשר שעות** · https://en.wikipedia.org/wiki/Jupiter  
+יום אחד על כוכב הלכת צדק נמשך בערך ____  
+House lies: שעה אחת, ארבעים שעות, שבוע שלם  
+Source says: "completing a rotation on its axis in slightly less than ten hours" (9 h 55 m).
+
+**he-36. נוגה** · https://en.wikipedia.org/wiki/Venus  
+כוכב הלכת החם ביותר במערכת השמש הוא ____, אף שהוא לא הכי קרוב לשמש  
+House lies: מאדים, צדק, כדור הארץ  
+Source says: "the hottest planet in the solar system" / "hotter than Mercury's, even though Venus is nearly twice Mercury's distance from the Sun".
+
+**he-37. טיפות מים** · https://en.wikipedia.org/wiki/Popcorn  
+גרעין תירס מתפוצץ לפופקורן בגלל ____ שיש בתוכו  
+House lies: חשמל סטטי, סוכר, אבקת אפייה  
+Source says: "Each kernel of popcorn contains moisture and oil." / "As the oil and water in the kernel are heated, they turn into steam." Kept out of the lies: oil and air.
+
+**he-38. הוורד** · https://en.wikipedia.org/wiki/Rosaceae  
+התפוח שייך לאותה משפחה של צמחים כמו ____  
+House lies: הבננה, התפוז, הגזר  
+Source says: Rosaceae "includes apples, pears, ... strawberries, ... and roses." Kept out of the lies: strawberries, pears and other members of the family.
+
+**he-39. גרפיט** · https://en.wikipedia.org/wiki/Pencil  
+בעיפרון אין בכלל עופרת: הליבה שלו עשויה ____ מעורבב בחימר  
+House lies: ברזל, גיר, פלסטיק שחור  
+Source says: "The lead of the pencil is a mix of finely ground graphite and clay powders." Kept out of the lies: charcoal (charcoal pencils exist).
+
+**he-40. הצופים בטלוויזיה** · https://en.wikipedia.org/wiki/Tennis_ball  
+ב-1972 החליפו את כדורי הטניס לצהובים, כדי ש____ יראו אותם טוב יותר  
+House lies: השחקנים בלילה, הכלבים, הציפורים  
+Source says: "In 1972, the International Tennis Federation introduced yellow balls, as these were easier to see on television".
+
+**he-41. אורוגוואי** · https://en.wikipedia.org/wiki/1930_FIFA_World_Cup  
+את המונדיאל הראשון, ב-1930, אירחה ____, והיא גם זכתה בו  
+House lies: ברזיל, אנגליה, איטליה  
+Source says: "The 1930 FIFA World Cup was the first FIFA World Cup"; "It took place in Uruguay"; "Uruguay defeated Argentina 4–2 ... to become the first nation to win the World Cup."
+
+**he-42. טיפה אחר טיפה** · https://en.wikipedia.org/wiki/Netafim  
+ב-1966 התחילה חברת נטפים מקיבוץ חצרים למכור מתקן השקיה ראשון מסוגו בעולם, שמשקה צמחים ____  
+House lies: רק בלילה, במי ים, בבועות סבון  
+Source says: "1965 – Kibbutz Hatzerim signs agreement with Blass to establish Netafim" / "1966 – Introduces world's first commercial dripper". Worded as the first commercial dripper, not the invention of drip irrigation, which had earlier forms elsewhere.
+
+**he-43. המים מלוחים מדי** · https://en.wikipedia.org/wiki/Dead_Sea  
+דגים לא יכולים לחיות בים המלח, כי ____  
+House lies: המים חמים מדי, אין שם אור, הגלים חזקים מדי  
+Source says: "its high salinity prevents macroscopic aquatic organisms, such as fish and aquatic plants, from living in it." The lies are wrong reasons: the water is not too hot to live in, sunlight reaches it, and its waves (about 1 m) are no reason.
+
+**he-44. 50 מיליון** · https://en.wikipedia.org/wiki/Krembo  
+בכל שנה נמכרים בישראל בערך ____ קרמבו, ורק מאוקטובר עד פברואר  
+House lies: חצי מיליון, 5 מיליון, מיליארד  
+Source says: "over 50 million krembos sold each year" / "a seasonal treat sold only four months a year, from October to February." (Also Jerusalem Post: https://www.jpost.com/Arts-and-Culture/Israelis-consume-50-million-krembos-every-year)
+
+**he-45. מטיל ביצים** · https://en.wikipedia.org/wiki/Platypus  
+הברווזן, שנקרא גם פלטיפוס, הוא יונק, אבל הוא ____  
+House lies: נושם רק מתחת למים, יודע לעוף, חי בלי לב  
+Source says: The platypus "is a semiaquatic, egg-laying mammal endemic to eastern Australia".
+
+**he-46. הציפורים** · https://en.wikipedia.org/wiki/Bird  
+לפי המדענים, יש דינוזאורים שחיים איתנו גם היום: ____  
+House lies: הלטאות, הכרישים, הצבים  
+Source says: "Birds are the only extant members of Dinosauria" / birds "constitute the only known living dinosaurs." Kept out of the lies: crocodiles (their closest living relatives).
+
+**he-47. נשיא ארצות הברית** · https://en.wikipedia.org/wiki/Teddy_bear  
+הדובי 'טדי' קיבל את השם שלו מ____  
+House lies: דוב בגן חיות, ספר ילדים, הכלב של הממציא  
+Source says: "The teddy bear was named by Morris Michtom after the 26th president of the United States, Theodore Roosevelt".
+
+**he-48. 88** · https://en.wikipedia.org/wiki/Mercury_(planet)  
+שנה אחת על כוכב חמה, הכוכב הקרוב ביותר לשמש, נמשכת רק ____ ימים שלנו  
+House lies: 3, 12, 1000  
+Source says: "It takes 87.969 Earth days to complete an orbit."
+
+**he-49. ירך** · https://en.wikipedia.org/wiki/Femur  
+העצם הכי ארוכה בגוף שלנו נמצאת ב____  
+House lies: גב, זרוע, חזה  
+Source says: "The femur is the only bone in the upper leg and the longest bone in the human body."
+
+**he-50. לקפוץ** · https://en.wikipedia.org/wiki/Elephant  
+פילים הם חיות חזקות מאוד, אבל הם לא מסוגלים ____  
+House lies: לשחות, לשכב, לטפס בעלייה  
+Source says: Elephants "are incapable of trotting, jumping, or galloping." Kept out of the lies: running (elephants walk fast but do not truly run); they can swim and lie down.

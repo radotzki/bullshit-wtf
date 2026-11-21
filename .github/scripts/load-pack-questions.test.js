@@ -73,9 +73,9 @@ test('the repository\'s files pass the check, and every key is an id of its own 
     assert.deepStrictEqual(counts[2].ids, Object.keys(THANKS));
     assert.deepStrictEqual(counts[3].ids, Object.keys(XMAS));
     assert.deepStrictEqual(counts[4].ids, Object.keys(KIDS));
-    // The kids pack: 20 in each language, every one marked kids, so none reaches a normal game.
-    for (const lang of ['en', 'he']) {
-        assert.strictEqual(Object.keys(KIDS).filter(id => id.startsWith(`kids-26-${lang}-`)).length, 20, lang);
+    // The kids pack: 20 in English and 50 in Hebrew, every one marked kids, so none reaches a normal game.
+    for (const [lang, count] of [['en', 20], ['he', 50]]) {
+        assert.strictEqual(Object.keys(KIDS).filter(id => id.startsWith(`kids-26-${lang}-`)).length, count, lang);
     }
     for (const id of Object.keys(KIDS)) {
         assert.match(id, /^kids-26-(en|he)-\d{2}$/);
@@ -172,7 +172,7 @@ test('the dry run names exactly the file\'s ids, as an update', () => {
     assert.strictEqual(lines[4], `  from ${FACTS_FILE}, the strange facts (120): ${Object.keys(FACTS).join(', ')}`);
     assert.strictEqual(lines[5], `  from ${THANKS_FILE}, the Thanksgiving pack (${Object.keys(THANKS).length}): ${Object.keys(THANKS).join(', ')}`);
     assert.strictEqual(lines[6], `  from ${XMAS_FILE}, the Christmas and New Year pack (${Object.keys(XMAS).length}): ${Object.keys(XMAS).join(', ')}`);
-    assert.strictEqual(lines[7], `  from ${KIDS_FILE}, the kids pack (40): ${Object.keys(KIDS).join(', ')}`);
+    assert.strictEqual(lines[7], `  from ${KIDS_FILE}, the kids pack (70): ${Object.keys(KIDS).join(', ')}`);
     assert.strictEqual(lines[8], `  from ${EVERY_FILE}, the everyday questions (100): ${Object.keys(EVERY).join(', ')}`);
     assert.match(lines[9], /: yes$/);
     assert.strictEqual(lines.length, 11);

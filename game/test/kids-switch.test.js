@@ -22,7 +22,7 @@ const { createStrings } = loadPlain(path.join(dir, 'create-strings.ts'));
 const html = fs.readFileSync(path.join(dir, 'create-game.component.html'), 'utf8');
 const src = fs.readFileSync(path.join(dir, 'create-game.component.ts'), 'utf8');
 
-test('the switch has its words in English and Hebrew, and says what comes after the 20', () => {
+test('the switch has its words in English and Hebrew, and says what comes after the kid questions (20 in English, 50 in Hebrew)', () => {
     const en = createStrings('en');
     const he = createStrings('he');
     assert.strictEqual(en.kids, '🧒 Kids are playing');
@@ -31,7 +31,7 @@ test('the switch has its words in English and Hebrew, and says what comes after 
     assert.match(he.players, /[א-ת]/);
     assert.match(en.kidsNote, /20/);
     assert.match(en.kidsNote, /usual questions/);
-    assert.match(he.kidsNote, /20/);
+    assert.match(he.kidsNote, /50/);
     assert.match(he.kidsNote, /השאלות הרגילות/);
     // The line names no season and no pack: it stays true in every month.
     for (const note of [en.kidsNote, he.kidsNote]) {
