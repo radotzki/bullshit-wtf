@@ -60,6 +60,31 @@ test('no stylesheet from another site blocks the first draw', () => {
         }
     });
     assert.ok(links.some(l => /font-awesome/.test(l)), 'the icons are still loaded');
+    // The icons come from the game's own files and still wait: the browser draws without them.
+    const icons = links.find(l => /font-awesome/.test(l));
+    assert.match(icons, /href="assets\/font-awesome\/css\/font-awesome\.min\.css"/);
+    assert.match(icons, /media="print" onload="this\.media='all'"/);
     // Without scripts the icons still come, the normal way.
-    assert.match(head, /<noscript><link rel="stylesheet" href="https:\/\/maxcdn\.bootstrapcdn\.com\/font-awesome\/4\.7\.0\/css\/font-awesome\.min\.css"><\/noscript>/);
+    assert.match(head, /<noscript><link rel="stylesheet" href="assets\/font-awesome\/css\/font-awesome\.min\.css"><\/noscript>/);
+});
+
+test('the fonts and icons come from the game\'s own files, with their licences', () => {
+    assert.ok(!/fonts\.googleapis\.com|fonts\.gstatic\.com|maxcdn\.bootstrapcdn\.com/.test(head), 'no font or icon from another site');
+    const faces = head.match(/@font-face\s*\{[^}]*\}/g) || [];
+    assert.strictEqual(faces.length, 5, 'Luckiest Guy (latin, latin-ext) and Suez One (hebrew, latin, latin-ext)');
+    const assets = path.join(__dirname, '..', 'src', 'assets');
+    faces.forEach(f => {
+        (f.match(/url\(([^)]+)\)/g) || []).forEach(u => {
+            const file = u.slice(4, -1);
+            assert.match(file, /^assets\/fonts\/[a-z-]+\.woff2?$/, file);
+            assert.ok(fs.existsSync(path.join(assets, '..', file)), `${file} is in src/assets`);
+        });
+    });
+    assert.ok(faces.some(f => /'Suez One'/.test(f) && /U\+0590-05FF/.test(f)), 'the Hebrew part of Suez One');
+    ['fonts/LICENSE-luckiest-guy.txt', 'fonts/OFL-suez-one.txt', 'font-awesome/LICENSE.txt'].forEach(f =>
+        assert.ok(fs.existsSync(path.join(assets, f)), `${f} is kept beside the files`));
+    const css = fs.readFileSync(path.join(assets, 'font-awesome', 'css', 'font-awesome.min.css'), 'utf8');
+    assert.match(css, /Font Awesome 4\.7\.0/);
+    (css.match(/url\('\.\.\/fonts\/[^'?#]+/g) || []).forEach(u =>
+        assert.ok(fs.existsSync(path.join(assets, 'font-awesome', 'css', u.slice(5))), `${u.slice(5)} is beside the icons' stylesheet`));
 });
