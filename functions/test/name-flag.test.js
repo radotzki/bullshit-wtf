@@ -42,7 +42,7 @@ test('swap names fit the nickname limit, and the same uid gets the same one', ()
     const next = swapName('uidA', 'en', [first.toUpperCase()]);
     assert.notStrictEqual(next, first);
     assert.ok(swapToast('Angel', 'en').includes('tonight you\'re Angel'));
-    assert.ok(swapToast('סבתא', 'he').includes('קוראים לך סבתא'));
+    assert.ok(swapToast('מלאך', 'he').includes('קוראים לך מלאך'));
 });
 
 // ---- join, crews and analytics, against fakes ----
@@ -95,6 +95,17 @@ test('join swaps a flagged name, keeps normal names, and cuts names to 9 after c
     const long = await join('abcd', 'cucumbersandwich', 'u2');
     assert.strictEqual(long.nickname, 'cucumbers');
 
+    // The English Christmas night walk: the grandparents' shared tablet typed "Grandma & Grandpa".
+    const grand = await join('abcd', 'Grandma & Grandpa', 'u7');
+    assert.strictEqual(grand.nickname, 'Grandma');
+    assert.strictEqual((await join('abcd', 'Nana and Pop', 'u8')).nickname, 'Nana');
+    assert.strictEqual((await join('abcd', 'Gran&Pop', 'u9')).nickname, 'Gran&Pop');
+    assert.strictEqual((await join('abcd', 'Mary-Jane Smith', 'u10')).nickname, 'Mary-Jane');
+    assert.strictEqual((await join('abcd', 'Ann + Bob', 'u11')).nickname, 'Ann + Bob');
+    assert.strictEqual((await join('abcd', 'Ann + Bobby', 'u12')).nickname, 'Ann + Bob');
+    assert.strictEqual((await join('abcd', 'Ann and Bob', 'u14')).nickname, 'Ann and B');
+    assert.strictEqual((await join('abcd', '&&&&&&&&&&&&', 'u13')).nickname, '&&&&&&&&&');
+
     const slur = await join('abcd', 'nigger123456', 'u3');
     assert.strictEqual(slur.swapped, true);
     assert.ok(SWAP_NAMES.en.includes(slur.nickname));
@@ -136,4 +147,12 @@ test('a crew name that is a slur or a sex word is refused in the game\'s languag
 test('old crews hide flagged members from the standings and the rematch chips', () => {
     const crew = { members: { a: { nickname: 'dana', wins: 1 }, b: { nickname: 'nigger', wins: 5 }, c: { nickname: 'cumshot' } } };
     assert.deepStrictEqual(crewStandings(crew).map(m => m.nickname), ['dana']);
+});
+
+// The Hanukkah and Christmas night walks: a teenager's rude name became "Grandma" at a table where the
+// real grandparents played, so the scores read "Grandma fooled Grandma & ...". No swap name is a family role.
+test('no swap name is a name a relative at the table goes by', () => {
+    const family = ['grandma', 'grandpa', 'granny', 'nana', 'mom', 'mum', 'dad', 'auntie', 'uncle',
+        'סבתא', 'סבא', 'אמא', 'אבא', 'דודה', 'דוד'];
+    for (const n of SWAP_NAMES.en.concat(SWAP_NAMES.he)) assert.ok(family.indexOf(n.toLowerCase()) < 0, n);
 });

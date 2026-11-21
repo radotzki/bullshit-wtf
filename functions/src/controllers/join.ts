@@ -30,7 +30,22 @@ export function cleanNickname(typed: any, uid: string, pid: string, locale: stri
             .map(k => players[k].nickname);
         return { nickname: swapName(uid || pid, locale, taken), swapped: true };
     }
-    return { nickname: Array.from(name).slice(0, NICKNAME_MAX).join('').trim(), swapped: false };
+    return { nickname: cutNickname(name), swapped: false };
+}
+
+/**
+ * A name cut to NICKNAME_MAX characters, without a dangling "&", "+", "-", "," or "and" at the cut, so
+ * "Grandma & Grandpa" sits at the table as "Grandma", not "Grandma &" (and "Grandma &'s excuse" in an
+ * About question): from the English Christmas night walk. A name that is nothing but those keeps its cut.
+ */
+export function cutNickname(name: string): string {
+    const all = Array.from(name);
+    const cut = all.slice(0, NICKNAME_MAX).join('').trim();
+    if (all.length <= NICKNAME_MAX) {
+        return cut;
+    }
+    const tidy = cut.replace(/(?:[\s&+,\-\/]+|\s+(?:and|und|et|y|ו))+$/i, '').trim();
+    return tidy || cut;
 }
 
 /**
