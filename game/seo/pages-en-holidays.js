@@ -40,22 +40,47 @@ ${howToStart('Start a Christmas game')}
 <p>"Bullshit" is a swear word, and it is on the screens, including the "biggest bullshitter" title at the end. In most families that is half the fun. You know yours.</p>
 <p>The full rules and points are on <a href="/how-to-play">How to play</a>. Playing again on New Year's Eve? See <a href="/new-years-eve-party-game">the New Year's Eve page</a>.</p>`;
 
+// New Year's Eve: its own pack (?pack=newyear, functions/data/newyear-questions.json) and its own
+// steps, written for a grown-up party around a TV, with friends on a video call, people arriving late
+// and leaving at midnight (from the English New Year's Eve walk, 31 December played on 21 November
+// 2026: the page opened a Christmas game, whose first question was NORAD's Santa tracker). Its
+// example is a true fact in no question file: Ecuador's años viejos (Wikipedia, Año Viejo).
 const newYear = `
 <p>There are a few hours between dinner and midnight, and a room full of people waiting for the countdown. Bullshit fills them: a party game everyone plays on their own phone, in the browser, with nothing to buy or install. One person opens a game, the others type a four-letter PIN, and the room is playing in under a minute.</p>
 <!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a lie that sounds true enough to fool the others. All the answers appear together with the truth, and everyone picks the one they believe. Find the truth and you score; fool a friend and you score for that too. Fall for one of the lies the game adds itself and you lose points.</p>
-${example('The world\'s first webcam was set up to keep an eye on a ____',
-    'Say Alex writes "baby", Priya writes "parking space" and Jo writes "fish tank". The truth: a coffee pot, in a university computer lab. Everyone who went for "fish tank" just gave Jo points.')}
+${example('In Ecuador, families see the new year in by burning life-size ____ in the street at midnight',
+    'Say Alex writes "wooden boats", Priya writes "Christmas trees" and Jo writes "paper lanterns". The truth: dolls, stuffed with sawdust and dressed up as the old year, or as a politician. Everyone who went for "Christmas trees" just gave Priya points.')}
+<p>The "Start a New Year's game" button on this page gives the game New Year's Eve questions: how the rest of the world sees the new year in. They are in English only. Every game has three, and REMATCH brings ones the room hasn't seen.</p>
 <h2>Why it suits New Year's Eve</h2>
 <ul>
-  <li><strong>It fits around the party.</strong> A game of 5 questions takes about ten minutes, so you can play one, go back to the drinks, and play another before midnight. "Rematch" keeps the same players and brings new questions.</li>
+  <li><strong>It fits around the party.</strong> A game of 5 questions takes about ten minutes, so you can play one, go back to the drinks, and play another before midnight. Want the winner on the screen at the countdown? Start a 5-question game at about a quarter to twelve.</li>
   <li><strong>Points grow each round</strong>, so nobody is out of it until the last question, and the "final question" card says how far first place leads.</li>
   <li><strong>Up to 12 phones a game.</strong> A bigger party plays in pairs, one phone per pair, or opens a second game in the kitchen.</li>
-  <li><strong>The big screen.</strong> On a laptop or computer connected to the TV, open bullshit.wtf, click "Present" and type the PIN, and everyone else can watch, read the lies and shout bad advice.</li>
   <li><strong>Free and in the browser.</strong> No app, no sign-up, no ads in the game.</li>
 </ul>
-${howToStart('Start a New Year\'s game')}
+<h2>How to start</h2>
+<ol>
+  <li>On the laptop connected to the TV, click "Start a New Year's game" on this page, choose 5, 7 or 9 questions, and click "Create". The game is in English, with the New Year's Eve questions on.</li>
+  <li>Type your name, and in the lobby click "Use as the big screen". The TV now shows the PIN, a QR code and the START button. Join on your own phone like everyone else.</li>
+  <li>Everyone scans the QR code from the TV, or opens bullshit.wtf on their phone, taps "Join Game" and types the PIN. Or send the link under the QR code to the group chat.</li>
+  <li>When everyone is in, press START on the TV. The game moves on by itself from there.</li>
+</ol>
+<p>Started the game on your phone instead? Open bullshit.wtf on the laptop, click "Present Game" and type the PIN: the TV shows the game, and you press START on your phone.</p>
+<h2>The night as it really goes</h2>
+<ul>
+  <li><strong>Friends on a video call.</strong> Share the laptop's screen in the call (Zoom, FaceTime, Google Meet), so they see the questions, and send them the link. They play on their own phone or laptop. The call runs a second or two behind, but every phone has its own copy of the question and the clock. Friends in London hit midnight five hours before New York: they can play the first games and say goodnight.</li>
+  <li><strong>Someone arrives late.</strong> They open the same link, or type the PIN under "Join Game", and join the game under way, at 0 points.</li>
+  <li><strong>A phone goes to sleep</strong> while its owner fetches a drink. Wake it up and the game comes back where the room is. Nobody waits for it: the clock runs, and that player just misses the question.</li>
+  <li><strong>Someone leaves at midnight.</strong> The game carries on without them. REMATCH starts the next game with whoever presses JOIN THE REMATCH.</li>
+</ul>
+<h2>A grown-up table</h2>
+<ul>
+  <li><strong>The name.</strong> "Bullshit" is a swear word, and it is on the screens, including the "biggest bullshitter" title at the end. At most parties that is the point.</li>
+  <li><strong>Names are 9 letters at most</strong>, so "Tipsy Tina" comes out as "Tipsy Tin": pick a short one. The game swaps a rude nickname for a harmless one.</li>
+  <li><strong>Leave "Kids are playing" off.</strong> A kids game has no New Year's Eve questions.</li>
+</ul>
 <h2>Keep the crew for next year</h2>
 <p>At the end of a game you can save the group as a crew. The crew gets its own page, with standings that carry over from game to game and a button for a rematch, so the friend who won tonight can be dethroned at the next party.</p>
 <p>The full rules and points are on <a href="/how-to-play">How to play</a>. Family first? See <a href="/christmas-party-game">the Christmas page</a>.</p>`;
@@ -97,7 +122,7 @@ module.exports = {
         },
         {
             path: '/new-years-eve-party-game', site: en, tag: 'seo-en-new-year',
-            start: { href: '/create-game?lang=en&pack=christmas', label: 'Start a New Year\'s game' },
+            start: { href: '/create-game?lang=en&pack=newyear', label: 'Start a New Year\'s game' },
             image: '/assets/og-new-year-en.png',
             title: 'New Year\'s Eve party game: bluffing trivia · Bullshit',
             description: 'Something to play before midnight: Bullshit is a free party game where everyone writes a lie and tries to find the truth, on their own phone. No app, 10-minute games.',

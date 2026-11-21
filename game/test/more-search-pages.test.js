@@ -1,6 +1,6 @@
 // The Jackbox-alternative pages (English and Hebrew twin) and the English holiday pages (Christmas,
-// New Year's Eve, office holiday party): each has its own tag, its own share picture, a real question of
-// the game as its example, an honest note on the trademark, and the home row shows the holiday pages
+// New Year's Eve, office holiday party): each has its own tag, its own share picture, an example (a real
+// question of the game on the Jackbox pages, one in no question file on the holiday pages), an honest note on the trademark, and the home row shows the holiday pages
 // in December only. Run: npm test (from game/).
 const test = require('node:test');
 const assert = require('node:assert');
@@ -47,7 +47,10 @@ Object.keys(added).forEach(p => {
         assert.ok(page(p).body.indexOf('<!--start-->') > 0);
     });
 
-    test(`${p}: the example is a real question of the game, with its true answer`, () => {
+    // The holiday pages' examples are in no question file (holiday-pages.test.js, from the English
+    // Christmas night walk), so a family that read the page meets no truth it already knows.
+    const holiday = /^\/(christmas|new-years-eve|office-holiday)-/.test(p);
+    if (!holiday) test(`${p}: the example is a real question of the game, with its true answer`, () => {
         const lang = page(p).site.lang;
         const m = /<p class="q">([^<]+)<\/p>/.exec(page(p).body);
         assert.ok(m, 'has an example question');
@@ -62,7 +65,7 @@ Object.keys(added).forEach(p => {
 });
 
 test('the holiday pages start an English game with the Christmas and New Year pack', () => {
-    ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game'].forEach(p => {
+    ['/christmas-party-game', '/office-holiday-party-game'].forEach(p => {
         assert.strictEqual(page(p).start.href, '/create-game?lang=en&pack=christmas', p);
         assert.ok(!page(p).twin, `${p} is English only`);
     });

@@ -1,0 +1,338 @@
+{
+  "newyear-26-en-01": {
+    "questionText": "The first Times Square ball was lowered on New Year's Eve 1907, after the city banned the $blank$ that had been set off over the crowd there",
+    "realAnswer": "fireworks",
+    "fakeAnswers": [
+      "confetti cannons",
+      "street bands",
+      "horse-drawn sleighs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Times_Square_Ball",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-02": {
+    "questionText": "The Times Square ball copies the time balls once dropped in ports at a set hour, so that $blank$ could check their clocks",
+    "realAnswer": "ships' navigators",
+    "fakeAnswers": [
+      "factory owners",
+      "train drivers",
+      "church bell ringers"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Time_ball",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-03": {
+    "questionText": "Instead of a ball, the town of Lebanon, Pennsylvania, lowers a giant $blank$ at midnight on New Year's Eve",
+    "realAnswer": "bologna",
+    "fakeAnswers": [
+      "pretzel",
+      "rubber duck",
+      "cheesesteak"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/List_of_objects_dropped_on_New_Year%27s_Eve",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-04": {
+    "questionText": "Mount Olive, North Carolina, home of a pickle factory, drops its New Year pickle at 7 pm, because that is midnight in $blank$",
+    "realAnswer": "greenwich",
+    "fakeAnswers": [
+      "paris",
+      "rome",
+      "moscow"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/List_of_objects_dropped_on_New_Year%27s_Eve",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-05": {
+    "questionText": "Christmas was frowned on for so long in Scotland, where Hogmanay was the big night, that Christmas Day only became a public holiday there in $blank$",
+    "realAnswer": "1958",
+    "fakeAnswers": [
+      "1901",
+      "1919",
+      "1973"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hogmanay",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-06": {
+    "questionText": "At Hogmanay in Stonehaven, Scotland, people parade up the high street at midnight swinging $blank$ around their heads",
+    "realAnswer": "balls of fire",
+    "fakeAnswers": [
+      "live lobsters",
+      "bagpipes",
+      "whole haggises"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hogmanay",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-07": {
+    "questionText": "On New Year's Eve in Brazil, crowds dress in white and, at midnight, jump over $blank$ waves, making a wish for each",
+    "realAnswer": "seven",
+    "fakeAnswers": [
+      "three",
+      "twelve",
+      "one hundred"
+    ],
+    "citation": "https://theculturetrip.com/south-america/brazil/articles/how-to-celebrate-new-years-eve-in-rio-de-janeiro",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-08": {
+    "questionText": "In Colombia, anyone who wants to travel in the new year walks around the block at midnight carrying a $blank$",
+    "realAnswer": "suitcase",
+    "fakeAnswers": [
+      "birdcage",
+      "wine bottle",
+      "flower pot"
+    ],
+    "citation": "https://theculturetrip.com/south-america/colombia/articles/the-11-strangest-colombian-new-year-traditions",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-09": {
+    "questionText": "In Denmark, people save up old $blank$ all year, to smash against their friends' front doors on New Year's Eve",
+    "realAnswer": "plates",
+    "fakeAnswers": [
+      "light bulbs",
+      "flower pots",
+      "snow globes"
+    ],
+    "citation": "https://www.ripleys.com/stories/new-years-eve-traditions",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-10": {
+    "questionText": "In the Philippines, children jump as high as they can at the stroke of midnight on New Year's Eve, so that they will $blank$",
+    "realAnswer": "grow taller",
+    "fakeAnswers": [
+      "get presents",
+      "stay awake",
+      "have good teeth"
+    ],
+    "citation": "https://tribune.net.ph/2025/12/31/up-up-and-away-new-year-jump-tradition",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-11": {
+    "questionText": "On New Year's Eve, many Japanese families eat a bowl of long $blank$, to cross from the old year into the new",
+    "realAnswer": "buckwheat noodles",
+    "fakeAnswers": [
+      "grilled eels",
+      "sweet potatoes",
+      "chicken skewers"
+    ],
+    "citation": "https://www.nippon.com/en/japan-data/h01199/",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-12": {
+    "questionText": "On New Year's Eve the Dutch eat oliebollen, deep-fried dough balls whose name means $blank$",
+    "realAnswer": "oil balls",
+    "fakeAnswers": [
+      "fat clouds",
+      "lucky buns",
+      "sugar stones"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Oliebol",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-13": {
+    "questionText": "Every New Year's Eve, millions of Germans watch the same 1963 black-and-white TV sketch, performed in English by two British comedians: \"$blank$ for One\"",
+    "realAnswer": "dinner",
+    "fakeAnswers": [
+      "table",
+      "party",
+      "champagne"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dinner_for_One",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-14": {
+    "questionText": "In the Soviet comedy Russians watch every New Year's Eve, a drunk man is put on the wrong plane, and his key opens a stranger's flat in $blank$",
+    "realAnswer": "leningrad",
+    "fakeAnswers": [
+      "kyiv",
+      "minsk",
+      "vladivostok"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/The_Irony_of_Fate",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-15": {
+    "questionText": "In Talca, Chile, many families see in the new year in $blank$, beside their late relatives",
+    "realAnswer": "the cemetery",
+    "fakeAnswers": [
+      "the cathedral",
+      "the town square",
+      "the hospital"
+    ],
+    "citation": "https://www.lafm.com.co/entretenimiento/ciudad-chilena-recibe-ano-nuevo-extrana-tradicion-cementerio",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-16": {
+    "questionText": "Sydney has two New Year's Eve firework shows: the midnight one, and one at 9 pm, for $blank$",
+    "realAnswer": "families with children",
+    "fakeAnswers": [
+      "the boats on the harbour",
+      "tourists flying home",
+      "the night shift"
+    ],
+    "citation": "https://news.cityofsydney.nsw.gov.au/media-releases/family-fireworks-deliver-new-delights-on-nye",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-17": {
+    "questionText": "In 2011, to move to the other side of the date line, Samoa skipped a whole day: it had no $blank$",
+    "realAnswer": "30 december",
+    "fakeAnswers": [
+      "new year's eve",
+      "boxing day",
+      "new year's day"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Samoa",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-18": {
+    "questionText": "ABBA's \"Happy New Year\" began life with the working title \"Daddy Don't Get $blank$ on Christmas Day\"",
+    "realAnswer": "drunk",
+    "fakeAnswers": [
+      "lost",
+      "grumpy",
+      "stuck"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Happy_New_Year_(ABBA_song)",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-19": {
+    "questionText": "\"Come quickly, I am tasting the stars!\", said to be the monk Dom Perignon on his first sip of champagne, was first printed in $blank$",
+    "realAnswer": "an advertisement",
+    "fakeAnswers": [
+      "a love letter",
+      "a cookbook",
+      "a hymn book"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dom_P%C3%A9rignon_(monk)",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-20": {
+    "questionText": "Legend says the wide champagne coupe was modelled on Marie Antoinette's $blank$, but the glass was made in England nearly a century before her",
+    "realAnswer": "breast",
+    "fakeAnswers": [
+      "soup bowl",
+      "perfume bottle",
+      "crown"
+    ],
+    "citation": "https://www.snopes.com/fact-check/palace-coupe/",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-21": {
+    "questionText": "Opening champagne by slicing its neck off with a sword is said to have caught on with the cavalry of $blank$",
+    "realAnswer": "napoleon",
+    "fakeAnswers": [
+      "genghis khan",
+      "the tsar",
+      "admiral nelson"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sabrage",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-22": {
+    "questionText": "In Japan, the tune of \"Auld Lang Syne\" is widely known as the music that shops play when they are $blank$",
+    "realAnswer": "closing",
+    "fakeAnswers": [
+      "opening",
+      "having a sale",
+      "out of stock"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Auld_Lang_Syne",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-23": {
+    "questionText": "In Vienna, just after the midnight bells on New Year's Eve, the radio plays $blank$, and people waltz in the streets",
+    "realAnswer": "the blue danube",
+    "fakeAnswers": [
+      "ode to joy",
+      "edelweiss",
+      "silent night"
+    ],
+    "citation": "https://www.wien.info/en/music-stage-shows/new-years-eve",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-24": {
+    "questionText": "In the American South, a plate of $blank$ on New Year's Day is meant to bring luck for the year",
+    "realAnswer": "black-eyed peas",
+    "fakeAnswers": [
+      "pecan pie",
+      "fried okra",
+      "corn dogs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Black-eyed_pea",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-25": {
+    "questionText": "Pasadena's Rose Parade never runs on a Sunday: since 1893, when 1 January is a Sunday it moves to Monday, so as not to frighten $blank$",
+    "realAnswer": "horses outside churches",
+    "fakeAnswers": [
+      "the choir",
+      "the bishop",
+      "sleeping drunks"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rose_Parade",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-26": {
+    "questionText": "On 1 January, thousands of Dutch people run into the freezing North Sea wearing matching orange $blank$, from a soup brand",
+    "realAnswer": "woolly hats",
+    "fakeAnswers": [
+      "scarves",
+      "clogs",
+      "life jackets"
+    ],
+    "citation": "https://dutchreview.com/culture/the-new-years-dive-at-scheveningen/",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-27": {
+    "questionText": "\"Auld Lang Syne\" at midnight caught on in America through the New Year's Eve broadcasts of bandleader $blank$, from 1929 to 1976",
+    "realAnswer": "guy lombardo",
+    "fakeAnswers": [
+      "glenn miller",
+      "benny goodman",
+      "tommy dorsey"
+    ],
+    "citation": "https://www.nationalgeographic.com/history/article/auld-lang-syne-new-years-eve-tradition",
+    "lang": "en",
+    "pack": "newyear"
+  },
+  "newyear-26-en-28": {
+    "questionText": "In Italy, many people put on new $blank$ underwear on New Year's Eve, for luck in the year ahead",
+    "realAnswer": "red",
+    "fakeAnswers": [
+      "gold",
+      "inside-out",
+      "borrowed"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/New_Year%27s_Eve",
+    "lang": "en",
+    "pack": "newyear"
+  }
+}

@@ -4,7 +4,8 @@
 // the strange facts (functions/data/strange-facts-2026-11.json, ids fact-26-en-01.., -he-01..)
 // the Thanksgiving pack (functions/data/thanksgiving-questions.json, ids
 // thanksgiving-26-en-01.., English only) and the Christmas and New Year pack
-// (functions/data/christmas-questions.json, ids christmas-26-en-01.., English only), the kids
+// (functions/data/christmas-questions.json, ids christmas-26-en-01.., English only), the New Year's
+// Eve pack (functions/data/newyear-questions.json, ids newyear-26-en-01.., English only), the kids
 // pack for the create page's "Kids are playing" switch (functions/data/kids-questions.json, ids
 // kids-26-en-01.., -he-01..) and the everyday questions (functions/data/everyday-questions-2026-11.json,
 // ids everyday-26-en-01.., -he-01..).
@@ -77,6 +78,8 @@ const FILES = [
     { file: 'functions/data/christmas-questions.json', name: 'the Christmas and New Year pack', id: /^christmas-26-(en)-\d{2}$/, like: 'christmas-26-en-01', pack: 'christmas' },
     { file: 'functions/data/kids-questions.json', name: 'the kids pack', id: /^kids-26-(en|he)-\d{2}$/, like: 'kids-26-en-01', pack: 'kids' },
     { file: 'functions/data/everyday-questions-2026-11.json', name: 'the everyday questions', id: /^everyday-26-(en|he)-\d{2}$/, like: 'everyday-26-en-01', pack: null },
+    // English only, like the Christmas pack: the New Year's Eve pack (questionPacks.newyear).
+    { file: 'functions/data/newyear-questions.json', name: 'the New Year\'s Eve pack', id: /^newyear-26-(en)-\d{2}$/, like: 'newyear-26-en-01', pack: 'newyear' },
 ];
 // Never a file of the game's bank, whatever a later edit adds to FILES: the daily puzzle reads
 // its questions from the functions bundle, and a daily question in questions/ would turn up in
