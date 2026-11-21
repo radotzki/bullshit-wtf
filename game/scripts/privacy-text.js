@@ -3,8 +3,8 @@
 //   join:     functions/src/controllers/analytics.ts onJoinGame (users: ip, useragent, nickname, pin, via)
 //   visits:   functions/src/controllers/visit.ts (no IP, no uid, no nickname)
 //   games:    the Realtime Database, games/<PIN>; old-games.ts moves players' parts out of reach, erases nothing
-//   crews:    functions/src/controllers/crew.ts; daily group rounds: daily-store.ts eraseOldRounds (nine days)
-//   errors:   game/src/app/sentry; fonts and icons: game/src/index.html
+//   crews:    functions/src/controllers/crew.ts, crew-night.ts (the night's date and who said "I'm in"); daily group rounds: daily-store.ts eraseOldRounds (nine days)
+//   errors:   game/src/app/sentry (setSentryUser: the uid; reportError: the PIN; Sentry keeps the IP); fonts and icons: game/src/index.html
 //   portal:   game/src/app/portal (CrazyGames username and language)
 // No contact address: the site shows none, so questions go to the public repository's issues.
 
@@ -31,9 +31,10 @@ const en = {
                 'The nickname you type (on CrazyGames, your CrazyGames username), the answers and fake answers you write, your picks '
                 + 'and your score. The other players in the game see them. A few hours after the game, they are moved out of '
                 + 'other players\' reach and kept on our server.',
-                'When you join a game: your IP address, your browser\'s description (its user agent), your nickname, the game\'s code, '
-                + 'and how you came to it (a link, the code, a QR code).',
-                'If your group saves a crew: its name, and its players\' nicknames and scores.',
+                'When you join a game: your IP address, your browser\'s description (its user agent), its random id, your nickname, '
+                + 'the game\'s code, and how you came to it (a link, the code, a QR code).',
+                'If your group saves a crew: its name, its players\' nicknames and scores, and its next game night: the date, and the '
+                + 'names of those who said they\'re in.',
                 'In a group round of the daily puzzle: the first names and fake answers sent. They are erased nine days after the '
                 + 'puzzle\'s day.',
             ],
@@ -46,7 +47,7 @@ const en = {
         {
             h: 'Errors',
             p: ['When something breaks, a report goes to Sentry, the service we use to find bugs: what went wrong, on which page, in '
-                + 'which browser.'],
+                + 'which browser, with your browser\'s random id, the game\'s code and your IP address.'],
         },
         {
             h: 'On your device',
@@ -102,9 +103,10 @@ const he = {
                 'הכינוי שאתם מקלידים (ב-CrazyGames, שם המשתמש שלכם שם), התשובות והתשובות המומצאות שאתם כותבים, הבחירות שלכם '
                 + 'והניקוד. שאר השחקנים במשחק רואים אותם. כמה שעות אחרי המשחק הם מועברים למקום ששחקנים אחרים לא מגיעים אליו, '
                 + 'ונשמרים אצלנו בשרת.',
-                'כשמצטרפים למשחק: כתובת ה-IP, תיאור הדפדפן (ה-user agent), הכינוי, קוד המשחק, ואיך הגעתם אליו (קישור, הקוד, '
+                'כשמצטרפים למשחק: כתובת ה-IP, תיאור הדפדפן (ה-user agent), המזהה האקראי שלו, הכינוי, קוד המשחק, ואיך הגעתם אליו (קישור, הקוד, '
                 + 'קוד QR).',
-                'אם הקבוצה שלכם שומרת חבורה: השם שלה, והכינויים והניקוד של השחקנים בה.',
+                'אם הקבוצה שלכם שומרת חבורה: השם שלה, הכינויים והניקוד של השחקנים בה, וערב המשחק הבא שלה: התאריך, והשמות של מי '
+                + 'שאמרו שהם באים.',
                 'בסבב קבוצתי של החידה היומית: השמות הפרטיים והתשובות המומצאות שנשלחו. הם נמחקים תשעה ימים אחרי היום של החידה.',
             ],
         },
@@ -115,7 +117,8 @@ const he = {
         },
         {
             h: 'תקלות',
-            p: ['כשמשהו נשבר, נשלח דיווח ל-Sentry, השירות שבו אנחנו מוצאים באגים: מה השתבש, באיזה עמוד, באיזה דפדפן.'],
+            p: ['כשמשהו נשבר, נשלח דיווח ל-Sentry, השירות שבו אנחנו מוצאים באגים: מה השתבש, באיזה עמוד, באיזה דפדפן, '
+                + 'יחד עם המזהה האקראי של הדפדפן, קוד המשחק וכתובת ה-IP שלכם.'],
         },
         {
             h: 'במכשיר שלכם',

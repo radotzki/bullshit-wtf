@@ -53,16 +53,23 @@ test('the privacy page has no way into the game: its only links are the other la
 test('the privacy page says what the join keeps, and the words the code backs', () => {
     const all = (t) => [t.intro].concat(...t.sections.map(s => (s.p || []).concat(s.list || []))).join(' ');
     const en = all(PRIVACY.en);
-    for (const fact of [/IP address/, /user agent/, /nickname/, /Sentry/, /Google Fonts/, /BootstrapCDN/, /nine days/, /CrazyGames/]) {
+    for (const fact of [/IP address/, /user agent/, /random id/, /game night/, /said they're in/, /nickname/, /Sentry/, /Google Fonts/, /BootstrapCDN/, /nine days/, /CrazyGames/]) {
         assert.match(en, fact);
     }
     const he = all(PRIVACY.he);
-    for (const fact of [/IP/, /user agent/, /Sentry/, /Google Fonts/, /BootstrapCDN/, /תשעה ימים/, /CrazyGames/]) {
+    for (const fact of [/IP/, /user agent/, /המזהה האקראי/, /ערב המשחק הבא/, /Sentry/, /Google Fonts/, /BootstrapCDN/, /תשעה ימים/, /CrazyGames/]) {
         assert.match(he, fact);
     }
     // The join keeps exactly these (functions/src/controllers/analytics.ts onJoinGame).
     const analytics = fs.readFileSync(path.join(root, '..', 'functions', 'src', 'controllers', 'analytics.ts'), 'utf8');
     assert.match(analytics, /insert\('users', \{[^}]*\bip,\s*useragent,\s*pin,\s*nickname,\s*via,/);
+    // An error report names the browser's id and the game: say so where the page speaks of Sentry.
+    const errors = (t) => t.sections.find(x => /Sentry/.test((x.p || []).join(' '))).p.join(' ');
+    assert.match(errors(PRIVACY.en), /random id.*game's code.*IP address/);
+    assert.match(errors(PRIVACY.he), /המזהה האקראי.*קוד המשחק.*IP/);
+    assert.match(fs.readFileSync(path.join(root, 'src', 'app', 'services', 'session.service.ts'), 'utf8'), /setSentryUser\(\{ id: user\.uid \}\)/);
+    // A crew keeps its next night and who said "I'm in" (game-model CrewNight).
+    assert.match(fs.readFileSync(path.join(root, '..', 'game-model.ts'), 'utf8'), /export interface CrewNight \{\s*time: number;\s*by\?: string;\s*in\?:/);
     // A visit keeps no IP (functions/src/controllers/visit.ts).
     assert.match(fs.readFileSync(path.join(root, '..', 'functions', 'src', 'controllers', 'visit.ts'), 'utf8'), /No IP, no user agent/);
 });
