@@ -9,6 +9,13 @@
     background-position: center center;
     background-repeat: no-repeat;
 
+    // Inside Discord the content policy refuses images from other sites: the arcade photo from the game's
+    // own files (src/assets/images/arcade.jpg, a copy of the repository's graphics/arcade.jpg). boot.ts marks the
+    // page data-bs-discord. Off Discord the photo still comes from Cloudinary, as it always has.
+    [data-bs-discord] & {
+        background-image: url(/assets/images/arcade.jpg);
+    }
+
     .title-area {
         padding: 0 15px;
         color: white;

@@ -174,7 +174,8 @@ function redirect(url) {
     return null;
 }
 
-// The game's two fonts come from Google Fonts, which this run can't reach. FONTS=<dir> serves them
+// The game now serves its two fonts itself (src/assets/fonts), so a build from then on needs none of
+// this. For an older build: its fonts come from Google Fonts, which this run can't reach. FONTS=<dir> serves them
 // from a folder that holds fonts.css (the stylesheet Google sends) and its .woff2 files, so the
 // screens are measured in the fonts a TV shows. Without it the browser's own font stands in.
 function localFont(url) {

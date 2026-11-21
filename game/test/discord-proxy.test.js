@@ -88,9 +88,21 @@ function fakeWindow(href) {
     WebSocket.OPEN = 1;
     function XMLHttpRequest() { }
     XMLHttpRequest.prototype.open = function (method, url) { seen.push(['xhr', url]); };
-    const links = [{ media: 'print', attrs: { 'data-beasties-media': 'all' },
-        getAttribute(n) { return this.attrs[n]; }, removeAttribute(n) { delete this.attrs[n]; } }];
-    const document = { links, querySelectorAll: (sel) => (sel === 'link[data-beasties-media]' ? links.filter((l) => 'data-beasties-media' in l.attrs) : []) };
+    const link = (attrs) => ({ media: 'print', attrs,
+        getAttribute(n) { return this.attrs[n]; }, removeAttribute(n) { delete this.attrs[n]; } });
+    // The game's stylesheet (Angular's critical-CSS step) and the icons' (index.html, data-bs-later).
+    const links = [link({ 'data-beasties-media': 'all' }), link({ 'data-bs-later': '' })];
+    const scripts = [];
+    const root = { attrs: {}, setAttribute(n, v) { this.attrs[n] = v; } };
+    const document = {
+        links, scripts, documentElement: root,
+        querySelectorAll: (sel) => {
+            const attr = { 'link[data-beasties-media]': 'data-beasties-media', 'link[data-bs-later]': 'data-bs-later' }[sel];
+            return attr ? links.filter((l) => attr in l.attrs) : [];
+        },
+        createElement: (tag) => ({ tag }),
+        head: { appendChild: (el) => scripts.push(el) },
+    };
     const win = {
         location: new URL(href), URL, Request, WebSocket, XMLHttpRequest, seen, document,
         fetch(input) { seen.push(['fetch', input instanceof Request ? input.url : String(input)]); return Promise.resolve(); },
@@ -135,6 +147,9 @@ test('boot: on the site and anywhere off Discord, nothing is patched', () => {
         assert.strictEqual(win.XMLHttpRequest.prototype.open, before.open, href);
         assert.strictEqual(win.bsDiscordProxy, undefined, href);
         assert.strictEqual(win.document.links[0].media, 'print', `${href}: the inline script turns the stylesheet on, as before`);
+        assert.strictEqual(win.document.links[1].media, 'print', `${href}: the icons' inline onload turns them on, as before`);
+        assert.deepStrictEqual(win.document.scripts, [], `${href}: the inline beacon alone counts the visit`);
+        assert.deepStrictEqual(win.document.documentElement.attrs, {}, `${href}: not marked as Discord`);
     }
 });
 
@@ -147,10 +162,28 @@ test('boot: inside Discord the page is patched and marked', () => {
         delete global.window;
     }
     assert.strictEqual(win.bsDiscordProxy, true);
-    // The stylesheet is on without the inline script, which Discord's content policy may refuse.
+    // The stylesheets are on without the inline script and onload, which Discord's content policy may refuse.
     assert.strictEqual(win.document.links[0].media, 'all');
+    assert.strictEqual(win.document.links[1].media, 'all', 'the icons');
+    // Marked for the Discord styles (the background photo from the game's own files).
+    assert.ok('data-bs-discord' in win.document.documentElement.attrs);
+    // The visit beacon did not run inline (no bsVisit): its file is loaded, once.
+    assert.deepStrictEqual(win.document.scripts.map((el) => [el.tag, el.src]), [['script', '/visit-beacon.js']]);
     new win.WebSocket('wss://bullshit-wtf-prod.firebaseio.com/.ws');
     assert.deepStrictEqual(win.seen, [['ws', `wss://${HOST}/fb/bullshit-wtf-prod/.ws`]]);
+});
+
+test('boot: inside Discord, where the inline beacon did run, its file is not loaded again', () => {
+    const win = fakeWindow(PAGE);
+    win.bsVisit = () => { };
+    global.window = win;
+    try {
+        load(path.join(SRC, 'boot.ts'), (m) => (m === './proxy' ? proxy : {}));
+    } finally {
+        delete global.window;
+    }
+    assert.strictEqual(win.bsDiscordProxy, true);
+    assert.deepStrictEqual(win.document.scripts, [], 'no second beacon, so no visit counted twice');
 });
 
 test('the polyfills run the boot first, before zone.js and the app', () => {
@@ -166,4 +199,19 @@ test('the database stays on WebSockets inside Discord', () => {
     assert.ok(force > init, 'forceWebSockets() is called after initializeApp');
     assert.ok(api.indexOf('.database()') > force, 'and before the first database use');
     assert.match(api.slice(init, force), /bsDiscordProxy === true/);
+});
+
+test('the beacon file is the page\'s own beacon, word for word', () => {
+    const { beacon, FILE } = require('../scripts/build-visit-file');
+    const index = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.html'), 'utf8');
+    const inline = /<!-- BS:VISIT:START -->\s*<script>([\s\S]*?)<\/script>\s*<!-- BS:VISIT:END -->/.exec(index)[1];
+    assert.strictEqual(beacon(index).trim(), inline.trim());
+    assert.strictEqual(FILE, 'visit-beacon.js');
+    // boot.ts loads it by that name, and Hosting serves it uncached, like the pages.
+    assert.match(fs.readFileSync(path.join(SRC, 'boot.ts'), 'utf8'), /'\/visit-beacon\.js'/);
+    const hosting = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'firebase.json'), 'utf8')).hosting;
+    const rule = hosting.headers.find((h) => h.source === '/visit-beacon.js');
+    assert.ok(rule && rule.headers.some((h) => h.key === 'Cache-Control' && h.value === 'no-cache'));
+    // The build writes it.
+    assert.match(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')).scripts.build, /node scripts\/build-visit-file\.js/);
 });

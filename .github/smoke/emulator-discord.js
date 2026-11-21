@@ -37,19 +37,40 @@ const QUESTIONS = 5;
 const GAME_TIMEOUT_MS = Number(process.env.GAME_MINUTES || 8) * 60 * 1000;
 const PHONE_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36';
 
-// Refused by the content policy, and expected to be until later build steps (spec, "The build" row 5):
-// Google Fonts and Font Awesome come from other sites, the visit beacon and the stylesheet switch are
-// inline scripts (boot.ts turns the stylesheet on instead). Also Firebase sign-in's helper for
-// pop-up and redirect sign-in (apis.google.com/js/api.js), which it loads on start and the game never
-// uses (it signs in anonymously). None of them stops the game.
+// Refused by the content policy, and expected to be: the page's inline scripts (the visit beacon, the
+// stylesheet switch, the icons' onload), which boot.ts makes up for from files (the beacon from
+// visit-beacon.js, the stylesheets turned on by itself). Also Firebase sign-in's helper for pop-up and
+// redirect sign-in (apis.google.com/js/api.js), which it loads on start and the game never uses (it
+// signs in anonymously). None of them stops the game. The fonts, the icons and the background photo come
+// from the game's own files, so a request for them to another site fails the check.
 const EXPECTED_BLOCKS = [
     /^https:\/\/apis\.google\.com\/js\/api\.js/,
-    /^https:\/\/fonts\.googleapis\.com\//,
-    /^https:\/\/fonts\.gstatic\.com\//,
-    /^https:\/\/maxcdn\.bootstrapcdn\.com\//,
-    /^https:\/\/res\.cloudinary\.com\//,
     /^inline$/,
 ];
+// The fields of every visit row (the beacon in src/index.html): the same inside Discord as off it.
+const VISIT_FIELDS = ['k', 'v', 'first', 'last', 'booted', 'ms', 'err', 'lang', 'ref', 'tag', 'fv', 'cr', 'jn', 'pl', 'wd'].sort().join(',');
+
+/** What a page's own fonts, icons and photo came to: each font loaded from this host, and where from. */
+async function ownAssets(frame) {
+    return frame.evaluate(async () => {
+        const tries = { 'Luckiest Guy': 'BULLSHIT', 'Suez One': '\u05d1\u05d5\u05dc\u05e9\u05d9\u05d8', FontAwesome: '\uf00c' };
+        const fonts = {};
+        for (const [family, text] of Object.entries(tries)) {
+            const faces = await document.fonts.load(`20px "${family}"`, text).catch(() => []);
+            fonts[family] = faces.some((f) => f.status === 'loaded');
+        }
+        const files = performance.getEntriesByType('resource').map((e) => e.name);
+        const icons = Array.from(document.querySelectorAll('link[data-bs-later]')).map((l) => l.media);
+        return {
+            fonts,
+            fontFiles: files.filter((u) => /\.(woff2?|ttf|eot)(\?|$)/.test(u)).map((u) => new URL(u).host),
+            iconsOn: icons.length > 0 && icons.every((m) => m === 'all'),
+            photo: files.filter((u) => /arcade/.test(u)),
+            marked: document.documentElement.hasAttribute('data-bs-discord'),
+            beaconFile: files.some((u) => /\/visit-beacon\.js$/.test(u)),
+        };
+    });
+}
 const ALLOWED_CONSOLE_ERRORS = [
     // The browser's own line for each refusal above.
     /^Refused to (load|apply|execute|connect)/,
@@ -74,8 +95,11 @@ async function newPlayer(browser, proxy, name, role, desktop) {
         ? { serviceWorkers: 'block', viewport: { width: 1280, height: 720 } }
         : { serviceWorkers: 'block', viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true, userAgent: PHONE_UA });
     await context.addInitScript(watchPolicy);
-    const player = { name, role, context, problems: [], screens: [], lies: [], picks: [], done: false, escaped: [] };
+    const player = { name, role, context, problems: [], screens: [], lies: [], picks: [], done: false, escaped: [], visits: [] };
     context.on('request', (req) => {
+        if (new URL(req.url()).pathname === '/_v') {
+            try { player.visits.push(JSON.parse(req.postData())); } catch (e) { player.visits.push({ bad: String(req.postData()).slice(0, 80) }); }
+        }
         const host = new URL(req.url()).hostname;
         if (host !== ACTIVITY_HOST && host !== CLIENT_HOST && !req.url().startsWith('data:') && !req.url().startsWith('blob:')) {
             player.escaped.push(req.url().slice(0, 160));
@@ -215,11 +239,25 @@ async function main() {
         const failed = proxy.events.filter((e) => e.kind !== 'sentry' && e.status >= 500);
         const final = await db('GET', `games/${game.pin}`);
 
-        // Off Discord: the same build on its own host patches nothing.
+        // The fonts, icons and photo inside Discord, from the Activity's own host.
+        const assets = {};
+        for (const p of players) assets[p.name] = await ownAssets(p.page).catch((e) => ({ error: String(e) }));
+
+        // Off Discord: the same build on its own host patches nothing, and the inline beacon counts the visit.
         const plain = await browser.newContext();
+        const plainVisits = [];
+        const plainOut = [];
+        plain.on('request', (req) => {
+            const u = new URL(req.url());
+            // On this host (not one of the site's own) the beacon posts straight to the visit function.
+            if (u.pathname === '/_v' || /cloudfunctions\.net$/.test(u.hostname) && u.pathname === '/visit') { try { plainVisits.push(JSON.parse(req.postData())); } catch (e) { } }
+            if (u.hostname !== HOST && !/^(data|blob):/.test(req.url())) plainOut.push(u.hostname);
+        });
         const plainPage = await plain.newPage();
-        await plainPage.goto(`http://${HOST}:${site.address().port}/`);
+        await plainPage.goto(`http://${HOST}:${site.address().port}/create-game`);
+        await waitFor('the plain page draws', async () => plainVisits.some((r) => r.k === 'drawn'));
         const offDiscord = await plainPage.evaluate(() => window.bsDiscordProxy === undefined);
+        const plainAssets = await ownAssets(plainPage.mainFrame()).catch((e) => ({ error: String(e) }));
         await plain.close();
 
         const summary = {
@@ -236,7 +274,10 @@ async function main() {
             databaseSockets: sockets.length,
             sentryReport: { status: sent, received: sentry.length },
             refusedByPolicy: Array.from(new Set(blocks.map((b) => `${b.directive} ${b.blocked}`))),
+            assets,
+            visits: Object.fromEntries(players.map((p) => [p.name, p.visits.map((r) => r.k).join(' ')])),
             offDiscordUnpatched: offDiscord,
+            offDiscord: { visits: plainVisits.map((r) => r.k).join(' '), assets: plainAssets, outsideHosts: Array.from(new Set(plainOut)) },
             policy: proxy.policy,
         };
 
@@ -251,6 +292,31 @@ async function main() {
         if (failed.length) problems.push(`${failed.length} requests through the stand-in failed: ${failed.slice(0, 3).map((e) => `${e.kind} ${e.path} ${e.status}`).join(', ')}`);
         if (!styled) problems.push('the game\'s stylesheet is not on inside Discord');
         if (!offDiscord) problems.push('off Discord the page was patched');
+        players.forEach((p) => {
+            const a = assets[p.name] || {};
+            Object.entries(a.fonts || {}).forEach(([family, ok]) => { if (!ok) problems.push(`${p.name}: the font ${family} did not load inside Discord`); });
+            if (!a.fonts) problems.push(`${p.name}: could not read the fonts (${a.error})`);
+            (a.fontFiles || []).forEach((h) => { if (!h.startsWith(ACTIVITY_HOST)) problems.push(`${p.name}: a font came from ${h}`); });
+            if (!a.iconsOn) problems.push(`${p.name}: the icons' stylesheet is not on inside Discord`);
+            if (!a.marked) problems.push(`${p.name}: the page is not marked data-bs-discord`);
+            if (!a.beaconFile) problems.push(`${p.name}: visit-beacon.js was not loaded inside Discord`);
+            (a.photo || []).forEach((u) => { if (!u.startsWith(proxy.activityOrigin + '/assets/images/')) problems.push(`${p.name}: the background photo came from ${u}`); });
+            const views = p.visits.filter((r) => r.k === 'view');
+            if (views.length !== 1) problems.push(`${p.name}: ${views.length} view rows inside Discord, not 1`);
+            if (!p.visits.some((r) => r.k === 'drawn')) problems.push(`${p.name}: no drawn row inside Discord`);
+            p.visits.forEach((r) => { if (Object.keys(r).sort().join(',') !== VISIT_FIELDS) problems.push(`${p.name}: a visit row with other fields: ${Object.keys(r).join(',')}`); });
+            const want = p.role === 'host' ? 'create' : 'join';
+            if (!p.visits.some((r) => r.k === want)) problems.push(`${p.name}: no ${want} row inside Discord (${p.visits.map((r) => r.k).join(' ')})`);
+        });
+        if (!(assets[host.name] && assets[host.name].photo && assets[host.name].photo.length)) problems.push('the host never loaded the background photo inside Discord');
+        // Off Discord: the inline beacon alone (no file), the same fields, fonts and icons from the site.
+        if (plainVisits.filter((r) => r.k === 'view').length !== 1) problems.push(`off Discord: ${plainVisits.filter((r) => r.k === 'view').length} view rows, not 1`);
+        plainVisits.forEach((r) => { if (Object.keys(r).sort().join(',') !== VISIT_FIELDS) problems.push(`off Discord: a visit row with other fields: ${Object.keys(r).join(',')}`); });
+        if (plainAssets.beaconFile) problems.push('off Discord the page loaded visit-beacon.js too');
+        if (plainAssets.marked) problems.push('off Discord the page is marked data-bs-discord');
+        if (!plainAssets.iconsOn) problems.push('off Discord the icons\' stylesheet is not on');
+        ['Luckiest Guy', 'Suez One', 'FontAwesome'].forEach((f) => { if (!(plainAssets.fonts || {})[f]) problems.push(`off Discord the font ${f} did not load`); });
+        plainOut.filter((h) => /fonts\.googleapis|fonts\.gstatic|maxcdn/.test(h)).forEach((h) => problems.push(`off Discord a request went to ${h}`));
         unexpected.forEach((b) => problems.push(`${b.player}: the content policy refused ${b.blocked} (${b.directive}, ${b.source}:${b.line})`));
         players.forEach((p) => {
             Array.from(new Set(p.escaped)).forEach((u) => {
