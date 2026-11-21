@@ -20,8 +20,15 @@ import { environment } from '../../environments/environment';
 import firebaseCompat from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/database';
+import { forceWebSockets } from 'firebase/database';
 
 const firebase = firebaseCompat.initializeApp(environment.firebaseConfig);
+// Inside Discord (src/discord/boot.ts patched the page for its proxy) the database must stay on its
+// WebSocket: its fallback, long polling, loads <script> tags from firebaseio.com, which Discord's
+// content policy blocks and its proxy can't map. Called before any database use, as Firebase requires.
+if (typeof window !== 'undefined' && (window as any).bsDiscordProxy === true) {
+    forceWebSockets();
+}
 
 /** The page's one reconnect nudge (see reconnect-nudge.ts), started with the first ApiService. */
 let nudging = false;
