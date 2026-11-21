@@ -152,3 +152,21 @@ test('Hebrew swearing written in English letters is refused', () => {
     refused(['kusima', 'kusit', 'benzona', 'ben zona', 'mefager', 'tizdayen', 'lech tizdayen', 'mizdayen', 'kibenimat']);
     fine(['Zayn Malik', 'Zain', 'Sahara', 'Hara-kiri', 'Arizona', 'Kuskus', 'couscous', 'Kushner']);
 });
+
+// Product's look at e7d8823 (reports: kids-filter-226-check): an apostrophe and an English ending end a
+// word, and a Hebrew geresh is part of its letter, so possessives and Hebrew names are not hidden letters.
+test('possessives, contractions and geresh names are not read as hidden letters', () => {
+    fine(["Hooke's law", "the pen's cap", "my chin's itchy", "Chin's restaurant", "pi's first digit", "rap's biggest star",
+        "the goo's green", "the crowd's boo's", "the coo's sound", "Fu's noodles", "Kik's app", "rap'd", "ti's", "fa's",
+        "hom's", "pak's", "k's", "c'mon", "who'd", "o'clock", "y'all", "s'mores", "ז'ן ולז'ן", "דיק צ'ייני", 'fromage râpé']);
+    refused(["b'tch", "b*tch's", "f'ck", "the d*ck's", "ז*ן"]);
+});
+
+test('the older gaps of Product\'s section 2 are refused', () => {
+    refused(['אחושרמוטה', 'קוס אמק', 'קוסאמק', 'חארה', 'תזדיינו', 'לכו תזדיינו', 'כוס אמו', 'כוסאמו', 'כוסעומק', 'שרמוטא',
+        'מאניאק', 'מנייאק', 'לך תמצוץ', 'זיינתי', "בייץ'", "ביצ'ס", 'ז1ן', 'ass', 'a$$', '@ss', 'a55', 'a**', 'kiss my a**',
+        'badass', 'a-hole', 'what an a-hole', 'fukc', 'fcuk', 'slvt', 'biotch', 'kos emek', 'koss emek', 'kusomo',
+        'sharmoota', 'sharmootah']);
+    fine(['a hole in the ground', 'Kos island', 'pass', 'class', 'assist', 'Assad', 'מוצץ', 'תמצוץ את הלימון', 'the A-Team',
+        'a-ha', 'ביצה קשה', "ביצ'יקו", "ז'אן"]);
+});

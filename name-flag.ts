@@ -97,6 +97,102 @@ function hits(t: Tier, raw: string, sq: string, toks: string[]): boolean {
     return t.raw.some(e => raw.indexOf(e) >= 0);
 }
 
+// Signs that hide one letter or more inside a word ("b*tch", "f@ck", "d#ck", "c.nt", "b🐝tch", "ז*ן"): any
+// sign at all, bar a space. A run of k signs stands for 1 to k letters (at most 3); "a**hole" is "asshole".
+const HIDDEN_MAX = 3;
+const LETTER = /^[a-zא-ת]$/;
+const WILD_SIGNS = '@$!';
+export type Piece = string | number;
+// An apostrophe and an English ending end a word ("Hooke's", "pen's", "who'd"): the apostrophe hides no letter.
+const ENDING = /['’`](s|d|t|m|re|ll|ve)$/i;
+// A geresh after these Hebrew letters is part of the letter (ז'ן is Jean, צ'יפס is chips), not a hidden one.
+const GERESH = /([גזצץת])['׳’`]/g;
+const HE_ANY = /[א-ת]/;
+const DIGIT = /[0-9]/;
+
+/**
+ * One word, as letters and hidden-letter runs (numbers), or null if nothing is hidden inside it. `wild` are
+ * the look-alike signs that count as hidden letters too ("f@ck" is not "fack").
+ */
+export function hiddenPattern(token: string, wild: string = WILD_SIGNS): Piece[] | null {
+    const pieces: Piece[] = [];
+    token = token.replace(ENDING, '').replace(GERESH, '$1');
+    const hebrew = HE_ANY.test(token);
+    for (let i = 0; i < token.length; i++) {
+        // A character outside the first plane (an emoji) is two UTF-16 units: one sign.
+        const code = token.charCodeAt(i);
+        const c = code >= 0xD800 && code < 0xDC00 && i + 1 < token.length ? token.substr(i++, 2) : token.charAt(i);
+        const n = normalizeName(c);
+        if (!n) {
+            continue;
+        }
+        // In a Hebrew word a digit is no Latin letter but a hidden Hebrew one ("ז1ן").
+        if (LETTER.test(n) && wild.indexOf(c) < 0 && !(hebrew && DIGIT.test(c))) {
+            pieces.push(n);
+        } else if (typeof pieces[pieces.length - 1] === 'number') {
+            pieces[pieces.length - 1] = Math.min(HIDDEN_MAX, (pieces[pieces.length - 1] as number) + 1);
+        } else {
+            pieces.push(1);
+        }
+    }
+    while (typeof pieces[0] === 'number') {
+        pieces.shift();
+    }
+    while (typeof pieces[pieces.length - 1] === 'number') {
+        pieces.pop();
+    }
+    const letters = pieces.filter(p => typeof p === 'string').length;
+    const hidden = pieces.filter(p => typeof p === 'number').length;
+    // Three or more letters one at a time between signs are initials ("C.S.I", "s.h.e"), or a word spelled out
+    // (wordsRefused). Two are a word with one hidden letter ("ז*ן", "ח*א").
+    const initials = pieces.every((p, j) => j === 0 || typeof p === 'number' || typeof pieces[j - 1] === 'number');
+    return hidden && !(initials && letters >= 3) && letters >= 2 && letters >= hidden ? pieces : null;
+}
+
+/** Whether the pieces spell `t` exactly, or, with `start`, the beginning of a word that starts with `t`. */
+export function spells(pieces: Piece[], t: string, start: boolean, p: number = 0, at: number = 0): boolean {
+    if (p === pieces.length) {
+        return at === t.length;
+    }
+    const piece = pieces[p];
+    if (typeof piece === 'string') {
+        if (t.charAt(at) !== piece) {
+            return false;
+        }
+        // A word start is matched once its last letter is typed: "mother-in-law" is not "motherf…".
+        return (start && at + 1 === t.length) || spells(pieces, t, start, p + 1, at + 1);
+    }
+    for (let k = 1; k <= piece && at + k < t.length + (start ? 0 : 1); k++) {
+        if (spells(pieces, t, start, p + 1, at + k)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * A name with letters hidden inside a word ("wh*re", "p*ssy", "n!gg@"), read against a tier's lists: its
+ * words whole, its starts at a word's start, and its anywhere-strings from any typed letter on.
+ */
+function hiddenHits(t: Tier, raw: string): boolean {
+    // In a name other signs join two parts ("Mary-Jane", "O'Neil", "dan_k", "AC/DC", a link), and so do digits
+    // that look like no letter: they hide none. Stars, hashes and emoji do ("wh*re", "p#ssy").
+    return raw.split(/[\s!"$-)+-\/:-?\[-`{-~’2689]+/).some(token => {
+        // "@", "$" and "!" are read as the letters they look like (normalizeName): "Ke$ha" and "Ni$$an" are names.
+        const pieces = hiddenPattern(token, '');
+        if (!pieces) {
+            return false;
+        }
+        const first = pieces[0] as string;
+        if (t.start.some(e => e.charAt(0) === first && spells(pieces, e, true))
+            || Object.keys(t.word).some(w => w.charAt(0) === first && spells(pieces, w, false))) {
+            return true;
+        }
+        return pieces.some((p, i) => typeof p === 'string'
+            && t.any.some(e => e.charAt(0) === p && spells(pieces.slice(i), e, true)));
+    });
+}
+
 /** 'hate' or 'sex' when a nickname (or crew name) is one we swap, else null. Check the whole name, before any cut. */
 export function nameFlag(name: string): NameFlag | null {
     const raw = String(name == null ? '' : name);
@@ -106,10 +202,10 @@ export function nameFlag(name: string): NameFlag | null {
         return null;
     }
     const toks = tokens(n);
-    if (hits(HATE, raw, sq, toks)) {
+    if (hits(HATE, raw, sq, toks) || hiddenHits(HATE, raw)) {
         return 'hate';
     }
-    if (hits(SEX, raw, sq, toks)) {
+    if (hits(SEX, raw, sq, toks) || hiddenHits(SEX, raw)) {
         return 'sex';
     }
     return null;
