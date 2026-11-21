@@ -30,7 +30,7 @@
                         name="answer" [(ngModel)]="answer" maxlength="40" autofocus autocomplete="off"
                         [attr.placeholder]="aboutMe ? aboutWords.placeholder : helper.placeholder"
                         [attr.aria-label]="aboutMe ? aboutWords.placeholder : helper.placeholder">
-                    <span *ngIf="enteredCorrectAnswer" class="help is-danger">{{t.tooCloseToTruth}}</span>
+                    <span *ngIf="enteredCorrectAnswer" class="help is-danger">{{enteredPartOfTruth ? t.partOfTruth : t.tooCloseToTruth}}</span>
                 </p>
             </div>
 

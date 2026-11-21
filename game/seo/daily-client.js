@@ -131,7 +131,7 @@
         if (core.tidy(friend.name) !== friend.name || core.tidy(friend.lie) !== friend.lie) {
             return null;
         }
-        if (core.screenLie(friend.lie, friend.name, truth(), houseLies(), shared.isSameAnswer, shared.nameFlag)) {
+        if (core.screenLie(friend.lie, friend.name, truth(), houseLies(), shared.isSameAnswer, shared.nameFlag, shared.isPartOfTruth)) {
             return null;
         }
         return { f: friend.f, name: friend.name, lie: friend.lie };
@@ -480,8 +480,8 @@
         var link = function () {
             var typed = core.tidy(lie.value);
             var who = core.tidy(name.value);
-            var why = core.screenLie(typed, who, truth(), houseLies(), shared.isSameAnswer, shared.nameFlag);
-            error.textContent = why === 'truth' ? s.lieIsTruth : why === 'taken' ? s.lieIsTaken : why === 'refused' ? s.lieRefused : '';
+            var why = core.screenLie(typed, who, truth(), houseLies(), shared.isSameAnswer, shared.nameFlag, shared.isPartOfTruth);
+            error.textContent = why === 'truth' ? s.lieIsTruth : why === 'close' ? s.lieTooClose : why === 'taken' ? s.lieIsTaken : why === 'refused' ? s.lieRefused : '';
             show(error, !!error.textContent);
             if (why) {
                 lie.focus();
