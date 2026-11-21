@@ -32,7 +32,8 @@
     // Same site on Firebase Hosting (firebase.json sends /_v to the visit function): blockers
     // drop every beacon to another site (EasyPrivacy's "*$ping,third-party", used by Samsung
     // Internet's ad-block add-ons, Brave and uBlock), and sendBeacon still says true then.
-    var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-(prod|dev)(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$/.test(location.hostname)
+    // Inside Discord (<app id>.discordsays.com) /_v reaches the site through Discord's proxy ("/" mapping).
+    var url = /(^|\.)bullshit\.wtf$|^bullshit-wtf-(prod|dev)(--[a-z0-9-]+)?\.(web\.app|firebaseapp\.com)$|^[a-z0-9-]+\.discordsays\.com$/.test(location.hostname)
       ? '/_v'
       : 'https://us-central1-bullshit-wtf-dev.cloudfunctions.net/visit';
     // The tag of the link that brought the visitor (?via=fb-he-hanukkah, ?via=qr, ?via=test), else

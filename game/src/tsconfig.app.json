@@ -5,7 +5,8 @@
     "types": []
   },
   "files": [
-    "main.ts"
+    "main.ts",
+    "discord/boot.ts"
   ],
   "include": [
     "**/*.d.ts"

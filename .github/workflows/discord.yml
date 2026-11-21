@@ -1,0 +1,101 @@
+# The Discord check for every pull request: .github/smoke/emulator-discord.js plays a whole test game
+# with four players inside a local stand-in for Discord's Activity proxy (.github/smoke/discord-proxy.js),
+# against the Firebase emulators. Each player opens the game the way Discord shows an Activity: in a
+# frame, at https://<app id>.discordsays.com, under a strict content policy, where every request the
+# game sends must go through the URL mappings that game/src/discord/boot.ts rewrites it to. It fails
+# when the game stops playing there, or when a request leaves the proxy's host.
+#
+# Needs no secrets and touches no Firebase project or Discord app: the emulators run under the
+# demo-bullshit project and the browser resolves no host but the stand-in's two names, at 127.0.0.1.
+#
+# Like night-after.yml, it lives apart from ci.yml on purpose: deploy.yml calls ci.yml before a
+# release, and this run is a pull request check only, so it adds nothing to a release.
+name: Discord
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discord-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discord:
+    name: Discord Activity (proxy stand-in, emulators)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          # 22, the functions' Cloud runtime: the functions emulator runs them on this Node.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            game/package-lock.json
+            functions/package-lock.json
+            .github/smoke/package-lock.json
+      # The database emulator is a Java program.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install firebase-tools (the root's lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Build the functions
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Build the game
+        working-directory: game
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Install the smoke test
+        working-directory: .github/smoke
+        run: npm ci --no-audit --no-fund
+
+      - name: Cache the browser and the emulators
+        id: tool-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/firebase/emulators
+          key: discord-${{ runner.os }}-${{ hashFiles('.github/smoke/package-lock.json', 'package-lock.json') }}
+      - name: Download the browser
+        if: steps.tool-cache.outputs.cache-hit != 'true'
+        working-directory: .github/smoke
+        run: npx playwright install --only-shell chromium
+
+      - name: Play a game through the Discord stand-in
+        timeout-minutes: 15
+        env:
+          SHOTS: ${{ runner.temp }}/discord-shots
+        run: node .github/smoke/emulator-discord.js game/dist
+
+      # On a failure: the screenshots of the run and the emulators' log, to see what the page showed.
+      - name: Keep the screenshots and the emulators' log
+        if: failure()
+        run: |
+          mkdir -p "$RUNNER_TEMP/discord-shots"
+          for f in /tmp/bs-emulators-*/emulators.log; do
+            [ -f "$f" ] && cp "$f" "$RUNNER_TEMP/discord-shots/$(basename "$(dirname "$f")").log"
+          done
+          true
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: discord-failure
+          path: ${{ runner.temp }}/discord-shots
+          retention-days: 7
+          if-no-files-found: ignore
