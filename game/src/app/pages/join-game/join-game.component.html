@@ -117,7 +117,8 @@
                 <div class="field" *ngIf="nicknameState">
                     <p class="control">
                         <input class="input is-large pin-input" type="text" [placeholder]="t.nicknamePlaceholder"
-                            [(ngModel)]="nickname" name="nickname" appAutofocus maxlength="9">
+                            [ngModel]="nickname" (ngModelChange)="typedNickname($event, nicknameBox)" (paste)="pastedNickname($event, nicknameBox)"
+                            #nicknameBox name="nickname" appAutofocus maxlength="9">
                     </p>
                 </div>
 
