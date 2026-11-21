@@ -207,7 +207,7 @@ Source says: The neck grew by "lengthening of the cervical vertebrae, not ... th
 Added 21 November 2026 for the Hanukkah school break: he-21 to he-50. Every page was read on 21 November 2026, and each house lie checked against it.
 
 **he-21. האוכל שהם אוכלים** · https://www.britannica.com/story/why-are-flamingos-pink  
-גוזלי פלמינגו בוקעים מהביצה בצבע אפור, והם נהיים ורודים בזכות ____  
+גוזלי פלמינגו בוקעים מהביצים בצבע אפור, והם נהיים ורודים בזכות ____  
 House lies: השמש החזקה, המים המלוחים, זה שהם מתביישים  
 Source says: "The birds are in fact born a dull gray." / "The bright pink color of flamingos comes from beta carotene ... within the algae, larvae, and brine shrimp that flamingos eat." (Britannica)
 
@@ -271,7 +271,7 @@ Source says: "most people cannot effectively tickle themselves." Hence "רוב �
 House lies: אור, כוח משיכה, זמן  
 Source says: "Sound does not travel in space." / "Sound requires molecules to travel through, and there are none in space because space is a vacuum." (Smithsonian National Air and Space Museum). Light and gravity do reach through space (NASA: "a small amount of gravity can be found everywhere in space").
 
-**he-34. 4 סנטימטרים** · https://en.wikipedia.org/wiki/Orbit_of_the_Moon  
+**he-34. ארבעה סנטימטרים** · https://en.wikipedia.org/wiki/Orbit_of_the_Moon  
 הירח מתרחק מכדור הארץ בכל שנה בערך ____  
 House lies: קילומטר, מטר, מילימטר  
 Source says: "The Moon is gradually receding from Earth" ... "at approximately 38 millimetres per year" (3.8 cm, "בערך 4").
@@ -311,10 +311,10 @@ Source says: "In 1972, the International Tennis Federation introduced yellow bal
 House lies: ברזיל, אנגליה, איטליה  
 Source says: "The 1930 FIFA World Cup was the first FIFA World Cup"; "It took place in Uruguay"; "Uruguay defeated Argentina 4–2 ... to become the first nation to win the World Cup."
 
-**he-42. טיפה אחר טיפה** · https://en.wikipedia.org/wiki/Netafim  
-ב-1966 התחילה חברת נטפים מקיבוץ חצרים למכור מתקן השקיה ראשון מסוגו בעולם, שמשקה צמחים ____  
-House lies: רק בלילה, במי ים, בבועות סבון  
-Source says: "1965 – Kibbutz Hatzerim signs agreement with Blass to establish Netafim" / "1966 – Introduces world's first commercial dripper". Worded as the first commercial dripper, not the invention of drip irrigation, which had earlier forms elsewhere.
+**he-42. לעוף** · https://www.nps.gov/subjects/bats/how-bats-fly.htm  
+העטלף הוא היונק היחיד שיודע ____  
+House lies: לנשום מתחת למים, לשנות צבע, לישון בעיניים פתוחות  
+Source says: "Bats are the only mammals capable of true flight." / "Other mammals like the flying squirrel glide rather than actually fly." (US National Park Service; also UC Museum of Paleontology: bats "are the only mammals ever to evolve true powered flight"). Lies: no mammal breathes under water, and "the only mammal" that changes colour or sleeps with open eyes is not the bat on either page. Replaces a Netafim question whose text gave away the answer to everyday-26-he-15.
 
 **he-43. המים מלוחים מדי** · https://en.wikipedia.org/wiki/Dead_Sea  
 דגים לא יכולים לחיות בים המלח, כי ____  
@@ -322,7 +322,7 @@ House lies: המים חמים מדי, אין שם אור, הגלים חזקים 
 Source says: "its high salinity prevents macroscopic aquatic organisms, such as fish and aquatic plants, from living in it." The lies are wrong reasons: the water is not too hot to live in, sunlight reaches it, and its waves (about 1 m) are no reason.
 
 **he-44. 50 מיליון** · https://en.wikipedia.org/wiki/Krembo  
-בכל שנה נמכרים בישראל בערך ____ קרמבו, ורק מאוקטובר עד פברואר  
+בכל שנה נמכרים בישראל בערך ____ קרמבו, בעיקר בחורף  
 House lies: חצי מיליון, 5 מיליון, מיליארד  
 Source says: "over 50 million krembos sold each year" / "a seasonal treat sold only four months a year, from October to February." (Also Jerusalem Post: https://www.jpost.com/Arts-and-Culture/Israelis-consume-50-million-krembos-every-year)
 

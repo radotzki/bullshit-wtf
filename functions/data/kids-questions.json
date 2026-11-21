@@ -480,7 +480,7 @@
     "pack": "kids"
   },
   "kids-26-he-21": {
-    "questionText": "גוזלי פלמינגו בוקעים מהביצה בצבע אפור, והם נהיים ורודים בזכות $blank$",
+    "questionText": "גוזלי פלמינגו בוקעים מהביצים בצבע אפור, והם נהיים ורודים בזכות $blank$",
     "realAnswer": "האוכל שהם אוכלים",
     "fakeAnswers": [
       "השמש החזקה",
@@ -637,7 +637,7 @@
   },
   "kids-26-he-34": {
     "questionText": "הירח מתרחק מכדור הארץ בכל שנה בערך $blank$",
-    "realAnswer": "4 סנטימטרים",
+    "realAnswer": "ארבעה סנטימטרים",
     "fakeAnswers": [
       "קילומטר",
       "מטר",
@@ -732,14 +732,14 @@
     "pack": "kids"
   },
   "kids-26-he-42": {
-    "questionText": "ב-1966 התחילה חברת נטפים מקיבוץ חצרים למכור מתקן השקיה ראשון מסוגו בעולם, שמשקה צמחים $blank$",
-    "realAnswer": "טיפה אחר טיפה",
+    "questionText": "העטלף הוא היונק היחיד שיודע $blank$",
+    "realAnswer": "לעוף",
     "fakeAnswers": [
-      "רק בלילה",
-      "במי ים",
-      "בבועות סבון"
+      "לנשום מתחת למים",
+      "לשנות צבע",
+      "לישון בעיניים פתוחות"
     ],
-    "citation": "https://en.wikipedia.org/wiki/Netafim",
+    "citation": "https://www.nps.gov/subjects/bats/how-bats-fly.htm",
     "lang": "he",
     "pack": "kids"
   },
@@ -756,7 +756,7 @@
     "pack": "kids"
   },
   "kids-26-he-44": {
-    "questionText": "בכל שנה נמכרים בישראל בערך $blank$ קרמבו, ורק מאוקטובר עד פברואר",
+    "questionText": "בכל שנה נמכרים בישראל בערך $blank$ קרמבו, בעיקר בחורף",
     "realAnswer": "50 מיליון",
     "fakeAnswers": [
       "חצי מיליון",
