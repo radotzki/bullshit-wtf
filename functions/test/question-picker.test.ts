@@ -171,6 +171,18 @@ const tests: { [name: string]: () => void } = {
         assert.strictEqual(new Set(qids).size, 5);
     },
 
+    // Run 2 of the walk-through: the About questions took slots 1 and 3, just where the two went.
+    'the season questions never sit where an About question goes'() {
+        const kids = ['k0', 'k1', 'k2', 'k3', 'k4'];
+        const five = withSeasonKids(kids, ['t0', 't1'], [], 2, seeded(2), [1, 3]);
+        assert.deepStrictEqual([five[2][0], five[4][0]], ['t', 't']);
+        assert.deepStrictEqual([five[0], five[1], five[3]], ['k0', 'k1', 'k3']);
+        const seven = withSeasonKids(['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6'], ['t0', 't1'], [], 2, seeded(2), [2, 4]);
+        const at = seven.map((q, i) => q[0] === 't' ? i : -1).filter(i => i >= 0);
+        assert.strictEqual(at.length, 2);
+        assert.ok(at.every(i => i !== 0 && i !== 2 && i !== 4), JSON.stringify(at));
+    },
+
     'a kids game with no fresh season questions is the kids questions as picked'() {
         const kids = ['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
         assert.deepStrictEqual(withSeasonKids(kids, ['t0'], [{ t0: 5 }], 2, seeded(1)), kids);

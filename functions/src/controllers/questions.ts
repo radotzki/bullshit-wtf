@@ -2,6 +2,7 @@ import { questionsRef, seenQuestionsRef, get } from './../firebase';
 import { Question, questionPacks, isPack, KIDS_PACK, KIDS_SEASON_PER_GAME, kidsSeasonPack } from '../game-model';
 import { pickQuestions, pickWithPack, pickWithOpener, withSeasonKids, SeenRecord } from './question-picker';
 import { isRetired } from './retired-questions';
+import { aboutSlots } from './about';
 
 /**
  * Picks `count` questions for `lang`, avoiding questions any of the given
@@ -24,7 +25,8 @@ export async function randomQuestions(lang: string, count: number, uids: string[
         if (season) {
             const inBank = new Set(all.map(q => q.id));
             const kidsToo = (questionPacks[season].kidsToo || []).filter(id => inBank.has(id) && !isRetired(id));
-            return withSeasonKids(picked, kidsToo, seen, KIDS_SEASON_PER_GAME);
+            // Not where an About question would take the question's place (aboutSlots).
+            return withSeasonKids(picked, kidsToo, seen, KIDS_SEASON_PER_GAME, Math.random, aboutSlots(count));
         }
         return picked;
     }

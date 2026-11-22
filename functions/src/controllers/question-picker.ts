@@ -133,8 +133,9 @@ export function pickWithOpener(
 /**
  * A kids game in a holiday's season: puts up to `perGame` of the season's kid-friendly questions
  * (QuestionPack.kidsToo) that nobody in the room has seen into a kids game's picked questions,
- * spread out, never as question 1 (the kids' own opener stays). With none left fresh, or none
- * given, the game is the kids' questions as picked.
+ * spread out, never as question 1 (the kids' own opener stays) and never at an index in `avoid`
+ * (the About questions' slots, which would replace them). With none left fresh, or none given,
+ * the game is the kids' questions as picked.
  */
 export function withSeasonKids(
     qids: string[],
@@ -142,13 +143,17 @@ export function withSeasonKids(
     seenRecords: SeenRecord[],
     perGame: number,
     random: Random = Math.random,
+    avoid: number[] = [],
 ): string[] {
     const lastSeen = mergeSeen(seenRecords);
     const fresh = shuffle(seasonIds.filter(id => !(id in lastSeen) && qids.indexOf(id) < 0), random);
-    const n = Math.max(0, Math.min(perGame, fresh.length, qids.length - 1));
+    const all = qids.map((_, i) => i).slice(1);
+    const free = all.filter(i => avoid.indexOf(i) < 0);
+    const places = free.length ? free : all;
+    const n = Math.max(0, Math.min(perGame, fresh.length, places.length));
     const result = qids.slice();
-    for (let i = 1; i <= n; i++) {
-        result[Math.round(i * qids.length / (n + 1))] = fresh[i - 1];
+    for (let k = 1; k <= n; k++) {
+        result[places[Math.round(k * (places.length + 1) / (n + 1)) - 1]] = fresh[k - 1];
     }
     return result;
 }
