@@ -129,3 +129,26 @@ export function pickWithOpener(
     }
     return [opener].concat(pickRest(regularIds, count - 1));
 }
+
+/**
+ * A kids game in a holiday's season: puts up to `perGame` of the season's kid-friendly questions
+ * (QuestionPack.kidsToo) that nobody in the room has seen into a kids game's picked questions,
+ * spread out, never as question 1 (the kids' own opener stays). With none left fresh, or none
+ * given, the game is the kids' questions as picked.
+ */
+export function withSeasonKids(
+    qids: string[],
+    seasonIds: string[],
+    seenRecords: SeenRecord[],
+    perGame: number,
+    random: Random = Math.random,
+): string[] {
+    const lastSeen = mergeSeen(seenRecords);
+    const fresh = shuffle(seasonIds.filter(id => !(id in lastSeen) && qids.indexOf(id) < 0), random);
+    const n = Math.max(0, Math.min(perGame, fresh.length, qids.length - 1));
+    const result = qids.slice();
+    for (let i = 1; i <= n; i++) {
+        result[Math.round(i * qids.length / (n + 1))] = fresh[i - 1];
+    }
+    return result;
+}

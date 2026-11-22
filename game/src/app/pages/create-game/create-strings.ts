@@ -22,6 +22,8 @@ export interface CreateStrings {
     players: string;
     kids: string;
     kidsNote: string;
+    /** While kids play in a holiday's season: "It also gets two kid-friendly" + the pack's label. */
+    kidsSeason: string;
     create: string;
     error: string;
 }
@@ -40,6 +42,7 @@ const en: CreateStrings = {
     players: 'Players:',
     kids: '🧒 Kids are playing',
     kidsNote: 'Questions kids of 8 to 12 get. After all 20, the usual questions.',
+    kidsSeason: 'A kids game also gets two kid-friendly',
     create: 'CREATE',
     error: 'oops, something went wrong. Please try again',
 };
@@ -58,6 +61,7 @@ const he: CreateStrings = {
     players: 'מי משחק:',
     kids: '🧒 ילדים משחקים',
     kidsNote: 'שאלות שילדים בני 8 עד 12 יבינו. אחרי כל ה־20, השאלות הרגילות.',
+    kidsSeason: 'במשחק ילדים יש גם שתי',
     create: 'פתיחת משחק',
     error: 'אופס, משהו השתבש. נסו שוב',
 };

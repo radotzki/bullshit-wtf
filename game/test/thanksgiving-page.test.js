@@ -58,12 +58,22 @@ test('its Start button opens an English game with the Thanksgiving pack', () => 
     assert.ok(model.packFits('thanksgiving', 'en'));
 });
 
-test('the example and the facts the page names are questions of the pack', () => {
+test('the example is in no question file, and the facts the page names are questions of the pack', () => {
     const m = /<p class="q">([^<]+)<\/p>/.exec(page.body);
     assert.ok(m, 'has an example question');
-    const q = pack.find(x => x.questionText.replace('$blank$', '____') === m[1]);
-    assert.ok(q, `"${m[1]}" is in functions/data/thanksgiving-questions.json`);
-    assert.ok(page.body.toLowerCase().indexOf('the truth: ' + q.realAnswer) >= 0, 'the page gives the true answer');
+    // A host who read the page must not meet its truth in a game (Big Bird's feathers, pack question 27,
+    // did that until the Thanksgiving night walk): no question file has the example, or a truth of Minnesota.
+    const data = path.join(root, 'functions', 'data');
+    const norm = t => t.toLowerCase().replace(/\$blank\$|_+/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+    const example = norm(m[1]);
+    fs.readdirSync(data).filter(f => f.endsWith('.json')).forEach(f => {
+        const all = Object.values(JSON.parse(fs.readFileSync(path.join(data, f), 'utf8')));
+        all.filter(x => x && x.questionText).forEach(x => {
+            assert.notStrictEqual(norm(x.questionText), example, `the example is in ${f}`);
+            assert.ok(!/minnesota/i.test(String(x.realAnswer)), `${f} has a question whose truth is Minnesota: "${x.questionText}"`);
+        });
+    });
+    assert.ok(page.body.indexOf('The truth: Minnesota.') >= 0, 'the page gives the true answer');
     const texts = pack.map(x => x.questionText).join('\n');
     // "What a president said when he spared his turkey. What the first Macy's parade had instead of
     // balloons. What a football announcer handed the best player of the game."
@@ -125,4 +135,24 @@ test('the Create page offers the pack for an English game only, and drops it whe
     assert.strictEqual(offered('hanukkah', 'he', october), 'hanukkah');
     assert.strictEqual(offered('hanukkah', 'en', thursday), 'hanukkah');
     assert.strictEqual(offered(null, 'en', october), null);
+});
+
+// The English Thanksgiving family night walk-through: what tripped the table, said on the page.
+test('the page says how the evening really goes: names, late arrivals, sleeping phones, the rematch, kids', () => {
+    const text = page.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    assert.match(text, /click "Present Game"/, 'the button is "Present Game"');
+    assert.ok(!/click "Present" /.test(text));
+    assert.match(text, /"Use as the big screen"/);
+    assert.match(text, /9 letters at most/);
+    assert.match(text, /"Aunt Lind"/);
+    assert.ok(['Linda', 'AuntLinda', 'Pop Joe'].every(n => n.length <= 9));
+    assert.match(text, /arrives after the first question/);
+    assert.match(text, /goes to sleep/);
+    assert.match(text, /Join the rematch/);
+    // The kids switch keeps two Thanksgiving questions in the season (questionPacks.thanksgiving.kidsToo).
+    assert.match(text, /two Thanksgiving questions picked for kids/);
+    assert.ok((model.questionPacks.thanksgiving.kidsToo || []).length >= 8);
+    assert.strictEqual(model.KIDS_SEASON_PER_GAME, 2);
+    assert.match(text, /until 30 November/);
+    assert.strictEqual(model.questionPacks.thanksgiving.season.to, '2026-11-30');
 });
