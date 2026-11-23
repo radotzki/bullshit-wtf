@@ -334,6 +334,9 @@ export function packBanner(pack: string, locale: string): string {
     if (pack === 'thanksgiving') {
         return 'Thanksgiving edition: new Thanksgiving questions in this game';
     }
+    if (pack === 'newyear') {
+        return 'New Year\'s Eve edition: this game has New Year\'s Eve questions';
+    }
     if (pack === 'christmas') {
         return 'Holiday edition: new Christmas and New Year questions in this game';
     }

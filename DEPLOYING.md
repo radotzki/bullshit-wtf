@@ -859,6 +859,8 @@ puts the questions of the repository's reviewed question files there itself, in 
     rule has no Hebrew), every question with `pack: "thanksgiving"` (see "Thanksgiving pack" below);
   - `functions/data/christmas-questions.json`, ids `christmas-26-en-NN` (English only), every
     question with `pack: "christmas"` (see "Christmas and New Year pack" below);
+  - `functions/data/newyear-questions.json`, ids `newyear-26-en-NN` (English only), every
+    question with `pack: "newyear"` (see "New Year's Eve pack" below);
   - `functions/data/kids-questions.json`, ids `kids-26-en-NN` and `kids-26-he-NN`, every question
     with `pack: "kids"` (see "Kids are playing" below);
   - `functions/data/everyday-questions-2026-11.json`, ids `everyday-26-en-NN` and `everyday-26-he-NN`,
@@ -974,16 +976,17 @@ It must merge by Friday 27 November to be live on 1 December.
 - **English only,** as Thanksgiving: `locales: ['en']` in `questionPacks`.
 - **The default depends on the game's language.** A pack can now name the languages that get it by
   default in its season (`seasonIn`; without it, every language it fits). Hanukkah has
-  `seasonIn: ['he']`. So from 1 December to 2 January (by the date in Israel, which is New Year's
-  Eve until midnight on the US West Coast) the Create page ticks "🎄 Christmas and New Year
+  `seasonIn: ['he']`. So from 1 to 29 December (by the date in Israel; from 30 December the New
+  Year's Eve pack takes over, see below) the Create page ticks "🎄 Christmas and New Year
   questions" for an English game, and from 1 to 13 December "🕎 Hanukkah questions" for a Hebrew
   one. A crew rematch takes the same pack by the crew's language. Hanukkah stays one tap away for an
   English game: the Hanukkah page's Start button (`?pack=hanukkah`). Seasons may overlap only
   between packs that no one language gets by default (a test checks each language).
 - **The lobby** of a pack game says "🎄 Holiday edition: new Christmas and New Year questions in this game".
-- **The pages:** the Christmas, New Year's Eve and office party pages' Start buttons now open
-  `/create-game?lang=en&pack=christmas` (before: `pack=none`), in season and out of it.
-- **Home (English only):** from 1 December to 1 January, by the visitor's own calendar, the line
+- **The pages:** the Christmas and office party pages' Start buttons open
+  `/create-game?lang=en&pack=christmas` (before: `pack=none`), in season and out of it. The New
+  Year's Eve page's opens the New Year's Eve pack.
+- **Home (English only):** from 1 to 29 December, by the visitor's own calendar, the line
   above the buttons says "The holidays are here: play with Christmas and New Year questions" and
   links the Christmas page, in place of the Hanukkah line. The Hebrew home keeps the Hanukkah line.
 - **Until the first release after the merge has added the questions,** a Christmas game is a normal
@@ -994,6 +997,35 @@ It must merge by Friday 27 November to be live on 1 December.
 
 How to read it: games with `pack = 'christmas'` in `opened_games` (test games out), and the three
 pages' tags as before.
+
+## New Year's Eve pack
+
+For a grown-up New Year's Eve party, English games only (from the English New Year's Eve walk, in
+the project's files: on 31 December the New Year's Eve page had opened a Christmas game, whose first
+question was NORAD's Santa tracker). Nothing to run before or after the merge: the release adds the
+questions itself (see "Question files the release adds"). It must merge by Tuesday 29 December to
+be live on 30 December.
+
+- **The pack:** 28 English questions in `functions/data/newyear-questions.json`, ids
+  `newyear-26-en-01..28`, each with `pack: "newyear"`: how the world sees the new year in. Each
+  `citation` is the page the truth was checked against on 21 November 2026. `questionPacks.newyear`:
+  3 a game, `locales: ['en']`, icon 🎆, no `openers` list (every question was written to open a game).
+- **The default:** from 30 December to 2 January, by the date in Israel (New Year's Eve until
+  midnight on the US West Coast, and New Year's Day), the Create page ticks "🎆 New Year's Eve
+  questions" for an English game, after the Christmas pack's days end on 29 December. Hebrew games
+  get no pack on those days. A crew rematch takes it the same way.
+- **The lobby** of a pack game says "New Year's Eve edition: this game has New Year's Eve questions".
+- **The page:** the New Year's Eve page's Start opens `/create-game?lang=en&pack=newyear`, in season
+  and out of it.
+- **Home (English only):** from 30 December to 1 January, by the visitor's own calendar, the line
+  above the buttons says "New Year's Eve is here: play with New Year's Eve questions" and links the
+  New Year's Eve page, in place of the Christmas line.
+- Tested by `functions/test/newyear-questions.test.js`, `game/test/new-year-page.test.js` and
+  `.github/scripts/load-pack-questions.test.js`. Next year: new days in `questionPacks` and in
+  `newYearSeasons` (`search-links.ts`).
+
+How to read it: games with `pack = 'newyear'` in `opened_games` (test games out), and the page's tag
+`seo-en-new-year` as before.
 
 ## Hanukkah pack and campaign tags
 

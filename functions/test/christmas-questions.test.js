@@ -1,7 +1,8 @@
 // The Christmas and New Year pack (functions/data/christmas-questions.json): English questions for
 // office parties, Christmas and New Year's Eve, loaded into /questions by the release (DEPLOYING.md,
 // "Christmas and New Year pack"). Checks the questions' shape, and that the pack is offered by
-// default in English games only, from 1 December to 2 January, while Hebrew games keep Hanukkah.
+// default in English games only, from 1 December to 29 December, while Hebrew games keep Hanukkah.
+// From 30 December the New Year's Eve pack takes over (newyear-questions.test.js).
 const test = require('node:test');
 const assert = require('node:assert');
 const pack = require('../data/christmas-questions.json');
@@ -78,7 +79,7 @@ test('the pack is English only, with its own icon and labels', () => {
     assert.strictEqual(packInSeasonFor('none', 'en'), false);
 });
 
-test('English games get it by default from 1 December to 2 January; Hebrew games keep Hanukkah', () => {
+test('English games get it by default from 1 December to 29 December; Hebrew games keep Hanukkah', () => {
     const at = iso => Date.parse(iso);
     // The first evening of December, in London and in Israel.
     assert.strictEqual(seasonalPack(at('2026-12-01T19:00:00+00:00'), 'en'), 'christmas');
@@ -89,9 +90,10 @@ test('English games get it by default from 1 December to 2 January; Hebrew games
     // After Hanukkah, a Hebrew game has no pack; an English one still has Christmas.
     assert.strictEqual(seasonalPack(at('2026-12-20T19:00:00+02:00'), 'he'), undefined);
     assert.strictEqual(seasonalPack(at('2026-12-24T20:00:00-06:00'), 'en'), 'christmas');
-    // New Year's Eve until midnight on the West Coast, and in Sydney.
-    assert.strictEqual(seasonalPack(at('2026-12-31T23:30:00-08:00'), 'en'), 'christmas');
-    assert.strictEqual(seasonalPack(at('2026-12-31T23:30:00+11:00'), 'en'), 'christmas');
+    // The week after Christmas, until 29 December in Israel; New Year's Eve has its own pack.
+    assert.strictEqual(seasonalPack(at('2026-12-28T19:00:00-05:00'), 'en'), 'christmas');
+    assert.strictEqual(seasonalPack(at('2026-12-31T23:30:00-08:00'), 'en'), 'newyear');
+    assert.strictEqual(seasonalPack(at('2026-12-31T23:30:00+11:00'), 'en'), 'newyear');
     // Not before: the Thanksgiving weekend's last night. Not after: 3 January in Israel.
     assert.strictEqual(seasonalPack(at('2026-11-30T21:00:00+02:00'), 'en'), 'thanksgiving');
     assert.strictEqual(seasonalPack(at('2027-01-03T00:30:00+02:00'), 'en'), undefined);

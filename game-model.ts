@@ -906,15 +906,29 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         icon: '🦃',
     },
     // Christmas and New Year's Eve, English questions only (functions/data/christmas-questions.json).
-    // By default in English games from 1 December, office party season, to 2 January: by the date
-    // in Israel that is New Year's Eve until midnight on the US West Coast. Hebrew games keep
-    // Hanukkah. Next year's days go here.
+    // By default in English games from 1 December, office party season, to 29 December; from 30
+    // December the New Year's Eve pack takes over (below). Hebrew games keep Hanukkah. Next year's
+    // days go here. By link (?pack=christmas) it plays all year.
     christmas: {
         perGame: 3,
-        season: { from: '2026-12-01', to: '2027-01-02' },
+        season: { from: '2026-12-01', to: '2026-12-29' },
         label: { en: 'Christmas and New Year questions', he: 'שאלות חג המולד והשנה החדשה (באנגלית)' },
         locales: ['en'],
         icon: '🎄',
+    },
+    // New Year's Eve, English questions only (functions/data/newyear-questions.json): 28 true facts
+    // about how the world sees the new year in, for a grown-up party (from the English New Year's
+    // Eve walk: on 31 December the New Year's Eve page opened a Christmas game, whose first question
+    // could be the Yule Cat or Rudolph, a week after Christmas). By default in English games from 30
+    // December to 2 January: by the date in Israel that is New Year's Eve until midnight on the US
+    // West Coast, and New Year's Day. The New Year's Eve page's Start button asks for it all year
+    // (?pack=newyear). Every question is fit to open a game; next year's days go here.
+    newyear: {
+        perGame: 3,
+        season: { from: '2026-12-30', to: '2027-01-02' },
+        label: { en: 'New Year\'s Eve questions', he: 'שאלות סילבסטר (באנגלית)' },
+        locales: ['en'],
+        icon: '🎆',
     },
     // "Kids are playing" (functions/data/kids-questions.json): 20 strange-but-true facts in each
     // language that a child of 8 to 12 can follow. Not seasonal: the create page's own switch asks for
