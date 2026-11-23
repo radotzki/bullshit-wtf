@@ -4,6 +4,7 @@ import { drawBigReveal } from './big-reveal';
 import { withStaged } from './phase';
 import { drawAboutUs } from './about';
 import { GameScheme, GameState, packFits, cleanCampaign } from '../game-model';
+import { kidsHolidayFor } from './kids-season';
 import { get, gamesRef, gameCounterRef } from '../firebase';
 
 export interface NewGameOptions {
@@ -12,6 +13,8 @@ export interface NewGameOptions {
     uids?: string[];
     // A seasonal question pack (see questionPacks in game-model).
     pack?: string;
+    // A kids game's holiday, as the create page offered it (see GameScheme kidsHoliday).
+    kidsHoliday?: string;
     // The campaign tag the host arrived with.
     campaign?: string;
     // The creating phone's one-game secret (see hostKey in game-model), already cleaned.
@@ -32,11 +35,16 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
         const gamePin = options.pin || generateGameName(gameCounter);
         // A pack with questions in one language only (Thanksgiving: English) is dropped from any other game.
         const pack = packFits(options.pack, locale) ? options.pack : undefined;
-        const questions = await randomQuestions(locale, count, options.uids || [], pack);
+        // Kept only on a kids game, and only while it is that holiday's season (kidsHolidayFor).
+        const kidsHoliday = kidsHolidayFor(pack, locale, options.kidsHoliday);
+        const questions = await randomQuestions(locale, count, options.uids || [], pack, kidsHoliday);
         const game = emptyGame(locale, count, questions, creator);
 
         if (pack) {
             game.pack = pack;
+        }
+        if (kidsHoliday) {
+            game.kidsHoliday = kidsHoliday;
         }
 
         const campaign = cleanCampaign(options.campaign);

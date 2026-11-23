@@ -300,7 +300,7 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
             const aboutUs = req.body.aboutUs === true;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
+                pack: req.body.pack, kidsHoliday: req.body.kidsHoliday, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);

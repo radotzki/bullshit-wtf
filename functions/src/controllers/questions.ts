@@ -1,14 +1,17 @@
 import { questionsRef, seenQuestionsRef, get } from './../firebase';
-import { Question, questionPacks, isPack, KIDS_PACK, KIDS_SEASON_PER_GAME, kidsSeasonPack } from '../game-model';
+import { Question, questionPacks, isPack, KIDS_SEASON_PER_GAME } from '../game-model';
 import { pickQuestions, pickWithPack, pickWithOpener, withSeasonKids, SeenRecord } from './question-picker';
 import { isRetired } from './retired-questions';
 import { aboutSlots } from './about';
+import { kidsSeasonQuestions } from './kids-season';
 
 /**
  * Picks `count` questions for `lang`, avoiding questions any of the given
  * devices (uids) have already seen. With no uids it is a plain random pick.
+ * `kidsHoliday`: a kids game's holiday (GameScheme kidsHoliday), see kidsSeasonQuestions.
  */
-export async function randomQuestions(lang: string, count: number, uids: string[] = [], pack?: string) {
+export async function randomQuestions(lang: string, count: number, uids: string[] = [], pack?: string,
+    kidsHoliday?: string) {
     const all = await getQuestionsByLang(lang);
     // Pack questions only appear in games of their pack.
     const questions = all.filter(q => !q.pack);
@@ -22,10 +25,8 @@ export async function randomQuestions(lang: string, count: number, uids: string[
         const picked = pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame, Math.random,
             questionPacks[pack].openers || []);
         // A kids game in a holiday's season also gets a few of the holiday's kid-friendly questions.
-        const season = pack === KIDS_PACK ? kidsSeasonPack(Date.now(), lang) : undefined;
-        if (season) {
-            const inBank = new Set(all.map(q => q.id));
-            const kidsToo = (questionPacks[season].kidsToo || []).filter(id => inBank.has(id) && !isRetired(id));
+        const kidsToo = kidsSeasonQuestions(pack, lang, all.map(q => q.id), Date.now(), kidsHoliday);
+        if (kidsToo.length) {
             // Not where an About question would take the question's place (aboutSlots).
             return withSeasonKids(picked, kidsToo, seen, KIDS_SEASON_PER_GAME, Math.random, aboutSlots(count));
         }

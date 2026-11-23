@@ -64,7 +64,7 @@ export async function fork(pin: string, creator?: string, hostPid?: string, host
         }
     }
 
-    const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
+    const questions = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack, game.kidsHoliday);
     const forkedGame = createFork(pin, game, questions, creator, hostPid, hostKey, stagedReveal, forkedGamePin, aboutUs);
 
     await gamesRef.child(forkedGamePin).set(forkedGame);
@@ -173,6 +173,10 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
     // Replay keeps the seasonal pack (a group playing Hanukkah night after night).
     if (game.pack) {
         forked.pack = game.pack;
+    }
+    // And a kids game's holiday (an English kids game from the Hanukkah page keeps its Hanukkah questions).
+    if (game.kidsHoliday) {
+        forked.kidsHoliday = game.kidsHoliday;
     }
 
     // A Replay of a test game is a test game, and of a portal game a portal game (portal.ts); other

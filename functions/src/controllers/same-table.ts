@@ -193,7 +193,7 @@ async function openTable(pin: string, game: GameScheme, fresh: string, seat: str
     // theirs by the link (one phone, one seat, see join.ts).
     const uids = Object.keys(game.players || {}).map(k => game.players[k] && game.players[k].uid).filter(u => !!u);
     const totalQ = replayLength(game);
-    const questions = await randomQuestions(game.locale, totalQ, uids, game.pack);
+    const questions = await randomQuestions(game.locale, totalQ, uids, game.pack, game.kidsHoliday);
     const players: GamePlayers = { [seat]: game.players[seat] };
     const table: GameScheme = Object.assign({}, game, { players, totalQ, lastSent: undefined, played: undefined });
     const lobby = createFork(pin, table, questions, creator || game.players[seat].uid, seat, hostKey,

@@ -144,7 +144,7 @@ export class ApiService {
         return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
-    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
+    async createGame(locale: string, count: number, pack?: string, campaign?: string, kidsHoliday?: string): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating never waits long for sign-in:
         // without a uid the game is made all the same, and anyone may start it.
@@ -154,7 +154,9 @@ export class ApiService {
         const resp = await this.post<{ pin: string }>(`newGame`, {
             // Where this visit started and whether this browser played before (see arrival.ts).
             arrival: newGameArrival(),
-            locale, count, uid, pack: pack || null, campaign: campaign || null, clientWaitMs: waitedMs, hostKey,
+            locale, count, uid, pack: pack || null, campaign: campaign || null,
+            // A kids game's holiday, as the create page offered it (GameScheme kidsHoliday).
+            kidsHoliday: kidsHoliday || null, clientWaitMs: waitedMs, hostKey,
             // This client starts through startGame, so the server may refuse START ticks for this game.
             serverStart: true,
             // This client can show the staged reveal, so the server may draw this game into its 50/50 test.
