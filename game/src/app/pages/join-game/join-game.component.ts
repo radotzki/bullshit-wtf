@@ -9,6 +9,7 @@ import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
 import { cleanCode } from '../../services/game-code';
+import { WholeName, boxValue, nicknameToSend, pastedName } from './whole-name';
 import { StorageService } from '../../services/storage.service';
 import { GameService } from '../../services/game.service';
 import {
@@ -31,6 +32,9 @@ export class JoinGameComponent implements OnInit, OnDestroy {
     private lang: string;
     pin: string;
     nickname: string;
+    // A name longer than the box, kept whole while the box shows its beginning (whole-name.ts).
+    private wholeNickname: WholeName | null = null;
+    private pastedWhole: string | null = null;
     loading: boolean;
     errorMsg: string;
     nicknameState: boolean;
@@ -434,6 +438,35 @@ export class JoinGameComponent implements OnInit, OnDestroy {
         this.nickname = nickname;
     }
 
+    /**
+     * The nickname box changed. A value longer than the box (the portal's CrazyGames username, a
+     * paste, an autofill) shows its first 9 characters and is kept whole, so the server checks every
+     * character of it before it cuts (whole-name.ts).
+     */
+    typedNickname(value: string, box: HTMLInputElement) {
+        const pasted = this.pastedWhole;
+        this.pastedWhole = null;
+        const { shown, kept } = boxValue(value);
+        this.nickname = shown;
+        if (box && box.value !== shown) {
+            box.value = shown;
+        }
+        if (kept) {
+            this.wholeNickname = kept;
+        } else if (pasted && pasted.indexOf(shown) === 0 && shown.trim()) {
+            // The browser cut the paste to the box: what it shows is the start of the whole name.
+            this.wholeNickname = { whole: pasted, shown };
+        } else {
+            this.wholeNickname = null;
+        }
+    }
+
+    /** A paste: the whole name it makes, before the box's maxlength cuts it. */
+    pastedNickname(event: ClipboardEvent, box: HTMLInputElement) {
+        const text = event && event.clipboardData ? event.clipboardData.getData('text') : '';
+        this.pastedWhole = box ? pastedName(box.value, box.selectionStart, box.selectionEnd, text) : null;
+    }
+
     submit() {
         if (!this.nicknameState) {
             this.validateGameName();
@@ -482,10 +515,12 @@ export class JoinGameComponent implements OnInit, OnDestroy {
 
         // signInAnonymously waits at most about 1.5 s and resolves to undefined if sign-in is slower or fails.
         const via = takeJoinSource(this.pin, this.activatedRoute.snapshot.queryParams['via'], this.pinInUrl);
-        const user = await this.apiService.signInAnonymously(this.pin, this.nickname, via);
+        // The whole name when the box shows only its beginning: the server checks it whole, then cuts.
+        const typed = nicknameToSend(this.nickname, this.wholeNickname);
+        const user = await this.apiService.signInAnonymously(this.pin, typed, via);
         const uid: any = user ? user.uid : 0;
 
-        this.apiService.join(this.pin, this.nickname, uid)
+        this.apiService.join(this.pin, typed, uid)
             .then(({ pid, nickname, swapped }) => {
                 // Keep the name the server stored, so Replay and the crew never send the typed one back.
                 this.sessionService.user = { nickname: nickname.toLowerCase(), pid, uid };

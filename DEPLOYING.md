@@ -335,6 +335,9 @@ The `join` function swaps a nickname that is a slur or a sex word for a sweet na
 the swap names are in `name-lists.json`. To add a missed word, put it in the right list; to stop a
 false hit, add the whole squashed name to `allow`. Then run `functions/test/name-flag.test.js` and
 the BigQuery check in the growth notes before shipping. Crew names on the list are refused.
+The join page's box shows 9 characters but sends a longer name whole (a paste, or the CrazyGames
+username), so the filter sees every character before the server cuts it to 9
+(`game/src/app/pages/join-game/whole-name.ts`, `functions/test/whole-name-join.test.js`).
 
 Release: run `functions/bigquery/2026-11-name-flag.sql` (adds `users.name_flag`), then all
 functions, then the game. Until the SQL runs, joins still log, without `name_flag`.

@@ -64,7 +64,13 @@ function prepare(t: any): Tier {
 const HATE = prepare((NAME_LISTS as any).hate);
 const SEX = prepare((NAME_LISTS as any).sex);
 const ALLOW: { [w: string]: boolean } = {};
-((NAME_LISTS as any).allow || []).forEach((a: string) => ALLOW[squash(normalizeName(a))] = true);
+// The same entries word by word, as written ("moby dick", "כוס קפה"): a run of a name's words is
+// taken out only when it is an entry's own words, so "cum in me" is not read as "cumin" + "me".
+const ALLOW_WORDS: { [w: string]: boolean } = {};
+((NAME_LISTS as any).allow || []).forEach((a: string) => {
+    ALLOW[squash(normalizeName(a))] = true;
+    ALLOW_WORDS[normalizeName(a).split(/[^a-zא-ת]+/).filter(t => !!t).join(' ')] = true;
+});
 
 function hits(t: Tier, raw: string, sq: string, toks: string[]): boolean {
     if (t.any.some(e => sq.indexOf(e) >= 0)) {
@@ -79,15 +85,48 @@ function hits(t: Tier, raw: string, sq: string, toks: string[]): boolean {
     return t.raw.some(e => raw.indexOf(e) >= 0);
 }
 
+/**
+ * The words of a name with every allowed word, or run of words, taken out ("Cocktail Hour" leaves
+ * "hour", "Moby Dick Fan" leaves "fan", "כוס קפה בבוקר" leaves "בבוקר"). The longest allowed run
+ * starting at each word wins. What is left is checked as a name of its own, so a rude word beside an
+ * allowed one ("Cocktail whore") is still caught.
+ */
+function withoutAllowed(toks: string[]): string[] {
+    const left: string[] = [];
+    let i = 0;
+    while (i < toks.length) {
+        let run = 0;
+        let joined = '';
+        for (let j = i; j < toks.length; j++) {
+            joined += (j > i ? ' ' : '') + toks[j];
+            if (ALLOW_WORDS[joined]) {
+                run = j - i + 1;
+            }
+        }
+        if (run) {
+            i += run;
+        } else {
+            left.push(toks[i]);
+            i++;
+        }
+    }
+    return left;
+}
+
 /** 'hate' or 'sex' when a nickname (or crew name) is one we swap, else null. Check the whole name, before any cut. */
 export function nameFlag(name: string): NameFlag | null {
     const raw = String(name == null ? '' : name);
     const n = normalizeName(raw);
-    const sq = squash(n);
-    if (ALLOW[sq]) {
-        return null;
+    const all = tokens(n);
+    // The allow list names fair words that hold a listed one ("cocktail", "nazir", "כוס קפה"): taken
+    // out word by word, so a longer fair name ("Cocktail Hour", "Nazir Khan") isn't swapped either.
+    // Tokens are the runs of letters squash keeps, so their join is the squashed name.
+    const toks = ALLOW[squash(n)] ? [] : withoutAllowed(all);
+    const sq = toks.join('');
+    if (!toks.length) {
+        // Only allowed words (or no letters at all): only a listed symbol ("卐") can still flag it.
+        return HATE.raw.some(e => raw.indexOf(e) >= 0) ? 'hate' : SEX.raw.some(e => raw.indexOf(e) >= 0) ? 'sex' : null;
     }
-    const toks = tokens(n);
     if (hits(HATE, raw, sq, toks)) {
         return 'hate';
     }
