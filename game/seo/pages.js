@@ -242,11 +242,20 @@ module.exports = [
 <h2>Why it fits Hanukkah</h2>
 <ul>
   <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, not know facts. Playing with kids of 8 to 12? Tick "Kids are playing" for questions they get; from 1 December those include two easy Hanukkah questions.</li>
-  <li><strong>Up to 12 phones</strong>, and a TV or laptop can show the game to the whole room.</li>
-  <li><strong>Free, no app.</strong> Cousins who arrive late join with the PIN in seconds.</li>
-  <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
-  <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together. Save your group as a crew and the scoreboard carries over from night to night.</li>
+  <li><strong>Up to 12 phones</strong>, and a TV or laptop can show the game to the whole room. Grandparents can share one phone or a tablet and play as one.</li>
+  <li><strong>Free, no app.</strong> A cousin who comes late opens the same link and joins the game under way, at 0 points.</li>
+  <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more. The first one is always one your family half knows.</li>
 </ul>
+<h2>Set up your night</h2>
+<ol>
+  <li>Press "Start a Hanukkah game", keep 7 questions, press CREATE and type your name.</li>
+  <li>Put it on the TV. Started on the laptop by the TV? Click "Use as the big screen" in the lobby. Started on your phone? Open bullshit.wtf on the laptop, click "Present Game" and type the PIN.</li>
+  <li>Send the link to the family chat. Everyone taps it, types a name and plays on their own phone.</li>
+  <li>Family in another city? Share the laptop's screen in your video call (Zoom, FaceTime, Google Meet), so they see the questions too. They open the same link and play on their own phones.</li>
+  <li>When everyone is in, press START.</li>
+</ol>
+<h2>Eight nights</h2>
+<p>In 2026 the first candle is lit on Friday evening, 4 December, and the eighth on Friday 11 December. If your family keeps Shabbat, start on Saturday night, the second candle. On every night of Hanukkah the final scores say which night it is. Press REMATCH to play again at once with the same family, or SAME TABLE TOMORROW to save tomorrow evening in your calendar with your table's link. Every game has Hanukkah questions nobody at the table has seen yet. Save your group as a crew and the scoreboard carries over from night to night.</p>
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {

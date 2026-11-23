@@ -27,8 +27,8 @@
     "questionText": "Before potatoes reached Europe, the first latkes were often made of $blank$",
     "realAnswer": "cheese",
     "fakeAnswers": [
-      "seaweed",
-      "bananas",
+      "beans",
+      "turnips",
       "sunflower seeds"
     ],
     "citation": "https://en.wikipedia.org/wiki/Latke",
@@ -65,7 +65,7 @@
     "fakeAnswers": [
       "sesame street",
       "the tonight show",
-      "a bar mitzvah in queens"
+      "mtv"
     ],
     "citation": "https://en.wikipedia.org/wiki/The_Chanukah_Song",
     "lang": "en",
@@ -99,9 +99,9 @@
     "questionText": "King Antiochus IV called himself Epiphanes, \"god made visible\". Behind his back he was Epimanes: $blank$",
     "realAnswer": "the madman",
     "fakeAnswers": [
-      "the bald one",
+      "the cruel",
       "the tax man",
-      "the little goat"
+      "the fat one"
     ],
     "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
     "lang": "en",
@@ -123,9 +123,9 @@
     "questionText": "Israeli dreidels swap shin for pe, so they say \"a great miracle happened $blank$\"",
     "realAnswer": "here",
     "fakeAnswers": [
-      "last tuesday",
-      "to grandma",
-      "by accident"
+      "there",
+      "in the temple",
+      "to us"
     ],
     "citation": "https://en.wikipedia.org/wiki/Dreidel",
     "lang": "en",
@@ -135,9 +135,9 @@
     "questionText": "In the 1920s, jelly doughnuts became the Land of Israel's Hanukkah food partly thanks to the $blank$",
     "realAnswer": "labor union",
     "fakeAnswers": [
-      "army",
-      "dentists' association",
-      "chief rabbi of yemen"
+      "bakers guild",
+      "jewish national fund",
+      "british governor"
     ],
     "citation": "https://en.wikipedia.org/wiki/Sufganiyah",
     "lang": "en",
@@ -184,8 +184,8 @@
     "realAnswer": "tamar",
     "fakeAnswers": [
       "ruth",
-      "the whale",
-      "his mother-in-law"
+      "delilah",
+      "bathsheba"
     ],
     "citation": "https://en.wikipedia.org/wiki/Latke",
     "lang": "en",
@@ -197,7 +197,7 @@
     "fakeAnswers": [
       "sun",
       "spark",
-      "uncle"
+      "guard"
     ],
     "citation": "https://en.wikipedia.org/wiki/Hanukkah_menorah",
     "lang": "en",
@@ -208,7 +208,7 @@
     "realAnswer": "messiah",
     "fakeAnswers": [
       "jerusalem",
-      "chocolate",
+      "shalom",
       "maccabee"
     ],
     "citation": "https://en.wikipedia.org/wiki/Dreidel",
@@ -221,7 +221,7 @@
     "fakeAnswers": [
       "married him",
       "stole his horse",
-      "sold him a goat"
+      "ran away"
     ],
     "citation": "https://en.wikipedia.org/wiki/Book_of_Judith",
     "lang": "en",
@@ -292,7 +292,7 @@
     "realAnswer": "eight crazy nights",
     "fakeAnswers": [
       "the latke kid",
-      "dreidel in the hood",
+      "the night before hanukkah",
       "oil be home for hanukkah"
     ],
     "citation": "https://en.wikipedia.org/wiki/Eight_Crazy_Nights",
@@ -376,7 +376,7 @@
     "realAnswer": "daughters",
     "fakeAnswers": [
       "grandfathers",
-      "goats",
+      "widows",
       "bakers"
     ],
     "citation": "https://www.jtsa.edu/chag-habanot-north-african-hanukkah-festival/",
@@ -425,7 +425,7 @@
     "fakeAnswers": [
       "quran",
       "book of mormon",
-      "iliad"
+      "dead sea scrolls"
     ],
     "citation": "https://en.wikipedia.org/wiki/1_Maccabees",
     "lang": "en",
@@ -436,8 +436,8 @@
     "realAnswer": "mezuzah",
     "fakeAnswers": [
       "doorbell",
-      "shoe rack",
-      "welcome mat"
+      "door handle",
+      "window"
     ],
     "citation": "https://www.chabad.org/holidays/chanukah/article_cdo/aid/603798/jewish/Chanukah-Guide.htm",
     "lang": "en",
@@ -483,8 +483,8 @@
     "questionText": "A tune from an 18th-century oratorio about Judah Maccabee became a famous Christian hymn for $blank$",
     "realAnswer": "easter",
     "fakeAnswers": [
-      "halloween",
-      "the pope's birthday",
+      "pentecost",
+      "all saints' day",
       "new year's eve"
     ],
     "citation": "https://en.wikipedia.org/wiki/Thine_Be_the_Glory",
@@ -557,7 +557,7 @@
     "fakeAnswers": [
       "kosher butcher",
       "rabbi",
-      "latke champion"
+      "union organizer"
     ],
     "citation": "https://en.wikipedia.org/wiki/Aliza_Greenblatt",
     "lang": "en",
@@ -569,7 +569,7 @@
     "fakeAnswers": [
       "spun dreidels in the street",
       "fried latkes at city hall",
-      "lit the mayor's house"
+      "painted their doors blue"
     ],
     "citation": "https://www.niot.org/nios-video/not-our-town",
     "lang": "en",
@@ -605,7 +605,7 @@
     "fakeAnswers": [
       "10 cubits",
       "the roof",
-      "a camel's head"
+      "40 cubits"
     ],
     "citation": "https://www.myjewishlearning.com/article/shabbat-22/",
     "lang": "en",
@@ -629,7 +629,7 @@
     "fakeAnswers": [
       "lions of god",
       "swords",
-      "kings of cups"
+      "champions"
     ],
     "citation": "https://en.wikipedia.org/wiki/Nine_Worthies",
     "lang": "en",
@@ -641,7 +641,7 @@
     "fakeAnswers": [
       "lions",
       "crows",
-      "sharks"
+      "snakes"
     ],
     "citation": "https://en.wikipedia.org/wiki/Antiochus_IV_Epiphanes",
     "lang": "en",
@@ -652,8 +652,8 @@
     "realAnswer": "sukkot",
     "fakeAnswers": [
       "passover",
-      "the king's birthday",
-      "a greek wedding"
+      "shavuot",
+      "a wedding week"
     ],
     "citation": "https://en.wikipedia.org/wiki/2_Maccabees",
     "lang": "en",
@@ -665,7 +665,7 @@
     "fakeAnswers": [
       "sugar",
       "pillow",
-      "sunset"
+      "cloud"
     ],
     "citation": "https://en.wikipedia.org/wiki/Sufganiyah",
     "lang": "en",
@@ -700,8 +700,8 @@
     "realAnswer": "high priest",
     "fakeAnswers": [
       "king",
-      "army",
-      "temple cat"
+      "prophet",
+      "first maccabee"
     ],
     "citation": "https://www.sefaria.org/Shabbat.21b",
     "lang": "en",
@@ -904,7 +904,7 @@
     "realAnswer": "his son-in-law",
     "fakeAnswers": [
       "his cook",
-      "an elephant",
+      "a greek spy",
       "his brother"
     ],
     "citation": "https://en.wikipedia.org/wiki/Ptolemy_son_of_Abubus",
