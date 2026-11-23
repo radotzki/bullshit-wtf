@@ -20,6 +20,7 @@ import { environment } from '../../environments/environment';
 import firebaseCompat from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/database';
+import { bigScreenInGame } from '../pages/show-answers/question-on-phone';
 
 const firebase = firebaseCompat.initializeApp(environment.firebaseConfig);
 
@@ -118,6 +119,17 @@ export class ApiService {
     gameHasPresenter(pin: string) {
         pin = pin.toUpperCase();
         return this.get<boolean>(this.gamesRef.child(pin).child('presenter'));
+    }
+
+    /**
+     * Whether a big screen is in this game: a presenter joined, or the host made their computer the big
+     * screen (see question-on-phone.ts). False when neither can be read.
+     */
+    gameHasBigScreen(pin: string): Promise<boolean> {
+        return Promise.all([
+            this.gameHasPresenter(pin).catch(() => false),
+            this.getGameHasHost(pin).catch(() => false),
+        ]).then(([presenter, hasHost]) => bigScreenInGame(presenter, hasHost));
     }
 
     /** Anonymous uid of the browser that created (or replayed) this game, if known. */

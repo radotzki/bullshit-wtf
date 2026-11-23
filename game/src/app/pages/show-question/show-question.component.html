@@ -15,7 +15,7 @@
             <app-waiting-row [pin]="pin" [t]="t" [presenter]="true"></app-waiting-row>
         </div>
 
-        <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()" [class.about-me]="aboutMe">
+        <form *ngIf="question && !questionSubmitted && !presenter" (submit)="submit()" [class.about-me]="aboutMe" [class.phone-only]="phoneOnly">
             <p *ngIf="aboutMe" class="about-title" [class.rtl]="rtl">{{ aboutWords.youTitle }}</p>
             <p class="question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
