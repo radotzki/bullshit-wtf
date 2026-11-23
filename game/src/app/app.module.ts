@@ -1,4 +1,7 @@
 import { GameService } from './services/game.service';
+import { inject, provideAppInitializer } from '@angular/core';
+import { PortalHomeComponent } from './portal/portal-home.component';
+import { PortalService } from './portal/portal.service';
 import { SentryModule } from './sentry/sentry.module';
 import { ApiService } from './services/api.service';
 import { StorageService } from './services/storage.service';
@@ -52,6 +55,7 @@ import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-nig
 @NgModule({
     declarations: [
         AppComponent,
+        PortalHomeComponent,
         MobileLandingComponent,
         DesktopLandingComponent,
         CreateGameComponent,
@@ -103,6 +107,8 @@ import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-nig
         ResultsCardService,
         CrewService,
         SoundService,
+        // The CrazyGames version (portal/portal.ts); does nothing off the portal path.
+        provideAppInitializer(() => inject(PortalService).start()),
     ],
     bootstrap: [AppComponent]
 })
