@@ -1,3 +1,5 @@
+import { inPortal } from '../portal/portal';
+import { portalRoutes } from '../portal/portal-routes';
 import { ScoreBoardFinalComponent } from './../pages/score-board-final/score-board-final.component';
 import { ScoreBoardComponent } from './../pages/score-board/score-board.component';
 import { RevealTheTruthComponent } from './../pages/reveal-the-truth/reveal-the-truth.component';
@@ -54,7 +56,9 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forRoot(routes)],
+    // The CrazyGames version (portal/portal.ts) routes by the address's hash, so its frame stays on
+    // /portal/crazygames, and has its own home in place of the site's pages that link out.
+    imports: [RouterModule.forRoot(inPortal() ? portalRoutes(routes) : routes, { useHash: inPortal() })],
     exports: [RouterModule]
 })
 export class AppRoutingModule { }
