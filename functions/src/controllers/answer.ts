@@ -13,6 +13,7 @@ import { writeMarks } from './mark-sent';
 import { aboutOf } from '../game-model';
 import { writingSent } from './about';
 import { matchOffer } from './pair';
+import { filtersLies, lieRefused, FLAGGED_LIE } from './portal';
 
 /**
  * A player's lie for the current question. `decoy`: in a pair game (see pair.ts), the house lie the
@@ -40,6 +41,11 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
     // An About question (see about.ts): the player it is about writes the truth, kept where no phone
     // can read it; everyone else writes a lie as usual. No lie is refused as "too close to the truth":
     // the truth may not be in yet, and refusing one would tell its writer that they had guessed it.
+    // A portal game or a kids' game (see portal.ts): a lie with swearing, a slur or a sex word is refused; its writer tries another.
+    if (filtersLies(game) && lieRefused(playerAnswer)) {
+        return Promise.reject(FLAGGED_LIE);
+    }
+
     const about = aboutOf(game.state);
     if (about) {
         return aboutAnswer(pin, game, pid, playerAnswer, about.pid === pid);
