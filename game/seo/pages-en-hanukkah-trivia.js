@@ -67,7 +67,7 @@ const questions = [
         answer: 'Numbers chapter 7',
     },
     {
-        q: 'On the Shabbat of Hanukkah, a famous line from the prophet Zechariah is read in synagogue. What is it?',
+        q: 'On the first Shabbat of Hanukkah, a famous line from the prophet Zechariah is read in synagogue. What is it?',
         a: '"Not by might, nor by power, but by My spirit, says the Lord of hosts" (Zechariah 4:6). The reading comes with a vision of a golden lampstand fed by two olive trees.',
         answer: 'Not by might, nor by power',
     },
