@@ -1,0 +1,29 @@
+<div class="versus" *ngIf="card" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'"
+    [class.won]="outcome === 'won'" [class.lost]="outcome === 'lost'">
+    <p class="versus-label">{{ t.label }}</p>
+    <p class="versus-line" dir="auto">{{ line }}</p>
+    <div class="versus-tables">
+        <div class="versus-table ours">
+            <p class="versus-name">{{ t.us }}</p>
+            <p class="versus-top">{{ ourTop }}</p>
+            <ol class="versus-rows">
+                <li *ngFor="let row of ours.rows" class="versus-row">
+                    <span class="versus-row-name" dir="auto">{{ row.name }}</span>
+                    <span class="versus-row-score">{{ row.score }}</span>
+                </li>
+            </ol>
+            <p class="versus-more" *ngIf="ours.more">{{ t.more(ours.more) }}</p>
+        </div>
+        <div class="versus-table theirs">
+            <p class="versus-name" dir="auto">{{ t.them(card.host) }}</p>
+            <p class="versus-top">{{ card.top }}</p>
+            <ol class="versus-rows">
+                <li *ngFor="let row of theirs.rows" class="versus-row">
+                    <span class="versus-row-name" dir="auto">{{ row.name }}</span>
+                    <span class="versus-row-score">{{ row.score }}</span>
+                </li>
+            </ol>
+            <p class="versus-more" *ngIf="theirMore">{{ t.more(theirMore) }}</p>
+        </div>
+    </div>
+</div>

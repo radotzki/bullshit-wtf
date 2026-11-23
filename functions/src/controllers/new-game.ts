@@ -6,6 +6,7 @@ import { drawAboutUs } from './about';
 import { GameScheme, GameState, packFits, cleanCampaign } from '../game-model';
 import { kidsHolidayFor } from './kids-season';
 import { get, gamesRef, gameCounterRef } from '../firebase';
+import { challengeSeed } from './challenge';
 
 export interface NewGameOptions {
     // A crew rematch: the crew this game counts for, and its members' browsers (no repeat questions).
@@ -27,17 +28,33 @@ export interface NewGameOptions {
     aboutUs?: boolean;
     // A pin claimed already (a crew's lobby, see next-game.ts): the game is made under it.
     pin?: string;
+    // CHALLENGE ANOTHER GROUP: the PIN of the finished game this one plays against (see challenge.ts).
+    // The new game takes that game's language, length, pack and questions, whatever else was asked.
+    challenge?: string;
 }
 
 export async function newGame(locale, count, creator?: string, options: NewGameOptions = {}) {
+    // A challenge is checked before a PIN is spent on it.
+    const seed = options.challenge ? await challengeSeed(options.challenge) : null;
+    if (options.challenge && !seed) {
+        return Promise.reject({ message: 'This challenge is over', code: 'CHALLENGE_OVER' });
+    }
     const counter = options.pin ? Promise.resolve(null) : incGameCounter();
     return counter.then(async gameCounter => {
         const gamePin = options.pin || generateGameName(gameCounter);
+        if (seed) {
+            // The challenged game's language, length and pack (which fits its language).
+            locale = seed.card.locale;
+            count = seed.qids.length;
+            options = { ...options, pack: seed.pack };
+        }
         // A pack with questions in one language only (Thanksgiving: English) is dropped from any other game.
         const pack = packFits(options.pack, locale) ? options.pack : undefined;
-        // Kept only on a kids game, and only while it is that holiday's season (kidsHolidayFor).
-        const kidsHoliday = kidsHolidayFor(pack, locale, options.kidsHoliday);
-        const questions = await randomQuestions(locale, count, options.uids || [], pack, kidsHoliday);
+        // Kept only on a kids game, and only while it is that holiday's season (kidsHolidayFor). A challenge
+        // plays the other table's questions, so it keeps none.
+        const kidsHoliday = seed ? undefined : kidsHolidayFor(pack, locale, options.kidsHoliday);
+        // A challenge plays the other table's questions, in their order (see challenge.ts).
+        const questions = seed ? seed.qids : await randomQuestions(locale, count, options.uids || [], pack, kidsHoliday);
         const game = emptyGame(locale, count, questions, creator);
 
         if (pack) {
@@ -47,9 +64,14 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
             game.kidsHoliday = kidsHoliday;
         }
 
-        const campaign = cleanCampaign(options.campaign);
+        // A test game's challenge is a test game too.
+        const campaign = cleanCampaign(seed && seed.testCampaign ? seed.testCampaign : options.campaign);
         if (campaign) {
             game.campaign = campaign;
+        }
+
+        if (seed) {
+            game.challenge = seed.card;
         }
 
         // The round-1 lie helper, on for every game (crew rematches included). Logged as coach.
@@ -79,7 +101,8 @@ export async function newGame(locale, count, creator?: string, options: NewGameO
 
         // The About questions, for half of the games made by a client that can show them: by the crew's
         // half for a crew's game, else by the PIN's.
-        const aboutUs = drawAboutUs(options.aboutUs === true, gamePin, options.crew);
+        // Not in a challenge: its questions are the other table's, all of them.
+        const aboutUs = drawAboutUs(options.aboutUs === true && !seed, gamePin, options.crew);
         if (aboutUs !== undefined) {
             game.aboutUs = aboutUs;
         }

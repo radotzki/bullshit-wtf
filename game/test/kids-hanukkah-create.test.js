@@ -57,8 +57,8 @@ test('the "has no" line shows only where there is no season line; the season lin
 
 test('the page sends the kids game\'s holiday, and only for a kids game', () => {
     assert.match(src, /const kidsHoliday = this\.kids \? this\.kidsHoliday : undefined;/);
-    assert.match(src, /this\.apiService\.createGame\(this\.locale, this\.length, pack, this\.campaign \|\| arrivalCampaign\(\), kidsHoliday\)/);
-    assert.match(api, /kidsHoliday: kidsHoliday \|\| null/);
+    assert.match(src, /this\.apiService\.createGame\(this\.locale, this\.length, pack, this\.campaign \|\| arrivalCampaign\(\), undefined, kidsHoliday\)/);
+    assert.match(api, /\.\.\.\(kidsHoliday \? \{ kidsHoliday \} : \{\}\),/);
 });
 
 test('the Hanukkah pages no longer say a kids game has no Hanukkah questions', () => {

@@ -92,7 +92,7 @@ export class CreateGameComponent implements OnInit {
         // A kids game keeps the holiday's kid-friendly questions (the server checks the season again).
         const kidsHoliday = this.kids ? this.kidsHoliday : undefined;
 
-        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign(), kidsHoliday)
+        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign(), undefined, kidsHoliday)
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);
