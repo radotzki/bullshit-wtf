@@ -12,9 +12,12 @@ import * as V from './view';
 import { keyboard } from './keyboard';
 import { signIn, uidWithin, call, write } from './backend';
 import { rememberedSeat, rememberSeat, seatUid, seatStatus } from './seat';
+import { onPress, nextCommand } from './press';
 
 const GS = V.GameState;
 const RETRY_MS = 3000;
+/** A command the screen has not acted on by then may be pressed again. */
+const PENDING_MS = 6000;
 
 const air = new AirConsole({ orientation: AirConsole.ORIENTATION_PORTRAIT, silence_inactive_players: false });
 const app = document.getElementById('app');
@@ -31,6 +34,8 @@ let wrong = '';
 let busy = false;
 let kb = null;
 let drawn = '';
+let command = null;
+let pending = null;
 
 const esc = s => String(s === undefined || s === null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -38,6 +43,27 @@ const lang = () => (shared && shared.pin ? shared.locale : V.localeFor(air.getLa
 const words = () => ({ t: gameStrings(lang()), f: finalStrings[lang() === 'he' ? 'he' : 'en'], a: airStrings(lang()) });
 const isMaster = () => !!shared && shared.master === air.getDeviceId();
 const toScreen = data => air.message(AirConsole.SCREEN, data);
+
+/**
+ * START, switch language or PLAY AGAIN from the master: sent by both routes (see press.js), and shown
+ * as sent until the screen moves on, so a press that reached nothing can be told from one that did.
+ */
+function sendCommand(type) {
+    if (!shared || !shared.pin || (pending && pending.key === shared.key && Date.now() < pending.until)) {
+        return;
+    }
+    command = nextCommand(command, type, shared.pin, Date.now());
+    pending = { type, key: shared.key, pin: shared.pin, until: Date.now() + PENDING_MS };
+    toScreen(command);
+    air.setCustomDeviceState({ cmd: command });
+    render();
+    setTimeout(render, PENDING_MS + 50);
+}
+
+function isPending(type) {
+    return !!pending && pending.type === type && !!shared && pending.key === shared.key
+        && pending.pin === shared.pin && Date.now() < pending.until;
+}
 
 function storage() {
     try {
@@ -198,18 +224,10 @@ function next() {
     render(true);
 }
 
-app.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-do]');
-    if (!b || b.disabled) {
-        return;
-    }
+onPress(app, '[data-do]', b => {
     const act = b.getAttribute('data-do');
-    if (act === 'start') {
-        toScreen({ type: 'start' });
-    } else if (act === 'locale') {
-        toScreen({ type: 'locale' });
-    } else if (act === 'again') {
-        toScreen({ type: 'again' });
+    if (act === 'start' || act === 'locale' || act === 'again') {
+        sendCommand(act);
     } else if (act === 'send') {
         sendLie();
     } else if (act === 'clear') {
@@ -280,8 +298,9 @@ function body() {
             <p class="big">${esc(a.youreIn)}</p>
             ${isMaster() ? `
                 <p>${esc(count >= V.MIN_PLAYERS ? a.youStart : a.needMore(V.MIN_PLAYERS - count))}</p>
-                <button class="button primary" data-do="start" ${count >= V.MIN_PLAYERS ? '' : 'disabled'}>${esc(t.start)}</button>
-                <button class="button light" data-do="locale">${esc(a.switchLanguage)}</button>`
+                <button class="button primary" data-do="start" ${count >= V.MIN_PLAYERS && !isPending('start') ? '' : 'disabled'}>${esc(t.start)}</button>
+                <button class="button light" data-do="locale" ${isPending('locale') ? 'disabled' : ''}>${esc(a.switchLanguage)}</button>
+                ${isPending('start') || isPending('locale') ? `<p class="note">${esc(a.sentToScreen)}</p>` : ''}`
         : `<p>${esc(masterName ? a.waitStart(masterName) : '')}</p>`}
         </main>`;
     }
@@ -335,7 +354,7 @@ function body() {
         return `${top}<main class="center">
             <p class="big">${esc(row ? a.yourScore(row.score) : '')}</p>
             <p>${esc(placeLine)}</p>
-            ${final && isMaster() ? `<button class="button primary" data-do="again">${esc(a.playAgain)}</button>` : ''}
+            ${final && isMaster() ? `<button class="button primary" data-do="again" ${isPending('again') ? 'disabled' : ''}>${esc(a.playAgain)}</button>` : ''}
             ${final && !isMaster() ? `<p>${esc(a.lookAtScreen)}</p>` : ''}
         </main>`;
     }

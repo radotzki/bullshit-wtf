@@ -10,6 +10,8 @@
 // simulator's "Add Controller".
 // Each controller may come from its own origin (another port), so each has its own storage and its
 // own Firebase sign-in, as phones do.
+// `lose`: command types (start, locale, again) whose AirConsole messages from a controller never reach
+// the screen, so the game must work by the commands' other route (see src/press.js).
 
 (function () {
     'use strict';
@@ -18,6 +20,7 @@
     const lang = q.get('lang') || 'en';
     const names = (q.get('names') || 'Ana,Ben,Cleo,Dov,Eli,Fay').split(',');
     const hold = (q.get('hold') || '').split(',').filter(Boolean).map(Number);
+    const lose = (q.get('lose') || '').split(',').filter(Boolean);
     const devices = [];   // device_id -> { frame, url, data, loaded }
     const log = [];
     window.harnessLog = log;
@@ -113,6 +116,10 @@
             updateAll(id);
         } else if (data.action === 'message') {
             const to = data.to === undefined || data.to === null ? null : data.to;
+            if (id !== 0 && data.data && lose.indexOf(data.data.type) >= 0) {
+                log.push(`lost ${id} -> ${to} ${JSON.stringify(data.data).slice(0, 80)}`);
+                return;
+            }
             devices.forEach((d, i) => {
                 if (i !== id && (to === null || to === i)) {
                     post(i, { action: 'message', from: id, data: data.data });

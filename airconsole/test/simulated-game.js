@@ -137,6 +137,8 @@ async function openHarness(browser, servers, problems) {
         // The other phones that share controller 1's origin load once it has its seat, one by one, as
         // phones added with the simulator's "Add Controller": they find its Firebase uid already kept.
         hold: SHARED.slice(1).join(','),
+        // START's message is lost on its way, so START must also arrive by the controller's device state.
+        lose: 'start',
     });
     await page.goto(`${origin(servers.harness)}/harness.html?${q}`);
     return { context, page, names };
@@ -162,6 +164,15 @@ async function shot(page, name, label) {
     fs.mkdirSync(SHOTS, { recursive: true });
     const el = name === 'harness' ? page : page.locator(`iframe[name="${name}"]`);
     await el.screenshot({ path: path.join(SHOTS, `${LOCALE}-${label}.png`) }).catch(e => log(`no shot ${label}: ${e.message}`));
+}
+
+/** Presses a controller's button with a pointerdown alone: no mouseup and no click follow it. */
+async function press(f, act) {
+    await f.locator(`[data-do="${act}"]:not([disabled])`).waitFor();
+    await f.evaluate(a => {
+        const b = document.querySelector(`[data-do="${a}"]`);
+        b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0, isPrimary: true }));
+    }, act);
 }
 
 /** One controller's move on the step it shows. Returns what it did. */
@@ -260,7 +271,10 @@ async function main() {
         await Promise.all(['answer', 'answer', 'answer', 'answer', 'answer', 'answer'].map(fn => fetch(`${FUNCTIONS}/${fn}`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: 'ZZZZ' }),
         }).catch(() => null)));
-        await frame(page, 'controller-1').locator('[data-do="start"]').click();
+        // A press alone, with no click after it, as AirConsole's simulator's phones may deliver it
+        // (its Pong demo acts on the press; our START, on click only, did nothing there).
+        await press(frame(page, 'controller-1'), 'start');
+        result.checks.startLost = (await page.evaluate(() => window.harnessLog)).filter(l => /^lost 1 -> 0 .*"start"/.test(l)).length;
 
         const lies = LOCALE === 'he' ? ['גבינה', 'ירח כחול', 'סבתא', 'חתול', 'בננה'] : ['cheese', 'blue moon', 'grandma', 'a cat', 'banana'];
         const end = Date.now() + GAME_TIMEOUT_MS;
@@ -325,7 +339,7 @@ async function main() {
 
         // PLAY AGAIN on the master: AirConsole's ad break, then a new game that every controller joins.
         await until('PLAY AGAIN on the master', async () => (await frame(page, 'controller-1').locator('[data-do="again"]').count()) === 1);
-        await frame(page, 'controller-1').locator('[data-do="again"]').click();
+        await press(frame(page, 'controller-1'), 'again');
         const pin2 = await until('a new game', async () => {
             const s = await page.evaluate(() => window.harness.devices[0].data.custom);
             return s && s.pin && s.pin !== pin && s.pin;
@@ -353,6 +367,7 @@ async function main() {
     if (c.hasHost !== 'screen') fails.push(`hasHost is ${c.hasHost}`);
     if (c.presenter !== true) fails.push('the game has no big screen');
     if (c.startOnOthers !== 0) fails.push('a controller that is not the master shows START');
+    if (!(c.startLost >= 1)) fails.push('START\'s message was not lost on its way, so its other route went untested');
     if (c.roundIndexAtEnd !== 2) fails.push(`the game ended in round ${c.roundIndexAtEnd + 1}, not 3`);
     if (c.idle) fails.push('the game ended idle');
     if (!c.lateJoinerSeated) fails.push('the controller that joined mid-game has no seat');

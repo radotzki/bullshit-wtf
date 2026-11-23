@@ -9,6 +9,7 @@ import { finalStrings } from '../../game/src/app/pages/score-board-final/final-s
 import { airStrings } from './strings';
 import * as V from './view';
 import { uidWithin, call, watch, write, serverOffset, reconnect, signIn } from './backend';
+import { acceptCommand } from './press';
 
 const GS = V.GameState;
 const RETRY_MS = 5000;
@@ -29,6 +30,7 @@ let tickTimer = null;
 let lastShared = '';
 let pendingAgain = false;
 let failed = false;
+const seenCommands = {};
 
 const esc = s => String(s === undefined || s === null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -65,12 +67,29 @@ air.onMessage = function (from, data) {
     if (!data || typeof data !== 'object') {
         return;
     }
-    const step = game.state ? game.state.id : null;
-    const isMaster = from === master();
     if (data.type === 'hello') {
         lastShared = '';
         share();
-    } else if (data.type === 'start' && isMaster && step === GS.GameStaging) {
+    } else {
+        onCommand(from, data);
+    }
+};
+
+// The same commands also come in each controller's own device state (see press.js).
+air.onCustomDeviceStateChange = function (from, data) {
+    if (from !== AirConsole.SCREEN && data && typeof data === 'object' && data.cmd) {
+        onCommand(from, data.cmd);
+    }
+};
+
+/** START, switch language or PLAY AGAIN: from the master only, once per command, for this game. */
+function onCommand(from, data) {
+    if (!acceptCommand(seenCommands, from, data, game.pin)) {
+        return;
+    }
+    const step = game.state ? game.state.id : null;
+    const isMaster = from === master();
+    if (data.type === 'start' && isMaster && step === GS.GameStaging) {
         if (V.seats(game.players || {}).length >= V.MIN_PLAYERS) {
             call('startGame', { pin: game.pin, hostKey }).catch(e => console.warn('START failed', e.code));
         }
@@ -81,7 +100,7 @@ air.onMessage = function (from, data) {
         pendingAgain = true;
         air.showAd();
     }
-};
+}
 
 async function newGame(lang) {
     if (creating) {
