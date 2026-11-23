@@ -3,7 +3,7 @@
     <p class="ask-text">{{ late ? t.lateText : t.text }}</p>
     <div class="ask-buttons">
         <button class="button is-primary ask-create" type="button" (click)="create()">{{ t.create }}</button>
-        <button class="button ask-remind" type="button" (click)="remind()">{{ t.remind }}</button>
+        <button *ngIf="remindShown" class="button ask-remind" type="button" (click)="remind()">{{ t.remind }}</button>
     </div>
     <p class="ask-saved" *ngIf="reminded">
         {{ t.saved }}
