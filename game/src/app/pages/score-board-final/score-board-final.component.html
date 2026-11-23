@@ -95,10 +95,6 @@
                 <app-challenge-share *ngIf="!soloTaste && !taste && !idle && displayPlayers.length > 1" [pin]="pin" [locale]="locale"
                     (sheet)="onSheet($event)"></app-challenge-share>
             </div>
-            <!-- Half of guests: INVITE ANOTHER GROUP in place of the ask below (a 50/50 test, see invite-group.ts). -->
-            <app-invite-group *ngIf="inviteAsk" [pin]="pin" [locale]="locale" [nickname]="myNickname" [best]="mine ? mine.best : null"
-                (sheet)="onSheet($event)"></app-invite-group>
-
             <app-host-ask *ngIf="hostAsk" [locale]="locale" [pack]="pack" place="after-game"></app-host-ask>
 
             <ol *ngIf="!soloTaste" class="players" [class.many]="displayPlayers.length > 4" [class.lots]="displayPlayers.length > 8">

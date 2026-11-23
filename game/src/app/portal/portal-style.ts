@@ -16,7 +16,6 @@
 export const PORTAL_CSS = `
 html.bs-portal #bs-about,
 html.bs-portal app-host-ask,
-html.bs-portal app-invite-group,
 html.bs-portal app-next-week,
 html.bs-portal .crew-link,
 html.bs-portal .save-crew,

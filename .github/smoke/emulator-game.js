@@ -420,7 +420,7 @@ async function main() {
 }
 
 // Run as a script it plays the game; required, it lends its emulators and phones to the other
-// local runs (emulator-crew-night.js, emulator-invite-group.js, emulator-rejoin.js).
+// local runs (emulator-crew-night.js, emulator-rejoin.js).
 if (require.main === module) {
     main().catch((e) => {
         console.error('FAIL', e.stack || e);
