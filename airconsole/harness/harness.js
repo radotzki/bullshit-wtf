@@ -5,7 +5,9 @@
 // "update" for connects, disconnects and device states. It is a test double, not AirConsole: it
 // proves the game against the API's code, not against AirConsole's servers.
 //
-// Query: ?screen=<url of screen.html>&controllers=<url>,<url>,...&lang=en|he&names=Ana,Ben,...
+// Query: ?screen=<url of screen.html>&controllers=<url>,<url>,...&lang=en|he&names=Ana,Ben,...&hold=2,3
+// `hold`: device ids whose controller loads only on harness.release(id), as a phone added later with the
+// simulator's "Add Controller".
 // Each controller may come from its own origin (another port), so each has its own storage and its
 // own Firebase sign-in, as phones do.
 
@@ -15,6 +17,7 @@
     const q = new URLSearchParams(location.search);
     const lang = q.get('lang') || 'en';
     const names = (q.get('names') || 'Ana,Ben,Cleo,Dov,Eli,Fay').split(',');
+    const hold = (q.get('hold') || '').split(',').filter(Boolean).map(Number);
     const devices = [];   // device_id -> { frame, url, data, loaded }
     const log = [];
     window.harnessLog = log;
@@ -55,7 +58,9 @@
         const id = devices.length;
         const frame = document.createElement('iframe');
         frame.name = kind === 'screen' ? 'screen' : `controller-${id}`;
-        frame.src = url;
+        if (hold.indexOf(id) < 0) {
+            frame.src = url;
+        }
         const box = document.createElement('div');
         box.className = `device ${kind}`;
         const label = document.createElement('span');
@@ -132,6 +137,15 @@
     window.harness = {
         devices,
         drop,
+        /** Loads a held controller (see `hold`). */
+        release(id) {
+            const d = devices[id];
+            if (!d || d.frame.src) {
+                return false;
+            }
+            d.frame.src = d.url;
+            return true;
+        },
         addController(url, nickname) {
             return add('controller', url, nickname);
         },

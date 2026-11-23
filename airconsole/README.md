@@ -16,6 +16,13 @@ and `score-board-final/final-strings.ts`, and the production Firebase settings) 
 - **The controllers** (`src/controller.js`) take a seat in that game under the player's AirConsole
   nickname (`join`, then `onJoinGame`, which is what counts a weekly player), and write lies, pick
   answers and press NEXT straight on the game's server, as the site's phones do.
+- **One seat per phone:** the server gives one seat per Firebase sign-in, and a sign-in is kept per
+  browser. In AirConsole's simulator every phone runs in one browser, so `src/seat.js` seats by
+  AirConsole's device id: each device remembers its own seat (per PIN and device id), and only the first
+  connected device of a browser sends the shared sign-in to `join`; the others join with none and get a
+  seat of their own. Every phone still sends its sign-in to `onJoinGame`, which counts weekly players.
+  A phone says "You're in!" only once the screen lists its seat under its name; if another phone took
+  that seat over, it takes a new one.
 - **Between them**, the screen shares the step through its AirConsole custom device state: the PIN,
   the step and its time left, the question, the answers' texts and the reveal's rows. Never which answer
   is the truth before the reveal, and never the host key. Controllers send the screen three messages:
@@ -56,7 +63,8 @@ npm test               # unit tests of the rules, the keyboard, the words and th
 ## Play a whole game locally
 
 `test/simulated-game.js` plays a full game (three rounds, four controllers, one that leaves and one that
-joins mid-game, then PLAY AGAIN) against the Firebase emulators, in headless Chromium, under
+joins mid-game, then PLAY AGAIN; three controllers and the late one share one origin, as the simulator's
+phones share one browser) against the Firebase emulators, in headless Chromium, under
 `harness/`: a local stand-in for AirConsole's platform that speaks the messages of AirConsole's API to
 the screen and the controllers. It is a test double, not AirConsole's simulator. It needs Java, the
 root's `npm ci` (firebase-tools), `functions/` built, `.github/smoke`'s `npm ci` (Playwright), and a copy

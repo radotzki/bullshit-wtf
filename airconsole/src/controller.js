@@ -11,6 +11,7 @@ import { airStrings } from './strings';
 import * as V from './view';
 import { keyboard } from './keyboard';
 import { signIn, uidWithin, call, write } from './backend';
+import { rememberedSeat, rememberSeat, seatUid, seatStatus } from './seat';
 
 const GS = V.GameState;
 const RETRY_MS = 3000;
@@ -21,7 +22,7 @@ const app = document.getElementById('app');
 let shared = null;
 let endsAt = null;
 let revealAt = null;
-let me = { pin: null, pid: null, nickname: '', joining: false, full: false, failed: false, late: false };
+let me = { pin: null, pid: null, nickname: '', joining: false, full: false, failed: false, late: false, own: false, retakes: 0 };
 let sent = { key: '', text: '' };
 let picked = { key: '', text: '' };
 let nexted = '';
@@ -38,19 +39,16 @@ const words = () => ({ t: gameStrings(lang()), f: finalStrings[lang() === 'he' ?
 const isMaster = () => !!shared && shared.master === air.getDeviceId();
 const toScreen = data => air.message(AirConsole.SCREEN, data);
 
-function remember(pin, pid) {
+function storage() {
     try {
-        localStorage.setItem(`bs-airconsole-${pin}`, pid);
-    } catch (e) { /* private mode: the seat is not kept for a reload */ }
-}
-
-function remembered(pin) {
-    try {
-        return localStorage.getItem(`bs-airconsole-${pin}`);
+        return window.localStorage;
     } catch (e) {
         return null;
     }
 }
+
+/** At most this many fresh seats per game for a phone whose seat another phone took over. */
+const MAX_RETAKES = 2;
 
 air.onReady = function () {
     signIn();
@@ -89,27 +87,50 @@ function onShared(state) {
     }
     if (state.pin && state.pin !== me.pin) {
         join(state.pin);
+    } else if (me.pid && !me.joining && seatStatus(state.players, me.pid, me.nickname) === 'taken'
+        && me.retakes < MAX_RETAKES) {
+        // Another phone took this seat over: never go on saying "You're in!"; take a seat of our own.
+        join(state.pin, { own: true, retakes: me.retakes + 1 });
     }
     render();
 }
 
-async function join(pin) {
+/**
+ * Takes a seat in game `pin` for this AirConsole device (see seat.js: one seat per device, also when
+ * several devices share a browser, as in AirConsole's simulator). `fresh.own`: a new seat, no uid and
+ * no remembered seat, after another phone took this one's over.
+ */
+async function join(pin, fresh) {
+    const own = !!(fresh && fresh.own);
     me = { pin, pid: null, nickname: air.getNickname() || '', joining: true, full: false, failed: false,
-        late: !!shared && shared.step !== GS.GameStaging };
+        late: !!shared && shared.step !== GS.GameStaging, own: own || (me.pin === pin && me.own),
+        retakes: fresh && fresh.retakes || (me.pin === pin ? me.retakes : 0) };
     sent = { key: '', text: '' };
     picked = { key: '', text: '' };
     draft = '';
     render();
     try {
         const { uid } = await uidWithin(1500);
-        const resp = await call('join', { pin, nickname: me.nickname, uid: uid || null, hostKey: null, pid: remembered(pin) });
+        if (me.pin !== pin) {
+            return;
+        }
+        // Decided with no wait between reading and claiming, so two simulated phones never both claim.
+        const device = air.getDeviceId();
+        const store = storage();
+        const seat = {
+            uid: me.own ? null : seatUid(store, pin, uid || null, device, air.getControllerDeviceIds()),
+            pid: me.own ? null : rememberedSeat(store, pin, device),
+        };
+        const resp = await call('join', { pin, nickname: me.nickname, uid: seat.uid, hostKey: null, pid: seat.pid });
         if (me.pin !== pin) {
             return;
         }
         me.pid = resp.pid;
         me.nickname = resp.nickname || me.nickname;
         me.joining = false;
-        remember(pin, resp.pid);
+        // Kept per device from now on (also a fresh seat's), so a reload finds this device's own seat.
+        me.own = false;
+        rememberSeat(store, pin, device, resp.pid);
         // The join that counts this phone as a weekly player (the users table), as the site sends it.
         signIn().then(id => id && call('onJoinGame', { uid: id, pin, nickname: me.nickname, via: V.AIRCONSOLE_TAG })
             .catch(() => { }));
@@ -124,8 +145,7 @@ async function join(pin) {
             me.failed = true;
             setTimeout(() => {
                 if (me.pin === pin && !me.pid && !me.full) {
-                    me.pin = null;
-                    join(pin);
+                    join(pin, { own: me.own, retakes: me.retakes });
                 }
             }, RETRY_MS);
         }
@@ -250,6 +270,10 @@ function body() {
     const key = shared.key;
 
     if (step === GS.GameStaging) {
+        if (seatStatus(shared.players, me.pid, me.nickname) !== 'listed') {
+            // Not on the screen's list (yet), or another phone took the seat: not "You're in!".
+            return `${top}<main class="center"><div class="big-logo"></div><p>${esc(a.joining)}</p></main>`;
+        }
         const count = (shared.players || []).length;
         const masterName = shared.master !== null && shared.master !== undefined ? air.getNickname(shared.master) : '';
         return `${top}<main class="center lobby">

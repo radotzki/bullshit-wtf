@@ -4,7 +4,8 @@
 // (airconsole/harness), which runs AirConsole's own API 1.11.0 in every frame.
 //
 // What it checks: the screen makes a game tagged portal-airconsole and holds its host key; every
-// controller takes a seat under its AirConsole nickname; the first controller (AirConsole's master)
+// controller takes a seat of its own under its AirConsole nickname, also the three that share one
+// browser origin (one storage, one Firebase sign-in), as all phones do in AirConsole's simulator; the first controller (AirConsole's master)
 // starts it; lies, picks, reveals and scores through every question of three rounds to the final
 // scores; a controller that leaves mid-game and one that joins mid-game; the master's PLAY AGAIN,
 // with AirConsole's ad break first, opens a new game that every controller joins. In Hebrew, both
@@ -50,11 +51,14 @@ const API_URL = 'https://www.airconsole.com/api/airconsole-1.11.0.js';
 const FUNCTIONS = `http://${HOST}:5001/${PROJECT}/us-central1`;
 const AUTH = `http://${HOST}:9099`;
 const CONTROLLERS = 4;
+// Controllers 1-3 and the one that joins mid-game come from one origin, as every phone of AirConsole's
+// simulator does (one browser: one storage, one Firebase uid); controller 4 from its own, as a real phone.
+const SHARED = [1, 2, 3];
 const GAME_TIMEOUT_MS = Number(process.env.GAME_MINUTES || 10) * 60 * 1000;
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.png': 'image/png' };
 
-/** Serves one folder on its own port: each controller gets its own origin, so its own storage. */
+/** Serves one folder on its own port: an origin of its own, so its own storage and Firebase sign-in. */
 function serve(dir) {
     return new Promise(resolve => {
         const server = http.createServer((req, res) => {
@@ -130,6 +134,9 @@ async function openHarness(browser, servers, problems) {
         controllers: controllers.join(','),
         lang: LOCALE,
         names: names.join(','),
+        // The other phones that share controller 1's origin load once it has its seat, one by one, as
+        // phones added with the simulator's "Add Controller": they find its Firebase uid already kept.
+        hold: SHARED.slice(1).join(','),
     });
     await page.goto(`${origin(servers.harness)}/harness.html?${q}`);
     return { context, page, names };
@@ -200,11 +207,23 @@ async function main() {
         await seed();
         servers.harness = await serve(HARNESS);
         servers.screen = await serve(DIST);
-        for (let i = 0; i < CONTROLLERS + 1; i++) servers.controllers.push(await serve(DIST));
+        // servers.controllers[i - 1] serves controller i; the shared ones (and the late joiner) reuse one server.
+        const shared = await serve(DIST);
+        for (let i = 1; i <= CONTROLLERS; i++) servers.controllers.push(SHARED.includes(i) ? shared : await serve(DIST));
+        servers.controllers.push(shared);
         browser = await chromium.launch({ args: [`--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE ${HOST}`] });
         const { page, names } = await openHarness(browser, servers, problems);
         const screen = () => frame(page, 'screen');
 
+        // The phones that share an origin with controller 1 come in one by one once it has its seat.
+        for (const id of SHARED.slice(1)) {
+            await until(`controller ${id - 1} seated`, async () => {
+                const s = await page.evaluate(() => window.harness.devices[0].data.custom);
+                return s && s.pin && (await text(frame(page, `controller-${id - 1}`), '.lobby .big'));
+            }, 60000);
+            await page.evaluate(i => window.harness.release(i), id);
+            log(`controller ${id} added`);
+        }
         // The lobby: four controllers take their seats under their AirConsole nicknames.
         await until('the screen to show 4 players', async () => (await screen().locator('.lobby .seat').count()) === CONTROLLERS, 60000);
         const pin = await until('the game PIN', async () => {
@@ -217,6 +236,15 @@ async function main() {
         result.checks.hasHost = lobbyGame.hasHost;
         result.checks.presenter = lobbyGame.presenter;
         result.checks.lobbyNames = Object.values(lobbyGame.players || {}).map(p => p.nickname).sort();
+        result.checks.lobbySeats = Object.keys(lobbyGame.players || {}).length;
+        // No two seats carry one uid (the controllers that share an origin may share one uid, or not).
+        const uids = Object.values(lobbyGame.players || {}).map(p => p.uid).filter(Boolean);
+        result.checks.lobbyUids = uids.length;
+        result.checks.lobbyUidsDistinct = new Set(uids).size;
+        result.checks.youreIn = await until('every controller to say it is in', async () => {
+            const said = await Promise.all([1, 2, 3, 4].map(i => text(frame(page, `controller-${i}`), '.lobby .big')));
+            return said.every(Boolean) && said;
+        }).catch(() => Promise.all([1, 2, 3, 4].map(i => text(frame(page, `controller-${i}`), '.lobby .big'))));
         result.checks.dirScreen = await screen().evaluate(() => document.documentElement.dir);
         result.checks.dirController = await frame(page, 'controller-1').evaluate(() => document.documentElement.dir);
         await shot(page, 'harness', '0-lobby-all');
@@ -311,7 +339,7 @@ async function main() {
         result.pin = pin;
     } finally {
         if (browser) await browser.close();
-        Object.values(servers).flat().forEach(s => s && s.close && s.close());
+        new Set(Object.values(servers).flat()).forEach(s => s && s.close && s.close());
         stopEmulators(emulators);
         await sleep(5000); // let the emulators shut down before this process ends
     }
@@ -319,6 +347,9 @@ async function main() {
     const c = result.checks;
     const fails = [];
     if (c.campaign !== 'portal-airconsole') fails.push(`campaign is ${c.campaign}`);
+    if (c.lobbySeats !== CONTROLLERS || new Set(c.lobbyNames).size !== CONTROLLERS) fails.push(`the lobby has ${c.lobbySeats} seats (${c.lobbyNames}), not one per controller`);
+    if (c.lobbyUids !== 2 || c.lobbyUidsDistinct !== 2) fails.push(`seats carry ${c.lobbyUids} uids, ${c.lobbyUidsDistinct} distinct, not one per origin`);
+    if (c.youreIn.some(t => !t)) fails.push(`a seated controller does not say it is in: ${JSON.stringify(c.youreIn)}`);
     if (c.hasHost !== 'screen') fails.push(`hasHost is ${c.hasHost}`);
     if (c.presenter !== true) fails.push('the game has no big screen');
     if (c.startOnOthers !== 0) fails.push('a controller that is not the master shows START');
