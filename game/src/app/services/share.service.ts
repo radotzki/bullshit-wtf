@@ -18,7 +18,9 @@ const strings = {
     en: {
         inviteTitle: 'Join my Bullshit game',
         scanHint: 'or let them scan this',
-        inviteText: (pin: string) => `Come play Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`,
+        inviteText: (pin: string, pack?: string) => (pack === 'hanukkah'
+            ? `Come play a Hanukkah game of Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`
+            : `Come play Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`),
         resultsTitle: 'Bullshit results',
         resultsText: (place: number, total: number, score: number) =>
             place === 1
@@ -32,7 +34,10 @@ const strings = {
     he: {
         inviteTitle: 'בואו לשחק בולשיט',
         scanHint: 'או שיסרקו את זה',
-        inviteText: (pin: string) => `בואו לשחק איתי בולשיט! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`,
+        // A Hanukkah game says so: the family chat's text is the first thing a grandparent reads.
+        inviteText: (pin: string, pack?: string) => (pack === 'hanukkah'
+            ? `בואו לשחק איתי בולשיט, משחק חנוכה! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`
+            : `בואו לשחק איתי בולשיט! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`),
         resultsTitle: 'תוצאות בולשיט',
         resultsText: (place: number, total: number, score: number) =>
             place === 1
