@@ -238,7 +238,31 @@ function wordsRefused(ws: string[]): boolean {
         return true;
     }
     // Spelled out a letter or two at a time ("c u n t", "f u c k").
-    return ws.length > 1 && ws.every(w => w.length <= 2) && wordRefused(ws.join(''));
+    if (ws.length > 1 && ws.every(w => w.length <= 2) && wordRefused(ws.join(''))) {
+        return true;
+    }
+    return spelledInside(ws, covered);
+}
+
+/**
+ * A word spelled out among other words ("a c u n t", "you f u c k i n g idiot", "c u n t face"): any run of
+ * words of one or two letters, read joined, where at least two of the words read are single letters and the
+ * letters joined are three or more. Two-letter words alone are left as they are, since they join into fair
+ * lies too ("an al pacino film"), and so are two letters joined, since initials make them ("J.F.K.", "A.F.K.").
+ */
+function spelledInside(ws: string[], covered: boolean[]): boolean {
+    for (let i = 0; i < ws.length; i++) {
+        let joined = '';
+        let singles = 0;
+        for (let j = i; j < ws.length && ws[j].length <= 2 && !covered[j]; j++) {
+            joined += ws[j];
+            singles += ws[j].length === 1 ? 1 : 0;
+            if (j > i && singles >= 2 && joined.length >= 3 && wordRefused(joined)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /** A lie the filter refuses. */

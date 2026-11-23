@@ -84,6 +84,8 @@ test('the filter reads each word as the nickname filter reads a name', () => {
     assert.strictEqual(lieRefused('כוסית'), true);
     // Spelled out a letter or two at a time.
     assert.strictEqual(lieRefused('c u n t'), true);
+    // Also after a one-letter word (the Discord version's probe).
+    assert.strictEqual(lieRefused('a c u n t'), true);
 });
 
 test('allowed names stay allowed, also as part of a longer lie', () => {

@@ -103,3 +103,18 @@ test('doubled letters and "es" endings of fair words are not read as listed word
     refused(['fuuuck', 'shiiit', 'biiitch', 'זונהה', 'spics', 'wetbacks', 'porch monkey', 'kill the jews',
         'kill jews', 'white power', 'מזיין שכל']);
 });
+
+test('a word spelled out after a one-letter word, or among other words, is refused (the Discord probe)', () => {
+    refused(['a c u n t', 'A c u n t', 'you a c u n t', 'you are a c u n t', 'u r a c u n t', 'i c u n t',
+        'a c-u-n-t', 'a c.u.n.t', 'a s h i t', 'what a s h i t', 'a b i t c h', 'you a b i t c h',
+        'f u c k you', 'c u n t face', 'c u n t s', 'a c u n t s', 'you f u c k i n g idiot', 'a d i c k',
+        'a w h o r e', 'a n i g g e r', 'a f a g', 'i a m a c u n t', 'a c u n t!', 'ז י ן', 'ו ז י ן']);
+});
+
+test('short words and initials around a lie stay fair', () => {
+    fine(['an al pacino film', 'a b c', 'A to Z', 'J K Rowling', 'J. R. R. Tolkien', 'U S A', 'the U.S. army',
+        'e.g. a cat', 'at 5 p.m. a dog', 'I am a cat', 'it is a dog', 'a I', 'B B King', 'R E M', 'a cat or a dog',
+        'a c', 'a u', 'vitamin a c and e', 'plan a or b', 'go to a b c', 'a rapper', 'a wet back', 'spices',
+        'Philip K Dick', 'J.F.K.', 'J.F.K. airport', 'the J.F.K. assassination', 'R.F.K. Jr.',
+        'J F K airport', 'A.F.K.', 'he went a f k', 'F. K. Wallace', 'B.F.K.', 'it is a T rex', 'a T shirt', 'א ב ג', 'כוס קפה']);
+});
