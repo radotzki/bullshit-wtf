@@ -219,6 +219,25 @@
     opacity: .85;
 }
 
+// Under Start, for a visitor who never played: send it to the group for tonight (tonight-line.ts).
+.tonight-line {
+    display: block;
+    width: fit-content;
+    margin: 10px 2px 0;
+    color: #c9f2d4;
+    font-size: 17px;
+    text-decoration: underline;
+
+    .fa {
+        color: #4fce5d;
+    }
+
+    &:hover,
+    &:focus-visible {
+        color: #fff;
+    }
+}
+
 // Right under Create, for a visitor on their own: today's question (daily-line.ts).
 .alone-line {
     display: inline-block;
