@@ -1,0 +1,153 @@
+# The AirConsole version (airconsole/) on every pull request that touches it, or the game code it
+# bundles: its unit tests and its build, then a whole game in English and in Hebrew under a local
+# stand-in for AirConsole's platform (airconsole/harness), against the Firebase emulators.
+#
+# Needs no secrets and touches no Firebase project: the emulators run under the demo-bullshit project,
+# the browser resolves no host but 127.0.0.1, and every request the build makes to Firebase is sent to
+# the emulators (as .github/smoke/emulator-game.js does). AirConsole's API script comes from
+# github.com/AirConsole/airconsole-api at a pinned commit, checked by its hash.
+#
+# A file of its own, apart from ci.yml (which deploy.yml calls before a release): the AirConsole build
+# is not released by a merge to master; its zip goes to AirConsole by hand (airconsole/README.md).
+name: AirConsole
+
+on:
+  pull_request:
+    paths:
+      - 'airconsole/**'
+      - 'game-model.ts'
+      - 'name-flag.ts'
+      - 'name-lists.json'
+      - 'game/src/app/pages/game-strings.ts'
+      - 'game/src/app/pages/score-board-final/**'
+      - 'game/src/app/pages/reveal-the-truth/reveal-strings.ts'
+      - 'game/src/app/services/answers-list.ts'
+      - 'game/src/environments/environment.prod.ts'
+      - 'functions/src/**'
+      - 'database-rules.json'
+      - '.github/smoke/emulator-game.js'
+      - '.github/workflows/airconsole.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: airconsole-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # AirConsole's API 1.11.0, as airconsole/src/*.html load it from www.airconsole.com.
+  AIRCONSOLE_API_COMMIT: 53d7be952c2374ffa14efb74a1ceef3aa23afa69
+  AIRCONSOLE_API_SHA256: 5d1957e1cc85e5cac0ef65cb1a272abd52fb09057989e81af2b17a24aa42bed8
+
+jobs:
+  unit:
+    name: AirConsole (unit tests and build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: airconsole
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: airconsole/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: node build.js --zip
+
+  game:
+    name: AirConsole (a whole game, English and Hebrew)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          # 22, the functions' Cloud runtime: the functions emulator runs them on this Node.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+            airconsole/package-lock.json
+            .github/smoke/package-lock.json
+      # The database emulator is a Java program.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install firebase-tools (the root's lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Build the functions
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Build the AirConsole version
+        working-directory: airconsole
+        run: |
+          npm ci --no-audit --no-fund
+          node build.js
+      - name: Install the smoke test (Playwright)
+        working-directory: .github/smoke
+        run: npm ci --no-audit --no-fund
+      - name: Get AirConsole's API at the pinned commit
+        run: |
+          mkdir -p "$RUNNER_TEMP/airconsole-api"
+          cd "$RUNNER_TEMP/airconsole-api"
+          git init -q
+          git fetch -q --depth 1 https://github.com/AirConsole/airconsole-api "$AIRCONSOLE_API_COMMIT"
+          git checkout -q FETCH_HEAD
+          echo "$AIRCONSOLE_API_SHA256  airconsole-1.11.0.js" | sha256sum -c -
+
+      - name: Cache the browser and the emulators
+        id: tool-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/firebase/emulators
+          key: airconsole-${{ runner.os }}-${{ hashFiles('.github/smoke/package-lock.json', 'package-lock.json') }}
+      - name: Download the browser
+        if: steps.tool-cache.outputs.cache-hit != 'true'
+        working-directory: .github/smoke
+        run: npx playwright install --only-shell chromium
+
+      - name: A whole game in English
+        timeout-minutes: 12
+        env:
+          AIRCONSOLE_API: ${{ runner.temp }}/airconsole-api/airconsole-1.11.0.js
+        run: node airconsole/test/simulated-game.js --locale en --shots "$RUNNER_TEMP/airconsole-shots"
+      - name: A whole game in Hebrew
+        timeout-minutes: 12
+        env:
+          AIRCONSOLE_API: ${{ runner.temp }}/airconsole-api/airconsole-1.11.0.js
+        run: node airconsole/test/simulated-game.js --locale he --shots "$RUNNER_TEMP/airconsole-shots"
+
+      # The screenshots of both games (the screen and the master's controller at each step), and on a
+      # failure the emulators' log.
+      - name: Keep the emulators' log
+        if: failure()
+        run: |
+          mkdir -p "$RUNNER_TEMP/airconsole-shots"
+          for f in /tmp/bs-emulators-*/emulators.log; do
+            [ -f "$f" ] && cp "$f" "$RUNNER_TEMP/airconsole-shots/$(basename "$(dirname "$f")").log"
+          done
+          true
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: airconsole-screenshots
+          path: ${{ runner.temp }}/airconsole-shots
+          retention-days: 14
+          if-no-files-found: ignore

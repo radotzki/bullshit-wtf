@@ -1,0 +1,138 @@
+/* The AirConsole screen and controllers, in the site's colours (game/src/styles.scss). The site's own
+   fonts load from Google Fonts there; this first version uses the system fonts, so nothing loads from
+   a server AirConsole doesn't host. */
+
+:root {
+    --primary: #db7151;
+    --info: #f3d467;
+    --success: #97374e;
+    --ink: #2d2d2d;
+    --paper: #fffaf3;
+    --muted: #8a7f78;
+    --truth: #2f9e5b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Arial Rounded MT Bold", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Hebrew", sans-serif;
+    overflow: hidden;
+}
+
+/* No <img> on the controller (AirConsole's checklist): every picture is a <div>'s background. */
+.logo, .big-logo, .avatar {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+.logo, .big-logo { background-image: url(assets/logo.png); }
+
+#app { height: 100%; display: flex; flex-direction: column; }
+main { flex: 1; padding: 2vh 4vw; overflow: hidden; }
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2vh; }
+
+/* ---------- the screen (a TV: 960x540 and up) ---------- */
+
+body.screen { font-size: 2.6vh; }
+.screen header { display: flex; justify-content: space-between; align-items: center; padding: 2vh 4vw 0; height: 9vh; }
+.screen .logo { width: 18vh; height: 7vh; background-position: left center; }
+[dir="rtl"] .screen .logo, .screen[dir="rtl"] .logo { background-position: right center; }
+.screen .header-right { font-weight: bold; color: var(--muted); letter-spacing: .05em; }
+.screen .big-logo { width: 50vw; height: 22vh; }
+.screen .lobby { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.6vh; }
+.screen .lobby .big-logo { height: 16vh; }
+.screen .tagline { font-size: 3.2vh; margin: 0; }
+.screen .line { font-size: 3vh; margin: 0; }
+.screen .line.strong { font-weight: bold; color: var(--success); font-size: 3.6vh; }
+.screen .hint { color: var(--muted); margin: 0; }
+.screen h1 { font-size: 9vh; margin: 0; color: var(--primary); letter-spacing: .03em; }
+.screen .points { font-size: 4vh; margin: 0; }
+.screen .points b { color: var(--success); }
+
+.seats { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4vh 2vw; max-width: 90vw; }
+.seat { display: flex; flex-direction: column; align-items: center; width: 11vh; transition: opacity .3s; }
+.seat .avatar { width: 9vh; height: 9vh; }
+.seat .name { font-size: 2.2vh; max-width: 11vh; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seat.not-yet { opacity: .35; }
+.seat.away { opacity: .2; }
+.seat.done .avatar { outline: .5vh solid var(--truth); border-radius: 50%; }
+
+.progress-track { height: 1.4vh; background: #eee3d6; }
+.progress { height: 100%; width: 100%; background: var(--primary); transition: width .25s linear; }
+.progress.panic { background: #e5484d; }
+
+.question-step { display: flex; flex-direction: column; align-items: center; gap: 2.4vh; text-align: center; }
+.question { font-size: 5.4vh; line-height: 1.25; margin: 0; max-width: 85vw; font-weight: bold; }
+.question.small { font-size: 3.4vh; }
+.answers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vh 1.6vw; width: 88vw; }
+.answer { background: #fff; border: .3vh solid var(--primary); border-radius: 1.4vh; padding: 1.4vh; font-size: 3.2vh; font-weight: bold; text-transform: uppercase; }
+
+.reveal { display: flex; flex-direction: column; align-items: center; gap: 1.4vh; }
+.reveal-rows { display: flex; flex-direction: column; gap: 1.2vh; width: 80vw; }
+.reveal-row { background: #fff; border-radius: 1.4vh; padding: 1.2vh 2vw; border-inline-start: 1.2vh solid var(--primary); animation: rise .4s ease-out; }
+.reveal-row.truth { border-color: var(--truth); }
+.reveal-row.house { border-color: var(--info); }
+.reveal-text { font-size: 4vh; font-weight: bold; text-transform: uppercase; }
+.reveal-pickers { color: var(--muted); font-size: 2.6vh; }
+.reveal-writer { font-size: 3vh; font-weight: bold; color: var(--success); }
+.reveal-row.truth .reveal-writer { color: var(--truth); }
+.unpicked { color: var(--muted); font-size: 2.6vh; text-align: center; }
+@keyframes rise { from { transform: translateY(1.5vh); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.ranking { list-style: none; padding: 0; margin: 0 auto; width: 60vw; display: flex; flex-direction: column; gap: 1vh; }
+.ranking li { display: flex; align-items: center; gap: 2vw; background: #fff; border-radius: 1.2vh; padding: .8vh 2vw; font-size: 3.4vh; }
+.ranking .avatar.small { width: 6vh; height: 6vh; }
+.ranking .place { color: var(--muted); width: 3vw; }
+.ranking .name { flex: 1; font-weight: bold; }
+.ranking .score { color: var(--success); font-weight: bold; }
+.final { display: flex; flex-direction: column; align-items: center; gap: 1.6vh; text-align: center; }
+.final .ranking li:first-child { background: var(--info); }
+.award { font-size: 3vh; margin: 0; }
+.award b { color: var(--primary); }
+body.ad #app { visibility: hidden; }
+
+/* ---------- the controller (a phone: 320x480 and up) ---------- */
+
+body.controller { font-size: 16px; }
+.controller .me { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #fff; border-bottom: 1px solid #eee3d6; font-weight: bold; }
+.controller .me .avatar { width: 32px; height: 32px; }
+.controller .my-score { margin-inline-start: auto; color: var(--success); }
+.controller main { padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.controller .center { justify-content: center; }
+.controller .big-logo { width: 70vw; height: 18vh; }
+.controller .big { font-size: 22px; font-weight: bold; margin: 0; }
+.controller p { margin: 0; }
+.controller .note { color: var(--muted); font-size: 14px; }
+.controller .question { font-size: 18px; text-align: center; }
+.controller .question.small { font-size: 15px; color: var(--muted); }
+.controller .progress-track { height: 6px; }
+
+.button {
+    display: block; width: 100%; min-height: 52px; border: 0; border-radius: 12px; font: inherit; font-size: 20px;
+    font-weight: bold; letter-spacing: .03em; cursor: pointer; padding: 10px 14px;
+}
+.button.primary { background: var(--primary); color: #fff; }
+.button.light { background: #f1e8dc; color: var(--ink); }
+.button.small { width: auto; min-height: 40px; font-size: 14px; }
+.button:disabled { opacity: .45; }
+.pick-button { background: #fff; border: 2px solid var(--primary); color: var(--ink); text-transform: uppercase; }
+.lie-box { display: flex; gap: 8px; align-items: stretch; }
+.lie { flex: 1; min-height: 44px; background: #fff; border: 2px solid var(--primary); border-radius: 10px; padding: 10px; font-size: 18px; overflow-wrap: anywhere; }
+.lie.empty { color: var(--muted); }
+.wrong { color: #c0392b; font-weight: bold; }
+.result-line { font-size: 20px; font-weight: bold; }
+
+.keyboard { display: flex; flex-direction: column; gap: 5px; margin-top: auto; user-select: none; touch-action: manipulation; }
+.key-row { display: flex; gap: 4px; }
+.key { flex: 1; min-width: 0; height: 42px; border: 0; border-radius: 6px; background: #fff; box-shadow: 0 1px 0 #d6cabb; font: inherit; font-size: 18px; padding: 0; }
+.key:active { background: var(--info); }
+.key-wide { flex: 1.6; font-size: 15px; }
+.key-space { flex: 5; font-size: 13px; color: var(--muted); }
+
+/* The lobby shows the big logo: no second one in its header. */
+body.step-0 header .logo { visibility: hidden; }

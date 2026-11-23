@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>AirConsole stand-in</title>
+    <style>
+        body { margin: 0; padding: 16px; background: #1d1b22; color: #ddd; font: 13px/1.4 system-ui, sans-serif; }
+        h1 { font-size: 14px; margin: 0 0 8px; font-weight: normal; color: #aaa; }
+        .row { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+        .device { display: flex; flex-direction: column; gap: 4px; }
+        .device span { color: #aaa; }
+        iframe { border: 0; background: #fff; border-radius: 6px; }
+        .screen iframe { width: 960px; height: 540px; }
+        .controller iframe { width: 320px; height: 568px; }
+    </style>
+</head>
+<body>
+    <h1>A local stand-in for AirConsole's platform (airconsole/harness): it speaks the API's own messages
+        to the screen and the controllers. Not AirConsole's simulator.</h1>
+    <div class="row" id="screen-row"></div>
+    <div class="row" id="controller-row" style="margin-top:14px"></div>
+    <script src="harness.js"></script>
+</body>
+</html>
