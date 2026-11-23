@@ -118,8 +118,11 @@ test('the controller presses its buttons through onPress, and the screen reads c
     const path = require('path');
     const controller = fs.readFileSync(path.join(__dirname, '..', 'src', 'controller.js'), 'utf8');
     const screen = fs.readFileSync(path.join(__dirname, '..', 'src', 'screen.js'), 'utf8');
-    assert.match(controller, /onPress\(app, '\[data-do\]'/);
-    assert.doesNotMatch(controller, /app\.addEventListener\('click'/, 'a click-only handler did nothing in AirConsole\'s simulator');
+    // Only START, language and PLAY AGAIN act on the press (screens that don't scroll). An answer, SEND
+    // or NEXT on the press would act on a finger that only meant to scroll the list (Product, 6805700).
+    assert.match(controller, /const COMMAND_BUTTONS = '\[data-do="start"\], \[data-do="locale"\], \[data-do="again"\]';/);
+    assert.match(controller, /onPress\(app, COMMAND_BUTTONS,/);
+    assert.doesNotMatch(controller, /onPress\(app, '\[data-do\]'/);
     assert.match(controller, /setCustomDeviceState\(\{ cmd: command \}\)/);
     assert.match(screen, /air\.onCustomDeviceStateChange = /);
     assert.match(screen, /acceptCommand\(/);

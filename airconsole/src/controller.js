@@ -18,6 +18,8 @@ const GS = V.GameState;
 const RETRY_MS = 3000;
 /** A command the screen has not acted on by then may be pressed again. */
 const PENDING_MS = 6000;
+/** The buttons that act on the press, not on the click. */
+const COMMAND_BUTTONS = '[data-do="start"], [data-do="locale"], [data-do="again"]';
 
 const air = new AirConsole({ orientation: AirConsole.ORIENTATION_PORTRAIT, silence_inactive_players: false });
 const app = document.getElementById('app');
@@ -224,11 +226,18 @@ function next() {
     render(true);
 }
 
-onPress(app, '[data-do]', b => {
+// START, switch language and PLAY AGAIN act on the press (see press.js): they sit on the lobby and
+// final screens, which don't scroll. Every other button keeps the click, so a finger that lands on an
+// answer to scroll the list picks nothing (a pick can't be taken back).
+onPress(app, COMMAND_BUTTONS, b => sendCommand(b.getAttribute('data-do')));
+
+app.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-do]');
+    if (!b || b.disabled || b.matches(COMMAND_BUTTONS)) {
+        return;
+    }
     const act = b.getAttribute('data-do');
-    if (act === 'start' || act === 'locale' || act === 'again') {
-        sendCommand(act);
-    } else if (act === 'send') {
+    if (act === 'send') {
         sendLie();
     } else if (act === 'clear') {
         draft = '';

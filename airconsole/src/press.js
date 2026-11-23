@@ -1,12 +1,14 @@
-// How a controller's buttons act, and how its commands (START, switch language, PLAY AGAIN) reach
+// How a controller's command buttons act, and how its commands (START, switch language, PLAY AGAIN) reach
 // the screen. Both are made to work in AirConsole's own simulator, where START on the master phone
 // did nothing (replay of 23 Nov 2026) while AirConsole's Pong demo started from its phone at once.
 //
-// Presses: a button acts when it is pressed down (pointerdown, or touchstart / mousedown where
+// Presses: START, switch language and PLAY AGAIN act when pressed down (pointerdown, or touchstart / mousedown where
 // pointer events are missing), as AirConsole's own controllers (Pong) do, and not only on "click",
 // which a phone frame inside AirConsole's pages may never receive. The press's default is stopped, so
 // the button takes no focus and the frame keeps none. "click" stays as a fallback (a keyboard's Enter,
-// or a click that came without a press); one press acts once.
+// or a click that came without a press); one press acts once. Only those three: they sit on screens
+// that don't scroll. Answers, SEND and NEXT keep the click, so a finger that lands on an answer to
+// scroll the list picks nothing.
 //
 // Commands: each goes twice, as an AirConsole message to the screen and in the controller's own
 // custom device state, so one lost route is not a dead button. Each carries the game's PIN and a

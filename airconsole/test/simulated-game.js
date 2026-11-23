@@ -175,6 +175,24 @@ async function press(f, act) {
     }, act);
 }
 
+/**
+ * A finger that lands on an answer and drags to scroll the list, as a browser delivers it: the press,
+ * moves, then pointercancel once the browser scrolls, and no click. True if that picked the answer.
+ */
+async function scrollDrag(f) {
+    const before = await f.locator('[data-do="pick"]').count();
+    await f.evaluate(() => {
+        const b = document.querySelector('[data-do="pick"]');
+        const at = y => ({ bubbles: true, cancelable: true, pointerType: 'touch', isPrimary: true, button: 0, clientX: 50, clientY: y });
+        b.dispatchEvent(new PointerEvent('pointerdown', at(300)));
+        b.dispatchEvent(new PointerEvent('pointermove', at(260)));
+        b.dispatchEvent(new PointerEvent('pointercancel', at(200)));
+    });
+    await sleep(1200);
+    const after = await f.locator('[data-do="pick"]').count();
+    return !(before > 0 && after === before);
+}
+
 /** One controller's move on the step it shows. Returns what it did. */
 async function act(f, step, lie, n) {
     if (!f) return null;
@@ -310,7 +328,10 @@ async function main() {
             const f = frame(page, 'controller-1');
             if (q === 0 && f) {
                 if (step === 2 && (await f.locator('[data-do="send"]').count())) await shot(page, 'controller-1', '3-question-controller');
-                if (step === 3 && (await f.locator('[data-do="pick"]').count())) await shot(page, 'controller-1', '5-answers-controller');
+                if (step === 3 && (await f.locator('[data-do="pick"]').count())) {
+                    await shot(page, 'controller-1', '5-answers-controller');
+                    if (result.checks.scrollPicked === undefined) result.checks.scrollPicked = await scrollDrag(f);
+                }
                 if (step === 4 && (await f.locator('[data-do="next"]').count())) {
                     await shot(page, 'controller-1', '7-reveal-controller');
                     await shot(page, 'screen', '6-reveal-screen');
@@ -367,6 +388,7 @@ async function main() {
     if (c.hasHost !== 'screen') fails.push(`hasHost is ${c.hasHost}`);
     if (c.presenter !== true) fails.push('the game has no big screen');
     if (c.startOnOthers !== 0) fails.push('a controller that is not the master shows START');
+    if (c.scrollPicked !== false) fails.push(`a drag to scroll the answers ${c.scrollPicked ? 'picked one' : 'was not tried'}`);
     if (!(c.startLost >= 1)) fails.push('START\'s message was not lost on its way, so its other route went untested');
     if (c.roundIndexAtEnd !== 2) fails.push(`the game ended in round ${c.roundIndexAtEnd + 1}, not 3`);
     if (c.idle) fails.push('the game ended idle');
