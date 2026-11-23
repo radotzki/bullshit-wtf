@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { pickQuestions, pickWithPack, pickWithOpener, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
+import { questionPacks } from '../src/game-model';
 
 // Seeded random so failures are reproducible.
 function seeded(seed: number) {
@@ -113,6 +114,37 @@ const tests: { [name: string]: () => void } = {
         }
         assert.deepStrictEqual(counts, [3, 3, 1, 0]);
         assert.strictEqual(Object.keys(store).filter(q => q[0] === 'h').length, 7);
+    },
+
+    'pack game: an unseen pack opener opens the game; once the room has seen them all, any pack question'() {
+        const regular = bank(40);
+        const pack = Array.from({ length: 12 }, (_, i) => `h${i}`);
+        const openers = ['h3', 'h7'];
+        for (let seed = 1; seed <= 20; seed++) {
+            const qids = pickWithPack(regular, pack, [], 7, 3, seeded(seed), openers);
+            assert.ok(openers.indexOf(qids[0]) >= 0, `game ${seed} opens with an opener, not ${qids[0]}`);
+            assert.strictEqual(qids.filter(q => q[0] === 'h').length, 3);
+            assert.strictEqual(new Set(qids).size, 7);
+        }
+        // One opener seen: the other one opens.
+        const one = pickWithPack(regular, pack, [{ h3: 1 }], 5, 3, seeded(4), openers);
+        assert.strictEqual(one[0], 'h7');
+        // Both seen: a pack question still opens, as before, and no seen one comes back.
+        const none = pickWithPack(regular, pack, [{ h3: 1, h7: 2 }], 5, 3, seeded(5), openers);
+        assert.strictEqual(none[0][0], 'h');
+        assert.ok(none.indexOf('h3') < 0 && none.indexOf('h7') < 0);
+    },
+
+    'Hanukkah openers are Hebrew questions of the Hanukkah pack file'() {
+        // From dist-test/test/ the repository's functions/data is two folders up.
+        const file = require('../../data/hanukkah-questions.json');
+        const openers: string[] = questionPacks.hanukkah.openers;
+        assert.ok(openers.length >= 8, 'enough openers for a family\'s nights');
+        openers.forEach(id => {
+            assert.ok(file[id], `${id} is in hanukkah-questions.json`);
+            assert.strictEqual(file[id].lang, 'he');
+            assert.strictEqual(file[id].pack, 'hanukkah');
+        });
     },
 
     'pack game with a tiny normal bank tops up from the pack'() {

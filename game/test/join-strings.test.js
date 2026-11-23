@@ -26,7 +26,8 @@ function words(t) {
         const v = t[key];
         out[key] = typeof v !== 'function' ? v
             : key === 'error' ? [v('GAME_NOT_EXIST', 'Wrong game PIN'), v('GAME_IS_FULL', 'Sorry, game is full'), v('INTERNAL', 'boom')]
-                : v('@@');
+                : key === 'packGame' ? v('hanukkah')
+                    : v('@@');
     }
     return out;
 }
@@ -58,6 +59,9 @@ test('English visitors keep the English pages word for word', () => {
         error: ['Wrong game PIN', 'Sorry, game is full', 'boom'],
         // Added to a wrong PIN typed with Hebrew letters (english-letters-hint.test.js).
         englishLetters: 'Game codes are English letters.',
+        // Under the nickname heading of a holiday pack's game (hanukkah-link-join.test.js).
+        packGame: '🕎 A Hanukkah game',
+        packHow: 'Everyone writes a fake answer, then finds the true one. Each on their own phone.',
     });
 });
 

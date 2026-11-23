@@ -84,7 +84,7 @@ module.exports = {
             title: 'Free Jackbox and Fibbage alternative game · Bullshit',
             description: 'Like Fibbage, but free and with no TV needed: write a lie, find the truth, fool your friends. Bullshit runs in the phone browser, up to 12 players, English and Hebrew.',
             h1: 'A free alternative to Jackbox\'s Fibbage',
-            updated: '2026-11-23',
+            updated: '2026-11-24',
             body: jackboxEn,
         },
         {

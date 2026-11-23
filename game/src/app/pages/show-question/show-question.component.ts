@@ -1,5 +1,6 @@
 import { reportError } from './../../sentry/sentry.module';
 import { Howl } from 'howler';
+import { FLAGGED_LIE_TEXT } from '../../portal/portal';
 import { fadeOutAndUnload } from './../fade-out';
 import { ApiService } from './../../services/api.service';
 import { SessionService } from './../../services/session.service';
@@ -24,6 +25,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     pin: string;
     question: string;
     presenter: boolean;
+    /** No big screen in the game: the phone is the only place the question is, so it is set larger. */
+    phoneOnly = false;
     loading: boolean;
     errorMsg: string;
     answer: string;
@@ -77,6 +80,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
             this.loadHelper();
+            this.apiService.gameHasBigScreen(this.pin).then(bigScreen => this.phoneOnly = !bigScreen);
         }
     }
 
@@ -186,6 +190,11 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
             })
             .catch(err => {
                 this.loading = false;
+                // A lie the word filter refused (the CrazyGames version, see portal/portal.ts): write another.
+                if (err && err.code === 'FLAGGED_LIE') {
+                    this.errorMsg = FLAGGED_LIE_TEXT[this.t.rtl ? 'he' : 'en'];
+                    return;
+                }
 
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;
