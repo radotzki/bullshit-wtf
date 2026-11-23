@@ -226,7 +226,7 @@ module.exports = {
         },
         {
             path: '/he/family-evening', site: he, tag: 'seo-he-family',
-            updated: '2026-11-23',
+            updated: '2026-11-25',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק משפחתי' },
             image: '/assets/og-family-he.png',
             title: 'משחק לערב משפחתי: בולשיט, לילדים, להורים ולסבא וסבתא',
