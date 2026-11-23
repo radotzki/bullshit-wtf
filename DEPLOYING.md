@@ -935,8 +935,8 @@ off by default. Nothing to run before or after the merge: the release adds the q
 (see "Question files the release adds"), and the analytics use the `pack` column that is already
 there.
 
-- **The questions:** 20 English and 20 Hebrew strange-but-true facts a child of 8 to 12 can
-  follow, in `functions/data/kids-questions.json`, ids `kids-26-en-01..20` and `kids-26-he-01..20`,
+- **The questions:** 50 English and 50 Hebrew strange-but-true facts a child of 8 to 12 can
+  follow, in `functions/data/kids-questions.json`, ids `kids-26-en-01..50` and `kids-26-he-01..50`,
   each with `pack: "kids"`, so none appears in a normal game. Sources are quoted in
   `docs/kids-questions-sources.md`.
 - **A pack without a season.** `kids` in `questionPacks` (`game-model.ts`) has no `season`, so it is
@@ -944,13 +944,15 @@ there.
   `/create-game?pack=kids`) asks for it. Its `perGame` is 99: every question of the game is a kid
   question nobody in the room has seen, as many as there are (`pickWithPack`). Once the room has
   seen them all, the rest of the game comes from the normal bank, as for any pack; a kid question is
-  never repeated. A family playing 7-question games nightly gets about three evenings of kid
-  questions per language.
+  never repeated. A kids game of 7 spends two on About questions, so it uses about 5 kid questions:
+  about ten games' worth in each language (he-21..50 were added for the Hanukkah school break and
+  en-21..50 for the US and UK winter break, so a children's table that plays several afternoons
+  keeps getting kid questions).
 - **With Special (the seasonal pack):** one pack a game. While the switch is on, the Special row
   leaves the form and the game plays kid questions only; Hanukkah or Christmas questions are not
   mixed in. Switched off, the Special row comes back as it was.
 - **What the table sees:** the line under the switch, while it is on, says what it does and that
-  after the 20 the usual questions follow. The lobby shows no pack line for a kids game, so nothing
+  after the 50 kid questions the usual questions follow. The lobby shows no pack line for a kids game, so nothing
   on the table's screens promises kid questions in a game that has run out of them.
 - **Replay** keeps the switch (it carries the pack); a crew rematch does not (it takes the season's
   pack, as before).

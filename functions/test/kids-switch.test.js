@@ -96,7 +96,7 @@ console.log = () => {};
 test.after(() => { console.log = log; });
 
 // The live bank as the release leaves it: 30 normal questions a language, some of them openers,
-// the 40 kid questions, and a Hanukkah pack.
+// the 100 kid questions (50 a language), and a Hanukkah pack.
 function seedQuestions() {
     db.gameCounter = 100;
     db.games = {};
@@ -186,17 +186,17 @@ test('a game without the switch never gets a kid question, in season or out', as
 test('once the room has seen every kid question, the game comes from the normal bank; a kid question is never repeated', async () => {
     seedQuestions();
     const en = Object.keys(kids).filter(id => kids[id].lang === 'en');
-    // The family saw 16 of the 20: the next 7-question game has the 4 left, then 3 normal ones.
-    db.seenQuestions.mom = Object.fromEntries(en.slice(0, 10).map((id, i) => [id, 1000 + i]));
-    db.seenQuestions.kid = Object.fromEntries(en.slice(10, 16).map((id, i) => [id, 2000 + i]));
+    // The family saw 46 of the 50: the next 7-question game has the 4 left, then 3 normal ones.
+    db.seenQuestions.mom = Object.fromEntries(en.slice(0, 25).map((id, i) => [id, 1000 + i]));
+    db.seenQuestions.kid = Object.fromEntries(en.slice(25, 46).map((id, i) => [id, 2000 + i]));
     const pin = await newGame('en', 7, 'mom', { pack: 'kids', uids: ['mom', 'kid'] });
     const qids = db.games[pin].qids;
     assert.strictEqual(qids.length, 7);
-    assert.deepStrictEqual(qids.filter(isKid).sort(), en.slice(16).sort());
+    assert.deepStrictEqual(qids.filter(isKid).sort(), en.slice(46).sort());
     assert.ok(qids.filter(id => !isKid(id)).every(id => /^n-en-\d+$/.test(id)), qids.join());
     assert.strictEqual(qids[0], qids.filter(isKid)[0], 'a kid question opens the game');
-    // All 20 seen: a whole game of normal English questions, no Hanukkah, no repeat.
-    db.seenQuestions.kid = Object.assign(db.seenQuestions.kid, Object.fromEntries(en.slice(16).map(id => [id, 3000])));
+    // All 50 seen: a whole game of normal English questions, no Hanukkah, no repeat.
+    db.seenQuestions.kid = Object.assign(db.seenQuestions.kid, Object.fromEntries(en.slice(46).map(id => [id, 3000])));
     const later = db.games[await newGame('en', 7, 'mom', { pack: 'kids', uids: ['mom', 'kid'] })];
     assert.strictEqual(later.pack, 'kids', 'the switch is still recorded');
     assert.strictEqual(later.qids.length, 7);

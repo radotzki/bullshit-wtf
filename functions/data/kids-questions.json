@@ -197,7 +197,7 @@
     "fakeAnswers": [
       "magnetic",
       "fizzy",
-      "see-through"
+      "bouncy"
     ],
     "citation": "https://en.wikipedia.org/wiki/Banana_equivalent_dose",
     "lang": "en",
@@ -236,6 +236,366 @@
       "ten minutes"
     ],
     "citation": "https://en.wikipedia.org/wiki/International_Space_Station",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-21": {
+    "questionText": "An octopus has $blank$ hearts",
+    "realAnswer": "three",
+    "fakeAnswers": [
+      "two",
+      "five",
+      "eight"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Octopus",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-22": {
+    "questionText": "Honeybees show each other where to find flowers by doing a $blank$",
+    "realAnswer": "waggle dance",
+    "fakeAnswers": [
+      "loud buzzing song",
+      "headstand",
+      "drawing in the dirt"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Waggle_dance",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-23": {
+    "questionText": "Your heart beats about $blank$ times every day",
+    "realAnswer": "100,000",
+    "fakeAnswers": [
+      "1,000",
+      "10,000",
+      "10 million"
+    ],
+    "citation": "https://health.clevelandclinic.org/facts-about-the-heart",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-24": {
+    "questionText": "Saturn's rings are made almost entirely of chunks of $blank$",
+    "realAnswer": "ice",
+    "fakeAnswers": [
+      "gold",
+      "glass",
+      "metal"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rings_of_Saturn",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-25": {
+    "questionText": "Pizza Margherita is said to be named after an Italian $blank$",
+    "realAnswer": "queen",
+    "fakeAnswers": [
+      "famous chef",
+      "racehorse",
+      "ship"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pizza_Margherita",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-26": {
+    "questionText": "Earmuffs were invented in 1873 by Chester Greenwood, when he was just $blank$ years old",
+    "realAnswer": "15",
+    "fakeAnswers": [
+      "6",
+      "40",
+      "92"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chester_Greenwood",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-27": {
+    "questionText": "In 1972, tennis balls were changed to yellow so that $blank$ could see them better",
+    "realAnswer": "people watching on tv",
+    "fakeAnswers": [
+      "the ball boys",
+      "dogs",
+      "players at night"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tennis_ball",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-28": {
+    "questionText": "Russia is so big that it has $blank$ time zones",
+    "realAnswer": "eleven",
+    "fakeAnswers": [
+      "four",
+      "thirty",
+      "a hundred"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Time_in_Russia",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-29": {
+    "questionText": "Sloths move so slowly that tiny green algae grow in their fur and help them $blank$",
+    "realAnswer": "hide in the trees",
+    "fakeAnswers": [
+      "smell nice",
+      "stay dry",
+      "glow at night"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sloth",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-30": {
+    "questionText": "Babies are born with around $blank$ bones, and some of them join together as they grow up",
+    "realAnswer": "270",
+    "fakeAnswers": [
+      "50",
+      "600",
+      "2,000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_skeleton",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-31": {
+    "questionText": "Olympus Mons, a volcano on Mars, is about $blank$ as tall as Mount Everest",
+    "realAnswer": "two and a half times",
+    "fakeAnswers": [
+      "half",
+      "ten times",
+      "a hundred times"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Olympus_Mons",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-32": {
+    "questionText": "A male emperor penguin keeps his egg warm on his feet for more than 60 days, and in all that time he eats $blank$",
+    "realAnswer": "nothing at all",
+    "fakeAnswers": [
+      "one fish a day",
+      "seaweed",
+      "krill his mate brings"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emperor_penguin",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-33": {
+    "questionText": "Each bottlenose dolphin has its own whistle, and the others use it like a $blank$",
+    "realAnswer": "name",
+    "fakeAnswers": [
+      "song",
+      "alarm clock",
+      "secret password"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Signature_whistle",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-34": {
+    "questionText": "The story goes that the microwave oven was invented after an engineer found that the chocolate bar in his pocket had $blank$",
+    "realAnswer": "melted",
+    "fakeAnswers": [
+      "turned to stone",
+      "started to glow",
+      "doubled in size"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Percy_Spencer",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-35": {
+    "questionText": "For the first thirteen ancient Olympic Games in Greece, there was only one event: a $blank$",
+    "realAnswer": "running race",
+    "fakeAnswers": [
+      "chariot race",
+      "wrestling match",
+      "swimming race"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ancient_Olympic_Games",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-36": {
+    "questionText": "The biggest desert in the world is $blank$",
+    "realAnswer": "antarctica",
+    "fakeAnswers": [
+      "the sahara",
+      "the gobi",
+      "australia"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Desert",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-37": {
+    "questionText": "If an axolotl, a kind of salamander, loses a leg, it can $blank$",
+    "realAnswer": "grow a new one",
+    "fakeAnswers": [
+      "glue it back on",
+      "swap it for a fin",
+      "borrow one from a friend"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Axolotl",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-38": {
+    "questionText": "The world's tallest known living tree is a coast redwood in California called $blank$",
+    "realAnswer": "hyperion",
+    "fakeAnswers": [
+      "big tom",
+      "sky reacher",
+      "old goliath"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hyperion_(tree)",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-39": {
+    "questionText": "Light from the Sun takes about $blank$ to reach the Earth",
+    "realAnswer": "8 minutes",
+    "fakeAnswers": [
+      "1 second",
+      "3 days",
+      "a year"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sunlight",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-40": {
+    "questionText": "A giraffe's long neck has the same number of bones as $blank$",
+    "realAnswer": "your neck",
+    "fakeAnswers": [
+      "a whole snake",
+      "a dinosaur's tail",
+      "your whole spine"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cervical_vertebrae",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-41": {
+    "questionText": "Before an ice hockey game, the pucks are $blank$ so they hop around less on the ice",
+    "realAnswer": "frozen",
+    "fakeAnswers": [
+      "warmed up",
+      "polished",
+      "soaked in milk"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hockey_puck",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-42": {
+    "questionText": "Your brain is only about 2% of your weight, but it uses about $blank$ of your body's energy",
+    "realAnswer": "a fifth",
+    "fakeAnswers": [
+      "a hundredth",
+      "all of it",
+      "nine tenths"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_brain",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-43": {
+    "questionText": "The city of Venice in Italy is built on closely packed $blank$ pushed into the mud",
+    "realAnswer": "tree trunks",
+    "fakeAnswers": [
+      "old boats",
+      "glass bottles",
+      "metal springs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venice",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-44": {
+    "questionText": "The hottest planet in our solar system is $blank$, even though it is not the closest one to the Sun",
+    "realAnswer": "venus",
+    "fakeAnswers": [
+      "mercury",
+      "mars",
+      "jupiter"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venus",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-45": {
+    "questionText": "In the dark Arctic winter, a reindeer's eyes change from gold to $blank$",
+    "realAnswer": "deep blue",
+    "fakeAnswers": [
+      "bright red",
+      "silver",
+      "orange"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Reindeer",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-46": {
+    "questionText": "There is no lead in a pencil: its dark middle is mostly $blank$",
+    "realAnswer": "graphite",
+    "fakeAnswers": [
+      "coal dust",
+      "squid ink",
+      "burnt toast"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pencil",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-47": {
+    "questionText": "Elephants are very strong, but they can't $blank$",
+    "realAnswer": "jump",
+    "fakeAnswers": [
+      "swim",
+      "lie down",
+      "walk uphill"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Elephant",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-48": {
+    "questionText": "There is no $blank$ in space, because there is no air to carry it",
+    "realAnswer": "sound",
+    "fakeAnswers": [
+      "light",
+      "gravity",
+      "time"
+    ],
+    "citation": "https://howthingsfly.si.edu/ask-an-explainer/how-does-sound-travel-space",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-49": {
+    "questionText": "Scientists say some dinosaurs are still alive today: they are the $blank$",
+    "realAnswer": "birds",
+    "fakeAnswers": [
+      "lizards",
+      "sharks",
+      "turtles"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bird",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-50": {
+    "questionText": "A popcorn kernel pops because the tiny bit of $blank$ inside it turns into steam",
+    "realAnswer": "water",
+    "fakeAnswers": [
+      "sugar",
+      "salt",
+      "electricity"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Popcorn",
     "lang": "en",
     "pack": "kids"
   },
@@ -476,6 +836,366 @@
       "חמישים"
     ],
     "citation": "https://en.wikipedia.org/wiki/Giraffe",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-21": {
+    "questionText": "גוזלי פלמינגו בוקעים מהביצים בצבע אפור, והם נהיים ורודים בזכות $blank$",
+    "realAnswer": "האוכל שהם אוכלים",
+    "fakeAnswers": [
+      "השמש החזקה",
+      "המים המלוחים",
+      "זה שהם מתביישים"
+    ],
+    "citation": "https://www.britannica.com/story/why-are-flamingos-pink",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-22": {
+    "questionText": "הקוליברי הוא הציפור היחידה שיודעת לעוף $blank$",
+    "realAnswer": "אחורה",
+    "fakeAnswers": [
+      "הפוך על הגב",
+      "בעיניים עצומות",
+      "בלי לנפנף בכנפיים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Backward_flying",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-23": {
+    "questionText": "לכוכב ים יש עין קטנה בקצה של כל $blank$",
+    "realAnswer": "זרוע",
+    "fakeAnswers": [
+      "קוץ",
+      "שן",
+      "סנפיר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Starfish",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-24": {
+    "questionText": "בשלד של כריש אין אף $blank$",
+    "realAnswer": "עצם",
+    "fakeAnswers": [
+      "סחוס",
+      "חוליה",
+      "לסת"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Shark",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-25": {
+    "questionText": "הינשוף לא יכול להזיז את $blank$ שלו, ולכן הוא מסובב את כל הראש",
+    "realAnswer": "העיניים",
+    "fakeAnswers": [
+      "הכנפיים",
+      "הרגליים",
+      "המקור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Owl",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-26": {
+    "questionText": "סוסים יכולים לנמנם $blank$",
+    "realAnswer": "בעמידה",
+    "fakeAnswers": [
+      "בזמן ריצה",
+      "על עץ",
+      "מתחת למים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stay_apparatus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-27": {
+    "questionText": "צפרדעים לא שותות כמונו. הן סופגות מים דרך $blank$",
+    "realAnswer": "העור",
+    "fakeAnswers": [
+      "האוזניים",
+      "הזנב",
+      "הלשון"
+    ],
+    "citation": "https://www.burkemuseum.org/blog/all-about-frogs",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-28": {
+    "questionText": "לנמלים אין $blank$. הן נושמות דרך חורים קטנטנים בגוף",
+    "realAnswer": "ריאות",
+    "fakeAnswers": [
+      "פה",
+      "מוח",
+      "רגליים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ant",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-29": {
+    "questionText": "הקיבה של פרה מחולקת ל$blank$",
+    "realAnswer": "ארבעה חלקים",
+    "fakeAnswers": [
+      "שני חלקים",
+      "שבעה חלקים",
+      "עשרה חלקים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ruminant",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-30": {
+    "questionText": "הלב שלנו פועם בערך $blank$ פעמים ביום",
+    "realAnswer": "מאה אלף",
+    "fakeAnswers": [
+      "אלף",
+      "חמשת אלפים",
+      "עשרה מיליון"
+    ],
+    "citation": "https://health.clevelandclinic.org/facts-about-the-heart",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-31": {
+    "questionText": "השיער על הראש גדל בערך $blank$ בחודש",
+    "realAnswer": "סנטימטר אחד",
+    "fakeAnswers": [
+      "מילימטר אחד",
+      "עשרה סנטימטרים",
+      "חצי מטר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_hair_growth",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-32": {
+    "questionText": "רוב האנשים לא מצליחים לדגדג $blank$",
+    "realAnswer": "את עצמם",
+    "fakeAnswers": [
+      "את הכלב שלהם",
+      "את סבא",
+      "תינוקות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tickling",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-33": {
+    "questionText": "בחלל אין $blank$, כי אין שם אוויר שיעביר אותו",
+    "realAnswer": "קול",
+    "fakeAnswers": [
+      "אור",
+      "כוח משיכה",
+      "זמן"
+    ],
+    "citation": "https://howthingsfly.si.edu/ask-an-explainer/how-does-sound-travel-space",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-34": {
+    "questionText": "הירח מתרחק מכדור הארץ בכל שנה בערך $blank$",
+    "realAnswer": "ארבעה סנטימטרים",
+    "fakeAnswers": [
+      "קילומטר",
+      "מטר",
+      "מילימטר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Orbit_of_the_Moon",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-35": {
+    "questionText": "יום אחד על כוכב הלכת צדק נמשך בערך $blank$",
+    "realAnswer": "עשר שעות",
+    "fakeAnswers": [
+      "שעה אחת",
+      "ארבעים שעות",
+      "שבוע שלם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jupiter",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-36": {
+    "questionText": "כוכב הלכת החם ביותר במערכת השמש הוא $blank$, אף שהוא לא הכי קרוב לשמש",
+    "realAnswer": "נוגה",
+    "fakeAnswers": [
+      "מאדים",
+      "צדק",
+      "כדור הארץ"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-37": {
+    "questionText": "גרעין תירס מתפוצץ לפופקורן בגלל $blank$ שיש בתוכו",
+    "realAnswer": "טיפות מים",
+    "fakeAnswers": [
+      "חשמל סטטי",
+      "סוכר",
+      "אבקת אפייה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Popcorn",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-38": {
+    "questionText": "התפוח שייך לאותה משפחה של צמחים כמו $blank$",
+    "realAnswer": "הוורד",
+    "fakeAnswers": [
+      "הבננה",
+      "התפוז",
+      "הגזר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rosaceae",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-39": {
+    "questionText": "בעיפרון אין בכלל עופרת: הליבה שלו עשויה $blank$ מעורבב בחימר",
+    "realAnswer": "גרפיט",
+    "fakeAnswers": [
+      "ברזל",
+      "גיר",
+      "פלסטיק שחור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pencil",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-40": {
+    "questionText": "ב-1972 החליפו את כדורי הטניס לצהובים, כדי ש$blank$ יראו אותם טוב יותר",
+    "realAnswer": "הצופים בטלוויזיה",
+    "fakeAnswers": [
+      "השחקנים בלילה",
+      "הכלבים",
+      "הציפורים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tennis_ball",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-41": {
+    "questionText": "את המונדיאל הראשון, ב-1930, אירחה $blank$, והיא גם זכתה בו",
+    "realAnswer": "אורוגוואי",
+    "fakeAnswers": [
+      "ברזיל",
+      "אנגליה",
+      "איטליה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/1930_FIFA_World_Cup",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-42": {
+    "questionText": "העטלף הוא היונק היחיד שיודע $blank$",
+    "realAnswer": "לעוף",
+    "fakeAnswers": [
+      "לנשום מתחת למים",
+      "לשנות צבע",
+      "לישון בעיניים פתוחות"
+    ],
+    "citation": "https://www.nps.gov/subjects/bats/how-bats-fly.htm",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-43": {
+    "questionText": "דגים לא יכולים לחיות בים המלח, כי $blank$",
+    "realAnswer": "המים מלוחים מדי",
+    "fakeAnswers": [
+      "המים חמים מדי",
+      "אין שם אור",
+      "הגלים חזקים מדי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dead_Sea",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-44": {
+    "questionText": "בכל שנה נמכרים בישראל בערך $blank$ קרמבו, בעיקר בחורף",
+    "realAnswer": "50 מיליון",
+    "fakeAnswers": [
+      "חצי מיליון",
+      "5 מיליון",
+      "מיליארד"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Krembo",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-45": {
+    "questionText": "הברווזן, שנקרא גם פלטיפוס, הוא יונק, אבל הוא $blank$",
+    "realAnswer": "מטיל ביצים",
+    "fakeAnswers": [
+      "נושם רק מתחת למים",
+      "יודע לעוף",
+      "חי בלי לב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Platypus",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-46": {
+    "questionText": "לפי המדענים, יש דינוזאורים שחיים איתנו גם היום: $blank$",
+    "realAnswer": "הציפורים",
+    "fakeAnswers": [
+      "הלטאות",
+      "הכרישים",
+      "הצבים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bird",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-47": {
+    "questionText": "הדובי 'טדי' קיבל את השם שלו מ$blank$",
+    "realAnswer": "נשיא ארצות הברית",
+    "fakeAnswers": [
+      "דוב בגן חיות",
+      "ספר ילדים",
+      "הכלב של הממציא"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Teddy_bear",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-48": {
+    "questionText": "שנה אחת על כוכב חמה, הכוכב הקרוב ביותר לשמש, נמשכת רק $blank$ ימים שלנו",
+    "realAnswer": "88",
+    "fakeAnswers": [
+      "3",
+      "12",
+      "1000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Mercury_(planet)",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-49": {
+    "questionText": "העצם הכי ארוכה בגוף שלנו נמצאת ב$blank$",
+    "realAnswer": "ירך",
+    "fakeAnswers": [
+      "גב",
+      "זרוע",
+      "חזה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Femur",
+    "lang": "he",
+    "pack": "kids"
+  },
+  "kids-26-he-50": {
+    "questionText": "פילים הם חיות חזקות מאוד, אבל הם לא מסוגלים $blank$",
+    "realAnswer": "לקפוץ",
+    "fakeAnswers": [
+      "לשחות",
+      "לשכב",
+      "לטפס בעלייה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Elephant",
     "lang": "he",
     "pack": "kids"
   }
