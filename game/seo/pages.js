@@ -227,6 +227,8 @@ module.exports = [
 <p><a href="/he/family-evening">ערבי משפחה</a>, <a href="/he/friday-dinner">ארוחות שישי</a> וארוחות חג, <a href="/he/friends-evening">ערב חברים</a>, מסיבות וימי גיבוש בעבודה, תנועות נוער ושיעורי אנגלית.</p>
 <p>פעם ראשונה? קראו <a href="/he/how-to-play">איך משחקים</a>, או פשוט תתחילו: החוקים מובנים אחרי שאלה אחת.</p>`,
     },
+    // Hanukkah trivia: 12 questions with their answers, then the game (seo/pages-en-hanukkah-trivia.js).
+    ...require('./pages-en-hanukkah-trivia').pages(en),
     {
         path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en, tag: 'seo-en-hanukkah',
         start: { href: '/create-game?lang=en&pack=hanukkah', label: 'Start a Hanukkah game' },
