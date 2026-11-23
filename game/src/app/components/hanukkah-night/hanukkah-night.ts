@@ -120,6 +120,17 @@ export const hanukkahNightStrings = {
             + 'everyone joins the same table on their own phone.',
         /** The join page's recap, opened by the link. */
         recapLine: (n: number) => `Hanukkah, night ${n} of ${NIGHTS}: same table?`,
+        /**
+         * The link opened in a browser that didn't play that game (a forwarded link, or a calendar that
+         * opens another browser): wait for the table, and join it once someone from it opens tonight's game.
+         */
+        waitTitle: 'Same table, tonight.',
+        waitText: (n: number) => `No game is open for night ${n} yet. When someone from the table opens it, `
+            + 'a button to join shows up here. Keep this page open.',
+        playingTitle: 'The table is already playing.',
+        playingText: 'You can join now, in the middle of the game. You start at 0 points.',
+        joinNow: 'JOIN NOW',
+        ownTable: 'Or start a table of your own',
     },
     he: {
         line: (n: number) => `חנוכה, נר ${n} מתוך ${NIGHTS}`,
@@ -131,6 +142,13 @@ export const hanukkahNightStrings = {
         eventText: (n: number) => `נר ${n} של חנוכה. פותחים את הקישור ולוחצים "לשחק שוב, אותו שולחן": `
             + 'כולם מצטרפים לאותו שולחן מהטלפון.',
         recapLine: (n: number) => `חנוכה, נר ${n} מתוך ${NIGHTS}: אותו שולחן?`,
+        waitTitle: 'אותו שולחן, הערב.',
+        waitText: (n: number) => `עוד אין משחק פתוח לנר ${n}. כשמישהו מהשולחן יפתח אותו, `
+            + 'יופיע כאן כפתור להצטרפות. אפשר להשאיר את הדף פתוח.',
+        playingTitle: 'השולחן כבר משחק.',
+        playingText: 'אפשר להצטרף עכשיו, באמצע המשחק. מתחילים מאפס נקודות.',
+        joinNow: 'להצטרף עכשיו',
+        ownTable: 'או לפתוח שולחן משלכם',
     },
 };
 
