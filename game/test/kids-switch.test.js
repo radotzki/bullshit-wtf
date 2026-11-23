@@ -40,7 +40,7 @@ test('the switch has its words in English and Hebrew, and says what comes after 
 });
 
 test('with a seasonal pack on offer, the kids line says the game has none of its questions', () => {
-    assert.match(html, /<p class="kids-note kids-no-pack" \*ngIf="kids && pack">\{\{ t\.kidsNoPack \}\} \{\{ packLabel \}\}\.<\/p>/);
+    assert.match(html, /<p class="kids-note kids-no-pack" \*ngIf="kids && pack && !kidsSeasonLine">\{\{ t\.kidsNoPack \}\} \{\{ packLabel \}\}\.<\/p>/);
     assert.strictEqual(`${createStrings('he').kidsNoPack} ${model.questionPacks.hanukkah.label.he}.`, 'במשחק ילדים אין שאלות חנוכה.');
     assert.strictEqual(`${createStrings('en').kidsNoPack} ${model.questionPacks.hanukkah.label.en}.`, 'A kids game has no Hanukkah questions.');
 });
