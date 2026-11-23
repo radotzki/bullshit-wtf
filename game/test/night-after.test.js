@@ -138,10 +138,11 @@ test('same table: the page puts "They\'re playing again" above the recap, and th
     assert.ok(playing > 0 && playing < html.indexOf('recap-heading'), 'the open lobby comes first');
     assert.match(html, /ask === 'again-other'"[^>]*>[\s\S]*?\(click\)="joinThem\(\)"/);
     assert.match(html, /ask === 'again-player'"[\s\S]*?\(click\)="playAgain\(\)"/);
-    assert.match(component, /this\.apiService\.sameTable\(pin, late && wait\)/);
+    // The third argument: the Hanukkah night's tag, when the page came by that link (components/hanukkah-night).
+    assert.match(component, /this\.apiService\.sameTable\(pin, late && wait, nightTag\(this\.hanukkahNight\) \|\| undefined\)/);
     assert.match(component, /'same-table-open' : 'same-table'/);
     assert.match(component, /countRecap\('join-them'\)/);
-    assert.match(api, /`fork`, \{ pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, \.\.\.\(wait \? \{ wait: true \} : \{\}\) \}/);
+    assert.match(api, /`fork`, \{ pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, \.\.\.\(wait \? \{ wait: true \} : \{\}\),\s+\.\.\.\(campaign \? \{ campaign \} : \{\}\) \}/);
 });
 
 // The page's own methods (showGameOver, setRecap, countRecap), run on a stand-in for the page, so what a

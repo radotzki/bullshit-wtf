@@ -4,6 +4,7 @@ import { readGame } from './old-games';
 import { gameOverError } from './game-over';
 import { nightAfter } from './night-after';
 import { lateTable } from './same-table';
+import { openCard, versusCard } from './challenge';
 
 /**
  * Whether a phone may join the game by this PIN. A finished game answers GAME_OVER; within a week of its
@@ -18,8 +19,18 @@ export async function validateGameName(pin: string, uid?: any, pid?: any) {
         return Promise.reject({ message: 'Wrong game PIN', code: 'GAME_NOT_EXIST' });
     }
 
-    const over = await gameOverError(game, Date.now());
+    const over: any = await gameOverError(game, Date.now());
     if (over) {
+        // CHALLENGE ANOTHER GROUP (challenge.ts): the card a challenge link shows, once a player opened it,
+        // and on a game played against another table, that table's scores for the final screen.
+        const challenge = openCard(pin, game, Date.now());
+        if (challenge) {
+            over.challenge = challenge;
+        }
+        const versus = versusCard(game, Date.now());
+        if (versus) {
+            over.versus = versus;
+        }
         // Beside an open rematch lobby the page shows the recap under "They're playing again" (same-table.ts).
         const recap = nightAfter(pin, game, Date.now(), uid, pid);
         // A player who comes late while the table's lobby is mid-game: the page says so (same-table.ts).

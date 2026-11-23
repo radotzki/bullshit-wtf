@@ -13,6 +13,7 @@ import {
     NIGHT_AFTER_CONTENT, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
     readRecap, recapAsk, seenMethod, whenWas,
 } from './night-after';
+import { HanukkahNightStrings, nightStrings, nightTag, tagNight } from '../../components/hanukkah-night/hanukkah-night';
 
 @Component({
     standalone: false,
@@ -46,6 +47,12 @@ export class JoinGameComponent implements OnInit {
     againError: string;
     // The PIN whose seen- row this page load sent, so a second GAME_OVER answer sends no second one.
     private recapCounted: string;
+    /**
+     * The link SAME TABLE TOMORROW saved on a Hanukkah night (?via=hanukkah-night-N, components/hanukkah-night):
+     * the night it is for, and the PIN it came with. That game's recap shows, as every game's does, says which night
+     * it is, and the lobby its PLAY AGAIN, SAME TABLE opens carries the tag.
+     */
+    private hanukkah: { pin: string; night: number } = null;
     // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
     seatTaken: boolean;
 
@@ -68,6 +75,8 @@ export class JoinGameComponent implements OnInit {
         this.seatTaken = !!this.pin && (this.activatedRoute.snapshot.queryParams || {})['taken'] === '1';
 
         if (this.pin) {
+            const night = tagNight((this.activatedRoute.snapshot.queryParams || {})['via']);
+            this.hanukkah = night ? { pin: this.pin.toUpperCase(), night } : null;
             this.pinInUrl = true;
             this.nicknameState = true;
             this.loadCrew();
@@ -109,10 +118,11 @@ export class JoinGameComponent implements OnInit {
         if (!recap) {
             return;
         }
+        const tagged = !!this.hanukkahNight;
         if (this.recapCounted !== pin) {
             this.recapCounted = pin;
             // None beside an open rematch (seenMethod).
-            const seen = seenMethod(recap.player, this.gameOver && this.gameOver.rematch);
+            const seen = tagged ? 'seen-hanukkah' : seenMethod(recap.player, this.gameOver && this.gameOver.rematch);
             if (seen) {
                 this.countRecap(seen);
             }
@@ -125,6 +135,15 @@ export class JoinGameComponent implements OnInit {
             return;
         }
         this.apiService.logShare(NIGHT_AFTER_CONTENT, method, { crew: this.recapPin, locale: this.t.lang });
+    }
+
+    /** The Hanukkah night the link was saved for, while the page shows that link's game; else 0. */
+    get hanukkahNight(): number {
+        return this.hanukkah && this.recapPin === this.hanukkah.pin ? this.hanukkah.night : 0;
+    }
+
+    get hn(): HanukkahNightStrings {
+        return nightStrings(this.t.lang);
     }
 
     get n(): NightAfterStrings {
@@ -183,7 +202,7 @@ export class JoinGameComponent implements OnInit {
         this.countRecap(late ? (wait ? 'catch-next' : 'new-table')
             : this.gameOver && this.gameOver.rematch ? 'same-table-open' : 'same-table');
         try {
-            const r = await this.apiService.sameTable(pin, late && wait);
+            const r = await this.apiService.sameTable(pin, late && wait, nightTag(this.hanukkahNight) || undefined);
             if (!r || !r.pin) {
                 throw new Error('no table');
             }

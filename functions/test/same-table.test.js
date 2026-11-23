@@ -362,3 +362,30 @@ test('a late player who taps between the table\'s final scores and its Replay: o
     assert.ok(staging(after.pin));
     assert.strictEqual(after.host, true);
 });
+
+test('Hanukkah night: the link SAME TABLE TOMORROW saved tags the lobby it opens, and nothing else', async () => {
+    const { tableCampaign } = require(path.join(dist, 'same-table'));
+    assert.strictEqual(tableCampaign('hanukkah-night-4'), 'hanukkah-night-4');
+    for (const bad of ['hanukkah-night-1', 'hanukkah-night-9', 'fb-he-hanukkah', 'test', 'HANUKKAH-NIGHT-3', 7, null, undefined]) {
+        assert.strictEqual(tableCampaign(bad), undefined, String(bad));
+    }
+    const g = await finishedGame(20 * H);
+    const r = await sameTable(g.pin, 'u2', g.pids.u2, KEYS[1], false, false, false, 'hanukkah-night-4');
+    assert.strictEqual(db.games[r.pin].campaign, 'hanukkah-night-4');
+    assert.strictEqual(db.games[r.pin].origin, 'table');
+    // A second press while that lobby is open joins it, and changes no tag.
+    const s = await sameTable(g.pin, 'u3', g.pids.u3, KEYS[2], false, false, false, 'hanukkah-night-5');
+    assert.strictEqual(s.pin, r.pin);
+    assert.strictEqual(db.games[r.pin].campaign, 'hanukkah-night-4');
+    // Any other value, or a press with none, leaves the lobby untagged, as before.
+    const h = await finishedGame(20 * H);
+    const t = await sameTable(h.pin, 'u1', h.pids.u1, KEYS[0], false, false, false, 'fb-he-hanukkah');
+    assert.strictEqual(db.games[t.pin].campaign, undefined);
+});
+
+test('Hanukkah night: a test game\'s table keeps its test tag', async () => {
+    const g = await finishedGame(20 * H);
+    db.games[g.pin].campaign = 'test-qa';
+    const r = await sameTable(g.pin, 'u1', g.pids.u1, KEYS[0], false, false, false, 'hanukkah-night-3');
+    assert.strictEqual(db.games[r.pin].campaign, 'test-qa');
+});
