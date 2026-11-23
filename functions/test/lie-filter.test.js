@@ -115,5 +115,6 @@ test('short words and initials around a lie stay fair', () => {
     fine(['an al pacino film', 'a b c', 'A to Z', 'J K Rowling', 'J. R. R. Tolkien', 'U S A', 'the U.S. army',
         'e.g. a cat', 'at 5 p.m. a dog', 'I am a cat', 'it is a dog', 'a I', 'B B King', 'R E M', 'a cat or a dog',
         'a c', 'a u', 'vitamin a c and e', 'plan a or b', 'go to a b c', 'a rapper', 'a wet back', 'spices',
-        'Philip K Dick', 'it is a T rex', 'a T shirt', 'א ב ג', 'כוס קפה']);
+        'Philip K Dick', 'J.F.K.', 'J.F.K. airport', 'the J.F.K. assassination', 'R.F.K. Jr.',
+        'J F K airport', 'A.F.K.', 'he went a f k', 'F. K. Wallace', 'B.F.K.', 'it is a T rex', 'a T shirt', 'א ב ג', 'כוס קפה']);
 });
