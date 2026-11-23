@@ -31,6 +31,17 @@ export interface JoinStrings {
     error: (code: string, message: string) => string;
     /** Added to a wrong PIN that was typed with Hebrew letters: codes are English letters. */
     englishLetters: string;
+    /**
+     * Under the nickname heading, in a holiday pack's game: which game this is (a family chat's guest
+     * may never have heard of the game), then what it is in one line. '' for a game without such a pack.
+     */
+    packGame: (pack: string) => string;
+    packHow: string;
+}
+
+/** The words for a pack, or '' for none (or a name that is not one of them). */
+function pick(words: { [pack: string]: string }, pack: any): string {
+    return typeof pack === 'string' && Object.prototype.hasOwnProperty.call(words, pack) ? words[pack] : '';
 }
 
 const en: JoinStrings = {
@@ -55,6 +66,8 @@ const en: JoinStrings = {
     // The English pages show the server's own words, as before.
     error: (code, message) => message,
     englishLetters: 'Game codes are English letters.',
+    packGame: pack => pick({ hanukkah: '🕎 A Hanukkah game', christmas: '🎄 A Christmas game', thanksgiving: '🦃 A Thanksgiving game' }, pack),
+    packHow: 'Everyone writes a fake answer, then finds the true one. Each on their own phone.',
 };
 
 const heErrors: { [code: string]: string } = {
@@ -83,6 +96,8 @@ const he: JoinStrings = {
     seatTakenText: 'טלפון אחר הצטרף עם אותו כינוי. בחרו כינוי חדש כדי להצטרף שוב.',
     error: code => heErrors[code] || 'אופס, משהו השתבש. נסו שוב',
     englishLetters: 'הקוד באותיות באנגלית.',
+    packGame: pack => pick({ hanukkah: '🕎 משחק חנוכה', christmas: '🎄 משחק חג המולד', thanksgiving: '🦃 משחק חג ההודיה' }, pack),
+    packHow: 'כל אחד ממציא תשובה, ואז מחפשים את האמת. כל אחד מהטלפון שלו.',
 };
 
 export function joinStrings(locale: string): JoinStrings {
