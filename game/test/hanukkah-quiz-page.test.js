@@ -52,14 +52,46 @@ test('12 questions, each read aloud with its answer behind "התשובה"', () =
     });
 });
 
-test('no question is one of the game\'s Hebrew Hanukkah questions', () => {
+// Words of a pack question as one plain list: punctuation out, the blank filled with its true answer.
+const words = s => norm(s.replace(/[()!?]/g, ' ')).split(' ').filter(Boolean);
+// A pack answer is spoiled when a quiz question or answer holds it as a word, or after one Hebrew prefix letter
+// ("ב", "ה", "ו", "כ", "ל", "מ", "ש"), so "גרמני" isn't found inside "מגרמניה". Answers of 3 letters or fewer
+// ("שם", "אש", "שני") are everyday words and are left out, unless they have two words or more.
+const holds = (text, answer) => {
+    const a = words(answer);
+    const t = words(text);
+    if (a.length === 1 && a[0].length <= 3) {
+        return false;
+    }
+    for (let i = 0; i + a.length <= t.length; i++) {
+        const first = t[i] === a[0] || (t[i].length === a[0].length + 1 && 'בהוכלמש'.includes(t[i][0]) && t[i].slice(1) === a[0]);
+        if (first && a.slice(1).every((w, k) => t[i + 1 + k] === w)) {
+            return true;
+        }
+    }
+    return false;
+};
+// Pack answers that a quiz question names for another fact, each checked by hand.
+//  - "רומא": quiz 11 is Rome entering Jerusalem in 63 BCE; the pack asks who Judah signed a treaty with.
+const allowed = { 'רומא': 11 };
+
+test('no question or answer gives away a Hebrew question of the game\'s Hanukkah pack', () => {
     const he = pack.filter(q => q.lang === 'he');
     assert.ok(he.length > 50, 'the pack was read');
-    quiz.questions.forEach(x => {
+    quiz.questions.forEach((x, i) => {
+        const text = x.q + ' ' + x.a;
+        const plain = ' ' + words(text).join(' ') + ' ';
         he.forEach(q => {
-            assert.notStrictEqual(norm(x.answer), norm(q.realAnswer), `"${x.q}" has the same answer as "${q.questionText}"`);
-            const stem = norm(q.questionText.split('$blank$')[0]);
-            assert.ok(stem.length < 12 || !norm(x.q).includes(stem), `"${x.q}" repeats "${q.questionText}"`);
+            assert.notStrictEqual(norm(x.answer), norm(q.realAnswer), `quiz ${i + 1} has the same answer as "${q.questionText}"`);
+            if (allowed[norm(q.realAnswer)] !== i + 1) {
+                assert.ok(!holds(text, q.realAnswer), `quiz ${i + 1} names "${q.realAnswer}", the answer to "${q.questionText}"`);
+            }
+            // Four words in a row of the pack's question, read with its answer, give its fact away.
+            const w = words(q.questionText.replace('$blank$', ' ' + q.realAnswer + ' '));
+            for (let k = 0; k + 4 <= w.length; k++) {
+                const run = w.slice(k, k + 4).join(' ');
+                assert.ok(!plain.includes(' ' + run + ' '), `quiz ${i + 1} repeats "${run}" from "${q.questionText}"`);
+            }
         });
     });
 });
