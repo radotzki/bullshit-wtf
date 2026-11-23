@@ -55,6 +55,9 @@
                 <app-hanukkah-night *ngIf="hanukkahNight" [view]="hanukkahNight" [locale]="locale" [pin]="pin" part="line"></app-hanukkah-night>
             </div>
 
+            <!-- A game played against another table's challenge: both tables' scores (components/challenge). -->
+            <app-challenge-versus *ngIf="!soloTaste && !taste" [pin]="pin" [locale]="locale" [players]="displayPlayers"></app-challenge-versus>
+
             <div class="actions" *ngIf="!presenter" [class.next-week-first]="nextWeekOn && nextWeekFirst">
                 <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
                      and its lobby opens on the invite. -->
@@ -101,6 +104,9 @@
                     <ng-container *ngTemplateOutlet="crewControls"></ng-container>
                 </div>
                 <app-share-results [pin]="pin" [players]="displayPlayers" [label]="t.share" (sheet)="onSheet($event)"></app-share-results>
+                <!-- CHALLENGE ANOTHER GROUP: the same questions for another group, both scores at the end. -->
+                <app-challenge-share *ngIf="!soloTaste && !taste && !idle && displayPlayers.length > 1" [pin]="pin" [locale]="locale"
+                    (sheet)="onSheet($event)"></app-challenge-share>
             </div>
             <!-- Half of guests: INVITE ANOTHER GROUP in place of the ask below (a 50/50 test, see invite-group.ts). -->
             <app-invite-group *ngIf="inviteAsk" [pin]="pin" [locale]="locale" [nickname]="myNickname" [best]="mine ? mine.best : null"

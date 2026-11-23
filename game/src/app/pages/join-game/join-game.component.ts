@@ -2,7 +2,8 @@ import { reportError } from './../../sentry/sentry.module';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SessionService } from './../../services/session.service';
 import { ApiService } from './../../services/api.service';
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { takeJoinSource, markVisit, preferredLocale } from '../../services/join-source';
 import { CrewService } from '../../services/crew.service';
 import { crewStandings } from '../../game-model';
@@ -24,7 +25,7 @@ import { HanukkahNightStrings, nightStrings, nightTag, tagNight } from '../../co
     templateUrl: './join-game.component.html',
     styleUrls: ['./join-game.component.scss']
 })
-export class JoinGameComponent implements OnInit {
+export class JoinGameComponent implements OnInit, OnDestroy {
     // The page's own words: the visitor's language, decided as the Create page decides it.
     t: JoinStrings = joinStrings('en');
     // `lang` on this page's address (the Create page sends it when its language is not the browser's).
@@ -60,6 +61,16 @@ export class JoinGameComponent implements OnInit {
     private hanukkah: { pin: string; night: number } = null;
     // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
     seatTaken: boolean;
+    /**
+     * The Hanukkah link in a browser that didn't play that game: the table's game it may join now, while
+     * that game is under way (a latecomer sits down at 0 points), else null; and the watch on the finished
+     * game's `fork`, which moves when someone from the table opens tonight's game (see watchTable).
+     */
+    tableNow: string = null;
+    private tableWatch: Subscription;
+    private tableWatched: string;
+    // The game's holiday pack, for the line under the nickname heading ('' for none).
+    pack = '';
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -86,7 +97,32 @@ export class JoinGameComponent implements OnInit {
             this.pinInUrl = true;
             this.nicknameState = true;
             this.loadCrew();
+            this.loadPack();
             this.checkLinkedGame();
+        }
+    }
+
+    ngOnDestroy() {
+        this.stopTableWatch();
+    }
+
+    /** The line under the nickname heading: which holiday's game this is, if any. */
+    get packGame(): string {
+        return this.t.packGame(this.pack);
+    }
+
+    /** Reads the game's pack, for the nickname page (a family chat's guest sees it is a Hanukkah game). */
+    private loadPack() {
+        const pin = this.pin;
+        this.pack = '';
+        try {
+            this.apiService.getGamePack(pin).then(pack => {
+                if (this.pin === pin) {
+                    this.pack = typeof pack === 'string' ? pack : '';
+                }
+            }, () => { });
+        } catch (e) {
+            // The line is a help; the page works without it.
         }
     }
 
@@ -142,6 +178,68 @@ export class JoinGameComponent implements OnInit {
                 this.countRecap(seen);
             }
         }
+        if (tagged && !recap.player) {
+            this.watchTable(pin);
+        }
+    }
+
+    /**
+     * The Hanukkah link, in a browser that didn't play: only a player's PLAY AGAIN, SAME TABLE opens the
+     * table, so this page waits for it. The finished game's `fork` names the table's latest game; each time
+     * it moves, the page asks again: an open lobby comes back as the rematch ("They're playing again", JOIN
+     * THEM), and a game already under way can still be joined (JOIN NOW). One watch per PIN.
+     */
+    private watchTable(pin: string) {
+        if (this.tableWatched === pin) {
+            return;
+        }
+        this.stopTableWatch();
+        this.tableWatched = pin;
+        this.tableWatch = this.apiService.getForkGame(pin).subscribe(fork => this.tableMoved(pin, fork), () => { });
+    }
+
+    private stopTableWatch() {
+        if (this.tableWatch) {
+            this.tableWatch.unsubscribe();
+        }
+        this.tableWatch = null;
+        this.tableWatched = undefined;
+        this.tableNow = null;
+    }
+
+    private async tableMoved(pin: string, fork: string) {
+        if (!fork || this.tableWatched !== pin) {
+            return;
+        }
+        try {
+            await this.apiService.validateGameName(pin, true);
+        } catch (err) {
+            if (this.tableWatched !== pin || this.recapPin !== pin) {
+                return;
+            }
+            if (err && err.code === 'GAME_OVER' && err.rematch) {
+                this.tableNow = null;
+                return this.showGameOver(err);
+            }
+        }
+        // No lobby waiting: a game under way that a latecomer may join (validateGameName says yes to it).
+        let open = false;
+        try {
+            await this.apiService.validateGameName(fork);
+            open = true;
+        } catch (e) { }
+        if (this.tableWatched === pin && this.recapPin === pin && !(this.gameOver && this.gameOver.rematch)) {
+            this.tableNow = open ? fork.toUpperCase() : null;
+        }
+    }
+
+    /** JOIN NOW, under "The table is already playing": into that game, at the nickname box. */
+    joinNow() {
+        const table = this.tableNow;
+        if (table) {
+            this.countRecap('join-playing');
+            this.goToLobby(table);
+        }
     }
 
     /** A night-after row; a test game's link sends none. */
@@ -194,10 +292,17 @@ export class JoinGameComponent implements OnInit {
         });
     }
 
-    /** Which ask the recap shows (see recapAsk). */
+    /**
+     * Which ask the recap shows (see recapAsk). On the Hanukkah link, a browser that didn't play is not
+     * told it missed it: it waits for the table (hanukkah-wait), or joins its game under way (hanukkah-playing).
+     */
     get ask() {
-        return recapAsk(!!(this.recap && this.recap.player), this.gameOver && this.gameOver.rematch,
+        const ask = recapAsk(!!(this.recap && this.recap.player), this.gameOver && this.gameOver.rematch,
             !!(this.recap && this.recap.tablePlaying));
+        if (ask === 'other' && this.hanukkahNight) {
+            return this.tableNow ? 'hanukkah-playing' : 'hanukkah-wait';
+        }
+        return ask;
     }
 
     /**
@@ -262,6 +367,8 @@ export class JoinGameComponent implements OnInit {
 
     /** Back to an empty PIN box. */
     tryAnotherPin() {
+        this.stopTableWatch();
+        this.pack = '';
         this.seatTaken = false;
         this.gameOver = null;
         this.recap = null;
@@ -285,6 +392,7 @@ export class JoinGameComponent implements OnInit {
 
     /** To the nickname box of a lobby (the rematch, or the table PLAY AGAIN opened). */
     private goToLobby(rematch: string) {
+        this.stopTableWatch();
         this.seatTaken = false;
         this.gameOver = null;
         this.recap = null;
@@ -296,6 +404,7 @@ export class JoinGameComponent implements OnInit {
         this.crewNicknames = [];
         this.router.navigate([this.joinPath(), rematch], { replaceUrl: true, queryParams: this.keepLang() });
         this.loadCrew();
+        this.loadPack();
     }
 
     async loadCrew() {
@@ -381,6 +490,7 @@ export class JoinGameComponent implements OnInit {
             .then(() => {
                 this.nicknameState = true;
                 this.loading = false;
+                this.loadPack();
             })
             .catch(err => {
                 if (err && err.code === 'GAME_OVER') {

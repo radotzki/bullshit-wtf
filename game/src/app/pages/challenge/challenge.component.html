@@ -1,0 +1,31 @@
+<div class="arcade-form challenge-page" [attr.dir]="rtl ? 'rtl' : null" [attr.lang]="rtl ? 'he' : null" [class.is-rtl]="rtl">
+    <div class="title-area">
+        <h1 class="title" [routerLink]="rtl ? '/he' : '/'">{{ rtl ? 'בולשיט' : 'Bullshit' }}</h1>
+        <div class="separator">♦</div>
+    </div>
+
+    <div class="controls-wrapper">
+        <div class="controls challenge-card">
+            <div *ngIf="loading" class="loader"></div>
+
+            <ng-container *ngIf="!loading && card">
+                <p class="challenge-title">{{ t.title }}</p>
+                <p class="challenge-table" dir="auto">{{ table }}</p>
+                <p class="challenge-top">{{ card.top }}</p>
+                <p class="challenge-to-beat">{{ t.toBeat }}</p>
+                <p class="challenge-facts">{{ t.facts(card.played, card.questions) }}</p>
+                <p class="challenge-text">{{ t.text(card.questions) }}</p>
+                <button class="button is-primary is-medium is-fullwidth challenge-start" type="button" [disabled]="starting"
+                    [class.is-loading]="starting" (click)="start()">{{ t.start }}</button>
+                <p class="challenge-hint">{{ t.startHint }}</p>
+                <div class="notification is-danger" *ngIf="errorMsg">{{ errorMsg }}</div>
+            </ng-container>
+
+            <ng-container *ngIf="!loading && over">
+                <p class="challenge-title">{{ t.overTitle }}</p>
+                <p class="challenge-text">{{ t.overText }}</p>
+                <button class="button is-primary is-medium is-fullwidth challenge-new" type="button" (click)="newGame()">{{ t.newGame }}</button>
+            </ng-container>
+        </div>
+    </div>
+</div>

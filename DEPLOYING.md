@@ -2401,3 +2401,78 @@ account and no sign-in: the site proves it is ours with a key file at its root.
 - **To see it worked:** the deploy run's log for that step says "IndexNow: sent N URLs". Bing
   Webmaster Tools (the owner's sign-in) shows the received URLs under IndexNow once the site is
   verified there.
+
+## Challenge another group: the same questions, both scores side by side
+
+A table that just finished has a score to brag about. On the final screen of a game of 2 or more players
+(not a taste, not an idle game), every phone shows CHALLENGE ANOTHER GROUP under SHARE RESULTS ("Same
+questions, another group. Both scores side by side at the end."). It opens a sheet with WHATSAPP, SHARE
+(the phone's share sheet) and COPY LINK. The message quotes the table's best score and the number of
+questions, and its link is `/challenge/<PIN>` (`/he/challenge/<PIN>` for a Hebrew game) with
+`?via=challenge-whatsapp`, `challenge-share` or `challenge-copy`. The link's page says "YOU'VE BEEN
+CHALLENGED", names the table ("Noa's table", or "A table of 4"), its best score to beat, how many played,
+and START THE CHALLENGE, which makes a game hosted from that browser on the **same questions in the same
+order**, in the same language and length, then the nickname page as after Create. At that game's end every
+phone (and the big screen) shows both tables side by side: each table's best score and first five rows, and
+"You beat Noa's table by 500 points!", "Noa's table wins by 300 points." or "A dead heat". That final
+screen offers CHALLENGE ANOTHER GROUP again, on the same questions, so a challenge can travel on.
+
+- **Where it is built.** `functions/src/controllers/challenge.ts`. The sheet's press calls
+  `validateGameName` with `openChallenge: true` (no new function): only a browser that sat at that game
+  (its sign-in uid or its last seat) may open it, and it writes `games/<PIN>/challengeOpen`. From then
+  on, for 7 days after the game ended (`CHALLENGE_MS`), its PIN's GAME_OVER answer carries `challenge`, the
+  card: the host's name as a link preview may show it (`shownName`), the language, the number of questions
+  and players, the best score and the final scores (at most 12 rows). `newGame` with `challenge: <PIN>`
+  copies that game's question ids, language, length and pack, and the card, to `games/<new PIN>/challenge`.
+  At START (`tick.ts`) a challenge game keeps those ids, whatever the room has seen before, and plays no
+  About questions; every other game picks its questions again as before. When a challenge game ends, its
+  own PIN's GAME_OVER answer carries `versus` (the card it was made with) for 7 days, which the final
+  screen reads. A Replay of a challenge game is a plain game with new questions.
+- **What can be forged: nothing.** A link carries only a PIN and a tag. Every name and score comes from
+  the games' own records on the server; the site reads them as plain strings and numbers (`readCard`) and
+  shows them as text. Names lose invisible and right-to-left control characters and are cut to 24
+  characters. A game nobody opened shows nothing at `/challenge/<PIN>`: "This challenge is over" and START
+  A NEW GAME (tagged `challenge-over`), as it does after the 7 days.
+- **What is stored.** `challengeOpen` on a challenged game, and `challenge` (the other table's card) on a
+  game made from a challenge. Neither has a database rule, so no phone can read them; they travel only
+  through `validateGameName`. **No rules change, no new function, no new column or table.** Hosting serves
+  `/challenge/*` and `/he/challenge/*` as the app's pages (`firebase.json`), with no-cache and noindex.
+- **Counting.** The games it makes carry the link's tag in `opened_games.campaign` (`challenge-whatsapp`,
+  `challenge-share`, `challenge-copy`, or plain `challenge` for a link with no tag). A test game's challenge
+  is a test game: it keeps the test tag whatever its link says, and sends no row.
+
+| `shares.method` (`content_type = 'challenge'`, the challenged game's PIN in capitals in `crew_id`) | When |
+|---|---|
+| `open` | a player pressed CHALLENGE ANOTHER GROUP and the challenge opened |
+| `whatsapp`, `native`, `copy` | sent it: WHATSAPP, the phone's share sheet, or COPY LINK (and SHARE on a phone with no share sheet) |
+| `seen` | the challenge page showed its card (once per page load) |
+| `seen-over` | the page of a challenge that is over, or was never opened, showed |
+| `start` | pressed START THE CHALLENGE |
+| `seen-versus` | a phone of the challenge game showed the side-by-side scores |
+
+**How to read it.** New groups a week that a challenge brought, and whether they bring the next one:
+
+```sql
+SELECT DATE_TRUNC(DATE(time), WEEK(MONDAY)) AS week, campaign,
+  COUNT(*) AS games, SUM(players) AS players
+FROM `bullshit-wtf-prod.analytics.opened_games`
+WHERE campaign LIKE 'challenge%' AND players >= 2 AND time >= TIMESTAMP('2026-11-18')
+GROUP BY week, campaign ORDER BY week, campaign
+```
+
+The funnel, by challenged game (sent, page seen, started, finished side by side):
+
+```sql
+SELECT method, COUNT(DISTINCT crew_id) AS challenged_games, COUNT(*) AS rows
+FROM `bullshit-wtf-prod.analytics.shares`
+WHERE content_type = 'challenge' AND time >= TIMESTAMP('2026-11-18')
+GROUP BY method ORDER BY rows DESC
+```
+
+- Deploy functions and hosting together (a merge does both). A browser still on the older site shows no
+  button and ignores `versus`.
+- A player of the first table can join the second table and knows the answers: nothing stops that.
+- **Checked** with `functions/test/challenge.test.js`, `game/test/challenge.test.js`, and a run on the
+  Firebase emulators, `node .github/smoke/emulator-challenge.js`: in English and in Hebrew, table A plays a
+  whole test game, a guest sends the challenge, table B opens the link, starts it, plays it to the end on
+  the same questions, and every phone of table B shows both tables with table A's scores as stored.

@@ -234,8 +234,9 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean, run = f
                 };
             }
 
-            const qids = await pickQuestionsForRoom(game);
-            const aboutPlan = await aboutPlanFor(game, taste);
+            // A challenge keeps the other table's questions, in their order, whatever this room saw (challenge.ts).
+            const qids = game.challenge ? game.qids : await pickQuestionsForRoom(game);
+            const aboutPlan = game.challenge ? {} : await aboutPlanFor(game, taste);
             return Object.assign({
                 state: updateState(GameState.RoundIntro),
                 qids: await packClearOfAbout(game, qids, aboutPlan.aboutQs),

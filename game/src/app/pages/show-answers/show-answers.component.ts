@@ -10,6 +10,7 @@ import { GameState, aboutView } from '../../game-model';
 import { SoundService } from './../../services/sound.service';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings } from './../about-strings';
+import { answersQuestion, AnswersQuestionView } from './question-on-phone';
 
 @Component({
     standalone: false,
@@ -31,6 +32,10 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
     showQuestion: boolean;
     /** A taste (a game started alone) has no writing screen: its question is first read here, above the answers. */
     taste = false;
+    /** Whether the game has a big screen; null until read. Without one, the question stands above the answers. */
+    private bigScreen: boolean | null = null;
+    /** What this phone shows of the question (see question-on-phone.ts). */
+    questionView: AnswersQuestionView = { above: false, askButton: false };
     /** An About question about this phone's player: they know the truth, so they watch and do not pick. */
     aboutMe = false;
     aboutWords: AboutStrings = aboutStrings('en');
@@ -64,9 +69,22 @@ export class ShowAnswersComponent implements OnInit, OnDestroy {
             this.aboutMe = aboutView(about, null, user && user.pid, this.presenter).aboutMe;
             this.answers = a;
         });
-        this.apiService.getTaste(this.pin).then(taste => this.taste = !!taste);
+        this.apiService.getTaste(this.pin).then(taste => {
+            this.taste = !!taste;
+            this.updateQuestionView();
+        });
+        if (!this.presenter) {
+            this.apiService.gameHasBigScreen(this.pin).then(bigScreen => {
+                this.bigScreen = bigScreen;
+                this.updateQuestionView();
+            });
+        }
         this.startTimer();
         this.playBackground();
+    }
+
+    private updateQuestionView() {
+        this.questionView = answersQuestion({ isPresenter: this.presenter, taste: this.taste, bigScreen: this.bigScreen });
     }
 
     private useLocale(locale: string) {
