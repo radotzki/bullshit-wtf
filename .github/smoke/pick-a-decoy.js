@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Local run: "Pick a decoy" (functions/src/controllers/pair.ts and game/src/app/pages/pair-strings.ts),
-// a 50/50 test on two-player games, in headless Chromium against the Firebase emulators. Each sitting is
+// decoys for every two-player game, in headless Chromium against the Firebase emulators. Each sitting is
 // one test game (?via=test) of five questions, with the big screen on.
 //
-//   en-pair, he-pair      two phones in the decoy half. Checks: pair true at START; the first question's
+//   en-pair, he-pair      two phones, PIN in the ended test's decoy half. Checks: pair true at START; the first question's
 //                         card says how it plays; the writing screen offers decoy chips on every question
 //                         (the second phone at 320 px wide); the host taps a chip, the friend taps none;
 //                         each phone lists three answers, never its own lie or decoy, and no house lie is
@@ -12,14 +12,13 @@
 //   en-one-writer, he-one-writer  as en-pair, but on the first question the friend writes no lie. Checks:
 //                         both players still have a decoy, so the writer's phone lists two answers (the
 //                         truth and the friend's decoy), not the truth alone; the friend's lists three.
-//   en-control, he-control two phones in the other half: no chips, no card line, house lies as today,
-//                         pair false on every row.
-//   en-three              three phones, PIN in the decoy half: not in the test, nothing changes.
+//   en-old-control, he-old-control  as en-pair, with a PIN from the ended test's no-decoy half: decoys too.
+//   en-three              three phones, PIN in the old decoy half: not a pair game, nothing changes.
 //
 // Nothing reaches production: see emulator-game.js, whose emulators and phones this run uses.
 // From the repository root, with game/ and functions/ built and the root's npm ci done:
 //   node .github/smoke/pick-a-decoy.js [path to dist]
-// ONLY=en-pair,he-pair,en-one-writer,he-one-writer,en-control,he-control,en-three plays only those. SHOTS=<dir> saves screenshots.
+// ONLY=en-pair,he-pair,en-one-writer,he-one-writer,en-old-control,he-old-control,en-three plays only those. SHOTS=<dir> saves screenshots.
 // Prints a JSON summary; exits non-zero when a check fails.
 
 'use strict';
@@ -49,7 +48,7 @@ function loadTs(file) {
 const { pairStrings } = loadTs(path.join(ROOT, 'game', 'src', 'app', 'pages', 'pair-strings.ts'));
 const DECOY_POINTS = [250, 375, 500];
 
-/** The half a new game falls in, as functions/src/controllers/pair.ts works it out. */
+/** The half a PIN fell in during the ended 50/50 test (true: decoys). Only to show that both halves get decoys now. */
 const half = (pin) => crypto.createHash('sha256').update('pair:' + pin.toUpperCase(), 'utf8').digest()[0] % 2 === 1;
 /** The PIN the game counter gives (generateGameName in new-game.ts). */
 const pinOf = (counter) => counter.toString(26).replace(/\d/g, (d) => 'qrstuvwxyz'[d]).toUpperCase().padStart(4, 'Q');
@@ -166,7 +165,7 @@ async function act(phone, game, sitting) {
             phone.answersShot = true;
             await shot(page, `${sitting.key}-answers-${phone.name}`);
         }
-        // In the decoy half the host falls for the friend's decoy, to see it pay; everyone else picks at random.
+        // In a pair game the host falls for the friend's decoy, to see it pay; everyone else picks at random.
         let target = Math.floor(Math.random() * n);
         if (sitting.pair && phone.role === 'host' && friendDecoy && texts.includes(friendDecoy)) target = texts.indexOf(friendDecoy);
         await buttons.nth(target).click().catch(() => { });
@@ -271,7 +270,7 @@ async function sitting(base, s) {
         const g = await db('GET', `games/${game.pin}`);
         const seen = game.seen;
         check(g.campaign === 'test', `not a test game (campaign ${g.campaign})`);
-        const want = s.players === 2 ? s.half : undefined;
+        const want = s.players === 2 ? true : undefined;
         check(g.pair === want, `pair is ${g.pair}, not ${want}`);
         const rows = rowsOf(game.pin);
         check(rows.length === 5, `${rows.length} question_results rows, not 5`);
@@ -297,7 +296,7 @@ async function sitting(base, s) {
                 check(!!row && row.lies === 1 && row.decoy_picks >= 1, `the one-writer question: ${JSON.stringify(row)}`);
             }
             check(!!seen.screenTag, 'the big screen never showed the DECOY tag');
-            check(rows.every((r) => r.house_picks === 0), 'a house lie was picked in the decoy half');
+            check(rows.every((r) => r.house_picks === 0), 'a house lie was picked in a pair game');
             const decoyPicks = rows.reduce((n, r) => n + (r.decoy_picks || 0), 0);
             check(decoyPicks >= 5, `${decoyPicks} decoy picks over 5 questions (the host falls for one each time)`);
             check(rows.every((r) => r.friend_fooled + r.decoy_picks > 0), `a round fooled nobody: ${JSON.stringify(rows.map((r) => [r.friend_fooled, r.decoy_picks]))}`);
@@ -310,9 +309,9 @@ async function sitting(base, s) {
                 rows: rows.map((r) => ({ q: r.q_index, round: r.round, lies: r.lies, picks: r.picks, friend_fooled: r.friend_fooled, decoy_picks: r.decoy_picks, truth_picks: r.truth_picks, house_picks: r.house_picks, pair: r.pair })),
                 flash: [...new Set(seen.flash)], results: seen.results, problems };
         }
-        check(seen.intro.length === 0, `the card's decoy line in a game not in the decoy half: ${JSON.stringify(seen.intro)}`);
-        check(seen.chips.every((c) => c.chips === 0), `decoy chips in a game not in the decoy half: ${JSON.stringify(seen.chips)}`);
-        check(rows.every((r) => !r.decoy_picks), 'decoy picks in a game not in the decoy half');
+        check(seen.intro.length === 0, `the card's decoy line in a game of three: ${JSON.stringify(seen.intro)}`);
+        check(seen.chips.every((c) => c.chips === 0), `decoy chips in a game of three: ${JSON.stringify(seen.chips)}`);
+        check(rows.every((r) => !r.decoy_picks), 'decoy picks in a game of three');
         check(seen.answers.every((a) => a.buttons >= 4), `fewer answers than today: ${JSON.stringify(seen.answers)}`);
         return { key: s.key, pin: game.pin, pair: g.pair, scores: Object.values(g.players).map((p) => `${p.nickname}: ${p.score}`),
             answersListed: seen.answers.map((a) => a.buttons), problems };
@@ -348,8 +347,8 @@ async function main() {
             { key: 'he-pair', locale: 'he', half: true, pair: true, players: 2 },
             { key: 'en-one-writer', locale: 'en', half: true, pair: true, players: 2, silentQ: 0 },
             { key: 'he-one-writer', locale: 'he', half: true, pair: true, players: 2, silentQ: 0 },
-            { key: 'en-control', locale: 'en', half: false, players: 2 },
-            { key: 'he-control', locale: 'he', half: false, players: 2 },
+            { key: 'en-old-control', locale: 'en', half: false, pair: true, players: 2 },
+            { key: 'he-old-control', locale: 'he', half: false, pair: true, players: 2 },
             { key: 'en-three', locale: 'en', half: true, players: 3 },
         ].filter((s) => !only || only.includes(s.key));
         const next = async () => {

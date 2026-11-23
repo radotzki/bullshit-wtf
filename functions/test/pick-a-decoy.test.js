@@ -6,6 +6,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const Module = require('module');
 const path = require('path');
+const crypto = require('crypto');
 
 // ---- in-memory Realtime Database (just what the controllers use) ----
 const db = {};
@@ -79,7 +80,7 @@ const dist = path.join(__dirname, '..', 'dist', 'controllers');
 const { advance } = require(path.join(dist, 'tick'));
 const { answer } = require(path.join(dist, 'answer'));
 const { onAnswerSelection } = require(path.join(dist, 'on-answer-selection'));
-const { pairHalf, drawPair, chooseDecoy, matchOffer, pairDecoys, DECOY_POINTS } = require(path.join(dist, 'pair'));
+const { drawPair, chooseDecoy, matchOffer, pairDecoys, DECOY_POINTS } = require(path.join(dist, 'pair'));
 const { questionResult } = require(path.join(dist, 'lie-helper'));
 const { scoreQuestion, addQuestionScores } = require(path.join(dist, 'scoring'));
 const { addHighlights, isPlayerLie, isLie, revealScoreChanges } = require(path.join(__dirname, '..', 'dist', 'game-model'));
@@ -89,13 +90,17 @@ const TOTAL_Q = 3;
 console.log = () => {};
 console.error = () => {};
 
-// PINs in each half, found once.
+// The half a PIN fell in while "Pick a decoy" was a 50/50 test (true: decoys), as the server worked it
+// out until the test ended. Kept here only to show that PINs of the old no-decoy half get decoys now.
+const oldHalf = pin => crypto.createHash('sha256').update('pair:' + pin.toUpperCase(), 'utf8').digest()[0] % 2 === 1;
+// PINs of each old half, found once.
 const PINS = { true: [], false: [] };
 for (let i = 0; PINS.true.length < 40 || PINS.false.length < 40; i++) {
     const pin = 'D' + i.toString(36).toUpperCase().padStart(3, '0');
-    PINS[pairHalf(pin)].push(pin);
+    PINS[oldHalf(pin)].push(pin);
 }
 
+/** A game in the lobby. `half`: which half of the ended test its PIN fell in, which no longer matters. */
 function newGame(half, playerIds = ['p1', 'p2'], extra = {}) {
     const pin = PINS[half].shift();
     db.questions = db.questions || {};
@@ -146,31 +151,12 @@ const rowsFor = pin => (inserted.question_results || []).filter(r => r.id === pi
 
 // ---- the pure parts ----
 
-test('the half follows from the PIN alone, about half and half, independent of the staged reveal', () => {
-    const { stagedHalf } = require(path.join(dist, 'big-reveal'));
-    let pair = 0;
-    let both = 0;
-    for (let i = 0; i < 4000; i++) {
-        const pin = 'P' + i.toString(36).toUpperCase();
-        assert.strictEqual(pairHalf(pin), pairHalf(pin.toLowerCase()));
-        if (pairHalf(pin)) pair++;
-        if (pairHalf(pin) && stagedHalf(pin)) both++;
-    }
-    assert.ok(pair > 1850 && pair < 2150, `${pair} of 4000`);
-    assert.ok(both > 900 && both < 1100, `${both} of 4000 in both`);
-});
-
-test('only a table of exactly two is in the test; a Replay keeps its parent\'s half', () => {
-    const t = PINS.true[0];
-    const f = PINS.false[0];
-    assert.strictEqual(drawPair(1, t), undefined);
-    assert.strictEqual(drawPair(3, t), undefined);
-    assert.strictEqual(drawPair(8, f, true), undefined, 'a Replay of a pair game that grew to 8 is not in the test');
-    assert.strictEqual(drawPair(2, t), true);
-    assert.strictEqual(drawPair(2, f), false);
-    assert.strictEqual(drawPair(2, t, false), false);
-    assert.strictEqual(drawPair(2, f, true), true);
-    assert.strictEqual(drawPair(2, f, null), false, 'a parent not in the test: drawn afresh');
+test('every table of exactly two is a pair game, whatever its PIN; no other table is', () => {
+    assert.strictEqual(drawPair(0), undefined);
+    assert.strictEqual(drawPair(1), undefined);
+    assert.strictEqual(drawPair(3), undefined);
+    assert.strictEqual(drawPair(8), undefined, 'a Replay of a pair game that grew to 8 is not a pair game');
+    assert.strictEqual(drawPair(2), true);
 });
 
 test('the chosen decoy is kept only while it is one of the offers and free', () => {
@@ -291,7 +277,7 @@ test('question_results: pair and decoy_picks; lies, friend_fooled and house_pick
 
 // ---- whole games ----
 
-test('a two-player game in the decoy half: three answers a phone, decoys score, the data says so', async () => {
+test('a two-player game: three answers a phone, decoys score, the data says so', async () => {
     const pin = newGame(true);
     await next(pin);
     assert.strictEqual(game(pin).pair, true, 'set at START');
@@ -399,29 +385,30 @@ test('one writer: both players still get a decoy, so the writer has a real choic
     assert.strictEqual(list.filter(a => a.decoyOf).length, 0);
 });
 
-test('a two-player game in the other half plays as before', async () => {
+test('a two-player game whose PIN was in the old no-decoy half gets decoys too', async () => {
     const pin = newGame(false);
     await next(pin);
-    assert.strictEqual(game(pin).pair, false);
+    assert.strictEqual(game(pin).pair, true);
     await toQuestion(pin);
-    await answer(pin, 'p1', 'p1 lie', 'House A');
+    const ideas = game(pin).ideas;
+    assert.ok(ideas && ideas.p1 && ideas.p2, 'offers for both');
+    await answer(pin, 'p1', 'p1 lie', ideas.p1[0]);
     await answer(pin, 'p2', 'p2 lie');
-    assert.ok(!game(pin).decoys);
     const list = Object.values(game(pin).answers);
-    assert.strictEqual(list.filter(a => a.decoyOf).length, 0);
-    assert.ok(list.filter(a => a.houseLie).length >= 1, 'house lies as today');
+    assert.strictEqual(list.filter(a => a.decoyOf).length, 2);
+    assert.strictEqual(list.filter(a => a.houseLie).length, 0, 'no neutral house lies');
     await pick(pin, 'p1', 'truth0');
     await pick(pin, 'p2', 'truth0');
     await next(pin);
     await next(pin);
     assert.strictEqual(state(pin), S.RoundIntro);
     await next(pin);
-    assert.ok(!game(pin).ideas, 'round 2: no ideas, as before');
-    assert.strictEqual(rowsFor(pin)[0].pair, false);
+    assert.ok(game(pin).ideas && game(pin).ideas.p1, 'round 2: offers again');
+    assert.strictEqual(rowsFor(pin)[0].pair, true);
     assert.strictEqual(rowsFor(pin)[0].decoy_picks, 0);
 });
 
-test('three players: not in the test, nothing changes', async () => {
+test('three players: not a pair game, nothing changes', async () => {
     const pin = newGame(true, ['p1', 'p2', 'p3']);
     await next(pin);
     assert.strictEqual(game(pin).pair, undefined);
@@ -439,15 +426,15 @@ test('three players: not in the test, nothing changes', async () => {
     assert.strictEqual(rowsFor(pin)[0].pair, null);
 });
 
-test('a Replay with two players keeps its parent\'s half', async () => {
+test('a Replay with two players gets decoys, also of a game from the old no-decoy half', async () => {
     const parentF = newGame(false);
     game(parentF).pair = false;
-    const replay = newGame(true, ['p1', 'p2'], { parent: parentF });
+    const replay = newGame(false, ['p1', 'p2'], { parent: parentF });
     await next(replay);
-    assert.strictEqual(game(replay).pair, false, 'kept, though its own PIN is in the decoy half');
+    assert.strictEqual(game(replay).pair, true, 'the parent\'s old half no longer counts');
 
     const parentNone = newGame(true, ['p1', 'p2', 'p3']);
     const replay2 = newGame(false, ['p1', 'p2'], { parent: parentNone });
     await next(replay2);
-    assert.strictEqual(game(replay2).pair, false, 'a parent not in the test: its own PIN decides');
+    assert.strictEqual(game(replay2).pair, true, 'a parent of three, a Replay of two');
 });

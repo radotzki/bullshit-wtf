@@ -373,21 +373,9 @@ async function populateFakeAnswers(pin: string, game: GameScheme) {
     return res;
 }
 
-/**
- * At START, a game with two players gets its half of the "Pick a decoy" test (see pair.ts). A Replay
- * keeps its parent's half while it still has two players. Nothing to write for any other game.
- */
+/** At START, a game with two players is a pair game, and gets decoys (see pair.ts). Nothing to write for any other. */
 async function pairFor(pin: string, game: GameScheme): Promise<Partial<GameScheme>> {
-    const count = Object.keys(game.players || {}).filter(k => !!game.players[k]).length;
-    if (count !== 2) {
-        return {};
-    }
-    let parentPair: boolean | null = null;
-    if (game.parent) {
-        parentPair = await get<boolean>(gamesRef.child(String(game.parent).toUpperCase()).child('pair'))
-            .catch(e => { console.error(`[PIN: ${pin}] parent's pair not read`, e && e.message); return null; });
-    }
-    const pair = drawPair(count, pin, parentPair);
+    const pair = drawPair(Object.keys(game.players || {}).filter(k => !!game.players[k]).length);
     return pair === undefined ? {} : { pair };
 }
 
