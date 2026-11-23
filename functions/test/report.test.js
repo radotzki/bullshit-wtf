@@ -24,6 +24,7 @@ const stand = {
     'same-table': controller(['sameTable']),
     'start': controller(['startGame', 'hostHere', 'hostToBigScreen']),
     'validate-game-name': controller(['validateGameName']),
+    'challenge': controller(['openChallenge']),
     'crew': controller(['createCrew', 'crewRematch']),
     'crew-night': controller(['crewNight']),
     'laugh': controller(['laugh']),

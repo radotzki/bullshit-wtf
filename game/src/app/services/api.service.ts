@@ -83,6 +83,13 @@ function apiError(url: string, resp: any) {
     if (body && body.nightAfter && typeof body.nightAfter === 'object') {
         error.nightAfter = body.nightAfter;
     }
+    // GAME_OVER: a game's open challenge, and the other table of a game played against one (challenge.ts).
+    if (body && body.challenge && typeof body.challenge === 'object') {
+        error.challenge = body.challenge;
+    }
+    if (body && body.versus && typeof body.versus === 'object') {
+        error.versus = body.versus;
+    }
     return error;
 }
 
@@ -144,7 +151,11 @@ export class ApiService {
         return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
-    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
+    /**
+     * `challenge`: the PIN of a finished game to play against (CHALLENGE ANOTHER GROUP). The server then
+     * takes that game's language, length, pack and questions, whatever else is sent.
+     */
+    async createGame(locale: string, count: number, pack?: string, campaign?: string, challenge?: string): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating never waits long for sign-in:
         // without a uid the game is made all the same, and anyone may start it.
@@ -161,6 +172,7 @@ export class ApiService {
             stagedReveal: true,
             // This client can show the About questions, so the server may draw this game into their test.
             aboutUs: true,
+            ...(challenge ? { challenge: challenge.toUpperCase() } : {}),
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -245,6 +257,36 @@ export class ApiService {
         const user = this.sessionService.user;
         const pid = user && typeof user.pid === 'string' ? user.pid : undefined;
         return this.post(`validateGameName`, { pin, uid, pid });
+    }
+
+    /**
+     * CHALLENGE ANOTHER GROUP: a player of this finished game opens its challenge, so its link shows the
+     * table's score to another group. Resolves to the challenge's card (see components/challenge).
+     */
+    async openChallenge(pin: string): Promise<{ challenge: any }> {
+        let uid: string;
+        try {
+            uid = (await this.uidWithin(SIGN_IN_WAIT_MS)).uid;
+        } catch (e) { }
+        const user = this.sessionService.user;
+        const pid = user && typeof user.pid === 'string' ? user.pid : undefined;
+        return this.post<{ challenge: any }>(`validateGameName`, { pin: pin.toUpperCase(), uid, pid, openChallenge: true });
+    }
+
+    /**
+     * What a finished game's PIN says about challenges: `challenge`, its card when one of its players
+     * opened it; `versus`, the other table, when it was played against one. Both null when none.
+     */
+    async challengeOf(pin: string): Promise<{ challenge: any; versus: any; over: boolean }> {
+        try {
+            await this.post(`validateGameName`, { pin: pin.toUpperCase() });
+            return { challenge: null, versus: null, over: false };
+        } catch (err) {
+            if (err && (err.code === 'GAME_OVER' || err.code === 'GAME_NOT_EXIST')) {
+                return { challenge: err.challenge || null, versus: err.versus || null, over: true };
+            }
+            throw err;
+        }
     }
 
     joinAsPresenter(pin: string) {

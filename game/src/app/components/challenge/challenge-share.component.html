@@ -1,0 +1,40 @@
+<div class="challenge-ask" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+    <button class="button is-warning is-fullwidth challenge-open" type="button" (click)="openSheet()">
+        <span class="icon" aria-hidden="true"><i class="fa fa-trophy"></i></span>
+        <span>{{ t.button }}</span>
+    </button>
+    <p class="challenge-hint">{{ t.hint }}</p>
+</div>
+
+<div class="modal challenge-modal" [class.is-active]="open">
+    <div class="modal-background" (click)="close()"></div>
+    <div class="modal-content">
+        <section class="modal-card-body challenge-sheet" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+            <h4 class="sheet-title">{{ t.sheetTitle }}</h4>
+            <p class="sheet-text" *ngIf="ready">{{ sheetText }}</p>
+            <p class="sheet-text" *ngIf="making">{{ t.making }}</p>
+
+            <a class="button is-fullwidth whatsapp challenge-whatsapp" [class.is-loading]="making" [class.is-disabled]="!ready"
+                [attr.href]="whatsappUrl || null" target="_blank" rel="noopener" (click)="whatsapp($event)">
+                <span class="icon"><i class="fa fa-whatsapp"></i></span>
+                <span> {{ t.whatsapp }} </span>
+            </a>
+            <button *ngIf="canShare" class="button is-primary is-fullwidth challenge-share" type="button" [disabled]="!ready" (click)="share()">
+                <span class="icon"><i class="fa fa-share-alt"></i></span>
+                <span> {{ t.share }} </span>
+            </button>
+            <button class="button is-fullwidth challenge-copy" type="button" [disabled]="!ready" (click)="copy()">
+                <span class="icon"><i class="fa fa-link"></i></span>
+                <span> {{ t.copy }} </span>
+            </button>
+            <p class="sheet-note" *ngIf="copied">{{ t.copied }}</p>
+            <div class="notification is-danger" *ngIf="failed">
+                {{ t.failed }}
+                <button type="button" class="link-button retry" (click)="makeChallenge()">{{ t.retry }}</button>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" type="button" (click)="close()"> {{ t.done }} </button>
+        </footer>
+    </div>
+</div>
