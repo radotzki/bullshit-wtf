@@ -1,5 +1,5 @@
 // The CrazyGames version's rules on the server (controllers/portal.ts): its games' lies go through the
-// word filter, and Replay keeps its tag. Off the portal nothing changes. In-memory database, no
+// lie filter, and Replay keeps its tag. Off the portal only kids' games filter lies. In-memory database, no
 // Firebase project:  npm run build && node --test test/portal.test.js
 const test = require('node:test');
 const assert = require('node:assert');
@@ -65,7 +65,7 @@ console.log = () => {};
 
 let n = 0;
 /** A game on its first question, with two players (so one lie does not end the question). */
-function question(campaign) {
+function question(campaign, pack) {
     const pin = 'P' + String(++n).padStart(3, 'A').replace(/\d/g, d => 'ABCDEFGHIJ'[d]);
     db.questions = { q1: { question: 'The honorary mayor of Talkeetna was ___', realAnswer: 'a cat', fakeAnswers: ['a dog'] } };
     db.games = db.games || {};
@@ -73,7 +73,7 @@ function question(campaign) {
         state: { id: 2, timestamp: Date.now() }, locale: 'en', timestamp: Date.now(),
         roundIndex: 0, questionIndex: 0, totalQ: 5, qids: ['q1'], tick: 0, presenter: false,
         players: { p1: { nickname: 'ann', uid: 'u1' }, p2: { nickname: 'bob', uid: 'u2' } },
-    }, campaign ? { campaign } : {});
+    }, campaign ? { campaign } : {}, pack ? { pack } : {});
     return pin;
 }
 
@@ -100,6 +100,34 @@ test('only portal games filter lies', () => {
     assert.strictEqual(filtersLies({ campaign: 'fb-he-hanukkah' }), false);
     assert.strictEqual(filtersLies({}), false);
     assert.strictEqual(filtersLies(null), false);
+});
+
+test('on the main site, kids\' games filter lies, and no other game does', () => {
+    assert.strictEqual(filtersLies({ pack: 'kids' }), true);
+    assert.strictEqual(filtersLies({ pack: 'kids', campaign: 'fb-he-hanukkah' }), true);
+    assert.strictEqual(filtersLies({ pack: 'hanukkah' }), false);
+    assert.strictEqual(filtersLies({ pack: 'christmas' }), false);
+});
+
+test('a kids\' game refuses a swear word and takes a fair name; a grown-up game takes both', async () => {
+    const kids = question(undefined, 'kids');
+    await assert.rejects(answer(kids, 'p1', 'holy shit'), e => e.code === 'FLAGGED_LIE');
+    assert.strictEqual(at(['games', kids, 'answers', 'p1']), null);
+    await answer(kids, 'p1', 'Dick Van Dyke');
+    assert.strictEqual(at(['games', kids, 'answers', 'p1', 'text']), 'dick van dyke');
+    const grownUps = question(undefined, 'hanukkah');
+    await answer(grownUps, 'p1', 'holy shit');
+    assert.strictEqual(at(['games', grownUps, 'answers', 'p1', 'text']), 'holy shit');
+});
+
+test('a portal game refuses common swear words, in English and Hebrew', async () => {
+    for (const lie of ['fuck', 'a bitch', 'בן זונה', 'כוס אמק']) {
+        const pin = question('portal-crazygames');
+        await assert.rejects(answer(pin, 'p1', lie), e => e.code === 'FLAGGED_LIE', lie);
+    }
+    const pin = question('portal-crazygames');
+    await answer(pin, 'p1', 'כוס');
+    assert.strictEqual(at(['games', pin, 'answers', 'p1', 'text']), 'כוס');
 });
 
 test('a portal game refuses a flagged lie, and keeps nothing of it', async () => {
