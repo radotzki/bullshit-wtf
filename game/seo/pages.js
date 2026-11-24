@@ -152,6 +152,8 @@ const howHe = `
 
 module.exports = [
     ...groupsHome.pages(en, he),
+    // How to play the classic card game Bullshit, for those who search for it (seo/pages-card-game.js).
+    ...require('./pages-card-game').pages(en, he),
     {
         path: '/how-to-play', twin: '/he/how-to-play', site: en, tag: 'seo-en-how',
         image: '/assets/og-how-en.png',
