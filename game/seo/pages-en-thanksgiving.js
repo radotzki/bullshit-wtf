@@ -5,10 +5,14 @@
 // game-model.ts).
 //
 // Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
-// game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen (Present), Rematch.
-// A game of the pack has up to 3 Thanksgiving questions among the usual ones. The example and the
-// facts named below are questions of the pack (functions/data/thanksgiving-questions.json); a test
-// (test/thanksgiving-page.test.js) fails if one of them leaves the file.
+// game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen (a computer host's
+// "Use as the big screen" in the lobby, or Present with the PIN), Rematch. A kids game (8 to 12, the
+// "Kids are playing" switch) has no pack. A game of the pack has up to 3 Thanksgiving questions among
+// the usual ones. The facts named below are questions of the pack
+// (functions/data/thanksgiving-questions.json). The example is not in any question file, so a host who
+// read the page meets no truth they already know (from the Thanksgiving night walk: Big Bird's turkey
+// feathers were pack question 27). Its truth: Minnesota raises more turkeys than any other state
+// (USDA NASS's yearly Turkeys Raised report). A test (test/thanksgiving-page.test.js) checks both.
 
 const thanksgiving = `
 <p>The turkey is eaten, the dishes can wait, and three generations are in one room with the TV on. Bullshit is a game for exactly that hour: a strange true fact appears with a blank, everyone writes a lie to fill it on their own phone, and then the whole family tries to find the truth among the lies. It is free, it runs in the browser, and there is nothing to buy, install or set up.</p>
@@ -16,15 +20,15 @@ const thanksgiving = `
 <h2>Thanksgiving questions, already in the game</h2>
 <p>A game started from this page has Thanksgiving questions mixed in with the usual strange facts: the turkey, the parade, the football, the Pilgrims and the leftovers. What a president said when he spared his turkey. What the first Macy's parade had instead of balloons. What a football announcer handed the best player of the game. Every truth was checked against a source, and nobody at the table will know it.</p>
 <div class="example">
-  <p class="q">Big Bird's yellow costume on "Sesame Street" is made with the tail feathers of ____</p>
-  <p>Say Grandpa writes "canaries", your sister writes "ostriches" and the eight-year-old writes "a giant chicken". The truth: turkeys. Everyone who picked "ostriches" just gave your sister points, and she will mention it until Christmas.</p>
+  <p class="q">The US state that raises the most turkeys is ____</p>
+  <p>Say Grandpa writes "Virginia", your sister writes "Texas, obviously" and the eight-year-old writes "Turkey". The truth: Minnesota. Everyone who picked "Texas, obviously" just gave your sister points, and she will mention it until Christmas.</p>
 </div>
 <h2>Put it on the TV</h2>
-<p>The game is made for one room and one screen. On a laptop or computer connected to the TV, open bullshit.wtf, click "Present" and type the game's PIN. The TV shows the questions, every answer, who fell for what and the scores, with music. Phones are only for writing and picking, so the people on the sofa and the people still at the table play the same game.</p>
+<p>The game is made for one room and one screen. Start the game on the laptop or computer connected to the TV: tap "Start a Thanksgiving game" on this page, type your name, and in the game's lobby press "Use as the big screen". The TV then shows a code to scan: you join on your own phone like everyone else, and press "Start" on the TV when the family is in. Already started the game on a phone? On the computer, open bullshit.wtf, click "Present" and type the game's PIN. The TV shows the questions, every answer, who fell for what and the scores, with music. Phones are only for writing and picking, so the people on the sofa and the people still at the table play the same game.</p>
 <h2>Why it works on Thanksgiving</h2>
 <ul>
   <li><strong>Nobody needs to know trivia.</strong> Nobody knows these facts. The game is about writing a believable lie and knowing which uncle will fall for it.</li>
-  <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, that's all.</li>
+  <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, that's all. For a game of questions made for kids of 8 to 12, tick "Kids are playing" when you create it (that game has no Thanksgiving questions).</li>
   <li><strong>Up to 12 phones a game.</strong> A bigger family plays in pairs, one phone per pair, which is also the easy way to include the youngest and the oldest.</li>
   <li><strong>Short.</strong> A game of 5 questions takes about ten minutes, so it fits between dinner and pie, or at halftime. "Rematch" at the end starts another with the same players and new questions.</li>
   <li><strong>Free, no app, no sign-up.</strong> A cousin who arrives late joins with the PIN in seconds.</li>
