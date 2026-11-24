@@ -4,7 +4,9 @@
 // site's buttons (the print rules at the top of the body).
 //
 // The text is the team's checked activity (the counselors' Hanukkah activity, revised 22 November 2026 after
-// Product's look): change the layout, not the facts. What it rests on, as in pull request #238 for /he/youth-group:
+// Product's look): change the layout, not the facts. Its opener facts (annex A) and paper questions (annex B)
+// were swapped on 24 November for facts that no Hebrew Hanukkah question of the game asks, since tables play
+// the pack right after; test/hanukkah-activity-page.test.js keeps it so. What it rests on, as in pull request #238 for /he/youth-group:
 //  - 12 seats a game (MAX_PLAYERS) and the counselor who opens it takes one, so 11 teams: up to 22 children in pairs;
 //  - a rematch ("משחק חוזר") plays as many questions as the first game, so 5 and then 5;
 //  - Hebrew games from 1 to 13 December get three Hanukkah questions by themselves, and ?pack=hanukkah on the
@@ -138,19 +140,19 @@ ${printStyle}
 </ul>
 <h2 class="annex">נספח א': אמת או המצאה? (לפתיחה)</h2>
 <ol>
-  <li>סיפור פך השמן שהספיק לשמונה ימים לא מופיע בספרי המקבים. <strong>אמת.</strong></li>
-  <li>על סביבונים בחוץ לארץ כתוב ש' ("נס גדול היה שם"), ועל סביבונים בארץ כתוב פ' ("נס גדול היה פה"). <strong>אמת.</strong></li>
-  <li>המרד של מתתיהו ובניו התחיל במודיעין. <strong>אמת.</strong></li>
+  <li>בחנוכה אסור לצום. <strong>אמת.</strong> לפי ההלכה, בימי חנוכה לא מתענים.</li>
+  <li>בחנוכה קוראים בתורה בבית הכנסת בכל אחד משמונת הימים, גם ביום חול. <strong>אמת.</strong></li>
+  <li>יש מנהג שנשים לא עושות מלאכה כל עוד נרות החנוכה דולקים. <strong>אמת.</strong></li>
   <li>בחנוכייה יש תשעה קנים, כי פעם חגגו את חנוכה תשעה ימים. <strong>המצאה.</strong> הקנה התשיעי הוא השמש, שממנו מדליקים את שאר הנרות.</li>
-  <li>המכבים ניצחו בקרב הראשון שלהם כי הפילים של הצבא היווני נבהלו מאור הלפידים. <strong>המצאה.</strong> היו פילים, אבל בקרב אחר (בית זכריה), ושם המכבים הפסידו.</li>
+  <li>מותר לקרוא ספר לאור נרות החנוכה. <strong>המצאה.</strong> אסור להשתמש באור שלהם: הם דולקים רק כדי שנראה אותם.</li>
 </ol>
 <h2>נספח ב': שאלות לגרסת הדף (אם אין אינטרנט)</h2>
 <ol>
   <li>המילה "חנוכה" באה מ____ המקדש. (חנוכת)</li>
-  <li>בתוך הסביבון כתובות ארבע אותיות: נ', ג', ה' ו____. (פ', או ש' בחוץ לארץ)</li>
+  <li>אחרי הדלקת הנרות שרים "הנרות ____". (הללו)</li>
   <li>הנר שממנו מדליקים את שאר נרות החנוכה נקרא ____. (שמש)</li>
-  <li>המרד של המכבים התחיל בעיר ____. (מודיעין)</li>
-  <li>סיפור פך השמן שהספיק לשמונה ימים מופיע ב____. (תלמוד)</li>
+  <li>בתפילה בחנוכה מוסיפים קטע שנקרא "על ה____". (ניסים)</li>
+  <li>בכל שמונת ימי חנוכה אומרים בבית הכנסת ____ שלם. (הלל)</li>
 </ol>
 <div class="no-print">
 <h2>עוד למדריכים</h2>

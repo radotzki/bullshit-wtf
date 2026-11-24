@@ -150,3 +150,69 @@ test('the page module and the page list agree', () => {
     assert.strictEqual(activity.TAG, pg.tag);
     assert.deepStrictEqual(activity.pages(pg.site).map(p => p.path), [PATH]);
 });
+
+// Spoils. Counselor tables play the game's Hanukkah pack right after this activity, so nothing the counselor reads
+// aloud (opener, paper questions, the rest of the page) may give away a Hebrew question of the pack, kids' ones
+// included (they are pack questions too). The same rules as test/hanukkah-quiz-page.test.js.
+const pack = Object.values(JSON.parse(fs.readFileSync(path.join(root, 'functions', 'data', 'hanukkah-questions.json'), 'utf8')))
+    .filter(q => q.lang === 'he');
+const norm = s => s.replace(/['"׳״:,.]/g, '').replace(/\s+/g, ' ').trim();
+// Words of a text as one plain list: punctuation out.
+const words = s => norm(s.replace(/[()!?;–—_]/g, ' ')).split(' ').filter(Boolean);
+// A pack answer is spoiled when the text holds it as a word, or after one Hebrew prefix letter, so "גרמני" isn't
+// found inside "מגרמניה". Answers of 3 letters or fewer ("שם", "אש", "שני") are everyday words and are left out,
+// unless they have two words or more; the four-word check below still catches their facts.
+const holds = (t, answer) => {
+    const a = words(answer);
+    if (a.length === 1 && a[0].length <= 3) {
+        return false;
+    }
+    for (let i = 0; i + a.length <= t.length; i++) {
+        const first = t[i] === a[0] || (t[i].length === a[0].length + 1 && 'בהוכלמש'.includes(t[i][0]) && t[i].slice(1) === a[0]);
+        if (first && a.slice(1).every((w, k) => t[i + 1 + k] === w)) {
+            return true;
+        }
+    }
+    return false;
+};
+// The closing talk comes after both games (minutes 33 to 45), and its two stories are the activity's point, so it
+// may name these pack answers; checked by hand. Nowhere else on the page may.
+//  - "תלמוד": the oil story is told in the Talmud (pack: where is the oil miracle first told?).
+//  - "מודיעין": the revolt began in Modiin (pack: where was the Hanukkah torch run lit?).
+//  - "שמונה": the oil lasted eight days, as every Hanukkah page says (an older pack asked how many candles Beit
+//    Shammai light on the first night).
+const closingMay = ['תלמוד', 'מודיעין', 'שמונה'];
+const parts = (() => {
+    const all = pg.body.replace(/<style>[\s\S]*?<\/style>/g, ' ');
+    const at = all.indexOf('<h2>סיכום: שני סיפורים של חנוכה');
+    const end = all.indexOf('<h2', at + 4);
+    assert.ok(at > 0 && end > at, 'the closing talk is found');
+    return {
+        page: [pg.title, pg.description, pg.h1, activity.waText, all.slice(0, at), all.slice(end)].map(text).join(' '),
+        closing: text(all.slice(at, end)),
+    };
+})();
+
+test('the opener, the paper questions and the rest of the page give away no Hebrew Hanukkah question of the game', () => {
+    assert.ok(pack.length > 50, 'the pack was read');
+    const paper = pg.body.split(/<h2[^>]*>נספח ב'/)[1];
+    const answers = [...paper.matchAll(/<li>[^<]*\(([^)]+)\)<\/li>/g)].map(m => m[1]);
+    assert.ok(answers.length >= 5, 'the paper questions\' answers were read: ' + answers.join(', '));
+    [['page', parts.page, []], ['closing talk', parts.closing, closingMay]].forEach(([where, t, may]) => {
+        const w = words(t);
+        const plain = ' ' + w.join(' ') + ' ';
+        pack.forEach(q => {
+            if (may.indexOf(norm(q.realAnswer)) < 0) {
+                assert.ok(!holds(w, q.realAnswer), `the ${where} names "${q.realAnswer}", the answer to "${q.questionText}"`);
+            }
+            // Four words in a row of the pack's question, read with its answer, give its fact away.
+            const qw = words(q.questionText.replace('$blank$', ' ' + q.realAnswer + ' '));
+            for (let k = 0; k + 4 <= qw.length; k++) {
+                const run = qw.slice(k, k + 4).join(' ');
+                assert.ok(!plain.includes(' ' + run + ' '), `the ${where} repeats "${run}" from "${q.questionText}"`);
+            }
+        });
+    });
+    pack.forEach(q => answers.forEach(a => assert.notStrictEqual(norm(words(a).join(' ')), norm(words(q.realAnswer).join(' ')),
+        `a paper question has the answer of "${q.questionText}"`)));
+});
