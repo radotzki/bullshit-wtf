@@ -244,6 +244,7 @@ module.exports = [
         title: 'Hanukkah party game for the whole family, free · Bullshit',
         description: 'Eight nights, one family, a lot of latkes. Bullshit is a free bluffing trivia game everyone plays on their own phone after candle lighting. No download.',
         h1: 'A Hanukkah game for after the candles',
+        updated: '2026-11-26',
         body: `
 <p>Hanukkah has eight nights and most of them end with the family around a table. Bullshit gives that table a game: everyone on their own phone, the grandparents included, and nothing to set up or clean away.</p>
 <!--start-->
@@ -257,6 +258,7 @@ module.exports = [
   <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
   <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together. Save your group as a crew and the scoreboard carries over from night to night.</li>
 </ul>
+<p>Hosting Thanksgiving first? The <a href="/thanksgiving-party-game">Thanksgiving party game</a> mixes Thanksgiving questions into the game, from Thursday's table to the long weekend.</p>
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {
