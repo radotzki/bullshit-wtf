@@ -73,6 +73,10 @@ const allowed = {
     '/he/hanukkah-activity': {
         'תלמוד': 'the closing talk tells the two stories of Hanukkah, read after both games (#239, judged fair in its review)',
     },
+    '/hanukkah-youth-group-activity': {
+        'talmud': 'the closing talk tells the two stories of Hanukkah, read after both games, as the Hebrew page does (#240)',
+        'modiin': 'the closing talk tells the two stories of Hanukkah, read after both games, as the Hebrew page does (#240)',
+    },
 };
 
 test('every page entry is allowed with its reason', () => {
