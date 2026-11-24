@@ -101,12 +101,14 @@ function tagOf(v: any): string {
 // The most copies of the visit function that may run at once. The endpoint is public and has no rate limit, so without a cap a
 // flood of posts is served by as many copies as it asks for, and each one costs run time, a log
 // line and a BigQuery row. The site has a few hundred visits a day, each sending about five small
-// rows: far below one a second, and one warm copy answers a row in well under a second. Three
-// leaves room for a full lobby of 8 phones opening the join page at once and for a copy held by
-// a slow BigQuery call. Over the cap a row waits a moment or is dropped (the beacon reads no
-// answer and never retries on failure), which no player sees. Raise it if real traffic grows
-// about a hundredfold.
-export const VISIT_MAX_INSTANCES = 3;
+// rows: far below one a second on average, and one warm copy answers a row in well under a second.
+// But rows come in bursts: on 20 November 2026, 21 rows landed within one second, seven for each of
+// three copies. Hanukkah's first night (4 December 2026) may bring ten times a normal Friday
+// evening, so ten copies: room for several lobbies opening the join page at once, for copies held by a
+// slow BigQuery call, and for the seconds a new copy takes to start. Over the cap a row waits a
+// moment or is dropped (the beacon reads no answer and never retries on failure), which no player
+// sees, but the night's visit counts would then come up short. Ten still bounds what a flood can cost.
+export const VISIT_MAX_INSTANCES = 10;
 
 /** A test tag: `test` or `test-<name>`, the mark a play-test link carries (?via=test). */
 export function isTestTag(tag: string): boolean {

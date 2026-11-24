@@ -444,7 +444,7 @@ The retired Google Analytics tag is gone from the page.
 - Post tags on the plain pages: every link of a plain page that stays on the site (the buttons,
   the logo, the links in the text, the other pages, the other language) carries the page's
   `?via=` tag on, so a game created after any of them is credited to the post.
-- The visit function runs at most 3 copies at once (`VISIT_MAX_INSTANCES` in
+- The visit function runs at most 10 copies at once (`VISIT_MAX_INSTANCES` in
   `functions/src/controllers/visit.ts`, with the reason). The endpoint is still public, with no
   rate limit and no check that a row came from the site: the cap bounds what a flood can cost,
   not whether rows can be forged, so a number from this table can be inflated by someone who
