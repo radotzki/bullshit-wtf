@@ -43,6 +43,7 @@ ${example('In 1932, the Australian army went to war against ____, and lost',
   <li>When everyone is in, the person who opened the game taps "Start". A game of 5 questions takes about ten minutes, and "Rematch" at the end starts a new one with the same players and new questions.</li>
 </ol>
 <p>The full rules and points are on <a href="/how-to-play">How to play</a>. More about playing on phones: <a href="/party-games-on-your-phone">party games on your phone</a>.</p>
+<p>Playing on a holiday? The <a href="/thanksgiving-party-game">Thanksgiving party game</a> and the <a href="/hanukkah-party-game">Hanukkah party game</a> each mix that holiday's questions into the game.</p>
 <p><small>Jackbox, The Jackbox Party Pack and Fibbage are trademarks of Jackbox Games. Bullshit is an independent game and is not made by, endorsed by or connected to Jackbox Games.</small></p>`;
 
 const jackboxHe = `
@@ -83,6 +84,7 @@ module.exports = {
             title: 'Free Jackbox and Fibbage alternative game · Bullshit',
             description: 'Like Fibbage, but free and with no TV needed: write a lie, find the truth, fool your friends. Bullshit runs in the phone browser, up to 12 players, English and Hebrew.',
             h1: 'A free alternative to Jackbox\'s Fibbage',
+            updated: '2026-11-24',
             body: jackboxEn,
         },
         {

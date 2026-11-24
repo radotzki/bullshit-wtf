@@ -4,6 +4,8 @@
 // 5, 7 or 9 questions, three rounds where points grow, English and Hebrew questions.
 // A page may stand in one language only: leave `twin` out. A page with a `tag` sends it on its
 // Start button as ?via=<tag>, so a game opened from the page is counted for it.
+// A page whose own text changed after its language's `updated` day names that day in `updated`
+// (YYYY-MM-DD), for the sitemap's <lastmod>.
 // The weekly-group and home-together pages (marketing drafts 6 and 7), in a file of their own.
 const groupsHome = require('./pages-groups-home');
 const occasions = require('./pages-he-occasions');
@@ -16,6 +18,10 @@ const partyNights = require('./pages-party-nights');
 
 const en = {
     lang: 'en',
+    // The day this language's menu (nav) or footer last changed. Every page shows them, so it is the
+    // sitemap's <lastmod> for every page of this language, unless the page's own `updated` is later.
+    // Change it when you change the menu or the footer.
+    updated: '2026-11-19',
     dir: 'ltr',
     start: { href: '/create-game', label: 'Start a game' },
     join: { href: '/join-game', label: 'Join with a PIN' },
@@ -44,6 +50,10 @@ const en = {
 
 const he = {
     lang: 'he',
+    // The day this language's menu (nav) or footer last changed. Every page shows them, so it is the
+    // sitemap's <lastmod> for every page of this language, unless the page's own `updated` is later.
+    // Change it when you change the menu or the footer.
+    updated: '2026-11-19',
     dir: 'rtl',
     start: { href: '/create-game?lang=he', label: 'פותחים משחק' },
     join: { href: '/join-game', label: 'מצטרפים עם קוד' },
@@ -256,6 +266,7 @@ module.exports = [
         title: 'משחק לחנוכה למשפחה ולמבוגרים: חידון מצחיק בטלפון | בולשיט',
         description: 'חידון חנוכה מצחיק לכל המשפחה, גם למבוגרים: כל אחד ממציא תשובה מהטלפון, וכולם מחפשים את האמת. שאלות חנוכה, עד 12 שחקנים, גם בשיחת וידאו. חינם.',
         h1: 'משחק לחנוכה לכל המשפחה, גם למבוגרים: חידון שבו ממציאים את התשובות',
+        updated: '2026-11-24',
         body: `
 <p>בחנוכה יש שמונה לילות, ורובם נגמרים עם המשפחה סביב השולחן. בולשיט נותן לשולחן הזה משחק: כל אחד מהטלפון שלו, גם סבא וסבתא, ובלי שום דבר לסדר או לאסוף אחר כך.</p>
 <!--start-->
@@ -269,6 +280,7 @@ module.exports = [
   <li><strong>שאלות חנוכה.</strong> במשחק חנוכה יש שלוש שאלות חנוכה בכל משחק: האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג, ועוד.</li>
   <li><strong>שמונה לילות, שאלות חדשות.</strong> בסוף משחק לוחצים שוב, ואותה חבורה ממשיכה למשחק חדש. שומרים את החבורה, וטבלת הניקוד ממשיכה מלילה ללילה.</li>
 </ul>
+<p>גם אחרי החג, לערבים שכולם בבית: <a href="/he/home-together">משחק קבוצתי לבית</a>.</p>
 <p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
     },
     {
