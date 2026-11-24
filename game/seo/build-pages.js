@@ -79,7 +79,8 @@ function render(p) {
         description: p.description,
         inLanguage: s.lang,
         url: SITE + p.path,
-        about: {
+        // A page about something other than our game (the card game's rules) names it in its own `about`.
+        about: p.about || {
             '@type': 'VideoGame',
             name: s.lang === 'he' ? 'בולשיט' : 'Bullshit',
             url: SITE + '/',

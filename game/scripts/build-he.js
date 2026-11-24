@@ -86,6 +86,7 @@ const about = `
       <a href="/he/bachelorette">משחק למסיבת רווקות</a> · <a href="/he/adult-birthday">משחק ליום הולדת למבוגרים</a> ·
       <a href="/he/friends-weekend">משחק לסופ"ש בצימר</a> ·
       <a href="/?lang=en" hreflang="en" lang="en">Bullshit in English</a></p>
+    <p>מחפשים את משחק הקלפים? כאן מוסבר <a href="/he/bullshit-card-game">איך משחקים בולשיט בקלפים</a>.</p>
     <noscript><p>המשחק עצמו צריך JavaScript פעיל בדפדפן.</p></noscript>
   </main>
   `;
