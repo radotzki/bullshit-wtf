@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const pages = require('./pages');
+const { robotsTxt } = require('./robots');
 // The daily puzzle (/daily, /he/daily) is written by build-daily.js; every page here links to it.
 const dailyWords = require('./daily-strings');
 
@@ -239,19 +240,8 @@ ${homes.concat(urls).join('\n')}
 `;
 }
 
-// Game screens (a PIN in the address) have nothing to index. Join links stay
-// crawlable so chat apps can still read their link previews.
-const robots = `User-agent: *
-Disallow: /game-staging/
-Disallow: /round-intro/
-Disallow: /show-question/
-Disallow: /show-answers/
-Disallow: /reveal-the-truth/
-Disallow: /score-board/
-Disallow: /score-board-final/
-
-Sitemap: ${SITE}/sitemap.xml
-`;
+// Game screens are kept out of search by their noindex header (firebase.json); see seo/robots.js.
+const robots = robotsTxt(SITE);
 
 // A page with a twin needs it to exist, and twins must point at each other. A tag must be one the game keeps.
 pages.forEach(p => {
