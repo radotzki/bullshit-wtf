@@ -271,6 +271,8 @@ module.exports = [
 </ul>
 <p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
     },
+    // A Hanukkah party for grown-ups or teens, straight into a Hanukkah game (seo/pages-he-hanukkah-party.js).
+    ...require('./pages-he-hanukkah-party').pages(he),
     {
         path: '/purim-party-game', twin: '/he/purim', site: en, tag: 'seo-en-purim',
         image: '/assets/og-purim-en.png',
