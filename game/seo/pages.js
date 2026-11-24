@@ -250,6 +250,7 @@ module.exports = [
 <!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 7 questions takes about a quarter of an hour, and you can pick 5 for a shorter one.</p>
+<p>Hosting Thanksgiving first? The <a href="/thanksgiving-party-game">Thanksgiving party game</a> mixes Thanksgiving questions into the game, from Thursday's table to the long weekend.</p>
 <h2>Why it fits Hanukkah</h2>
 <ul>
   <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, not know facts. Playing with kids of 8 to 12? Tick "Kids are playing" for questions they get (a kids game has no Hanukkah questions).</li>
@@ -258,7 +259,6 @@ module.exports = [
   <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more.</li>
   <li><strong>Eight nights, new questions.</strong> Play again with Replay and the same group stays together. Save your group as a crew and the scoreboard carries over from night to night.</li>
 </ul>
-<p>Hosting Thanksgiving first? The <a href="/thanksgiving-party-game">Thanksgiving party game</a> mixes Thanksgiving questions into the game, from Thursday's table to the long weekend.</p>
 <p>Read <a href="/how-to-play">how to play</a>, or start a game now.</p>`,
     },
     {
