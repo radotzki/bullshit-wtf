@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { warmInviteLink } from './invite-warm';
+import { PORTAL_SHARE_STRINGS, inPortal, portalGameLink, portalInviteUrl } from '../portal/portal';
 
 export type Locale = 'en' | 'he';
 
@@ -18,7 +19,9 @@ const strings = {
     en: {
         inviteTitle: 'Join my Bullshit game',
         scanHint: 'or let them scan this',
-        inviteText: (pin: string) => `Come play Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`,
+        inviteText: (pin: string, pack?: string) => (pack === 'hanukkah'
+            ? `Come play a Hanukkah game of Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`
+            : `Come play Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`),
         resultsTitle: 'Bullshit results',
         resultsText: (place: number, total: number, score: number) =>
             place === 1
@@ -32,7 +35,10 @@ const strings = {
     he: {
         inviteTitle: 'בואו לשחק בולשיט',
         scanHint: 'או שיסרקו את זה',
-        inviteText: (pin: string) => `בואו לשחק איתי בולשיט! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`,
+        // A Hanukkah game says so: the family chat's text is the first thing a grandparent reads.
+        inviteText: (pin: string, pack?: string) => (pack === 'hanukkah'
+            ? `בואו לשחק איתי בולשיט, משחק חנוכה! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`
+            : `בואו לשחק איתי בולשיט! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`),
         resultsTitle: 'תוצאות בולשיט',
         resultsText: (place: number, total: number, score: number) =>
             place === 1
@@ -59,7 +65,9 @@ function ordinal(n: number) {
 export class ShareService {
 
     strings(locale: string) {
-        return strings[locale === 'he' ? 'he' : 'en'];
+        const lang = locale === 'he' ? 'he' : 'en';
+        // The CrazyGames version: its texts send no one to bullshit.wtf (portal/portal.ts).
+        return inPortal() ? Object.assign({}, strings[lang], PORTAL_SHARE_STRINGS[lang]) : strings[lang];
     }
 
     /**
@@ -68,6 +76,10 @@ export class ShareService {
      * `via` tags where the link came from (qr, link) so joins can be counted later.
      */
     inviteUrl(pin: string, locale: string, via: 'link' | 'qr') {
+        if (inPortal()) {
+            // CrazyGames' own invite link for this game ('' until CrazyGames has made it).
+            return portalInviteUrl(pin);
+        }
         const prefix = locale === 'he' ? '/he' : '';
         return `${SITE}${prefix}/join-game/${pin.toUpperCase()}?via=${via}`;
     }
@@ -78,7 +90,7 @@ export class ShareService {
      * (see invite-warm.ts).
      */
     warmInvite(pin: string, locale: string) {
-        if (!pin) {
+        if (!pin || inPortal()) {
             return;
         }
         let fetcher: any = null;
@@ -90,6 +102,10 @@ export class ShareService {
 
     /** Home page link, in the game's language, tagged with where it was shared from. */
     siteUrl(locale: string, via: string) {
+        if (inPortal()) {
+            // The game's page on CrazyGames, never the playable site ('' when unknown: text only).
+            return portalGameLink();
+        }
         return `${SITE}${locale === 'he' ? '/he' : '/'}?via=${via}`;
     }
 

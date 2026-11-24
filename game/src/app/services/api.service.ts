@@ -20,6 +20,7 @@ import { environment } from '../../environments/environment';
 import firebaseCompat from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/database';
+import { bigScreenInGame } from '../pages/show-answers/question-on-phone';
 
 const firebase = firebaseCompat.initializeApp(environment.firebaseConfig);
 
@@ -83,6 +84,13 @@ function apiError(url: string, resp: any) {
     if (body && body.nightAfter && typeof body.nightAfter === 'object') {
         error.nightAfter = body.nightAfter;
     }
+    // GAME_OVER: a game's open challenge, and the other table of a game played against one (challenge.ts).
+    if (body && body.challenge && typeof body.challenge === 'object') {
+        error.challenge = body.challenge;
+    }
+    if (body && body.versus && typeof body.versus === 'object') {
+        error.versus = body.versus;
+    }
     return error;
 }
 
@@ -111,6 +119,17 @@ export class ApiService {
     gameHasPresenter(pin: string) {
         pin = pin.toUpperCase();
         return this.get<boolean>(this.gamesRef.child(pin).child('presenter'));
+    }
+
+    /**
+     * Whether a big screen is in this game: a presenter joined, or the host made their computer the big
+     * screen (see question-on-phone.ts). False when neither can be read.
+     */
+    gameHasBigScreen(pin: string): Promise<boolean> {
+        return Promise.all([
+            this.gameHasPresenter(pin).catch(() => false),
+            this.getGameHasHost(pin).catch(() => false),
+        ]).then(([presenter, hasHost]) => bigScreenInGame(presenter, hasHost));
     }
 
     /** Anonymous uid of the browser that created (or replayed) this game, if known. */
@@ -144,7 +163,11 @@ export class ApiService {
         return this.post<{ screen: boolean }>(`hostToBigScreen`, { pin, hostKey });
     }
 
-    async createGame(locale: string, count: number, pack?: string, campaign?: string): Promise<{ pin: string }> {
+    /**
+     * `challenge`: the PIN of a finished game to play against (CHALLENGE ANOTHER GROUP). The server then
+     * takes that game's language, length, pack and questions, whatever else is sent.
+     */
+    async createGame(locale: string, count: number, pack?: string, campaign?: string, challenge?: string): Promise<{ pin: string }> {
         // The creating browser's anonymous uid marks the host, so BigQuery can
         // tell whether hosts come back. Creating never waits long for sign-in:
         // without a uid the game is made all the same, and anyone may start it.
@@ -161,6 +184,7 @@ export class ApiService {
             stagedReveal: true,
             // This client can show the About questions, so the server may draw this game into their test.
             aboutUs: true,
+            ...(challenge ? { challenge: challenge.toUpperCase() } : {}),
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
@@ -245,6 +269,36 @@ export class ApiService {
         const user = this.sessionService.user;
         const pid = user && typeof user.pid === 'string' ? user.pid : undefined;
         return this.post(`validateGameName`, { pin, uid, pid });
+    }
+
+    /**
+     * CHALLENGE ANOTHER GROUP: a player of this finished game opens its challenge, so its link shows the
+     * table's score to another group. Resolves to the challenge's card (see components/challenge).
+     */
+    async openChallenge(pin: string): Promise<{ challenge: any }> {
+        let uid: string;
+        try {
+            uid = (await this.uidWithin(SIGN_IN_WAIT_MS)).uid;
+        } catch (e) { }
+        const user = this.sessionService.user;
+        const pid = user && typeof user.pid === 'string' ? user.pid : undefined;
+        return this.post<{ challenge: any }>(`validateGameName`, { pin: pin.toUpperCase(), uid, pid, openChallenge: true });
+    }
+
+    /**
+     * What a finished game's PIN says about challenges: `challenge`, its card when one of its players
+     * opened it; `versus`, the other table, when it was played against one. Both null when none.
+     */
+    async challengeOf(pin: string): Promise<{ challenge: any; versus: any; over: boolean }> {
+        try {
+            await this.post(`validateGameName`, { pin: pin.toUpperCase() });
+            return { challenge: null, versus: null, over: false };
+        } catch (err) {
+            if (err && (err.code === 'GAME_OVER' || err.code === 'GAME_NOT_EXIST')) {
+                return { challenge: err.challenge || null, versus: err.versus || null, over: true };
+            }
+            throw err;
+        }
     }
 
     joinAsPresenter(pin: string) {
@@ -574,10 +628,11 @@ export class ApiService {
      * START in the lobby. The server checks that this phone may start the game: in a game with a
      * host key, only the phone that brings that key may, big screen or not.
      */
-    startGame(pin: string) {
+    /** START. `run`: a host alone gets the solo run (SoloRun in game-model) in place of the 5-question taste. */
+    startGame(pin: string, run = false) {
         pin = pin.toUpperCase();
         const hostKey = hostKeyFor(pin) || null;
-        return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
+        return this.post<{ started: boolean }>(`startGame`, run ? { pin, hostKey, run: true } : { pin, hostKey });
     }
 
     /**
@@ -811,15 +866,19 @@ export class ApiService {
      * PLAY AGAIN, SAME TABLE on a finished game's recap (functions' same-table.ts, through `fork`): the
      * game's one open lobby, or a new one this phone hosts. Like Replay, with a new host key.
      */
-    /** `wait`: CATCH THE NEXT ROUND; while the table still plays the server answers TABLE_PLAYING. */
-    async sameTable(pin: string, wait = false) {
+    /**
+     * `wait`: CATCH THE NEXT ROUND; while the table still plays the server answers TABLE_PLAYING.
+     * `campaign`: the Hanukkah night's tag of the link the page came by (hanukkah-night-N), for the lobby it opens.
+     */
+    async sameTable(pin: string, wait = false, campaign?: string) {
         pin = pin.toUpperCase();
         const { uid } = await this.uidWithin(SIGN_IN_WAIT_MS);
         const user = this.sessionService.user;
         const pid = user && typeof user.pid === 'string' ? user.pid : null;
         const hostKey = newHostKey();
         const resp = await this.post<{ pin?: string; host?: boolean; hostKey?: string }>(
-            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, ...(wait ? { wait: true } : {}) });
+            `fork`, { pin, uid, pid, hostKey, stagedReveal: true, aboutUs: true, sameTable: true, ...(wait ? { wait: true } : {}),
+                ...(campaign ? { campaign } : {}) });
         if (resp && resp.pin && resp.host !== false) {
             rememberHostKey(resp.pin, resp.hostKey || hostKey);
         }

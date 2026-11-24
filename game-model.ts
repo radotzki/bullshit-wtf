@@ -63,6 +63,8 @@ export interface GameScheme {
     // Current clients write "<state id>:<state timestamp>" of the state they want to leave.
     tick: number | string;
     presenter: boolean;
+    // The host started it alone as a solo run (startGame with run: true; see SoloRun). Server-written.
+    soloRun?: boolean;
     fork?: string;
     // The first Replay claims its new game's pin here, so a second Replay at the same moment joins it.
     forking?: string;
@@ -171,6 +173,14 @@ export interface GameScheme {
     // Server time each player's lie and pick arrived, for measuring the wait (question_results).
     // Server only: no rule opens it, so no phone can read or write it.
     answerTimes?: AnswerTimes;
+    // CHALLENGE ANOTHER GROUP (challenge.ts in the functions). On a finished game: a player of it pressed
+    // CHALLENGE ANOTHER GROUP, so its link may show its table's score to another group for CHALLENGE_MS.
+    // Server only: no rule opens it.
+    challengeOpen?: boolean;
+    // On a game made from a challenge link: the other table as it finished (its PIN, host, scores), copied
+    // by the server when this game was made. Its questions are that game's, in the same order. Server
+    // only: no rule opens it; the final screen gets it through validateGameName. Not carried by Replay.
+    challenge?: ChallengeCard;
     // "Pick a decoy", a 50/50 test on two-player games, set at START (see pair.ts in the functions).
     // true: each player also picks a decoy, one of two house lies offered only to them, and the game has
     // no neutral house lies. false: in the test, plays as before. Absent: not in the test (not two
@@ -179,6 +189,34 @@ export interface GameScheme {
     // A pair game's decoy each player chose with their lie for the current question. Server only: no
     // rule opens it, so the friend never learns it before the answers are on the table.
     decoys?: { [pid: string]: string };
+}
+
+/** One row of a challenged table's final scores, as another group sees it. */
+export interface ChallengeRow {
+    name: string;
+    score: number;
+    place: number;
+}
+
+/**
+ * A finished table that another group may play against (CHALLENGE ANOTHER GROUP): built by the server
+ * from the game's own record, never from anything in a link, so a link cannot change a name or a score.
+ */
+export interface ChallengeCard {
+    /** The challenged game's PIN. */
+    from: string;
+    /** Its host's nickname as a link preview may show it, or ''. */
+    host: string;
+    locale: 'en' | 'he';
+    questions: number;
+    /** Players at that table. */
+    played: number;
+    /** The table's best score (its winner's). */
+    top: number;
+    /** Its final scores, best first, at most CHALLENGE_ROWS. */
+    rows: ChallengeRow[];
+    /** The other table was a test game: rows are not counted. */
+    test?: boolean;
 }
 
 /** When one player's lie or pick arrived (server time, ms), and for which question. */
@@ -841,6 +879,9 @@ export interface QuestionPack {
     locales?: string[];
     seasonIn?: string[];
     icon?: string;
+    // Pack questions that open a pack game while the room hasn't seen them (pickWithPack): ones most
+    // players of that language already half know, so the first question of the night is an easy one.
+    openers?: string[];
     // Questions of the pack that a child of 8 to 12 can play too. In the pack's season a kids game
     // ("Kids are playing") gets up to KIDS_SEASON_PER_GAME of them among its kid questions, so a
     // family with an 8-year-old doesn't have to choose between the kids' questions and the holiday's
@@ -856,6 +897,9 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         // English games get the Christmas pack by default in December; Hanukkah stays one tap
         // away for them with ?pack=hanukkah (the Hanukkah page's Start button).
         seasonIn: ['he'],
+        // Hebrew games open with one an Israeli family half knows (the doughnut's name, the dreidel's
+        // letters, 44 candles, Levin Kipnis...), not with American trivia (from the Hanukkah night walk).
+        openers: ['03', '05', '06', '12', '20', '22', '26', '30', '48', '56', '58', '59'].map(n => `hanukkah-26-he-${n}`),
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
@@ -867,6 +911,12 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Thanksgiving questions', he: 'שאלות חג ההודיה (באנגלית)' },
         locales: ['en'],
         icon: '🦃',
+        // A Thanksgiving game opens with one an American family half knows, the kids too (the TV dinner,
+        // the green bean casserole, the Lions, cranberries that float...), not with a 1967 folk song
+        // (from the Thanksgiving night walk). Not Big Bird's feathers (the page used to give it away),
+        // and none that is a daily puzzle of the season: Sarah Josepha Hale's nursery rhyme (02) is
+        // also the daily puzzle on Thanksgiving Day itself, so Franklin's turkey (19) opens instead.
+        openers: ['01', '12', '15', '19', '20', '26', '28', '31'].map(n => `thanksgiving-26-en-${n}`),
         // For a kids game in the season: the TV dinner, Felix the Cat, the three-day feast, the snood,
         // the poult, turkeys asleep in trees, the 3,699-pound pie, Charlie Brown's popcorn, Big Bird's
         // feathers, cranberries that float. No presidents, football, folk songs or the Mayflower.
@@ -1211,6 +1261,66 @@ export interface Taste {
     found: number;
     // The length the host chose for the game. A Replay of a taste is a whole game of this length.
     length: number;
+    // A solo run (see SoloRun): only on a taste that its host started as one.
+    run?: SoloRun;
+}
+
+/**
+ * The solo run: a taste that goes on, question after question against the house's lies, until the
+ * player is fooled SOLO_RUN_LIVES times. Its score is the taste's `found`, the truths found. Every
+ * SOLO_RUN_LIFE_STREAK truths in a row give a life back, up to SOLO_RUN_LIVES. The first questions
+ * have fewer answers (soloRunOptions), so a new player gets going before it gets hard.
+ * A host starts it on purpose (startGame with run: true): from the portal's "Try it alone", and from
+ * the taste's final screen. A run stops at SOLO_RUN_MAX questions at most.
+ * In the usage rows a run is a taste with total_q = SOLO_RUN_MAX (question_results) and
+ * questions = SOLO_RUN_MAX (opened_games, closed_games); its length is the number of its
+ * question_results rows. No column is new.
+ */
+export const SOLO_RUN_LIVES = 3;
+export const SOLO_RUN_LIFE_STREAK = 3;
+export const SOLO_RUN_MAX = 60;
+
+export interface SoloRun {
+    // Lives left: the run ends at 0.
+    lives: number;
+    // Truths found in a row, now.
+    streak: number;
+    // The longest streak of this run.
+    bestStreak: number;
+    // The question just revealed gave a life back.
+    gained?: boolean;
+}
+
+/** A new run: every life, no streak. */
+export function newSoloRun(): SoloRun {
+    return { lives: SOLO_RUN_LIVES, streak: 0, bestStreak: 0 };
+}
+
+/**
+ * How many answers question `qIndex` (from 0) of a run shows, the truth among them: 3 for the
+ * first ten, 4 up to question 20, then 5. A question short of house lies shows what it has.
+ */
+export function soloRunOptions(qIndex: number): number {
+    return qIndex < 10 ? 3 : qIndex < 20 ? 4 : 5;
+}
+
+/** The run after one more question: found the truth, or was fooled (or let the clock run out). */
+export function nextSoloRun(run: SoloRun, found: boolean): SoloRun {
+    if (!found) {
+        return { lives: Math.max(0, run.lives - 1), streak: 0, bestStreak: run.bestStreak };
+    }
+    const streak = run.streak + 1;
+    const gained = streak % SOLO_RUN_LIFE_STREAK === 0 && run.lives < SOLO_RUN_LIVES;
+    const next: SoloRun = { lives: run.lives + (gained ? 1 : 0), streak, bestStreak: Math.max(run.bestStreak, streak) };
+    if (gained) {
+        next.gained = true;
+    }
+    return next;
+}
+
+/** Whether the run is over: no life left, or its last question played. */
+export function soloRunOver(run: SoloRun, questionIndex: number): boolean {
+    return run.lives <= 0 || questionIndex >= SOLO_RUN_MAX - 1;
 }
 
 /** The game's state as a taste carries it. */
@@ -1225,7 +1335,15 @@ export function tasteOf(state: any): Taste | null {
         return null;
     }
     const count = (n: any) => typeof n === 'number' && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
-    return { found: count(taste.found), length: count(taste.length) };
+    const out: Taste = { found: count(taste.found), length: count(taste.length) };
+    const run = taste.run;
+    if (run && typeof run === 'object') {
+        out.run = { lives: Math.min(count(run.lives), SOLO_RUN_LIVES), streak: count(run.streak), bestStreak: count(run.bestStreak) };
+        if (run.gained === true) {
+            out.run.gained = true;
+        }
+    }
+    return out;
 }
 
 /**

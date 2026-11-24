@@ -19,7 +19,8 @@ export async function randomQuestions(lang: string, count: number, uids: string[
     if (pack && isPack(pack)) {
         // A pack game opens with a pack question, as before.
         const packIds = all.filter(q => q.pack === pack && !isRetired(q.id)).map(q => q.id);
-        const picked = pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame);
+        const picked = pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame, Math.random,
+            questionPacks[pack].openers || []);
         // A kids game in a holiday's season also gets a few of the holiday's kid-friendly questions.
         const season = pack === KIDS_PACK ? kidsSeasonPack(Date.now(), lang) : undefined;
         if (season) {

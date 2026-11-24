@@ -72,6 +72,9 @@ export function shuffle<T>(items: T[], random: Random = Math.random): T[] {
  * Picks a game's questions with a seasonal pack mixed in: up to `perGame` pack questions nobody
  * in the room has seen (a pack question is never repeated), the rest from the normal bank as
  * pickQuestions does. The pack questions are spread out, the first one opening the game.
+ * `openerIds`: pack questions most players already half know (the pack's `openers`). While the
+ * room has one it hasn't seen, the game opens with it, so a family's first question is one the
+ * grandparents and the kids can play, not an obscure one; the other pack questions are picked as before.
  */
 export function pickWithPack(
     regularIds: string[],
@@ -80,10 +83,15 @@ export function pickWithPack(
     count: number,
     perGame: number,
     random: Random = Math.random,
+    openerIds: string[] = [],
 ): string[] {
     const lastSeen = mergeSeen(seenRecords);
     const freshPack = packIds.filter(id => !(id in lastSeen));
-    const pack = shuffle(freshPack, random).slice(0, Math.max(0, Math.min(perGame, count)));
+    const opener = count > 0 && perGame > 0
+        ? shuffle(freshPack.filter(id => openerIds.indexOf(id) >= 0), random)[0]
+        : undefined;
+    const pack = (opener ? [opener] : []).concat(shuffle(freshPack.filter(id => id !== opener), random))
+        .slice(0, Math.max(0, Math.min(perGame, count)));
     const regular = pickQuestions(regularIds, seenRecords, count - pack.length, random);
 
     // Short of normal questions (tiny bank): top up with more fresh pack questions.

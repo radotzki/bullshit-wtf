@@ -1,19 +1,22 @@
-<div class="arcade-form" *ngIf="!hide">
+<div class="arcade-form" *ngIf="!hide" [attr.dir]="t.dir === 'rtl' ? 'rtl' : null" [attr.lang]="t.dir === 'rtl' ? t.lang : null">
     <form (submit)="submit()" novalidate>
 
         <div class="title-area">
-            <h1 class="title" routerLink="/">Bullshit</h1>
-            <h3 class="sub-title">Enter a game PIN</h3>
+            <h1 class="title" routerLink="/">{{ t.title }}</h1>
+            <h3 class="sub-title">{{ t.heading }}</h3>
             <div class="separator">♦</div>
         </div>
 
         <div class="controls-wrapper">
             <div class="controls">
                 <p class="control">
-                    <input class="input is-medium pin-input" type="text" placeholder="Game PIN" [(ngModel)]="pin" name="pin" appAutofocus>
+                    <input class="input is-medium pin-input" type="text" [placeholder]="t.placeholder" [(ngModel)]="pin" name="pin" appAutofocus
+                        dir="ltr" autocapitalize="characters" autocomplete="off" spellcheck="false">
                 </p>
 
-                <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">PRESENT</button>
+                <div class="notification is-danger present-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+                <button class="button is-primary is-medium is-fullwidth" type="submit" [disabled]="!pin" [class.is-loading]="loading">{{ t.present }}</button>
             </div>
         </div>
     </form>
