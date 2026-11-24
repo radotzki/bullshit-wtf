@@ -17,7 +17,9 @@ import { keepRunScore, BestResult } from './../../services/solo-run';
 import { happyTime } from './../../portal/portal';
 import { SOLO_RUN_LIVES } from './../../game-model';
 import { finalStrings, FinalStrings } from './final-strings';
-import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
+import { hostedGame, rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
+import { showSendScores } from './../../components/send-scores/send-scores';
+import { inPortal } from './../../portal/portal';
 import { GameState, seatPicture } from './../../game-model';
 import { StorageService } from './../../services/storage.service';
 import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
@@ -99,6 +101,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     myNickname: string;
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
+    /** This phone hosted the game, of 3 or more: SEND THE SCORES TO THE GROUP (components/send-scores). */
+    sendScores: boolean;
     /** The game's seasonal pack (the ask speaks of Hanukkah after a Hanukkah game). */
     pack: string = undefined;
     /**
@@ -426,7 +430,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         // Null once read, with or without a pack: undefined means not known yet (see hanukkahNight).
         this.pack = (await this.apiService.getGamePack(this.pin).catch(() => null)) || null;
         const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
-        const guest = showHostAsk({
+        const askInput = {
             presenter: this.presenter,
             myPid: user ? user.pid : null,
             myUid: user ? user.uid : null,
@@ -434,6 +438,15 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             creator: await this.apiService.getGameCreator(this.pin).catch(() => null),
             holdsHostKey: this.apiService.holdsHostKey(this.pin),
             players,
+        };
+        const guest = showHostAsk(askInput);
+        this.sendScores = showSendScores({
+            presenter: this.presenter,
+            hosted: hostedGame(askInput),
+            played: !!this.mine,
+            players: players.length,
+            taste: !!this.taste,
+            portal: inPortal(),
         });
         await this.splitAsk(guest, user);
     }

@@ -105,7 +105,7 @@ test('the page: the recap only in the new half, today\'s page otherwise, and the
     assert.match(html, /\*ngIf="gameOver && recapShown && recap"/);
     assert.match(html, /\*ngIf="gameOver && !\(recapShown && recap\)"/);
     // Today's page keeps its late-joiner ask, untouched, in the other half.
-    assert.match(html, /<app-host-ask \[locale\]="t.lang" place="game-over"><\/app-host-ask>/);
+    assert.match(html, /<app-host-ask \[locale\]="t.lang" place="game-over"( \[createTag\]="scoresTag")?><\/app-host-ask>/);
     // Players and the rest get their own button (same-table: a player opens the table again); the crew
     // link only for a crew's game.
     assert.match(html, /\*ngIf="ask === 'other'"[\s\S]*n.create[\s\S]*\*ngIf="ask === 'player'"[\s\S]*n.playAgain/);

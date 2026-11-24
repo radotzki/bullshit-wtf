@@ -204,12 +204,25 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //                          test's halves still compare the same visits
 //     join-playing         on that link, a browser that didn't play pressed JOIN NOW: the table's game was
 //                          under way, and it joined it (a link that waits for the table says nothing more)
+//   night-after, two more (the scores link):
+//     seen-scores-player   the link SEND THE SCORES TO THE GROUP sent (?via=scores) opened the page, in a browser
+//                          that played that game: stands in for seen-player/seen-control-player, so the test's
+//                          halves still compare the same visits (none beside an open rematch, as theirs)
+//     seen-scores-other    the same, in a browser that didn't play it
+//   scores      SEND THE SCORES TO THE GROUP, on the host's final screen (game/: components/send-scores), a game
+//               of 3 or more. Every row carries the game's PIN, in capitals, in crew_id. A test game sends none.
+//               Its link carries via=scores; a game started from that page carries campaign after-game-late-scores:
+//     whatsapp             tapped the button (opens WhatsApp with the winner and the game's link)
+//     native               sent it through the phone's share sheet ("Share another way")
+//     copy                 the same on a phone with no share sheet: the text and link were copied
 /** The lone-host help's rows: their crew_id is the lobby's PIN. */
 export const LOBBY_HELP = 'lobby-help';
 /** The night-after rows: their crew_id is the finished game's PIN. */
 export const NIGHT_AFTER = 'night-after';
 /** The challenge rows: their crew_id is the challenged game's PIN. */
 export const CHALLENGE = 'challenge';
+/** SEND THE SCORES TO THE GROUP's rows: their crew_id is the finished game's PIN. */
+export const SCORES = 'scores';
 
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
@@ -236,8 +249,11 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
         // A player came late, the table mid-game: CATCH THE NEXT ROUND, or START A NEW TABLE NOW.
         'catch-next', 'new-table',
         // Opened by SAME TABLE TOMORROW's link, on a Hanukkah night; JOIN NOW into the table's game under way.
-        'seen-hanukkah', 'join-playing'],
+        'seen-hanukkah', 'join-playing',
+        // Opened by SEND THE SCORES TO THE GROUP's link (?via=scores).
+        'seen-scores-player', 'seen-scores-other'],
     'hanukkah-night': ['save', 'save-google'],
+    'scores': ['whatsapp', 'native', 'copy'],
 };
 
 /** The Hanukkah night rows: their crew_id is the finished game's PIN, as night-after's is. */
@@ -263,7 +279,7 @@ export function cleanShare(body: any): ShareRow | null {
         return null;
     }
     let crew = typeof body.crew === 'string' && /^[a-z0-9]{1,32}$/i.test(body.crew) ? body.crew.toLowerCase() : null;
-    if (contentType === LOBBY_HELP || contentType === NIGHT_AFTER || contentType === CHALLENGE) {
+    if (contentType === LOBBY_HELP || contentType === NIGHT_AFTER || contentType === CHALLENGE || contentType === SCORES) {
         // The lobby's PIN travels in the crew field: letters only, kept in capitals. No PIN, no row.
         if (typeof body.crew !== 'string' || !/^[A-Za-z]{1,12}$/.test(body.crew)) {
             return null;
@@ -281,13 +297,13 @@ export function cleanShare(body: any): ShareRow | null {
     return { content_type: contentType, method, crew_id: crew, locale, uid };
 }
 
-/** A test game leaves no lobby-help, night-after or challenge row: shares has no campaign column to leave it out by later. */
+/** A test game leaves no lobby-help, night-after, challenge, hanukkah-night or scores row: shares has no campaign column to leave it out by later. */
 export async function onShare(row: ShareRow, testGame: (pin: string) => Promise<boolean> = isTestGame) {
     if ((row.content_type === LOBBY_HELP || row.content_type === NIGHT_AFTER || row.content_type === CHALLENGE)
         && await testGame(row.crew_id)) {
         return;
     }
-    if (row.content_type === HANUKKAH_NIGHT && await testGame(row.crew_id)) {
+    if ((row.content_type === HANUKKAH_NIGHT || row.content_type === SCORES) && await testGame(row.crew_id)) {
         return;
     }
     return insert('shares', { ...row, time: new Date() });

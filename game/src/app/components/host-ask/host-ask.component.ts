@@ -27,6 +27,8 @@ export class HostAskComponent {
     @Input() place: AskPlace = 'after-game';
     /** The finished game's seasonal pack: after a Hanukkah game, the Hanukkah words (hanukkahEvening). */
     @Input() pack: string = null;
+    /** The campaign of the game CREATE starts, in place of the place's own (the scores link: after-game-late-scores). */
+    @Input() createTag: string = null;
     /** REMIND ME was pressed: say so, and offer Google Calendar for phones that ignore the file. */
     reminded: boolean;
     googleUrl: string;
@@ -70,7 +72,7 @@ export class HostAskComponent {
         this.count('create');
         // The finished game must not move this phone any more (a rematch there starting, say).
         this.gameService.unregister();
-        const tag = ASK_TAGS[this.late ? 'game-over' : 'after-game'].create;
+        const tag = this.createTag || ASK_TAGS[this.late ? 'game-over' : 'after-game'].create;
         const queryParams: any = { via: tag, lang: this.rtl ? 'he' : 'en' };
         if (this.pack === 'hanukkah') {
             queryParams.pack = this.pack;

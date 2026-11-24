@@ -1,0 +1,13 @@
+<div class="send-scores" [class.is-rtl]="rtl" [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+    <a class="button is-medium is-fullwidth whatsapp send-scores-whatsapp" [attr.href]="whatsappUrl" target="_blank" rel="noopener"
+        (click)="whatsapp()">
+        <span class="icon"><i class="fa fa-whatsapp"></i></span>
+        <span class="send-scores-label">{{ t.button }}</span>
+    </a>
+    <p class="hint send-scores-hint">
+        <span *ngIf="!sent && !copied">{{ t.hint }}</span>
+        <span *ngIf="sent && !copied"><span class="tick">✓</span> {{ t.sent }}</span>
+        <span *ngIf="copied"><span class="tick">✓</span> {{ t.copied }}</span>
+        <button type="button" class="link-button send-scores-other" (click)="other()">{{ t.other }}</button>
+    </p>
+</div>

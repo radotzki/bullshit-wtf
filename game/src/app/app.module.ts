@@ -39,6 +39,7 @@ import { InviteComponent } from './components/invite/invite.component';
 import { ShareResultsComponent } from './components/share-results/share-results.component';
 import { HostAskComponent } from './components/host-ask/host-ask.component';
 import { InviteGroupComponent } from './components/invite-group/invite-group.component';
+import { SendScoresComponent } from './components/send-scores/send-scores.component';
 import { ChallengeShareComponent } from './components/challenge/challenge-share.component';
 import { ChallengeVersusComponent } from './components/challenge/challenge-versus.component';
 import { ChallengeComponent } from './pages/challenge/challenge.component';
@@ -82,6 +83,7 @@ import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-nig
         ShareResultsComponent,
         HostAskComponent,
         InviteGroupComponent,
+        SendScoresComponent,
         ChallengeShareComponent,
         ChallengeVersusComponent,
         ChallengeComponent,
