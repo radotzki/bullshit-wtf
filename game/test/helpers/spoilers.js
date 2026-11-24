@@ -198,14 +198,15 @@ function matchWord(pageWord, pageForms, answerWord, wanted) {
 const filled = (q) => q.questionText.replace('$blank$', ' ' + q.realAnswer + ' ');
 
 // Every spoiler of the questions in this text: [{ id, kind, question, answer, near }].
-// allow: { '<question id>': 'reason' } leaves a question out, for a page that names it on purpose.
+// allow: { '<question id or its answer>': 'reason' } leaves a question out, for a page that names it on
+// purpose. An answer stays the same when a pack's ids move, as they do when questions are swapped.
 function find(text, questions, allow) {
     allow = allow || {};
     const pageWords = words(text);
     const pageForms = pageWords.map(forms);
     const found = [];
     questions.forEach(q => {
-        if (allow[q.id]) {
+        if (allow[q.id] || allow[q.realAnswer]) {
             return;
         }
         const near = (i, n) => pageWords.slice(Math.max(0, i - 6), i + n + 6).join(' ');

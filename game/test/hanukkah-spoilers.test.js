@@ -67,9 +67,22 @@ test('every answer that may stand alone on a page has its reason', () => {
     Object.entries(spoilers.LONE_OK).forEach(([a, why]) => assert.ok(why.length > 5, `"${a}" has its reason`));
 });
 
+// Pages that name an answer on purpose, by the answer, each with its reason. A page that is not on master
+// yet may be listed, so its entry is here the day it merges.
+const allowed = {
+    '/he/hanukkah-activity': {
+        'תלמוד': 'the closing talk tells the two stories of Hanukkah, read after both games (#239, judged fair in its review)',
+    },
+};
+
+test('every page entry is allowed with its reason', () => {
+    Object.values(allowed).forEach(entries => Object.entries(entries).forEach(([a, why]) =>
+        assert.ok(why.length > 20, `"${a}" has its reason`)));
+});
+
 pages.forEach(p => {
     test(`${p.path}: gives away no question of the ${p.site.lang === 'he' ? 'Hebrew' : 'English'} Hanukkah pack`, () => {
-        const found = spoilers.find(spoilers.pageText(p), packs[p.site.lang]);
+        const found = spoilers.find(spoilers.pageText(p), packs[p.site.lang], allowed[p.path]);
         assert.deepStrictEqual(found.map(spoilers.describe), []);
     });
 });
