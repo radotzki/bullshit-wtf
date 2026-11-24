@@ -63,6 +63,8 @@ export interface GameScheme {
     // Current clients write "<state id>:<state timestamp>" of the state they want to leave.
     tick: number | string;
     presenter: boolean;
+    // The host started it alone as a solo run (startGame with run: true; see SoloRun). Server-written.
+    soloRun?: boolean;
     fork?: string;
     // The first Replay claims its new game's pin here, so a second Replay at the same moment joins it.
     forking?: string;
@@ -1232,6 +1234,66 @@ export interface Taste {
     found: number;
     // The length the host chose for the game. A Replay of a taste is a whole game of this length.
     length: number;
+    // A solo run (see SoloRun): only on a taste that its host started as one.
+    run?: SoloRun;
+}
+
+/**
+ * The solo run: a taste that goes on, question after question against the house's lies, until the
+ * player is fooled SOLO_RUN_LIVES times. Its score is the taste's `found`, the truths found. Every
+ * SOLO_RUN_LIFE_STREAK truths in a row give a life back, up to SOLO_RUN_LIVES. The first questions
+ * have fewer answers (soloRunOptions), so a new player gets going before it gets hard.
+ * A host starts it on purpose (startGame with run: true): from the portal's "Try it alone", and from
+ * the taste's final screen. A run stops at SOLO_RUN_MAX questions at most.
+ * In the usage rows a run is a taste with total_q = SOLO_RUN_MAX (question_results) and
+ * questions = SOLO_RUN_MAX (opened_games, closed_games); its length is the number of its
+ * question_results rows. No column is new.
+ */
+export const SOLO_RUN_LIVES = 3;
+export const SOLO_RUN_LIFE_STREAK = 3;
+export const SOLO_RUN_MAX = 60;
+
+export interface SoloRun {
+    // Lives left: the run ends at 0.
+    lives: number;
+    // Truths found in a row, now.
+    streak: number;
+    // The longest streak of this run.
+    bestStreak: number;
+    // The question just revealed gave a life back.
+    gained?: boolean;
+}
+
+/** A new run: every life, no streak. */
+export function newSoloRun(): SoloRun {
+    return { lives: SOLO_RUN_LIVES, streak: 0, bestStreak: 0 };
+}
+
+/**
+ * How many answers question `qIndex` (from 0) of a run shows, the truth among them: 3 for the
+ * first ten, 4 up to question 20, then 5. A question short of house lies shows what it has.
+ */
+export function soloRunOptions(qIndex: number): number {
+    return qIndex < 10 ? 3 : qIndex < 20 ? 4 : 5;
+}
+
+/** The run after one more question: found the truth, or was fooled (or let the clock run out). */
+export function nextSoloRun(run: SoloRun, found: boolean): SoloRun {
+    if (!found) {
+        return { lives: Math.max(0, run.lives - 1), streak: 0, bestStreak: run.bestStreak };
+    }
+    const streak = run.streak + 1;
+    const gained = streak % SOLO_RUN_LIFE_STREAK === 0 && run.lives < SOLO_RUN_LIVES;
+    const next: SoloRun = { lives: run.lives + (gained ? 1 : 0), streak, bestStreak: Math.max(run.bestStreak, streak) };
+    if (gained) {
+        next.gained = true;
+    }
+    return next;
+}
+
+/** Whether the run is over: no life left, or its last question played. */
+export function soloRunOver(run: SoloRun, questionIndex: number): boolean {
+    return run.lives <= 0 || questionIndex >= SOLO_RUN_MAX - 1;
 }
 
 /** The game's state as a taste carries it. */
@@ -1246,7 +1308,15 @@ export function tasteOf(state: any): Taste | null {
         return null;
     }
     const count = (n: any) => typeof n === 'number' && isFinite(n) && n >= 0 ? Math.floor(n) : 0;
-    return { found: count(taste.found), length: count(taste.length) };
+    const out: Taste = { found: count(taste.found), length: count(taste.length) };
+    const run = taste.run;
+    if (run && typeof run === 'object') {
+        out.run = { lives: Math.min(count(run.lives), SOLO_RUN_LIVES), streak: count(run.streak), bestStreak: count(run.bestStreak) };
+        if (run.gained === true) {
+            out.run.gained = true;
+        }
+    }
+    return out;
 }
 
 /**

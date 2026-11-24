@@ -2,6 +2,8 @@
     <app-game-header></app-game-header>
     <progress *ngIf="answers && past && duration" class="progress" [class.is-primary]="!panic" [class.is-danger]="panic"
         [value]="past" [max]="duration"></progress>
+    <!-- A solo run: lives, truths found, the streak (nothing in any other game). -->
+    <app-run-bar *ngIf="!presenter" [pin]="pin"></app-run-bar>
 
     <div class="game-main">
         <div *ngIf="!answers" class="screen-center">

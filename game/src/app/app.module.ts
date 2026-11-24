@@ -1,3 +1,4 @@
+import { RunBarComponent } from './components/run-bar/run-bar.component';
 import { GameService } from './services/game.service';
 import { inject, provideAppInitializer } from '@angular/core';
 import { PortalHomeComponent } from './portal/portal-home.component';
@@ -90,6 +91,7 @@ import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-nig
         CrewComponent,
         StepComponent,
         HanukkahNightComponent,
+        RunBarComponent,
     ],
     imports: [
         BrowserModule,

@@ -628,10 +628,11 @@ export class ApiService {
      * START in the lobby. The server checks that this phone may start the game: in a game with a
      * host key, only the phone that brings that key may, big screen or not.
      */
-    startGame(pin: string) {
+    /** START. `run`: a host alone gets the solo run (SoloRun in game-model) in place of the 5-question taste. */
+    startGame(pin: string, run = false) {
         pin = pin.toUpperCase();
         const hostKey = hostKeyFor(pin) || null;
-        return this.post<{ started: boolean }>(`startGame`, { pin, hostKey });
+        return this.post<{ started: boolean }>(`startGame`, run ? { pin, hostKey, run: true } : { pin, hostKey });
     }
 
     /**
