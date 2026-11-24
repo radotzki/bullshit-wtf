@@ -150,18 +150,18 @@ ${printStyle}
 <h2 class="annex">Handout A: true or made up? (for the opener)</h2>
 <ol>
   <li>The story of the jar of oil that lasted eight days is not in the Books of Maccabees. <strong>True.</strong></li>
-  <li>Dreidels outside Israel have the letter shin ("a great miracle happened there"), and dreidels in Israel have pe ("a great miracle happened here"). <strong>True.</strong></li>
-  <li>The revolt of Mattathias and his sons began in Modi'in. <strong>True.</strong></li>
+  <li>When Hanukkah falls on a Friday, the Hanukkah candles are lit before the Shabbat candles, so before sunset. <strong>True.</strong></li>
+  <li>Fasting is not allowed on Hanukkah. <strong>True.</strong></li>
   <li>A menorah has nine branches because Hanukkah used to last nine days. <strong>Made up.</strong> The ninth is the shamash, the candle used to light the others.</li>
   <li>The Maccabees won their first battle because the Greek army's elephants were scared of their torches. <strong>Made up.</strong> There were elephants, but in another battle (Beth Zechariah), and the Maccabees lost that one.</li>
 </ol>
 <h2>Handout B: questions for the paper version (if there's no internet)</h2>
 <ol>
-  <li>The word "Hanukkah" means ____, as in the rededication of the Temple. (dedication)</li>
+  <li>In Hebrew, a dreidel is called a ____. (sevivon)</li>
   <li>The four letters on a dreidel are nun, gimel, hei and ____. (shin, or pe in Israel)</li>
   <li>The candle used to light the other Hanukkah candles is called the ____. (shamash)</li>
-  <li>The revolt of the Maccabees began in the town of ____. (Modi'in)</li>
-  <li>The story of the jar of oil that lasted eight days appears in the ____. (Talmud)</li>
+  <li>On all eight mornings of Hanukkah, the full ____, the psalms of praise, is said in the morning prayers. (Hallel)</li>
+  <li>On Hanukkah a prayer called "For the ____" is added to the daily prayers and to grace after meals. (miracles: Al HaNissim in Hebrew)</li>
 </ol>
 <div class="no-print">
 <h2>More for leaders</h2>
