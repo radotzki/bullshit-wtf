@@ -126,6 +126,35 @@ const TEXT = {
     },
 };
 
+type PreviewText = typeof TEXT.en;
+
+// A Hanukkah-pack game's invite says so: the family group sees tonight's Hanukkah game, not a generic
+// card. Same shape as TEXT, and no question's text, so nothing is given away before the game.
+const HANUKKAH: { [locale in PreviewLocale]: PreviewText } = {
+    en: {
+        named: (host: string) => startsRightToLeft(host)
+            ? `You're invited by ${host} to a Hanukkah game of Bullshit`
+            : `${host} invited you to a Hanukkah game of Bullshit`,
+        nameless: 'You\'re invited to a Hanukkah game of Bullshit',
+        description: (pin: string) =>
+            `Tap to join game ${pin}. A Hanukkah night of lies: strange true Hanukkah facts, write a fake answer, fool the whole family, find the truth. Everyone plays on their own phone. Free, no download.`,
+        alt: 'Bullshit, Hanukkah edition: fool the whole family with fake answers to strange true facts',
+    },
+    // No gender here either, as in TEXT.he.
+    he: {
+        named: (host: string) => `ערב חנוכה של בולשיט: ${host} מחכה לך`,
+        nameless: 'ערב חנוכה של בולשיט: מי יזהה את האמת?',
+        description: (pin: string) =>
+            `הקישור מצרף אותך ישר למשחק ${pin}. משחק השקרים של חנוכה: עובדות חנוכה מוזרות ואמיתיות, ממציאים תשובה מזויפת, עובדים על כל המשפחה ומגלים את האמת. כל אחד משחק מהטלפון, בחינם ובלי הורדה.`,
+        alt: 'בולשיט, מהדורת חנוכה: עבדו על כל המשפחה עם תשובות מזויפות לעובדות מוזרות ואמיתיות',
+    },
+};
+
+/** The words of a game's invite: the Hanukkah pack's own, else the language's. */
+export function textOf(locale: PreviewLocale, pack: any): PreviewText {
+    return isPack(pack) && pack === 'hanukkah' ? HANUKKAH[locale] : TEXT[locale];
+}
+
 /** The picture of a game: its pack's, else the language's own. All are 1200 x 630, in game/src/assets. */
 export function imageOf(locale: PreviewLocale, pack: any, origin: string = SITE): string {
     if (isPack(pack) && pack === 'hanukkah') {
@@ -146,7 +175,7 @@ export function previewOf(game: PreviewGame | null, pin: string, now: number, or
         return null;
     }
     const locale: PreviewLocale = game.locale === 'he' ? 'he' : 'en';
-    const t = TEXT[locale];
+    const t = textOf(locale, game.pack);
     const host = shownName(hostOf(game));
     return {
         locale,
