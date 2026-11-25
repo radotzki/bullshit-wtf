@@ -15,6 +15,8 @@ const holidays = require('./pages-en-holidays');
 const thanksgiving = require('./pages-en-thanksgiving');
 // Grown-up party nights: bachelorette and bachelor parties, adult birthdays, a weekend away.
 const partyNights = require('./pages-party-nights');
+// The counselors' Hanukkah activity, whole and printable (/he/hanukkah-activity).
+const hanukkahActivity = require('./pages-he-hanukkah-activity');
 
 const en = {
     lang: 'en',
@@ -316,4 +318,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he), hanukkahActivity.pages(he));
