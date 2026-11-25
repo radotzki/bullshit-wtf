@@ -88,11 +88,11 @@ export class ShareResultsComponent implements OnInit, OnDestroy {
             const lie = best && best.text && best.fooled ? t.bestLieText(best.text.toUpperCase(), best.fooled) + ' ' : '';
             // Ties share a place: the final screen gives each player their place.
             const place = players[idx].place || idx + 1;
-            return lie + t.resultsText(place, players.length, players[idx].score || 0);
+            return lie + t.resultsText(place, players.length, players[idx].score || 0, this.pack);
         }
 
         const winner = players[0];
-        return t.groupResultsText(winner ? winner.nickname : '', winner ? winner.score || 0 : 0);
+        return t.groupResultsText(winner ? winner.nickname : '', winner ? winner.score || 0 : 0, this.pack);
     }
 
     get siteUrl() {

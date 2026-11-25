@@ -23,12 +23,17 @@ const strings = {
             ? `Come play a Hanukkah game of Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`
             : `Come play Bullshit with me! Tap the link to join, or enter PIN ${pin} at bullshit.wtf`),
         resultsTitle: 'Bullshit results',
-        resultsText: (place: number, total: number, score: number) =>
-            place === 1
+        resultsText: (place: number, total: number, score: number, pack?: string) => (pack === 'hanukkah'
+            ? (place === 1
+                ? `I won our Hanukkah game night of Bullshit with ${score} points! Think you can fool me? Play free at bullshit.wtf`
+                : `I came ${ordinal(place)} of ${total} at our Hanukkah game night of Bullshit with ${score} points. `
+                    + 'Can you beat that? Play free at bullshit.wtf')
+            : place === 1
                 ? `I won at Bullshit with ${score} points! Think you can fool me? Play free at bullshit.wtf`
-                : `I came ${ordinal(place)} of ${total} at Bullshit with ${score} points. Can you beat that? Play free at bullshit.wtf`,
-        groupResultsText: (winner: string, score: number) =>
-            `${winner} won our game of Bullshit with ${score} points. Can you fool your friends? Play free at bullshit.wtf`,
+                : `I came ${ordinal(place)} of ${total} at Bullshit with ${score} points. Can you beat that? Play free at bullshit.wtf`),
+        groupResultsText: (winner: string, score: number, pack?: string) => (pack === 'hanukkah'
+            ? `${winner} won our Hanukkah game night of Bullshit with ${score} points. Can you fool your friends? Play free at bullshit.wtf`
+            : `${winner} won our game of Bullshit with ${score} points. Can you fool your friends? Play free at bullshit.wtf`),
         bestLieText: (lie: string, fooled: number) =>
             `My lie "${lie}" fooled ${fooled === 1 ? '1 friend' : `${fooled} friends`}.`,
     },
@@ -40,12 +45,17 @@ const strings = {
             ? `בואו לשחק איתי בולשיט, משחק חנוכה! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`
             : `בואו לשחק איתי בולשיט! לחצו על הקישור כדי להצטרף, או הקלידו את הקוד ${pin} ב-bullshit.wtf`),
         resultsTitle: 'תוצאות בולשיט',
-        resultsText: (place: number, total: number, score: number) =>
-            place === 1
+        // A Hanukkah game's results say it was the family's Hanukkah night (no question or truth in them).
+        resultsText: (place: number, total: number, score: number, pack?: string) => (pack === 'hanukkah'
+            ? (place === 1
+                ? `ניצחתי בערב הבולשיט של חנוכה עם ${score} נקודות! חושבים שתצליחו לעבוד עליי? שחקו בחינם ב-bullshit.wtf`
+                : `הגעתי למקום ${place} מתוך ${total} בערב הבולשיט של חנוכה, עם ${score} נקודות. תצליחו יותר? שחקו בחינם ב-bullshit.wtf`)
+            : place === 1
                 ? `ניצחתי בבולשיט עם ${score} נקודות! חושבים שתצליחו לעבוד עליי? שחקו בחינם ב-bullshit.wtf`
-                : `הגעתי למקום ${place} מתוך ${total} בבולשיט עם ${score} נקודות. תצליחו יותר? שחקו בחינם ב-bullshit.wtf`,
-        groupResultsText: (winner: string, score: number) =>
-            `הניצחון במשחק הבולשיט שלנו הלך ל-${winner} עם ${score} נקודות. תצליחו לעבוד על החברים? שחקו בחינם ב-bullshit.wtf`,
+                : `הגעתי למקום ${place} מתוך ${total} בבולשיט עם ${score} נקודות. תצליחו יותר? שחקו בחינם ב-bullshit.wtf`),
+        groupResultsText: (winner: string, score: number, pack?: string) => (pack === 'hanukkah'
+            ? `הניצחון בערב הבולשיט של חנוכה הלך ל-${winner} עם ${score} נקודות. תצליחו לעבוד על החברים? שחקו בחינם ב-bullshit.wtf`
+            : `הניצחון במשחק הבולשיט שלנו הלך ל-${winner} עם ${score} נקודות. תצליחו לעבוד על החברים? שחקו בחינם ב-bullshit.wtf`),
         bestLieText: (lie: string, fooled: number) =>
             `השקר שלי "${lie}" עבד על ${fooled === 1 ? 'חבר אחד' : `${fooled} חברים`}.`,
     },

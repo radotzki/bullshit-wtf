@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './../../services/api.service';
 import { CrewService } from './../../services/crew.service';
@@ -26,7 +26,7 @@ import {
     templateUrl: './invite-group.component.html',
     styleUrls: ['./invite-group.component.scss'],
 })
-export class InviteGroupComponent {
+export class InviteGroupComponent implements OnInit {
     @Input() pin: string;
     @Input() locale = 'en';
     /** The guest's nickname as the game stored it: the phone is known by it on the table's page. */
@@ -48,6 +48,8 @@ export class InviteGroupComponent {
     calendarSaved: boolean;
     /** The night as it was last sent or saved: "Friday 20 November, 21:00". */
     sentWhen: string;
+    /** The game's seasonal pack: after a Hanukkah game, the message speaks of a Hanukkah night. */
+    pack: string = null;
 
     constructor(
         private router: Router,
@@ -56,6 +58,12 @@ export class InviteGroupComponent {
         private gameService: GameService,
         private shareService: ShareService,
     ) { }
+
+    ngOnInit() {
+        if (this.pin) {
+            this.apiService.getGamePack(this.pin).then(pack => this.pack = typeof pack === 'string' ? pack : null, () => { });
+        }
+    }
 
     get t(): InviteStrings {
         return inviteWords(this.locale);
@@ -138,7 +146,7 @@ export class InviteGroupComponent {
     }
 
     private get message() {
-        return inviteMessage(this.night, this.locale, this.best);
+        return inviteMessage(this.night, this.locale, this.best, this.pack);
     }
 
     get whatsappUrl() {
