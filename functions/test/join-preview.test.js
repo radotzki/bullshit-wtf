@@ -185,6 +185,37 @@ test('previewOf: English and Hebrew invites, nameless, and the generic card for 
     assert.strictEqual(jp.previewOf(lobby({ pack: 'hanukkah', locale: 'he' }), 'QBCD', now).image, 'https://bullshit.wtf/assets/og-hanukkah-he.png');
     assert.strictEqual(jp.previewOf(lobby({ pack: 'nope' }), 'QBCD', now).image, 'https://bullshit.wtf/assets/og-image.png');
 
+    // ...and a Hanukkah invite's words: a Hanukkah night, with the host, the PIN and no question's text.
+    const hHe = jp.previewOf(lobby({ pack: 'hanukkah', locale: 'he' }), 'QBCD', now);
+    assert.strictEqual(hHe.title, 'ערב חנוכה של בולשיט: ' + en.host + ' מחכה לך');
+    assert.match(hHe.description, /^הקישור מצרף אותך ישר למשחק QBCD\. .*חנוכה/);
+    assert.match(hHe.imageAlt, /מהדורת חנוכה/);
+    assert.doesNotMatch(hHe.title + hHe.description + hHe.imageAlt, /מזמינ|מזמין|\/ה/);
+    assert.strictEqual(jp.previewOf(lobby({ pack: 'hanukkah', locale: 'he', players: {} }), 'QBCD', now).title, 'ערב חנוכה של בולשיט: מי יזהה את האמת?');
+    const hEn = jp.previewOf(lobby({ pack: 'hanukkah' }), 'QBCD', now);
+    assert.strictEqual(hEn.title, en.host + ' invited you to a Hanukkah game of Bullshit');
+    assert.strictEqual(hEn.image, 'https://bullshit.wtf/assets/og-hanukkah-en.png');
+    assert.match(hEn.description, /^Tap to join game QBCD\. A Hanukkah night/);
+    assert.strictEqual(jp.previewOf(lobby({ pack: 'hanukkah', players: {} }), 'QBCD', now).title, 'You\'re invited to a Hanukkah game of Bullshit');
+    // Every other pack, and no pack, keeps the ordinary invite word for word.
+    for (const pack of [undefined, 'nope', 'christmas', 'thanksgiving', 'kids']) {
+        for (const locale of ['en', 'he']) {
+            const p = jp.previewOf(lobby({ pack, locale }), 'QBCD', now);
+            const plain = jp.previewOf(lobby({ locale }), 'QBCD', now);
+            assert.strictEqual(p.title, plain.title, `${pack} ${locale}`);
+            assert.strictEqual(p.description, plain.description);
+            assert.strictEqual(p.imageAlt, plain.imageAlt);
+            assert.doesNotMatch(p.title + p.description, /Hanukkah|חנוכה/);
+        }
+    }
+    // The pictures a preview may name are there, 1200 x 630 and small enough for WhatsApp.
+    for (const file of ['og-hanukkah-he.png', 'og-hanukkah-en.png']) {
+        const png = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'game', 'src', 'assets', file));
+        assert.strictEqual(png.readUInt32BE(16), 1200, file);
+        assert.strictEqual(png.readUInt32BE(20), 630, file);
+        assert.ok(png.length < 300 * 1024, file);
+    }
+
     // Over: no game, the final scoreboard, still for six hours, junk.
     assert.strictEqual(jp.previewOf(null, 'QBCD', now), null);
     assert.strictEqual(jp.previewOf(lobby({ state: { id: 6, timestamp: now - MIN } }), 'QBCD', now), null);

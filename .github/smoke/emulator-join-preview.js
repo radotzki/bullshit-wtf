@@ -191,9 +191,9 @@ async function newPhone(browser, name, options = {}) {
 }
 
 /** A host makes a game in `locale` and joins it as `nickname`; returns the PIN once the lobby shows. */
-async function hostGame(browser, locale, nickname) {
+async function hostGame(browser, locale, nickname, pack) {
     const host = await newPhone(browser, nickname);
-    await host.page.goto(`${SITE}/create-game?via=test`);
+    await host.page.goto(`${SITE}/create-game?via=test${pack ? `&pack=${pack}` : ''}`);
     await host.page.locator('input[name="locale"]').nth(locale === 'he' ? 1 : 0).check();
     await host.page.locator('input[name="length"]').first().check();
     await host.page.locator('form button[type="submit"]').first().click();
@@ -236,6 +236,11 @@ async function main() {
 
         const en = await hostGame(browser, 'en', 'Dana');
         const he = await hostGame(browser, 'he', 'נועה');
+        // A Hebrew family's Hanukkah night: the Hanukkah page's Start button asks for the pack.
+        const hanukkah = await hostGame(browser, 'he', 'סבתא רותי', 'hanukkah');
+        const hanukkahPack = await db('GET', `games/${hanukkah.pin}/pack`);
+        if (hanukkahPack !== 'hanukkah') problems.push(`the Hanukkah game plays pack ${hanukkahPack}`);
+        const hanukkahLink = `${SITE}/he/join-game/${hanukkah.pin}?via=link`;
         // The links the lobbies give, as the invite builds them (share.service.ts inviteUrl).
         const enLink = `${SITE}/join-game/${en.pin}?via=link`;
         const heLink = `${SITE}/he/join-game/${he.pin}?via=link`;
@@ -261,6 +266,21 @@ async function main() {
             if (scriptOf(b.body) !== scriptOf(staticHe) || !b.body.includes('BS:META')) problems.push(`${bot}: the Hebrew page is not the app's page`);
             if (a.cache !== 'public, max-age=300, s-maxage=600') problems.push(`${bot}: Cache-Control is ${a.cache}`);
         }
+        // The Hanukkah game: a Hanukkah night in the title and description, the Hanukkah picture.
+        for (const [bot, ua] of Object.entries(BOTS)) {
+            const h = await asBot(hanukkahLink, ua);
+            summary.previews[bot].hanukkah = unescape(h.meta['og:title']);
+            const expectH = 'ערב חנוכה של בולשיט: סבתא רותי מחכה לך';
+            if (h.status !== 200 || unescape(h.meta['og:title']) !== expectH) problems.push(`${bot}: Hanukkah link previewed as ${h.status} "${h.meta['og:title']}"`);
+            if (unescape(h.meta['twitter:title']) !== expectH || unescape(h.title) !== expectH) problems.push(`${bot}: Hanukkah twitter:title or <title> is not the Hanukkah invite`);
+            if (!/חנוכה/.test(unescape(h.meta['og:description'])) || !unescape(h.meta['og:description']).includes(hanukkah.pin)) problems.push(`${bot}: Hanukkah description is "${unescape(h.meta['og:description'])}"`);
+            if (!/\/assets\/og-hanukkah-he\.png$/.test(h.meta['og:image'] || '')) problems.push(`${bot}: Hanukkah image is ${h.meta['og:image']}`);
+            if (h.meta['og:locale'] !== 'he_IL') problems.push(`${bot}: Hanukkah og:locale is ${h.meta['og:locale']}`);
+        }
+        summary.hanukkahDescription = unescape((await asBot(hanukkahLink, BOTS.whatsapp)).meta['og:description']);
+        const hanukkahImage = await fetch(`${SITE}/assets/og-hanukkah-he.png`);
+        summary.hanukkahImageBytes = (await hanukkahImage.arrayBuffer()).byteLength;
+        if (hanukkahImage.status !== 200 || summary.hanukkahImageBytes > 300 * 1024) problems.push(`the Hanukkah picture answered ${hanukkahImage.status}, ${summary.hanukkahImageBytes} bytes`);
         summary.description = { en: unescape((await asBot(enLink, BOTS.whatsapp)).meta['og:description']), he: unescape((await asBot(heLink, BOTS.whatsapp)).meta['og:description']) };
 
         // An unknown PIN: the page as Hosting serves it.
@@ -303,7 +323,7 @@ async function main() {
             await guest.page.screenshot({ path: path.join(process.env.SHOTS, 'guest-lobby.png') });
             await en.host.page.screenshot({ path: path.join(process.env.SHOTS, 'host-lobby.png') });
         }
-        [en.host, he.host, guest].forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
+        [en.host, he.host, hanukkah.host, guest].forEach((p) => p.problems.forEach((x) => problems.push(`${p.name}: ${x}`)));
 
         const fnLog = fs.readFileSync(emulators.logFile, 'utf8').split('\n').filter((l) => /joinPreview /.test(l));
         summary.functionLog = fnLog.slice(-4).map((l) => l.replace(/^.*?joinPreview /, 'joinPreview '));
