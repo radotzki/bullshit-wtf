@@ -386,3 +386,134 @@ test('a question with a single house lie still plays in a taste', async () => {
     await pick(pin, 'p1', truthOf(pin));
     assert.strictEqual(state(pin), S.RevealTheTruth);
 });
+
+// ---- the solo run: a taste that goes on until the player is fooled three times ----
+const { startGame } = require(path.join(dist, 'start'));
+const { SOLO_RUN_LIVES, SOLO_RUN_MAX, nextSoloRun, newSoloRun, soloRunOptions } = require(path.join(__dirname, '..', 'dist', 'game-model'));
+
+/** Plays a run from START: picks[i] for question i ('truth', 'lie' or 'none'), 'truth' past the list. */
+async function playRun(pin, picks) {
+    const seen = [];
+    await startGame(pin, undefined, Date.now(), true);
+    await onStateChange(pin);
+    seen.push(state(pin));
+    while (state(pin) !== S.ScoreBoardFinal) {
+        const id = state(pin);
+        if (id === S.ShowAnswers) {
+            const what = picks[game(pin).questionIndex] || 'truth';
+            seen.push({ q: game(pin).questionIndex, answers: answersOf(pin).length, lives: game(pin).state.taste.run.lives });
+            if (what === 'none') {
+                await next(pin);
+            } else {
+                await pick(pin, 'p1', what === 'truth' ? truthOf(pin) : houseLieOf(pin));
+            }
+        } else {
+            seen.push(await next(pin));
+        }
+        assert.ok(seen.length < 400, 'the run ends');
+    }
+    return seen;
+}
+
+test('pure: a run loses a life when fooled, and three truths in a row give one back', () => {
+    let run = newSoloRun();
+    assert.deepStrictEqual(run, { lives: SOLO_RUN_LIVES, streak: 0, bestStreak: 0 });
+    run = nextSoloRun(run, false);
+    assert.deepStrictEqual(run, { lives: 2, streak: 0, bestStreak: 0 });
+    for (let i = 0; i < 2; i++) run = nextSoloRun(run, true);
+    assert.deepStrictEqual(run, { lives: 2, streak: 2, bestStreak: 2 });
+    run = nextSoloRun(run, true);
+    assert.deepStrictEqual(run, { lives: 3, streak: 3, bestStreak: 3, gained: true });
+    for (let i = 0; i < 3; i++) run = nextSoloRun(run, true);
+    assert.strictEqual(run.lives, SOLO_RUN_LIVES, 'never more than three');
+    assert.strictEqual(run.gained, undefined, 'no life given when all three are there');
+    assert.deepStrictEqual([0, 9, 10, 19, 20, 40].map(soloRunOptions), [3, 3, 4, 4, 5, 5], 'easier first, harder later');
+});
+
+test('a run: pick-only questions, no round cards after the first, three answers to start, until fooled three times', async () => {
+    rows.length = 0;
+    const pin = lobby(['dana'], 5);
+    // Fooled on questions 2 and 4; questions 5 to 7 are three in a row, a life back; fooled on 8 and 9: over.
+    const seen = await playRun(pin, ['truth', 'lie', 'truth', 'lie', 'truth', 'truth', 'truth', 'lie', 'lie', 'truth']);
+    const questions = seen.filter(s => typeof s === 'object');
+    assert.deepStrictEqual(questions.map(q => q.q), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    assert.deepStrictEqual(questions.map(q => q.answers), [3, 3, 3, 3, 3, 3, 3, 3, 3]);
+    assert.deepStrictEqual(questions.map(q => q.lives), [3, 3, 2, 2, 1, 1, 1, 2, 1]);
+    assert.strictEqual(seen.filter(s => s === S.RoundIntro).length, 1, 'one card, before question 1');
+    assert.ok(seen.indexOf(S.ShowQuestion) < 0, 'no writing');
+    const t = tasteOf(game(pin).state);
+    assert.strictEqual(t.found, 5);
+    assert.deepStrictEqual(t.run, { lives: 0, streak: 0, bestStreak: 3 });
+    assert.strictEqual(game(pin).totalQ, SOLO_RUN_MAX);
+    assert.strictEqual(new Set(Object.values(game(pin).qids)).size, Object.keys(game(pin).qids).length, 'no question twice');
+
+    // Usage rows: a taste of total_q = SOLO_RUN_MAX; its length is its question rows.
+    const qrows = rows.filter(r => r.table === 'question_results' && r.row.id === pin).map(r => r.row);
+    assert.strictEqual(qrows.length, 9);
+    assert.ok(qrows.every(q => q.players === 1 && q.lies === 0 && q.total_q === SOLO_RUN_MAX));
+    const closed = rows.filter(r => r.table === 'closed_games' && r.row.id === pin);
+    assert.strictEqual(closed.length, 1);
+    assert.deepStrictEqual([closed[0].row.players, closed[0].row.questions], [1, SOLO_RUN_MAX]);
+});
+
+test('a run whose player walks away ends on its clocks after three questions', async () => {
+    const pin = lobby(['dana'], 5);
+    const seen = await playRun(pin, ['none', 'none', 'none', 'none']);
+    assert.strictEqual(seen.filter(s => typeof s === 'object').length, SOLO_RUN_LIVES);
+    assert.strictEqual(tasteOf(game(pin).state).found, 0);
+});
+
+test('a run ends when the bank has no question left for it, and a life given back shows on its reveal', async () => {
+    const pin = lobby(['dana'], 5);
+    const seen = await playRun(pin, ['lie']);
+    // Twenty questions in the test bank: one fooling, then every truth, to the last question.
+    assert.strictEqual(seen.filter(s => typeof s === 'object').length, 20);
+    assert.strictEqual(tasteOf(game(pin).state).found, 19);
+    // Three answers to question 10, four to question 20 (the test bank has five lies a question).
+    assert.deepStrictEqual(seen.filter(s => typeof s === 'object').map(q => q.answers),
+        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]);
+    assert.strictEqual(tasteOf(game(pin).state).run.lives, SOLO_RUN_LIVES, 'the life came back after three in a row');
+    assert.deepStrictEqual(seen.filter(s => typeof s === 'object').map(q => q.lives).slice(0, 6), [3, 2, 2, 2, 3, 3]);
+});
+
+test('the reveal that gives a life back says so, and the next question drops the mark', async () => {
+    const pin = lobby(['dana'], 5);
+    await startGame(pin, undefined, Date.now(), true);
+    await next(pin);
+    const picks = ['lie', 'truth', 'truth', 'truth'];
+    for (let q = 0; q < picks.length; q++) {
+        assert.strictEqual(state(pin), S.ShowAnswers);
+        assert.strictEqual(game(pin).state.taste.run.gained, undefined);
+        await pick(pin, 'p1', picks[q] === 'truth' ? truthOf(pin) : houseLieOf(pin));
+        assert.strictEqual(state(pin), S.RevealTheTruth);
+        assert.strictEqual(game(pin).state.taste.run.gained, q === 3 ? true : undefined, `question ${q + 1}`);
+        assert.strictEqual(await next(pin), S.ScoreBoard);
+        assert.strictEqual(game(pin).state.taste.run.gained, q === 3 ? true : undefined, 'kept on the scoreboard');
+        await next(pin);
+    }
+});
+
+test('START with run: true and a friend in the lobby is a whole game, untouched', async () => {
+    const pin = lobby(['dana'], 5);
+    await join(pin, 'ben', 'u-ben');
+    await startGame(pin, undefined, Date.now(), true);
+    assert.strictEqual(state(pin), S.RoundIntro);
+    assert.strictEqual('taste' in game(pin).state, false);
+    assert.strictEqual(game(pin).totalQ, 5);
+});
+
+test('START without run is the five-question taste, as before', async () => {
+    const pin = lobby(['dana'], 5);
+    await startGame(pin, undefined, Date.now());
+    assert.deepStrictEqual(game(pin).state.taste, { found: 0, length: 5 });
+    assert.strictEqual(game(pin).totalQ, TASTE_QUESTIONS);
+});
+
+test('the solo run\'s three starts are counted in shares as invite rows', () => {
+    const { cleanShare } = require(path.join(dist, 'analytics'));
+    for (const method of ['solo-run-start', 'solo-run-again', 'solo-run-after-taste']) {
+        assert.deepStrictEqual(cleanShare({ content_type: 'invite', method, locale: 'en', uid: 'u1' }),
+            { content_type: 'invite', method, crew_id: null, locale: 'en', uid: 'u1' });
+        assert.strictEqual(cleanShare({ content_type: 'results', method }), null, 'only as invite rows');
+    }
+});

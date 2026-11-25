@@ -40,6 +40,10 @@
                     </label>
                 </p>
                 <p class="kids-note" *ngIf="kids">{{ t.kidsNote }}</p>
+                <!-- One pack a game: say so, so a family doesn't lose the season's questions without knowing. -->
+                <p class="kids-note kids-no-pack" *ngIf="kids && pack && !kidsSeasonLine">{{ t.kidsNoPack }} {{ packLabel }}.</p>
+                <!-- A kids game in a holiday's season still gets two of its kid-friendly questions (QuestionPack.kidsToo). -->
+                <p class="kids-note kids-season" *ngIf="kids && kidsSeasonLine">{{ kidsSeasonLine }}</p>
 
                 <ng-container *ngIf="pack && !kids">
                     <label>{{ t.special }}</label>

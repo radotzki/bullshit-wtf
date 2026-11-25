@@ -1,5 +1,6 @@
 import * as assert from 'assert';
-import { pickQuestions, pickWithPack, pickWithOpener, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
+import { pickQuestions, pickWithPack, pickWithOpener, withSeasonKids, mergeSeen, shuffle, SeenRecord } from '../src/controllers/question-picker';
+import { questionPacks, kidsSeasonPack, KIDS_SEASON_PER_GAME } from '../src/game-model';
 
 // Seeded random so failures are reproducible.
 function seeded(seed: number) {
@@ -115,6 +116,61 @@ const tests: { [name: string]: () => void } = {
         assert.strictEqual(Object.keys(store).filter(q => q[0] === 'h').length, 7);
     },
 
+    'pack game: an unseen pack opener opens the game; once the room has seen them all, any pack question'() {
+        const regular = bank(40);
+        const pack = Array.from({ length: 12 }, (_, i) => `h${i}`);
+        const openers = ['h3', 'h7'];
+        for (let seed = 1; seed <= 20; seed++) {
+            const qids = pickWithPack(regular, pack, [], 7, 3, seeded(seed), openers);
+            assert.ok(openers.indexOf(qids[0]) >= 0, `game ${seed} opens with an opener, not ${qids[0]}`);
+            assert.strictEqual(qids.filter(q => q[0] === 'h').length, 3);
+            assert.strictEqual(new Set(qids).size, 7);
+        }
+        // One opener seen: the other one opens.
+        const one = pickWithPack(regular, pack, [{ h3: 1 }], 5, 3, seeded(4), openers);
+        assert.strictEqual(one[0], 'h7');
+        // Both seen: a pack question still opens, as before, and no seen one comes back.
+        const none = pickWithPack(regular, pack, [{ h3: 1, h7: 2 }], 5, 3, seeded(5), openers);
+        assert.strictEqual(none[0][0], 'h');
+        assert.ok(none.indexOf('h3') < 0 && none.indexOf('h7') < 0);
+    },
+
+    'Hanukkah openers are Hebrew questions of the Hanukkah pack file'() {
+        // From dist-test/test/ the repository's functions/data is two folders up.
+        const file = require('../../data/hanukkah-questions.json');
+        const openers: string[] = questionPacks.hanukkah.openers;
+        assert.ok(openers.length >= 8, 'enough openers for a family\'s nights');
+        openers.forEach(id => {
+            assert.ok(file[id], `${id} is in hanukkah-questions.json`);
+            assert.strictEqual(file[id].lang, 'he');
+            assert.strictEqual(file[id].pack, 'hanukkah');
+        });
+    },
+
+    'Thanksgiving openers are English questions of the Thanksgiving pack file, not the one its page gives away'() {
+        const file = require('../../data/thanksgiving-questions.json');
+        const openers: string[] = questionPacks.thanksgiving.openers;
+        assert.ok(openers.length >= 6, 'enough openers for the long weekend');
+        openers.forEach(id => {
+            assert.ok(file[id], `${id} is in thanksgiving-questions.json`);
+            assert.strictEqual(file[id].lang, 'en');
+            assert.strictEqual(file[id].pack, 'thanksgiving');
+        });
+        // The Thanksgiving page shows Big Bird's turkey feathers, truth and all.
+        assert.ok(openers.indexOf('thanksgiving-26-en-27') < 0);
+        // Not the 1967 folk song a first walk-through opened with.
+        assert.ok(openers.indexOf('thanksgiving-26-en-25') < 0);
+        // None is also a daily puzzle of the pack's season (Hale's nursery rhyme, 02, is Thanksgiving
+        // Day's): a family who played the puzzle that morning would open the night knowing the truth.
+        const daily: any = require('../../data/daily-questions.json');
+        const season = questionPacks.thanksgiving.season;
+        const truths = Object.keys(daily).map(k => daily[k])
+            .filter(d => d.lang === 'en' && d.day >= season.from && d.day <= season.to)
+            .map(d => String(d.realAnswer).toLowerCase());
+        openers.forEach(id => assert.ok(truths.indexOf(String(file[id].realAnswer).toLowerCase()) < 0,
+            `${id} is also a daily puzzle between ${season.from} and ${season.to}`));
+    },
+
     'pack game with a tiny normal bank tops up from the pack'() {
         const qids = pickWithPack(bank(2), ['h0', 'h1', 'h2', 'h3', 'h4'], [], 5, 2, seeded(3));
         assert.strictEqual(qids.length, 5);
@@ -155,6 +211,50 @@ const tests: { [name: string]: () => void } = {
         const qids = pickWithOpener(bank(20), [], [], 7, (ids, n) => pickQuestions(ids, [], n, random), random);
         assert.strictEqual(qids.length, 7);
         assert.strictEqual(new Set(qids).size, 7);
+    },
+
+    // The English Thanksgiving family night: "Kids are playing" took every Thanksgiving question away.
+    'a kids game in season gets two fresh season questions, spread out, never first'() {
+        const kids = ['k0', 'k1', 'k2', 'k3', 'k4'];
+        const season = ['t0', 't1', 't2'];
+        const qids = withSeasonKids(kids, season, [{ t0: 1 }], 2, seeded(3));
+        assert.strictEqual(qids.length, 5);
+        assert.strictEqual(qids[0], 'k0', 'the kids opener stays');
+        const added = qids.filter(q => q[0] === 't');
+        assert.deepStrictEqual(added.slice().sort(), ['t1', 't2'], 'only unseen season questions');
+        assert.ok(qids[1][0] === 'k' && qids[4][0] === 'k', 'spread out, not side by side at an end');
+        assert.strictEqual(new Set(qids).size, 5);
+    },
+
+    // Run 2 of the walk-through: the About questions took slots 1 and 3, just where the two went.
+    'the season questions never sit where an About question goes'() {
+        const kids = ['k0', 'k1', 'k2', 'k3', 'k4'];
+        const five = withSeasonKids(kids, ['t0', 't1'], [], 2, seeded(2), [1, 3]);
+        assert.deepStrictEqual([five[2][0], five[4][0]], ['t', 't']);
+        assert.deepStrictEqual([five[0], five[1], five[3]], ['k0', 'k1', 'k3']);
+        const seven = withSeasonKids(['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6'], ['t0', 't1'], [], 2, seeded(2), [2, 4]);
+        const at = seven.map((q, i) => q[0] === 't' ? i : -1).filter(i => i >= 0);
+        assert.strictEqual(at.length, 2);
+        assert.ok(at.every(i => i !== 0 && i !== 2 && i !== 4), JSON.stringify(at));
+    },
+
+    'a kids game with no fresh season questions is the kids questions as picked'() {
+        const kids = ['k0', 'k1', 'k2', 'k3', 'k4', 'k5', 'k6'];
+        assert.deepStrictEqual(withSeasonKids(kids, ['t0'], [{ t0: 5 }], 2, seeded(1)), kids);
+        assert.deepStrictEqual(withSeasonKids(kids, [], [], 2, seeded(1)), kids);
+        assert.deepStrictEqual(withSeasonKids(['k0'], ['t0'], [], 2, seeded(1)), ['k0']);
+    },
+
+    'Thanksgiving week: English kids games get Thanksgiving kid questions, Hebrew ones none'() {
+        const thursday = Date.parse('2026-11-26T23:30:00Z');
+        assert.strictEqual(kidsSeasonPack(thursday, 'en'), 'thanksgiving');
+        assert.strictEqual(kidsSeasonPack(thursday, 'he'), undefined);
+        assert.strictEqual(kidsSeasonPack(Date.parse('2026-11-10T12:00:00Z'), 'en'), undefined);
+        assert.strictEqual(KIDS_SEASON_PER_GAME, 2);
+        const ids = questionPacks.thanksgiving.kidsToo;
+        const file = require('../../data/thanksgiving-questions.json');
+        assert.ok(ids.length >= 8, 'enough for a rematch or three');
+        ids.forEach(id => assert.ok(file[id], `${id} is a question of the pack`));
     },
 };
 

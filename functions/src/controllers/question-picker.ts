@@ -72,6 +72,9 @@ export function shuffle<T>(items: T[], random: Random = Math.random): T[] {
  * Picks a game's questions with a seasonal pack mixed in: up to `perGame` pack questions nobody
  * in the room has seen (a pack question is never repeated), the rest from the normal bank as
  * pickQuestions does. The pack questions are spread out, the first one opening the game.
+ * `openerIds`: pack questions most players already half know (the pack's `openers`). While the
+ * room has one it hasn't seen, the game opens with it, so a family's first question is one the
+ * grandparents and the kids can play, not an obscure one; the other pack questions are picked as before.
  */
 export function pickWithPack(
     regularIds: string[],
@@ -80,10 +83,15 @@ export function pickWithPack(
     count: number,
     perGame: number,
     random: Random = Math.random,
+    openerIds: string[] = [],
 ): string[] {
     const lastSeen = mergeSeen(seenRecords);
     const freshPack = packIds.filter(id => !(id in lastSeen));
-    const pack = shuffle(freshPack, random).slice(0, Math.max(0, Math.min(perGame, count)));
+    const opener = count > 0 && perGame > 0
+        ? shuffle(freshPack.filter(id => openerIds.indexOf(id) >= 0), random)[0]
+        : undefined;
+    const pack = (opener ? [opener] : []).concat(shuffle(freshPack.filter(id => id !== opener), random))
+        .slice(0, Math.max(0, Math.min(perGame, count)));
     const regular = pickQuestions(regularIds, seenRecords, count - pack.length, random);
 
     // Short of normal questions (tiny bank): top up with more fresh pack questions.
@@ -128,4 +136,32 @@ export function pickWithOpener(
         return pickRest(regularIds.concat(openerIds), count);
     }
     return [opener].concat(pickRest(regularIds, count - 1));
+}
+
+/**
+ * A kids game in a holiday's season: puts up to `perGame` of the season's kid-friendly questions
+ * (QuestionPack.kidsToo) that nobody in the room has seen into a kids game's picked questions,
+ * spread out, never as question 1 (the kids' own opener stays) and never at an index in `avoid`
+ * (the About questions' slots, which would replace them). With none left fresh, or none given,
+ * the game is the kids' questions as picked.
+ */
+export function withSeasonKids(
+    qids: string[],
+    seasonIds: string[],
+    seenRecords: SeenRecord[],
+    perGame: number,
+    random: Random = Math.random,
+    avoid: number[] = [],
+): string[] {
+    const lastSeen = mergeSeen(seenRecords);
+    const fresh = shuffle(seasonIds.filter(id => !(id in lastSeen) && qids.indexOf(id) < 0), random);
+    const all = qids.map((_, i) => i).slice(1);
+    const free = all.filter(i => avoid.indexOf(i) < 0);
+    const places = free.length ? free : all;
+    const n = Math.max(0, Math.min(perGame, fresh.length, places.length));
+    const result = qids.slice();
+    for (let k = 1; k <= n; k++) {
+        result[places[Math.round(k * (places.length + 1) / (n + 1)) - 1]] = fresh[k - 1];
+    }
+    return result;
 }

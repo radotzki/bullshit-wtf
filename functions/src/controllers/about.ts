@@ -33,7 +33,7 @@ import { createHash } from 'crypto';
 import { Answers, GameScheme, GameState, GameStateInfo, About, AboutSlot, aboutOf } from '../game-model';
 import { shuffle, Random, pickQuestions, SeenRecord } from './question-picker';
 import { aboutPrompts, aboutPrompt, aboutPromptText } from './about-prompts';
-import { isSameAnswer } from './same-answer';
+import { isSameAnswer, isPartOfTruth } from './same-answer';
 import { normalize } from './answer-options';
 
 /** A game plays About questions only when it leaves the lobby with this many players or more. */
@@ -253,8 +253,9 @@ export function aboutAnswers(game: Partial<GameScheme>, truth: { pid: string; te
         if (!lie || pid === truth.pid || typeof lie.text !== 'string' || !lie.text) {
             return;
         }
-        // A friend wrote the truth itself: one answer, the truth, which that friend can still pick.
-        if (isSameAnswer(lie.text, truthText)) {
+        // A friend wrote the truth itself, or only a part of it ("pizza" for "pizza with olives"): one
+        // answer, the truth, which that friend can still pick.
+        if (isPartOfTruth(lie.text, truthText)) {
             return;
         }
         answers[pid] = Object.assign({}, lie);
@@ -264,7 +265,7 @@ export function aboutAnswers(game: Partial<GameScheme>, truth: { pid: string; te
     const taken = new Set(Object.keys(answers).map(k => normalize(answers[k].text)));
     taken.add(normalize(truthText));
     const candidates = (prompt ? aboutPromptText(prompt, game.locale).house : [])
-        .filter(text => !taken.has(normalize(text)) && !isSameAnswer(text, truthText) &&
+        .filter(text => !taken.has(normalize(text)) && !isPartOfTruth(text, truthText) &&
             !Object.keys(answers).some(k => isSameAnswer(text, answers[k].text)));
     const needed = Math.max(0, ABOUT_MIN_OPTIONS - taken.size);
     shuffle(candidates, random).slice(0, needed).forEach(text => {

@@ -1,5 +1,6 @@
 import { replayLength, gameTaste } from './taste';
 import { GameScheme, GameState, GamePlayers, isTestCampaign } from '../game-model';
+import { isPortalCampaign } from './portal';
 import { get, gamesRef } from '../firebase';
 import { readGame } from './old-games';
 import { incGameCounter, generateGameName } from './new-game';
@@ -11,6 +12,7 @@ import { drawAboutUs } from './about';
 import { claimFork, forkOf, crewLobbyFor, NEXT_GAME_WAIT_MS } from './next-game';
 import { REMATCH_REUSE_MS } from './crew';
 import { HOST_AWAY_MIN_PLAYERS } from './start';
+import { seatGone } from './seats';
 
 /** How long a second Replay waits for the first one's game to be ready before it makes its own. */
 export const FORK_WAIT_MS = NEXT_GAME_WAIT_MS;
@@ -174,8 +176,9 @@ export function createFork(parent: string, game: GameScheme, qids: string[], cre
         forked.pack = game.pack;
     }
 
-    // A Replay of a test game is a test game (other campaign tags count the first game only).
-    if (isTestCampaign(game.campaign)) {
+    // A Replay of a test game is a test game, and of a portal game a portal game (portal.ts); other
+    // campaign tags count the first game only.
+    if (isTestCampaign(game.campaign) || isPortalCampaign(game.campaign)) {
         forked.campaign = game.campaign;
     }
 
@@ -249,17 +252,22 @@ export function withoutSecondSeats(game: GameScheme, hostPid?: string): GamePlay
  *
  * A game that ended before lastSent was kept, or where nobody sent anything on its last question,
  * has nothing to go by: it keeps the seats as withoutSecondSeats does.
+ *
+ * Then, whatever lastSent says, a seat whose page is gone when Replay is pressed (seats.ts seatGone:
+ * away GONE_MS or more) is left out too: a guest who played to the end and then said goodnight and
+ * closed the page. Before, such a guest sat in the Replay at 0 and its first question waited out the
+ * clock for them (21 Nov, New Year's Eve play-through). A phone that only slept comes back to the final
+ * screen, finds the Replay, and joins it like any late phone, before or after it has started.
  */
-export function seatsForReplay(game: GameScheme, hostPid?: string): GamePlayers {
+export function seatsForReplay(game: GameScheme, hostPid?: string, now = Date.now()): GamePlayers {
     const players = withoutSecondSeats(game, hostPid);
-    const here = (game && game.lastSent) || {};
-    const seats = Object.keys(players).filter(k => players[k]);
-    if (!seats.some(k => here[k] === true)) {
-        return players;
-    }
     // The phone that pressed Replay is here. An old client sends no player id: then the old host stays.
     const presser = hostPid && players[hostPid] ? hostPid : undefined;
-    const keep = (k: string) => here[k] === true || k === presser || (!presser && !!players[k].host);
+    const pressed = (k: string) => k === presser || (!presser && !!players[k].host);
+    const here = (game && game.lastSent) || {};
+    const seats = Object.keys(players).filter(k => players[k]);
+    const sentLast = seats.some(k => here[k] === true);
+    const keep = (k: string) => pressed(k) || ((!sentLast || here[k] === true) && !seatGone(game, k, now));
     const out: GamePlayers = {};
     seats.filter(keep).forEach(k => out[k] = players[k]);
     return out;

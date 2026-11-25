@@ -9,12 +9,16 @@ const { nameFlag, swapName, swapToast, SWAP_NAMES, NICKNAME_MAX } = require('../
 
 // ---- the spec's test cases ----
 const cases = {
-    hate: ['nigger', 'Nigger', 'N1GG3R', 'n!gger', 'knee grow', 'hitlerson', '1488', 'נאצי', 'אדולף', 'היטלר',
+    hate: ['nigger', 'Nigger', 'N1GG3R', 'n!gger', 'knee grow', 'hitlerson', '1488', 'נאצי', 'אדולף', 'היטלר', 'Nazir nigger',
         'הומו', 'כושי', "צ'חצ'ח", 'מוות לערבים', 'lilnigga', 'nigga24', 'n_i_g_g_a', 'kkk', 'myn1gg3r'],
-    sex: ['cum', 'CUMSHOT', 'bbcman', 'cockalari', 'זין', 'זונה', 'כוס אמק', 'maya זונה'],
+    sex: ['cum', 'CUMSHOT', 'bbcman', 'cockalari', 'זין', 'זונה', 'כוס אמק', 'maya זונה',
+        // A rude word beside an allowed one, and two words that only squash into an allowed one.
+        'Cocktail whore', 'Therapist slut', 'cum in me', 'כוס קפה זונה'],
     none: ['cucumber', 'cocktail', 'therapist', 'booboo', 'ben dover', 'mike hawk', 'gay', 'bitch', 'kaki',
         'moby dick', 'dickens', 'pussycat', 'nazir', 'הומוס', 'כושר', 'ערבי', 'זינה', 'בננה', 'פין', 'כוס תה',
-        'מזונה', 'רום המלך', 'peacock', 'analyst', 'כוסות', 'dana', 'יואב', '', 'fuck you', 'bullshit', 'jew', 'black', 'epstein'],
+        'מזונה', 'רום המלך', 'peacock', 'analyst', 'כוסות', 'dana', 'יואב', '', 'fuck you', 'bullshit', 'jew', 'black', 'epstein',
+        // An allowed word inside a longer name (the allow list applies word by word).
+        'Cocktail Hour', 'Nazir Khan', 'Moby Dick Fan', 'כוס קפה בבוקר', 'מזונות לכולם'],
 };
 
 test('names from the spec get the expected flag', () => {

@@ -6,13 +6,14 @@ import { readGame, isMoved } from './old-games';
 import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
-import { isSameAnswer } from './same-answer';
+import { isSameAnswer, isPartOfTruth } from './same-answer';
 import { stamp } from './answer-times';
 import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
 import { aboutOf } from '../game-model';
 import { writingSent } from './about';
 import { matchOffer } from './pair';
+import { filtersLies, lieRefused, FLAGGED_LIE } from './portal';
 
 /**
  * A player's lie for the current question. `decoy`: in a pair game (see pair.ts), the house lie the
@@ -40,6 +41,11 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
     // An About question (see about.ts): the player it is about writes the truth, kept where no phone
     // can read it; everyone else writes a lie as usual. No lie is refused as "too close to the truth":
     // the truth may not be in yet, and refusing one would tell its writer that they had guessed it.
+    // A portal game or a kids' game (see portal.ts): a lie with swearing, a slur or a sex word is refused; its writer tries another.
+    if (filtersLies(game) && lieRefused(playerAnswer)) {
+        return Promise.reject(FLAGGED_LIE);
+    }
+
     const about = aboutOf(game.state);
     if (about) {
         return aboutAnswer(pin, game, pid, playerAnswer, about.pid === pid);
@@ -48,8 +54,13 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
     const qid = game.qids[game.questionIndex];
     const question = await getQuestion(qid);
 
+    // The truth, typed a little differently, or only a part of it ("Germany" for "Nazi Germany"):
+    // refused (see same-answer.ts). The same code for both, so a phone that is still on an older page
+    // shows its message; `part` lets a newer one say "too close to the truth" and not "the correct answer".
     if (isSameAnswer(playerAnswer, question.realAnswer)) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
+    } else if (isPartOfTruth(playerAnswer, question.realAnswer)) {
+        return Promise.reject({ message: 'Too close to the correct answer.', code: 'CORRECT_ANSWER', part: true });
     } else {
         const stored: Answer = {
             text: playerAnswer.toLowerCase(),

@@ -4,6 +4,12 @@
 
     <div class="notification is-danger" *ngIf="errorMsg"> {{errorMsg}} </div>
 
+    <!-- A solo game that did not start by itself: say so, and the button that starts it. -->
+    <div *ngIf="soloFailed && !presenter" class="solo-failed" [attr.dir]="locale === 'he' ? 'rtl' : null">
+        <p class="solo-failed-line"> {{runWords.startFailed}} </p>
+        <button class="button is-primary is-large is-fullwidth solo-failed-start" [class.is-loading]="loading" (click)="startSolo()"> {{runWords.startButton}} </button>
+    </div>
+
     <!-- The host is back on screen to a full lobby: one big START (startPanelDue in lobby-host.ts). -->
     <div *ngIf="panel && showStartButton && !lobby?.alone" class="start-panel" [attr.dir]="lobby?.rtl ? 'rtl' : null">
         <p class="start-panel-line"> {{panel.line}} </p>

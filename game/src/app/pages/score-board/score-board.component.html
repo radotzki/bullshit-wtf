@@ -1,5 +1,7 @@
 <section class="game-container score-board" [appFitScreen]="presenter" [class.many]="displayPlayers && displayPlayers.length > 8" [attr.dir]="rtl ? 'rtl' : null">
     <app-game-header></app-game-header>
+    <!-- A solo run: lives, truths found, the streak (nothing in any other game). -->
+    <app-run-bar *ngIf="!presenter" [pin]="pin"></app-run-bar>
 
     <div class="game-main">
         <div *ngIf="!displayPlayers" class="screen-center">

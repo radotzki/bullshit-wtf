@@ -1,3 +1,5 @@
+import { inPortal } from '../portal/portal';
+import { portalRoutes } from '../portal/portal-routes';
 import { ScoreBoardFinalComponent } from './../pages/score-board-final/score-board-final.component';
 import { ScoreBoardComponent } from './../pages/score-board/score-board.component';
 import { RevealTheTruthComponent } from './../pages/reveal-the-truth/reveal-the-truth.component';
@@ -15,6 +17,7 @@ import { LearnComponent } from '../pages/learn/learn.component';
 import { SessionService } from '../services/session.service';
 import { CrewComponent } from '../pages/crew/crew.component';
 import { StepComponent } from '../pages/step/step.component';
+import { ChallengeComponent } from '../pages/challenge/challenge.component';
 
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -32,11 +35,14 @@ const routes: Routes = [
     { path: 'learn', component: LearnComponent },
     // A saved crew: standings across games and a one-tap rematch
     { path: 'c/:id', component: CrewComponent },
+    // CHALLENGE ANOTHER GROUP: a finished table's score to beat, on the same questions
+    { path: 'challenge/:pin', component: ChallengeComponent },
     // Hebrew entry points: same pages, served from he.html so link previews are in Hebrew
     { path: 'he', component: LandingComponent },
     { path: 'he/join-game', component: JoinGameComponent },
     { path: 'he/join-game/:pin', component: JoinGameComponent },
     { path: 'he/c/:id', component: CrewComponent },
+    { path: 'he/challenge/:pin', component: ChallengeComponent },
     { path: 'game-staging/:pin', component: GameStagingComponent, canActivate: [SessionService, GameService] },
     { path: 'round-intro/:pin', component: RoundIntroComponent, canActivate: [SessionService, GameService] },
     { path: 'show-question/:pin', component: ShowQuestionComponent, canActivate: [SessionService, GameService] },
@@ -50,7 +56,9 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forRoot(routes)],
+    // The CrazyGames version (portal/portal.ts) routes by the address's hash, so its frame stays on
+    // /portal/crazygames, and has its own home in place of the site's pages that link out.
+    imports: [RouterModule.forRoot(inPortal() ? portalRoutes(routes) : routes, { useHash: inPortal() })],
     exports: [RouterModule]
 })
 export class AppRoutingModule { }

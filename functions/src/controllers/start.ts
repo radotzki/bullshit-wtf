@@ -90,8 +90,12 @@ function keepStartBy(pin: string, verdict: StartVerdict): Promise<boolean> {
     });
 }
 
-/** START in the lobby: move the game into its first round, if this phone may start it. */
-export async function startGame(pin: string, hostKey: string | undefined, now = Date.now()): Promise<{ started: boolean }> {
+/**
+ * START in the lobby: move the game into its first round, if this phone may start it.
+ * `run`: the host asked for a solo run (SoloRun in game-model). It counts only for a game that starts
+ * as a taste (one player, no big screen); a friend in the lobby makes it a whole game, as before.
+ */
+export async function startGame(pin: string, hostKey: string | undefined, now = Date.now(), run = false): Promise<{ started: boolean }> {
     pin = typeof pin === 'string' ? pin.toUpperCase() : '';
     const game = pin ? await readGame(pin) : null;
 
@@ -114,6 +118,11 @@ export async function startGame(pin: string, hostKey: string | undefined, now = 
     // Kept for opened_games.start_by. Only the first START's verdict: a second press at the same moment
     // finds it set, and its advance finds the lobby already taken (see advance in tick.ts).
     await keepStartBy(pin, verdict).catch(e => console.error(`[PIN: ${pin}] startBy not kept`, e && e.message));
+    if (run === true) {
+        // Read by newTaste when the game leaves the lobby; a game of two never reads it.
+        await gamesRef.child(pin).child('soloRun').set(true)
+            .catch(e => console.error(`[PIN: ${pin}] soloRun not kept, a taste instead`, e && e.message));
+    }
     await advance(pin, game.state);
     return { started: true };
 }
