@@ -25,7 +25,7 @@ const hebrew = /[֐-׿]/;
 const latin = /[A-Za-z]/;
 
 test('a game from a group page or a counselors\' post gets the counselor\'s ending', () => {
-    for (const tag of ['peula-net', 'seo-he-youth', 'seo-he-gibush', 'bnei-akiva', 'zofim', 'pitch-he-zofim', 'pop-edu']) {
+    for (const tag of ['peula-net', 'seo-he-youth', 'seo-he-gibush', 'bnei-akiva', 'zofim', 'pitch-he-zofim', 'pop-edu', 'wa-he-madrichim']) {
         assert.strictEqual(groupTag(tag), tag, tag);
         assert.strictEqual(groupTag(tag.toUpperCase()), tag, tag + ' in capitals');
     }
@@ -50,6 +50,9 @@ test('the saved link is the post\'s page with the same tag, so the day\'s game c
     assert.strictEqual(activityLink('seo-he-youth'), 'https://bullshit.wtf/he/youth-group?via=seo-he-youth');
     assert.strictEqual(activityLink('bnei-akiva'), 'https://bullshit.wtf/he/youth-group?via=bnei-akiva');
     assert.strictEqual(activityLink('seo-he-gibush'), 'https://bullshit.wtf/he/gibush?via=seo-he-gibush');
+    // The youth page's own "send to other counselors" WhatsApp button.
+    assert.strictEqual(activityLink('wa-he-madrichim'), 'https://bullshit.wtf/he/youth-group?via=wa-he-madrichim');
+    assert.strictEqual(activityLink('test-wa-he-madrichim'), 'https://bullshit.wtf/he/youth-group?via=test-wa-he-madrichim');
 });
 
 test('the counselor\'s words, as the play-through report wrote them, Hebrew in Hebrew and English in English', () => {

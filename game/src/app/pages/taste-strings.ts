@@ -116,6 +116,7 @@ const GROUP_PAGES: { [tag: string]: string } = {
     'zofim': '/he/youth-group',
     'pitch-he-zofim': '/he/youth-group',
     'pop-edu': '/he/youth-group',
+    'wa-he-madrichim': '/he/youth-group',
     'seo-he-gibush': '/he/gibush',
 };
 
