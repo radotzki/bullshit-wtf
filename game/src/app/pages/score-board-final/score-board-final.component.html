@@ -62,7 +62,22 @@
                 <!-- After a taste played alone: the invitation. Its button makes the new game, like REMATCH,
                      and its lobby opens on the invite. -->
                 <!-- Beside it, the solo run: PLAY AGAIN after a run, KEEP GOING ALONE after the taste. -->
-                <div *ngIf="soloTaste && !rematchPin" class="taste-ask">
+                <!-- A taste opened from a group page: the counselor's ending, for the day of the activity. -->
+                <div *ngIf="counselorEnd && !rematchPin" class="taste-ask counselor-end">
+                    <h2 class="taste-ask-title">{{ counselorWords.title }}</h2>
+                    <p *ngFor="let line of counselorWords.lines" class="taste-ask-text counselor-line">{{ line }}</p>
+                    <div class="solo-buttons">
+                        <button class="button is-primary is-medium is-fullwidth rematch taste-invite counselor-see" (click)="replay()"
+                            [class.is-loading]="loading">
+                            {{ counselorWords.seeIt }}
+                        </button>
+                        <button class="button is-info is-medium is-fullwidth rematch counselor-save" (click)="saveActivityLink()">
+                            {{ counselorWords.save }}
+                        </button>
+                    </div>
+                    <p class="hint">{{ linkCopied ? counselorWords.copied : counselorWords.seeItHint }}</p>
+                </div>
+                <div *ngIf="soloTaste && !counselorEnd && !rematchPin" class="taste-ask">
                     <h2 class="taste-ask-title">{{ tasteWords.askTitle }}</h2>
                     <p class="taste-ask-text">{{ soloRunEnd ? runWords.askText : tasteWords.askText }}</p>
                     <div class="solo-buttons">

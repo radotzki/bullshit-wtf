@@ -10,7 +10,9 @@ import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
 import { gameGone, joinPageFor } from './game-gone';
 import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
-import { tasteStrings, TasteStrings } from './../taste-strings';
+import { tasteStrings, TasteStrings, counselorStrings, CounselorStrings, groupTag, activityLink } from './../taste-strings';
+import { arrivalCampaign } from './../../services/join-source';
+import { ShareService } from './../../services/share.service';
 import { runStrings, RunStrings } from './../run-strings';
 import { SoloRunService } from './../../services/solo-run.service';
 import { keepRunScore, BestResult } from './../../services/solo-run';
@@ -63,6 +65,11 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     /** The game was a taste (five pick-only questions for a host who started alone), or null. */
     taste: Taste = null;
     tasteWords: TasteStrings = tasteStrings('en');
+    /** The taste was opened from a group page (taste-strings.ts, groupTag): this tab's campaign, or null. */
+    counselorTag: string = groupTag(arrivalCampaign());
+    counselorWords: CounselorStrings = counselorStrings('en');
+    /** SAVE THE LINK FOR THE ACTIVITY found no share sheet and copied the link. */
+    linkCopied = false;
     runWords: RunStrings = runStrings('en');
     runLives = SOLO_RUN_LIVES;
     /** A solo run's best on this device (solo-run.ts), once its final screen has read the run. */
@@ -139,6 +146,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         private storageService: StorageService,
         private router: Router,
         private soloRun: SoloRunService,
+        private shareService: ShareService,
     ) { }
 
     /** Nobody played question 1, so the game ended there: the final screen says so. */
@@ -169,6 +177,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];
             this.tasteWords = tasteStrings(this.locale);
+            this.counselorWords = counselorStrings(this.locale);
             this.runWords = runStrings(this.locale);
             this.taste = taste || null;
             // "Nobody fell for their lies" only when every round was counted.
@@ -590,6 +599,22 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             return this.winners.length > 1 ? this.t.youTied : this.t.youWon;
         }
         return this.t.yourPlace(this.mine.place, this.displayPlayers.length);
+    }
+
+    /**
+     * The counselor's ending (taste-strings.ts, CounselorStrings): a taste played alone, not a solo
+     * run, in a tab that came from a group page. Every other taste keeps the ordinary invitation.
+     */
+    get counselorEnd(): boolean {
+        return this.soloTaste && !this.soloRunEnd && !!this.counselorTag;
+    }
+
+    /** SAVE THE LINK FOR THE ACTIVITY: the group page's link with its tag, to the share sheet or copied. */
+    async saveActivityLink() {
+        const w = this.counselorWords;
+        const result = await this.shareService.share(
+            { title: w.saveTitle, text: w.saveText, url: activityLink(arrivalCampaign()) }, 'activity-link');
+        this.linkCopied = result === 'copied';
     }
 
     replay() {
