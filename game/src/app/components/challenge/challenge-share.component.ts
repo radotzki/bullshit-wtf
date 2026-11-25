@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ApiService } from './../../services/api.service';
 import { ShareService } from './../../services/share.service';
 import { reportError } from './../../sentry/sentry.module';
@@ -19,7 +19,7 @@ import {
     templateUrl: './challenge-share.component.html',
     styleUrls: ['./challenge-share.component.scss'],
 })
-export class ChallengeShareComponent {
+export class ChallengeShareComponent implements OnInit {
     @Input() pin: string;
     @Input() locale = 'en';
     /** The sheet opened (true) or closed (false): a started rematch waits for a player who is mid-send. */
@@ -31,8 +31,16 @@ export class ChallengeShareComponent {
     copied: boolean;
     /** The challenge, once the server has opened it. */
     card: ChallengeCard;
+    /** The game's seasonal pack: a Hanukkah game's challenge message says so. */
+    pack: string = null;
 
     constructor(private apiService: ApiService, private shareService: ShareService) { }
+
+    ngOnInit() {
+        if (this.pin) {
+            this.apiService.getGamePack(this.pin).then(pack => this.pack = typeof pack === 'string' ? pack : null, () => { });
+        }
+    }
 
     get t(): ChallengeStrings {
         return challengeWords(this.locale);
@@ -92,7 +100,7 @@ export class ChallengeShareComponent {
     }
 
     private message() {
-        return this.card ? this.t.message(this.card.top, this.card.questions) : '';
+        return this.card ? this.t.message(this.card.top, this.card.questions, this.pack) : '';
     }
 
     private url(method: ChallengeMethod) {
@@ -123,7 +131,7 @@ export class ChallengeShareComponent {
         }
         const native = this.canShare;
         const result = await this.shareService.share({
-            title: this.t.shareTitle,
+            title: this.t.shareTitle(this.pack),
             text: this.message(),
             url: this.url(native ? 'native' : 'copy'),
         }, null);

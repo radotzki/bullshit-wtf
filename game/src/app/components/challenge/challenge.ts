@@ -138,9 +138,10 @@ const words = {
         copy: 'COPY LINK',
         copied: 'Copied! Paste it in their group chat.',
         done: 'DONE',
-        message: (top: number, questions: number) =>
-            `We scored ${top} at Bullshit. Same ${questions} questions, your group: can you beat us?`,
-        shareTitle: 'A Bullshit challenge',
+        message: (top: number, questions: number, pack?: string) => (pack === 'hanukkah'
+            ? `Our Hanukkah game night of Bullshit: we scored ${top}. Same ${questions} questions, your group: can you beat us?`
+            : `We scored ${top} at Bullshit. Same ${questions} questions, your group: can you beat us?`),
+        shareTitle: (pack?: string): string => (pack === 'hanukkah' ? 'A Hanukkah Bullshit challenge' : 'A Bullshit challenge'),
         // The challenge link's page.
         title: 'YOU\'VE BEEN CHALLENGED',
         table: (host: string, played: number) => host ? `${host}'s table` : `A table of ${played}`,
@@ -177,9 +178,11 @@ const words = {
         copy: 'העתקת הקישור',
         copied: 'הועתק! אפשר להדביק בקבוצה שלהם.',
         done: 'סיום',
-        message: (top: number, questions: number) =>
-            `עשינו ${top} נקודות בבולשיט. אותן ${questions} שאלות, החבורה שלכם: תצליחו לנצח אותנו?`,
-        shareTitle: 'אתגר בבולשיט',
+        // A Hanukkah game's challenge says it came from the family's Hanukkah night (no question in it).
+        message: (top: number, questions: number, pack?: string) => (pack === 'hanukkah'
+            ? `ערב בולשיט של חנוכה: עשינו ${top} נקודות. אותן ${questions} שאלות, החבורה שלכם: תצליחו לנצח אותנו?`
+            : `עשינו ${top} נקודות בבולשיט. אותן ${questions} שאלות, החבורה שלכם: תצליחו לנצח אותנו?`),
+        shareTitle: (pack?: string): string => (pack === 'hanukkah' ? 'אתגר חנוכה בבולשיט' : 'אתגר בבולשיט'),
         title: 'קיבלתם אתגר',
         table: (host: string, played: number) => host ? `השולחן של ${host}` : `שולחן של ${played} שחקנים`,
         toBeat: 'הניקוד שצריך לעבור',

@@ -8,7 +8,7 @@
  * A 50/50 test by browser. Kept free of Angular so it can be tested in Node.
  */
 import { CalendarEvent, nightLabel } from '../../pages/crew/next-night';
-import { hanukkahEvening } from '../host-ask/host-ask';
+import { HANUKKAH_CANDLES, hanukkahEvening } from '../host-ask/host-ask';
 
 const SITE = 'https://bullshit.wtf';
 
@@ -67,6 +67,19 @@ export function inviteHalf(uid: string | null | undefined, forced?: string | nul
  */
 export function candleEvening(now: Date, pack?: string | null): boolean {
     return hanukkahEvening(now, pack) !== null;
+}
+
+/**
+ * Does the message for this night speak of Hanukkah? Only after a Hanukkah game, and only for a night
+ * up to the eighth candle's evening (local date): a night picked after Hanukkah gets the plain message.
+ */
+export function hanukkahInvite(night: Date, pack?: string | null): boolean {
+    if (pack !== 'hanukkah' || !(night instanceof Date) || isNaN(night.getTime())) {
+        return false;
+    }
+    const two = (n: number) => (n < 10 ? '0' : '') + n;
+    const day = `${night.getFullYear()}-${two(night.getMonth() + 1)}-${two(night.getDate())}`;
+    return day <= HANUKKAH_CANDLES.last;
 }
 
 /** Words of the ask and its sheet, in the game's language. Hebrew avoids gendered verbs. */
@@ -136,23 +149,33 @@ export interface BestLie {
  * the night is the bait when it fooled at least one player. The guest reads all of it in WhatsApp
  * before sending, the lie included.
  */
-export function inviteMessage(night: Date, locale: string, best?: BestLie | null): string {
+export function inviteMessage(night: Date, locale: string, best?: BestLie | null, pack?: string | null): string {
     const he = locale === 'he';
     const when = nightLabel(night, locale);
+    // After a Hanukkah game, a night up to the eighth candle is a Hanukkah game night (hanukkahInvite).
+    const hanukkah = hanukkahInvite(night, pack);
     // Single marks inside, so a lie with quotation marks does not close the message's own.
     const lie = best && best.fooled >= 1 ? String(best.text || '').replace(/\s+/g, ' ').replace(/["\u201c\u201d]/g, '\'').trim() : '';
-    const tail = he ? `המשחק עליי, ${when}. מי בפנים? לוחצים כאן:` : `My game, ${when}. Who's in? Tap here:`;
+    const tail = hanukkah
+        ? (he ? `ערב בולשיט של חנוכה עליי, ${when}. מי בפנים? לוחצים כאן:` : `A Hanukkah game night on me, ${when}. Who's in? Tap here:`)
+        : (he ? `המשחק עליי, ${when}. מי בפנים? לוחצים כאן:` : `My game, ${when}. Who's in? Tap here:`);
     if (!lie) {
+        if (hanukkah) {
+            return he
+                ? `מצאתי לנו משחק לחנוכה: בולשיט. כולם ממציאים שקר ומנסים לזהות את האמת. ${tail}`
+                : `Found us a game for Hanukkah: Bullshit. Everyone makes up a lie and tries to spot the truth. ${tail}`;
+        }
         return he
             ? `מצאתי לנו משחק: בולשיט. כולם ממציאים שקר ומנסים לזהות את האמת. ${tail}`
             : `Found us a game: Bullshit. Everyone makes up a lie and tries to spot the truth. ${tail}`;
     }
     if (he) {
         const who = best.fooled === 1 ? 'מישהו' : best.fooled === 2 ? 'שני אנשים' : `${best.fooled} אנשים`;
-        return `הערב עבדתי על ${who} בבולשיט עם השקר הזה: "${lie}". נראה אתכם. ${tail}`;
+        return `הערב עבדתי על ${who} בבולשיט${hanukkah ? ' של חנוכה' : ''} עם השקר הזה: "${lie}". נראה אתכם. ${tail}`;
     }
     const who = best.fooled === 1 ? 'someone' : `${best.fooled} people`;
-    return `Tonight I fooled ${who} in Bullshit with this lie: "${lie}". Think you'd do better? ${tail}`;
+    const game = hanukkah ? 'a Hanukkah game of Bullshit' : 'Bullshit';
+    return `Tonight I fooled ${who} in ${game} with this lie: "${lie}". Think you'd do better? ${tail}`;
 }
 
 /** The table's link: its crew page, in its language, tagged so what it brings can be counted. */
