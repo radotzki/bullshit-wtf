@@ -173,6 +173,14 @@ export interface GameScheme {
     // Server time each player's lie and pick arrived, for measuring the wait (question_results).
     // Server only: no rule opens it, so no phone can read or write it.
     answerTimes?: AnswerTimes;
+    // CHALLENGE ANOTHER GROUP (challenge.ts in the functions). On a finished game: a player of it pressed
+    // CHALLENGE ANOTHER GROUP, so its link may show its table's score to another group for CHALLENGE_MS.
+    // Server only: no rule opens it.
+    challengeOpen?: boolean;
+    // On a game made from a challenge link: the other table as it finished (its PIN, host, scores), copied
+    // by the server when this game was made. Its questions are that game's, in the same order. Server
+    // only: no rule opens it; the final screen gets it through validateGameName. Not carried by Replay.
+    challenge?: ChallengeCard;
     // "Pick a decoy", a 50/50 test on two-player games, set at START (see pair.ts in the functions).
     // true: each player also picks a decoy, one of two house lies offered only to them, and the game has
     // no neutral house lies. false: in the test, plays as before. Absent: not in the test (not two
@@ -181,6 +189,34 @@ export interface GameScheme {
     // A pair game's decoy each player chose with their lie for the current question. Server only: no
     // rule opens it, so the friend never learns it before the answers are on the table.
     decoys?: { [pid: string]: string };
+}
+
+/** One row of a challenged table's final scores, as another group sees it. */
+export interface ChallengeRow {
+    name: string;
+    score: number;
+    place: number;
+}
+
+/**
+ * A finished table that another group may play against (CHALLENGE ANOTHER GROUP): built by the server
+ * from the game's own record, never from anything in a link, so a link cannot change a name or a score.
+ */
+export interface ChallengeCard {
+    /** The challenged game's PIN. */
+    from: string;
+    /** Its host's nickname as a link preview may show it, or ''. */
+    host: string;
+    locale: 'en' | 'he';
+    questions: number;
+    /** Players at that table. */
+    played: number;
+    /** The table's best score (its winner's). */
+    top: number;
+    /** Its final scores, best first, at most CHALLENGE_ROWS. */
+    rows: ChallengeRow[];
+    /** The other table was a test game: rows are not counted. */
+    test?: boolean;
 }
 
 /** When one player's lie or pick arrived (server time, ms), and for which question. */
@@ -843,6 +879,14 @@ export interface QuestionPack {
     locales?: string[];
     seasonIn?: string[];
     icon?: string;
+    // Pack questions that open a pack game while the room hasn't seen them (pickWithPack): ones most
+    // players of that language already half know, so the first question of the night is an easy one.
+    openers?: string[];
+    // Questions of the pack that a child of 8 to 12 can play too. In the pack's season a kids game
+    // ("Kids are playing") gets up to KIDS_SEASON_PER_GAME of them among its kid questions, so a
+    // family with an 8-year-old doesn't have to choose between the kids' questions and the holiday's
+    // (from the English Thanksgiving family night walk-through).
+    kidsToo?: string[];
 }
 
 export const questionPacks: { [id: string]: QuestionPack } = {
@@ -853,6 +897,9 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         // English games get the Christmas pack by default in December; Hanukkah stays one tap
         // away for them with ?pack=hanukkah (the Hanukkah page's Start button).
         seasonIn: ['he'],
+        // Hebrew games open with one an Israeli family half knows (the doughnut's name, the dreidel's
+        // letters, 44 candles, Levin Kipnis...), not with American trivia (from the Hanukkah night walk).
+        openers: ['03', '05', '06', '12', '20', '22', '26', '30', '48', '56', '58', '59'].map(n => `hanukkah-26-he-${n}`),
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
@@ -864,6 +911,16 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         label: { en: 'Thanksgiving questions', he: 'שאלות חג ההודיה (באנגלית)' },
         locales: ['en'],
         icon: '🦃',
+        // A Thanksgiving game opens with one an American family half knows, the kids too (the TV dinner,
+        // the green bean casserole, the Lions, cranberries that float...), not with a 1967 folk song
+        // (from the Thanksgiving night walk). Not Big Bird's feathers (the page used to give it away),
+        // and none that is a daily puzzle of the season: Sarah Josepha Hale's nursery rhyme (02) is
+        // also the daily puzzle on Thanksgiving Day itself, so Franklin's turkey (19) opens instead.
+        openers: ['01', '12', '15', '19', '20', '26', '28', '31'].map(n => `thanksgiving-26-en-${n}`),
+        // For a kids game in the season: the TV dinner, Felix the Cat, the three-day feast, the snood,
+        // the poult, turkeys asleep in trees, the 3,699-pound pie, Charlie Brown's popcorn, Big Bird's
+        // feathers, cranberries that float. No presidents, football, folk songs or the Mayflower.
+        kidsToo: ['01', '04', '09', '17', '18', '20', '22', '26', '27', '31'].map(n => `thanksgiving-26-en-${n}`),
     },
     // Christmas and New Year's Eve, English questions only (functions/data/christmas-questions.json).
     // By default in English games from 1 December, office party season, to 2 January: by the date
@@ -890,6 +947,18 @@ export const questionPacks: { [id: string]: QuestionPack } = {
 
 /** The pack the create page's "Kids are playing" switch asks for. */
 export const KIDS_PACK = 'kids';
+
+/** How many of the season's kidsToo questions a kids game gets, at most. */
+export const KIDS_SEASON_PER_GAME = 2;
+
+/**
+ * The seasonal pack whose kid-friendly questions a kids game gets today in this language (see
+ * QuestionPack.kidsToo), or undefined.
+ */
+export function kidsSeasonPack(now: number = Date.now(), locale?: string): string | undefined {
+    const id = seasonalPack(now, locale);
+    return id && (questionPacks[id].kidsToo || []).length ? id : undefined;
+}
 
 /**
  * The pack a game made on the create page asks for: kids when "Kids are playing" is on (it takes

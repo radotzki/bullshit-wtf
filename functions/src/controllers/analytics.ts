@@ -181,6 +181,16 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     same-table           pressed PLAY AGAIN, SAME TABLE (played; opens the game's lobby, same-table.ts)
 //     same-table-open      the same, while the table's lobby was already open (it joins that lobby)
 //     join-them            pressed JOIN THEM under "They're playing again" (didn't play; joins the open lobby)
+//   challenge   CHALLENGE ANOTHER GROUP (challenge.ts). Every row carries the challenged game's PIN, in
+//               capitals, in crew_id, as night-after's do. A test game's challenge sends no row:
+//     open               a player pressed CHALLENGE ANOTHER GROUP on the final screen (the sheet opened)
+//     whatsapp           sent the challenge: tapped WHATSAPP (its link carries via=challenge-whatsapp)
+//     native             sent it through the phone's share sheet (via=challenge-share)
+//     copy               copied the message and link (via=challenge-copy)
+//     seen               the challenge link showed its card to someone (once per page load)
+//     seen-over          the link of a challenge that is over (or never opened) showed
+//     start              pressed START THE CHALLENGE (the game it makes carries the link's via as campaign)
+//     seen-versus        the final screen of a game played against the challenge showed both tables
 //   sound       the mute button of the staged reveal (not a send: counts who silences the phone sounds):
 //     mute               tapped it to silence the game
 //     unmute             tapped it again
@@ -192,10 +202,14 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     seen-hanukkah        the link SAME TABLE TOMORROW saved (?via=hanukkah-night-N) opened the page: the
 //                          recap shows in either half, so this row stands in for seen-player/seen-other and the
 //                          test's halves still compare the same visits
+//     join-playing         on that link, a browser that didn't play pressed JOIN NOW: the table's game was
+//                          under way, and it joined it (a link that waits for the table says nothing more)
 /** The lone-host help's rows: their crew_id is the lobby's PIN. */
 export const LOBBY_HELP = 'lobby-help';
 /** The night-after rows: their crew_id is the finished game's PIN. */
 export const NIGHT_AFTER = 'night-after';
+/** The challenge rows: their crew_id is the challenged game's PIN. */
+export const CHALLENGE = 'challenge';
 
 export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'crew-night': ['whatsapp', 'calendar-share', 'calendar-download', 'google-calendar',
@@ -217,11 +231,12 @@ export const SHARE_METHODS: { [contentType: string]: string[] } = {
     'game-over': ['create', 'remind', 'remind-google'],
     'host-invite': ['seen-new', 'seen-classic', 'open', 'whatsapp', 'native', 'copy', 'calendar', 'google-calendar', 'create-now'],
     'sound': ['mute', 'unmute'],
+    'challenge': ['open', 'whatsapp', 'native', 'copy', 'seen', 'seen-over', 'start', 'seen-versus'],
     'night-after': ['seen-player', 'seen-other', 'seen-control-player', 'seen-control-other', 'create', 'create-player', 'crew', 'same-table', 'same-table-open', 'join-them',
         // A player came late, the table mid-game: CATCH THE NEXT ROUND, or START A NEW TABLE NOW.
         'catch-next', 'new-table',
-        // Opened by SAME TABLE TOMORROW's link, on a Hanukkah night.
-        'seen-hanukkah'],
+        // Opened by SAME TABLE TOMORROW's link, on a Hanukkah night; JOIN NOW into the table's game under way.
+        'seen-hanukkah', 'join-playing'],
     'hanukkah-night': ['save', 'save-google'],
 };
 
@@ -248,7 +263,7 @@ export function cleanShare(body: any): ShareRow | null {
         return null;
     }
     let crew = typeof body.crew === 'string' && /^[a-z0-9]{1,32}$/i.test(body.crew) ? body.crew.toLowerCase() : null;
-    if (contentType === LOBBY_HELP || contentType === NIGHT_AFTER) {
+    if (contentType === LOBBY_HELP || contentType === NIGHT_AFTER || contentType === CHALLENGE) {
         // The lobby's PIN travels in the crew field: letters only, kept in capitals. No PIN, no row.
         if (typeof body.crew !== 'string' || !/^[A-Za-z]{1,12}$/.test(body.crew)) {
             return null;
@@ -266,9 +281,10 @@ export function cleanShare(body: any): ShareRow | null {
     return { content_type: contentType, method, crew_id: crew, locale, uid };
 }
 
-/** A test game leaves no lobby-help or night-after row: shares has no campaign column to leave it out by later. */
+/** A test game leaves no lobby-help, night-after or challenge row: shares has no campaign column to leave it out by later. */
 export async function onShare(row: ShareRow, testGame: (pin: string) => Promise<boolean> = isTestGame) {
-    if ((row.content_type === LOBBY_HELP || row.content_type === NIGHT_AFTER) && await testGame(row.crew_id)) {
+    if ((row.content_type === LOBBY_HELP || row.content_type === NIGHT_AFTER || row.content_type === CHALLENGE)
+        && await testGame(row.crew_id)) {
         return;
     }
     if (row.content_type === HANUKKAH_NIGHT && await testGame(row.crew_id)) {

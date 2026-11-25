@@ -1,0 +1,92 @@
+$dark: #363636;
+$body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+.challenge-ask {
+    margin-top: 10px;
+    text-align: center;
+
+    &.is-rtl {
+        font-family: 'Suez One', $body-font;
+    }
+
+    .challenge-open {
+        height: auto;
+        min-height: 44px;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .challenge-hint {
+        margin-top: 4px;
+        font-family: $body-font;
+        font-size: .85rem;
+        line-height: 1.3;
+        color: #7a7a7a;
+    }
+}
+
+.challenge-sheet {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 8px 8px 0 0;
+    color: $dark;
+    text-align: center;
+
+    &.is-rtl {
+        font-family: 'Suez One', $body-font;
+    }
+
+    .sheet-title {
+        font-size: 1.25rem;
+        margin-bottom: 4px;
+    }
+
+    .sheet-text,
+    .sheet-note {
+        font-family: $body-font;
+        font-size: .95rem;
+        line-height: 1.35;
+        margin-bottom: 10px;
+    }
+
+    .sheet-note {
+        margin: 8px 0 0;
+        color: #7a7a7a;
+    }
+
+    .button + .button,
+    .button + .button.challenge-copy {
+        margin-top: 8px;
+    }
+
+    .whatsapp {
+        background-color: #25d366;
+        border-color: transparent;
+        color: #fff;
+
+        &.is-disabled {
+            opacity: .5;
+            pointer-events: none;
+        }
+    }
+
+    .notification {
+        margin-top: 10px;
+        font-family: $body-font;
+    }
+
+    .link-button {
+        padding: 4px 6px;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+}
+
+.modal-card-foot {
+    justify-content: center;
+}

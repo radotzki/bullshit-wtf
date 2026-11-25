@@ -34,7 +34,8 @@
         </div>
 
         <div *ngIf="answers && !answerSelected && !presenter && !aboutMe">
-            <p *ngIf="taste" class="taste-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <!-- A taste, or a game with no big screen: the phone is the only place the question is. -->
+            <p *ngIf="questionView.above && question" class="phone-question" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
 
             <p *ngFor="let answer of answers" class="control">
                 <button class="button is-primary is-fullwidth answer" (click)="submit(answer)" [disabled]="loading" [class.rtl]="rtl">
@@ -43,10 +44,10 @@
             </p>
 
             <p class="control">
-                <button *ngIf="!showQuestion && !taste" class="button is-info is-fullwidth" (click)="showQuestion = true">{{t.whatWasTheQuestion}}</button>
+                <button *ngIf="!showQuestion && questionView.askButton" class="button is-info is-fullwidth" (click)="showQuestion = true">{{t.whatWasTheQuestion}}</button>
             </p>
 
-            <p *ngIf="showQuestion" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
+            <p *ngIf="showQuestion && !questionView.above" [class.rtl]="rtl"> {{question | bsQuestion}} </p>
         </div>
 
         <div *ngIf="answerSelected" class="screen-center">

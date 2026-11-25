@@ -36,6 +36,8 @@ test('English visitors keep the English Create page word for word', () => {
         players: 'Players:',
         kids: '🧒 Kids are playing',
         kidsNote: 'Questions kids of 8 to 12 get. After all 20, the usual questions.',
+        kidsNoPack: 'A kids game has no',
+        kidsSeason: 'A kids game also gets two kid-friendly',
         create: 'CREATE',
         error: 'oops, something went wrong. Please try again',
     });

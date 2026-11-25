@@ -73,6 +73,8 @@ const about = `
       <li><strong>ממציאים שקר, ואז מחפשים את האמת.</strong> 5, 7 או 9 שאלות, והנקודות גדלות בכל סבב.</li>
     </ol>
     <p>לקבוצה גדולה, אפשר להציג את השאלות והניקוד על טלוויזיה או מחשב במצב הצגה.</p>
+    <p>בחופש חנוכה, או בכל יום שכולם בבית: יש לנו <a href="/he/school-break">משחקים לחופש</a>, רעיונות ל<a href="/he/days-at-home">ימים ארוכים בבית עם הילדים</a>,
+      ו<a href="/he/home-together">משחק קבוצתי לבית</a> לערב שכולם יחד בסלון.</p>
     <h2>עוד על המשחק</h2>
     <p class="bs-links"><a href="/he/how-to-play">איך משחקים</a> · <a href="/he/party-game-phone">משחק חברה בטלפון</a> ·
       <a href="/he/hanukkah">משחק לחנוכה</a> · <a href="/he/friday-dinner">משחק לארוחת שישי</a> ·
@@ -85,7 +87,8 @@ const about = `
       <a href="/he/seder">משחק לליל הסדר</a> · <a href="/he/made-up-answers">משחק שממציאים בו תשובות</a> ·
       <a href="/he/bachelorette">משחק למסיבת רווקות</a> · <a href="/he/adult-birthday">משחק ליום הולדת למבוגרים</a> ·
       <a href="/he/friends-weekend">משחק לסופ"ש בצימר</a> ·
-      <a href="/" hreflang="en" lang="en">Bullshit in English</a></p>
+      <a href="/?lang=en" hreflang="en" lang="en">Bullshit in English</a></p>
+    <p>מחפשים את משחק הקלפים? כאן מוסבר <a href="/he/bullshit-card-game">איך משחקים בולשיט בקלפים</a>.</p>
     <noscript><p>המשחק עצמו צריך JavaScript פעיל בדפדפן.</p></noscript>
   </main>
   `;

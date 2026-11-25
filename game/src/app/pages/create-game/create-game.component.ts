@@ -4,7 +4,7 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, markVisit, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
 import { inPortal } from '../../portal/portal';
-import { questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack } from '../../game-model';
+import { questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack, kidsSeasonPack } from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
@@ -60,6 +60,12 @@ export class CreateGameComponent implements OnInit {
      */
     get pack(): string {
         return packFits(this.askedPack, this.locale) ? this.askedPack : seasonalPack(Date.now(), this.locale) || null;
+    }
+
+    /** With kids playing: the holiday whose kid-friendly questions the kids game still gets today, or ''. */
+    get kidsSeasonLine(): string {
+        const id = kidsSeasonPack(Date.now(), this.locale);
+        return id ? `${this.t.kidsSeason} ${packIcon(id)} ${questionPacks[id].label[this.locale === 'he' ? 'he' : 'en']}.` : '';
     }
 
     get packIcon(): string {
