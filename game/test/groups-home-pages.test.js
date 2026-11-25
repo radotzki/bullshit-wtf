@@ -26,6 +26,7 @@ const homeStrings = load('pages/landing/home-strings.ts').homeStrings;
 const createStrings = load('pages/create-game/create-strings.ts').createStrings;
 const gameStrings = load('pages/game-strings.ts').gameStrings;
 const finalStrings = load('pages/score-board-final/final-strings.ts').finalStrings;
+const bigScreenStrings = load('pages/game-staging/big-screen-host.ts').bigScreenStrings;
 
 const page = p => pages.find(x => x.path === p);
 const text = body => body.replace(/<[^>]+>/g, ' ');
@@ -87,7 +88,7 @@ Object.keys(added).forEach(p => {
     test(`${p}: every button it names is one the site shows there`, () => {
         const home = homeStrings(lang), create = createStrings(lang), game = gameStrings(lang), final = finalStrings[lang];
         const norm = s => s.toLowerCase();
-        const buttons = [startOf(pg).label, create.create, home.join, game.start, final.rematch, home.presentShort].map(norm);
+        const buttons = [startOf(pg).label, create.create, home.join, game.start, final.rematch, home.presentShort, bigScreenStrings(lang).button].map(norm);
         const named = [];
         const re = lang === 'he'
             ? /(?:לוחצים על|לוחצים|לוחץ על|ללחוץ על|בוחרים|בוחר|כפתור) "([^"]+)"/g
