@@ -399,6 +399,23 @@ test('a friend who writes the truth itself: one answer, which they can still pic
     assert.strictEqual(truth.selectors.length, 3, 'the friend who wrote it found it');
 });
 
+test('a friend who writes only a part of the truth: folded into the truth too, in both languages; a lie that drops "not" stays', async () => {
+    for (const [truthText, part, fair] of [['pizza with olives', 'Pizza', 'not pizza'], ['פיצה עם זיתים', 'פיצה', 'לא פיצה']]) {
+        const pin = newGame(4);
+        await next(pin);
+        await toQuestion(pin, 1);
+        const named = model.aboutOf(game(pin).state).pid;
+        const others = pids(pin).filter(p => p !== named);
+        await answer(pin, named, truthText);
+        await answer(pin, others[0], part);
+        await answer(pin, others[1], fair);
+        await answer(pin, others[2], 'falafel');
+        assert.ok(!game(pin).answers[others[0]], `"${part}" is a part of "${truthText}"`);
+        assert.ok(game(pin).answers[others[1]], `"${fair}" is a lie`);
+        assert.ok(game(pin).answers[others[2]]);
+    }
+});
+
 test('a full table gets no house answers: every answer is a real one', async () => {
     const pin = newGame(8, { totalQ: 7 });
     await next(pin);

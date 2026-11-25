@@ -32,6 +32,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     answer: string;
     questionSubmitted: boolean;
     enteredCorrectAnswer: boolean;
+    // The lie refused was only a part of the truth: "too close", not "the correct answer".
+    enteredPartOfTruth: boolean;
     rtl: boolean;
     t: GameStrings = gameStrings('en');
     duration: number;
@@ -198,6 +200,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;
+                    this.enteredPartOfTruth = err.part === true;
                 } else {
                     reportError(err, 'answer', { pin: this.pin });
                     this.errorMsg = this.t.oops;

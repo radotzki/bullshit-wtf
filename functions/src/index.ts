@@ -40,6 +40,10 @@ function errorBody(e: any) {
         if (e.justEnded === true) {
             body.justEnded = true;
         }
+        // CORRECT_ANSWER: the lie is only a part of the truth, not the truth itself (see answer.ts).
+        if (e.part === true) {
+            body.part = true;
+        }
         // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
         if (e.nightAfter && typeof e.nightAfter === 'object') {
             body.nightAfter = e.nightAfter;
