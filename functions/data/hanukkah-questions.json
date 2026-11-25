@@ -1656,26 +1656,26 @@
     "pack": "hanukkah"
   },
   "hanukkah-26-he-62": {
-    "questionText": "את 'מעוז צור' שרים באנגלית בדרך כלל כ$blank$",
-    "realAnswer": "רוק אוף אייג'ס",
+    "questionText": "הפסטיגל, מופע הילדים של חופשת חנוכה, נערך לראשונה ב-1981 ב$blank$",
+    "realAnswer": "חיפה",
     "fakeAnswers": [
-      "איי אוף דה טייגר",
-      "קנדל אין דה ווינד",
-      "וי וויל רוק יו"
+      "תל אביב",
+      "ירושלים",
+      "אילת"
     ],
-    "citation": "https://www.myjewishlearning.com/article/maoz-tzur-rock-of-ages/",
+    "citation": "https://en.wikipedia.org/wiki/Festigal",
     "lang": "he",
     "pack": "hanukkah"
   },
   "hanukkah-26-he-63": {
-    "questionText": "ב-1951 ראש הממשלה דוד בן גוריון העניק חנוכייה לנשיא ארה\"ב $blank$",
-    "realAnswer": "הארי טרומן",
+    "questionText": "המנורה שעל מטבע 10 האגורות נוצרה בהשראת מטבע עתיק של המלך האחרון של בית $blank$",
+    "realAnswer": "חשמונאי",
     "fakeAnswers": [
-      "דווייט אייזנהאואר",
-      "פרנקלין רוזוולט",
-      "ג'ון קנדי"
+      "הורדוס",
+      "דוד",
+      "שלמה"
     ],
-    "citation": "https://obamawhitehouse.archives.gov/photos-and-video/photo/2013/12/menorah-presented-harry-s-truman-prime-minister-david-ben-gurion-isra",
+    "citation": "https://www.boi.org.il/en/bank-of-israel/education-and-visitors-center/the-currency-exhibit-development-of-money/part3",
     "lang": "he",
     "pack": "hanukkah"
   },
