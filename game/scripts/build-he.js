@@ -78,6 +78,7 @@ const about = `
     <h2>עוד על המשחק</h2>
     <p class="bs-links"><a href="/he/how-to-play">איך משחקים</a> · <a href="/he/party-game-phone">משחק חברה בטלפון</a> ·
       <a href="/he/hanukkah">משחק לחנוכה</a> · <a href="/he/friday-dinner">משחק לארוחת שישי</a> ·
+      <a href="/he/hanukkah-quiz">חידון חנוכה למבוגרים</a> ·
       <a href="/he/family-evening">משחק לערב משפחתי</a> · <a href="/he/friends-evening">משחק לערב חברים</a> ·
       <a href="/he/classroom">משחק לכיתה</a> · <a href="/he/team-building">משחק לגיבוש צוות</a> ·
       <a href="/he/game-like-jackbox">משחק כמו ג'קבוקס</a> · <a href="/he/youth-group">פעולה מוכנה לתנועת נוער</a> ·

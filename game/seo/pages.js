@@ -172,6 +172,8 @@ module.exports = [
         h1: 'איך משחקים בולשיט',
         body: howHe,
     },
+    // A Hanukkah quiz for adults: 12 questions with their answers, then the game (seo/pages-he-hanukkah-quiz.js).
+    ...require('./pages-he-hanukkah-quiz').pages(he),
     {
         path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en, tag: 'seo-en-phone',
         image: '/assets/og-phone-en.png',
