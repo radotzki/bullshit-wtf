@@ -651,7 +651,9 @@ async function aboutAnswersStep(pin: string, game: GameScheme): Promise<Partial<
 
 /**
  * At START, in a pack game that plays About questions: the questions reordered so that every pack question
- * is played (see clearAboutPlaces). On any failure the order is kept, as before.
+ * is played (see clearAboutPlaces). Any question with a pack is kept, so a kids game's season questions
+ * (QuestionPack.kidsToo, e.g. pack thanksgiving) stay too; only bank questions (no pack) move. On any
+ * failure the order is kept, as before.
  */
 async function packClearOfAbout(game: GameScheme, qids: any, aboutQs: GameScheme['aboutQs']): Promise<any> {
     if (!game.pack || !aboutQs || !qids || typeof qids !== 'object') {
@@ -661,7 +663,7 @@ async function packClearOfAbout(game: GameScheme, qids: any, aboutQs: GameScheme
         const list: string[] = Array.isArray(qids) ? qids : Object.keys(qids).sort((a, b) => +a - +b).map(k => qids[k]);
         const places = Object.keys(aboutQs).map(k => Number(k.slice(1))).filter(n => Number.isInteger(n));
         const questions = await Promise.all(list.map(qid => qid ? get<any>(questionsRef.child(qid)) : Promise.resolve(null)));
-        const pack = new Set(list.filter((qid, i) => !!questions[i] && questions[i].pack === game.pack));
+        const pack = new Set(list.filter((qid, i) => !!questions[i] && !!questions[i].pack));
         if (!places.some(place => pack.has(list[place]))) {
             return qids;
         }
