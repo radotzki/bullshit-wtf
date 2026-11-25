@@ -246,11 +246,13 @@ module.exports = [
         title: 'Hanukkah party game for the whole family, free · Bullshit',
         description: 'Eight nights, one family, a lot of latkes. Bullshit is a free bluffing trivia game everyone plays on their own phone after candle lighting. No download.',
         h1: 'A Hanukkah game for after the candles',
+        updated: '2026-11-26',
         body: `
 <p>Hanukkah has eight nights and most of them end with the family around a table. Bullshit gives that table a game: everyone on their own phone, the grandparents included, and nothing to set up or clean away.</p>
 <!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a lie to fill it, then everyone tries to spot the truth among all the answers. You score for finding the truth and for every relative who falls for your lie. A game of 7 questions takes about a quarter of an hour, and you can pick 5 for a shorter one.</p>
+<p>Hosting Thanksgiving first? The <a href="/thanksgiving-party-game">Thanksgiving party game</a> mixes Thanksgiving questions into the game, from Thursday's table to the long weekend.</p>
 <h2>Why it fits Hanukkah</h2>
 <ul>
   <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, not know facts. Playing with kids of 8 to 12? Tick "Kids are playing" for questions they get (a kids game has no Hanukkah questions).</li>
