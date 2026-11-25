@@ -18,10 +18,13 @@ export class LandingComponent implements OnInit {
     ngOnInit() {
         this.sessionService.presenter = undefined;
 
+        // The menu shows, but the address stays the one the visitor opened (/ or /he, with its ?via=):
+        // a copied /d or /m would open the English page and, on a phone, the computer menu.
+        const keep = { skipLocationChange: true };
         if (isMobile()) {
-            this.router.navigate(['m']);
+            this.router.navigate(['m'], keep);
         } else {
-            this.router.navigate(['d']);
+            this.router.navigate(['d'], keep);
         }
     }
 

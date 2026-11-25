@@ -85,8 +85,10 @@
                             [class.is-loading]="loading" [disabled]="runStarting">
                             {{ tasteWords.invite }}
                         </button>
+                        <!-- Its two lines are one name for a screen reader, with a pause between them (side by side they ran together). -->
                         <button class="button is-info is-medium is-fullwidth rematch solo-again" (click)="playSolo()"
-                            [class.is-loading]="runStarting" [disabled]="loading || !mine">
+                            [class.is-loading]="runStarting" [disabled]="loading || !mine"
+                            [attr.aria-label]="soloRunEnd ? runWords.playAgain : runWords.keepGoing + ', ' + runWords.keepGoingSub(runLives)">
                             <span class="solo-again-main">{{ soloRunEnd ? runWords.playAgain : runWords.keepGoing }}</span>
                             <span *ngIf="!soloRunEnd" class="solo-again-sub">{{ runWords.keepGoingSub(runLives) }}</span>
                         </button>

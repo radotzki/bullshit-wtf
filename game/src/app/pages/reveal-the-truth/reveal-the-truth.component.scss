@@ -605,6 +605,14 @@
             padding: 6px 12px;
             margin-bottom: 6px;
             animation: none;
+            // The truth's label keeps its own line above the answer, as in an unfolded row
+            // (side by side it read "THE TRUTHPIZZA", "האמתלסובב").
+            flex-wrap: wrap;
+
+            .truth-label {
+                flex: 0 0 100%;
+                margin-bottom: 2px;
+            }
 
             .text-line {
                 flex: 1 1 auto;
