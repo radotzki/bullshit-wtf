@@ -136,3 +136,23 @@ test('the Create page offers the pack for an English game only, and drops it whe
     assert.strictEqual(offered('hanukkah', 'en', thursday), 'hanukkah');
     assert.strictEqual(offered(null, 'en', october), null);
 });
+
+// The English Thanksgiving family night walk-through: what tripped the table, said on the page.
+test('the page says how the evening really goes: names, late arrivals, sleeping phones, the rematch, kids', () => {
+    const text = page.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    assert.match(text, /click "Present Game"/, 'the button is "Present Game"');
+    assert.ok(!/click "Present" /.test(text));
+    assert.match(text, /"Use as the big screen"/);
+    assert.match(text, /9 letters at most/);
+    assert.match(text, /"Aunt Lind"/);
+    assert.ok(['Linda', 'AuntLinda', 'Pop Joe'].every(n => n.length <= 9));
+    assert.match(text, /arrives after the first question/);
+    assert.match(text, /goes to sleep/);
+    assert.match(text, /Join the rematch/);
+    // The kids switch keeps two Thanksgiving questions in the season (questionPacks.thanksgiving.kidsToo).
+    assert.match(text, /two Thanksgiving questions picked for kids/);
+    assert.ok((model.questionPacks.thanksgiving.kidsToo || []).length >= 8);
+    assert.strictEqual(model.KIDS_SEASON_PER_GAME, 2);
+    assert.match(text, /until 30 November/);
+    assert.strictEqual(model.questionPacks.thanksgiving.season.to, '2026-11-30');
+});
