@@ -204,6 +204,25 @@ export function setInviteMaker(make: LinkMaker | null, changed?: () => void) {
     }
 }
 
+// ---------- happy time ----------
+// CrazyGames' SDK asks to be told of a moment of joy ("happytime"), sparingly. A solo run's new best
+// is one. Outside the portal (or before the SDK is ready) nothing is told.
+let happy: (() => void) | null = null;
+
+/** Set by the portal service once the SDK is ready. */
+export function setHappyTime(f: (() => void) | null) {
+    happy = f;
+}
+
+/** A moment of joy for CrazyGames (a solo run's new best); nothing anywhere else. */
+export function happyTime() {
+    try {
+        if (happy) {
+            happy();
+        }
+    } catch (e) { }
+}
+
 /** The CrazyGames invite link of a game, or '' while it is not known (asked for in the background). */
 export function portalInviteUrl(pin: string): string {
     const key = String(pin || '').toUpperCase();
@@ -287,7 +306,7 @@ export function announcePortalLocale(locale: 'he' | 'en') {
 // Most CrazyGames players come alone, from the game's tile. The home says at once that this is a
 // party game for friends, how a round goes, and offers two starts of the same size (CrazyGames:
 // "Playing alone is as prominent as playing with friends"): a game with friends, its lobby and
-// invite link one tap away, and the 5-question taste alone, which needs no one.
+// invite link one tap away, and the solo run alone (until fooled 3 times), which needs no one.
 
 export interface PortalHomeStrings {
     pitch: string;
@@ -312,7 +331,7 @@ export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings
         friends: 'Play with friends',
         friendsSub: 'You get a link to send them',
         solo: 'Try it alone',
-        soloSub: '5 quick questions, no one needed',
+        soloSub: 'Play until you\'re fooled 3 times',
         options: 'More options: language, length, kids',
     },
     he: {
@@ -326,7 +345,7 @@ export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings
         friends: 'לשחק עם חברים',
         friendsSub: 'מקבלים קישור לשלוח להם',
         solo: 'לנסות לבד',
-        soloSub: '5 שאלות מהירות, בלי אף אחד',
+        soloSub: 'משחקים עד שנופלים 3 פעמים',
         options: 'עוד אפשרויות: שפה, אורך, ילדים',
     },
 };
@@ -353,7 +372,7 @@ export function autoJoinDue(quick: QuickStart | null, route: string, name: strin
     return !!quick && !quick.sent && !!m && m[1].toUpperCase() === quick.pin && !!name;
 }
 
-/** Whether a route is the lobby of the quick-start game played alone: the taste starts at once. */
+/** Whether a route is the lobby of the quick-start game played alone: the solo run starts at once. */
 export function soloStartDue(quick: QuickStart | null, route: string): boolean {
     const m = /^\/game-staging\/([A-Za-z]+)$/.exec(routePath(route));
     return !!quick && quick.solo && !!m && m[1].toUpperCase() === quick.pin;

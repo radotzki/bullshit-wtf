@@ -7,9 +7,10 @@ import { reportError } from '../sentry/sentry.module';
 import { chosenPack, seasonalPack } from '../game-model';
 import {
     PORTAL_TAG, QuickStart, announcePortalLocale, autoJoinDue, blockedLink, gameplayFor, inPortal, invitePin, portalCampaign,
-    portalLocale, roomFor, portalUsername, setInviteMaker, setPortalGameLink, setPortalUsername, soloStartDue,
+    portalLocale, roomFor, portalUsername, setHappyTime, setInviteMaker, setPortalGameLink, setPortalUsername, soloStartDue,
 } from './portal';
 import { PORTAL_CSS } from './portal-style';
+import { clearSoloStartFailure, soloStartFailed } from '../services/solo-run';
 
 /** CrazyGames' HTML5 SDK, v3 (https://docs.crazygames.com/sdk/intro/). Loaded on the portal path only. */
 export const SDK_URL = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
@@ -135,6 +136,8 @@ export class PortalService {
         this.applyMute();
         this.call(() => sdk.game.addSettingsChangeListener(() => this.applyMute()));
 
+        // A solo run's new best is a happy moment (portal.ts, happyTime).
+        setHappyTime(() => this.call(() => sdk.game.happytime()));
         // Invite links come from CrazyGames; the lobby's QR, WhatsApp, share and copy read them.
         setInviteMaker(pin => sdk.game.inviteLink({ roomId: pin }), () => this.zone.run(() => { }));
         try {
@@ -175,8 +178,8 @@ export class PortalService {
      * A new game with the default settings (5 questions, the pack in season, as the create page
      * offers), for the portal's home and Instant Multiplayer. With the player's CrazyGames username
      * known, the join step sends it at once, so the player lands in the lobby with the invite link
-     * (prefillNickname); without one, they type a nickname first. `solo`: the 5-question taste,
-     * started as soon as the player is in the lobby (startSoloIfDue). Resolves false if no game
+     * (prefillNickname); without one, they type a nickname first. `solo`: the solo run, started as
+     * soon as the player is in the lobby (startSoloIfDue). Resolves false if no game
      * could be made.
      */
     async quickGame(locale: string, solo: boolean): Promise<boolean> {
@@ -202,15 +205,23 @@ export class PortalService {
         }
     }
 
-    /** The taste alone: START on its lobby, once, as the lobby's own "Try 5 quick questions alone" does. */
+    /**
+     * "Try it alone": START on its lobby, once, as a solo run (SoloRun in game-model): questions until
+     * the player is fooled three times. If START fails, the lobby says so and shows its button
+     * (soloStartFailed in services/solo-run.ts).
+     */
     private startSoloIfDue(url: string) {
         const quick = this.quick;
         if (!soloStartDue(quick, url)) {
             return;
         }
         this.quick = null;
-        this.api.logShare('invite', 'solo-start', { locale: preferredLocale() });
-        this.api.startGame(quick.pin).catch(err => reportError(err, 'portalSoloStart', { pin: quick.pin }));
+        clearSoloStartFailure();
+        this.api.logShare('invite', 'solo-run-start', { locale: preferredLocale() });
+        this.api.startGame(quick.pin, true).catch(err => {
+            reportError(err, 'portalSoloStart', { pin: quick.pin });
+            this.zone.run(() => soloStartFailed(quick.pin));
+        });
     }
 
     private onRoute(url: string) {

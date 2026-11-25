@@ -22,7 +22,7 @@ const { lobbyText } = load(path.join(app, 'pages', 'game-staging', 'lobby-host.t
 /** Every word of a language, with the functions called on sample values. */
 function words(t) {
     const samples = {
-        pin: ['ABCD'], round: [2], questionOf: [3, 7], scanLabel: ['ABCD'], points: [500],
+        pin: ['ABCD'], round: [2], questionOf: [3, 7], questionNo: [7], scanLabel: ['ABCD'], points: [500],
         leadsBy: ['Dan', 500], tiedForFirst: ['Dan and Ben'], manyTiedForFirst: [4], youLeadBy: [500],
         youAreTiedWith: ['Ben'], youAreTiedWithMany: [3], behind: [500, 'Dan'], behindFirstPlace: [1500],
         foundTheTruth: ['+1000'], fellForOurs: ['-500'], fellFor: ['Dan'], fooled: ['Dan and Ben', '+500'],
@@ -60,6 +60,7 @@ test('every game that is not Hebrew keeps the English words, letter for letter',
         pin: 'PIN: ABCD',
         round: 'ROUND 2',
         questionOf: '3 OF 7',
+        questionNo: 'QUESTION 7',
         joinAt: 'Join at',
         withPin: 'with Game PIN:',
         leaveTitle: 'Don\'t leave us :(',
@@ -154,6 +155,7 @@ test('Hebrew lines keep the players\' names, the PIN and the numbers', () => {
     assert.ok(he.scanLabel('ABCD').indexOf('ABCD') !== -1);
     assert.strictEqual(he.round(2), 'סיבוב 2');
     assert.strictEqual(he.questionOf(3, 7), '3 מתוך 7');
+    assert.strictEqual(he.questionNo(7), 'שאלה 7');
     assert.strictEqual(he.points(750), '750 נקודות');
     assert.strictEqual(he.waitingFor(1), 'מחכים לחבר אחד');
     assert.ok(he.waitingFor(3).indexOf('3') !== -1);

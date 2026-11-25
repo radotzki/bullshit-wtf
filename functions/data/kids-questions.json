@@ -87,7 +87,7 @@
     "questionText": "Baby seahorses are carried in a pouch and born from their $blank$",
     "realAnswer": "dad",
     "fakeAnswers": [
-      "mum",
+      "mom",
       "big sister",
       "grandma"
     ],
@@ -125,7 +125,7 @@
     "fakeAnswers": [
       "blue",
       "green",
-      "grey"
+      "gray"
     ],
     "citation": "https://en.wikipedia.org/wiki/Carrot",
     "lang": "en",

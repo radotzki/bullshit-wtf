@@ -25,6 +25,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     pin: string;
     question: string;
     presenter: boolean;
+    /** No big screen in the game: the phone is the only place the question is, so it is set larger. */
+    phoneOnly = false;
     loading: boolean;
     errorMsg: string;
     answer: string;
@@ -78,6 +80,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
             this.loadHelper();
+            this.apiService.gameHasBigScreen(this.pin).then(bigScreen => this.phoneOnly = !bigScreen);
         }
     }
 

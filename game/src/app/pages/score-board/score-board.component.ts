@@ -1,4 +1,5 @@
-import { GamePlayer, seatPicture } from './../../game-model';
+import { GamePlayer } from './../../game-model';
+import { scoreRows } from './score-rows';
 import { SessionService } from './../../services/session.service';
 import { GameService } from './../../services/game.service';
 import { ApiService } from './../../services/api.service';
@@ -32,12 +33,9 @@ export class ScoreBoardComponent implements OnInit {
         this.gameService.register(this.pin);
         this.rtl = this.apiService.knownGameLocale(this.pin) === 'he';
         this.apiService.getGameLocale(this.pin).then(locale => this.rtl = locale === 'he', () => null);
-        this.apiService.getPlayers(this.pin).then(resp => {
-            const players = Object.keys(resp).map(k => resp[k]);
-            this.displayPlayers = players
-                .map((p, i) => Object.assign(p, { picture: seatPicture(i) }))
-                .sort((a, b) => a.score < b.score ? 1 : -1);
-        });
+        // An old game reads no players (or is refused): an empty board, and the final screen next.
+        this.apiService.getPlayers(this.pin)
+            .then(resp => this.displayPlayers = scoreRows(resp), () => this.displayPlayers = []);
     }
 
 }

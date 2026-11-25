@@ -2,7 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Bullshit: a free party game for phones. Lie, bluff, find the truth</title>
+  <title>Bullshit: bluffing party game on phones, not the card game</title>
+  <!--
+    Hebrew browsers to the Hebrew home (BS:HE-AUTO). Most of the game's Google clicks are people who
+    typed its name in Hebrew ("בולשיט") and landed here, on the English "/". A browser whose first
+    language is Hebrew that opens a bare "/" (no query, no hash), and has never been given a language
+    on this site (BS_SITE_LOCALE, set by /he, ?lang= and the menu's language switch), goes straight
+    to /he?via=he-auto before anything is drawn, so a phone never shows English first. The tag reaches
+    the visit beacon and a game this tab creates (join-source.ts), so the weekly count can tell these
+    arrivals apart. A tab that already carries a post tag keeps it and goes to /he. Robots and
+    automated browsers stay on "/": search engines index this page as the English home.
+    It runs before the visit beacon, so a visit that moves on is counted once, on /he. It keeps
+    where the visit came from (BS_ARRIVAL, as seo/arrival-note.js), since /he sees only this site.
+  -->
+  <!-- BS:HE-AUTO:START -->
+  <script>
+  (function () {
+    try {
+      var l = location, n = navigator, w = window;
+      if (l.pathname !== '/' || l.search || l.hash || n.webdriver) { return; }
+      if (/bot|crawl|spider|slurp|preview|externalhit|lighthouse|headless/i.test(n.userAgent || '')) { return; }
+      var first = String((n.languages && n.languages[0]) || n.language || '').toLowerCase();
+      if (!/^(he|iw)(-|$)/.test(first) || w.localStorage.getItem('BS_SITE_LOCALE')) { return; }
+      var s = w.sessionStorage, kept = s.getItem('BS_CAMPAIGN');
+      if (!s.getItem('BS_ARRIVAL')) {
+        var m = /^[a-z][a-z0-9+.-]*:\/\/([^\/?#]*)/i.exec(document.referrer || '');
+        var h = m ? m[1].replace(/^[^@]*@/, '').replace(/:\d*$/, '').toLowerCase() : '';
+        s.setItem('BS_ARRIVAL', JSON.stringify({
+          page: '/', ref: h && h !== l.hostname && /^[a-z0-9.-]{1,60}$/.test(h) ? h : null, at: new Date().getTime()
+        }));
+      }
+      l.replace(kept ? '/he' : '/he?via=he-auto');
+    } catch (e) { }
+  })();
+  </script>
+  <!-- BS:HE-AUTO:END -->
   <!--
     Visit beacon: counts page views, with no cookie and nothing that names a person. It posts small
     rows to /_v (the `visit` function), which writes them to BigQuery `analytics.visits`:
@@ -109,7 +143,7 @@
     every tag between the BS:META markers; /he and the Hebrew app addresses are served from that file.
   -->
   <!-- BS:META:START -->
-  <meta name="description" content="A free party game everyone plays on their own phone, in the browser. Write a lie that fools your friends, then find the truth. Up to 12 players, no download. In English and Hebrew.">
+  <meta name="description" content="Not the card game: Bullshit is a free bluffing party game everyone plays on their own phone. Write a fake answer to a strange true fact, fool your friends, find the truth. 2 to 12 players, no download.">
   <link rel="canonical" href="https://bullshit.wtf/">
   <link rel="alternate" hreflang="en" href="https://bullshit.wtf/">
   <link rel="alternate" hreflang="he" href="https://bullshit.wtf/he">
@@ -210,6 +244,7 @@
       <a href="/bachelorette-party-game">Bachelorette party game</a> · <a href="/adult-birthday-party-game">Adult birthday party game</a> ·
       <a href="/weekend-away-games">Games for a weekend away</a> ·
       <a href="/he" hreflang="he" lang="he">בולשיט בעברית</a></p>
+    <p>Looking for the card game? Here is <a href="/bullshit-card-game">how to play Bullshit, the card game</a>.</p>
     <noscript><p>The game itself needs JavaScript turned on.</p></noscript>
   </main>
   <!-- BS:ABOUT:END -->

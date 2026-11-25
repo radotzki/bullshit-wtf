@@ -340,7 +340,8 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
             // wait: CATCH THE NEXT ROUND, while the table is mid-game (same-table.ts).
             const forked = req.body.sameTable === true
                 ? await sameTable(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
-                    req.body.stagedReveal === true, req.body.aboutUs === true, req.body.wait === true)
+                    req.body.stagedReveal === true, req.body.aboutUs === true, req.body.wait === true,
+                    typeof req.body.campaign === 'string' ? req.body.campaign : undefined)
                 : await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
                     req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(forked);
@@ -410,7 +411,7 @@ exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
 exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
     cors(req, res, async () => {
         try {
-            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey)));
+            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey), Date.now(), req.body.run === true));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));

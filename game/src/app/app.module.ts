@@ -1,3 +1,4 @@
+import { RunBarComponent } from './components/run-bar/run-bar.component';
 import { GameService } from './services/game.service';
 import { inject, provideAppInitializer } from '@angular/core';
 import { PortalHomeComponent } from './portal/portal-home.component';
@@ -50,6 +51,7 @@ import { CrewService } from './services/crew.service';
 import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
 import { StepComponent } from './pages/step/step.component';
+import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-night.component';
 
 @NgModule({
     declarations: [
@@ -88,6 +90,8 @@ import { StepComponent } from './pages/step/step.component';
         DemoClipComponent,
         CrewComponent,
         StepComponent,
+        HanukkahNightComponent,
+        RunBarComponent,
     ],
     imports: [
         BrowserModule,
