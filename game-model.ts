@@ -129,6 +129,10 @@ export interface GameScheme {
     crew?: string;
     // A seasonal question pack mixed into this game (see questionPacks). Carried by Replay.
     pack?: string;
+    // A kids game ("Kids are playing") made from a holiday's offer that its language doesn't get by
+    // default, like an English game from the Hanukkah page: that holiday, whose kid-friendly questions
+    // (QuestionPack.kidsToo) the game gets in its season (kidsSeasonPack). Carried by Replay.
+    kidsHoliday?: string;
     // Where the host's visit started (see GameArrival). No phone can read it; not carried by Replay.
     arrival?: GameArrival;
     // The campaign tag (?via=...) the host arrived with, for measuring posts. Not carried by Replay,
@@ -905,6 +909,16 @@ export const questionPacks: { [id: string]: QuestionPack } = {
             // the shamash, Rock of Ages, Eight Crazy Nights...), not with a random pack question (Apphus,
             // twenty cubits, Nicanor's head): from the English Hanukkah night walk. No gory one opens.
             .concat(['04', '05', '13', '17', '21', '24', '25', '26', '33', '50', '68'].map(n => `hanukkah-26-en-${n}`)),
+        // For a kids game in the season (Hebrew by default, English from the Hanukkah page's offer):
+        // the easiest, gentlest questions of the pack, short answers, no battles, kings or comedians.
+        // English: Hubble's dreidel, cheese latkes, nun, 44 candles, "here", to turn, the servant,
+        // dedication, the Temple's seven lamps, gimel, the menurkey, the clay dreidel, the sponge.
+        // Hebrew: Hubble's dreidel, the sponge, cheese latkes, nun, 44 candles, the newest candle,
+        // "there", to turn, the seven lamps, gimel, the songs (גיל, אש, אדליק), זאת חנוכה, Levin
+        // Kipnis, the first Festigal in Haifa.
+        kidsToo: ['01', '03', '04', '05', '11', '13', '17', '21', '24', '26', '44', '50', '56'].map(n => `hanukkah-26-en-${n}`)
+            .concat(['01', '03', '04', '05', '06', '10', '11', '12', '20', '22', '26', '30', '48', '56', '58', '62']
+                .map(n => `hanukkah-26-he-${n}`)),
     },
     // US Thanksgiving is Thursday 26 November 2026. English questions only
     // (functions/data/thanksgiving-questions.json), from the Friday before to the Sunday after.
@@ -958,11 +972,29 @@ export const KIDS_SEASON_PER_GAME = 2;
 
 /**
  * The seasonal pack whose kid-friendly questions a kids game gets today in this language (see
- * QuestionPack.kidsToo), or undefined.
+ * QuestionPack.kidsToo), or undefined: `asked` (the holiday the create page offered, GameScheme
+ * kidsHoliday) while in its season, else the pack the language gets by default today.
  */
-export function kidsSeasonPack(now: number = Date.now(), locale?: string): string | undefined {
+export function kidsSeasonPack(now: number = Date.now(), locale?: string, asked?: string): string | undefined {
+    // A holiday the game asked for (the create page's offer, like ?pack=hanukkah in English), while
+    // it is in its season and has questions in this language.
+    if (asked && hasKidsToo(asked) && packFits(asked, locale) && inSeason(asked, now)) {
+        return asked;
+    }
     const id = seasonalPack(now, locale);
-    return id && (questionPacks[id].kidsToo || []).length ? id : undefined;
+    return id && hasKidsToo(id) ? id : undefined;
+}
+
+function hasKidsToo(id: any): boolean {
+    return isPack(id) && (questionPacks[id].kidsToo || []).length > 0;
+}
+
+/** Whether today (the date in Israel) is in pack `id`'s season. */
+export function inSeason(id: any, now: number = Date.now()): boolean {
+    const s = isPack(id) && questionPacks[id].season;
+    // Israel is UTC+2 in winter; close enough for a day-level season (as seasonalPack).
+    const day = new Date(now + 2 * 3600 * 1000).toISOString().slice(0, 10);
+    return !!s && day >= s.from && day <= s.to;
 }
 
 /**

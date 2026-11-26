@@ -189,9 +189,30 @@ export class ApiService {
             // This client can show the About questions, so the server may draw this game into their test.
             aboutUs: true,
             ...(challenge ? { challenge: challenge.toUpperCase() } : {}),
+            // A kids game's holiday (createKidsGame).
+            ...this.takeKidsHoliday(),
         });
         rememberHostKey(resp && resp.pin, hostKey);
         return resp;
+    }
+
+    // The holiday the next createGame's kids game keeps (createKidsGame); taken once.
+    private kidsHoliday: string;
+
+    /**
+     * "Kids are playing" in a holiday's season: a game made as createGame makes it, which also keeps
+     * `kidsHoliday` (GameScheme kidsHoliday), so the kids game gets that holiday's kid-friendly questions.
+     * A method of its own, so createGame's arguments stay as they are.
+     */
+    createKidsGame(locale: string, count: number, pack: string, campaign: string, kidsHoliday: string): Promise<{ pin: string }> {
+        this.kidsHoliday = kidsHoliday;
+        return this.createGame(locale, count, pack, campaign);
+    }
+
+    private takeKidsHoliday(): { kidsHoliday?: string } {
+        const kidsHoliday = this.kidsHoliday;
+        this.kidsHoliday = undefined;
+        return kidsHoliday ? { kidsHoliday } : {};
     }
 
     /**

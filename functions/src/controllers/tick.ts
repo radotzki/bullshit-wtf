@@ -361,7 +361,7 @@ async function ideasFor(game: GameScheme, qidx: number) {
  */
 async function pickQuestionsForRoom(game: GameScheme) {
     try {
-        const qids = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack);
+        const qids = await randomQuestions(game.locale, game.totalQ, playerUids(game), game.pack, game.kidsHoliday);
         return qids.length ? qids : game.qids;
     } catch (e) {
         console.error('Failed to pick questions for room, keeping original ones', e);

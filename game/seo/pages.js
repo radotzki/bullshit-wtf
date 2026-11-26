@@ -261,7 +261,7 @@ module.exports = [
 <p>Hosting Thanksgiving first? The <a href="/thanksgiving-party-game">Thanksgiving party game</a> mixes Thanksgiving questions into the game, from Thursday's table to the long weekend.</p>
 <h2>Why it fits Hanukkah</h2>
 <ul>
-  <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, not know facts. Playing with kids of 8 to 12? Tick "Kids are playing" for questions they get (a kids game has no Hanukkah questions).</li>
+  <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, not know facts. Playing with kids of 8 to 12? Tick "Kids are playing" for questions they get; from 1 December those include two easy Hanukkah questions.</li>
   <li><strong>Up to 12 phones</strong>, and a TV or laptop can show the game to the whole room. Grandparents can share one phone or a tablet and play as one.</li>
   <li><strong>Free, no app.</strong> A cousin who comes late opens the same link and joins the game under way, at 0 points.</li>
   <li><strong>Hanukkah questions.</strong> A Hanukkah game mixes three Hanukkah questions into every game: the astronaut who spun a dreidel in space, the year Hanukkah met Thanksgiving, and more. The first one is always one your family half knows.</li>
@@ -293,7 +293,7 @@ module.exports = [
 <p>מופיעה עובדה אמיתית ומוזרה עם חלק חסר. כל אחד ממציא תשובה, ואז כולם מנסים לזהות את האמת בין כל התשובות. מקבלים נקודות על מציאת האמת ועל כל קרוב משפחה שנפל בשקר שלכם. משחק של 7 שאלות לוקח בערך רבע שעה, ואפשר לבחור 5 למשחק קצר יותר.</p>
 <h2>למה זה מתאים לחנוכה</h2>
 <ul>
-  <li><strong>מגיל 8</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות. משחקים עם ילדים בני 8 עד 12? מסמנים "ילדים משחקים" ומקבלים שאלות שהם יבינו (במשחק ילדים אין שאלות חנוכה).</li>
+  <li><strong>מגיל 8</strong> משחקים יחד: צריך לכתוב תשובה קצרה, לא לדעת עובדות. משחקים עם ילדים בני 8 עד 12? מסמנים "ילדים משחקים" ומקבלים שאלות שהם יבינו, ומ־1 בדצמבר גם שתי שאלות חנוכה קלות.</li>
   <li><strong>עד 12 טלפונים</strong>, וטלוויזיה או מחשב יכולים להציג את המשחק לכל החדר.</li>
   <li><strong>חינם, בלי אפליקציה.</strong> בני דודים שמגיעים באיחור מצטרפים עם הקוד תוך שניות.</li>
   <li><strong>שאלות חנוכה.</strong> במשחק חנוכה יש שלוש שאלות חנוכה בכל משחק: האסטרונאוט שסובב סביבון בחלל, מי הפך את הסופגנייה למאכל החג, ועוד.</li>

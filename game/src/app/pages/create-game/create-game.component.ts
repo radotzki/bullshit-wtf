@@ -62,9 +62,17 @@ export class CreateGameComponent implements OnInit {
         return packFits(this.askedPack, this.locale) ? this.askedPack : seasonalPack(Date.now(), this.locale) || null;
     }
 
-    /** With kids playing: the holiday whose kid-friendly questions the kids game still gets today, or ''. */
+    /**
+     * With kids playing: the holiday whose kid-friendly questions the kids game still gets today: the one
+     * asked for with ?pack= (an English game from the Hanukkah page), else the language's own, or none.
+     */
+    get kidsHoliday(): string | undefined {
+        return kidsSeasonPack(Date.now(), this.locale, this.askedPack || undefined);
+    }
+
+    /** The line under the kids switch that names that holiday, or ''. */
     get kidsSeasonLine(): string {
-        const id = kidsSeasonPack(Date.now(), this.locale);
+        const id = this.kidsHoliday;
         return id ? `${this.t.kidsSeason} ${packIcon(id)} ${questionPacks[id].label[this.locale === 'he' ? 'he' : 'en']}.` : '';
     }
 
@@ -84,7 +92,13 @@ export class CreateGameComponent implements OnInit {
         // One pack a game: with kids playing, the kid questions take the seasonal pack's place.
         const pack = chosenPack(this.kids, this.usePack, this.pack);
 
-        this.apiService.createGame(this.locale, this.length, pack, this.campaign || arrivalCampaign())
+        // A kids game keeps the holiday's kid-friendly questions (the server checks the season again).
+        const kidsHoliday = this.kids ? this.kidsHoliday : undefined;
+        const campaign = this.campaign || arrivalCampaign();
+
+        (kidsHoliday
+            ? this.apiService.createKidsGame(this.locale, this.length, pack, campaign, kidsHoliday)
+            : this.apiService.createGame(this.locale, this.length, pack, campaign))
             .then((resp) => {
                 this.loading = false;
                 markHosted(resp.pin);

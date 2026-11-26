@@ -316,7 +316,8 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             // challenge: the PIN of a finished game to play against (CHALLENGE ANOTHER GROUP, challenge.ts).
             const challenge = typeof req.body.challenge === 'string' ? req.body.challenge : undefined;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs, challenge,
+                pack: req.body.pack, kidsHoliday: req.body.kidsHoliday, campaign: req.body.campaign, hostKey, serverStart,
+                stagedReveal, aboutUs, challenge,
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);
