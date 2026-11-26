@@ -215,3 +215,28 @@
     margin-left: .25em;
     margin-right: calc(-.5em - 1px);
 }
+
+// The nudge (lone-host.ts: nudgeDue): the host has been alone 20 s and pressed nothing. The first invite
+// button pulses a few times, then keeps a ring. No movement for those who ask for less.
+@keyframes invite-nudge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); transform: scale(1); }
+    50% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); transform: scale(1.03); }
+}
+
+.invite-inline .whatsapp.nudge,
+.invite-computer .send .nudge {
+    animation: invite-nudge 1.4s ease-in-out 4;
+    outline: 3px solid rgba(37, 211, 102, 0.45);
+    outline-offset: 2px;
+}
+
+.invite-computer .send .nudge {
+    outline-color: rgba(219, 113, 81, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .invite-inline .whatsapp.nudge,
+    .invite-computer .send .nudge {
+        animation: none;
+    }
+}

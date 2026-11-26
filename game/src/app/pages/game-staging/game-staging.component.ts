@@ -15,7 +15,8 @@ import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_
 import { gameStrings, GameStrings } from './../game-strings';
 import { runStrings, RunStrings } from './../run-strings';
 import { clearSoloStartFailure, onSoloStartFailed, soloStartFailedFor } from './../../services/solo-run';
-import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY } from './lone-host';
+import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY, nudgeDue, nudgeSeen, loneHostStrings, NUDGE_AFTER_MS,
+    INVITE_PRESSED_KEY } from './lone-host';
 import { offerBigScreen, bigScreenStrings, BigScreenStrings, hostStillToJoin, pressedWith, PRESSED_WITH_KEY } from './big-screen-host';
 
 /** A value from the browser's storage, or null where storage is closed (private mode). */
@@ -47,6 +48,12 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     help: LoneHostHelp = null;
     /** "Best with 4 or more": the light line under the help. */
     bestLine: string = null;
+    /** The host has been alone NUDGE_AFTER_MS and pressed no invite: say "send the link now" (lone-host.ts). */
+    nudge = false;
+    private aloneSince: number = null;
+    private invitePressed = false;
+    private nudgeTimer: any;
+    private nudgeCounted = false;
     sound: Howl;
     /** A host on a computer can make it the big screen (big-screen-host.ts): the offer, its words, the press. */
     bigScreenOffer = false;
@@ -111,6 +118,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         if (!document.hidden) {
             this.reportIn();
             this.back();
+            this.updateLobby();
         } else if (this.hostPhone) {
             this.hiddenAt = Date.now();
             this.playersAtHide = (this.players || []).length;
@@ -369,6 +377,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.lobby.sub = this.b.joinNow;
         }
         this.updateHelp(!!view.isHost);
+        this.updateNudge(!!view.alone);
         this.bigScreenOffer = offerBigScreen({
             isHost: !!view.isHost,
             holdsHostKey: this.apiService.holdsHostKey(this.pin),
@@ -432,9 +441,53 @@ export class GameStagingComponent implements OnInit, OnDestroy {
         this.helpSeen = this.helpSeen || this.help.due;
     }
 
+    /** The invite was pressed (WhatsApp, the share sheet, COPY LINK): no nudge for this lobby from now on. */
+    onInviteSent() {
+        this.invitePressed = true;
+        // Kept for this lobby across a reload (iOS reloads a tab left for WhatsApp when memory is short).
+        try {
+            sessionStorage.setItem(INVITE_PRESSED_KEY + this.pinKey(), '1');
+        } catch (e) { }
+        this.updateLobby();
+    }
+
+    /**
+     * After NUDGE_AFTER_MS alone with no invite pressed, the lobby's line says what to do now, and the first
+     * invite button pulses. Counted once per lobby and browser, in the test's lobbies (`help.inTest`).
+     */
+    private updateNudge(alone: boolean) {
+        const now = Date.now();
+        if (!alone) {
+            this.aloneSince = null;
+            clearTimeout(this.nudgeTimer);
+            this.nudgeTimer = null;
+        } else if (this.aloneSince === null) {
+            this.aloneSince = now;
+            clearTimeout(this.nudgeTimer);
+            this.nudgeTimer = setTimeout(() => this.updateLobby(), NUDGE_AFTER_MS + 100);
+        }
+        this.invitePressed = this.invitePressed || !!stored(() => sessionStorage, INVITE_PRESSED_KEY + this.pinKey());
+        this.nudge = nudgeDue({ alone, aloneSince: this.aloneSince, now, pressed: this.invitePressed, hidden: document.hidden });
+        if (!this.nudge) {
+            return;
+        }
+        const s = loneHostStrings(this.locale);
+        this.lobby.message = s.nudge;
+        this.lobby.sub = s.nudgeSub;
+        const key = 'BS_LOBBY_NUDGE_' + this.pinKey();
+        if (this.help && this.help.inTest && !this.nudgeCounted && !stored(() => sessionStorage, key)) {
+            this.apiService.logShare('lobby-help', nudgeSeen(this.help.device), { crew: this.pin, locale: this.locale });
+            try {
+                sessionStorage.setItem(key, '1');
+            } catch (e) { }
+        }
+        this.nudgeCounted = true;
+    }
+
     ngOnDestroy() {
         this.left = true;
         this.stopSoloWatch();
+        clearTimeout(this.nudgeTimer);
         this.playersSubscriber.unsubscribe();
         clearTimeout(this.graceTimer);
         clearTimeout(this.toastTimer);
