@@ -96,7 +96,7 @@ console.log = () => {};
 test.after(() => { console.log = log; });
 
 // The live bank as the release leaves it: 30 normal questions a language, some of them openers,
-// the 40 kid questions, and a Hanukkah pack.
+// the 70 kid questions (20 English, 50 Hebrew), and a Hanukkah pack.
 function seedQuestions() {
     db.gameCounter = 100;
     db.games = {};
