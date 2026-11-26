@@ -83,6 +83,22 @@
         color: #db7151;
     }
 
+    // The chosen chip is pale, with a tick, never filled like an answer or SEND: a tapped chip is a
+    // choice beside the lie, not the lie itself.
+    .decoy-chip.chosen {
+        border: 1px solid #db7151;
+    }
+
+    .decoy-chip.chosen::before {
+        content: '✓';
+        margin-inline-end: 0.5em;
+    }
+
+    .decoy-nudge {
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
     .decoy-note {
         font-size: 0.8rem;
         opacity: 0.8;

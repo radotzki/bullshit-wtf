@@ -1,6 +1,6 @@
 import { ApiService } from './../../services/api.service';
 import { ShareService } from './../../services/share.service';
-import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { gameStrings, GameStrings } from './../../pages/game-strings';
 import { loneHostStrings, LoneHostStrings } from './../../pages/game-staging/lone-host';
 
@@ -33,6 +33,10 @@ export class InviteComponent implements OnInit {
     @Input() compact: boolean;
     /** This lobby is in the lone-host test: count each send as "lobby-help" too. */
     @Input() counted: boolean;
+    /** The host has been alone a while and pressed nothing: the first invite button pulses (lone-host.ts: nudgeDue). */
+    @Input() nudge: boolean;
+    /** Any invite was pressed: WhatsApp, the share sheet (whatever came of it) or COPY LINK. */
+    @Output() sent = new EventEmitter<void>();
     h: LoneHostStrings = loneHostStrings('en');
     locale = 'en';
     open: boolean;
@@ -103,6 +107,11 @@ export class InviteComponent implements OnInit {
     }
 
     async share() {
+        // The tap is the press, even if the sheet is then closed: counted apart from what came of it.
+        this.sent.emit();
+        if (this.counted) {
+            this.apiService.logShare('lobby-help', 'share-tap', { crew: this.pinUpper, locale: this.locale });
+        }
         const result = await this.shareService.share({
             title: this.t.inviteTitle,
             text: this.t.inviteText(this.pinUpper, this.pack),
@@ -118,6 +127,7 @@ export class InviteComponent implements OnInit {
 
     async copy() {
         this.copied = await this.shareService.copy(this.linkUrl);
+        this.sent.emit();
         if (this.copied) {
             this.shareService.track('copy', 'invite');
             this.count('copy');
@@ -125,6 +135,7 @@ export class InviteComponent implements OnInit {
     }
 
     whatsapp() {
+        this.sent.emit();
         this.shareService.track('whatsapp', 'invite');
         this.count('whatsapp');
     }

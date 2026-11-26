@@ -15,6 +15,8 @@ const holidays = require('./pages-en-holidays');
 const thanksgiving = require('./pages-en-thanksgiving');
 // Grown-up party nights: bachelorette and bachelor parties, adult birthdays, a weekend away.
 const partyNights = require('./pages-party-nights');
+// The counselors' Hanukkah activity, whole and printable (/he/hanukkah-activity).
+const hanukkahActivity = require('./pages-he-hanukkah-activity');
 
 const en = {
     lang: 'en',
@@ -170,6 +172,8 @@ module.exports = [
         h1: 'איך משחקים בולשיט',
         body: howHe,
     },
+    // A Hanukkah quiz for adults: 12 questions with their answers, then the game (seo/pages-he-hanukkah-quiz.js).
+    ...require('./pages-he-hanukkah-quiz').pages(he),
     {
         path: '/party-games-on-your-phone', twin: '/he/party-game-phone', site: en, tag: 'seo-en-phone',
         image: '/assets/og-phone-en.png',
@@ -239,6 +243,8 @@ module.exports = [
 <p><a href="/he/family-evening">ערבי משפחה</a>, <a href="/he/friday-dinner">ארוחות שישי</a> וארוחות חג, <a href="/he/friends-evening">ערב חברים</a>, מסיבות וימי גיבוש בעבודה, תנועות נוער ושיעורי אנגלית.</p>
 <p>פעם ראשונה? קראו <a href="/he/how-to-play">איך משחקים</a>, או פשוט תתחילו: החוקים מובנים אחרי שאלה אחת.</p>`,
     },
+    // Hanukkah trivia: 12 questions with their answers, then the game (seo/pages-en-hanukkah-trivia.js).
+    ...require('./pages-en-hanukkah-trivia').pages(en),
     {
         path: '/hanukkah-party-game', twin: '/he/hanukkah', site: en, tag: 'seo-en-hanukkah',
         start: { href: '/create-game?lang=en&pack=hanukkah', label: 'Start a Hanukkah game' },
@@ -294,8 +300,11 @@ module.exports = [
   <li><strong>שמונה לילות, שאלות חדשות.</strong> בסוף משחק לוחצים שוב, ואותה חבורה ממשיכה למשחק חדש. שומרים את החבורה, וטבלת הניקוד ממשיכה מלילה ללילה.</li>
 </ul>
 <p>גם אחרי החג, לערבים שכולם בבית: <a href="/he/home-together">משחק קבוצתי לבית</a>.</p>
+<p>בחופשת חנוכה בתי הספר סגורים והילדים בבית כמה ימים ברצף. לימים האלה יש לנו <a href="/he/school-break">משחקים לחופש</a> ורעיונות ל<a href="/he/days-at-home">ימים ארוכים בבית עם הילדים</a>.</p>
 <p>קראו <a href="/he/how-to-play">איך משחקים</a>, או פתחו משחק עכשיו.</p>`,
     },
+    // A Hanukkah party for grown-ups or teens, straight into a Hanukkah game (seo/pages-he-hanukkah-party.js).
+    ...require('./pages-he-hanukkah-party').pages(he),
     {
         path: '/purim-party-game', twin: '/he/purim', site: en, tag: 'seo-en-purim',
         image: '/assets/og-purim-en.png',
@@ -324,4 +333,4 @@ module.exports = [
         h1: 'משחק לפורים שבו השקרן הכי טוב מנצח',
         body: occasions.purim,
     },
-].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he));
+].concat(occasions.pages(he), kit.pages(en, he), jackbox.pages(en, he), holidays.pages(en), thanksgiving.pages(en), partyNights.pages(en, he), hanukkahActivity.pages(he));

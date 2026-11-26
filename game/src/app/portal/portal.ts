@@ -6,7 +6,9 @@
  *   /portal/crazygames, the one path firebase.json lets CrazyGames frame;
  * - every game it creates carries the campaign tag `portal-crazygames` (a play-test tag wins);
  * - invites use CrazyGames' invite links, never a bullshit.wtf address;
- * - no link leaves for the playable site (CrazyGames' rules: no links to a playable web version).
+ * - no link leaves for the playable site (CrazyGames' rules: no links to a playable web version), bar the
+ *   privacy page, which has no way into the game;
+ * - nothing on the home or the create page offers the kids' questions (CrazyGames takes no games for children).
  * Off the portal path nothing here changes anything.
  */
 
@@ -91,6 +93,9 @@ export function invitePin(roomId: string | null | undefined): string | null {
 /** Hosts a portal link may open: CrazyGames itself, and WhatsApp for sending its invite link. */
 const ALLOWED_HOSTS = /(^|\.)crazygames\.com$|^wa\.me$|^api\.whatsapp\.com$/;
 
+/** The site's privacy pages (scripts/build-privacy.js): no way into the game, so the portal may link to them. */
+const PRIVACY_PATH = /^\/(he\/)?privacy$/;
+
 /**
  * Whether a link must not open in the portal: any web address but CrazyGames' (and WhatsApp's, for
  * an invite), this site's own pages included (the search pages, the daily puzzle, a crew page:
@@ -116,6 +121,10 @@ export function blockedLink(href: string | null | undefined, base: string): bool
     } catch (e) { }
     // The same page with another hash: an in-app route.
     if (here && url.origin === here.origin && url.pathname === here.pathname && url.search === here.search && url.hash) {
+        return false;
+    }
+    // The privacy page, on this site: CrazyGames allows a privacy-policy link in the game.
+    if (here && url.origin === here.origin && PRIVACY_PATH.test(url.pathname) && !url.search) {
         return false;
     }
     return !ALLOWED_HOSTS.test(url.hostname);
@@ -317,6 +326,9 @@ export interface PortalHomeStrings {
     solo: string;
     soloSub: string;
     options: string;
+    /** The foot's link to the privacy page (CrazyGames allows a privacy link; it opens in a new tab). */
+    privacy: string;
+    privacyHref: string;
 }
 
 export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings } = {
@@ -332,7 +344,9 @@ export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings
         friendsSub: 'You get a link to send them',
         solo: 'Try it alone',
         soloSub: 'Play until you\'re fooled 3 times',
-        options: 'More options: language, length, kids',
+        options: 'More options: language, length',
+        privacy: 'Privacy',
+        privacyHref: '/privacy',
     },
     he: {
         pitch: 'עובדים על החברים עם תשובות מומצאות לשאלות טריוויה מוזרות אבל נכונות.',
@@ -346,7 +360,9 @@ export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings
         friendsSub: 'מקבלים קישור לשלוח להם',
         solo: 'לנסות לבד',
         soloSub: 'משחקים עד שנופלים 3 פעמים',
-        options: 'עוד אפשרויות: שפה, אורך, ילדים',
+        options: 'עוד אפשרויות: שפה, אורך',
+        privacy: 'פרטיות',
+        privacyHref: '/he/privacy',
     },
 };
 

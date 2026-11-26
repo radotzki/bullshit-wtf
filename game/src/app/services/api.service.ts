@@ -80,6 +80,10 @@ function apiError(url: string, resp: any) {
     if (body && body.justEnded === true) {
         error.justEnded = true;
     }
+    // CORRECT_ANSWER: the lie is only a part of the truth ("Germany" for "Nazi Germany").
+    if (body && body.part === true) {
+        error.part = true;
+    }
     // GAME_OVER within a week of the end: the night's recap (pages/join-game/night-after.ts).
     if (body && body.nightAfter && typeof body.nightAfter === 'object') {
         error.nightAfter = body.nightAfter;

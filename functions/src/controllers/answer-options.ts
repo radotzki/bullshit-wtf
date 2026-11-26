@@ -15,10 +15,16 @@
  * its players wrote and the truth, and no more house lies than before, so the
  * pick list stays one a phone can read.
  *
+ * A house lie that is a near-duplicate of a player's lie (all the words of one are in the other:
+ * "איטליה של מוסוליני" next to a player's "איטליה") is used only when the screen would otherwise
+ * have fewer answers than the rule above asks for. A house lie whose words are all in the truth is
+ * never used.
+ *
  * This file is pure (no Firebase) so it can be unit tested.
  */
 import { shuffle, Random } from './question-picker';
 import { MAX_HOUSE_FILL } from '../game-model';
+import { wordsWithin } from './same-answer';
 
 export const MIN_OPTIONS = 6;
 
@@ -36,16 +42,23 @@ export function pickHouseLies(
     const taken = new Set((playerAnswers || []).map(normalize).filter(t => t));
     taken.add(normalize(realAnswer));
 
+    const lies = (playerAnswers || []).filter(t => normalize(t));
     const candidates: string[] = [];
+    const nearDuplicates: string[] = [];
     (fakeAnswers || []).forEach(text => {
         const key = normalize(text);
-        if (key && !taken.has(key) && !candidates.some(c => normalize(c) === key)) {
-            candidates.push(text);
+        if (!key || taken.has(key) || candidates.concat(nearDuplicates).some(c => normalize(c) === key)) {
+            return;
         }
+        if (wordsWithin(text, realAnswer)) {
+            return;
+        }
+        const near = lies.some(lie => wordsWithin(lie, text) || wordsWithin(text, lie));
+        (near ? nearDuplicates : candidates).push(text);
     });
 
     const target = Math.max(Math.min(playersCount + 1, MAX_HOUSE_FILL), MIN_OPTIONS);
     const needed = Math.max(0, target - taken.size);
 
-    return shuffle(candidates, random).slice(0, needed);
+    return shuffle(candidates, random).concat(shuffle(nearDuplicates, random)).slice(0, needed);
 }

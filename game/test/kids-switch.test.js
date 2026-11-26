@@ -56,7 +56,8 @@ test('the form: a checkbox bound to kids, its line only while it is on, Special 
 
 test('off by default; ?pack=kids switches it on and is never the Special pack', () => {
     assert.match(src, /^    kids = false;$/m);
-    assert.match(src, /this\.kids = params\.pack === KIDS_PACK;/);
+    // The CrazyGames version ignores ?pack=kids (test/privacy.test.js).
+    assert.match(src, /this\.kids = !this\.portal && params\.pack === KIDS_PACK;/);
     assert.match(src, /this\.askedPack = typeof params\.pack === 'string' && params\.pack !== KIDS_PACK \? params\.pack : null;/);
     assert.match(src, /const pack = chosenPack\(this\.kids, this\.usePack, this\.pack\);/);
     // What the Special row offers, as the page works it out: never kids, by season or by link.
