@@ -13,8 +13,12 @@
 // - a game of five questions takes five to ten minutes of play.
 // Nothing about sources, grades, accounts for classes, or more than 12 seats: the game has none.
 
+// A ready Hanukkah activity for youth groups, Hillels and teen programs (/hanukkah-youth-group-activity).
+const hanukkahActivityEn = require('./pages-en-hanukkah-activity');
+
 const classroomEn = `
 <p><strong>The game in one line:</strong> a strange true fact appears with a blank, everyone writes a lie to fill it, and then everyone tries to find the truth among all the lies.</p>
+<p><strong>Leading a youth group in Hanukkah week?</strong> There is <a href="/hanukkah-youth-group-activity">a ready 45-minute Hanukkah activity</a> for teens, with Hanukkah questions in the game, a closing discussion and a version to print.</p>
 <!--start-->
 <p>Bullshit runs in the browser, on phones. It is free, there is nothing to install, and nobody signs up: the game asks for a nickname and nothing else. One game takes up to 12 phones, and a projector can show it to the whole room. This page is for teachers and youth leaders: how to put it on the projector, how to split a class, and which settings fit a 15-minute slot.</p>
 <h2>Before the lesson</h2>
@@ -212,5 +216,6 @@ module.exports = {
             h1: 'משחק של רבע שעה לגיבוש הצוות',
             body: teamHe,
         },
-    ],
+    // The English Hanukkah activity for youth groups (seo/pages-en-hanukkah-activity.js), a page for leaders too.
+    ].concat(hanukkahActivityEn.pages(en)),
 };
