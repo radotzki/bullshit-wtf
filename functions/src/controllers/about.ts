@@ -30,7 +30,7 @@
  * This file is pure (no Firebase) so it can be unit tested.
  */
 import { createHash } from 'crypto';
-import { Answers, GameScheme, GameState, GameStateInfo, About, AboutSlot, aboutOf } from '../game-model';
+import { Answers, GameScheme, GameState, GameStateInfo, About, AboutSlot, aboutOf, KIDS_PACK } from '../game-model';
 import { shuffle, Random, pickQuestions, SeenRecord } from './question-picker';
 import { aboutPrompts, aboutPrompt, aboutPromptText } from './about-prompts';
 import { isSameAnswer, isPartOfTruth } from './same-answer';
@@ -132,11 +132,14 @@ export function playsAboutUs(game: Partial<GameScheme> | null | undefined, taste
 
 /**
  * The game's About questions, written at START: which places, and which prompt each (ones the room has
- * not seen first, as with the bank's questions).
+ * not seen first, as with the bank's questions). A kids' game (`pack` kids) leaves out the prompts
+ * marked notForKids.
  */
-export function planAbout(totalQ: number, seen: SeenRecord[], random: Random = Math.random): { [key: string]: AboutSlot } {
+export function planAbout(totalQ: number, seen: SeenRecord[], random: Random = Math.random, pack?: string): { [key: string]: AboutSlot } {
     const slots = aboutSlots(totalQ);
-    const ids = aboutPrompts.map(p => ABOUT_SEEN_PREFIX + p.id);
+    // A kids' game plays only the prompts a child can answer about a friend.
+    const prompts = pack === KIDS_PACK ? aboutPrompts.filter(p => !p.notForKids) : aboutPrompts;
+    const ids = prompts.map(p => ABOUT_SEEN_PREFIX + p.id);
     const picked = pickQuestions(ids, seen || [], slots.length, random).map(id => id.slice(ABOUT_SEEN_PREFIX.length));
     const plan: { [key: string]: AboutSlot } = {};
     slots.forEach((q, i) => {

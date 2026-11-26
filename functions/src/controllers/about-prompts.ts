@@ -26,11 +26,18 @@ export interface AboutPrompt {
     id: string;
     en: AboutPromptText;
     he: AboutPromptText;
+    /**
+     * Left out of a kids' game ("Kids are playing", the kids pack): a prompt written for grown-ups, that a
+     * child of 8 to 12 can't answer about a friend ("as a kid", "a day off"), or would rather not play
+     * with ("the house on fire", "the show watched in secret"). See reports/hebrew-kids-break.md.
+     */
+    notForKids?: boolean;
 }
 
 export const aboutPrompts: AboutPrompt[] = [
     {
         id: 'fire',
+        notForKids: true,
         en: {
             text: 'If the house were on fire, the one thing {name} would save is $blank$',
             house: ['a jar of pickles', 'the tv remote', 'a single sock', 'the wifi router', 'a houseplant named steve'],
@@ -174,6 +181,7 @@ export const aboutPrompts: AboutPrompt[] = [
     },
     {
         id: 'secret-show',
+        notForKids: true,
         en: {
             text: 'The show {name} watches in secret: $blank$',
             house: ['a cooking show for dogs', 'teletubbies', 'the weather channel', 'a fishing show', 'dora the explorer'],
@@ -207,6 +215,7 @@ export const aboutPrompts: AboutPrompt[] = [
     },
     {
         id: 'day-off',
+        notForKids: true,
         en: {
             text: 'The first thing {name} does on a day off: $blank$',
             house: ['sorting the spices a to z', 'washing the car twice', 'a trip to the hardware store', 'planning the next day off', 'small talk with the neighbors'],
@@ -229,6 +238,7 @@ export const aboutPrompts: AboutPrompt[] = [
     },
     {
         id: 'cartoon',
+        notForKids: true,
         en: {
             text: 'The cartoon {name} loved as a kid: $blank$',
             house: ['the smurfs', 'pingu', 'tom and jerry', 'bob the builder', 'a cartoon about a talking sponge'],

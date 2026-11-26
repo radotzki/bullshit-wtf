@@ -699,7 +699,7 @@ async function aboutPlanFor(game: GameScheme, taste: boolean): Promise<Partial<G
         return {};
     }
     try {
-        const plan = planAbout(game.totalQ, await seenRecordsFor(playerUids(game)));
+        const plan = planAbout(game.totalQ, await seenRecordsFor(playerUids(game)), Math.random, game.pack);
         return Object.keys(plan).length ? { aboutQs: plan } : {};
     } catch (e) {
         // The game goes on with bank questions only.
