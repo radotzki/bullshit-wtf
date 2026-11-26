@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link previews (1200x630) for the card-game rules pages, /bullshit-card-game and /he/bullshit-card-game.
+     Plain cards drawn here, no deck maker's art. Render: node graphics/render-card-game.js game/src/assets -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#1f5e46;margin-bottom:20px}
+.felt{position:absolute;inset:0;background:radial-gradient(ellipse at 35% 40%,rgba(255,255,255,.12),transparent 60%)}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{width:400px;margin:0 20px 90px 60px;display:block;position:relative}
+.text{flex:1;padding-right:60px;margin-bottom:90px;position:relative}
+h1{margin:0;font-size:118px;line-height:1;color:#fff;-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.3);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:58px;line-height:1.1;color:#f3d467}
+p{margin:12px 0 0;font-size:40px;color:#fff;line-height:1.2}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 60px 90px 20px}
+.he .text{padding-right:0;padding-left:60px}
+</style></head><body>
+<template id="fan">
+<svg class="art" viewBox="0 0 400 340" xmlns="http://www.w3.org/2000/svg">
+  <defs><pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="8" cy="8" r="3" fill="#db7151"/></pattern></defs>
+  <g transform="rotate(-22 200 330)"><rect x="130" y="40" width="150" height="220" rx="14" fill="#97374e" stroke="#fff" stroke-width="8"/><rect x="146" y="56" width="118" height="188" rx="8" fill="url(#dots)"/></g>
+  <g transform="rotate(-6 200 330)"><rect x="130" y="40" width="150" height="220" rx="14" fill="#97374e" stroke="#fff" stroke-width="8"/><rect x="146" y="56" width="118" height="188" rx="8" fill="url(#dots)"/></g>
+  <g transform="rotate(12 200 330)"><rect x="130" y="40" width="150" height="220" rx="14" fill="#fffaf3" stroke="#fff" stroke-width="8"/>
+    <text x="150" y="92" font-family="Georgia,serif" font-size="44" font-weight="bold" fill="#2b2523">A</text>
+    <text x="205" y="185" font-family="Georgia,serif" font-size="90" fill="#2b2523" text-anchor="middle">?</text></g>
+</svg>
+</template>
+
+<div class="card" id="card-game-en"><div class="felt"></div><span data-f></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The card game: how to play</div><p>The deal, a turn, calling bullshit, winning, and variations</p></div>
+  <div class="band">RULES · VARIATIONS · TIPS · BULLSHIT.WTF</div></div>
+
+<div class="card he" id="card-game-he"><div class="felt"></div><span data-f></span>
+  <div class="text"><h1>בולשיט</h1><div class="kicker">משחק הקלפים: איך משחקים</div><p>החלוקה, תור, מתי צועקים בולשיט, מי מנצח וגרסאות</p></div>
+  <div class="band">חוקים · גרסאות · טיפים · BULLSHIT.WTF</div></div>
+
+<script>
+document.querySelectorAll('[data-f]').forEach(function (el) {
+  el.replaceWith(document.getElementById('fan').content.cloneNode(true));
+});
+</script>
+</body></html>

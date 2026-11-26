@@ -10,6 +10,7 @@ import { openChallenge } from './controllers/challenge';
 import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
+import { onSeatGone } from './controllers/seat-gone';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
 import { sameTable } from './controllers/same-table';
@@ -38,6 +39,10 @@ function errorBody(e: any) {
         }
         if (e.justEnded === true) {
             body.justEnded = true;
+        }
+        // CORRECT_ANSWER: the lie is only a part of the truth, not the truth itself (see answer.ts).
+        if (e.part === true) {
+            body.part = true;
         }
         // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
         if (e.nightAfter && typeof e.nightAfter === 'object') {
@@ -630,6 +635,15 @@ exports.onRevealDone = functions.database.ref('games/{pin}/revealDone').onWrite(
     const pin = event.params.pin;
     return onRevealDone(pin);
 }));
+
+// A seat's page went away (the database marks the time in games/{pin}/seen/{pid}): once it has been
+// gone 20 seconds, end the phase if everyone still here is in (see controllers/seat-gone.ts).
+// It waits those 20 seconds, and at most a minute more, hence the longer timeout.
+exports.onSeatGone = functions
+    .runWith({ timeoutSeconds: 120, memory: '128MB' })
+    .database.ref('games/{pin}/seen/{pid}').onWrite(watched('onSeatGone', (change, context) => {
+        return onSeatGone(context.params.pin, context.params.pid, change.after.val());
+    }));
 
 exports.gameState = functions.database.ref('games/{pin}/state').onWrite(watched('gameState', (change, event) => {
     const pin = event.params.pin;

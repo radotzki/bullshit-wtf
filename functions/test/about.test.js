@@ -399,6 +399,23 @@ test('a friend who writes the truth itself: one answer, which they can still pic
     assert.strictEqual(truth.selectors.length, 3, 'the friend who wrote it found it');
 });
 
+test('a friend who writes only a part of the truth: folded into the truth too, in both languages; a lie that drops "not" stays', async () => {
+    for (const [truthText, part, fair] of [['pizza with olives', 'Pizza', 'not pizza'], ['פיצה עם זיתים', 'פיצה', 'לא פיצה']]) {
+        const pin = newGame(4);
+        await next(pin);
+        await toQuestion(pin, 1);
+        const named = model.aboutOf(game(pin).state).pid;
+        const others = pids(pin).filter(p => p !== named);
+        await answer(pin, named, truthText);
+        await answer(pin, others[0], part);
+        await answer(pin, others[1], fair);
+        await answer(pin, others[2], 'falafel');
+        assert.ok(!game(pin).answers[others[0]], `"${part}" is a part of "${truthText}"`);
+        assert.ok(game(pin).answers[others[1]], `"${fair}" is a lie`);
+        assert.ok(game(pin).answers[others[2]]);
+    }
+});
+
 test('a full table gets no house answers: every answer is a real one', async () => {
     const pin = newGame(8, { totalQ: 7 });
     await next(pin);
@@ -506,10 +523,11 @@ async function playPackGame(totalQ, opts = {}) {
     const pin = newGame(opts.seats || 4, { totalQ, locale: opts.locale });
     const g = game(pin);
     const lang = opts.locale || 'en';
-    g.pack = 'hanukkah';
-    g.qids = packQids(totalQ);
+    g.pack = opts.pack || 'hanukkah';
+    g.qids = opts.qids || packQids(totalQ);
     g.qids.forEach(id => {
-        db.questions[id] = id[0] === 'h'
+        db.questions[id] = opts.questionFor ? opts.questionFor(id, lang)
+            : id[0] === 'h'
             ? { lang, pack: 'hanukkah', questionText: `Pack question ${id} is $blank$`, realAnswer: `truth ${id}`, fakeAnswers: ['pack a', 'pack b', 'pack c'], citation: '' }
             : { lang, questionText: `Bank question ${id} is $blank$`, realAnswer: `truth ${id}`, fakeAnswers: ['house a', 'house b', 'house c', 'house d', 'house e'], citation: '' };
     });
@@ -518,7 +536,7 @@ async function playPackGame(totalQ, opts = {}) {
         const cur = game(pin);
         if (state(pin) === S.ShowQuestion) {
             const a = model.aboutOf(cur.state);
-            played[cur.questionIndex] = a ? 'A' : /Pack question/.test(cur.currentQ) ? 'P' : 'R';
+            played[cur.questionIndex] = a ? 'A' : /Season question/.test(cur.currentQ) ? 'S' : /Pack question/.test(cur.currentQ) ? 'P' : 'R';
             for (const pid of pids(pin)) {
                 if (a && pid === a.pid && opts.silentNamed) continue;
                 await answer(pin, pid, a && pid === a.pid ? 'My Dog Rex' : `${pid} lie ${cur.questionIndex}`);
@@ -549,4 +567,29 @@ test('a Hanukkah game in the About half plays three pack questions and its About
 test('a Hanukkah game whose named player stays silent still plays three pack questions', async () => {
     // Each About question falls back to the question of its place, a bank one now.
     assert.strictEqual(await playPackGame(5, { silentNamed: true }), 'PRPRP');
+});
+
+// A kids game in a holiday's season: withSeasonKids puts the season's kid-friendly questions (their own
+// pack, e.g. thanksgiving) off the About places. They are no bank questions, so START must not swap them
+// onto an About place, where the About question would take them.
+function kidsSeasonQuestion(season) {
+    return (id, lang) => id[0] === 's'
+        ? { lang, pack: season, questionText: `Season question ${id} is $blank$`, realAnswer: `truth ${id}`, fakeAnswers: ['season a', 'season b', 'season c'], citation: '' }
+        : { lang, pack: 'kids', questionText: `Pack question ${id} is $blank$`, realAnswer: `truth ${id}`, fakeAnswers: ['kid a', 'kid b', 'kid c'], citation: '' };
+}
+
+test('a kids game in the About half keeps its two season questions (Thanksgiving, Hanukkah), at 5, 7 and 9', async () => {
+    const { withSeasonKids } = require(path.join(dist, 'controllers', 'question-picker'));
+    for (const season of ['thanksgiving', 'hanukkah']) {
+        for (const totalQ of [5, 7, 9]) {
+            const places = about.aboutSlots(totalQ);
+            const picked = Array.from({ length: totalQ }, (_, i) => `k${i}-${season}`);
+            // As the server picks them: two season questions, off the About places.
+            const qids = withSeasonKids(picked, [`s0-${season}`, `s1-${season}`], [], model.KIDS_SEASON_PER_GAME, Math.random, places);
+            const expected = qids.map((id, i) => places.indexOf(i) >= 0 ? 'A' : id[0] === 's' ? 'S' : 'P').join('');
+            assert.strictEqual(expected.split('S').length - 1, 2, `${season} ${totalQ}: two season questions picked`);
+            const played = await playPackGame(totalQ, { pack: 'kids', qids, questionFor: kidsSeasonQuestion(season) });
+            assert.strictEqual(played, expected, `${season} ${totalQ}`);
+        }
+    }
 });

@@ -59,6 +59,20 @@ test('a link carries a name and a lie and nothing else', () => {
 test('the screen: the truth, however it is typed, is no lie', () => {
     ['dancing', 'Dancing', ' DANCING! ', 'the dancing', '"dancing"'].forEach(l => assert.strictEqual(screen(l), 'truth', l));
     assert.strictEqual(core.screenLie('הלונדון', '', 'לונדון', [], shared.isSameAnswer, shared.nameFlag), 'truth', 'a Hebrew prefix letter');
+});
+
+test('the screen: a part of the truth is too close, a lie that drops "no" or "half" is a lie', () => {
+    const part = (lie, t) => core.screenLie(lie, '', t, [], shared.isSameAnswer, shared.nameFlag, shared.isPartOfTruth);
+    assert.strictEqual(part('Germany', 'Nazi Germany'), 'close');
+    assert.strictEqual(part('גרמניה', 'גרמניה הנאצית'), 'close');
+    assert.strictEqual(part('Nazi Germany', 'Nazi Germany'), 'truth', 'the whole truth is still the truth');
+    assert.strictEqual(part('work', 'do no work'), null);
+    assert.strictEqual(part('עובדות', 'לא עובדות'), null);
+    assert.strictEqual(part('an hour', 'half an hour'), null);
+    assert.strictEqual(part('שעה', 'חצי שעה'), null);
+    assert.strictEqual(core.screenLie('Germany', '', 'Nazi Germany', [], shared.isSameAnswer, shared.nameFlag), null, 'without the check, as before');
+    assert.notStrictEqual(en.lieTooClose, en.lieIsTruth);
+    assert.notStrictEqual(he.lieTooClose, he.lieIsTruth);
     assert.strictEqual(screen('prancing'), null);
 });
 
