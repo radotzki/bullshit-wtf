@@ -2,13 +2,15 @@ import { Injectable, NgZone } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Howler } from 'howler';
 import { ApiService } from '../services/api.service';
-import { markHosted, markVisit, setPreferredLocale } from '../services/join-source';
+import { markHosted, markVisit, preferredLocale, setPreferredLocale } from '../services/join-source';
 import { reportError } from '../sentry/sentry.module';
+import { chosenPack, seasonalPack } from '../game-model';
 import {
-    PORTAL_TAG, announcePortalLocale, blockedLink, gameplayFor, inPortal, invitePin, portalCampaign, portalLocale, roomFor,
-    portalUsername, setInviteMaker, setPortalGameLink, setPortalUsername,
+    PORTAL_TAG, QuickStart, announcePortalLocale, autoJoinDue, blockedLink, gameplayFor, inPortal, invitePin, portalCampaign,
+    portalLocale, roomFor, portalUsername, setHappyTime, setInviteMaker, setPortalGameLink, setPortalUsername, soloStartDue,
 } from './portal';
 import { PORTAL_CSS } from './portal-style';
+import { clearSoloStartFailure, soloStartFailed } from '../services/solo-run';
 
 /** CrazyGames' HTML5 SDK, v3 (https://docs.crazygames.com/sdk/intro/). Loaded on the portal path only. */
 export const SDK_URL = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
@@ -28,6 +30,8 @@ export class PortalService {
     private started = false;
     private playing: boolean | null = null;
     private room = '';
+    /** The game the home's two starts (or Instant Multiplayer) just made (portal.ts, QuickStart). */
+    private quick: QuickStart | null = null;
 
     constructor(private router: Router, private zone: NgZone, private api: ApiService) { }
 
@@ -44,6 +48,12 @@ export class PortalService {
         } catch (e) { }
         this.keepCampaign();
         this.guardLinks();
+        // The taste played alone starts on its lobby, with or without the SDK.
+        this.router.events.subscribe(e => {
+            if (e instanceof NavigationEnd) {
+                this.startSoloIfDue(e.urlAfterRedirects);
+            }
+        });
         try {
             setPreferredLocale(portalLocale(null, window.location.pathname));
         } catch (e) { }
@@ -126,6 +136,8 @@ export class PortalService {
         this.applyMute();
         this.call(() => sdk.game.addSettingsChangeListener(() => this.applyMute()));
 
+        // A solo run's new best is a happy moment (portal.ts, happyTime).
+        setHappyTime(() => this.call(() => sdk.game.happytime()));
         // Invite links come from CrazyGames; the lobby's QR, WhatsApp, share and copy read them.
         setInviteMaker(pin => sdk.game.inviteLink({ roomId: pin }), () => this.zone.run(() => { }));
         try {
@@ -146,7 +158,8 @@ export class PortalService {
             roomId: sdk.game.getInviteParam ? sdk.game.getInviteParam('roomId') : null,
         });
         if (!invited && sdk.game.isInstantMultiplayer) {
-            await this.zone.run(() => this.instantGame(locale));
+            // Instant Multiplayer: a new private game with the default settings, its lobby at once.
+            await this.zone.run(() => this.quickGame(locale, false));
         }
         this.call(() => sdk.game.loadingStop());
     }
@@ -161,8 +174,15 @@ export class PortalService {
         return true;
     }
 
-    /** Instant Multiplayer: a new game with the default settings (5 questions), and its lobby. */
-    private async instantGame(locale: string) {
+    /**
+     * A new game with the default settings (5 questions, the pack in season, as the create page
+     * offers), for the portal's home and Instant Multiplayer. With the player's CrazyGames username
+     * known, the join step sends it at once, so the player lands in the lobby with the invite link
+     * (prefillNickname); without one, they type a nickname first. `solo`: the solo run, started as
+     * soon as the player is in the lobby (startSoloIfDue). Resolves false if no game
+     * could be made.
+     */
+    async quickGame(locale: string, solo: boolean): Promise<boolean> {
         try {
             const campaign = (() => {
                 try {
@@ -171,13 +191,37 @@ export class PortalService {
                     return PORTAL_TAG;
                 }
             })();
-            const { pin } = await this.api.createGame(locale, 5, undefined, campaign);
+            const pack = chosenPack(false, true, seasonalPack(Date.now(), locale) || null);
+            const { pin } = await this.api.createGame(locale, 5, pack, campaign);
             markHosted(pin);
             markVisit('create');
-            this.router.navigate(['/join-game', pin]);
+            this.quick = { pin: pin.toUpperCase(), solo };
+            // The nickname step follows the game's language, as the create page sends it.
+            this.router.navigate(['/join-game', pin], { queryParams: locale !== preferredLocale() ? { lang: locale } : {} });
+            return true;
         } catch (e) {
-            reportError(e, 'portalInstant', {});
+            reportError(e, solo ? 'portalSolo' : 'portalQuick', {});
+            return false;
         }
+    }
+
+    /**
+     * "Try it alone": START on its lobby, once, as a solo run (SoloRun in game-model): questions until
+     * the player is fooled three times. If START fails, the lobby says so and shows its button
+     * (soloStartFailed in services/solo-run.ts).
+     */
+    private startSoloIfDue(url: string) {
+        const quick = this.quick;
+        if (!soloStartDue(quick, url)) {
+            return;
+        }
+        this.quick = null;
+        clearSoloStartFailure();
+        this.api.logShare('invite', 'solo-run-start', { locale: preferredLocale() });
+        this.api.startGame(quick.pin, true).catch(err => {
+            reportError(err, 'portalSoloStart', { pin: quick.pin });
+            this.zone.run(() => soloStartFailed(quick.pin));
+        });
     }
 
     private onRoute(url: string) {
@@ -191,7 +235,11 @@ export class PortalService {
             this.call(() => play ? sdk.game.gameplayStart() : sdk.game.gameplayStop());
         }
         if (/^\/join-game\/[A-Za-z]+/.test(url)) {
-            this.prefillNickname();
+            const send = autoJoinDue(this.quick, url, portalUsername());
+            if (send) {
+                this.quick = Object.assign({}, this.quick, { sent: true });
+            }
+            this.prefillNickname(send);
         }
         const room = roomFor(url);
         if (room) {
@@ -211,7 +259,7 @@ export class PortalService {
      * CrazyGames username (they can still change it). Typed into the box as a player would, so the
      * join page itself needs no change.
      */
-    private prefillNickname() {
+    private prefillNickname(send = false) {
         const name = portalUsername();
         if (!name) {
             return;
@@ -228,6 +276,13 @@ export class PortalService {
             if (!box.value) {
                 box.value = name;
                 box.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            // A game this player just made from the home: in with their username, no step between.
+            if (send && box.value) {
+                const join = box.form && box.form.querySelector('button[type="submit"]') as HTMLButtonElement;
+                if (join) {
+                    setTimeout(() => this.zone.run(() => join.click()), 0);
+                }
             }
         };
         setTimeout(fill, 0);

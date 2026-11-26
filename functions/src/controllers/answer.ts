@@ -6,7 +6,7 @@ import { readGame, isMoved } from './old-games';
 import { advance } from './tick';
 import { everyoneSent, leftOutGuardWait } from './seats';
 import { isIdea } from './lie-helper';
-import { isSameAnswer } from './same-answer';
+import { isSameAnswer, isPartOfTruth } from './same-answer';
 import { stamp } from './answer-times';
 import { sentUpdate } from './sent';
 import { writeMarks } from './mark-sent';
@@ -54,8 +54,13 @@ export async function answer(pin: string, pid: string, playerAnswer: string, dec
     const qid = game.qids[game.questionIndex];
     const question = await getQuestion(qid);
 
+    // The truth, typed a little differently, or only a part of it ("Germany" for "Nazi Germany"):
+    // refused (see same-answer.ts). The same code for both, so a phone that is still on an older page
+    // shows its message; `part` lets a newer one say "too close to the truth" and not "the correct answer".
     if (isSameAnswer(playerAnswer, question.realAnswer)) {
         return Promise.reject({ message: 'You entered the correct answer.', code: 'CORRECT_ANSWER' });
+    } else if (isPartOfTruth(playerAnswer, question.realAnswer)) {
+        return Promise.reject({ message: 'Too close to the correct answer.', code: 'CORRECT_ANSWER', part: true });
     } else {
         const stored: Answer = {
             text: playerAnswer.toLowerCase(),

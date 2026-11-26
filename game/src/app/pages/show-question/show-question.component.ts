@@ -12,7 +12,7 @@ import { SoundService } from './../../services/sound.service';
 import { lieHelperView, nextIdea, LieHelperView } from './lie-helper';
 import { gameStrings, GameStrings } from './../game-strings';
 import { aboutStrings, AboutStrings, aboutMissedLine } from './../about-strings';
-import { pairStrings, PairStrings, decoyView, DecoyView, friendName } from './../pair-strings';
+import { pairStrings, PairStrings, decoyView, DecoyView, friendName, lieNudge } from './../pair-strings';
 
 @Component({
     standalone: false,
@@ -25,11 +25,15 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     pin: string;
     question: string;
     presenter: boolean;
+    /** No big screen in the game: the phone is the only place the question is, so it is set larger. */
+    phoneOnly = false;
     loading: boolean;
     errorMsg: string;
     answer: string;
     questionSubmitted: boolean;
     enteredCorrectAnswer: boolean;
+    // The lie refused was only a part of the truth: "too close", not "the correct answer".
+    enteredPartOfTruth: boolean;
     rtl: boolean;
     t: GameStrings = gameStrings('en');
     duration: number;
@@ -56,6 +60,8 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
     pairWords: PairStrings = pairStrings('en');
     friend = '';
     private chosenDecoy: string = null;
+    // The player tapped a chip themself (not the one-offer default): until they type a lie, say so.
+    private decoyTapped = false;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -78,6 +84,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         if (!this.presenter) {
             this.apiService.didAnswerSubmitted(this.pin).then(submitted => this.questionSubmitted = submitted);
             this.loadHelper();
+            this.apiService.gameHasBigScreen(this.pin).then(bigScreen => this.phoneOnly = !bigScreen);
         }
     }
 
@@ -144,8 +151,18 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
         return this.friend || this.pairWords.friend;
     }
 
-    chooseDecoy(offer: string) {
+    /** A chip tapped: the decoy is chosen, and the lie box gets the focus, since SEND still needs a lie. */
+    chooseDecoy(offer: string, lieBox?: HTMLInputElement) {
         this.chosenDecoy = offer;
+        this.decoyTapped = true;
+        if (lieBox && lieNudge(this.answer, true)) {
+            lieBox.focus();
+        }
+    }
+
+    /** The line under the lie box after a chip was tapped with the box still empty (pair games only). */
+    get showLieNudge(): boolean {
+        return !!this.decoy && lieNudge(this.answer, this.decoyTapped);
     }
 
     private updateHelper() {
@@ -195,6 +212,7 @@ export class ShowQuestionComponent implements OnInit, OnDestroy {
 
                 if (err && err.code === 'CORRECT_ANSWER') {
                     this.enteredCorrectAnswer = true;
+                    this.enteredPartOfTruth = err.part === true;
                 } else {
                     reportError(err, 'answer', { pin: this.pin });
                     this.errorMsg = this.t.oops;

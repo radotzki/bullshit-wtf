@@ -1,0 +1,15 @@
+<div class="hanukkah-night" *ngIf="view && (part === 'line' || view.button)" [class.is-rtl]="rtl" [class.night-actions]="part === 'button'"
+    [attr.dir]="rtl ? 'rtl' : 'ltr'" [attr.lang]="rtl ? 'he' : 'en'">
+    <p *ngIf="part === 'line'" class="night-line"><span class="menorah" aria-hidden="true">🕎</span> {{ t.line(view.night) }}</p>
+    <ng-container *ngIf="part === 'button'">
+        <button class="button is-warning is-fullwidth night-tomorrow" type="button" (click)="save()">
+            <span class="icon"><i class="fa fa-calendar"></i></span>
+            <span>{{ t.button(view.next) }}</span>
+        </button>
+        <p *ngIf="!saved" class="night-hint">{{ t.hint }}</p>
+        <p *ngIf="saved" class="night-saved">
+            {{ t.saved }}
+            <a class="night-google" [href]="googleUrl" target="_blank" rel="noopener" (click)="google()">{{ t.google }}</a>
+        </p>
+    </ng-container>
+</div>

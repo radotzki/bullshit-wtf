@@ -49,6 +49,42 @@ const tests: { [name: string]: () => void } = {
         assert.deepStrictEqual(house.slice().sort(), ['lard', 'styrofoam']);
     },
 
+    'a house lie that holds a player lie, or sits inside one, is left off (live game: "איטליה של מוסוליני" next to "איטליה")'() {
+        const fakes = ['איטליה של מוסוליני', 'יפן', 'ספרד', 'פורטוגל', 'יוון', 'צרפת'];
+        for (let s = 1; s <= 20; s++) {
+            const house = pickHouseLies(fakes, ['איטליה', 'רוסיה'], 'גרמניה הנאצית', 3, seeded(s));
+            assert.strictEqual(house.length, 3);
+            assert.ok(house.indexOf('איטליה של מוסוליני') < 0, house.join('|'));
+        }
+        const en = pickHouseLies(['Italy', 'Japan', 'Spain', 'France', 'Greece'], ['Fascist Italy'], 'Nazi Germany', 3, seeded(2));
+        assert.ok(en.indexOf('Italy') < 0, en.join('|'));
+        // Glued Hebrew prefixes count too.
+        const he = pickHouseLies(['ואיטליה', 'יפן', 'ספרד', 'צרפת', 'יוון'], ['איטליה'], 'גרמניה הנאצית', 3, seeded(3));
+        assert.ok(he.indexOf('ואיטליה') < 0, he.join('|'));
+    },
+
+    'a near-duplicate is used only when the screen would be short of answers'() {
+        // Two house lies needed (2 players: 6 answers = 2 lies + truth + 3), and only these two exist.
+        const house = pickHouseLies(['איטליה של מוסוליני', 'יפן'], ['איטליה', 'רוסיה'], 'גרמניה הנאצית', 2, seeded(4));
+        assert.deepStrictEqual(house.sort(), ['איטליה של מוסוליני', 'יפן'].sort());
+        // With enough clean ones, it waits at the back.
+        const plenty = pickHouseLies(['איטליה של מוסוליני', 'יפן', 'ספרד', 'צרפת'], ['איטליה', 'רוסיה'], 'גרמניה הנאצית', 2, seeded(4));
+        assert.strictEqual(plenty.length, 3);
+        assert.ok(plenty.indexOf('איטליה של מוסוליני') < 0);
+    },
+
+    'a house lie made only of the truth\'s words is never used'() {
+        for (let s = 1; s <= 10; s++) {
+            const house = pickHouseLies(['גרמניה', 'יפן', 'ספרד'], ['איטליה'], 'גרמניה הנאצית', 3, seeded(s));
+            assert.ok(house.indexOf('גרמניה') < 0);
+        }
+    },
+
+    'a house lie that only shares a word with a player lie stays'() {
+        const house = pickHouseLies(['Nazi Italy', 'Japan'], ['East Germany'], 'Nazi Germany', 2, seeded(5));
+        assert.deepStrictEqual(house.sort(), ['Japan', 'Nazi Italy']);
+    },
+
     'big groups keep the old rule: one answer per player plus the truth'() {
         const lies = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
         assert.strictEqual(pickHouseLies(fakes, lies, 'truth', 8, seeded(6)).length, 0);

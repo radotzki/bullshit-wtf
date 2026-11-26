@@ -18,7 +18,10 @@ const known = JSON.parse(/const known = (\[[^\]]+\])/.exec(joinSource)[1].replac
 const general = ['/he/how-to-play', '/he/party-game-phone', '/he/hanukkah', '/he/game-like-jackbox'];
 // The weekly-group and home-together pages (seo/pages-groups-home.js) have theirs too: test/groups-home-pages.test.js.
 const groupsHome = require('../seo/pages-groups-home').pages({}, {}).map(p => p.path);
-const tagged = pages.filter(p => p.tag && p.tag.indexOf('seo-he-') === 0 && general.indexOf(p.path) < 0 && groupsHome.indexOf(p.path) < 0);
+// The card game's rules page is no occasion and names no button of ours in its rules: test/card-game-pages.test.js.
+const cardGame = ['/he/bullshit-card-game'];
+const tagged = pages.filter(p => p.tag && p.tag.indexOf('seo-he-') === 0 && general.indexOf(p.path) < 0 && groupsHome.indexOf(p.path) < 0
+    && cardGame.indexOf(p.path) < 0);
 
 // The Hebrew site's own words, so that a page names only a button its reader will find.
 const ts = require('typescript');

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Local run: the lone-host help (game/src/app/pages/game-staging/lone-host.ts) in headless Chromium,
 // against the Firebase emulators. A host opens a lobby on a phone and on a computer, in English and
-// in Hebrew, in each half of the 50/50 test, and guests join one by one up to four players.
+// in Hebrew, in each half of the 50/50 test, and guests join one by one up to four players. A computer
+// gets the card in both halves (lone-host.ts: the arm 'all'): the split is for phones now.
 //
 // It checks what no unit test can: the half the page works out from a real PIN, the help on the
 // screen alone and with one guest (the phone's buttons, the computer's card, its link and QR code,
@@ -98,14 +99,19 @@ async function join(phone, base, pin, he) {
 // 1920), in both halves and before this change: that much is let through, so the check is about the help alone.
 const noSideScroll = (page) => page.evaluate(() => document.scrollingElement.scrollWidth <= window.innerWidth + (window.innerWidth >= 769 ? 12 : 1));
 
+/** A lobby's name in the summary and in ONLY=. */
+const lobbyTag = (l) => `${l.locale}-${l.testGame ? 'test' : l.wantNew ? 'new' : 'classic'}-${l.device}${l.noPack ? '-nopack' : ''}`;
+
 /** One lobby: a host on `device`, in `locale`, in the half asked for, then guests up to four players. */
-async function lobby(browser, base, { locale, wantNew, device, testGame }, problems) {
+async function lobby(browser, base, { locale, wantNew, device, testGame, noPack }, problems) {
     const he = locale === 'he';
-    const tag = `${locale}-${testGame ? 'test' : wantNew ? 'new' : 'classic'}-${device}`;
+    const tag = lobbyTag({ locale, wantNew, device, testGame, noPack });
     const check = (ok, text) => { if (!ok) problems.push(`${tag}: ${text}`); };
     const words = help.loneHostStrings(locale);
     const names = NAMES[locale];
     const computer = device === 'computer';
+    // Every computer host gets the card (lone-host.ts: the arm 'all'), whatever the PIN's half.
+    const helped = wantNew || computer;
     // The emulator's phones keep the desktop's user agent: the page tells them apart by width, as it
     // does a narrow window. The user agents are in game/test/lone-host.test.js.
     const host = await newPhone(browser, base, names[0], computer ? 'screen' : 'host');
@@ -121,7 +127,8 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
         let counter = await db('GET', 'gameCounter');
         while (half(pinOf(counter + 1)) !== wantNew) counter++;
         await db('PUT', 'gameCounter', counter);
-        await host.page.goto(`${base}/create-game${testGame ? '?via=test' : ''}`);
+        const query = [testGame ? 'via=test' : '', noPack ? 'pack=none' : ''].filter(Boolean).join('&');
+        await host.page.goto(`${base}/create-game${query ? '?' + query : ''}`);
         await host.page.locator('input[name="locale"]').nth(he ? 1 : 0).check();
         await host.page.locator('input[name="length"]').first().check();
         await host.page.locator('form button[type="submit"]').first().click();
@@ -147,9 +154,39 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
 
         // ---- alone ----
         check(await until('the invite', async () => (await visible(card)) || (await visible(inline))), 'no invite on the page of a host alone');
+        // The season's banner (a pack game, e.g. Thanksgiving in late November): a line of its own on a
+        // phone, a chip on the count's line on a computer, so it costs the card no height there.
+        await sleep(500);
+        const banner = await visible(page.locator('.pack-banner'));
+        const chip = await visible(page.locator('.pack-chip'));
+        result.banner = computer ? (chip ? 'chip' : 'none') : (banner ? 'line' : 'none');
+        check(computer ? !banner : !chip, `alone: the season's ${computer ? 'line' : 'chip'} shows on a ${device}`);
+        if (noPack) check(!banner && !chip, 'alone: a game with no pack shows the season\'s banner');
         check(await visible(tryAlone), 'alone: the "try alone" link is gone');
         check(!(await visible(start)), 'alone: START is in the header (today it waits behind the link)');
-        if (wantNew) {
+
+        // ---- the nudge: 20 s alone, nothing pressed (lone-host.ts: nudgeDue), in both halves ----
+        const message = page.locator('.lobby-message');
+        const nudged = page.locator('.lobby-message.nudge');
+        check(!(await visible(nudged)), 'alone: the nudge shows before 20 s');
+        check(await until('the nudge', () => visible(nudged), help.NUDGE_AFTER_MS + 8000), 'alone 20 s: no nudge');
+        check((await message.innerText()).trim() === words.nudge, `alone 20 s: the line is "${await message.innerText()}"`);
+        check((await page.locator('.lobby-sub').innerText()).trim() === words.nudgeSub, 'alone 20 s: the second line is not the nudge\'s');
+        const pulsing = page.locator(computer ? '.invite-computer .send button.nudge' : '.invite-inline a.whatsapp.nudge');
+        check(await visible(pulsing), 'alone 20 s: the first invite button does not pulse');
+        await sleep(6000); // the pulse is over: the screenshot shows where it rests
+        await shot(page, `${tag}-1b-nudge`);
+        if (!computer) {
+            await page.setViewportSize(SMALL_PHONE);
+            await sleep(300);
+            const box = await pulsing.boundingBox();
+            check(box && box.y + box.height <= SMALL_PHONE.height, 'alone 20 s, 320 px: the first invite button is below the screen');
+            check(await noSideScroll(page), 'alone 20 s: the page scrolls sideways at 320 px');
+            await shot(page, `${tag}-1b-nudge-320`);
+            await page.setViewportSize(PHONE);
+            await sleep(300);
+        }
+        if (helped) {
             check((await best.innerText().catch(() => '')).trim() === words.best, `alone: the line is "${await best.innerText().catch(() => '')}"`);
             if (computer) {
                 check(await visible(card), 'alone: no card on a computer');
@@ -192,6 +229,12 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
             // WhatsApp opens in a new tab, which never leaves this machine: its row below says it was pressed.
             await scope.locator('a.whatsapp').click();
             await sleep(500);
+            check(!(await visible(nudged)), 'an invite was pressed: the nudge is still there');
+            // The press outlives a reload (INVITE_PRESSED_KEY): no nudge comes back after another 20 s.
+            await page.reload();
+            check(await until('the invite after a reload', async () => (await visible(card)) || (await visible(inline))), 'after a reload: no invite');
+            await sleep(help.NUDGE_AFTER_MS + 3000);
+            check(!(await visible(nudged)), 'pressed, then reloaded: the nudge came back');
         } else {
             check(!(await visible(card)), 'the other half shows the computer\'s card');
             check(!(await visible(best)), 'the other half shows the "best with" line');
@@ -202,7 +245,7 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
         // ---- one guest ----
         await join(guests[0], base, pin, he);
         check(await until('START', () => visible(start)), 'with one guest: no START for the host');
-        if (wantNew) {
+        if (helped) {
             check(await visible(computer ? card : inline), 'with one guest: the help is gone');
             check(!(await visible(sheetButton)), 'with one guest: the folded invite button shows beside the help');
             check((await best.innerText().catch(() => '')).trim() === words.bestWithOne, `with one guest: the line is "${await best.innerText().catch(() => '')}"`);
@@ -278,11 +321,12 @@ async function lobby(browser, base, { locale, wantNew, device, testGame }, probl
             check(game.campaign === 'test', `not a test game (campaign ${game.campaign})`);
             check(mine.length === 0, `a test game's lobby sent ${mine.length} lobby-help rows`);
         } else {
-            const seen = `seen-${wantNew ? 'new' : 'classic'}-${device}`;
+            const seen = computer ? 'seen-all-computer' : `seen-${wantNew ? 'new' : 'classic'}-phone`;
             check(mine.filter((r) => r.method.startsWith('seen-')).length === 1 && mine.some((r) => r.method === seen),
                 `the seen rows are ${JSON.stringify(mine.filter((r) => r.method.startsWith('seen-')).map((r) => r.method))}, not one ${seen}`);
             check(mine.every((r) => r.locale === locale && r.uid === hostRow.uid), 'a row with another language or browser id');
-            if (wantNew) {
+            check(mine.filter((r) => r.method === `nudge-${device}`).length === 1, `no single nudge-${device} row`);
+            if (helped) {
                 check(mine.filter((r) => r.method === 'copy').length === 1, 'no single copy row');
                 check(mine.filter((r) => r.method === 'whatsapp').length === 1, 'no single whatsapp row');
                 const invites = shares().filter((r) => r.content_type === 'invite' && r.uid === hostRow.uid).map((r) => r.method);
@@ -325,9 +369,10 @@ async function main() {
             }
         }
         lobbies.push({ locale: 'en', device: 'computer', wantNew: true, testGame: true });
+        // The same computer lobby with no seasonal pack: the card must fit with the banner and without.
+        lobbies.push({ locale: 'en', device: 'computer', wantNew: true, noPack: true });
         for (const l of lobbies) {
-            const tag = `${l.locale}-${l.testGame ? 'test' : l.wantNew ? 'new' : 'classic'}-${l.device}`;
-            if (only && !only.includes(tag)) continue;
+            if (only && !only.includes(lobbyTag(l))) continue;
             results.push(await lobby(browser, base, l, problems));
         }
         console.log('\nRESULT ' + JSON.stringify({ build: DIST, lobbies: results, problems }, null, 2));

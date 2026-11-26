@@ -1,7 +1,8 @@
 import { questionsRef, seenQuestionsRef, get } from './../firebase';
-import { Question, questionPacks, isPack } from '../game-model';
-import { pickQuestions, pickWithPack, pickWithOpener, SeenRecord } from './question-picker';
+import { Question, questionPacks, isPack, KIDS_PACK, KIDS_SEASON_PER_GAME, kidsSeasonPack } from '../game-model';
+import { pickQuestions, pickWithPack, pickWithOpener, withSeasonKids, SeenRecord } from './question-picker';
 import { isRetired } from './retired-questions';
+import { aboutSlots } from './about';
 
 /**
  * Picks `count` questions for `lang`, avoiding questions any of the given
@@ -18,8 +19,17 @@ export async function randomQuestions(lang: string, count: number, uids: string[
     if (pack && isPack(pack)) {
         // A pack game opens with a pack question, as before.
         const packIds = all.filter(q => q.pack === pack && !isRetired(q.id)).map(q => q.id);
-        return pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame, Math.random,
+        const picked = pickWithPack(pool, packIds, seen, count, questionPacks[pack].perGame, Math.random,
             questionPacks[pack].openers || []);
+        // A kids game in a holiday's season also gets a few of the holiday's kid-friendly questions.
+        const season = pack === KIDS_PACK ? kidsSeasonPack(Date.now(), lang) : undefined;
+        if (season) {
+            const inBank = new Set(all.map(q => q.id));
+            const kidsToo = (questionPacks[season].kidsToo || []).filter(id => inBank.has(id) && !isRetired(id));
+            // Not where an About question would take the question's place (aboutSlots).
+            return withSeasonKids(picked, kidsToo, seen, KIDS_SEASON_PER_GAME, Math.random, aboutSlots(count));
+        }
+        return picked;
     }
 
     // Easy openers are kept for question 1 (see pickWithOpener).

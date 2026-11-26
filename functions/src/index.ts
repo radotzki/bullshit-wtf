@@ -6,9 +6,11 @@ import { tick } from './controllers/tick';
 import { onPhaseStart } from './controllers/phase-timer';
 import { answer } from './controllers/answer';
 import { newGame } from './controllers/new-game';
+import { openChallenge } from './controllers/challenge';
 import { onAnswerSelection } from './controllers/on-answer-selection';
 import { newPickers, eventTime } from './controllers/answer-times';
 import { onRevealDone } from './controllers/on-reveal-done';
+import { onSeatGone } from './controllers/seat-gone';
 import { join } from './controllers/join';
 import { fork } from './controllers/fork';
 import { sameTable } from './controllers/same-table';
@@ -38,9 +40,21 @@ function errorBody(e: any) {
         if (e.justEnded === true) {
             body.justEnded = true;
         }
+        // CORRECT_ANSWER: the lie is only a part of the truth, not the truth itself (see answer.ts).
+        if (e.part === true) {
+            body.part = true;
+        }
         // GAME_OVER within a week of the end: the night's recap (see night-after.ts).
         if (e.nightAfter && typeof e.nightAfter === 'object') {
             body.nightAfter = e.nightAfter;
+        }
+        // GAME_OVER: the challenge card of a game whose challenge is open, and the other table of a game
+        // played against one (see challenge.ts).
+        if (e.challenge && typeof e.challenge === 'object') {
+            body.challenge = e.challenge;
+        }
+        if (e.versus && typeof e.versus === 'object') {
+            body.versus = e.versus;
         }
         return body;
     }
@@ -299,14 +313,19 @@ exports.newGame = functions.https.onRequest(http('newGame', (req, res) => {
             const stagedReveal = req.body.stagedReveal === true;
             // The phone can show the About questions: the game is in that 50/50 test (see about.ts).
             const aboutUs = req.body.aboutUs === true;
+            // challenge: the PIN of a finished game to play against (CHALLENGE ANOTHER GROUP, challenge.ts).
+            const challenge = typeof req.body.challenge === 'string' ? req.body.challenge : undefined;
             const pin = await newGame(locale, count, uid, {
-                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs,
+                pack: req.body.pack, campaign: req.body.campaign, hostKey, serverStart, stagedReveal, aboutUs, challenge,
             });
             // Where the host's visit started, for the usage data (see controllers/arrival.ts).
             await analytics.recordArrival(pin, req.body.arrival);
             console.log('newGame created', JSON.stringify({ pin, clientWaitMs, signedIn: !!uid, hostKey: !!hostKey }));
             return res.send({ pin });
         } catch (e) {
+            if (e && e.code === 'CHALLENGE_OVER') {
+                return res.status(400).send(errorBody(e));
+            }
             console.error('newGame failed', e);
             caught(e);
             return res.status(500).send(errorBody(e));
@@ -325,7 +344,8 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
             // wait: CATCH THE NEXT ROUND, while the table is mid-game (same-table.ts).
             const forked = req.body.sameTable === true
                 ? await sameTable(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
-                    req.body.stagedReveal === true, req.body.aboutUs === true, req.body.wait === true)
+                    req.body.stagedReveal === true, req.body.aboutUs === true, req.body.wait === true,
+                    typeof req.body.campaign === 'string' ? req.body.campaign : undefined)
                 : await fork(pin, uid, cleanPid(req.body.pid), cleanHostKey(req.body.hostKey),
                     req.body.stagedReveal === true, req.body.aboutUs === true);
             return res.status(200).send(forked);
@@ -395,7 +415,7 @@ exports.crewNight = functions.https.onRequest(http('crewNight', (req, res) => {
 exports.startGame = functions.https.onRequest(http('startGame', (req, res) => {
     cors(req, res, async () => {
         try {
-            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey)));
+            return res.status(200).send(await startGame(req.body.pin, cleanHostKey(req.body.hostKey), Date.now(), req.body.run === true));
         } catch (e) {
             caught(e);
             return res.status(e && e.code === 'NOT_HOST' ? 403 : 400).send(errorBody(e));
@@ -486,6 +506,11 @@ exports.validateGameName = functions.https.onRequest(http('validateGameName', (r
         const pin = req.body.pin;
 
         try {
+            // openChallenge: CHALLENGE ANOTHER GROUP pressed on the final screen, through this function so no
+            // new function has to be deployed (challenge.ts). Only a player of the game may open it.
+            if (req.body.openChallenge === true) {
+                return res.status(200).send(await openChallenge(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
+            }
             // uid and pid: the join page's sign-in and last seat, so a finished game's recap knows a player.
             return res.status(200).send(await validateGameName(pin, cleanUid(req.body.uid), cleanPid(req.body.pid)));
         } catch (e) {
@@ -610,6 +635,15 @@ exports.onRevealDone = functions.database.ref('games/{pin}/revealDone').onWrite(
     const pin = event.params.pin;
     return onRevealDone(pin);
 }));
+
+// A seat's page went away (the database marks the time in games/{pin}/seen/{pid}): once it has been
+// gone 20 seconds, end the phase if everyone still here is in (see controllers/seat-gone.ts).
+// It waits those 20 seconds, and at most a minute more, hence the longer timeout.
+exports.onSeatGone = functions
+    .runWith({ timeoutSeconds: 120, memory: '128MB' })
+    .database.ref('games/{pin}/seen/{pid}').onWrite(watched('onSeatGone', (change, context) => {
+        return onSeatGone(context.params.pin, context.params.pid, change.after.val());
+    }));
 
 exports.gameState = functions.database.ref('games/{pin}/state').onWrite(watched('gameState', (change, event) => {
     const pin = event.params.pin;

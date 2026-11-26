@@ -142,6 +142,11 @@
             font-weight: 600;
         }
 
+        // The nudge: the host has been alone 20 s and pressed nothing. The line says what to do now.
+        .lobby-message.nudge {
+            color: #db7151;
+        }
+
         .lobby-sub {
             font-size: 1rem;
             margin-top: 2px;
@@ -186,6 +191,42 @@
         font-size: 1.6rem;
         margin: 12px auto 0;
         max-width: 40rem;
+    }
+}
+
+// A computer that isn't the big screen: the page's rem is a headline's size there
+// (styles/font-size.scss), so the banner on a line of its own took ~70 px and pushed the lone host's
+// invite card below a 1280x720 screen. There the banner becomes a slim chip on the count's line
+// ("1 player in"), which costs no height whatever the season's words. Phones and the big screen
+// keep the line above.
+.lobby-count-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: 14px;
+}
+
+.pack-chip {
+    display: none;
+}
+
+@media screen and (min-width: 769px) {
+    .pack-banner:not(.presenter) {
+        display: none;
+    }
+
+    .pack-chip {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 8px;
+        background: #1f3b73;
+        color: #f3d467;
+        // In px like the invite card: the page's rem is a headline's size on a computer.
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 1.4;
+        letter-spacing: .3px;
     }
 }
 
@@ -238,5 +279,27 @@
     .start-panel-button {
         font-weight: 700;
         letter-spacing: .04em;
+    }
+}
+
+// The solo game did not start by itself: one line and its button, at the top of the lobby.
+.solo-failed {
+    max-width: 480px;
+    margin: 10px auto 0;
+    padding: 0 12px;
+    text-align: center;
+
+    .solo-failed-line {
+        font-weight: bold;
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+
+    // In px: the page's rem grows with the window.
+    .solo-failed-start {
+        height: auto;
+        min-height: 54px;
+        font-size: 22px;
+        white-space: normal;
     }
 }

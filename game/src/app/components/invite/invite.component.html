@@ -7,7 +7,7 @@
 
 <!-- Phone, host alone in the lobby: the invite is the screen. WhatsApp first, then share or copy, then the QR. -->
 <div *ngIf="!presenter && inline && ready && help !== 'computer'" class="invite-inline" [attr.dir]="g.rtl ? 'rtl' : null">
-    <a class="button is-success is-fullwidth is-medium whatsapp" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
+    <a class="button is-success is-fullwidth is-medium whatsapp" [class.nudge]="nudge" [href]="whatsappUrl" target="_blank" rel="noopener" (click)="whatsapp()">
         <span class="icon"><i class="fa fa-whatsapp"></i></span>
         <span> {{g.whatsapp}} </span>
     </a>
@@ -35,7 +35,7 @@
         <p class="how"> {{h.scanOrOpen}} </p>
         <p class="url" dir="ltr"> {{displayUrl}} </p>
         <div class="send">
-            <button class="button is-primary is-medium" (click)="copy()">
+            <button class="button is-primary is-medium" [class.nudge]="nudge" (click)="copy()">
                 <span class="icon"><i class="fa" [class.fa-link]="!copied" [class.fa-check]="copied"></i></span>
                 <span> {{copied ? g.linkCopied : g.copyLink}} </span>
             </button>
