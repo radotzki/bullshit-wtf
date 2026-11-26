@@ -35,6 +35,10 @@
             <!-- For a visitor on their own (most strangers from a search, alone at a desk): today's
                  question, right under Create, once the puzzle is live (daily-line.ts). -->
             <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
+            <!-- For someone who never played and has nobody around right now (most strangers at a desk in
+                 the daytime): a WhatsApp message with the home's link, tagged (tonight-line.ts). -->
+            <a class="tonight-line" *ngIf="tonightShown" [href]="tonightHref" target="_blank" rel="noopener"
+                (click)="tonightSent()"><i class="fa fa-whatsapp" aria-hidden="true"></i> {{ tonightWords.line }}</a>
 
             <!-- Everything else the old menu offered, quieter. -->
             <nav class="other-ways">

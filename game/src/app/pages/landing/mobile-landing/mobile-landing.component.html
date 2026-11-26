@@ -81,6 +81,7 @@
             </div>
         </div>
         <ng-container *ngTemplateOutlet="join"></ng-container>
+        <ng-container *ngIf="tonightShown"><ng-container *ngTemplateOutlet="tonight_line; context: { low: true }"></ng-container></ng-container>
         <ng-container *ngTemplateOutlet="season_line"></ng-container>
         <!-- The demo clip: 20 silent seconds of one real round (components/demo-clip). Under Join, so
              it moves nothing of the first screen, and it loads only once it is near the screen. -->
@@ -129,6 +130,16 @@
         <!-- For a visitor on their own: today's question, right under Create, once the puzzle is
              live (daily-line.ts). -->
         <a class="alone-line" *ngIf="dailyLive" [href]="dailyHref">{{ t.aloneTry }}</a>
+        <!-- For someone who never played and has nobody around right now: a WhatsApp message with the
+             home's link, tagged home-tonight-he or -en (tonight-line.ts). -->
+        <ng-container *ngIf="picture && tonightShown"><ng-container *ngTemplateOutlet="tonight_line; context: { low: false }"></ng-container></ng-container>
+    </ng-template>
+
+    <!-- A short phone (600 px high or less) has no room for it under Start: there it shows under Join
+         Game instead, so Start and Join both keep their place on the first screen (the scss swaps them). -->
+    <ng-template #tonight_line let-low="low">
+        <a class="tonight-line" [class.is-low]="low" [href]="tonightHref" target="_blank" rel="noopener"
+            (click)="tonightSent()"><i class="fa fa-whatsapp" aria-hidden="true"></i> {{ tonightWords.line }}</a>
     </ng-template>
 
     <div class="menu-button present-game" routerLink="/present-game">

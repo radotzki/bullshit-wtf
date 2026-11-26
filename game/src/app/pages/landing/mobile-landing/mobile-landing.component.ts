@@ -10,6 +10,7 @@ import { CodeBox } from '../code-box';
 import { dailyHref, dailyLive } from '../daily-line';
 import { DAILY_FIRST_DAY } from '../../../daily-launch';
 import { pinError } from '../../join-game/join-strings';
+import { TONIGHT_SHARE, TonightStrings, showTonight, tonightHref, tonightStrings } from '../tonight-line';
 
 /** Reads a key the game keeps in this browser: localStorage, else the tab's storage, else nothing. */
 function readStored(key: string): string | null {
@@ -55,9 +56,13 @@ export class MobileLandingComponent {
     // The line under Create for a visitor on their own: shown once the daily puzzle is live.
     dailyLive: boolean;
     dailyHref: string;
+    // "Not now? Send it to your group for tonight", under Start, for a browser that never played (tonight-line.ts).
+    tonightShown: boolean;
+    tonightWords: TonightStrings;
+    tonightHref: string;
     private tag: string | null;
 
-    constructor(crewService: CrewService, injector: Injector, router: Router) {
+    constructor(crewService: CrewService, private injector: Injector, router: Router) {
         this.crews = crewService.list().slice(0, 3);
         // The database and sign-in start only when someone presses Join in the box.
         this.box = new CodeBox({
@@ -77,7 +82,14 @@ export class MobileLandingComponent {
         const visitor = readVisitor(readStored, tag);
         this.first = firstButton(visitor);
         this.picture = showPicture(visitor);
+        this.tonightShown = showTonight(visitor);
         this.createQuery = createQuery(tag);
+    }
+
+    /** The line is a plain wa.me link (phones block a window opened after a wait); this only counts the press. */
+    tonightSent() {
+        this.injector.get(ApiService).logShare(TONIGHT_SHARE.content, TONIGHT_SHARE.method,
+            { crew: TONIGHT_SHARE.crew, locale: this.t.lang });
     }
 
     switchLanguage() {
@@ -92,5 +104,7 @@ export class MobileLandingComponent {
         this.season = seasonLink(locale, new Date(), this.tag);
         this.dailyLive = dailyLive(DAILY_FIRST_DAY[this.t.lang], new Date());
         this.dailyHref = dailyHref(this.t.lang);
+        this.tonightWords = tonightStrings(this.t.lang);
+        this.tonightHref = tonightHref(this.t.lang);
     }
 }

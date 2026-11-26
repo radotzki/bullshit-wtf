@@ -81,6 +81,42 @@
         text-decoration: underline;
     }
 
+    // Under Start, for a visitor who never played (tonight-line.ts): one short line in the same strip
+    // as the daily line, so Join Game keeps its place on the first screen.
+    .tonight-line {
+        flex: none;
+        display: block;
+        padding: 0 15px 8px;
+        background-color: #6f2839;
+        color: #c9f2d4;
+        font-size: .95rem;
+        line-height: 1.3;
+        text-align: center;
+        text-decoration: underline;
+
+        .fa {
+            color: #4fce5d;
+            text-decoration: none;
+        }
+    }
+
+    // With the daily line above it, the two share one strip.
+    .alone-line:has(+ .tonight-line) {
+        padding-bottom: 4px;
+    }
+
+    // No daily line above it: the strip starts here.
+    .create-game + .tonight-line {
+        padding-top: 7px;
+    }
+
+    // Its place under Join Game, on a short phone only (see the template and the media query below).
+    .tonight-line.is-low {
+        display: none;
+        padding: 9px 15px 10px;
+        background-color: #3f2544;
+    }
+
     .menu-button.present-game {
         background-color: #db7151;
     }
@@ -303,6 +339,19 @@
 
     .home .alone-line {
         padding-top: 7px;
+        padding-bottom: 8px;
+    }
+
+    // No room under Start here: the line moves under Join Game.
+    .home .tonight-line {
+        display: none;
+    }
+
+    .home .tonight-line.is-low {
+        display: block;
+    }
+
+    .home .alone-line:has(+ .tonight-line) {
         padding-bottom: 8px;
     }
 

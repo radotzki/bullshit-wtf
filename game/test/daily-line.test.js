@@ -73,7 +73,7 @@ test('the words, in English and Hebrew', () => {
 test('on both homes the line sits right under Create, and replaces the older puzzle link once live', () => {
     const phone = read('mobile-landing', 'mobile-landing.component.html');
     const create = phone.slice(phone.indexOf('<ng-template #create>'), phone.indexOf('</ng-template>', phone.indexOf('<ng-template #create>')));
-    assert.match(create, /<\/div>\s*<!--[^]*?-->\s*<a class="alone-line" \*ngIf="dailyLive" \[href\]="dailyHref">\{\{ t\.aloneTry \}\}<\/a>\s*$/);
+    assert.match(create, /<\/div>\s*<!--[^]*?-->\s*<a class="alone-line" \*ngIf="dailyLive" \[href\]="dailyHref">\{\{ t\.aloneTry \}\}<\/a>\s*(<!--[^]*?-->\s*<ng-container \*ngIf="picture && tonightShown">[^]*?<\/ng-container><\/ng-container>\s*)?$/);
     assert.match(phone, /<ng-container \*ngIf="!dailyLive">\s*<a class="daily-link"/);
 
     const computer = read('desktop-landing', 'desktop-landing.component.html');
