@@ -77,6 +77,7 @@ test('the page\'s scripts are whole and cannot be cut short by what they hold', 
 test('the checks in the page are the game\'s own, not a copy', () => {
     const shared = daily.loadShared();
     assert.ok(shared.isSameAnswer('The London', 'london') && !shared.isSameAnswer('Paris', 'london'));
+    assert.ok(shared.isPartOfTruth('Germany', 'Nazi Germany') && !shared.isPartOfTruth('an hour', 'half an hour'));
     assert.strictEqual(shared.nameFlag('Dana'), null);
     const lists = JSON.parse(read('name-lists.json'));
     assert.ok(['hate', 'sex'].includes(shared.nameFlag(lists.hate.any[0])));

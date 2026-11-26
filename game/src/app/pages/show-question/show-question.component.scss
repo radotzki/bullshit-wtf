@@ -4,6 +4,15 @@
         margin-top: 20px;
     }
 
+    // A game with no big screen: the phone is the only place the question is, so about 18 px on a phone
+    // (the page's own type is 14 px there), the size the answers screen shows it at in such a game.
+    .phone-only .question {
+        font-size: 1.3rem;
+        line-height: 1.3;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
     .lie-hint {
         margin-top: -15px;
         margin-bottom: 15px;
@@ -72,6 +81,22 @@
     .decoy-chip.is-outlined:focus {
         background-color: transparent;
         color: #db7151;
+    }
+
+    // The chosen chip is pale, with a tick, never filled like an answer or SEND: a tapped chip is a
+    // choice beside the lie, not the lie itself.
+    .decoy-chip.chosen {
+        border: 1px solid #db7151;
+    }
+
+    .decoy-chip.chosen::before {
+        content: '✓';
+        margin-inline-end: 0.5em;
+    }
+
+    .decoy-nudge {
+        font-size: 0.85rem;
+        font-weight: 700;
     }
 
     .decoy-note {

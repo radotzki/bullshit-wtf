@@ -15,6 +15,11 @@ export interface PairStrings {
     single: string;
     /** Under the chips, small. */
     note: (name: string) => string;
+    /**
+     * Under the lie box, when a chip is tapped while the box is empty: a decoy is not a lie, and SEND
+     * waits for one. Live, two Hebrew tables tapped chips and never sent a lie (see lieNudge).
+     */
+    nudge: string;
     /** The first question's card, under the round's points. */
     intro: string;
     /** The tag on a decoy's reveal row, where a house lie shows its tag. */
@@ -31,6 +36,7 @@ const en: PairStrings = {
     label: name => `YOUR DECOY: which one would fool ${name}?`,
     single: 'YOUR DECOY:',
     note: name => `If it fools ${name}, you get half points.`,
+    nudge: 'Now write your own lie in the box, then SEND.',
     intro: 'Two players: each of you also picks a decoy. Every answer you see is the truth or a trap from your friend.',
     tag: 'DECOY',
     flash: names => `Your decoy fooled ${names}!`,
@@ -44,6 +50,7 @@ const he: PairStrings = {
     label: name => `הפיתיון שלך: מה יעבוד על ${name}?`,
     single: 'הפיתיון שלך:',
     note: name => `עובד על ${name}? חצי נקודות בשבילך`,
+    nudge: 'עכשיו לכתוב שקר משלך בתיבה, ואז לשלוח.',
     intro: 'שני שחקנים: כל אחד בוחר גם פיתיון. כל תשובה שתראו היא האמת או מלכודת מהצד השני.',
     tag: 'פיתיון',
     flash: names => `הפיתיון שלך עבד על ${names}!`,
@@ -86,6 +93,16 @@ export function decoyView(
     const single = free.length === 1;
     const kept = free.filter(o => key(o) === key(chosen))[0] || null;
     return { offers: free, chosen: single ? free[0] : kept, single };
+}
+
+/**
+ * Show the nudge under the lie box? Only once the player has tapped a chip themself and the box is
+ * still empty. A tapped chip is filled like an answer while SEND stays greyed out, so a new player can
+ * take the tap for their answer and wait out the clock with no lie sent (live, 20 November: two Hebrew
+ * pair games, JVGI and JVGO, picks on the first question and not one lie in either game).
+ */
+export function lieNudge(box: string | null | undefined, tapped: boolean): boolean {
+    return !!tapped && !key(box);
 }
 
 /** The friend's name for the chooser's lines: the other players' nicknames, or '' if none is known. */

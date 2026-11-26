@@ -51,6 +51,7 @@ import { PortalService } from './portal.service';
         </div>
     </form>
     <a class="portal-create" role="button" tabindex="0" (click)="create()" (keydown.enter)="create()">{{ p.options }}</a>
+    <p class="portal-foot"><a class="portal-privacy" [attr.href]="p.privacyHref" target="_blank" rel="noopener">{{ p.privacy }}</a></p>
 </section>`,
     styles: [`
 /* In px: the page's rem grows with the window, and the two starts must be on the first screen of a
@@ -76,6 +77,8 @@ import { PortalService } from './portal.service';
 .portal-code-row .input { text-transform: uppercase; text-align: center; letter-spacing: .15em; }
 .portal-create { display: inline-block; margin-top: 14px; color: #f4fcca; opacity: .8; font-size: 14px; text-decoration: underline;
     cursor: pointer; }
+.portal-foot { margin: 10px 0 0; font-size: 12px; }
+.portal-privacy { color: #f4fcca; opacity: .6; text-decoration: underline; }
 @media (min-width: 600px) {
     .portal-starts { flex-direction: row; }
 }
@@ -88,6 +91,7 @@ import { PortalService } from './portal.service';
     .portal-needs { font-size: 15px; margin-bottom: 10px; }
     .portal-starts { margin-bottom: 10px; }
     .portal-create { margin-top: 8px; }
+    .portal-foot { margin-top: 4px; }
 }
 `],
 })

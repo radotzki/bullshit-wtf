@@ -51,7 +51,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'late',
         en: {
             text: '{name}\'s excuse for being late next time: $blank$',
-            house: ['the cat sat on my keys', 'my gps took me to eilat', 'i was early, you were all late', 'there was a parade', 'the lift got stuck'],
+            house: ['the cat sat on my keys', 'my gps took me to canada', 'i was early, you were all late', 'there was a parade', 'the elevator got stuck'],
         },
         he: {
             text: 'התירוץ של {name} לאיחור הבא: $blank$',
@@ -61,7 +61,7 @@ export const aboutPrompts: AboutPrompt[] = [
     {
         id: 'food',
         en: {
-            text: '{name}\'s favourite food in the whole world: $blank$',
+            text: '{name}\'s favorite food in the whole world: $blank$',
             house: ['pickled herring', 'toast with ketchup', 'cereal with orange juice', 'boiled cabbage', 'frozen peas, still frozen'],
         },
         he: {
@@ -95,7 +95,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'superpower',
         en: {
             text: 'The superpower {name} wants most: $blank$',
-            house: ['never losing the tv remote', 'talking to fish', 'always finding parking', 'turning into a chair', 'flying, but only one metre up'],
+            house: ['never losing the tv remote', 'talking to fish', 'always finding parking', 'turning into a chair', 'flying, but only three feet up'],
         },
         he: {
             text: 'כוח העל ש־{name} הכי רוצה: $blank$',
@@ -117,7 +117,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'app',
         en: {
             text: 'The first app {name} opens in the morning: $blank$',
-            house: ['the calculator', 'the weather, twice', 'a bird-watching app', 'the torch', 'sudoku'],
+            house: ['the calculator', 'the weather, twice', 'a bird-watching app', 'the flashlight', 'sudoku'],
         },
         he: {
             text: 'האפליקציה הראשונה שנפתחת אצל {name} בבוקר: $blank$',
@@ -139,7 +139,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'dream-job',
         en: {
             text: '{name}\'s dream job at age six: $blank$',
-            house: ['a dinosaur', 'a traffic light', 'driving an ice cream van', 'ice cream taster', 'dragon trainer'],
+            house: ['a dinosaur', 'a traffic light', 'driving an ice cream truck', 'ice cream taster', 'dragon trainer'],
         },
         he: {
             text: 'עבודת החלומות של {name} בגיל שש: $blank$',
@@ -149,7 +149,7 @@ export const aboutPrompts: AboutPrompt[] = [
     {
         id: 'film',
         en: {
-            text: '{name}\'s favourite film: $blank$',
+            text: '{name}\'s favorite movie: $blank$',
             house: ['shrek 2', 'a documentary about bread', 'home alone', 'finding nemo', 'cars 3'],
         },
         he: {
@@ -160,8 +160,8 @@ export const aboutPrompts: AboutPrompt[] = [
     {
         id: 'place',
         en: {
-            text: '{name}\'s favourite place in town: $blank$',
-            house: ['the hardware store', 'the bench at the bus stop', 'the all-night bakery', 'the car wash', 'the mall car park'],
+            text: '{name}\'s favorite place in town: $blank$',
+            house: ['the hardware store', 'the bench at the bus stop', 'the all-night bakery', 'the car wash', 'the mall parking lot'],
         },
         he: {
             text: 'המקום האהוב על {name} בעיר: $blank$',
@@ -172,7 +172,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'laugh',
         en: {
             text: 'The thing that always makes {name} laugh: $blank$',
-            house: ['dogs in raincoats', 'terrible puns', 'videos of screaming goats', 'a sneeze at the worst moment', 'the word pyjamas'],
+            house: ['dogs in raincoats', 'terrible puns', 'videos of screaming goats', 'a sneeze at the worst moment', 'the word pajamas'],
         },
         he: {
             text: 'הדבר שתמיד מצחיק את {name}: $blank$',
@@ -195,7 +195,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'chore',
         en: {
             text: 'The chore that annoys {name} the most: $blank$',
-            house: ['pairing socks', 'dusting the ceiling', 'watering a plastic plant', 'ironing tea towels', 'sorting the spoons'],
+            house: ['pairing socks', 'dusting the ceiling', 'watering a plastic plant', 'ironing dish towels', 'sorting the spoons'],
         },
         he: {
             text: 'המטלה בבית שהכי מעצבנת את {name}: $blank$',
@@ -218,7 +218,7 @@ export const aboutPrompts: AboutPrompt[] = [
         notForKids: true,
         en: {
             text: 'The first thing {name} does on a day off: $blank$',
-            house: ['sorting the spices a to z', 'washing the car twice', 'a trip to the hardware store', 'planning the next day off', 'small talk with the neighbours'],
+            house: ['sorting the spices a to z', 'washing the car twice', 'a trip to the hardware store', 'planning the next day off', 'small talk with the neighbors'],
         },
         he: {
             text: 'הדבר הראשון ש־{name} עושה ביום חופש: $blank$',
@@ -252,7 +252,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'take-along',
         en: {
             text: 'The thing that always leaves the house with {name}: $blank$',
-            house: ['a lucky pebble', 'a spare umbrella', 'a tiny torch', 'a pocket of almonds', 'a pen that doesn\'t work'],
+            house: ['a lucky pebble', 'a spare umbrella', 'a tiny flashlight', 'a pocket of almonds', 'a pen that doesn\'t work'],
         },
         he: {
             text: 'הדבר שתמיד יוצא עם {name} מהבית: $blank$',
@@ -263,7 +263,7 @@ export const aboutPrompts: AboutPrompt[] = [
         id: 'hobby',
         en: {
             text: 'The hobby {name} would start tomorrow if there were time: $blank$',
-            house: ['competitive yodelling', 'ships in bottles', 'beekeeping', 'collecting spoons', 'tap dancing'],
+            house: ['competitive yodeling', 'ships in bottles', 'beekeeping', 'collecting spoons', 'tap dancing'],
         },
         he: {
             text: 'התחביב ש־{name} הכי רוצה להתחיל: $blank$',
@@ -273,7 +273,7 @@ export const aboutPrompts: AboutPrompt[] = [
     {
         id: 'ice-cream',
         en: {
-            text: 'The ice cream flavour {name} always orders: $blank$',
+            text: 'The ice cream flavor {name} always orders: $blank$',
             house: ['rum and raisin', 'mint with extra mint', 'black sesame', 'bubblegum', 'lemon sorbet, always'],
         },
         he: {

@@ -13,6 +13,8 @@ import { packIcon } from './../../game-model';
 import { lobbyHost, lobbyText, LobbyText, LobbyPlayer, HOST_GRACE_MS, HOST_PING_MS, packBanner, firstFriend,
     hostAwayMs, shouldAskClock, startPanelDue, startPanel, StartPanel, hiddenTitle } from './lobby-host';
 import { gameStrings, GameStrings } from './../game-strings';
+import { runStrings, RunStrings } from './../run-strings';
+import { clearSoloStartFailure, onSoloStartFailed, soloStartFailedFor } from './../../services/solo-run';
 import { loneHostHelp, LoneHostHelp, bestLine, HALF_OVERRIDE_KEY } from './lone-host';
 import { offerBigScreen, bigScreenStrings, BigScreenStrings, hostStillToJoin, pressedWith, PRESSED_WITH_KEY } from './big-screen-host';
 
@@ -64,6 +66,13 @@ export class GameStagingComponent implements OnInit, OnDestroy {
     private myUid: string = null;
     private myPid: string = null;
     locale = 'en';
+    /**
+     * The solo game this lobby was to start by itself (the portal's "Try it alone", a final screen's
+     * PLAY AGAIN) did not start: a short line and the button that starts it.
+     */
+    soloFailed = false;
+    runWords: RunStrings = runStrings('en');
+    private stopSoloWatch: () => void = () => { };
     t: GameStrings = gameStrings('en');
     packBanner: string = null;
     packIcon = '🕎';
@@ -131,6 +140,26 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             });
         this.loadHost();
         this.watchHost();
+        this.runWords = runStrings(this.apiService.knownGameLocale(this.pin));
+        this.soloFailed = soloStartFailedFor(this.pin);
+        this.stopSoloWatch = onSoloStartFailed(pin => this.soloFailed = this.soloFailed || pin === String(this.pin).toUpperCase());
+    }
+
+    /** The solo game's own button, after it did not start by itself: START as a solo run. */
+    startSolo() {
+        if (this.loading) {
+            return;
+        }
+        this.loading = true;
+        this.apiService.startGame(this.pin, true)
+            .then(() => {
+                this.soloFailed = false;
+                clearSoloStartFailure();
+            })
+            .catch(err => {
+                this.loading = false;
+                reportError(err, 'soloRunRetry', { pin: this.pin });
+            });
     }
 
     /**
@@ -269,6 +298,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
             this.myPid = !this.presenter && user && user.pid ? user.pid : null;
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = gameStrings(this.locale);
+            this.runWords = runStrings(this.locale);
             this.b = bigScreenStrings(this.locale);
             this.packBanner = packBanner(pack, this.locale);
             this.packIcon = packIcon(pack);
@@ -404,6 +434,7 @@ export class GameStagingComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.left = true;
+        this.stopSoloWatch();
         this.playersSubscriber.unsubscribe();
         clearTimeout(this.graceTimer);
         clearTimeout(this.toastTimer);

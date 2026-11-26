@@ -1,3 +1,4 @@
+import { RunBarComponent } from './components/run-bar/run-bar.component';
 import { GameService } from './services/game.service';
 import { inject, provideAppInitializer } from '@angular/core';
 import { PortalHomeComponent } from './portal/portal-home.component';
@@ -38,6 +39,9 @@ import { InviteComponent } from './components/invite/invite.component';
 import { ShareResultsComponent } from './components/share-results/share-results.component';
 import { HostAskComponent } from './components/host-ask/host-ask.component';
 import { InviteGroupComponent } from './components/invite-group/invite-group.component';
+import { ChallengeShareComponent } from './components/challenge/challenge-share.component';
+import { ChallengeVersusComponent } from './components/challenge/challenge-versus.component';
+import { ChallengeComponent } from './pages/challenge/challenge.component';
 import { NextWeekComponent } from './components/next-week/next-week.component';
 import { WaitingRowComponent } from './components/waiting-row/waiting-row.component';
 import { DemoClipComponent } from './components/demo-clip/demo-clip.component';
@@ -47,6 +51,7 @@ import { CrewService } from './services/crew.service';
 import { SoundService } from './services/sound.service';
 import { CrewComponent } from './pages/crew/crew.component';
 import { StepComponent } from './pages/step/step.component';
+import { HanukkahNightComponent } from './components/hanukkah-night/hanukkah-night.component';
 
 @NgModule({
     declarations: [
@@ -77,11 +82,16 @@ import { StepComponent } from './pages/step/step.component';
         ShareResultsComponent,
         HostAskComponent,
         InviteGroupComponent,
+        ChallengeShareComponent,
+        ChallengeVersusComponent,
+        ChallengeComponent,
         NextWeekComponent,
         WaitingRowComponent,
         DemoClipComponent,
         CrewComponent,
         StepComponent,
+        HanukkahNightComponent,
+        RunBarComponent,
     ],
     imports: [
         BrowserModule,

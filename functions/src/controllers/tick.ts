@@ -8,8 +8,8 @@ import { cleanHouseLies } from './house-lie-cleanup';
 import { pickIdeas, questionResult } from './lie-helper';
 import { onQuestionResult } from './analytics';
 import { playedUpdate, lastSentSeats } from './seats';
-import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, withTaste } from './taste';
-import { TASTE_QUESTIONS } from '../game-model';
+import { gameTaste, newTaste, nextTaste, startsAsTaste, tasteHouseLies, tasteOptions, withTaste } from './taste';
+import { TASTE_QUESTIONS, SOLO_RUN_MAX, soloRunOver } from '../game-model';
 import * as scoring from './scoring';
 import {
     ABOUT_SEEN_PREFIX, aboutAnswers, aboutColumns, aboutQuestionText, carryAbout, clearAboutPlaces, nameFor, planAbout, plannedSlot,
@@ -199,7 +199,7 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
     const taste = game.state.id === GameState.GameStaging
         ? (startsAsTaste(game) ? newTaste(game) : null)
         : gameTaste(game);
-    const update = await stepUpdate(pin, game, !!taste);
+    const update = await stepUpdate(pin, game, !!taste, !!(taste && taste.run));
 
     // An About question's `about` stays on its states up to the next question (see about.ts).
     if (update && update.state) {
@@ -213,9 +213,18 @@ async function nextUpdate(pin: string, game: GameScheme): Promise<Partial<GameSc
     return update;
 }
 
-async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promise<Partial<GameScheme> | undefined> {
+async function stepUpdate(pin: string, game: GameScheme, taste: boolean, run = false): Promise<Partial<GameScheme> | undefined> {
     switch (game.state.id) {
         case GameState.GameStaging:
+            if (run) {
+                // A solo run: questions until the player is fooled three times (SoloRun in game-model).
+                // Picked from the everyday bank, never a seasonal pack's, which stays for the group's games.
+                return {
+                    state: updateState(GameState.RoundIntro),
+                    totalQ: SOLO_RUN_MAX,
+                    qids: await pickQuestionsForRoom(Object.assign({}, game, { totalQ: SOLO_RUN_MAX, pack: null })),
+                };
+            }
             if (taste) {
                 // A host who starts alone: five questions, whatever length was chosen for the table.
                 return {
@@ -225,8 +234,9 @@ async function stepUpdate(pin: string, game: GameScheme, taste: boolean): Promis
                 };
             }
 
-            const qids = await pickQuestionsForRoom(game);
-            const aboutPlan = await aboutPlanFor(game, taste);
+            // A challenge keeps the other table's questions, in their order, whatever this room saw (challenge.ts).
+            const qids = game.challenge ? game.qids : await pickQuestionsForRoom(game);
+            const aboutPlan = game.challenge ? {} : await aboutPlanFor(game, taste);
             return Object.assign({
                 state: updateState(GameState.RoundIntro),
                 qids: await packClearOfAbout(game, qids, aboutPlan.aboutQs),
@@ -288,7 +298,26 @@ function updateState(stateId: number): GameStateInfo {
 
 function updateGame(pin: string, update: Partial<GameScheme>) {
     // Returned so the caller waits for the write before finishing.
-    return gamesRef.child(pin).update(update);
+    return gamesRef.child(pin).update(scoresOnly(update));
+}
+
+/**
+ * The scoreboard's new scores are written seat by seat, not as the whole players node. The step read
+ * the players before adding up the points: a seat taken since (a latecomer, see join.ts), or a mark
+ * written on a seat since, would be erased by writing that read back whole.
+ */
+export function scoresOnly(update: Partial<GameScheme>): { [path: string]: any } {
+    if (!update || !update.players) {
+        return update;
+    }
+    const out: { [path: string]: any } = Object.assign({}, update);
+    delete out.players;
+    Object.keys(update.players).forEach(pid => {
+        if (update.players[pid]) {
+            out[`players/${pid}/score`] = update.players[pid].score || 0;
+        }
+    });
+    return out;
 }
 
 async function populateQuestion(game: GameScheme, qidx: number) {
@@ -400,7 +429,8 @@ async function tasteQuestion(pin: string, game: GameScheme, qidx: number): Promi
         truth: { text: question.realAnswer, houseLie: false, realAnswer: true },
     };
 
-    tasteHouseLies(cleanHouseLies(question.id, question.fakeAnswers), question.realAnswer).forEach(text => {
+    const options = tasteOptions(gameTaste(game), qidx);
+    tasteHouseLies(cleanHouseLies(question.id, question.fakeAnswers), question.realAnswer, Math.random, options).forEach(text => {
         answers[gamesRef.child(pin).child('answers').push().key] = { text, houseLie: true, realAnswer: false };
     });
 
@@ -474,7 +504,23 @@ async function handleScoreBoardState(game: GameScheme, pin: string) {
             aboutColumns(game))).catch(e => console.error('onQuestionResult failed', pin, e && e.message)),
     ]);
 
-    if (nobodyPlayed(game)) {
+    const run = (gameTaste(game) || {} as any).run;
+    if (run && (soloRunOver(run, game.questionIndex) || !(game.qids || {})[game.questionIndex + 1])) {
+        // A solo run ends at its third fooling, or when it has no question left: its final screen.
+        res = {
+            state: updateState(GameState.ScoreBoardFinal),
+            lastSent: lastSentSeats(game),
+            currentQ: {},
+            answers: {},
+            answerSelections: {},
+            revealAnswers: null,
+            ideas: null,
+            aboutTruth: null,
+        };
+    } else if (run) {
+        // The next question at once: a run has no round cards.
+        res = Object.assign({ questionIndex: game.questionIndex + 1 }, await tasteQuestion(pin, game, game.questionIndex + 1));
+    } else if (nobodyPlayed(game)) {
         // Nobody sent a lie or a pick in question 1: the phones were put down (or never picked up).
         // The game ends here, with Replay, and is not counted as played (analytics.ts onStateChange).
         console.log(`[PIN: ${pin}] Nobody played question 1: the game ends`);
@@ -624,7 +670,9 @@ async function aboutAnswersStep(pin: string, game: GameScheme): Promise<Partial<
 
 /**
  * At START, in a pack game that plays About questions: the questions reordered so that every pack question
- * is played (see clearAboutPlaces). On any failure the order is kept, as before.
+ * is played (see clearAboutPlaces). Any question with a pack is kept, so a kids game's season questions
+ * (QuestionPack.kidsToo, e.g. pack thanksgiving) stay too; only bank questions (no pack) move. On any
+ * failure the order is kept, as before.
  */
 async function packClearOfAbout(game: GameScheme, qids: any, aboutQs: GameScheme['aboutQs']): Promise<any> {
     if (!game.pack || !aboutQs || !qids || typeof qids !== 'object') {
@@ -634,7 +682,7 @@ async function packClearOfAbout(game: GameScheme, qids: any, aboutQs: GameScheme
         const list: string[] = Array.isArray(qids) ? qids : Object.keys(qids).sort((a, b) => +a - +b).map(k => qids[k]);
         const places = Object.keys(aboutQs).map(k => Number(k.slice(1))).filter(n => Number.isInteger(n));
         const questions = await Promise.all(list.map(qid => qid ? get<any>(questionsRef.child(qid)) : Promise.resolve(null)));
-        const pack = new Set(list.filter((qid, i) => !!questions[i] && questions[i].pack === game.pack));
+        const pack = new Set(list.filter((qid, i) => !!questions[i] && !!questions[i].pack));
         if (!places.some(place => pack.has(list[place]))) {
             return qids;
         }

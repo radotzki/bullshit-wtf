@@ -13,6 +13,20 @@
         <!-- The week after a finished game, in the test's new half: the night's recap (night-after.ts). -->
         <div class="controls-wrapper" *ngIf="gameOver && recapShown && recap">
             <div class="controls night-after">
+                <!-- Opened by SAME TABLE TOMORROW's link on a Hanukkah night (components/hanukkah-night). -->
+                <p class="recap-hanukkah" *ngIf="hanukkahNight">🕎 {{ hn.recapLine(hanukkahNight) }}</p>
+                <!-- The Hanukkah link in a browser that didn't play: wait for the table, or join its game under way. -->
+                <div class="recap-ask recap-hanukkah-wait" *ngIf="ask === 'hanukkah-wait'">
+                    <p class="recap-ask-title">{{ hn.waitTitle }}</p>
+                    <p class="recap-ask-text">{{ hn.waitText(hanukkahNight) }}</p>
+                    <button class="button is-fullwidth recap-create" type="button" (click)="recapCreate()">{{ hn.ownTable }}</button>
+                </div>
+                <div class="recap-ask recap-hanukkah-playing" *ngIf="ask === 'hanukkah-playing'">
+                    <p class="recap-ask-title">{{ hn.playingTitle }}</p>
+                    <p class="recap-ask-text">{{ hn.playingText }}</p>
+                    <button class="button is-primary is-medium is-fullwidth recap-join-now" type="button"
+                        (click)="joinNow()">{{ hn.joinNow }}</button>
+                </div>
                 <!-- Same table tomorrow: this game's lobby is open, so it comes first (same-table.ts). -->
                 <div class="recap-ask recap-playing" *ngIf="ask === 'again-player' || ask === 'again-other'">
                     <p class="recap-ask-title">{{ n.againTitle }}</p>
@@ -109,6 +123,11 @@
                     </p>
                 </div>
 
+                <!-- A holiday pack's game: say which game the family chat's link opened, and what it is. -->
+                <div *ngIf="nicknameState && !gameOver && packGame" class="pack-game">
+                    <p class="pack-game-title">{{ packGame }}</p>
+                    <p class="pack-game-how">{{ t.packHow }}</p>
+                </div>
                 <div class="notification is-warning seat-taken" *ngIf="seatTaken && nicknameState">
                     <p><strong>{{ t.seatTakenTitle }}</strong></p>
                     <p>{{ t.seatTakenText }}</p>
