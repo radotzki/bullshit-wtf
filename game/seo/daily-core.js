@@ -96,13 +96,15 @@
     /**
      * Why a typed lie (and name) is refused, or null when it may go out. Run before sending and
      * again before showing, with the same rules as the game: `sameAnswer` is the game's
-     * isSameAnswer and `nameFlag` its nickname filter.
+     * isSameAnswer and `nameFlag` its nickname filter. `partOfTruth`, the game's isPartOfTruth, is
+     * optional: without it a lie made only of the truth's words is not refused.
      *   'empty'    nothing typed
      *   'truth'    it is the true answer, typed a little differently
+     *   'close'    it is only a part of the truth ("Germany" for "Nazi Germany")
      *   'taken'    it is one of the house's lies
      *   'refused'  too long, a slur or sex word, a link, an @, a run of 5 digits or more
      */
-    function screenLie(lie, name, truth, lies, sameAnswer, nameFlag) {
+    function screenLie(lie, name, truth, lies, sameAnswer, nameFlag, partOfTruth) {
         lie = tidy(lie);
         name = tidy(name);
         if (!lie) {
@@ -113,6 +115,9 @@
         }
         if (sameAnswer(lie, truth)) {
             return 'truth';
+        }
+        if (partOfTruth && partOfTruth(lie, truth)) {
+            return 'close';
         }
         for (var i = 0; i < lies.length; i++) {
             if (sameAnswer(lie, lies[i])) {

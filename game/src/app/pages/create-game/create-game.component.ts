@@ -3,7 +3,8 @@ import { ApiService } from './../../services/api.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { markHosted, markVisit, arrivalCampaign, preferredLocale, readCampaign } from '../../services/join-source';
-import { questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack } from '../../game-model';
+import { inPortal } from '../../portal/portal';
+import { questionPacks, seasonalPack, packFits, packIcon, KIDS_PACK, chosenPack, kidsSeasonPack } from '../../game-model';
 import { CreateStrings, createStrings } from './create-strings';
 
 @Component({
@@ -26,6 +27,8 @@ export class CreateGameComponent implements OnInit {
     usePack = false;
     // "Kids are playing": the game plays the kids pack in place of the seasonal one (see questionPacks.kids).
     kids = false;
+    // The CrazyGames version offers no kids' questions (CrazyGames takes no games for children): no box, and ?pack=kids is ignored.
+    readonly portal = inPortal();
     // A tag on this page's own address (the after-game ask links here with ?via=after-game).
     private campaign: string = null;
 
@@ -45,7 +48,7 @@ export class CreateGameComponent implements OnInit {
         this.campaign = typeof params.via === 'string' ? readCampaign(`?via=${encodeURIComponent(params.via)}`) : null;
 
         // ?pack=kids switches "Kids are playing" on; it is never offered as the Special pack.
-        this.kids = params.pack === KIDS_PACK;
+        this.kids = !this.portal && params.pack === KIDS_PACK;
         this.askedPack = typeof params.pack === 'string' && params.pack !== KIDS_PACK ? params.pack : null;
         this.usePack = params.pack !== 'none';
     }
@@ -57,6 +60,12 @@ export class CreateGameComponent implements OnInit {
      */
     get pack(): string {
         return packFits(this.askedPack, this.locale) ? this.askedPack : seasonalPack(Date.now(), this.locale) || null;
+    }
+
+    /** With kids playing: the holiday whose kid-friendly questions the kids game still gets today, or ''. */
+    get kidsSeasonLine(): string {
+        const id = kidsSeasonPack(Date.now(), this.locale);
+        return id ? `${this.t.kidsSeason} ${packIcon(id)} ${questionPacks[id].label[this.locale === 'he' ? 'he' : 'en']}.` : '';
     }
 
     get packIcon(): string {

@@ -22,7 +22,7 @@
  */
 import { nameFlag } from '../name-flag';
 import { cleanCampaign, isTestCampaign } from '../game-model';
-import { isSameAnswer } from './same-answer';
+import { isSameAnswer, isPartOfTruth } from './same-answer';
 import { DailyBank, DailyLang, DailyQuestion, addDays, contentTypeOf, daysBetween, isDay, israelDay, questionFor } from './daily';
 
 /** A round's id: 10 small letters or digits, made in the starter's browser. */
@@ -68,7 +68,7 @@ export function screenName(name: string): 'refused' | null {
 }
 
 /**
- * Why a lie is refused, or null when it may go in: 'empty', 'truth', 'taken' (a house lie or a lie
+ * Why a lie is refused, or null when it may go in: 'empty', 'truth' (the truth or a part of it), 'taken' (a house lie or a lie
  * already in the round), 'refused' (too long, a slur or sex word, a link, an @, five digits in a row).
  */
 export function screenLie(lie: string, truth: string, taken: string[]): string | null {
@@ -79,7 +79,8 @@ export function screenLie(lie: string, truth: string, taken: string[]): string |
     if (lengthOf(l) > LIE_MAX) {
         return 'refused';
     }
-    if (isSameAnswer(l, truth)) {
+    // The truth, or only a part of it ("Germany" for "Nazi Germany"), as in the game (same-answer.ts).
+    if (isPartOfTruth(l, truth)) {
         return 'truth';
     }
     if (taken.some(t => isSameAnswer(l, t))) {

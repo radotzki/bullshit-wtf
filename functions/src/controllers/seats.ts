@@ -23,6 +23,36 @@ export function leftOutGuardMs(stateId: number): number {
 const guardedPhases = [GameState.ShowQuestion, GameState.ShowAnswers];
 
 /**
+ * A seat whose page has been away this long is gone: the room stops waiting for it, and a Replay
+ * leaves it out. Each seat's page keeps games/$pin/seen/$pid true while it is connected, and the
+ * database writes the server's time there by itself when the connection drops (ApiService.followSeat).
+ * A phone that sleeps for a moment, a reload or a lift ride is back well inside this; a phone that
+ * slept longer counts again the moment it is back (its page sets the mark to true again).
+ */
+export const GONE_MS = 20 * 1000;
+
+/**
+ * Has this seat's page gone away, GONE_MS ago or more? Either its mark is the time it went away, or,
+ * in a Replay, it never came: the Replay carried the seat over, but its phone never opened the new game
+ * while other seats' phones did. A seat with no mark anywhere else (an older page, or a game from before
+ * the marks) is never gone.
+ */
+export function seatGone(game: GameScheme, pid: string, now: number): boolean {
+    const seen = (game && game.seen) || {};
+    const mark = seen[pid];
+    if (typeof mark === 'number') {
+        return now - mark >= GONE_MS;
+    }
+    if (mark !== undefined && mark !== null) {
+        return false;
+    }
+    // Never came to the Replay: only once the Replay has been open GONE_MS, and only where other seats
+    // are marked here, so the marks are known to work in this game.
+    const others = Object.keys(seen).some(k => k !== pid && !!(game.players || {})[k]);
+    return game.origin === 'replay' && others && typeof game.timestamp === 'number' && now - game.timestamp >= GONE_MS;
+}
+
+/**
  * Whether seats can be left out on the question the game is on: only from the second question of a
  * game whose flags were kept from its first (playedFrom). A game that was already running when this
  * was released has no playedFrom, so every seat counts in it to its end, as before.
@@ -44,24 +74,30 @@ function hasPlayed(game: GameScheme, pid: string): boolean {
  * this game (nobody is playing it: a player who went home, or a second seat left by a double join).
  * Such a seat counts again from the moment it sends one. It stays on the scoreboard either way.
  */
-export function seatsToWaitFor(game: GameScheme): string[] {
+export function seatsToWaitFor(game: GameScheme, now = Date.now()): string[] {
     // While an About question's answers are picked, the player it is about does not pick (see about.ts).
     const out = notPicking(game);
-    return seatsPlaying(game).filter(pid => pid !== out);
+    return seatsPlaying(game, now).filter(pid => pid !== out);
 }
 
-/** The seats the empty seats rule waits for: every seat on question 1, then those that sent something. */
-function seatsPlaying(game: GameScheme): string[] {
+/**
+ * The seats the room waits for: every seat on question 1, then those that sent something (the empty
+ * seats rule); on any question, less the seats whose page is gone (seatGone). A seat whose page left
+ * was waited for to the end of every question before: on 21 Nov's New Year's Eve play-through a guest
+ * who walked off at midnight in question 3 made each of the last questions run out its clock.
+ */
+function seatsPlaying(game: GameScheme, now = Date.now()): string[] {
     const pids = Object.keys(game && game.players || {});
-    return canLeaveOut(game) ? pids.filter(pid => hasPlayed(game, pid)) : pids;
+    const playing = canLeaveOut(game) ? pids.filter(pid => hasPlayed(game, pid)) : pids;
+    return playing.filter(pid => !seatGone(game, pid, now));
 }
 
 /**
  * Has every seat we wait for sent `sent` (the lies, the picks or the NEXT taps of this question)?
  * Never true with nobody to wait for: a game nobody plays runs on its clocks, as before.
  */
-export function everyoneSent(game: GameScheme, sent: { [pid: string]: any } | null | undefined): boolean {
-    const waited = seatsToWaitFor(game);
+export function everyoneSent(game: GameScheme, sent: { [pid: string]: any } | null | undefined, now = Date.now()): boolean {
+    const waited = seatsToWaitFor(game, now);
     return waited.length > 0 && waited.every(pid => !!(sent && sent[pid]));
 }
 
@@ -71,7 +107,7 @@ export function everyoneSent(game: GameScheme, sent: { [pid: string]: any } | nu
  */
 export function leftOutGuardWait(game: GameScheme, now: number): number {
     const seats = Object.keys(game && game.players || {}).length;
-    if (!game || !game.state || seatsPlaying(game).length === seats) {
+    if (!game || !game.state || seatsPlaying(game, now).length === seats) {
         return 0;
     }
     return Math.max(0, game.state.timestamp + leftOutGuardMs(game.state.id) - now);
@@ -122,10 +158,10 @@ export function endsAfterGuard(game: GameScheme, now: number): boolean {
     if (!game || !game.state || !guardedPhase(game.state.id) || leftOutGuardWait(game, now) > 0) {
         return false;
     }
-    const leftOut = seatsPlaying(game).length < Object.keys(game.players || {}).length;
+    const leftOut = seatsPlaying(game, now).length < Object.keys(game.players || {}).length;
     // Only a player's pick counts (see scoring.ts). The writing counts an About question's truth too.
     const sent = game.state.id === GameState.ShowQuestion ? writingSent(game) : playerPicks(game);
-    return leftOut && everyoneSent(game, sent);
+    return leftOut && everyoneSent(game, sent, now);
 }
 
 /**
@@ -134,6 +170,6 @@ export function endsAfterGuard(game: GameScheme, now: number): boolean {
  * while a seat is left out.
  */
 export function revealEndWait(game: GameScheme, now: number): number | undefined {
-    const wait = revealDoneWait(game, now, seatsToWaitFor(game));
+    const wait = revealDoneWait(game, now, seatsToWaitFor(game, now));
     return wait === undefined ? undefined : Math.max(wait, leftOutGuardWait(game, now));
 }

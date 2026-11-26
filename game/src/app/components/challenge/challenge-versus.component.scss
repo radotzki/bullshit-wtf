@@ -1,0 +1,92 @@
+$gold: #f3d467;
+$dark: #363636;
+$body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+
+.versus {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fff8dc;
+    box-shadow: 0 0 0 2px $gold, 0 3px 0 rgba(0, 0, 0, .12);
+    color: $dark;
+    text-align: center;
+
+    &.is-rtl {
+        font-family: 'Suez One', $body-font;
+    }
+
+    .versus-label {
+        font-size: .8rem;
+        letter-spacing: .08em;
+        color: #7a7a7a;
+    }
+
+    .versus-line {
+        font-size: 1.15rem;
+        line-height: 1.25;
+        margin: 2px 0 10px;
+    }
+
+    &.won .versus-line {
+        color: #23a55a;
+    }
+
+    .versus-tables {
+        display: flex;
+        gap: 10px;
+    }
+
+    .versus-table {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .versus-name {
+        font-size: .85rem;
+        text-transform: uppercase;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .versus-top {
+        font-size: 1.6rem;
+        line-height: 1.1;
+        font-weight: 700;
+    }
+
+    .versus-rows {
+        list-style: none;
+        margin: 6px 0 0;
+        padding: 0;
+        font-family: $body-font;
+        font-size: .85rem;
+    }
+
+    .versus-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .versus-row-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+    }
+
+    .versus-row-score {
+        flex: none;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .versus-more {
+        font-family: $body-font;
+        font-size: .8rem;
+        color: #7a7a7a;
+    }
+}

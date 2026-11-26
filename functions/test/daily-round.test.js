@@ -28,6 +28,12 @@ test('a lie passes the same screen as on the page', () => {
     assert.strictEqual(round.screenLie('', 'dancing', []), 'empty');
     assert.strictEqual(round.screenLie('Dancing!', 'dancing', []), 'truth');
     assert.strictEqual(round.screenLie('the dancing', 'dancing', []), 'truth');
+    assert.strictEqual(round.screenLie('Germany', 'Nazi Germany', []), 'truth', 'a part of the truth, as in the game');
+    assert.strictEqual(round.screenLie('גרמניה', 'גרמניה הנאצית', []), 'truth');
+    assert.strictEqual(round.screenLie('work', 'do no work', []), null, 'it leaves out "no": the opposite, a fair lie');
+    assert.strictEqual(round.screenLie('עובדות', 'לא עובדות', []), null);
+    assert.strictEqual(round.screenLie('an hour', 'half an hour', []), null);
+    assert.strictEqual(round.screenLie('שעה', 'חצי שעה', []), null);
     assert.strictEqual(round.screenLie('Laughing', 'dancing', ['laughing']), 'taken');
     assert.strictEqual(round.screenLie('see bit.ly/abc', 'dancing', []), 'refused');
     assert.strictEqual(round.screenLie('call 0541234567', 'dancing', []), 'refused');

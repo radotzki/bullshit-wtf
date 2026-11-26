@@ -14,11 +14,14 @@
         margin: 15px 0;
     }
 
-    // A taste's question, above its answers: the phone's writing screen shows a question the same way.
-    .taste-question {
+    // The question above the answers, in a taste or a game with no big screen: about 18 px on a phone
+    // (the page's own type is 14 px there), as the writing screen shows it in such a game.
+    .phone-question {
         margin: 10px 0 14px;
         font-size: 1.3rem;
         line-height: 1.3;
+        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
     // Ten answers or more (a table of 9 to 12): closer together, so the list stays short on a phone,
