@@ -938,7 +938,7 @@ export const questionPacks: { [id: string]: QuestionPack } = {
         locales: ['en'],
         icon: '🎄',
     },
-    // "Kids are playing" (functions/data/kids-questions.json): 20 strange-but-true facts in each
+    // "Kids are playing" (functions/data/kids-questions.json): 50 strange-but-true facts in each
     // language that a child of 8 to 12 can follow. Not seasonal: the create page's own switch asks for
     // it, and it takes the place of the seasonal pack in that game (one pack a game). Every question
     // of a kids game is a kid question nobody in the room has seen; once the room has seen them all,

@@ -197,7 +197,7 @@
     "fakeAnswers": [
       "magnetic",
       "fizzy",
-      "see-through"
+      "bouncy"
     ],
     "citation": "https://en.wikipedia.org/wiki/Banana_equivalent_dose",
     "lang": "en",
@@ -236,6 +236,366 @@
       "ten minutes"
     ],
     "citation": "https://en.wikipedia.org/wiki/International_Space_Station",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-21": {
+    "questionText": "An octopus has $blank$ hearts",
+    "realAnswer": "three",
+    "fakeAnswers": [
+      "two",
+      "five",
+      "eight"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Octopus",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-22": {
+    "questionText": "Honeybees show each other where to find flowers by doing a $blank$",
+    "realAnswer": "waggle dance",
+    "fakeAnswers": [
+      "loud buzzing song",
+      "headstand",
+      "drawing in the dirt"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Waggle_dance",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-23": {
+    "questionText": "Your heart beats about $blank$ times every day",
+    "realAnswer": "100,000",
+    "fakeAnswers": [
+      "1,000",
+      "10,000",
+      "10 million"
+    ],
+    "citation": "https://health.clevelandclinic.org/facts-about-the-heart",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-24": {
+    "questionText": "Saturn's rings are made almost entirely of chunks of $blank$",
+    "realAnswer": "ice",
+    "fakeAnswers": [
+      "gold",
+      "glass",
+      "metal"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Rings_of_Saturn",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-25": {
+    "questionText": "Pizza Margherita is said to be named after an Italian $blank$",
+    "realAnswer": "queen",
+    "fakeAnswers": [
+      "famous chef",
+      "racehorse",
+      "ship"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pizza_Margherita",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-26": {
+    "questionText": "Earmuffs were invented in 1873 by Chester Greenwood, when he was just $blank$ years old",
+    "realAnswer": "15",
+    "fakeAnswers": [
+      "6",
+      "40",
+      "92"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Chester_Greenwood",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-27": {
+    "questionText": "In 1972, tennis balls were changed to yellow so that $blank$ could see them better",
+    "realAnswer": "people watching on tv",
+    "fakeAnswers": [
+      "the ball boys",
+      "dogs",
+      "players at night"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tennis_ball",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-28": {
+    "questionText": "Russia is so big that it has $blank$ time zones",
+    "realAnswer": "eleven",
+    "fakeAnswers": [
+      "four",
+      "thirty",
+      "a hundred"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Time_in_Russia",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-29": {
+    "questionText": "Sloths move so slowly that tiny green algae grow in their fur and help them $blank$",
+    "realAnswer": "hide in the trees",
+    "fakeAnswers": [
+      "smell nice",
+      "stay dry",
+      "glow at night"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sloth",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-30": {
+    "questionText": "Babies are born with around $blank$ bones, and some of them join together as they grow up",
+    "realAnswer": "270",
+    "fakeAnswers": [
+      "50",
+      "600",
+      "2,000"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_skeleton",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-31": {
+    "questionText": "Olympus Mons, a volcano on Mars, is about $blank$ as tall as Mount Everest",
+    "realAnswer": "two and a half times",
+    "fakeAnswers": [
+      "half",
+      "ten times",
+      "a hundred times"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Olympus_Mons",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-32": {
+    "questionText": "A male emperor penguin keeps his egg warm on his feet for more than 60 days, and in all that time he eats $blank$",
+    "realAnswer": "nothing at all",
+    "fakeAnswers": [
+      "one fish a day",
+      "seaweed",
+      "krill his mate brings"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Emperor_penguin",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-33": {
+    "questionText": "Each bottlenose dolphin has its own whistle, and the others use it like a $blank$",
+    "realAnswer": "name",
+    "fakeAnswers": [
+      "song",
+      "alarm clock",
+      "secret password"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Signature_whistle",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-34": {
+    "questionText": "The story goes that the microwave oven was invented after an engineer found that the chocolate bar in his pocket had $blank$",
+    "realAnswer": "melted",
+    "fakeAnswers": [
+      "turned to stone",
+      "started to glow",
+      "doubled in size"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Percy_Spencer",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-35": {
+    "questionText": "For the first thirteen ancient Olympic Games in Greece, there was only one event: a $blank$",
+    "realAnswer": "running race",
+    "fakeAnswers": [
+      "chariot race",
+      "wrestling match",
+      "swimming race"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Ancient_Olympic_Games",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-36": {
+    "questionText": "The biggest desert in the world is $blank$",
+    "realAnswer": "antarctica",
+    "fakeAnswers": [
+      "the sahara",
+      "the gobi",
+      "australia"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Desert",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-37": {
+    "questionText": "If an axolotl, a kind of salamander, loses a leg, it can $blank$",
+    "realAnswer": "grow a new one",
+    "fakeAnswers": [
+      "glue it back on",
+      "swap it for a fin",
+      "borrow one from a friend"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Axolotl",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-38": {
+    "questionText": "The world's tallest known living tree is a coast redwood in California called $blank$",
+    "realAnswer": "hyperion",
+    "fakeAnswers": [
+      "big tom",
+      "sky reacher",
+      "old goliath"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hyperion_(tree)",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-39": {
+    "questionText": "Light from the Sun takes about $blank$ to reach the Earth",
+    "realAnswer": "8 minutes",
+    "fakeAnswers": [
+      "1 second",
+      "3 days",
+      "a year"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Sunlight",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-40": {
+    "questionText": "A giraffe's long neck has the same number of bones as $blank$",
+    "realAnswer": "your neck",
+    "fakeAnswers": [
+      "a whole snake",
+      "a dinosaur's tail",
+      "your whole spine"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Cervical_vertebrae",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-41": {
+    "questionText": "Before an ice hockey game, the pucks are $blank$ so they hop around less on the ice",
+    "realAnswer": "frozen",
+    "fakeAnswers": [
+      "warmed up",
+      "polished",
+      "soaked in milk"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Hockey_puck",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-42": {
+    "questionText": "Your brain is only about 2% of your weight, but it uses about $blank$ of your body's energy",
+    "realAnswer": "a fifth",
+    "fakeAnswers": [
+      "a hundredth",
+      "all of it",
+      "nine tenths"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Human_brain",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-43": {
+    "questionText": "The city of Venice in Italy is built on closely packed $blank$ pushed into the mud",
+    "realAnswer": "tree trunks",
+    "fakeAnswers": [
+      "old boats",
+      "glass bottles",
+      "metal springs"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venice",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-44": {
+    "questionText": "The hottest planet in our solar system is $blank$, even though it is not the closest one to the Sun",
+    "realAnswer": "venus",
+    "fakeAnswers": [
+      "mercury",
+      "mars",
+      "jupiter"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Venus",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-45": {
+    "questionText": "In the dark Arctic winter, a reindeer's eyes change from gold to $blank$",
+    "realAnswer": "deep blue",
+    "fakeAnswers": [
+      "bright red",
+      "silver",
+      "orange"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Reindeer",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-46": {
+    "questionText": "There is no lead in a pencil: its dark middle is mostly $blank$",
+    "realAnswer": "graphite",
+    "fakeAnswers": [
+      "coal dust",
+      "squid ink",
+      "burnt toast"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Pencil",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-47": {
+    "questionText": "Elephants are very strong, but they can't $blank$",
+    "realAnswer": "jump",
+    "fakeAnswers": [
+      "swim",
+      "lie down",
+      "walk uphill"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Elephant",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-48": {
+    "questionText": "There is no $blank$ in space, because there is no air to carry it",
+    "realAnswer": "sound",
+    "fakeAnswers": [
+      "light",
+      "gravity",
+      "time"
+    ],
+    "citation": "https://howthingsfly.si.edu/ask-an-explainer/how-does-sound-travel-space",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-49": {
+    "questionText": "Scientists say some dinosaurs are still alive today: they are the $blank$",
+    "realAnswer": "birds",
+    "fakeAnswers": [
+      "lizards",
+      "sharks",
+      "turtles"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bird",
+    "lang": "en",
+    "pack": "kids"
+  },
+  "kids-26-en-50": {
+    "questionText": "A popcorn kernel pops because the tiny bit of $blank$ inside it turns into steam",
+    "realAnswer": "water",
+    "fakeAnswers": [
+      "sugar",
+      "salt",
+      "electricity"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Popcorn",
     "lang": "en",
     "pack": "kids"
   },
