@@ -27,6 +27,17 @@
 .night-after {
     text-align: center;
 
+    .recap-hanukkah {
+        display: inline-block;
+        margin-bottom: 0.75rem;
+        padding: 2px 12px;
+        border-radius: 999px;
+        background: #fff8dc;
+        box-shadow: 0 0 0 2px #f3d467;
+        color: #363636;
+        font-weight: bold;
+    }
+
     .recap-heading {
         font-size: 1.5rem;
         font-weight: bold;
@@ -129,13 +140,35 @@
     }
 
     // "They're playing again" and "They started without you": above the recap, set apart from it.
-    .recap-playing, .recap-late {
+    .recap-playing, .recap-late, .recap-hanukkah-wait, .recap-hanukkah-playing {
         padding-bottom: 1rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .recap-new-table {
         margin-top: 0.75rem;
+    }
+}
+
+// A holiday pack's game, under the nickname heading: which game it is, and what it is in one line.
+.pack-game {
+    margin-bottom: 1rem;
+    text-align: center;
+
+    .pack-game-title {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 999px;
+        background: #fff8dc;
+        box-shadow: 0 0 0 2px #f3d467;
+        color: #363636;
+        font-weight: bold;
+    }
+
+    .pack-game-how {
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        color: #363636;
     }
 }
 

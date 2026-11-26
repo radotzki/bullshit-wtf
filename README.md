@@ -21,11 +21,12 @@ questions and scores on a TV or laptop if you like.
 - [Team building](https://bullshit.wtf/team-building-game?via=github)
 - [A free Jackbox and Fibbage alternative](https://bullshit.wtf/free-jackbox-alternative?via=github)
 - [Christmas](https://bullshit.wtf/christmas-party-game?via=github), [New Year's Eve](https://bullshit.wtf/new-years-eve-party-game?via=github), [the office holiday party](https://bullshit.wtf/office-holiday-party-game?via=github), [Hanukkah](https://bullshit.wtf/hanukkah-party-game?via=github)
+- [A Thanksgiving game for the whole table](https://bullshit.wtf/thanksgiving-party-game?via=github)
 
 ## בעברית
 
 - [משחק חברה בטלפון](https://bullshit.wtf/he/party-game-phone?via=github)
-- [משחק קבוצתי לבית](https://bullshit.wtf/he/home-together?via=github) · [ימים בבית עם הילדים](https://bullshit.wtf/he/days-at-home?via=github)
+- [משחק קבוצתי לבית](https://bullshit.wtf/he/home-together?via=github) · [ימים בבית עם הילדים](https://bullshit.wtf/he/days-at-home?via=github) · [משחקים לחופש חנוכה](https://bullshit.wtf/he/school-break?via=github)
 - [פעולה לשבט ולסניף](https://bullshit.wtf/he/youth-group?via=github) · [גיבוש](https://bullshit.wtf/he/gibush?via=github) · [גיבוש לצוות](https://bullshit.wtf/he/team-building?via=github)
 - [משחק לכיתה](https://bullshit.wtf/he/classroom?via=github) · [ערב משפחה](https://bullshit.wtf/he/family-evening?via=github) · [ארוחת שישי](https://bullshit.wtf/he/friday-dinner?via=github)
 - [חנוכה](https://bullshit.wtf/he/hanukkah?via=github) · [פורים](https://bullshit.wtf/he/purim?via=github)

@@ -10,7 +10,14 @@ import { CrewService } from './../../services/crew.service';
 import { reportError } from './../../sentry/sentry.module';
 import { gameGone, joinPageFor } from './game-gone';
 import { Highlight, Highlights, finalPlaces, funniestLies, Taste, TASTE_QUESTIONS } from './../../game-model';
-import { tasteStrings, TasteStrings } from './../taste-strings';
+import { tasteStrings, TasteStrings, counselorStrings, CounselorStrings, groupTag, activityLink } from './../taste-strings';
+import { arrivalCampaign } from './../../services/join-source';
+import { ShareService } from './../../services/share.service';
+import { runStrings, RunStrings } from './../run-strings';
+import { SoloRunService } from './../../services/solo-run.service';
+import { keepRunScore, BestResult } from './../../services/solo-run';
+import { happyTime } from './../../portal/portal';
+import { SOLO_RUN_LIVES } from './../../game-model';
 import { finalStrings, FinalStrings } from './final-strings';
 import { rematchMove, rematchStrings, showHostAsk } from './../../components/host-ask/host-ask';
 import { GameState, seatPicture } from './../../game-model';
@@ -19,6 +26,7 @@ import { GAMES_KEY, addGame, isRepeatGroup, parseGames } from './repeat-group';
 import { biggestBullshitters } from './biggest';
 import { INVITE_CONTENT, INVITE_HALF_KEY, candleEvening, inviteHalf } from './../../components/invite-group/invite-group';
 import { SIGN_IN_WAIT_MS } from './../../services/api.service';
+import { NightView, nightView } from './../../components/hanukkah-night/hanukkah-night';
 import {
     SEEN_KEY, SWAP_AFTER_MS, addSeen, bigScreenLine, buttonsSwap, parseSeen, seenMethod,
 } from './../../components/next-week/next-week';
@@ -57,6 +65,17 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     /** The game was a taste (five pick-only questions for a host who started alone), or null. */
     taste: Taste = null;
     tasteWords: TasteStrings = tasteStrings('en');
+    /** The taste was opened from a group page (taste-strings.ts, groupTag): this tab's campaign, or null. */
+    counselorTag: string = groupTag(arrivalCampaign());
+    counselorWords: CounselorStrings = counselorStrings('en');
+    /** SAVE THE LINK FOR THE ACTIVITY found no share sheet and copied the link. */
+    linkCopied = false;
+    runWords: RunStrings = runStrings('en');
+    runLives = SOLO_RUN_LIVES;
+    /** A solo run's best on this device (solo-run.ts), once its final screen has read the run. */
+    runBest: BestResult = null;
+    /** PLAY AGAIN or KEEP GOING ALONE is making the new run. */
+    runStarting = false;
     confetti = Array.from({ length: 28 }, (_, i) => i);
     sound: Howl;
     presenter: boolean;
@@ -88,7 +107,7 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
     /** This player did not host the game: show the "start your own game" ask. */
     hostAsk: boolean;
     /** The game's seasonal pack (the ask speaks of Hanukkah after a Hanukkah game). */
-    pack: string = null;
+    pack: string = undefined;
     /**
      * Someone else pressed REMATCH: the new game's pin. This phone stays on the final screen and its
      * REMATCH button becomes JOIN THE REMATCH (see rematchMove).
@@ -126,6 +145,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         private crewService: CrewService,
         private storageService: StorageService,
         private router: Router,
+        private soloRun: SoloRunService,
+        private shareService: ShareService,
     ) { }
 
     /** Nobody played question 1, so the game ended there: the final screen says so. */
@@ -156,6 +177,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             this.locale = locale === 'he' ? 'he' : 'en';
             this.t = finalStrings[this.locale];
             this.tasteWords = tasteStrings(this.locale);
+            this.counselorWords = counselorStrings(this.locale);
+            this.runWords = runStrings(this.locale);
             this.taste = taste || null;
             // "Nobody fell for their lies" only when every round was counted.
             this.wholeGame = from === 0;
@@ -168,6 +191,13 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
                 this.crewService.remember(this.crewId, this.crewName, this.myNickname);
             }
             this.setPlayers(resp, highlights || {}, user ? user.pid : undefined);
+            if (this.soloRunEnd) {
+                this.runBest = keepRunScore(this.locale, this.pin, this.taste.found);
+                if (this.runBest.isNew) {
+                    // CrazyGames' happy time: a new best is the run's moment of joy (nothing off the portal).
+                    happyTime();
+                }
+            }
             this.setHostAsk(resp, user);
             this.setRepeatGroup(resp);
             const host = Object.keys(resp).map(pid => resp[pid]).filter(p => p && p.host)[0];
@@ -253,6 +283,28 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             }, wait);
         }
     }
+
+    /**
+     * On a Hanukkah night (components/hanukkah-night): the night's line, and SAME TABLE TOMORROW on a
+     * player's phone. Null on any other day, and until the players and the game's pack are known.
+     */
+    get hanukkahNight(): NightView | null {
+        if (!this.displayPlayers || this.pack === undefined) {
+            return null;
+        }
+        const view = nightView(new Date(), this.locale, this.pack, {
+            presenter: this.presenter, player: !!this.mine, soloTaste: !!this.soloTaste,
+            players: this.displayPlayers.length,
+        });
+        // One object while the night stays the same, so the screen does not redraw it every check.
+        if (!view) {
+            this.nightCache = null;
+        } else if (!this.nightCache || this.nightCache.night !== view.night || this.nightCache.button !== view.button) {
+            this.nightCache = view;
+        }
+        return this.nightCache;
+    }
+    private nightCache: NightView = null;
 
     /** This phone shows the new button (or its banner) in place of the save-crew offer. */
     get nextWeekOn(): boolean {
@@ -380,7 +432,8 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
 
     /** The ask is for a player of this game who did not host it. */
     private async setHostAsk(resp, user) {
-        this.pack = await this.apiService.getGamePack(this.pin).catch(() => null);
+        // Null once read, with or without a pack: undefined means not known yet (see hanukkahNight).
+        this.pack = (await this.apiService.getGamePack(this.pin).catch(() => null)) || null;
         const players = Object.keys(resp).map(pid => ({ pid, uid: resp[pid].uid, host: !!resp[pid].host }));
         const guest = showHostAsk({
             presenter: this.presenter,
@@ -494,7 +547,30 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
         return !!this.taste && !this.presenter && !!this.displayPlayers && this.displayPlayers.length === 1;
     }
 
+    /** The end of a solo run played alone (SoloRun in game-model): its score, the best, PLAY AGAIN. */
+    get soloRunEnd(): boolean {
+        return this.soloTaste && !!this.taste.run;
+    }
+
+    /**
+     * A new solo run, one tap: PLAY AGAIN after a run, KEEP GOING ALONE after the taste. Same language,
+     * same nickname; the new game's lobby starts it (SoloRunService).
+     */
+    async playSolo() {
+        if (this.runStarting || !this.mine) {
+            return;
+        }
+        this.runStarting = true;
+        const ok = await this.soloRun.start(this.locale, this.mine.nickname, this.soloRunEnd ? 'solo-run-again' : 'solo-run-after-taste');
+        if (!ok) {
+            this.runStarting = false;
+        }
+    }
+
     get headline() {
+        if (this.soloRunEnd) {
+            return this.runWords.headline(this.taste.found);
+        }
         if (this.soloTaste) {
             return this.tasteWords.found(this.taste.found, TASTE_QUESTIONS);
         }
@@ -523,6 +599,22 @@ export class ScoreBoardFinalComponent implements OnInit, OnDestroy {
             return this.winners.length > 1 ? this.t.youTied : this.t.youWon;
         }
         return this.t.yourPlace(this.mine.place, this.displayPlayers.length);
+    }
+
+    /**
+     * The counselor's ending (taste-strings.ts, CounselorStrings): a taste played alone, not a solo
+     * run, in a tab that came from a group page. Every other taste keeps the ordinary invitation.
+     */
+    get counselorEnd(): boolean {
+        return this.soloTaste && !this.soloRunEnd && !!this.counselorTag;
+    }
+
+    /** SAVE THE LINK FOR THE ACTIVITY: the group page's link with its tag, to the share sheet or copied. */
+    async saveActivityLink() {
+        const w = this.counselorWords;
+        const result = await this.shareService.share(
+            { title: w.saveTitle, text: w.saveText, url: activityLink(arrivalCampaign()) }, 'activity-link');
+        this.linkCopied = result === 'copied';
     }
 
     replay() {

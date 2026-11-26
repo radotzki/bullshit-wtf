@@ -94,6 +94,49 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
         word-break: break-word;
     }
 
+    // A game played alone: no trophy, a short card, so the invitation and the buttons are on the first
+    // screen of a 1280x720 frame (and CrazyGames' 800x450 one).
+    // In px: the page's rem grows with the window.
+    .final.solo {
+        .confetti { height: 160px; }
+        .trophy { display: none; }
+        .hero { padding: 8px 12px 10px; }
+        .headline { font-size: 30px; }
+        .run-best { font-size: 17px; }
+        .run-best.new-best { font-size: 20px; }
+        .run-best .run-streak-line { font-size: 15px; }
+
+        .actions {
+            margin: 10px 0 12px;
+
+            .taste-ask { padding: 10px 12px 2px; }
+            .taste-ask .taste-ask-title { font-size: 22px; }
+            .taste-ask .taste-ask-text { font-size: 15px; margin: 4px 0 10px; }
+            .taste-ask .taste-daily { font-size: 14px; }
+            .rematch { height: auto; min-height: 50px; font-size: 20px; }
+            .solo-again .solo-again-sub { font-size: 12px; }
+            .hint { font-size: 13px; margin: 6px 0 6px; }
+
+            // The counselor's ending: three short lines, then its two long buttons, which wrap.
+            .taste-ask.counselor-end {
+                .taste-ask-title { font-size: 19px; }
+                .counselor-line { margin: 4px 0; font-size: 14px; }
+                .counselor-line:last-of-type { margin-bottom: 10px; }
+                .rematch { white-space: normal; line-height: 1.2; font-size: 17px; padding-top: 8px; padding-bottom: 8px; }
+            }
+        }
+    }
+
+    .run-best {
+        margin-top: 2px;
+        font-size: 1.1rem;
+        color: $gold;
+
+        &.new-best { font-size: 1.35rem; }
+
+        .run-streak-line { color: #fff; font-size: .95rem; }
+    }
+
     .winner-score {
         font-size: 1.2rem;
         color: $gold;
@@ -162,6 +205,38 @@ $body-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica 
                 font-family: $body-font;
                 font-size: .95rem;
                 text-decoration: underline;
+            }
+        }
+
+        // INVITE FRIENDS and the solo run's button, side by side where there is room.
+        .solo-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .rematch { flex: 1 1 0; }
+        }
+
+        .solo-again {
+            height: auto;
+            min-height: 3.2rem;
+            flex-direction: column;
+            white-space: normal;
+            line-height: 1.1;
+
+            .solo-again-sub {
+                font-family: $body-font;
+                font-size: .8rem;
+                text-shadow: none;
+                opacity: .9;
+            }
+        }
+
+        @media (min-width: 600px) {
+            .solo-buttons {
+                flex-direction: row;
+
+                .rematch { width: auto; min-width: 0; }
             }
         }
 

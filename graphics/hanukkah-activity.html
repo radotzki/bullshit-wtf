@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link preview (1200x630) for the counselors' Hanukkah activity page /he/hanukkah-activity
+     (game/seo/pages-he-hanukkah-activity.js). Same look as groups-home.html: the menorah of hanukkah.html
+     over the projector wall of the youth page's card. No real faces, no other company's artwork.
+     Render: node graphics/render-more-pages.js game/src/assets graphics/hanukkah-activity.html -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fff;margin-bottom:20px;color:#fff}
+.dots{position:absolute;inset:0}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{direction:ltr;width:340px;height:340px;margin:0 40px 90px 70px;display:block;flex:none;position:relative}
+.text{flex:1;padding-right:60px;margin-bottom:90px;position:relative}
+h1{margin:0;font-size:124px;line-height:1;color:#fff;-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.3);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:56px;line-height:1.1;color:#f3d467}
+p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 70px 90px 40px}
+.he .text{padding-right:0;padding-left:60px}
+.he .kicker{font-size:58px}
+/* Brand white, as the search pages' own previews */
+.white{background:#fff}
+.white h1{-webkit-text-stroke:5px #9b9b9b;text-shadow:6px 8px 0 rgba(0,0,0,.18)}
+.white .kicker{color:#97374e}
+.white p{color:#4a4a4a}
+/* Colours per occasion */
+.wine{background:#97374e}
+.night{background:#13284f}
+.green{background:#1f5b3e}
+.plum{background:#3b1f5c}
+.teal{background:#1d5560}
+.stars{background:
+ radial-gradient(circle at 10% 16%,rgba(243,212,103,.4) 0 3px,transparent 4px),
+ radial-gradient(circle at 84% 12%,rgba(243,212,103,.35) 0 2px,transparent 3px),
+ radial-gradient(circle at 66% 32%,rgba(255,255,255,.25) 0 2px,transparent 3px),
+ radial-gradient(circle at 26% 62%,rgba(255,255,255,.2) 0 2px,transparent 3px),
+ radial-gradient(circle at 93% 66%,rgba(243,212,103,.35) 0 3px,transparent 4px),
+ radial-gradient(circle at 47% 8%,rgba(255,255,255,.25) 0 2px,transparent 3px)}
+.snow{background:
+ radial-gradient(circle at 6% 10%,#fff 0 5px,transparent 6px),radial-gradient(circle at 18% 70%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 37% 14%,rgba(255,255,255,.8) 0 4px,transparent 5px),radial-gradient(circle at 55% 66%,#fff 0 3px,transparent 4px),
+ radial-gradient(circle at 72% 8%,#fff 0 5px,transparent 6px),radial-gradient(circle at 90% 40%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 97% 78%,#fff 0 3px,transparent 4px),radial-gradient(circle at 46% 40%,rgba(255,255,255,.6) 0 3px,transparent 4px)}
+.confetti{background:
+ radial-gradient(circle at 8% 14%,#f3d467 0 7px,transparent 8px),radial-gradient(circle at 22% 82%,#db7151 0 6px,transparent 7px),
+ radial-gradient(circle at 41% 9%,#7fd1c7 0 6px,transparent 7px),radial-gradient(circle at 63% 18%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 88% 10%,#db7151 0 7px,transparent 8px),radial-gradient(circle at 95% 55%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 55% 78%,#f3d467 0 5px,transparent 6px),radial-gradient(circle at 4% 52%,#7fd1c7 0 5px,transparent 6px)}
+.sky{background:#2a6f97}
+.sun{background:#c8553d}
+.art.menorah{width:360px;height:auto}
+</style></head><body>
+
+<template id="menorah-art"><!-- the menorah of hanukkah.html, all nine lit -->
+<svg class="art menorah" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#f3d467">
+    <rect x="190" y="200" width="20" height="40"/><rect x="130" y="236" width="140" height="16" rx="6"/>
+    <path d="M30 120 Q30 200 200 200 Q370 200 370 120 L356 120 Q356 186 200 186 Q44 186 44 120Z"/>
+    <path d="M75 120 Q75 172 200 172 Q325 172 325 120 L311 120 Q311 158 200 158 Q89 158 89 120Z"/>
+    <path d="M120 120 Q120 146 200 146 Q280 146 280 120 L266 120 Q266 134 200 134 Q134 134 134 120Z"/>
+    <path d="M160 120 Q160 124 200 124 Q240 124 240 120Z"/><rect x="193" y="96" width="14" height="110"/>
+  </g>
+  <g fill="#ffffff">
+    <rect x="28" y="72" width="18" height="48" rx="3"/><rect x="73" y="72" width="18" height="48" rx="3"/>
+    <rect x="118" y="72" width="18" height="48" rx="3"/><rect x="158" y="72" width="18" height="48" rx="3"/>
+    <rect x="191" y="40" width="18" height="56" rx="3"/>
+    <rect x="224" y="72" width="18" height="48" rx="3"/><rect x="264" y="72" width="18" height="48" rx="3"/>
+    <rect x="309" y="72" width="18" height="48" rx="3"/><rect x="354" y="72" width="18" height="48" rx="3"/>
+  </g>
+  <g fill="#ffb347">
+    <path d="M37 40 Q48 58 37 70 Q26 58 37 40Z"/><path d="M82 40 Q93 58 82 70 Q71 58 82 40Z"/>
+    <path d="M127 40 Q138 58 127 70 Q116 58 127 40Z"/><path d="M167 40 Q178 58 167 70 Q156 58 167 40Z"/>
+    <path d="M200 6 Q213 26 200 38 Q187 26 200 6Z"/>
+    <path d="M233 40 Q244 58 233 70 Q222 58 233 40Z"/><path d="M273 40 Q284 58 273 70 Q262 58 273 40Z"/>
+    <path d="M318 40 Q329 58 318 70 Q307 58 318 40Z"/><path d="M363 40 Q374 58 363 70 Q352 58 363 40Z"/>
+  </g>
+</svg>
+</template>
+</template>
+
+<div class="card night" id="hanukkah-activity-he"><div class="dots stars"></div><span data-art="menorah-art"></span>
+  <div class="text"><h1>בולשיט</h1><div class="kicker">פעולת חנוכה מוכנה</div><p>45 דקות לכיתות ז'-י"ב, מוכנה להדפסה</p></div>
+  <div class="band">חינם · בדפדפן · עד 12 טלפונים במשחק · BULLSHIT.WTF</div></div>
+
+<script>
+// Hebrew cards: right to left. Each [data-art] takes its picture.
+document.querySelectorAll('.card').forEach(function (c) { if (/-he$/.test(c.id)) c.classList.add('he'); });
+document.querySelectorAll('[data-art]').forEach(function (el) {
+  el.replaceWith(document.getElementById(el.getAttribute('data-art')).content.cloneNode(true));
+});
+</script>
+</body></html>

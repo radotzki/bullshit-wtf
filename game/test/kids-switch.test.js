@@ -40,7 +40,7 @@ test('the switch has its words in English and Hebrew, and says what comes after 
 });
 
 test('with a seasonal pack on offer, the kids line says the game has none of its questions', () => {
-    assert.match(html, /<p class="kids-note kids-no-pack" \*ngIf="kids && pack">\{\{ t\.kidsNoPack \}\} \{\{ packLabel \}\}\.<\/p>/);
+    assert.match(html, /<p class="kids-note kids-no-pack" \*ngIf="kids && pack && !kidsSeasonLine">\{\{ t\.kidsNoPack \}\} \{\{ packLabel \}\}\.<\/p>/);
     assert.strictEqual(`${createStrings('he').kidsNoPack} ${model.questionPacks.hanukkah.label.he}.`, 'במשחק ילדים אין שאלות חנוכה.');
     assert.strictEqual(`${createStrings('en').kidsNoPack} ${model.questionPacks.hanukkah.label.en}.`, 'A kids game has no Hanukkah questions.');
 });
@@ -56,7 +56,8 @@ test('the form: a checkbox bound to kids, its line only while it is on, Special 
 
 test('off by default; ?pack=kids switches it on and is never the Special pack', () => {
     assert.match(src, /^    kids = false;$/m);
-    assert.match(src, /this\.kids = params\.pack === KIDS_PACK;/);
+    // The CrazyGames version ignores ?pack=kids (test/privacy.test.js).
+    assert.match(src, /this\.kids = !this\.portal && params\.pack === KIDS_PACK;/);
     assert.match(src, /this\.askedPack = typeof params\.pack === 'string' && params\.pack !== KIDS_PACK \? params\.pack : null;/);
     assert.match(src, /const pack = chosenPack\(this\.kids, this\.usePack, this\.pack\);/);
     // What the Special row offers, as the page works it out: never kids, by season or by link.

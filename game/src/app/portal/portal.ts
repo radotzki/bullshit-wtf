@@ -6,7 +6,9 @@
  *   /portal/crazygames, the one path firebase.json lets CrazyGames frame;
  * - every game it creates carries the campaign tag `portal-crazygames` (a play-test tag wins);
  * - invites use CrazyGames' invite links, never a bullshit.wtf address;
- * - no link leaves for the playable site (CrazyGames' rules: no links to a playable web version).
+ * - no link leaves for the playable site (CrazyGames' rules: no links to a playable web version), bar the
+ *   privacy page, which has no way into the game;
+ * - nothing on the home or the create page offers the kids' questions (CrazyGames takes no games for children).
  * Off the portal path nothing here changes anything.
  */
 
@@ -71,8 +73,13 @@ export function portalLocale(sdkLocale: string | null | undefined, pathname: str
     return l.indexOf('he') === 0 || l.indexOf('iw') === 0 ? 'he' : 'en';
 }
 
-/** The CrazyGames username as a nickname: as the join page takes it (9 characters at most). */
-export function portalNickname(username: string | null | undefined, max = 9): string {
+/**
+ * The CrazyGames username as the join page receives it: spaces tidied, and kept whole (up to 64
+ * characters). The nickname box shows its first 9, and the server checks the whole name for slurs
+ * and sex words before it cuts it to 9 (join-game/whole-name.ts), so a rude word past the 9th
+ * character is swapped, not cut off.
+ */
+export function portalNickname(username: string | null | undefined, max = 64): string {
     const name = String(username || '').replace(/\s+/g, ' ').trim();
     return Array.from(name).slice(0, max).join('').trim();
 }
@@ -85,6 +92,9 @@ export function invitePin(roomId: string | null | undefined): string | null {
 
 /** Hosts a portal link may open: CrazyGames itself, and WhatsApp for sending its invite link. */
 const ALLOWED_HOSTS = /(^|\.)crazygames\.com$|^wa\.me$|^api\.whatsapp\.com$/;
+
+/** The site's privacy pages (scripts/build-privacy.js): no way into the game, so the portal may link to them. */
+const PRIVACY_PATH = /^\/(he\/)?privacy$/;
 
 /**
  * Whether a link must not open in the portal: any web address but CrazyGames' (and WhatsApp's, for
@@ -111,6 +121,10 @@ export function blockedLink(href: string | null | undefined, base: string): bool
     } catch (e) { }
     // The same page with another hash: an in-app route.
     if (here && url.origin === here.origin && url.pathname === here.pathname && url.search === here.search && url.hash) {
+        return false;
+    }
+    // The privacy page, on this site: CrazyGames allows a privacy-policy link in the game.
+    if (here && url.origin === here.origin && PRIVACY_PATH.test(url.pathname) && !url.search) {
         return false;
     }
     return !ALLOWED_HOSTS.test(url.hostname);
@@ -199,6 +213,25 @@ export function setInviteMaker(make: LinkMaker | null, changed?: () => void) {
     }
 }
 
+// ---------- happy time ----------
+// CrazyGames' SDK asks to be told of a moment of joy ("happytime"), sparingly. A solo run's new best
+// is one. Outside the portal (or before the SDK is ready) nothing is told.
+let happy: (() => void) | null = null;
+
+/** Set by the portal service once the SDK is ready. */
+export function setHappyTime(f: (() => void) | null) {
+    happy = f;
+}
+
+/** A moment of joy for CrazyGames (a solo run's new best); nothing anywhere else. */
+export function happyTime() {
+    try {
+        if (happy) {
+            happy();
+        }
+    } catch (e) { }
+}
+
 /** The CrazyGames invite link of a game, or '' while it is not known (asked for in the background). */
 export function portalInviteUrl(pin: string): string {
     const key = String(pin || '').toUpperCase();
@@ -255,7 +288,7 @@ export function setPortalUsername(name: string | null | undefined) {
     username = portalNickname(name);
 }
 
-/** The nickname to prefill on the join page: the CrazyGames username, or ''. */
+/** The nickname to prefill on the join page: the whole CrazyGames username, or ''. */
 export function portalUsername(): string {
     return username;
 }
@@ -276,4 +309,87 @@ export function onPortalLocale(listener: (locale: 'he' | 'en') => void): () => v
 
 export function announcePortalLocale(locale: 'he' | 'en') {
     localeListeners.slice().forEach(l => l(locale));
+}
+
+// ---------- the portal's home, for a player who arrives alone ----------
+// Most CrazyGames players come alone, from the game's tile. The home says at once that this is a
+// party game for friends, how a round goes, and offers two starts of the same size (CrazyGames:
+// "Playing alone is as prominent as playing with friends"): a game with friends, its lobby and
+// invite link one tap away, and the solo run alone (until fooled 3 times), which needs no one.
+
+export interface PortalHomeStrings {
+    pitch: string;
+    how: string[];
+    needs: string;
+    friends: string;
+    friendsSub: string;
+    solo: string;
+    soloSub: string;
+    options: string;
+    /** The foot's link to the privacy page (CrazyGames allows a privacy link; it opens in a new tab). */
+    privacy: string;
+    privacyHref: string;
+}
+
+export const PORTAL_HOME_STRINGS: { en: PortalHomeStrings; he: PortalHomeStrings } = {
+    en: {
+        pitch: 'Fool your friends with made-up answers to strange-but-true trivia.',
+        how: [
+            'Everyone gets the same trivia question',
+            'Write a fake answer that sounds true',
+            'Find the real one, and score for every friend who picks your lie',
+        ],
+        needs: 'A party game for 2 to 12 players, each on their own phone or computer.',
+        friends: 'Play with friends',
+        friendsSub: 'You get a link to send them',
+        solo: 'Try it alone',
+        soloSub: 'Play until you\'re fooled 3 times',
+        options: 'More options: language, length',
+        privacy: 'Privacy',
+        privacyHref: '/privacy',
+    },
+    he: {
+        pitch: 'עובדים על החברים עם תשובות מומצאות לשאלות טריוויה מוזרות אבל נכונות.',
+        how: [
+            'כולם מקבלים את אותה שאלת טריוויה',
+            'כותבים תשובה מומצאת שנשמעת אמיתית',
+            'מוצאים את התשובה הנכונה, ומקבלים נקודות על כל חבר שבחר בשקר שלכם',
+        ],
+        needs: 'משחק חברה ל-2 עד 12 שחקנים, כל אחד מהטלפון או מהמחשב שלו.',
+        friends: 'לשחק עם חברים',
+        friendsSub: 'מקבלים קישור לשלוח להם',
+        solo: 'לנסות לבד',
+        soloSub: 'משחקים עד שנופלים 3 פעמים',
+        options: 'עוד אפשרויות: שפה, אורך',
+        privacy: 'פרטיות',
+        privacyHref: '/he/privacy',
+    },
+};
+
+export function portalHomeStrings(locale: string | null | undefined): PortalHomeStrings {
+    return locale === 'he' ? PORTAL_HOME_STRINGS.he : PORTAL_HOME_STRINGS.en;
+}
+
+/**
+ * A game the portal's home (or Instant Multiplayer) just made: its PIN, whether the player's
+ * CrazyGames username joins it at once (no nickname step), and whether it starts alone at once
+ * (the taste). Kept for the one game only.
+ */
+export interface QuickStart {
+    pin: string;
+    solo: boolean;
+    /** The username was sent on the join step already. */
+    sent?: boolean;
+}
+
+/** Whether a route is the join step of the quick-start game, where the username is sent at once. */
+export function autoJoinDue(quick: QuickStart | null, route: string, name: string): boolean {
+    const m = /^\/join-game\/([A-Za-z]+)$/.exec(routePath(route));
+    return !!quick && !quick.sent && !!m && m[1].toUpperCase() === quick.pin && !!name;
+}
+
+/** Whether a route is the lobby of the quick-start game played alone: the solo run starts at once. */
+export function soloStartDue(quick: QuickStart | null, route: string): boolean {
+    const m = /^\/game-staging\/([A-Za-z]+)$/.exec(routePath(route));
+    return !!quick && quick.solo && !!m && m[1].toUpperCase() === quick.pin;
 }

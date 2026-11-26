@@ -62,3 +62,31 @@ test('the questions the Hanukkah pages promise are in the pack', () => {
     assert.match(he, /האסטרונאוט .* סובב סביבון בחלל/);
     assert.match(he, /הפכה את הסופגנייה למאכל החנוכה/);
 });
+
+test('English house lies sound like a relative wrote them, not like a joke nobody would pick', () => {
+    // From the English Hanukkah night walk: at a family table the computer's lie is the one nobody wrote,
+    // and a joke ("temple cat", "the pope's birthday", "a camel's head") is spotted at once, also when the
+    // 9-year-old's STUCK? button hands it to her as her own lie. These were swapped for lies a family
+    // could believe; none may come back.
+    const jokes = ['seaweed', 'bananas', 'a bar mitzvah in queens', 'the bald one', 'the little goat', 'last tuesday',
+        'to grandma', 'by accident', "dentists' association", 'chief rabbi of yemen', 'the whale', 'his mother-in-law',
+        'uncle', 'sold him a goat', 'dreidel in the hood', 'goats', 'iliad', 'shoe rack', 'welcome mat',
+        "the pope's birthday", 'latke champion', "lit the mayor's house", "a camel's head", 'kings of cups', 'sharks',
+        "the king's birthday", 'a greek wedding', 'sunset', 'temple cat', 'an elephant'];
+    for (const id of ids.filter(id => pack[id].lang === 'en')) {
+        const q = pack[id];
+        assert.ok(q.fakeAnswers.length >= 3, `${id} has three house lies`);
+        q.fakeAnswers.forEach(lie => assert.ok(jokes.indexOf(lie) < 0, `${id}: "${lie}"`));
+    }
+    // Israeli dreidels say "here"; every dreidel abroad says "there": the lie a family abroad will pick.
+    assert.ok(pack['hanukkah-26-en-11'].fakeAnswers.includes('there'));
+});
+
+test('no English house lie is true: Handel\'s tune is also Advent\'s and Palm Sunday\'s "Tochter Zion"', () => {
+    // From the Engineer's look at #223: a lie that is true tells the one player who knows that they were fooled.
+    const hymn = pack['hanukkah-26-en-41'].fakeAnswers;
+    ['christmas', 'palm sunday', 'advent'].forEach(day => assert.ok(!hymn.includes(day), day));
+    // The 1611 King James Bible prints the Books of Maccabees; Billings' neighbors may well have marched.
+    assert.ok(!pack['hanukkah-26-en-36'].fakeAnswers.includes('protestant bible'));
+    assert.ok(!pack['hanukkah-26-en-48'].fakeAnswers.includes('held a candlelight march'));
+});
