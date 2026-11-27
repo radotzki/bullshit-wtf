@@ -1,0 +1,23 @@
+-- Party night pack (DEPLOYING.md). Nothing to run: a party game carries pack = 'party' in the pack
+-- column that opened_games and closed_games already have (2026-11-hanukkah.sql). Before this pack
+-- no game had that value. Read-only queries; test games out (2026-11-test-mark.sql).
+
+-- Party games started and finished, by page tag and day (Israel).
+-- SELECT o.day, o.campaign, o.party_games, IFNULL(c.party_finished, 0) AS party_finished
+-- FROM (
+--   SELECT DATE(time, 'Asia/Jerusalem') AS day, campaign, COUNT(*) AS party_games
+--   FROM `bullshit-wtf-prod.analytics.opened_games`
+--   WHERE time >= '2026-11-19' AND pack = 'party' AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+--   GROUP BY day, campaign) o
+-- LEFT JOIN (
+--   SELECT DATE(time, 'Asia/Jerusalem') AS day, campaign, COUNT(*) AS party_finished
+--   FROM `bullshit-wtf-prod.analytics.closed_games`
+--   WHERE time >= '2026-11-19' AND pack = 'party' AND NOT REGEXP_CONTAINS(IFNULL(campaign, ''), r'^test(-|$)')
+--   GROUP BY day, campaign) c USING (day, campaign)
+-- ORDER BY o.day, o.campaign;
+
+-- Games from the party pages that the host played without the pack (unticked), against with it.
+-- SELECT campaign, COUNTIF(pack = 'party') AS with_pack, COUNTIF(pack IS NULL OR pack != 'party') AS without
+-- FROM `bullshit-wtf-prod.analytics.opened_games`
+-- WHERE time >= '2026-11-19' AND STARTS_WITH(IFNULL(campaign, ''), 'party-')
+-- GROUP BY campaign;

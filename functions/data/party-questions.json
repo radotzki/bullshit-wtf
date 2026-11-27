@@ -1,0 +1,962 @@
+{
+  "party-26-en-01": {
+    "questionText": "At a German Polterabend, guests smash porcelain for luck, but never $blank$, because it symbolises happiness",
+    "realAnswer": "glass",
+    "fakeAnswers": [
+      "silverware",
+      "clocks",
+      "candles"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Polterabend",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-02": {
+    "questionText": "The word 'bachelor' originally meant a young $blank$",
+    "realAnswer": "knight-in-training",
+    "fakeAnswers": [
+      "sheep shearer",
+      "monk's servant",
+      "apprentice baker"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelor_party",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-03": {
+    "questionText": "In Denmark, friends pelt a still-single 25-year-old with cinnamon. At 30, the spice is upgraded to $blank$",
+    "realAnswer": "pepper",
+    "fakeAnswers": [
+      "cardamom",
+      "mustard powder",
+      "paprika"
+    ],
+    "citation": "https://atlasobscura.com/foods/pebersvend-birthday-spice-attack",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-04": {
+    "questionText": "The first motel was called a \"mo-tel\" because \"Milestone Motor Hotel\" wouldn't fit on its $blank$",
+    "realAnswer": "rooftop",
+    "fakeAnswers": [
+      "matchbooks",
+      "room keys",
+      "postcards"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Motel",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-05": {
+    "questionText": "In the Great Tom Collins hoax of 1874, people were told a man named Tom Collins was nearby, $blank$",
+    "realAnswer": "talking about them",
+    "fakeAnswers": [
+      "looking for them",
+      "dating their sister",
+      "selling their secrets"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Tom_Collins",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-06": {
+    "questionText": "At an old English 'bride ale', held before the wedding, the bride made $blank$ and sold it to the guests at a high price",
+    "realAnswer": "beer",
+    "fakeAnswers": [
+      "candles",
+      "lace",
+      "soap"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bridal_shower",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-07": {
+    "questionText": "In parts of Germany, anyone still unmarried at 30 gets dressed up by friends and made to do silly tasks, most often $blank$",
+    "realAnswer": "cleaning work",
+    "fakeAnswers": [
+      "singing in the square",
+      "kissing strangers",
+      "climbing a tree"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelor_party",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-08": {
+    "questionText": "Some Danes begin cutting the birthday cake by $blank$ the figure on top, while guests feign horror",
+    "realAnswer": "decapitating",
+    "fakeAnswers": [
+      "kissing",
+      "blindfolding",
+      "salting"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday_cake",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-09": {
+    "questionText": "Thomas Cook's very first organised trip, in 1841, took 485 people by train to a $blank$ meeting",
+    "realAnswer": "temperance",
+    "fakeAnswers": [
+      "prayer",
+      "phrenology",
+      "chess club"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Thomas_Cook",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-10": {
+    "questionText": "\"Happy hour\" began in 1913 as the name sailors gave to regular smokers aboard a ship of the US $blank$",
+    "realAnswer": "navy",
+    "fakeAnswers": [
+      "army",
+      "coast guard",
+      "marine corps"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Happy_hour",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-11": {
+    "questionText": "The 'shower' in bridal shower may come from a Victorian custom of putting the presents inside a $blank$",
+    "realAnswer": "parasol",
+    "fakeAnswers": [
+      "hatbox",
+      "pillowcase",
+      "wheelbarrow"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bridal_shower",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-12": {
+    "questionText": "A Swedish bachelor party, the svensexa, traditionally starts with a $blank$",
+    "realAnswer": "kidnapping",
+    "fakeAnswers": [
+      "herring breakfast",
+      "sauna",
+      "cold lake swim"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelor_party",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-13": {
+    "questionText": "A study found that blowing out birthday candles increases the bacteria on the cake by about $blank$ times",
+    "realAnswer": "14",
+    "fakeAnswers": [
+      "3",
+      "40",
+      "120"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday_cake",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-14": {
+    "questionText": "The Gideons put their first Bibles in hotel rooms in a small Montana town called $blank$",
+    "realAnswer": "superior",
+    "fakeAnswers": [
+      "hope",
+      "liberty",
+      "paradise"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Gideons_International",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-15": {
+    "questionText": "Irish coffee began in the early 1940s when a chef added whiskey to the coffee of passengers getting off a $blank$",
+    "realAnswer": "flying boat",
+    "fakeAnswers": [
+      "zeppelin",
+      "night ferry",
+      "troop train"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Irish_coffee",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-16": {
+    "questionText": "When a couple lifts the top layer of a kransekake ring cake at their wedding, the rings stuck to it are said to tell $blank$",
+    "realAnswer": "the number of children",
+    "fakeAnswers": [
+      "years until their first fight",
+      "how many guests will divorce",
+      "years of good luck"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kransekake",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-17": {
+    "questionText": "In 1940, $blank$ hosted a Christmas-time 'hen party' for cabinet wives and 'ladies of the press'",
+    "realAnswer": "eleanor roosevelt",
+    "fakeAnswers": [
+      "mamie eisenhower",
+      "bess truman",
+      "wallis simpson"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelorette_party",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-18": {
+    "questionText": "The \"Beddian birthday\", the year your age matches the last two digits of your birth year, is named after a $blank$",
+    "realAnswer": "firefighter",
+    "fakeAnswers": [
+      "astronomer",
+      "baseball umpire",
+      "radio dj"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-19": {
+    "questionText": "On the first long-distance car trip, in 1888, Bertha Benz fixed an electrical problem using her $blank$ as insulation",
+    "realAnswer": "garter",
+    "fakeAnswers": [
+      "hair ribbon",
+      "glove",
+      "corset lace"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bertha_Benz",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-20": {
+    "questionText": "Daisuke Inoue, the inventor of karaoke, won the 2004 Ig Nobel $blank$ Prize",
+    "realAnswer": "peace",
+    "fakeAnswers": [
+      "literature",
+      "medicine",
+      "economics"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Daisuke_Inoue",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-21": {
+    "questionText": "A 1685 recipe for an English 'bride pie' filled it with oysters, pine kernels, cocks' combs and $blank$",
+    "realAnswer": "lamb testicles",
+    "fakeAnswers": [
+      "swan tongues",
+      "pickled eels",
+      "calf brains"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_cake",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-22": {
+    "questionText": "Stag parties caused so much disruption in $blank$ that the city formed a police group just for bachelor and bachelorette parties",
+    "realAnswer": "riga",
+    "fakeAnswers": [
+      "dublin",
+      "bratislava",
+      "tallinn"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelorette_party",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-23": {
+    "questionText": "In ancient Persia, by the law of the Royal Supper, on the king's birthday no one should be refused $blank$",
+    "realAnswer": "a request",
+    "fakeAnswers": [
+      "a cup of wine",
+      "a seat at the table",
+      "a second helping"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-24": {
+    "questionText": "The upright two-wheeled suitcase with a long handle was invented in 1987 by a US $blank$",
+    "realAnswer": "pilot",
+    "fakeAnswers": [
+      "baggage handler",
+      "bellhop",
+      "train conductor"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Baggage",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-25": {
+    "questionText": "The first patent for the disco ball called it $blank$",
+    "realAnswer": "myriad reflectors",
+    "fakeAnswers": [
+      "dazzle sphere",
+      "starlight globe",
+      "ballroom moon"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Disco_ball",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-26": {
+    "questionText": "In medieval England, cakes were stacked as high as possible for the bride and groom to $blank$",
+    "realAnswer": "kiss over",
+    "fakeAnswers": [
+      "jump over",
+      "knock down with a sword",
+      "count for luck"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_cake",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-27": {
+    "questionText": "In Canada, a pre-wedding party for both bride and groom is sometimes called a 'hag', short for $blank$",
+    "realAnswer": "hen and stag",
+    "fakeAnswers": [
+      "hugs and giggles",
+      "husband and gal",
+      "have a good one"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelorette_party",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-28": {
+    "questionText": "On Gandhi's birthday, all $blank$ across India are closed in his honor",
+    "realAnswer": "liquor shops",
+    "fakeAnswers": [
+      "cinemas",
+      "barber shops",
+      "butcher shops"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-29": {
+    "questionText": "The world's first hotel minibar was introduced in 1974 in $blank$",
+    "realAnswer": "hong kong",
+    "fakeAnswers": [
+      "las vegas",
+      "monte carlo",
+      "tokyo"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Minibar",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-30": {
+    "questionText": "To sell Smirnoff, John G. Martin had bartenders pose with a Moscow mule copper mug, and took $blank$ of them",
+    "realAnswer": "polaroid photographs",
+    "fakeAnswers": [
+      "plaster casts",
+      "oil portraits",
+      "fingerprints"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Moscow_mule",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-31": {
+    "questionText": "Scotland's 'blackening', where a couple-to-be gets covered in sticky mess, grew out of an older ritual called the $blank$",
+    "realAnswer": "feet-washing",
+    "fakeAnswers": [
+      "hair-burning",
+      "bed-sweeping",
+      "door-kicking"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Blackening_(Scottish_wedding_custom)",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-32": {
+    "questionText": "At a Canadian 'stag and doe', guests toss $blank$ at a 3-litre bottle of liquor, and the closest one wins the bottle",
+    "realAnswer": "two-dollar coins",
+    "fakeAnswers": [
+      "car keys",
+      "garters",
+      "bottle caps"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Stag_and_doe",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-33": {
+    "questionText": "The first guests of Sweden's Icehotel slept in an igloo, in sleeping bags on top of $blank$",
+    "realAnswer": "reindeer skins",
+    "fakeAnswers": [
+      "bales of hay",
+      "fishing nets",
+      "wolf pelts"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Icehotel_(Jukkasj%C3%A4rvi)",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-34": {
+    "questionText": "The band Chic wrote \"$blank$\" after being refused entry to Studio 54 on New Year's Eve 1977",
+    "realAnswer": "le freak",
+    "fakeAnswers": [
+      "good times",
+      "i want your love",
+      "dance, dance, dance"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Studio_54",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-35": {
+    "questionText": "At a Shinto wedding, the bride's hairstyle is said to veil her metaphorical $blank$ of jealousy, ego and selfishness",
+    "realAnswer": "horns",
+    "fakeAnswers": [
+      "fangs",
+      "thorns",
+      "storm clouds"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Shinto_wedding",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-36": {
+    "questionText": "The daiquiri cocktail shares its name with a beach and $blank$ near Santiago de Cuba",
+    "realAnswer": "an iron mine",
+    "fakeAnswers": [
+      "an old fortress",
+      "a sugar mill",
+      "a lighthouse"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Daiquiri",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-37": {
+    "questionText": "In an old Korean custom, the groom's friends hang him upside down and lightly beat the soles of his feet with a dried $blank$",
+    "realAnswer": "yellow corvina fish",
+    "fakeAnswers": [
+      "salted herring",
+      "smoked eel",
+      "frozen mackerel"
+    ],
+    "citation": "https://www.korea.net/NewsFocus/Culture/view?articleId=294270",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-38": {
+    "questionText": "At a Korean wedding, the parents throw jujubes and $blank$ onto the bride's skirt to symbolise children",
+    "realAnswer": "chestnuts",
+    "fakeAnswers": [
+      "pine nuts",
+      "red beans",
+      "ginkgo nuts"
+    ],
+    "citation": "https://www.korea.net/NewsFocus/Culture/view?articleId=294270",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-39": {
+    "questionText": "In early-1800s Britain, upper-class newlyweds took a 'bridal tour' to visit $blank$",
+    "realAnswer": "relatives who missed the wedding",
+    "fakeAnswers": [
+      "every church in the county",
+      "the bride's old suitors",
+      "the family graves"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Honeymoon",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-en-40": {
+    "questionText": "In feudal China, bridesmaids dressed like the bride to lower the risk that she would be $blank$",
+    "realAnswer": "kidnapped",
+    "fakeAnswers": [
+      "cursed",
+      "outshone",
+      "seen by her husband"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bridesmaid",
+    "lang": "en",
+    "pack": "party"
+  },
+  "party-26-he-01": {
+    "questionText": "בחופה, החתן שם את הטבעת דווקא על $blank$ של הכלה",
+    "realAnswer": "האצבע המורה של יד ימין",
+    "fakeAnswers": [
+      "הקמיצה של יד שמאל",
+      "האגודל של יד ימין",
+      "הזרת של יד שמאל"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jewish_wedding",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-02": {
+    "questionText": "בדרום אפריקה, מסיבת רווקות נקראת לפעמים $blank$",
+    "realAnswer": "תה מטבח",
+    "fakeAnswers": [
+      "ערב סינרים",
+      "ליל הלביאות",
+      "ארוחת הנדוניה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelorette_party",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-03": {
+    "questionText": "לפי הרודוטוס, ביום ההולדת שלהם פרסים עשירים אכלו פרה, סוס, חמור או $blank$ שלם אפוי",
+    "realAnswer": "גמל",
+    "fakeAnswers": [
+      "צבי",
+      "יען",
+      "תנין"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-04": {
+    "questionText": "השם של רחוב קאו סאן בבנגקוק, הבירה של התרמילאים, פירושו בתאית $blank$",
+    "realAnswer": "אורז קלוף",
+    "fakeAnswers": [
+      "דרך הנהר",
+      "שוק הלילה",
+      "שער המלך"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Khaosan_Road",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-05": {
+    "questionText": "היקב העתיק ביותר שנמצא בעולם, בן כ-6,000 שנה, התגלה במערה ב$blank$",
+    "realAnswer": "ארמניה",
+    "fakeAnswers": [
+      "יוון",
+      "טורקיה",
+      "לבנון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Areni-1_winery",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-06": {
+    "questionText": "בחתונות אשכנזיות רוקדים 'מיזינקע', ריקוד מיוחד להורים שמחתנים את $blank$",
+    "realAnswer": "הילד האחרון שלהם",
+    "fakeAnswers": [
+      "הבכור שלהם",
+      "הבת היחידה שלהם",
+      "הילד העשירי שלהם"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jewish_wedding",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-07": {
+    "questionText": "ב-1896 נערכה בניו יורק מסיבת רווקים שערורייתית שאירגן הנכד של $blank$, ושוטר פיזר אותה לפנות בוקר",
+    "realAnswer": "פי. טי. בארנום",
+    "fakeAnswers": [
+      "תומאס אדיסון",
+      "ג'ון ד. רוקפלר",
+      "מארק טוויין"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelor_party",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-08": {
+    "questionText": "ב-2008 וורנר גבתה על 'הפי ברת'דיי' תמלוגים של בערך $blank$ ליום",
+    "realAnswer": "5,000 דולר",
+    "fakeAnswers": [
+      "300 דולר",
+      "50,000 דולר",
+      "1,200 דולר"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Happy_Birthday_to_You",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-09": {
+    "questionText": "במלון סבוי בלונדון, כשמגיעים 13 סועדים לשולחן, מושיבים איתם בתור האורח ה-14 $blank$",
+    "realAnswer": "פסל של חתול",
+    "fakeAnswers": [
+      "מלצר בתחפושת",
+      "בובת ראווה",
+      "את מנהל המלון"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Savoy_Hotel",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-10": {
+    "questionText": "המילה 'ערק' באה מערבית, והפירוש המקורי שלה הוא $blank$",
+    "realAnswer": "זיעה",
+    "fakeAnswers": [
+      "שורש",
+      "נשמה",
+      "טיפה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Arak_(drink)",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-11": {
+    "questionText": "בריקוד חתונה אשכנזי שנקרא 'קרנצל', מכתירים בזר פרחים את $blank$, והבנות רוקדות סביבה",
+    "realAnswer": "אמא של הכלה",
+    "fakeAnswers": [
+      "סבתא של הכלה",
+      "השושבינה הראשית",
+      "אחות של החתן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Jewish_wedding",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-12": {
+    "questionText": "בשוודיה, מסיבת רווקים נקראה פעם 'סוונאפטון', כלומר '$blank$'",
+    "realAnswer": "הערב של סוון",
+    "fakeAnswers": [
+      "הלילה האחרון",
+      "פרידה מהחופש",
+      "ערב הדובים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Bachelor_party",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-13": {
+    "questionText": "הטקסט המלא של 'הפי ברת'דיי' הופיע לראשונה בדפוס כארבע השורות האחרונות של שיר בשם $blank$",
+    "realAnswer": "יום ההולדת של רוי",
+    "fakeAnswers": [
+      "ברכה לג'ורג'",
+      "מסיבה בגן",
+      "העוגה של מרי"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Happy_Birthday_to_You",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-14": {
+    "questionText": "בתוך מנזר סנטה קתרינה בסיני, ליד 'הסנה הבוער', יש גם $blank$ בן יותר מ-900 שנה",
+    "realAnswer": "מסגד",
+    "fakeAnswers": [
+      "בית כנסת",
+      "מקווה",
+      "בית מרזח"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Saint_Catherine%27s_Monastery",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-15": {
+    "questionText": "לפי רוב ההיסטוריונים, את הדאקירי המציא בקובה $blank$ אמריקאי",
+    "realAnswer": "מהנדס מכרות",
+    "fakeAnswers": [
+      "סוכן מכס",
+      "מתאגרף",
+      "קונסול"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Daiquiri",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-16": {
+    "questionText": "בחינה התימנית, לתערובת של הכלה מוסיפים מי ורדים, ביצים, מלח וגם $blank$",
+    "realAnswer": "קוניאק",
+    "fakeAnswers": [
+      "דבש",
+      "שמן זית",
+      "קפה שחור"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Henna",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-17": {
+    "questionText": "יום ההולדת היחיד שמוזכר בכל התורה הוא של $blank$",
+    "realAnswer": "פרעה",
+    "fakeAnswers": [
+      "יצחק",
+      "משה",
+      "יוסף"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-18": {
+    "questionText": "יש חוקרים שמזהים את דהב שבסיני עם מקום שמופיע בספר דברים בשם $blank$",
+    "realAnswer": "די זהב",
+    "fakeAnswers": [
+      "מי זהב",
+      "עין הזהב",
+      "חוף הזהב"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Dahab",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-19": {
+    "questionText": "באחד הדיסקוטקים הראשונים בגרמניה, ב-1959, מי שהשתלט על הפטיפון והתחיל להכריז על שירים היה $blank$ משועמם",
+    "realAnswer": "עיתונאי",
+    "fakeAnswers": [
+      "מלצר",
+      "שוטר",
+      "סטודנט לרפואה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Scotch-Club",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-20": {
+    "questionText": "אצל יהודי מרוקו, בטקס החינה שלו החתן נוהג ללבוש $blank$",
+    "realAnswer": "שחור",
+    "fakeAnswers": [
+      "בגדים של אישה",
+      "גלביה ירוקה",
+      "לבן מכף רגל ועד ראש"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Henna",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-21": {
+    "questionText": "המאפה הסיני המסורתי ליום הולדת הוא לחמניה במילוי משחת לוטוס, שמעוצבת ונצבעת כמו $blank$",
+    "realAnswer": "אפרסק",
+    "fakeAnswers": [
+      "דרקון",
+      "דג זהב",
+      "פרח שזיף"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday_cake",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-22": {
+    "questionText": "הארמון שנבנה בקורפו בשביל הקיסרית סיסי הפך אחר כך לקזינו, וצילמו בו סצנה מסרט של $blank$",
+    "realAnswer": "ג'יימס בונד",
+    "fakeAnswers": [
+      "אינדיאנה ג'ונס",
+      "הסנדק",
+      "מאמא מיה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Achilleion_(Corfu)",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-23": {
+    "questionText": "המגן דוד שעל הבירה גולדסטאר בא במקור מהסמל של $blank$ בימי הביניים",
+    "realAnswer": "גילדת מבשלי הבירה",
+    "fakeAnswers": [
+      "האבירים הטמפלרים",
+      "הקהילה היהודית בפראג",
+      "מסדר הנזירים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Goldstar_(beer)",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-24": {
+    "questionText": "ברוסיה נהוג שהכלה אוכלת ביום החתונה כפית של $blank$",
+    "realAnswer": "שמנת חמוצה",
+    "fakeAnswers": [
+      "דבש",
+      "קוויאר",
+      "מלח"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_customs_by_country",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-25": {
+    "questionText": "לפי אחת התיאוריות, נרות על עוגה התחילו אצל היוונים, שהדליקו נרות לכבוד ההולדת של האלה $blank$",
+    "realAnswer": "ארטמיס",
+    "fakeAnswers": [
+      "אפרודיטה",
+      "אתנה",
+      "פרספונה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday_cake",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-26": {
+    "questionText": "בשנים הראשונות של מלון המלך דוד בירושלים, השפים היו איטלקים ואנשי השירות היו בעיקר $blank$",
+    "realAnswer": "ברברים",
+    "fakeAnswers": [
+      "סודנים",
+      "ארמנים",
+      "יוונים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/King_David_Hotel",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-27": {
+    "questionText": "דום פריניון, שנחשב לממציא השמפניה, קיבל בכלל מהממונים עליו במנזר משימה $blank$",
+    "realAnswer": "להיפטר מהבועות",
+    "fakeAnswers": [
+      "למתק את היין",
+      "להכין יין לטקסים",
+      "לשמור על היין יותר זמן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Champagne_(wine)",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-28": {
+    "questionText": "בפינלנד של פעם, במקום לזרוק זר פרחים, הכלה זרקה $blank$",
+    "realAnswer": "מטאטא סאונה",
+    "fakeAnswers": [
+      "נעל ימין",
+      "כיכר לחם",
+      "דג מלוח"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_customs_by_country",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-29": {
+    "questionText": "השיר 'יום הולדת' של להקת עדן, שמתנגן כמעט בכל יומולדת בישראל, התחיל בכלל כשיר איטי $blank$",
+    "realAnswer": "כולו באנגלית",
+    "fakeAnswers": [
+      "כולו בצרפתית",
+      "כולו ביידיש",
+      "כולו בספרדית"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Yom_Huledet",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-30": {
+    "questionText": "קונרד הילטון קנה את המלון הראשון שלו בטקסס ב-1919 רק כי $blank$ לא יצאה לפועל",
+    "realAnswer": "קניית בנק",
+    "fakeAnswers": [
+      "קניית חוות בקר",
+      "קניית באר נפט",
+      "החתונה שלו"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Conrad_Hilton",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-31": {
+    "questionText": "כשנפתח ב-1937 בית הקפה 'אררט', ליד כסית בתל אביב, ההומוריסטנים אמרו שהשם הוא ראשי תיבות של 'אני רוצה רק $blank$'",
+    "realAnswer": "תה",
+    "fakeAnswers": [
+      "קפה",
+      "שקט",
+      "טוסט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Kassit",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-32": {
+    "questionText": "באירלנד נהגו $blank$ אחרי שהחתן והכלה נכנסו, שהחתן לא יתחרט ויברח",
+    "realAnswer": "לנעול את דלת הכנסייה",
+    "fakeAnswers": [
+      "לקשור את השרוכים של החתן",
+      "להחביא את הסוס של החתן",
+      "לפרק את הגלגלים של הכרכרה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_customs_by_country",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-33": {
+    "questionText": "בישראל נהוג להוסיף לעוגת יום ההולדת עוד נר אחד, שמסמל $blank$",
+    "realAnswer": "את השנה הבאה",
+    "fakeAnswers": [
+      "את הבריאות",
+      "את אמא",
+      "את השנה שעברה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday_cake",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-34": {
+    "questionText": "הספינה החלודה על החוף המפורסם בזקינתוס עלתה על שרטון ב-1980, ולפי מסמכים מבית משפט היא כנראה הבריחה $blank$",
+    "realAnswer": "סיגריות",
+    "fakeAnswers": [
+      "וויסקי",
+      "שעונים שווייצריים",
+      "עתיקות"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Navagio",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-35": {
+    "questionText": "לפי הסיפור, הנגרוני נולד ב-1919 בפירנצה כשרוזן ביקש לחזק את האמריקנו, ולשים במקום הסודה $blank$",
+    "realAnswer": "ג'ין",
+    "fakeAnswers": [
+      "וודקה",
+      "ברנדי",
+      "גראפה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Negroni",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-36": {
+    "questionText": "ברומא העתיקה, כלות זרקו $blank$ על המחזרים שהן דחו",
+    "realAnswer": "אגוזים",
+    "fakeAnswers": [
+      "ביצים",
+      "עגבניות",
+      "פרחים נבולים"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_customs_by_country",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-37": {
+    "questionText": "ביום ההולדת ה-52 של $blank$, הגישו לו עוגה עם כחמישים נרות שהתחילו להימס ולאיים לשרוף אותה",
+    "realAnswer": "גתה",
+    "fakeAnswers": [
+      "בטהובן",
+      "נפוליאון",
+      "מוצרט"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Birthday_cake",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-38": {
+    "questionText": "בכפרי הנופש הראשונים של קלאב מד, האורחים ישנו על החוף ב$blank$ בלי חשמל",
+    "realAnswer": "בקתות קש",
+    "fakeAnswers": [
+      "ערסלים",
+      "קרוונים",
+      "שקי שינה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Club_Med",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-39": {
+    "questionText": "בברזיל, החברות של הכלה כותבות את השמות שלהן $blank$",
+    "realAnswer": "בצד הפנימי של השמלה",
+    "fakeAnswers": [
+      "על הסוליות של החתן",
+      "על הקרם של העוגה",
+      "על הסרט של זר הכלה"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_customs_by_country",
+    "lang": "he",
+    "pack": "party"
+  },
+  "party-26-he-40": {
+    "questionText": "בצרפת של פעם, נהגו להפיל לתוך כוס היין של הזוג $blank$, שיהיו להם חיים בריאים",
+    "realAnswer": "חתיכה קטנה של טוסט",
+    "fakeAnswers": [
+      "קובייה של סוכר",
+      "עלה של דפנה",
+      "מטבע זהב קטן"
+    ],
+    "citation": "https://en.wikipedia.org/wiki/Wedding_customs_by_country",
+    "lang": "he",
+    "pack": "party"
+  }
+}

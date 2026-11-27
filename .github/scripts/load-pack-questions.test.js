@@ -24,9 +24,11 @@ const KIDS_FILE = 'functions/data/kids-questions.json';
 const KIDS = read(KIDS_FILE);
 const EVERY_FILE = 'functions/data/everyday-questions-2026-11.json';
 const EVERY = read(EVERY_FILE);
+const PARTY_FILE = 'functions/data/party-questions.json';
+const PARTY = read(PARTY_FILE);
 // What the release sends: every listed file's questions, in the list's order.
-const QUESTIONS = { ...PACK, ...FACTS, ...THANKS, ...XMAS, ...KIDS, ...EVERY };
-const ANY_ID = /^((hanukkah|fact|kids|everyday)-26-(en|he)|(thanksgiving|christmas)-26-en)-\d{2}$/;
+const QUESTIONS = { ...PACK, ...FACTS, ...THANKS, ...XMAS, ...KIDS, ...EVERY, ...PARTY };
+const ANY_ID = /^((hanukkah|fact|kids|everyday|party)-26-(en|he)|(thanksgiving|christmas)-26-en)-\d{2}$/;
 const URLS = {
     project: `https://firebase.googleapis.com/v1beta1/projects/${PROJECT}`,
     config: `https://firebase.googleapis.com/v1beta1/projects/${PROJECT}/adminSdkConfig`,
@@ -53,7 +55,7 @@ const noAnswer = (place, e) => [`no answer from ${place}: ${e && e.code}`];
 const tmpWith = (data, files = { [PACK_FILE]: data }) => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pack-'));
     fs.mkdirSync(path.join(dir, 'functions', 'data'), { recursive: true });
-    const all = { [PACK_FILE]: PACK, [FACTS_FILE]: FACTS, [THANKS_FILE]: THANKS, [XMAS_FILE]: XMAS, [KIDS_FILE]: KIDS, [EVERY_FILE]: EVERY, ...files };
+    const all = { [PACK_FILE]: PACK, [FACTS_FILE]: FACTS, [THANKS_FILE]: THANKS, [XMAS_FILE]: XMAS, [KIDS_FILE]: KIDS, [EVERY_FILE]: EVERY, [PARTY_FILE]: PARTY, ...files };
     for (const file of Object.keys(all)) {
         if (all[file] !== undefined) {
             fs.writeFileSync(path.join(dir, file), JSON.stringify(all[file]));
@@ -67,7 +69,7 @@ const fact = () => JSON.parse(JSON.stringify(FACTS['fact-26-en-01']));
 test('the repository\'s files pass the check, and every key is an id of its own file', () => {
     const { questions, counts } = payload(ROOT);
     assert.deepStrictEqual(questions, QUESTIONS);
-    assert.deepStrictEqual(counts.map(c => c.file), [PACK_FILE, FACTS_FILE, THANKS_FILE, XMAS_FILE, KIDS_FILE, EVERY_FILE]);
+    assert.deepStrictEqual(counts.map(c => c.file), [PACK_FILE, FACTS_FILE, THANKS_FILE, XMAS_FILE, KIDS_FILE, EVERY_FILE, PARTY_FILE]);
     assert.deepStrictEqual(counts[0].ids, Object.keys(PACK));
     assert.deepStrictEqual(counts[1].ids, Object.keys(FACTS));
     assert.deepStrictEqual(counts[2].ids, Object.keys(THANKS));
@@ -90,6 +92,16 @@ test('the repository\'s files pass the check, and every key is an id of its own 
         assert.strictEqual(questions[id].lang, id.split('-')[2]);
     }
     assert.strictEqual(Object.keys(EVERY).length, 100);
+    // The party pack: 40 in each language, every one marked party, so none reaches another game.
+    assert.deepStrictEqual(counts[6].ids, Object.keys(PARTY));
+    for (const lang of ['en', 'he']) {
+        assert.strictEqual(Object.keys(PARTY).filter(id => id.startsWith(`party-26-${lang}-`)).length, 40, lang);
+    }
+    for (const id of Object.keys(PARTY)) {
+        assert.match(id, /^party-26-(en|he)-\d{2}$/);
+        assert.strictEqual(questions[id].pack, 'party');
+        assert.strictEqual(questions[id].lang, id.split('-')[2]);
+    }
     for (const id of Object.keys(XMAS)) {
         assert.match(id, /^christmas-26-en-\d{2}$/);
         assert.strictEqual(questions[id].pack, 'christmas');
@@ -121,6 +133,7 @@ test('the list of question files is exactly the reviewed ones, and never the dai
         ['functions/data/christmas-questions.json', '/^christmas-26-(en)-\\d{2}$/', 'christmas'],
         ['functions/data/kids-questions.json', '/^kids-26-(en|he)-\\d{2}$/', 'kids'],
         ['functions/data/everyday-questions-2026-11.json', '/^everyday-26-(en|he)-\\d{2}$/', null],
+        ['functions/data/party-questions.json', '/^party-26-(en|he)-\\d{2}$/', 'party'],
     ]);
     assert.doesNotThrow(() => checkList(FILES));
     assert.deepStrictEqual(NEVER, ['functions/data/daily-questions.json']);
@@ -166,7 +179,7 @@ test('the daily puzzle\'s questions are refused, as a file and as a body', async
 test('the dry run names exactly the file\'s ids, as an update', () => {
     const lines = dryRun(ROOT);
     assert.match(lines[0], /^Would send: PATCH .*\/questions\.json \(an update, never a set\)$/);
-    assert.strictEqual(lines[1], `Question files (6): ${PACK_FILE}, ${FACTS_FILE}, ${THANKS_FILE}, ${XMAS_FILE}, ${KIDS_FILE}, ${EVERY_FILE}`);
+    assert.strictEqual(lines[1], `Question files (7): ${PACK_FILE}, ${FACTS_FILE}, ${THANKS_FILE}, ${XMAS_FILE}, ${KIDS_FILE}, ${EVERY_FILE}, ${PARTY_FILE}`);
     assert.strictEqual(lines[2], `Children of questions/ it writes (${Object.keys(QUESTIONS).length}):`);
     assert.strictEqual(lines[3], `  from ${PACK_FILE}, the Hanukkah pack (${Object.keys(PACK).length}): ${Object.keys(PACK).join(', ')}`);
     assert.strictEqual(lines[4], `  from ${FACTS_FILE}, the strange facts (120): ${Object.keys(FACTS).join(', ')}`);
@@ -174,8 +187,9 @@ test('the dry run names exactly the file\'s ids, as an update', () => {
     assert.strictEqual(lines[6], `  from ${XMAS_FILE}, the Christmas and New Year pack (${Object.keys(XMAS).length}): ${Object.keys(XMAS).join(', ')}`);
     assert.strictEqual(lines[7], `  from ${KIDS_FILE}, the kids pack (100): ${Object.keys(KIDS).join(', ')}`);
     assert.strictEqual(lines[8], `  from ${EVERY_FILE}, the everyday questions (100): ${Object.keys(EVERY).join(', ')}`);
-    assert.match(lines[9], /: yes$/);
-    assert.strictEqual(lines.length, 11);
+    assert.strictEqual(lines[9], `  from ${PARTY_FILE}, the party pack (80): ${Object.keys(PARTY).join(', ')}`);
+    assert.match(lines[10], /: yes$/);
+    assert.strictEqual(lines.length, 12);
 });
 
 test('one update of questions/ is sent, its body exactly the file, and nothing else is written', async () => {
