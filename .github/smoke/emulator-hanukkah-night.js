@@ -202,8 +202,6 @@ async function language(base, locale) {
         for (let i = 0; i < names.length; i++) phones.push(await newPhone(browser, base, names[i], i === 0 ? 'host' : 'player'));
         const screen = await newPhone(browser, base, 'big screen', 'screen');
         await clockByReload(screen.context);
-        // Guests keep today's ask (the INVITE ANOTHER GROUP test is off on Hanukkah evenings for the pack).
-        for (const p of phones) await p.context.addInitScript(() => { try { localStorage.setItem('BS_HOST_INVITE', 'classic'); } catch (e) { } });
         const host = phones[0];
         // English: a game of the Hanukkah pack (the Hanukkah page's Start). Hebrew: any Hebrew game.
         await host.page.goto(`${base}/create-game?via=test${he ? '' : '&pack=hanukkah'}`);
