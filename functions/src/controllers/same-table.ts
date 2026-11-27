@@ -1,5 +1,5 @@
 // "Same table tomorrow": a finished game's link reopens its table (Product's build plan, item 3).
-// The link of a link-invited table sits in its group chat. In "The night after"'s new half (night-after.ts),
+// The link of a link-invited table sits in its group chat. On "The night after"'s recap (night-after.ts),
 // a browser that played gets PLAY AGAIN, SAME TABLE there: one lobby for that game, with fresh questions,
 // that the next person to tap the same link lands in (validateGameName sends them on to it as the game's
 // rematch). Groups that come back mostly come back the next evening, with that link already in their chat.

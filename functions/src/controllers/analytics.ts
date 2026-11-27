@@ -174,13 +174,13 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     create-now         pressed "or start a game right now" (the game it makes carries campaign after-game-invite)
 //   game-over   the same ask on the join page of a game that is over (campaigns after-game-late and
 //               after-game-late-remind): create, remind, remind-google
-//   night-after a finished game's own link, in the week after the game: the recap or today's "Game over",
-//               a 50/50 test by the game's PIN (night-after.ts). Every row carries the game's PIN, in
+//   night-after a finished game's own link, in the week after the game: the recap (night-after.ts), for every
+//               game since its 50/50 test by PIN was retired. Every row carries the game's PIN, in
 //               capitals, in crew_id, as lobby-help's do. A test game's link sends no row:
 //     seen-player          the recap showed, to a browser that played that game (once per page load)
 //     seen-other           the recap showed, to a browser that didn't play it: "You missed it"
-//     seen-control-player  the other half: today's "Game over" showed, to a browser that played
-//     seen-control-other   the same, to a browser that didn't play
+//     seen-control-player  before the test was retired, the other half: "Game over" showed, to a browser that played
+//     seen-control-other   the same, to a browser that didn't play (still taken from pages loaded before then)
 //     create               pressed START YOUR OWN GAME (didn't play; the game it makes carries campaign night-after)
 //     create-player        pressed HOST THE NEXT ONE (played; its game carries campaign night-after-player)
 //     crew                 pressed "See who's in next time" (the table's saved crew page)
@@ -206,8 +206,8 @@ export async function onJoinGame(uid: string, ip: string, useragent: string, pin
 //     save-google          then tapped "Or add it to Google Calendar"
 //   night-after, one more (Hanukkah night):
 //     seen-hanukkah        the link SAME TABLE TOMORROW saved (?via=hanukkah-night-N) opened the page: the
-//                          recap shows in either half, so this row stands in for seen-player/seen-other and the
-//                          test's halves still compare the same visits
+//                          recap shows, as on every finished game, and this row stands in for
+//                          seen-player/seen-other, so those visits are counted apart
 //     join-playing         on that link, a browser that didn't play pressed JOIN NOW: the table's game was
 //                          under way, and it joined it (a link that waits for the table says nothing more)
 /** The lone-host help's rows: their crew_id is the lobby's PIN. */

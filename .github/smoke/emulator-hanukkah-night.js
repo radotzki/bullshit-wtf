@@ -10,7 +10,7 @@
 //   - night 8 (Friday 11 December, 21:30): the line, and no button (there is no tomorrow);
 //   - after Hanukkah (Saturday 12 December, 21:00): nothing new.
 // Then the saved link is opened the next evening by a player, with the game's test mark taken off: the recap
-// shows (in either half), says which night it is, sends seen-hanukkah, and PLAY AGAIN, SAME TABLE opens the
+// shows (as on every game), says which night it is, sends seen-hanukkah, and PLAY AGAIN, SAME TABLE opens the
 // table's lobby with campaign hanukkah-night-<N+1>.
 //
 // Nothing reaches production: see emulator-game.js, whose emulators and phones this run uses.
@@ -265,7 +265,7 @@ async function language(base, locale) {
         const at = IL('2026-12-08', '20:45');
         const ctx = guest.context;
         await clockForNewPages(ctx, at);
-        // The tester's switch on the other half: the tagged link shows the recap all the same.
+        // A leftover switch from the retired 50/50 test changes nothing: the tagged link shows the recap all the same.
         await ctx.addInitScript(() => { try { localStorage.setItem('BS_NIGHT_AFTER', 'control'); } catch (e) { } });
         const page = await ctx.newPage();
         const shares = [];

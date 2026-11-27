@@ -78,7 +78,8 @@ const { fork } = require(path.join(dist, 'fork'));
 const { join } = require(path.join(dist, 'join'));
 const { sameTable, REPLAY_GRACE_MS } = require(path.join(dist, 'same-table'));
 const { validateGameName } = require(path.join(dist, 'validate-game-name'));
-const { nightAfterHalf } = require(path.join(dist, 'night-after'));
+/** The retired night-after test's half of a PIN (SHA-256('night-after:' + PIN), lowest bit of the first byte). */
+const nightAfterHalf = (pin) => require('crypto').createHash('sha256').update('night-after:' + pin.toUpperCase()).digest()[0] % 2 === 1;
 const crew = require(path.join(dist, 'crew'));
 const oldGames = require(path.join(dist, 'old-games'));
 
@@ -192,7 +193,7 @@ test('only a player, within the recap\'s week, and only for a finished game', as
     assert.deepStrictEqual(Object.keys(db.games[r.pin].players), [g.pids.u2]);
 });
 
-test('the chat link: a chat member lands in the lobby; the recap beside it in the new half only', async () => {
+test('the chat link: a chat member lands in the lobby; the recap beside it for every game', async () => {
     let g, h;
     do { g = await finishedGame(20 * H); } while (!nightAfterHalf(g.pin));
     do { h = await finishedGame(20 * H); } while (nightAfterHalf(h.pin));
@@ -203,9 +204,11 @@ test('the chat link: a chat member lands in the lobby; the recap beside it in th
     assert.strictEqual(seen.rematch, a.pin);
     assert.strictEqual(seen.nightAfter.half, 'new');
     assert.strictEqual(seen.nightAfter.player, false);
+    // A game of the retired test's other half: the recap beside its rematch too.
     const control = await validateGameName(h.pin, 'friend').catch(e => e);
     assert.strictEqual(control.rematch, b.pin);
-    assert.strictEqual(control.nightAfter, undefined, 'the other half keeps today\'s page');
+    assert.strictEqual(control.nightAfter.half, 'new');
+    assert.strictEqual(control.nightAfter.player, false);
     // The friend joins the lobby with a seat of their own.
     const joined = await join(a.pin, 'friend', 'friend');
     assert.ok(db.games[a.pin].players[joined.pid]);

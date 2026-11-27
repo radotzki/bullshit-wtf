@@ -10,11 +10,10 @@ import { crewStandings } from '../../game-model';
 import { JoinStrings, joinStrings, joinLocale, pinError } from './join-strings';
 import { cleanCode } from '../../services/game-code';
 import { WholeName, boxValue, nicknameToSend, pastedName } from './whole-name';
-import { StorageService } from '../../services/storage.service';
 import { GameService } from '../../services/game.service';
 import {
-    NIGHT_AFTER_CONTENT, NIGHT_AFTER_KEY, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
-    readRecap, recapAsk, seenMethod, shownHalf, whenWas,
+    NIGHT_AFTER_CONTENT, NIGHT_AFTER_TAGS, NightAfterRecap, NightAfterStrings, namesOf, nightAfterWords,
+    readRecap, recapAsk, seenMethod, whenWas,
 } from './night-after';
 import { HanukkahNightStrings, nightStrings, nightTag, tagNight } from '../../components/hanukkah-night/hanukkah-night';
 
@@ -45,7 +44,7 @@ export class JoinGameComponent implements OnInit, OnDestroy {
     crewNicknames: string[] = [];
     // The PIN belongs to a game that is over: say so, and offer another PIN (or its rematch).
     gameOver: { pin: string; rematch?: string; justEnded?: boolean };
-    // In the week after a finished game, its recap (night-after.ts); shown in the test's new half only.
+    // In the week after a finished game, its recap (night-after.ts), for every game.
     recap: NightAfterRecap;
     recapShown: boolean;
     // PLAY AGAIN, SAME TABLE is on its way, or failed (its words).
@@ -55,7 +54,7 @@ export class JoinGameComponent implements OnInit, OnDestroy {
     private recapCounted: string;
     /**
      * The link SAME TABLE TOMORROW saved on a Hanukkah night (?via=hanukkah-night-N, components/hanukkah-night):
-     * the night it is for, and the PIN it came with. That game's recap shows in either half, says which night
+     * the night it is for, and the PIN it came with. That game's recap shows, as every game's does, says which night
      * it is, and the lobby its PLAY AGAIN, SAME TABLE opens carries the tag.
      */
     private hanukkah: { pin: string; night: number } = null;
@@ -78,7 +77,6 @@ export class JoinGameComponent implements OnInit, OnDestroy {
         private sessionService: SessionService,
         private router: Router,
         private crewService: CrewService,
-        private storageService: StorageService,
         private gameService: GameService,
     ) { }
 
@@ -146,34 +144,25 @@ export class JoinGameComponent implements OnInit, OnDestroy {
         const pin = (this.pin || '').toUpperCase();
         this.gameOver = { pin, rematch: err.rematch, justEnded: !!err.justEnded };
         // A later answer for the same PIN (a tap on JOIN) carries no recap: keep the one the page has.
-        // Beside an open rematch the server sends one in the new half only ("They're playing again").
         const recap = readRecap(err) || (this.recap && this.recapPin === pin ? this.recap : null);
         this.setRecap(recap, pin);
     }
 
     private recapPin: string;
 
-    /** Shows the recap in the new half, and counts what this page load showed (once a PIN). */
+    /** Shows the recap, and counts what this page load showed (once a PIN). */
     private setRecap(recap: NightAfterRecap, pin: string) {
         this.recap = recap;
         this.recapPin = recap ? pin : undefined;
+        this.recapShown = !!recap;
         if (!recap) {
-            this.recapShown = false;
             return;
         }
-        let forced: string = null;
-        try {
-            forced = this.storageService.getItem(NIGHT_AFTER_KEY);
-        } catch (e) { }
         const tagged = !!this.hanukkahNight;
-        // The Hanukkah link shows the recap in either half; its visits are counted apart (seen-hanukkah),
-        // so the test's halves still compare the same visits.
-        const half = tagged ? 'new' : shownHalf(recap, forced);
-        this.recapShown = half === 'new';
         if (this.recapCounted !== pin) {
             this.recapCounted = pin;
-            // None beside an open rematch, in either half (seenMethod).
-            const seen = tagged ? 'seen-hanukkah' : seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
+            // None beside an open rematch (seenMethod).
+            const seen = tagged ? 'seen-hanukkah' : seenMethod(recap.player, this.gameOver && this.gameOver.rematch);
             if (seen) {
                 this.countRecap(seen);
             }

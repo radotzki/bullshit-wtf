@@ -7,16 +7,16 @@
 //     it would open a lobby, and the visits below are of a table with none);
 //   - by someone who didn't play (a fresh browser): the recap, "You missed it", START YOUR OWN GAME, whose
 //     press opens the Create page tagged night-after;
-//   - in the other half (the tester's switch set to control): today's "Game over" page, with its ask;
-//   - with no switch: the half the server drew for the PIN.
+//   - by a browser that still has the retired test's switch set to control: the recap all the same;
+//   - by a plain browser: the recap, whatever half the retired 50/50 test would have drawn for the PIN.
 // It checks the recap's words against the game's own (night-after.ts), its scores against the database,
 // that no question and no true answer is on the page, and the rows: a test game sends none, and the same
-// game with its test mark taken off sends seen-player, seen-other, seen-control-other and create.
+// game with its test mark taken off sends seen-player, seen-other (twice) and create, and no seen-control- row.
 //
 // Nothing reaches production: see emulator-game.js, whose emulators and phones this run uses.
 // From the repository root, with game/ and functions/ built and the root's npm ci done:
 //   node .github/smoke/emulator-night-after.js [path to dist]
-// ONLY=en or ONLY=he plays one language. SHOTS=<dir> saves screenshots (390 px and 320 px wide).
+// ONLY=en or ONLY=he plays one language. SHOTS=<dir> saves screenshots (390, 360 and 320 px wide).
 // Prints a JSON summary; exits non-zero when a check fails.
 
 'use strict';
@@ -55,7 +55,7 @@ function loadTs(file) {
 const na = loadTs(path.join(ROOT, 'game', 'src', 'app', 'pages', 'join-game', 'night-after.ts'));
 const joinWords = loadTs(path.join(ROOT, 'game', 'src', 'app', 'pages', 'join-game', 'join-strings.ts'));
 
-/** The half the server draws for a PIN (night-after.ts). */
+/** The half the retired 50/50 test drew for a PIN (it no longer decides anything: every game shows the recap). */
 const half = (pin) => crypto.createHash('sha256').update('night-after:' + pin.toUpperCase(), 'utf8').digest()[0] % 2 === 1;
 
 const NAMES = { en: ['Ana', 'Ben', 'Cleo'], he: ['דנה', 'יוסי', 'מיכל'] };
@@ -97,9 +97,11 @@ async function shot(page, name) {
     if (!SHOTS) return;
     await page.screenshot({ path: path.join(SHOTS, `${name}-390.png`), fullPage: true }).catch(() => { });
     const size = page.viewportSize();
-    await page.setViewportSize({ width: 320, height: size.height });
-    await sleep(300);
-    await page.screenshot({ path: path.join(SHOTS, `${name}-320.png`), fullPage: true }).catch(() => { });
+    for (const width of [360, 320]) {
+        await page.setViewportSize({ width, height: size.height });
+        await sleep(300);
+        await page.screenshot({ path: path.join(SHOTS, `${name}-${width}.png`), fullPage: true }).catch(() => { });
+    }
     await page.setViewportSize(size);
 }
 
@@ -125,7 +127,7 @@ function sharesOf(pin) {
     return rows;
 }
 
-/** A browser that opens the link: a phone of its own (or a player's), the tester's switch set or not. */
+/** A browser that opens the link: a phone of its own, with the retired test's switch left set or not. */
 async function visitor(browser, base, name, forced) {
     const phone = await newPhone(browser, base, name, 'player');
     if (forced) await phone.context.addInitScript((v) => { try { localStorage.setItem('BS_NIGHT_AFTER', v); } catch (e) { } }, forced);
@@ -181,14 +183,13 @@ async function language(base, locale) {
         const g = await db('GET', `games/${game.pin}`);
         check(g && g.campaign === 'test' && g.state.id === 6, `the game is not a finished test game (${g && g.campaign}, ${g && JSON.stringify(g.state)})`);
         result.pin = game.pin;
-        result.serverHalf = half(game.pin) ? 'new' : 'control';
+        result.oldHalf = half(game.pin) ? 'new' : 'control';
         const seats = Object.values(g.players);
         const expected = seats.map((p) => ({ name: p.nickname, score: p.score || 0 })).sort((a, b) => b.score - a.score);
         const truths = await db('GET', 'questions');
 
-        // 1. A player of that game reopens the link from the group chat, in the new half.
+        // 1. A player of that game reopens the link from the group chat.
         const player = phones[1];
-        await player.context.addInitScript(() => { try { localStorage.setItem('BS_NIGHT_AFTER', 'new'); } catch (e) { } });
         player.shareCalls = [];
         player.page.on('request', (r) => { if (/\/onShare$/.test(r.url())) player.shareCalls.push(JSON.parse(r.postData() || '{}')); });
         await player.page.goto(link);
@@ -213,7 +214,7 @@ async function language(base, locale) {
         await shot(player.page, `${locale}-1-player`);
 
         // 2. Someone in the chat who didn't come: "You missed it", and START YOUR OWN GAME, tagged.
-        const other = await visitor(browser, base, 'outsider', 'new');
+        const other = await visitor(browser, base, 'outsider', null);
         await other.page.goto(link);
         await waitFor('the outsider sees no recap', () => visible(other.page.locator('.night-after')), problems);
         const theirs = await readRecap(other.page);
@@ -227,35 +228,31 @@ async function language(base, locale) {
         check(to.searchParams.get('via') === 'night-after' && to.searchParams.get('lang') === locale, `the Create page opened as ${to.pathname}${to.search}`);
         check(other.shareCalls.length === 0, `a test game's link sent ${other.shareCalls.length} rows`);
 
-        // 3. The other half: today's "Game over", with its ask.
+        // 3. A browser that still has the retired test's switch set to control: the recap all the same.
         const control = await visitor(browser, base, 'control', 'control');
         await control.page.goto(link);
-        await waitFor('the control browser sees no Game over', () => visible(control.page.locator('.game-over')), problems);
-        check(!(await visible(control.page.locator('.night-after'))), 'the control half shows the recap');
-        check(((await control.page.locator('.game-over-title').textContent()) || '').trim() === joinWords.joinStrings(locale).gameOverTitle, 'the control half lost today\'s title');
-        check(await visible(control.page.locator('app-host-ask .ask-create')), 'the control half lost its START MY OWN GAME ask');
-        await shot(control.page, `${locale}-3-control`);
+        await waitFor('the old control switch still hides the recap', () => visible(control.page.locator('.night-after')), problems);
+        check(!(await visible(control.page.locator('.game-over'))), 'the old control switch still shows "Game over"');
 
-        // 4. No switch: the server's half for this PIN.
+        // 4. A plain browser: the recap, whatever half the retired test drew for this PIN.
         const plain = await visitor(browser, base, 'plain', null);
         await plain.page.goto(link);
-        await waitFor('the plain browser sees neither page', async () => (await visible(plain.page.locator('.night-after'))) || (await visible(plain.page.locator('.game-over'))), problems);
-        const plainHalf = (await visible(plain.page.locator('.night-after'))) ? 'new' : 'control';
-        check(plainHalf === result.serverHalf, `with no switch the page shows ${plainHalf}, the server drew ${result.serverHalf}`);
+        await waitFor(`a plain browser sees no recap (the retired test's ${result.oldHalf} half)`, () => visible(plain.page.locator('.night-after')), problems);
+        check(!(await visible(plain.page.locator('.game-over'))), 'a plain browser sees "Game over"');
 
         // 5. The rows: the same game without its test mark (as a real game) sends them.
         await db('PUT', `games/${game.pin}/campaign`, null);
-        const real = [await visitor(browser, base, 'real-other', 'new'), await visitor(browser, base, 'real-control', 'control')];
+        const real = [await visitor(browser, base, 'real-other', null), await visitor(browser, base, 'real-control', 'control')];
         for (const v of real) {
             await v.page.goto(link);
-            await waitFor(`${v.name} sees neither page`, async () => (await visible(v.page.locator('.night-after'))) || (await visible(v.page.locator('.game-over'))), problems);
+            await waitFor(`${v.name} sees no recap`, () => visible(v.page.locator('.night-after')), problems);
         }
         await player.page.reload();
         await waitFor('the player sees no recap after a reload', () => visible(player.page.locator('.night-after')), problems);
         await real[0].page.locator('.night-after .recap-create').click();
         await sleep(3000);
         result.rows = sharesOf(game.pin).sort();
-        const want = ['create', 'seen-control-other', 'seen-other', 'seen-player'];
+        const want = ['create', 'seen-other', 'seen-other', 'seen-player'];
         check(JSON.stringify(result.rows) === JSON.stringify(want), `rows ${JSON.stringify(result.rows)}, not ${JSON.stringify(want)}`);
 
         for (const p of phones.concat(screen, other, control, plain, ...real)) {
