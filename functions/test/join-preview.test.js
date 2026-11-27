@@ -61,13 +61,12 @@ const { SWAP_NAMES } = require(path.join(dist, 'name-flag'));
 const ROOT = path.join(__dirname, '..', '..');
 const EN_SHELL = fs.readFileSync(path.join(ROOT, 'game', 'src', 'index.html'), 'utf8');
 function hebrewShell() {
+    // The script runs where it lives (it reads the Hanukkah season from game-model.ts), on a copy of
+    // the shell in its own folder, as the game's tests run it.
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bs-he-'));
-    fs.mkdirSync(path.join(dir, 'scripts'));
-    fs.mkdirSync(path.join(dir, 'dist'));
-    fs.copyFileSync(path.join(ROOT, 'game', 'scripts', 'build-he.js'), path.join(dir, 'scripts', 'build-he.js'));
-    fs.writeFileSync(path.join(dir, 'dist', 'index.html'), EN_SHELL);
-    execFileSync(process.execPath, [path.join(dir, 'scripts', 'build-he.js')], { stdio: 'ignore' });
-    return fs.readFileSync(path.join(dir, 'dist', 'he.html'), 'utf8');
+    fs.writeFileSync(path.join(dir, 'index.html'), EN_SHELL);
+    execFileSync(process.execPath, [path.join(ROOT, 'game', 'scripts', 'build-he.js'), dir], { stdio: 'ignore' });
+    return fs.readFileSync(path.join(dir, 'he.html'), 'utf8');
 }
 const HE_SHELL = hebrewShell();
 
