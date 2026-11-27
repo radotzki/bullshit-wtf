@@ -1,0 +1,20 @@
+{
+  "name": "bullshit-airconsole",
+  "private": true,
+  "description": "The game on AirConsole: the TV or computer is the screen, every phone a controller. See README.md.",
+  "scripts": {
+    "build": "node build.js",
+    "build:emulators": "node build.js --emulators",
+    "test": "node --test test/*.test.js",
+    "zip": "node build.js --zip"
+  },
+  "dependencies": {
+    "firebase": "13.3.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
