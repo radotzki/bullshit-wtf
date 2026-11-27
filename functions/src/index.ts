@@ -24,6 +24,7 @@ import { laugh } from './controllers/laugh';
 import { joinPreviewPage, readPreviewGame } from './controllers/join-preview';
 import { caught, http, watched } from './report';
 import { sweepOldGames } from './controllers/old-games';
+import { discordTable } from './controllers/discord-table';
 
 // Error bodies always carry a readable message and a code, so the client
 // (and Sentry) never sees an empty object.
@@ -356,6 +357,36 @@ exports.fork = functions.https.onRequest(http('fork', (req, res) => {
         }
     });
 }, 'game'));
+
+// The Discord Activity: the game of a Discord call, by Discord's instance id, made if the call has
+// none that can be played (controllers/discord-table.ts). Everyone who opens the Activity in one call
+// gets the same PIN; after a rematch, the rematch's. Answers { pin, created }.
+exports.discordTable = functions.https.onRequest(http('discordTable', (req, res) => {
+    cors(req, res, async () => {
+        try {
+            const table = await discordTable(req.body.instanceId, req.body.locale, {
+                uid: cleanUid(req.body.uid),
+                hostKey: cleanHostKey(req.body.hostKey),
+                serverStart: req.body.serverStart === true,
+                stagedReveal: req.body.stagedReveal === true,
+                aboutUs: req.body.aboutUs === true,
+                campaign: req.body.campaign,
+            });
+            if (table.created) {
+                // Where the host's visit started, as newGame keeps it (see controllers/arrival.ts).
+                await analytics.recordArrival(table.pin, req.body.arrival);
+            }
+            return res.status(200).send(table);
+        } catch (e) {
+            // A bad instance id or language is the caller's (anybody can send one): answered, not reported.
+            if (e && e.code === 'BAD_REQUEST') {
+                return res.status(400).send(errorBody(e));
+            }
+            caught(e);
+            return res.status(500).send(errorBody(e));
+        }
+    });
+}, 'new'));
 
 // Save the players of a finished game as a crew.
 exports.createCrew = functions.https.onRequest(http('createCrew', (req, res) => {
