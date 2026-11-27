@@ -1,0 +1,87 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link preview (1200x630) for the virtual holiday party page (game/seo/pages-en-holidays.js,
+     /virtual-holiday-party-game): a laptop with a video call's gallery and the game's question shared,
+     phones in front of it. Same look as party-nights.html. No real faces, no app's logo.
+     Render: node graphics/render-more-pages.js game/src/assets graphics/virtual-party.html -->
+     Render: node graphics/render-more-pages.js game/src/assets graphics/party-nights.html -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fff;margin-bottom:20px;color:#fff}
+.dots{position:absolute;inset:0}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{direction:ltr;width:340px;height:340px;margin:0 40px 90px 70px;display:block;flex:none;position:relative}
+.text{flex:1;padding-right:60px;margin-bottom:90px;position:relative}
+h1{margin:0;font-size:124px;line-height:1;color:#fff;-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.3);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:56px;line-height:1.1;color:#f3d467}
+p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 70px 90px 40px}
+.he .text{padding-right:0;padding-left:60px}
+.he .kicker{font-size:58px}
+/* Brand white, as the search pages' own previews */
+.white{background:#fff}
+.white h1{-webkit-text-stroke:5px #9b9b9b;text-shadow:6px 8px 0 rgba(0,0,0,.18)}
+.white .kicker{color:#97374e}
+.white p{color:#4a4a4a}
+/* Colours per occasion */
+.wine{background:#97374e}
+.night{background:#13284f}
+.green{background:#1f5b3e}
+.plum{background:#3b1f5c}
+.teal{background:#1d5560}
+.stars{background:
+ radial-gradient(circle at 10% 16%,rgba(243,212,103,.4) 0 3px,transparent 4px),
+ radial-gradient(circle at 84% 12%,rgba(243,212,103,.35) 0 2px,transparent 3px),
+ radial-gradient(circle at 66% 32%,rgba(255,255,255,.25) 0 2px,transparent 3px),
+ radial-gradient(circle at 26% 62%,rgba(255,255,255,.2) 0 2px,transparent 3px),
+ radial-gradient(circle at 93% 66%,rgba(243,212,103,.35) 0 3px,transparent 4px),
+ radial-gradient(circle at 47% 8%,rgba(255,255,255,.25) 0 2px,transparent 3px)}
+.snow{background:
+ radial-gradient(circle at 6% 10%,#fff 0 5px,transparent 6px),radial-gradient(circle at 18% 70%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 37% 14%,rgba(255,255,255,.8) 0 4px,transparent 5px),radial-gradient(circle at 55% 66%,#fff 0 3px,transparent 4px),
+ radial-gradient(circle at 72% 8%,#fff 0 5px,transparent 6px),radial-gradient(circle at 90% 40%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 97% 78%,#fff 0 3px,transparent 4px),radial-gradient(circle at 46% 40%,rgba(255,255,255,.6) 0 3px,transparent 4px)}
+.confetti{background:
+ radial-gradient(circle at 8% 14%,#f3d467 0 7px,transparent 8px),radial-gradient(circle at 22% 82%,#db7151 0 6px,transparent 7px),
+ radial-gradient(circle at 41% 9%,#7fd1c7 0 6px,transparent 7px),radial-gradient(circle at 63% 18%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 88% 10%,#db7151 0 7px,transparent 8px),radial-gradient(circle at 95% 55%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 55% 78%,#f3d467 0 5px,transparent 6px),radial-gradient(circle at 4% 52%,#7fd1c7 0 5px,transparent 6px)}
+.sky{background:#2a6f97}
+.sun{background:#c8553d}
+</style></head><body>
+
+<!-- Pictures, each in a 400x400 box. -->
+<template id="call"><!-- a laptop: a gallery of four faces around the shared game screen, three phones in front -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#2b2523" stroke-width="7" stroke-linejoin="round">
+    <rect x="40" y="60" width="320" height="200" rx="14" fill="#fff"/>
+    <path d="M20 268 h360 l-20 26 h-320 z" fill="#e6d9cc"/>
+  </g>
+  <rect x="62" y="80" width="276" height="96" rx="8" fill="#db7151" stroke="#2b2523" stroke-width="5"/>
+  <rect x="84" y="104" width="232" height="16" rx="6" fill="#fff"/>
+  <rect x="84" y="132" width="150" height="16" rx="6" fill="#fff"/><rect x="242" y="132" width="74" height="16" rx="6" fill="#f3d467"/>
+  <g stroke="#2b2523" stroke-width="5">
+    <rect x="62" y="186" width="62" height="56" rx="6" fill="#7fd1c7"/><rect x="133" y="186" width="62" height="56" rx="6" fill="#f3d467"/>
+    <rect x="205" y="186" width="62" height="56" rx="6" fill="#e6d9cc"/><rect x="276" y="186" width="62" height="56" rx="6" fill="#7fd1c7"/>
+  </g>
+  <g fill="#2b2523"><circle cx="93" cy="208" r="9"/><circle cx="164" cy="208" r="9"/><circle cx="236" cy="208" r="9"/><circle cx="307" cy="208" r="9"/></g>
+  <g fill="none" stroke="#2b2523" stroke-width="5" stroke-linecap="round"><path d="M80 228 q13 12 26 0"/><path d="M151 228 q13 12 26 0"/><path d="M223 228 q13 12 26 0"/><path d="M294 228 q13 12 26 0"/></g>
+  <g stroke="#2b2523" stroke-width="7">
+    <rect x="80" y="300" width="62" height="92" rx="12" fill="#fff"/>
+    <rect x="169" y="290" width="62" height="102" rx="12" fill="#fff"/>
+    <rect x="258" y="300" width="62" height="92" rx="12" fill="#fff"/>
+  </g>
+  <rect x="90" y="322" width="42" height="12" rx="5" fill="#f3d467"/><rect x="179" y="312" width="42" height="12" rx="5" fill="#e6d9cc"/><rect x="179" y="332" width="42" height="12" rx="5" fill="#f3d467"/><rect x="268" y="322" width="42" height="12" rx="5" fill="#f3d467"/>
+</svg></template>
+
+<div class="card green" id="virtual-party-en"><div class="dots snow"></div><span data-art="call"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">The holiday party game for remote teams</div><p>Share the screen. Everyone plays on their phone.</p></div>
+  <div class="band">FREE · ON ANY VIDEO CALL · BULLSHIT.WTF</div></div>
+
+<script>
+document.querySelectorAll('[data-art]').forEach(function (el) {
+  el.replaceWith(document.getElementById(el.getAttribute('data-art')).content.cloneNode(true));
+});
+</script>
+</body></html>
