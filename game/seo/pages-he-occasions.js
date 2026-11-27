@@ -216,7 +216,7 @@ module.exports = {
     purim,
     pages: (he) => [
         {
-            path: '/he/friday-dinner', site: he, tag: 'seo-he-friday',
+            path: '/he/friday-dinner', twin: '/shabbat-dinner-game', site: he, tag: 'seo-he-friday',
             start: { href: '/create-game?lang=he', label: 'פותחים משחק לשישי' },
             image: '/assets/og-friday-he.png',
             title: 'משחק לארוחת שישי: בולשיט, כל אחד מהטלפון שלו',

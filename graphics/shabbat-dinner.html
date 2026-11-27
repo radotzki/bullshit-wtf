@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset="utf-8">
+<!-- Link preview (1200x630) for the Shabbat dinner page, /shabbat-dinner-game: two candles behind a
+     dinner table with three phones on it. Styles as more-pages.html.
+     Render: node graphics/render-more-pages.js game/src/assets graphics/shabbat-dinner.html -->
+<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy|Suez+One" rel="stylesheet">
+<style>
+html,body{margin:0;background:#888}
+.card{width:1200px;height:630px;display:flex;align-items:center;position:relative;overflow:hidden;font-family:"Luckiest Guy","Suez One",sans-serif;background:#fff;margin-bottom:20px;color:#fff}
+.dots{position:absolute;inset:0}
+.band{position:absolute;left:0;right:0;bottom:0;height:96px;background:#db7151;color:#fff;display:flex;align-items:center;justify-content:center;font-size:40px;letter-spacing:1px;text-align:center}
+.art{direction:ltr;width:340px;height:340px;margin:0 40px 90px 70px;display:block;flex:none;position:relative}
+.text{flex:1;padding-right:60px;margin-bottom:90px;position:relative}
+h1{margin:0;font-size:124px;line-height:1;color:#fff;-webkit-text-stroke:5px #f3d467;text-shadow:6px 8px 0 rgba(0,0,0,.3);font-weight:normal}
+.kicker{margin:16px 0 0;font-size:56px;line-height:1.1;color:#f3d467}
+p{margin:12px 0 0;font-size:38px;line-height:1.2;color:#fff}
+.he{direction:rtl;font-family:"Suez One",sans-serif}
+.he .art{margin:0 70px 90px 40px}
+.he .text{padding-right:0;padding-left:60px}
+.he .kicker{font-size:58px}
+/* Brand white, as the search pages' own previews */
+.white{background:#fff}
+.white h1{-webkit-text-stroke:5px #9b9b9b;text-shadow:6px 8px 0 rgba(0,0,0,.18)}
+.white .kicker{color:#97374e}
+.white p{color:#4a4a4a}
+/* Colours per occasion */
+.wine{background:#97374e}
+.night{background:#13284f}
+.green{background:#1f5b3e}
+.plum{background:#3b1f5c}
+.teal{background:#1d5560}
+.autumn{background:#6b3a16}
+.stars{background:
+ radial-gradient(circle at 10% 16%,rgba(243,212,103,.4) 0 3px,transparent 4px),
+ radial-gradient(circle at 84% 12%,rgba(243,212,103,.35) 0 2px,transparent 3px),
+ radial-gradient(circle at 66% 32%,rgba(255,255,255,.25) 0 2px,transparent 3px),
+ radial-gradient(circle at 26% 62%,rgba(255,255,255,.2) 0 2px,transparent 3px),
+ radial-gradient(circle at 93% 66%,rgba(243,212,103,.35) 0 3px,transparent 4px),
+ radial-gradient(circle at 47% 8%,rgba(255,255,255,.25) 0 2px,transparent 3px)}
+.snow{background:
+ radial-gradient(circle at 6% 10%,#fff 0 5px,transparent 6px),radial-gradient(circle at 18% 70%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 37% 14%,rgba(255,255,255,.8) 0 4px,transparent 5px),radial-gradient(circle at 55% 66%,#fff 0 3px,transparent 4px),
+ radial-gradient(circle at 72% 8%,#fff 0 5px,transparent 6px),radial-gradient(circle at 90% 40%,rgba(255,255,255,.8) 0 4px,transparent 5px),
+ radial-gradient(circle at 97% 78%,#fff 0 3px,transparent 4px),radial-gradient(circle at 46% 40%,rgba(255,255,255,.6) 0 3px,transparent 4px)}
+.confetti{background:
+ radial-gradient(circle at 8% 14%,#f3d467 0 7px,transparent 8px),radial-gradient(circle at 22% 82%,#db7151 0 6px,transparent 7px),
+ radial-gradient(circle at 41% 9%,#7fd1c7 0 6px,transparent 7px),radial-gradient(circle at 63% 18%,#f3d467 0 5px,transparent 6px),
+ radial-gradient(circle at 88% 10%,#db7151 0 7px,transparent 8px),radial-gradient(circle at 95% 55%,#7fd1c7 0 6px,transparent 7px),
+ radial-gradient(circle at 55% 78%,#f3d467 0 5px,transparent 6px),radial-gradient(circle at 4% 52%,#7fd1c7 0 5px,transparent 6px)}
+</style></head><body>
+
+
+<template id="table"><!-- two lit candles behind a table, three phones on the tablecloth -->
+<svg class="art" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <g><ellipse cx="140" cy="44" rx="14" ry="26" fill="#f3d467"/><ellipse cx="140" cy="50" rx="6" ry="13" fill="#fff"/>
+     <ellipse cx="260" cy="44" rx="14" ry="26" fill="#f3d467"/><ellipse cx="260" cy="50" rx="6" ry="13" fill="#fff"/></g>
+  <g fill="#fff" stroke="#2b2523" stroke-width="6"><rect x="124" y="74" width="32" height="120" rx="4"/><rect x="244" y="74" width="32" height="120" rx="4"/></g>
+  <g fill="#e6d9cc" stroke="#2b2523" stroke-width="6"><path d="M110 194h60l-8 22h-44z"/><path d="M230 194h60l-8 22h-44z"/></g>
+  <path d="M10 236h380l-14 150H24z" fill="#fff" stroke="#2b2523" stroke-width="7"/>
+  <path d="M24 260h352" stroke="#e6d9cc" stroke-width="6"/>
+  <g stroke="#2b2523" stroke-width="6" fill="#2b2523"><rect x="48" y="282" width="70" height="88" rx="12"/><rect x="165" y="276" width="70" height="88" rx="12"/><rect x="282" y="282" width="70" height="88" rx="12"/></g>
+  <g fill="#db7151"><rect x="60" y="298" width="46" height="12" rx="5"/><rect x="177" y="292" width="46" height="12" rx="5"/><rect x="294" y="298" width="46" height="12" rx="5"/></g>
+  <g fill="#7fd1c7"><rect x="60" y="320" width="46" height="10" rx="5"/><rect x="177" y="314" width="34" height="10" rx="5"/><rect x="294" y="320" width="46" height="10" rx="5"/></g>
+</svg></template>
+
+<div class="card night" id="shabbat-dinner-en"><div class="dots stars"></div><span data-art="table"></span>
+  <div class="text"><h1>BULLSHIT</h1><div class="kicker">A game for the Shabbat table</div><p>Everyone at the table, on their own phone. Kids to grandparents.</p></div>
+  <div class="band">FREE · IN THE BROWSER · NO DOWNLOAD · BULLSHIT.WTF</div></div>
+
+<script>
+document.querySelectorAll('[data-art]').forEach(function (el) {
+  el.replaceWith(document.getElementById(el.getAttribute('data-art')).content.cloneNode(true));
+});
+</script>
+</body></html>
