@@ -106,6 +106,8 @@
                     {{ rematchJoin }}
                 </button>
                 <p *ngIf="rematchPin" class="hint rematch-line" dir="auto">{{ rematchLine }}</p>
+                <!-- The host's phone: the winner and the game's own link, back in the group's chat (components/send-scores). -->
+                <app-send-scores *ngIf="sendScores" [pin]="pin" [locale]="locale" [winners]="winners" (sheet)="onSheet($event)"></app-send-scores>
                 <!-- Hanukkah nights 1 to 7: SAME TABLE TOMORROW, saved to the calendar with the table's link. -->
                 <app-hanukkah-night *ngIf="hanukkahNight && hanukkahNight.button" [view]="hanukkahNight" [locale]="locale" [pin]="pin"
                     part="button"></app-hanukkah-night>

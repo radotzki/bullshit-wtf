@@ -110,7 +110,7 @@
                         [class.is-primary]="!gameOver.rematch" (click)="tryAnotherPin()">{{ t.tryAnother }}</button>
                 </div>
                 <!-- A late joiner has no game: ask them to start one. -->
-                <app-host-ask [locale]="t.lang" place="game-over"></app-host-ask>
+                <app-host-ask [locale]="t.lang" place="game-over" [createTag]="scoresTag"></app-host-ask>
             </div>
         </div>
 

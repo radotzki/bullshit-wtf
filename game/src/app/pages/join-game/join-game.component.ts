@@ -17,6 +17,7 @@ import {
     readRecap, recapAsk, seenMethod, shownHalf, whenWas,
 } from './night-after';
 import { HanukkahNightStrings, nightStrings, nightTag, tagNight } from '../../components/hanukkah-night/hanukkah-night';
+import { SCORES_CREATE_TAG, isScoresVisit, scoresSeenMethod } from '../../components/send-scores/send-scores';
 
 @Component({
     standalone: false,
@@ -59,6 +60,12 @@ export class JoinGameComponent implements OnInit, OnDestroy {
      * it is, and the lobby its PLAY AGAIN, SAME TABLE opens carries the tag.
      */
     private hanukkah: { pin: string; night: number } = null;
+    /**
+     * The link SEND THE SCORES TO THE GROUP sent (?via=scores, components/send-scores): its PIN. That game's
+     * seen row is counted apart (seen-scores-player / seen-scores-other), and a game started from this page
+     * carries campaign after-game-late-scores.
+     */
+    scoresPin: string = null;
     // This phone's seat in the game went to another phone with the same name (?taken=1, GameService.seatTaken).
     seatTaken: boolean;
     /**
@@ -94,6 +101,7 @@ export class JoinGameComponent implements OnInit, OnDestroy {
         if (this.pin) {
             const night = tagNight((this.activatedRoute.snapshot.queryParams || {})['via']);
             this.hanukkah = night ? { pin: this.pin.toUpperCase(), night } : null;
+            this.scoresPin = isScoresVisit((this.activatedRoute.snapshot.queryParams || {})['via']) ? this.pin.toUpperCase() : null;
             this.pinInUrl = true;
             this.nicknameState = true;
             this.loadCrew();
@@ -173,7 +181,8 @@ export class JoinGameComponent implements OnInit, OnDestroy {
         if (this.recapCounted !== pin) {
             this.recapCounted = pin;
             // None beside an open rematch, in either half (seenMethod).
-            const seen = tagged ? 'seen-hanukkah' : seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
+            const plain = seenMethod(half, recap.player, this.gameOver && this.gameOver.rematch);
+            const seen = tagged ? 'seen-hanukkah' : this.scoresPin === pin ? scoresSeenMethod(plain, recap.player) : plain;
             if (seen) {
                 this.countRecap(seen);
             }
@@ -287,9 +296,15 @@ export class JoinGameComponent implements OnInit, OnDestroy {
         try {
             this.gameService.unregister();
         } catch (e) { }
+        const tag = this.scoresTag || (player ? NIGHT_AFTER_TAGS.player : NIGHT_AFTER_TAGS.other);
         this.router.navigate(['/create-game'], {
-            queryParams: { via: player ? NIGHT_AFTER_TAGS.player : NIGHT_AFTER_TAGS.other, lang: this.t.lang },
+            queryParams: { via: tag, lang: this.t.lang },
         });
+    }
+
+    /** The campaign of a game started from this page when the scores link brought it, else null. */
+    get scoresTag(): string {
+        return this.scoresPin && this.gameOver && this.gameOver.pin === this.scoresPin ? SCORES_CREATE_TAG : null;
     }
 
     /**
