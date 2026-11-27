@@ -7,9 +7,14 @@
 // into the page and not into the code, so the bundle's files stay the same between two commits with
 // the same site code, and only index.html changes, as it does at every release anyway.
 // Nothing here can fail a build: with no commit, the page carries no tag and Sentry no release.
+//
+// The same run then puts the Christmas season's search title and description on the English home,
+// in season only (scripts/en-season.js). That part fails the build if game-model.ts loses the
+// Christmas pack's season, as build-he.js does for Hanukkah's.
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const enSeason = require('./en-season.js');
 
 const COMMIT = /^[0-9a-f]{40}$/;
 
@@ -50,4 +55,13 @@ if (require.main === module) {
     } catch (e) {
         console.warn('stamp-release: could not stamp dist/index.html (' + (e && e.code) + '); Sentry will show no release');
     }
+    const season = enSeason.christmasSeason(enSeason.readModel());
+    const day = enSeason.buildDay(process.env);
+    const page = fs.readFileSync(file, 'utf8');
+    const out = enSeason.seasonal(page, day, season);
+    if (out !== page) {
+        fs.writeFileSync(file, out);
+    }
+    console.log(`stamp-release: ${day} is ${out !== page ? '' : 'not '}in the Christmas season (${season.from} to ${season.to}); ` +
+        'the English home has its ' + (out !== page ? 'Christmas' : 'year-round') + ' title and description');
 }
