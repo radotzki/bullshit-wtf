@@ -594,7 +594,7 @@ export class ApiService {
     }
 
     /**
-     * Whether this game is in the decoy half of the "Pick a decoy" test (two players, set at START).
+     * Whether this game is a "Pick a decoy" pair game (every game of two players, set at START).
      * False when it cannot be read: the phone then shows today's screens, and the server still gives
      * the player a decoy.
      */

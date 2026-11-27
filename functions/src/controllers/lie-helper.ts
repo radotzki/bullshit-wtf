@@ -110,8 +110,9 @@ export interface QuestionResultRow {
  *   unpicked_lies  players' lies that nobody picked
  *   qid            the question's id in the bank (game.qids), to rank questions by how they play
  *   truth_picks    picks of the real answer
- *   house_picks    picks of a neutral house lie (none in a pair game's decoy half)
- *   pair           the game's "Pick a decoy" half (see pair.ts): true, false, or null when not in the test
+ *   house_picks    picks of a neutral house lie (none in a pair game)
+ *   pair           "Pick a decoy" (see pair.ts): true for a two-player game with decoys, false for the
+ *                  no-decoy half of the ended 50/50 test (old games only), null for any other game
  *   decoy_picks    picks of a decoy another player chose (pair games); lies, friend_fooled and
  *                  unpicked_lies count written lies only
  * A pick is the truth or a house lie as scoring counts it: it matches that answer alone (case aside).

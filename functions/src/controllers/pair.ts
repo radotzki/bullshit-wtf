@@ -1,5 +1,5 @@
 /**
- * "Pick a decoy", a 50/50 test on two-player games.
+ * "Pick a decoy": every two-player game gets decoys.
  *
  * At a table of two, a pick that is not the truth used to land on the friend's one lie or on one of
  * three neutral house lies, so about four rounds in five fooled nobody. In a pair game (pair: true)
@@ -9,16 +9,15 @@
  * answers: the truth, the friend's lie and the friend's decoy. A decoy that fools pays its owner half
  * a lie's points; the friend who fell for it loses nothing.
  *
- * The half is set once at START, for games with exactly two players that are not a taste: one bit of
- * a hash of the PIN with its own salt, the same method as the staged reveal (stagedHalf), so it is
- * independent of it. In BigQuery, with the PIN in column id:
- *   MOD(TO_CODE_POINTS(SHA256(CONCAT('pair:', UPPER(id))))[OFFSET(0)], 2) = 1
- * A Replay that still has two players keeps its parent's half, so a pair doesn't switch modes between
- * games. Games of three or more are not in the test (pair absent) and play as before.
+ * This started as a 50/50 test (19 Nov 2026, #165): half the pairs, by a hash of the PIN, played
+ * without decoys (pair: false). Decoys won (rounds that fooled someone: 65% against 30%), so the test
+ * has ended and pair is true for every game with exactly two players at START that is not a taste,
+ * Replays included. Games of three or more still have no pair value and play as before.
+ * In BigQuery, question_results.pair keeps telling the games apart: true is a decoy game, false a
+ * no-decoy pair from the test (only before this change deployed), null a game not of two.
  *
  * This file is pure (no Firebase) so it can be unit tested.
  */
-import { createHash } from 'crypto';
 import { normalize } from './answer-options';
 import { Random } from './question-picker';
 import { Answers, GameScheme } from '../game-model';
@@ -26,24 +25,9 @@ import { Answers, GameScheme } from '../game-model';
 /** What a decoy that fools the friend is worth, by round: half a lie (the size of a house lie's penalty). */
 export const DECOY_POINTS = [250, 375, 500];
 
-/** Which half a PIN falls in: true for decoys. The lowest bit of the first byte of SHA-256('pair:' + PIN). */
-export function pairHalf(pin: string): boolean {
-    const digest = createHash('sha256').update('pair:' + String(pin).toUpperCase(), 'utf8').digest();
-    return digest[0] % 2 === 1;
-}
-
-/**
- * The game's pair value at START: true or false for a game in the test, undefined for one that is not.
- * `parentPair` is the pair value of the game this one was replayed from, if any.
- */
-export function drawPair(playersCount: number, pin: string, parentPair?: boolean | null): boolean | undefined {
-    if (playersCount !== 2) {
-        return undefined;
-    }
-    if (parentPair === true || parentPair === false) {
-        return parentPair;
-    }
-    return pairHalf(pin);
+/** The game's pair value at START: true for a game of exactly two players, undefined for any other. */
+export function drawPair(playersCount: number): boolean | undefined {
+    return playersCount === 2 ? true : undefined;
 }
 
 /** Is `text` one of the player's offers (case and spacing do not matter)? The offer as offered, or null. */
