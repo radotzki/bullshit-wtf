@@ -3,10 +3,15 @@
 // Hebrew twin: Israel has no such season to search for). Each carries its own tag on its Start button.
 //
 // Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
-// game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen (Present), Rematch,
-// saved crews. The Start button opens an English game with the Christmas and New Year question pack
-// (?pack=christmas, functions/data/christmas-questions.json), in season and out of it. Each example
-// is a real question of the game (functions/data/opening-questions.json).
+// game, 5, 7 or 9 questions, three rounds where points grow, an optional big screen ("Use as the big
+// screen" in the lobby, or "Present Game" and the PIN), Rematch, saved crews. The Start button opens an
+// English game with the Christmas and New Year question pack (?pack=christmas,
+// functions/data/christmas-questions.json), in season and out of it. Each example is a true fact that is
+// in no question file, so a family that read the page meets no truth it already knows (from the English
+// Christmas night walk: the Christmas page's KFC example is an opening question that Christmas games can
+// draw). Their truths: Caracas's roller-skate Mass (Wikipedia, Christmas in Venezuela), Ecuador's años
+// viejos (Wikipedia, Año Viejo), the Post-it's failed super glue (3M's own history). A test
+// (test/holiday-pages.test.js) checks that no question file has them.
 
 const example = (q, story) => `<div class="example">
   <p class="q">${q}</p>
@@ -25,16 +30,17 @@ const christmas = `
 <!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a lie to fill it. Then all the answers appear together, the lies and the truth, and everyone picks the one they believe. You score for finding the truth and for every relative who falls for your lie.</p>
-${example('In Japan, millions of families eat ____ for Christmas dinner',
-    'Say Grandma writes "sushi", your brother writes "turkey ramen" and you write "pizza". All of them sound like they could be true. The real answer: KFC. Whoever picked "turkey ramen" just gave your brother points.')}
+${example('In Caracas, Venezuela, so many people go to early-morning Christmas Mass on ____ that streets are closed to cars for them',
+    'Say Grandpa writes "horseback", your brother writes "bicycles" and you write "tractors". All of them sound like they could be true. The real answer: roller skates. Whoever picked "bicycles" just gave your brother points.')}
 <h2>Why it works at Christmas</h2>
 <ul>
   <li><strong>Nobody needs to know trivia.</strong> Nobody knows these facts. The game is about writing a believable lie and knowing who in the family will fall for what.</li>
-  <li><strong>Ages from about 10 up</strong> can play together: you need to write a short answer, that's all.</li>
-  <li><strong>Up to 12 phones a game.</strong> A bigger family can play in pairs, one phone per pair.</li>
-  <li><strong>The TV can join in.</strong> On a laptop or computer connected to the TV, open bullshit.wtf, click "Present" and type the PIN. The whole room sees the questions, the answers and the scores, with music, while phones are for writing and picking.</li>
-  <li><strong>Free, no app, no sign-up.</strong> A cousin who arrives late joins with the PIN in seconds.</li>
-  <li><strong>Short.</strong> A game of 5 questions takes about ten minutes. "Rematch" at the end starts another with the same players and new questions.</li>
+  <li><strong>Ages 8 and up</strong> can play together: you need to write a short answer, that's all. A child who is stuck taps "Stuck? Give me a lie". Leave "Kids are playing" off when the grown-ups play too: a kids game has no Christmas questions.</li>
+  <li><strong>Up to 12 phones a game.</strong> A bigger family can play in pairs, one phone per pair. Grandparents can share one phone or a tablet and play as one: give it a short name, like "Gran&Pop" (names are 9 letters at most).</li>
+  <li><strong>The TV can join in.</strong> Started the game on the laptop by the TV? Click "Use as the big screen" in the lobby. Started it on your phone? Open bullshit.wtf on the laptop, click "Present Game" and type the PIN. The whole room sees the questions, the answers and the scores, with music, while phones are for writing and picking.</li>
+  <li><strong>Family in another city.</strong> Share the laptop's screen in your video call (Zoom, FaceTime, Google Meet), so they see the questions too, and send them the game's link. They play on their own phone or laptop.</li>
+  <li><strong>Free, no app, no sign-up.</strong> An uncle who arrives late opens the same link, or types the PIN under "Join Game" on bullshit.wtf, and joins the game under way, at 0 points.</li>
+  <li><strong>Short.</strong> A game of 5 questions takes about ten minutes. REMATCH at the end starts another with the same players and Christmas questions they haven't seen.</li>
 </ul>
 ${howToStart('Start a Christmas game')}
 <h2>A word on the name</h2>
@@ -46,14 +52,14 @@ const newYear = `
 <!--start-->
 <h2>How it works</h2>
 <p>A strange true fact appears with a blank. Everyone writes a lie that sounds true enough to fool the others. All the answers appear together with the truth, and everyone picks the one they believe. Find the truth and you score; fool a friend and you score for that too. Fall for one of the lies the game adds itself and you lose points.</p>
-${example('The world\'s first webcam was set up to keep an eye on a ____',
-    'Say Alex writes "baby", Priya writes "parking space" and Jo writes "fish tank". The truth: a coffee pot, in a university computer lab. Everyone who went for "fish tank" just gave Jo points.')}
+${example('In Ecuador, families see the new year in by burning life-size ____ in the street at midnight',
+    'Say Alex writes "wooden boats", Priya writes "Christmas trees" and Jo writes "paper lanterns". The truth: dolls, stuffed with sawdust and dressed up as the old year, or as a politician. Everyone who went for "Christmas trees" just gave Priya points.')}
 <h2>Why it suits New Year's Eve</h2>
 <ul>
   <li><strong>It fits around the party.</strong> A game of 5 questions takes about ten minutes, so you can play one, go back to the drinks, and play another before midnight. "Rematch" keeps the same players and brings new questions.</li>
   <li><strong>Points grow each round</strong>, so nobody is out of it until the last question, and the "final question" card says how far first place leads.</li>
   <li><strong>Up to 12 phones a game.</strong> A bigger party plays in pairs, one phone per pair, or opens a second game in the kitchen.</li>
-  <li><strong>The big screen.</strong> On a laptop or computer connected to the TV, open bullshit.wtf, click "Present" and type the PIN, and everyone else can watch, read the lies and shout bad advice.</li>
+  <li><strong>The big screen.</strong> On a laptop or computer connected to the TV, open bullshit.wtf, click "Present Game" and type the PIN, and everyone else can watch, read the lies and shout bad advice.</li>
   <li><strong>Free and in the browser.</strong> No app, no sign-up, no ads in the game.</li>
 </ul>
 ${howToStart('Start a New Year\'s game')}
@@ -64,8 +70,8 @@ ${howToStart('Start a New Year\'s game')}
 const office = `
 <p>The office holiday party needs one thing that gets people from different teams talking, without a speech or a quiz master. Bullshit is a party game everyone plays on their own phone: a strange true fact appears with a blank, everyone writes a lie to fill it, and then everyone tries to find the truth among all the lies. It is free, it runs in the browser, and nobody has to sign up for anything.</p>
 <!--start-->
-${example('The first thing ever sold on eBay was a broken ____',
-    'Say someone from finance writes "printer", the CEO writes "Game Boy" and the new intern writes "lava lamp". The truth: a laser pointer. Whoever picked "Game Boy" just gave the CEO points, and that is a story for the rest of the party.')}
+${example('The glue on Post-it Notes was a failure: the 3M chemist who made it was trying to make a ____',
+    'Say someone from finance writes "paint that never chips", the CEO writes "bandage that won\'t hurt" and the new intern writes "chewing gum". The truth: a super-strong glue, for building aircraft. Whoever picked the CEO\'s bandage just gave the CEO points, and that is a story for the rest of the party.')}
 <h2>Why it works at a work party</h2>
 <ul>
   <li><strong>Everyone starts equal.</strong> Nobody knows these facts, so the new hire and the person who has been here ten years start from the same place. What wins is knowing how your colleagues think.</li>
