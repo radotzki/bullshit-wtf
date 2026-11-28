@@ -4,6 +4,7 @@ import { NgModule, ErrorHandler } from '@angular/core';
 import { isAutomatedBrowser } from './automated';
 import { readRelease } from './release';
 import { markVisitError } from './visit-error';
+import { addReportTags } from './report-tags';
 
 Raven.config(environment.sentry, {
     environment: environment.production ? 'production' : 'development',
@@ -11,6 +12,9 @@ Raven.config(environment.sentry, {
     release: readRelease(typeof document === 'undefined' ? null : document),
     // Automated browser runs are not players: keep them out of Sentry's error and user counts.
     shouldSendCallback: () => !isAutomatedBrowser(typeof navigator === 'undefined' ? null : navigator as any),
+    // Every report says whether this tab is a play-test (`test`) and which page it came from (`page`,
+    // no game code), so the night check can leave tests out and group by page (report-tags.ts).
+    dataCallback: (data: any) => addReportTags(data, typeof window === 'undefined' ? null : window),
 }).install();
 
 function describe(value: any): string {

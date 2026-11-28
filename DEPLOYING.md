@@ -1375,7 +1375,8 @@ addresses) for windows that include those days.
 - A tester who joins a real game: that game stays a real game.
 - A crew page opened on its own in a test tab: a rematch is marked only when the crew was saved from
   a test game.
-- Page views in the visit beacon's log lines and errors in Sentry are not marked.
+- Page views in the visit beacon's log lines are not marked. The site's Sentry reports carry the
+  tab's mark, not the game's (see "Site errors in Sentry: test and page tags").
 
 **Deploy.** Functions only (`fork`, `onJoinGame`, `createCrew`, `crewRematch`; deploy all, as always).
 No BigQuery change, no rules change, no hosting change: the client already sends the tag. The lie
@@ -1451,6 +1452,26 @@ players were still played on the last question, and 28 of them had a rematch.
 Not readable yet: the share of games where first place changes on the last question. No table
 holds the scores before the last question, so that needs two numbers written by the server with
 the last question's row (who led before it, who won); it is not part of this change.
+
+## Site errors in Sentry: test and page tags
+
+Every report the site sends to Sentry carries two tags (`game/src/app/sentry/report-tags.ts`, added
+to each event by Raven's `dataCallback` in `sentry.module.ts`), beside `where`:
+
+- `test`: `yes` when the tab is a play-test by the same rule as the beacon and Create: a `?via=test`
+  or `?via=test-<name>` on the address (or in the portal's hash address), or kept for the tab in
+  `BS_CAMPAIGN` after the router drops the query. Else `no`. Leave tests out with `!test:yes`.
+  The mark is the tab's, not the game's: phones can't read a game's campaign, so a tester who joins a
+  test game by a typed PIN or a plain invite link reports `test:no`. Testers who want their errors
+  out open their join link with `?via=test` too; the server's reports (`side:server`) are marked by
+  the game.
+- `page`: the app's route with the game's code taken out, e.g. `/`, `/he`, `/create-game`,
+  `/join-game/:pin`, `/he/join-game/:pin`, `/score-board-final/:pin`, `/he/c/:id`,
+  `/portal/crazygames#/show-question/:pin`. Group or search by it (`page:"/join-game/:pin"`, quoted for the colon) in place
+  of reading each event's `url`.
+
+Neither tag holds a PIN, a crew id, a name or a query string. Reports sent before this change have
+neither tag.
 
 ## Server errors in Sentry
 
