@@ -1,5 +1,4 @@
-// English holiday pages: Christmas, New Year's Eve, the office holiday party and the virtual (video
-// call) holiday party for remote teams. One language only (no
+// English holiday pages: Christmas, New Year's Eve and the office holiday party. One language only (no
 // Hebrew twin: Israel has no such season to search for). Each carries its own tag on its Start button.
 //
 // Say only what the game really does (November 2026): free, in the phone's browser, up to 12 players a
@@ -78,7 +77,7 @@ ${example('The glue on Post-it Notes was a failure: the 3M chemist who made it w
   <li><strong>Everyone plays at once.</strong> Nobody waits for a turn, and the quiet ones play exactly as much as the loud ones.</li>
   <li><strong>It fits a slot.</strong> A game of 5 questions takes about ten minutes; two or three games fill half an hour.</li>
   <li><strong>The screen in the room.</strong> Open bullshit.wtf on the computer connected to the screen, click "Present" and type the PIN. The room sees the questions, every answer, who picked what and the scores.</li>
-  <li><strong>Remote colleagues can play.</strong> On a video call, everyone joins with the PIN from wherever they are, and whoever shares their screen shows the big-screen view. A whole party on a call? See <a href="/virtual-holiday-party-game">the virtual holiday party page</a>.</li>
+  <li><strong>Remote colleagues can play.</strong> On a video call, everyone joins with the PIN from wherever they are, and whoever shares their screen shows the big-screen view.</li>
 </ul>
 <h2>More than 12 people</h2>
 <p>A game takes 12 phones at most. For a bigger party, play in teams of two to four on one phone, up to 12 teams in one game on one screen, or let each table open its own game and play a final between the winners. The <a href="/team-building-game">team game page</a> has the details: how to put it on the big screen, how to split a room of up to 40, and which settings fit 15 minutes.</p>
@@ -90,42 +89,6 @@ ${example('The glue on Post-it Notes was a failure: the 3M chemist who made it w
 </ul>
 ${howToStart('Start an office party game')}
 <p>The full rules and points are on <a href="/how-to-play">How to play</a>.</p>`;
-
-const remote = `
-<p>The team is spread over cities and time zones, so this year the holiday party is a video call. Nobody wants another quiz where one person reads questions and everyone waits to unmute. Bullshit is a party game where the host shares the game's big screen in the call and everyone plays on their own phone, all at once. It is free, it runs in the browser, and it works with Zoom, Google Meet, Microsoft Teams, a Slack huddle or any call that can share a screen. Nobody downloads anything or signs up.</p>
-<!--start-->
-<h2>Setting it up on the call</h2>
-<ol>
-  <li>On the computer you will share, click "Start a virtual party game" on this page, choose 5, 7 or 9 questions, and click "Create". The Christmas and New Year questions are on.</li>
-  <li>Type your nickname. In the lobby, click "Use as the big screen". This computer is now the game's big screen: it shows the PIN, a QR code and the START button.</li>
-  <li>Share that browser window in the call, with its sound if your app offers it, so everyone hears the music and the clock.</li>
-  <li>Everyone, you too, scans the QR code from the shared screen, or opens bullshit.wtf on their phone, taps "Join Game" and types the PIN.</li>
-  <li>When everyone is in, click START on the big screen. The game moves on by itself from there.</li>
-</ol>
-<p>The shared screen shows each question, every answer, who picked what and the scores. Phones are for writing and picking. A call runs a second or two behind, but every phone has its own copy of the question and the clock, so nobody loses time to a slow connection.</p>
-<h2>How it works</h2>
-<p>A strange true fact appears with a blank. Everyone writes a lie to fill it. Then all the answers appear together, the lies and the truth, and everyone picks the one they believe. You score for finding the truth, and for every colleague who falls for your lie. Fall for one of the lies the game adds itself and you lose points.</p>
-${example('Before it was called Google, the search engine was called ____',
-    'Say someone in sales writes "SearchBot", your manager writes "Jeeves 2" and the new developer writes "Googol". The truth: BackRub. Everyone who picked "Googol" just gave the developer points, and the whole gallery saw the manager\'s face when the truth came up.')}
-<h2>Why it works on a video call</h2>
-<ul>
-  <li><strong>Nobody waits to unmute.</strong> Everyone writes and picks at the same time on their own phone, so the quiet ones play exactly as much as the loud ones.</li>
-  <li><strong>Everyone starts equal.</strong> Nobody knows these facts. What wins is knowing how your colleagues think, which is the point of a team party.</li>
-  <li><strong>The reveal happens on every face at once.</strong> In the gallery you see who fell for whose lie, and that is what people talk about afterwards.</li>
-  <li><strong>It fits a slot.</strong> A game of 5 questions takes about ten minutes. "Rematch" at the end starts another with the same players and new questions.</li>
-  <li><strong>It ends with a winner.</strong> The last screen shows each player's best lie and crowns the biggest bullshitter of the party.</li>
-</ul>
-<h2>More than 12 people</h2>
-<p>A game takes 12 phones at most. For a bigger team, use breakout rooms: in each room one person opens a game and shares its big screen, and each room plays its own. Then everyone comes back to the main room, and the winners of each room play a final on one shared screen.</p>
-<h2>Before the party</h2>
-<ul>
-  <li><strong>Try it once yourself.</strong> Open a game, and in the empty lobby click "Try 5 quick questions alone" to see five of the game's questions.</li>
-  <li><strong>Send the link ahead.</strong> Put bullshit.wtf in the invite, so people know to have their phone with them, charged and online.</li>
-  <li><strong>The name.</strong> "Bullshit" is a swear word, and it is on the screens. In most teams that is the joke; you know yours.</li>
-  <li><strong>The lies go up as typed.</strong> The game swaps rude nicknames for a harmless one, but it does not touch the lies. Ask people to keep it work-safe before the first question.</li>
-  <li><strong>No one wants to share a screen?</strong> Skip it. Open the game on your phone instead: every phone shows the question, the answers and the results, and the call is just for the shouting.</li>
-</ul>
-<p>The full rules and points are on <a href="/how-to-play">How to play</a>. Party in the office instead? See <a href="/office-holiday-party-game">the office holiday party page</a>. A short game for a regular team meeting? See <a href="/team-building-game">a 15-minute team game</a>.</p>`;
 
 module.exports = {
     pages: (en) => [
@@ -155,15 +118,6 @@ module.exports = {
             description: 'A game for the work holiday party: everyone writes a lie, everyone hunts for the truth, on their own phone and the room\'s screen. Free, in the browser, teams for big groups.',
             h1: 'A game for the office holiday party',
             body: office,
-        },
-        {
-            path: '/virtual-holiday-party-game', site: en, tag: 'seo-en-virtual-party',
-            start: { href: '/create-game?lang=en&pack=christmas', label: 'Start a virtual party game' },
-            image: '/assets/og-virtual-party-en.png',
-            title: 'Virtual holiday party game for remote teams · Bullshit',
-            description: 'A game for the team holiday party on Zoom, Meet or Teams: share the big screen, everyone plays on their phone. Write a lie, find the truth. Free.',
-            h1: 'A virtual holiday party game for remote teams',
-            body: remote,
         },
     ],
 };

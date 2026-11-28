@@ -38,7 +38,6 @@ const en = {
         { href: '/christmas-party-game', label: 'Christmas party game' },
         { href: '/new-years-eve-party-game', label: 'New Year\'s Eve party game' },
         { href: '/office-holiday-party-game', label: 'Office holiday party game' },
-        { href: '/virtual-holiday-party-game', label: 'Virtual holiday party game' },
         { href: '/free-jackbox-alternative', label: 'A free Jackbox alternative' },
         { href: '/family-game-night', label: 'Family game night' },
         { href: '/video-call-party-game', label: 'A party game for a video call' },
