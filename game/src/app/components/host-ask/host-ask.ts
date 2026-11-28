@@ -35,8 +35,6 @@ export const hostAskStrings = {
         lateTitle: 'Start your own game',
         lateText: 'No need to wait for them. It is free and takes 10 seconds.',
         create: 'START MY OWN GAME',
-        // CREATE on the join page of a game that is over (the same words, but in Hanukkah: see hanukkahAskStrings).
-        lateCreate: 'START MY OWN GAME',
         remind: 'REMIND ME',
         saved: 'One more step. If a calendar file downloaded, open it to save game night.',
         google: 'Or add it to Google Calendar',
@@ -50,7 +48,6 @@ export const hostAskStrings = {
         lateTitle: 'פתחו משחק משלכם',
         lateText: 'לא חייבים לחכות להם. זה בחינם ולוקח 10 שניות.',
         create: 'לפתוח משחק משלי',
-        lateCreate: 'לפתוח משחק משלי',
         remind: 'להזכיר לי',
         saved: 'עוד צעד אחד. אם ירד קובץ יומן, פתחו אותו כדי לשמור את ערב המשחק.',
         google: 'או הוסיפו ליומן Google',
@@ -72,19 +69,12 @@ export const hanukkahAskStrings = {
         remindFirst: 'FIRST CANDLE TOMORROW: PLAY AGAIN',
         remindNext: 'ANOTHER CANDLE TOMORROW: PLAY AGAIN',
         eventTitle: 'Hanukkah: host a game of Bullshit',
-        // The join page of a game that is over: a family back on last week's link starts a Hanukkah game.
-        lateTitle: 'Start your own Hanukkah game',
-        lateText: 'With Hanukkah questions, and everyone plays on their own phone. Free, and it takes 10 seconds.',
-        lateCreate: 'START A HANUKKAH GAME',
     },
     he: {
         title: 'מדליקים גם אצל הצד השני של המשפחה? פתחו שם משחק.',
         remindFirst: 'הנר הראשון מחר: משחקים שוב',
         remindNext: 'עוד נר מחר: משחקים שוב',
         eventTitle: 'חנוכה: לפתוח משחק בולשיט',
-        lateTitle: 'פתחו משחק חנוכה משלכם',
-        lateText: 'עם שאלות חנוכה, וכל אחד משחק מהטלפון שלו. בחינם ולוקח 10 שניות.',
-        lateCreate: 'לפתוח משחק חנוכה',
     },
 };
 
@@ -140,28 +130,10 @@ export function askStrings(locale: string, evening?: 'first' | 'next' | 'last' |
     const k = locale === 'he' ? hanukkahAskStrings.he : hanukkahAskStrings.en;
     return Object.assign({}, base, {
         title: k.title,
-        lateTitle: k.lateTitle,
-        lateText: k.lateText,
-        lateCreate: k.lateCreate,
         // On the eighth evening there is no candle tomorrow: the plain REMIND ME, for Friday.
         remind: evening === 'first' ? k.remindFirst : evening === 'next' ? k.remindNext : base.remind,
         eventTitle: evening === 'last' ? base.eventTitle : k.eventTitle,
     });
-}
-
-/**
- * The pack of the ask on the join page of a game that is over (place 'game-over'). That page doesn't
- * pass the old game's pack, so in the Hanukkah evenings (the eve of the first candle to the eighth,
- * see hanukkahEvening) a Hebrew ask is a Hanukkah ask: the Hanukkah words, CREATE with ?pack=hanukkah
- * and the next candle's reminder. Returning groups open last week's link and press it (Friday 27
- * November: 10 of 32 tables). English games get Christmas by default, so an English ask stays as it
- * was. Outside those evenings nothing changes, so this switches itself off after 12 December.
- */
-export function lateAskPack(now: Date, locale: string, pack?: string | null): string | null {
-    if (pack) {
-        return pack;
-    }
-    return locale === 'he' && hanukkahEvening(now, 'hanukkah') ? 'hanukkah' : null;
 }
 
 /** A player row of the finished game, as the final screen reads it. */
