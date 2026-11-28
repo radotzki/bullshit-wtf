@@ -336,3 +336,94 @@ test('CREATE and the reminder from a Hanukkah game-over ask carry the Hanukkah p
     assert.strictEqual(h.askCreateUrl(h.ASK_TAGS['game-over'].create, 'he', pack),
         'https://bullshit.wtf/create-game?via=after-game-late&lang=he&pack=hanukkah');
 });
+
+test('the join page around Christmas and New Year\'s Eve: Christmas in English, New Year\'s Eve in both', () => {
+    const at = (day, hour = 20) => new Date(`${day}T${hour < 10 ? '0' : ''}${hour}:00:00`);
+    // Before the Christmas evenings, and Hanukkah stays as it was.
+    assert.strictEqual(h.lateAskPack(at('2026-12-17'), 'en', null), null);
+    assert.strictEqual(h.lateAskPack(at('2026-12-06'), 'en', null), null);
+    assert.strictEqual(h.lateAskPack(at('2026-12-06'), 'he', null), 'hanukkah');
+    // Christmas: English only, from Friday 18 to Saturday 26 December.
+    assert.strictEqual(h.lateAskPack(at('2026-12-18'), 'en', null), 'christmas');
+    assert.strictEqual(h.lateAskPack(at('2026-12-24'), 'en', null), 'christmas');
+    assert.strictEqual(h.lateAskPack(at('2026-12-26'), 'en', null), 'christmas');
+    assert.strictEqual(h.lateAskPack(at('2026-12-24'), 'he', null), null);
+    // New Year's Eve: both languages, from Sunday 27 to the night of the 31st, past midnight.
+    assert.strictEqual(h.lateAskPack(at('2026-12-27'), 'en', null), 'newyear');
+    assert.strictEqual(h.lateAskPack(at('2026-12-27'), 'he', null), 'newyear');
+    assert.strictEqual(h.lateAskPack(at('2026-12-31'), 'he', null), 'newyear');
+    assert.strictEqual(h.lateAskPack(new Date(2027, 0, 1, 2, 0), 'he', null), 'newyear');
+    // Off from New Year's morning, and nothing in January.
+    assert.strictEqual(h.lateAskPack(new Date(2027, 0, 1, 6, 0), 'he', null), null);
+    assert.strictEqual(h.lateAskPack(at('2027-01-01'), 'en', null), null);
+    assert.strictEqual(h.lateAskPack(at('2027-01-02'), 'en', null), null);
+    assert.strictEqual(h.lateAskPack(at('2027-12-24'), 'en', null), null);
+    // A pack the page already knows is kept.
+    assert.strictEqual(h.lateAskPack(at('2026-12-24'), 'en', 'hanukkah'), 'hanukkah');
+});
+
+test('the Christmas and New Year\'s Eve asks: their words, the plain ask on the final screen', () => {
+    const xmas = h.askStrings('en', null, 'christmas', new Date(2026, 11, 20, 20));
+    assert.strictEqual(xmas.lateCreate, 'START A CHRISTMAS GAME');
+    assert.strictEqual(xmas.lateTitle, 'Start your own Christmas game');
+    assert.strictEqual(xmas.remind, 'REMIND ME ON SAT 26 DEC');
+    assert.strictEqual(xmas.create, h.hostAskStrings.en.create);
+    assert.strictEqual(xmas.title, h.hostAskStrings.en.title);
+    // On the 26th itself the reminder is a plain one.
+    assert.strictEqual(h.askStrings('en', null, 'christmas', new Date(2026, 11, 26, 20)).remind, 'REMIND ME');
+    const he = h.askStrings('he', null, 'newyear', new Date(2026, 11, 29, 20));
+    assert.strictEqual(he.lateCreate, 'לפתוח משחק לסילבסטר');
+    assert.strictEqual(he.remind, 'להזכיר לי בסילבסטר');
+    // Hebrew makes no claim of holiday questions (there are none in Hebrew).
+    assert.ok(!he.lateText.includes('שאלות'));
+    const en = h.askStrings('en', null, 'newyear', new Date(2026, 11, 29, 20));
+    assert.strictEqual(en.lateCreate, 'START A NEW YEAR\'S EVE GAME');
+    assert.strictEqual(h.askStrings('he', null, 'newyear', new Date(2026, 11, 31, 22)).remind, h.hostAskStrings.he.remind);
+    // No holiday: the words of before.
+    assert.deepStrictEqual(h.askStrings('en', null, null), h.hostAskStrings.en);
+});
+
+test('CREATE and REMIND ME from the Christmas and New Year\'s Eve asks', () => {
+    // CREATE asks for the pack; the create page plays it only where it is a pack of that language.
+    assert.strictEqual(h.askCreateUrl(h.ASK_TAGS['game-over'].create, 'en', h.linkPack('game-over', 'christmas')),
+        'https://bullshit.wtf/create-game?via=after-game-late&lang=en&pack=christmas');
+    assert.strictEqual(h.askCreateUrl(h.ASK_TAGS['game-over'].create, 'he', h.linkPack('game-over', 'newyear')),
+        'https://bullshit.wtf/create-game?via=after-game-late&lang=he&pack=newyear');
+    // The final screen of a Christmas game keeps its plain link, as before.
+    assert.strictEqual(h.linkPack('after-game', 'christmas'), null);
+    assert.strictEqual(h.linkPack('after-game', 'hanukkah'), 'hanukkah');
+    assert.strictEqual(h.linkPack('after-game', 'hanukkah', '2026-12-18'), null);
+
+    // Christmas, from Sunday 20 December: Saturday 26 December at 21:00.
+    let now = new Date(2026, 11, 20, 21);
+    let pack = h.lateAskPack(now, 'en', null);
+    let start = h.reminderNight(now, 'en', h.hanukkahEvening(now, pack), pack);
+    assert.strictEqual(start.getTime(), new Date(2026, 11, 26, 21).getTime());
+    let ev = h.reminderEvent(start, 'game-over', 'en', pack, null);
+    assert.strictEqual(ev.title, 'Christmas weekend: host a game of Bullshit');
+    assert.strictEqual(ev.url, 'https://bullshit.wtf/create-game?via=after-game-late-remind&lang=en&pack=christmas');
+    // Past midnight on Christmas Eve is still that evening.
+    assert.strictEqual(h.reminderNight(new Date(2026, 11, 25, 1), 'en', null, 'christmas').getDate(), 26);
+
+    // On the 26th itself: the coming game night, a plain game.
+    now = new Date(2026, 11, 26, 21);
+    start = h.reminderNight(now, 'en', null, 'christmas');
+    assert.ok(start > new Date(2026, 11, 27));
+    ev = h.reminderEvent(start, 'game-over', 'en', 'christmas', null);
+    assert.strictEqual(ev.title, h.hostAskStrings.en.eventTitle);
+    assert.strictEqual(ev.url, 'https://bullshit.wtf/create-game?via=after-game-late-remind&lang=en');
+
+    // New Year's Eve, from Monday 28 December, in Hebrew: 31 December at 21:00.
+    now = new Date(2026, 11, 28, 20);
+    pack = h.lateAskPack(now, 'he', null);
+    start = h.reminderNight(now, 'he', null, pack);
+    assert.strictEqual(start.getTime(), new Date(2026, 11, 31, 21).getTime());
+    ev = h.reminderEvent(start, 'game-over', 'he', pack, null);
+    assert.strictEqual(ev.title, 'סילבסטר: לפתוח משחק בולשיט');
+    assert.strictEqual(ev.url, 'https://bullshit.wtf/create-game?via=after-game-late-remind&lang=he&pack=newyear');
+    // On the night itself: the coming game night in January, plain.
+    start = h.reminderNight(new Date(2026, 11, 31, 22), 'he', null, 'newyear');
+    assert.ok(start > new Date(2027, 0, 1, 12));
+    assert.strictEqual(h.reminderEvent(start, 'game-over', 'he', 'newyear', null).url,
+        'https://bullshit.wtf/create-game?via=after-game-late-remind&lang=he');
+});
