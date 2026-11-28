@@ -89,6 +89,79 @@ export const hanukkahAskStrings = {
 };
 
 /**
+ * The other holidays of the ask on the join page of a game that is over (see lateAskPack), by the
+ * local date of the evening (see eveningOf), and the night its REMIND ME saves (21:00). From the
+ * evenings of last year (opened_games, 17 Dec 2025 to 4 Jan 2026): English tables were 0 on
+ * Christmas Eve and Christmas Day, 3 on the 26th and 10 on Saturday the 27th, so the Christmas
+ * reminder is for the Saturday after Christmas, 26 December 2026. New Year's Eve had 22 Hebrew and
+ * 14 English tables, so it asks in both languages, from the Sunday after Christmas, and reminds for
+ * 31 December. After its night each ask is over, so this switches itself off on 1 January 2027 at
+ * EVENING_TURNS_AT. `pack` is the pack CREATE asks for: the create page plays it only if it is a
+ * pack of that language (christmas: English; newyear: English once #236 is live, Hebrew once it has
+ * Hebrew questions), and otherwise the season's own pack, so a pack that isn't there yet asks for
+ * nothing. Change the dates for another year.
+ */
+export const LATE_ASKS: { [id: string]: { from: string; to: string; night: string; locales: string[] } } = {
+    christmas: { from: '2026-12-18', to: '2026-12-26', night: '2026-12-26', locales: ['en'] },
+    newyear: { from: '2026-12-27', to: '2026-12-31', night: '2026-12-31', locales: ['en', 'he'] },
+};
+
+/** Words of those asks. Hebrew avoids gendered verbs; it makes no claim of Hebrew holiday questions. */
+export const lateHolidayStrings: { [id: string]: { [locale: string]: Partial<HostAskStrings> } } = {
+    christmas: {
+        en: {
+            lateTitle: 'Start your own Christmas game',
+            lateText: 'With Christmas questions, and everyone plays on their own phone. Free, and it takes 10 seconds.',
+            lateCreate: 'START A CHRISTMAS GAME',
+            remind: 'REMIND ME ON SAT 26 DEC',
+            eventTitle: 'Christmas weekend: host a game of Bullshit',
+        },
+    },
+    newyear: {
+        en: {
+            lateTitle: 'Start a game for New Year\'s Eve',
+            lateText: 'A party game for the countdown: everyone plays on their own phone. Free, and it takes 10 seconds.',
+            lateCreate: 'START A NEW YEAR\'S EVE GAME',
+            remind: 'REMIND ME ON NEW YEAR\'S EVE',
+            eventTitle: 'New Year\'s Eve: host a game of Bullshit',
+        },
+        he: {
+            lateTitle: 'פתחו משחק לסילבסטר',
+            lateText: 'משחק למסיבה עד חצות: כל אחד משחק מהטלפון שלו. בחינם ולוקח 10 שניות.',
+            lateCreate: 'לפתוח משחק לסילבסטר',
+            remind: 'להזכיר לי בסילבסטר',
+            eventTitle: 'סילבסטר: לפתוח משחק בולשיט',
+        },
+    },
+};
+
+/** The holiday of the join page's ask tonight in this language (LATE_ASKS), or null. */
+export function lateHoliday(now: Date, locale: string): string | null {
+    const day = dayOf(eveningOf(now));
+    const lang = locale === 'he' ? 'he' : 'en';
+    return Object.keys(LATE_ASKS).find(id => {
+        const w = LATE_ASKS[id];
+        return day >= w.from && day <= w.to && w.locales.indexOf(lang) >= 0;
+    }) || null;
+}
+
+/** Packs a link to Create may ask for (askCreateUrl). */
+const LINK_PACKS = ['hanukkah', 'christmas', 'newyear'];
+
+/**
+ * The pack of a link to Create from the ask: Hanukkah as before; a LATE_ASKS holiday only from the
+ * join page (place 'game-over'; the final screen of a Christmas game keeps its plain links), and
+ * only up to that holiday's night. `day` is the reminder's night, if the link is a reminder's.
+ */
+export function linkPack(place: AskPlace, pack?: string | null, day?: string): string | null {
+    if (pack === 'hanukkah') {
+        return day && day > HANUKKAH_CANDLES.last ? null : pack;
+    }
+    const w = pack && place === 'game-over' && LATE_ASKS[pack];
+    return w && !(day && day > w.night) ? pack : null;
+}
+
+/**
  * The evenings of the first and the eighth candle, by the local date. Hanukkah 5787: the first
  * candle is lit on the evening of Friday 4 December 2026, the eighth on Friday 11 December.
  * Change these for another year; the pack's season is questionPacks in game-model.ts.
@@ -132,8 +205,16 @@ export function hanukkahEvening(now: Date, pack?: string | null): 'first' | 'nex
 }
 
 /** The ask's words; after a Hanukkah game, the Hanukkah title and REMIND ME (see hanukkahEvening). */
-export function askStrings(locale: string, evening?: 'first' | 'next' | 'last' | null): HostAskStrings {
+export function askStrings(locale: string, evening?: 'first' | 'next' | 'last' | null, holiday?: string | null,
+    now?: Date): HostAskStrings {
     const base = locale === 'he' ? hostAskStrings.he : hostAskStrings.en;
+    const w = holiday && LATE_ASKS[holiday];
+    const words = w && lateHolidayStrings[holiday][locale === 'he' ? 'he' : 'en'];
+    if (words) {
+        // On the holiday's own night REMIND ME saves the coming game night, in plain words.
+        const tonight = !!now && dayOf(eveningOf(now)) >= w.night;
+        return Object.assign({}, base, words, tonight ? { remind: base.remind, eventTitle: base.eventTitle } : {});
+    }
     if (!evening) {
         return base;
     }
@@ -161,7 +242,8 @@ export function lateAskPack(now: Date, locale: string, pack?: string | null): st
     if (pack) {
         return pack;
     }
-    return locale === 'he' && hanukkahEvening(now, 'hanukkah') ? 'hanukkah' : null;
+    // Then Christmas in English and New Year's Eve in both languages (see LATE_ASKS).
+    return locale === 'he' && hanukkahEvening(now, 'hanukkah') ? 'hanukkah' : lateHoliday(now, locale);
 }
 
 /** A player row of the finished game, as the final screen reads it. */
@@ -218,7 +300,7 @@ export function showHostAsk(input: HostAskInput): boolean {
  * a pack, the pack too, so the guest's own game has its questions (?pack= works out of season).
  */
 export function askCreateUrl(tag: string, locale: string, pack?: string | null) {
-    return `${SITE}/create-game?via=${tag}&lang=${locale === 'he' ? 'he' : 'en'}${pack === 'hanukkah' ? '&pack=hanukkah' : ''}`;
+    return `${SITE}/create-game?via=${tag}&lang=${locale === 'he' ? 'he' : 'en'}${LINK_PACKS.indexOf(pack) >= 0 ? '&pack=' + pack : ''}`;
 }
 
 /**
@@ -226,10 +308,17 @@ export function askCreateUrl(tag: string, locale: string, pack?: string | null) 
  * when tomorrow is a candle (hanukkahEvening 'first' or 'next'): the next candle's evening at
  * 21:00, counted from tonight's candle, so a game that ends after midnight does not skip one.
  */
-export function reminderNight(now: Date, locale: string, evening?: 'first' | 'next' | 'last' | null): Date {
+export function reminderNight(now: Date, locale: string, evening?: 'first' | 'next' | 'last' | null,
+    holiday?: string | null): Date {
     if (evening === 'first' || evening === 'next') {
         const e = eveningOf(now);
         return new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1, 21, 0, 0, 0);
+    }
+    // The join page's Christmas or New Year's Eve ask: that holiday's night, until it comes.
+    const w = holiday && LATE_ASKS[holiday];
+    if (w && dayOf(eveningOf(now)) < w.night) {
+        const [y, m, d] = w.night.split('-').map(Number);
+        return new Date(y, m - 1, d, 21, 0, 0, 0);
     }
     return defaultNight(now, locale);
 }
@@ -241,13 +330,14 @@ export function reminderNight(now: Date, locale: string, evening?: 'first' | 'ne
  */
 export function reminderEvent(start: Date, place: AskPlace, locale: string, pack?: string | null,
     evening?: 'first' | 'next' | 'last' | null): CalendarEvent {
-    const t = askStrings(locale, evening);
+    // A night after the holiday's own (a plain game night) gets the plain words and no pack.
+    const holiday = place === 'game-over' && pack && LATE_ASKS[pack] && dayOf(start) <= LATE_ASKS[pack].night ? pack : null;
+    const t = holiday ? askStrings(locale, null, holiday) : askStrings(locale, evening);
     const tag = ASK_TAGS[place === 'game-over' ? 'game-over' : 'after-game'].remind;
-    const afterHanukkah = pack === 'hanukkah' && dayOf(start) > HANUKKAH_CANDLES.last;
     return {
         title: t.eventTitle,
         text: t.eventText,
-        url: askCreateUrl(tag, locale, afterHanukkah ? null : pack),
+        url: askCreateUrl(tag, locale, linkPack(place, pack, dayOf(start))),
         uid: `host-${start.getTime()}`,
     };
 }

@@ -4,8 +4,8 @@ import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
 import { buildEventIcs, googleEventUrl } from './../../pages/crew/next-night';
 import {
-    ASK_TAGS, AskPlace, HostAskStrings, REMINDER_FILE, askContentType, askStrings, hanukkahEvening, lateAskPack, reminderEvent,
-    reminderNight,
+    ASK_TAGS, AskPlace, HostAskStrings, LATE_ASKS, REMINDER_FILE, askContentType, askStrings, hanukkahEvening, lateAskPack, linkPack,
+    reminderEvent, reminderNight,
 } from './host-ask';
 import { remindStepsAside } from './../hanukkah-night/hanukkah-night';
 
@@ -38,7 +38,12 @@ export class HostAskComponent implements OnInit {
     ) { }
 
     get t(): HostAskStrings {
-        return askStrings(this.locale, this.evening);
+        return askStrings(this.locale, this.evening, this.holiday, new Date());
+    }
+
+    /** The join page's Christmas or New Year's Eve ask (see LATE_ASKS), or null. */
+    get holiday(): string | null {
+        return this.late && this.pack && LATE_ASKS[this.pack] ? this.pack : null;
     }
 
     /** Where tonight stands in Hanukkah, after a Hanukkah game (null otherwise). */
@@ -62,7 +67,10 @@ export class HostAskComponent implements OnInit {
         return this.place === 'game-over';
     }
 
-    /** The join page of a game that is over, in the Hanukkah evenings: a Hanukkah ask (see lateAskPack). */
+    /**
+     * The join page of a game that is over: in the Hanukkah evenings a Hanukkah ask, around Christmas
+     * and New Year's Eve those asks (see lateAskPack).
+     */
     ngOnInit() {
         if (this.late) {
             this.pack = lateAskPack(new Date(), this.locale, this.pack);
@@ -79,8 +87,9 @@ export class HostAskComponent implements OnInit {
         this.gameService.unregister();
         const tag = ASK_TAGS[this.late ? 'game-over' : 'after-game'].create;
         const queryParams: any = { via: tag, lang: this.rtl ? 'he' : 'en' };
-        if (this.pack === 'hanukkah') {
-            queryParams.pack = this.pack;
+        const pack = linkPack(this.place, this.pack);
+        if (pack) {
+            queryParams.pack = pack;
         }
         this.router.navigate(['/create-game'], { queryParams });
     }
@@ -92,7 +101,7 @@ export class HostAskComponent implements OnInit {
     remind() {
         this.count('remind');
         const evening = this.evening;
-        const start = reminderNight(new Date(), this.locale, evening);
+        const start = reminderNight(new Date(), this.locale, evening, this.holiday);
         const event = reminderEvent(start, this.place, this.locale, this.pack, evening);
         this.googleUrl = googleEventUrl(start, event);
         this.reminded = true;
