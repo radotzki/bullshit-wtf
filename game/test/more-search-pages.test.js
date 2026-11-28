@@ -30,6 +30,7 @@ const added = {
     '/christmas-party-game': 'seo-en-christmas',
     '/new-years-eve-party-game': 'seo-en-new-year',
     '/office-holiday-party-game': 'seo-en-office-party',
+    '/virtual-holiday-party-game': 'seo-en-virtual-party',
 };
 
 test('the new pages are there, each with its own tag', () => {
@@ -62,7 +63,7 @@ Object.keys(added).forEach(p => {
 });
 
 test('the holiday pages start an English game with the Christmas and New Year pack', () => {
-    ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game'].forEach(p => {
+    ['/christmas-party-game', '/new-years-eve-party-game', '/office-holiday-party-game', '/virtual-holiday-party-game'].forEach(p => {
         assert.strictEqual(page(p).start.href, '/create-game?lang=en&pack=christmas', p);
         assert.ok(!page(p).twin, `${p} is English only`);
     });

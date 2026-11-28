@@ -274,7 +274,7 @@ ${example('The world\'s first webcam was set up to keep an eye on a ____',
 <ul>
   <li><strong>Families spread across cities or countries.</strong> A weekly game night is an easy way to see each other without having to think of what to say. Questions come in English or Hebrew.</li>
   <li><strong>Friends who moved away.</strong> Up to 12 phones a game. Save your group at the end and it gets a page with a table of wins that carries over, a button for the next game, and a way to send everyone the next game night for their calendar.</li>
-  <li><strong>Remote teams.</strong> A game of 5 questions takes about ten minutes. See <a href="/team-building-game">a team-building game</a>.</li>
+  <li><strong>Remote teams.</strong> A game of 5 questions takes about ten minutes. See <a href="/team-building-game">a team-building game</a>, or, for the team's holiday party on a call, <a href="/virtual-holiday-party-game">a virtual holiday party game</a>.</li>
 </ul>
 ${startEn('Start a video call game')}
 <h2>Quick answers</h2>
