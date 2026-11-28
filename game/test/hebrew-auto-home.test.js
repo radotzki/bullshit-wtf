@@ -110,8 +110,13 @@ test('the English home names itself and says it is not the card game; /he leads 
     assert.match(description, /^Not the card game: Bullshit is a free bluffing party game/);
     assert.match(description, /phone/);
     const he = fs.readFileSync(path.join(root, 'scripts', 'build-he.js'), 'utf8');
-    assert.match(/const pageTitle = '([^']*)'/.exec(he)[1], /^בולשיט: משחק/);
-    assert.match(/<meta name="description" content="([^"]*)">/.exec(he)[1], /^בולשיט הוא משחק/);
+    // Each title and description the build can pick (all year, and in Hanukkah season) leads with the name.
+    const literals = (name) => [...new RegExp(`const ${name} =[^;]*;`).exec(he)[0].matchAll(/'([^']*)'/g)].map(m => m[1]);
+    assert.ok(literals('pageTitle').length >= 1);
+    literals('pageTitle').forEach(t => assert.match(t, /^בולשיט: משחק/));
+    assert.match(he, /<meta name="description" content="\$\{searchDescription\}">/);
+    assert.ok(literals('searchDescription').length >= 1);
+    literals('searchDescription').forEach(d => assert.match(d, /^בולשיט הוא משחק/));
 });
 
 test('the sitemap pairs each language twin with x-default on the English page', () => {
