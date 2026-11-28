@@ -394,3 +394,55 @@ test('the home demo clip: the beacon sends one clip row a page view, and the fun
     assert.strictEqual(got[1].view, got[0].view);
     assert.deepStrictEqual(Object.keys(got[1]).sort(), Object.keys(got[0]).sort());
 });
+
+test('an app error after drawing: one err row at once, and the leave row carries the error', async () => {
+    rows.length = 0;
+    quiet();
+    const page = openPage({ href: 'https://bullshit.wtf/he/join-game/ABCD', ua: IPHONE, modern: true });
+    page.boot();
+    page.mutate();
+    // What src/app/sentry/visit-error.ts hands over when Angular's handler gets an error.
+    page.window.bsVisit('err', 'app error: TypeError: e is undefined');
+    page.window.bsVisit('err', 'app error: a second error');   // still one row, and the first text wins
+    page.hide();
+    await page.deliver();
+    loud();
+    const got = visits();
+    assert.deepStrictEqual(got.map(r => [r.kind, r.page, r.booted, r.err]), [
+        ['view', '/join-game/:pin', null, null],
+        ['page', '/join-game/:pin', null, null],
+        ['drawn', '/join-game/:pin', true, null],
+        ['err', '/join-game/:pin', true, 'app error: TypeError: e is undefined'],
+        ['end', '/join-game/:pin', true, 'app error: TypeError: e is undefined'],
+    ]);
+    assert.ok(got.every(r => r.view === got[0].view));
+    got.forEach(r => assert.deepStrictEqual(Object.keys(r).sort(), Object.keys(got[0]).sort()));
+});
+
+test('the 404 page: its view is followed at once by an err row "404 page", booted unknown as on any plain page', async () => {
+    rows.length = 0;
+    quiet();
+    const page = openPage({ href: 'https://bullshit.wtf/virtual-holiday-party-gam', ua: IPHONE, plain: true });
+    page.window.bsVisit('err', '404 page');   // the script build-404.js puts right after the beacon
+    await page.deliver();
+    loud();
+    assert.deepStrictEqual(visits().map(r => [r.kind, r.page, r.booted, r.err]), [
+        ['view', '/virtual-holiday-party-gam', null, null],
+        ['err', '/virtual-holiday-party-gam', null, '404 page'],
+    ]);
+});
+
+test('an app page left before it drew: the leave row says booted false, with its time, and no drawn row', async () => {
+    // The night check's "gone" rule reads exactly these: an end row, booted false, ms at 5 s or later.
+    rows.length = 0;
+    quiet();
+    const page = openPage({ href: 'https://bullshit.wtf/', ua: IPHONE, modern: true });
+    page.parsed();
+    page.mutate();                        // the loading card only: not drawn
+    page.hide();
+    await page.deliver();
+    loud();
+    const got = visits();
+    assert.deepStrictEqual(got.map(r => [r.kind, r.booted, r.err]), [['view', null, null], ['page', null, null], ['end', false, null]]);
+    assert.ok(got[2].ms >= 0);
+});

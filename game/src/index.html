@@ -51,6 +51,10 @@
       drawn   once, when the app has first drawn (booted() turns true): ms is from this script, like
               every other row, so page.ms + drawn.ms is the whole wait from the tap; only where the
               browser has MutationObserver, and never on a plain page
+      err     once, as soon as the page reports its own error (the app calls bsVisit('err', text)): an
+              error after the app has drawn, which Angular's handler keeps from the window's error
+              event (app/sentry/visit-error.ts), and the 404 page, which marks itself ('404 page').
+              The text becomes this view's error, so its later rows carry it too.
     v is a random id made new on every page load and stored nowhere; it groups the rows of one
     page view. It runs before every other script, so it also sees a phone where the app never
     starts (a script that fails to load or parse, before Sentry is up).
@@ -59,7 +63,7 @@
   <!-- BS:VISIT:START -->
   <script>
   (function () {
-    var w = window, d = document, max = { view: 1, page: 1, drawn: 1, stuck: 1, end: 3, create: 3, join: 3, clip: 1 }, sent = {}, did = {};
+    var w = window, d = document, max = { view: 1, page: 1, drawn: 1, stuck: 1, end: 3, create: 3, join: 3, clip: 1, err: 1 }, sent = {}, did = {};
     var v = Math.random().toString(36).slice(2, 10), t0 = new Date().getTime(), err = '', first = location.pathname;
     // A plain page (how to play and the other search pages) has no app to wait for.
     var plain = d.documentElement.getAttribute('data-page') === 'plain';
@@ -114,10 +118,12 @@
       try { var x = new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type', 'text/plain'); x.send(body); } catch (e) { }
     }
     // The app calls bsVisit('create') after a game is created and bsVisit('join') after a join,
-    // and bsVisit('clip') the first time the home's demo clip is half in view.
-    w.bsVisit = function (what) {
+    // and bsVisit('clip') the first time the home's demo clip is half in view. bsVisit('err', text)
+    // marks the view bad at once: the first error wins, here as for a script error.
+    w.bsVisit = function (what, text) {
       if (what === 'create' || what === 'join') { did[what] = true; send(what); }
       if (what === 'clip') { send(what); }
+      if (what === 'err') { if (!err) { err = String(text || 'error').slice(0, 200); } send(what); }
     };
     send('view');
     try { if (w.performance && typeof w.performance.now === 'function') { send('page', Math.round(w.performance.now())); } } catch (e) { }

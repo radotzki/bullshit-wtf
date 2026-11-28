@@ -3,6 +3,7 @@ import Raven from 'raven-js';
 import { NgModule, ErrorHandler } from '@angular/core';
 import { isAutomatedBrowser } from './automated';
 import { readRelease } from './release';
+import { markVisitError } from './visit-error';
 
 Raven.config(environment.sentry, {
     environment: environment.production ? 'production' : 'development',
@@ -79,6 +80,7 @@ export class RavenErrorHandler implements ErrorHandler {
         // Angular wraps some errors; promise rejections carry the cause in `rejection`.
         const cause = (err && (err.originalError || err.rejection)) || err;
         reportError(cause, 'unhandled');
+        markVisitError(toError(cause));
         console.error(err);
     }
 }
