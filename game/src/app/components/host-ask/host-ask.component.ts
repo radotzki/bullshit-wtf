@@ -1,10 +1,10 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from './../../services/api.service';
 import { GameService } from './../../services/game.service';
 import { buildEventIcs, googleEventUrl } from './../../pages/crew/next-night';
 import {
-    ASK_TAGS, AskPlace, HostAskStrings, REMINDER_FILE, askContentType, askStrings, hanukkahEvening, reminderEvent,
+    ASK_TAGS, AskPlace, HostAskStrings, REMINDER_FILE, askContentType, askStrings, hanukkahEvening, lateAskPack, reminderEvent,
     reminderNight,
 } from './host-ask';
 import { remindStepsAside } from './../hanukkah-night/hanukkah-night';
@@ -22,7 +22,7 @@ import { remindStepsAside } from './../hanukkah-night/hanukkah-night';
     templateUrl: './host-ask.component.html',
     styleUrls: ['./host-ask.component.scss'],
 })
-export class HostAskComponent {
+export class HostAskComponent implements OnInit {
     @Input() locale = 'en';
     @Input() place: AskPlace = 'after-game';
     /** The finished game's seasonal pack: after a Hanukkah game, the Hanukkah words (hanukkahEvening). */
@@ -60,6 +60,13 @@ export class HostAskComponent {
 
     get late() {
         return this.place === 'game-over';
+    }
+
+    /** The join page of a game that is over, in the Hanukkah evenings: a Hanukkah ask (see lateAskPack). */
+    ngOnInit() {
+        if (this.late) {
+            this.pack = lateAskPack(new Date(), this.locale, this.pack);
+        }
     }
 
     private count(method: 'create' | 'remind' | 'remind-google') {
