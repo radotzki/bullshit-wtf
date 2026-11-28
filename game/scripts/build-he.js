@@ -13,32 +13,13 @@ const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 
 // The page's own title carries the words people add to the name when they search for it
 // ("בולשיט משחק"); the link-preview title stays the short one.
-// In Hanukkah season the title and the search description add the holiday's search words
-// ("משחק לחנוכה", "משחק לחנוכה עם המשפחה"), the name still first. The season is the Hanukkah
-// question pack's own (questionPacks.hanukkah.season in game-model.ts), by the build's date: the
-// site is built on every deploy, so the first deploy after the season's last day drops them.
-// Next year's days go in game-model.ts only. BS_BUILD_DATE=YYYY-MM-DD overrides the date (tests).
-const model = fs.readFileSync(path.join(__dirname, '..', '..', 'game-model.ts'), 'utf8');
-const hanukkahSeason = /\bhanukkah: \{[^}]*?season: \{ from: '(\d{4}-\d\d-\d\d)', to: '(\d{4}-\d\d-\d\d)' \}/.exec(model);
-if (!hanukkahSeason) {
-    throw new Error('build-he: questionPacks.hanukkah.season not found in game-model.ts');
-}
-const buildDay = process.env.BS_BUILD_DATE || new Date().toISOString().slice(0, 10);
-const inHanukkah = buildDay >= hanukkahSeason[1] && buildDay <= hanukkahSeason[2];
-
-const pageTitle = inHanukkah
-    ? 'בולשיט: משחק לחנוכה ולמסיבות, חינם בטלפון לכל המשפחה'
-    : 'בולשיט: משחק מסיבות חינם בטלפון, לכל המשפחה';
-// The same description all year; in Hanukkah season its first sentence adds the holiday.
-const searchDescription = inHanukkah
-    ? 'בולשיט הוא משחק מסיבות חינמי לעד 12 שחקנים בטלפון, וגם משחק לחנוכה עם כל המשפחה. המציאו תשובות מזויפות לעובדות מוזרות ואמיתיות, עבדו על החברים וגלו את האמת.'
-    : 'בולשיט הוא משחק מסיבות חינמי לעד 12 שחקנים בטלפון. המציאו תשובות מזויפות לעובדות מוזרות ואמיתיות, עבדו על החברים וגלו את האמת.';
+const pageTitle = 'בולשיט: משחק מסיבות חינם בטלפון, לכל המשפחה';
 const title = 'בולשיט - משחק השקרים למסיבות';
 const description = 'עבדו על החברים עם תשובות מזויפות לעובדות מוזרות ואמיתיות. חינם, עד 12 שחקנים, כל אחד משחק מהטלפון.';
 const image = 'https://bullshit.wtf/assets/og-image-he.png';
 
 const hebrewMeta = `
-  <meta name="description" content="${searchDescription}">
+  <meta name="description" content="בולשיט הוא משחק מסיבות חינמי לעד 12 שחקנים בטלפון. המציאו תשובות מזויפות לעובדות מוזרות ואמיתיות, עבדו על החברים וגלו את האמת.">
   <link rel="canonical" href="https://bullshit.wtf/he">
   <link rel="alternate" hreflang="en" href="https://bullshit.wtf/">
   <link rel="alternate" hreflang="he" href="https://bullshit.wtf/he">
