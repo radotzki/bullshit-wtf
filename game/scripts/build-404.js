@@ -10,7 +10,9 @@ const path = require('path');
 const out = path.resolve(process.argv[2] || path.join(__dirname, '..', 'dist'));
 
 // The visit beacon, as on the search pages (seo/build-pages.js): a view of this page is counted, with
-// the address that was not found, so broken links show up in the visits table.
+// the address that was not found, so broken links show up in the visits table. Right after it, the
+// page marks its own view bad ('404 page', an err row at once), so the night check counts a missing
+// page as a broken one, not as a clean view of the address that is missing.
 function visitBeacon() {
     const html = fs.readFileSync(path.join(__dirname, '..', 'src', 'index.html'), 'utf8');
     const m = /<!-- BS:VISIT:START -->\s*(<script>[\s\S]*?<\/script>)\s*<!-- BS:VISIT:END -->/.exec(html);
@@ -20,11 +22,14 @@ function visitBeacon() {
     return m[1];
 }
 
+const NOT_FOUND_MARK = "<script>window.bsVisit && window.bsVisit('err', '404 page');</script>";
+
 const page = `<!doctype html>
 <html lang="en" data-page="plain">
 <head>
   <meta charset="utf-8">
   ${visitBeacon()}
+  ${NOT_FOUND_MARK}
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Page not found · Bullshit</title>

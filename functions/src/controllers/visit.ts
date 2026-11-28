@@ -8,7 +8,9 @@ export interface VisitRow {
     // clip: the home's demo clip came half into view (once a page view).
     // page: ms is the page's own trip, from the tap to the beacon starting (before every other row's
     // clock). drawn: the app first drew, at ms on the beacon's clock; page.ms + drawn.ms is the whole wait.
-    kind: 'view' | 'stuck' | 'end' | 'create' | 'join' | 'page' | 'drawn' | 'clip';
+    // err: the page reported its own error at once (an app error after drawing, or the 404 page's
+    // '404 page'), once a page view; err holds the text.
+    kind: 'view' | 'stuck' | 'end' | 'create' | 'join' | 'page' | 'drawn' | 'clip' | 'err';
     // Random per page load, never stored on the phone: groups the rows of one page view.
     view: string;
     first: string;
@@ -35,7 +37,7 @@ export interface VisitRow {
     bot: boolean;
 }
 
-const KINDS = ['view', 'stuck', 'end', 'create', 'join', 'page', 'drawn', 'clip'];
+const KINDS = ['view', 'stuck', 'end', 'create', 'join', 'page', 'drawn', 'clip', 'err'];
 
 function text(v: any, max: number): string {
     return typeof v === 'string' ? v.replace(/[\u0000-\u001f]/g, ' ').slice(0, max) : '';
